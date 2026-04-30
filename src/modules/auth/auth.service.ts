@@ -79,7 +79,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.create({
         data: {
-          userId: createdUser.id,
+          userId: createdUser.userId,
           email: createdUser.email,
           purpose: VerificationPurpose.SIGNUP,
           codeHash,
@@ -118,7 +118,7 @@ export class AuthService {
     }
 
     const verification = await this.getLatestActiveVerification(
-      user.id,
+      user.userId,
       dto.email,
     );
 
@@ -137,7 +137,9 @@ export class AuthService {
 
     if (!isValidCode) {
       await this.prisma.emailVerificationCode.update({
-        where: { id: verification.id },
+        where: {
+          emailVerificationCodeId: verification.emailVerificationCodeId,
+        },
         data: {
           attemptCount: {
             increment: 1,
@@ -152,13 +154,15 @@ export class AuthService {
 
     await this.prisma.$transaction([
       this.prisma.emailVerificationCode.update({
-        where: { id: verification.id },
+        where: {
+          emailVerificationCodeId: verification.emailVerificationCodeId,
+        },
         data: {
           consumedAt: verifiedAt,
         },
       }),
       this.prisma.user.update({
-        where: { id: user.id },
+        where: { userId: user.userId },
         data: {
           status: UserStatus.ACTIVE,
           emailVerifiedAt: verifiedAt,
@@ -190,14 +194,14 @@ export class AuthService {
     const expiresAt = this.buildVerificationExpiry();
 
     const previousVerification = await this.getLatestActiveVerification(
-      user.id,
+      user.userId,
       user.email,
     );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({
         where: {
-          userId: user.id,
+          userId: user.userId,
           purpose: VerificationPurpose.SIGNUP,
           consumedAt: null,
         },
@@ -208,7 +212,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.create({
         data: {
-          userId: user.id,
+          userId: user.userId,
           email: user.email,
           purpose: VerificationPurpose.SIGNUP,
           codeHash,
@@ -252,7 +256,7 @@ export class AuthService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
-        where: { id: user.id },
+        where: { userId: user.userId },
         data: {
           email: dto.newEmail,
         },
@@ -260,7 +264,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.updateMany({
         where: {
-          userId: user.id,
+          userId: user.userId,
           consumedAt: null,
         },
         data: {
@@ -270,7 +274,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.create({
         data: {
-          userId: user.id,
+          userId: user.userId,
           email: dto.newEmail,
           purpose: VerificationPurpose.SIGNUP,
           codeHash,
@@ -305,7 +309,7 @@ export class AuthService {
     const expiresAt = this.buildVerificationExpiry();
 
     const previousReset = await this.getLatestActiveVerification(
-      user.id,
+      user.userId,
       user.email,
       VerificationPurpose.PASSWORD_RESET,
     );
@@ -313,7 +317,7 @@ export class AuthService {
     await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({
         where: {
-          userId: user.id,
+          userId: user.userId,
           purpose: VerificationPurpose.PASSWORD_RESET,
           consumedAt: null,
         },
@@ -324,7 +328,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.create({
         data: {
-          userId: user.id,
+          userId: user.userId,
           email: user.email,
           purpose: VerificationPurpose.PASSWORD_RESET,
           codeHash,
@@ -355,7 +359,7 @@ export class AuthService {
     }
 
     const verification = await this.getLatestActiveVerification(
-      user.id,
+      user.userId,
       dto.email,
       VerificationPurpose.PASSWORD_RESET,
     );
@@ -375,7 +379,9 @@ export class AuthService {
 
     if (!isValidCode) {
       await this.prisma.emailVerificationCode.update({
-        where: { id: verification.id },
+        where: {
+          emailVerificationCodeId: verification.emailVerificationCodeId,
+        },
         data: {
           attemptCount: {
             increment: 1,
@@ -391,13 +397,15 @@ export class AuthService {
 
     await this.prisma.$transaction([
       this.prisma.emailVerificationCode.update({
-        where: { id: verification.id },
+        where: {
+          emailVerificationCodeId: verification.emailVerificationCodeId,
+        },
         data: {
           consumedAt: resetAt,
         },
       }),
       this.prisma.user.update({
-        where: { id: user.id },
+        where: { userId: user.userId },
         data: {
           passwordHash: hashedPassword,
         },
@@ -519,8 +527,8 @@ export class AuthService {
     role: AppRole,
   ) {
     const payload: JwtPayload = {
-      sub: user.id,
-      userId: user.id,
+      sub: user.userId,
+      userId: user.userId,
       companyId,
       role,
     };
@@ -539,7 +547,7 @@ export class AuthService {
   }
 
   private sanitizeUser(user: {
-    id: number;
+    userId: number;
     email: string;
     name: string;
     dateOfBirth: Date | null;
@@ -551,7 +559,7 @@ export class AuthService {
     updatedAt: Date;
   }) {
     return {
-      id: user.id,
+      id: user.userId,
       email: user.email,
       name: user.name,
       dateOfBirth: user.dateOfBirth,

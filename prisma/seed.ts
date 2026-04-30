@@ -24,7 +24,7 @@ async function main() {
 
   if (existingUser) {
     await prisma.user.update({
-      where: { id: existingUser.id },
+      where: { userId: existingUser.userId },
       data: {
         name,
         passwordHash,

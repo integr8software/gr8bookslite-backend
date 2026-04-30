@@ -75,7 +75,7 @@ export class UsersService {
 
   async findById(id: number) {
     const user = await this.prisma.user.findUnique({
-      where: { id },
+      where: { userId: id },
     });
 
     if (!user) {
@@ -99,7 +99,7 @@ export class UsersService {
     }
 
     const user = await this.prisma.user.update({
-      where: { id },
+      where: { userId: id },
       data,
     });
 
@@ -110,7 +110,7 @@ export class UsersService {
     await this.ensureUserExists(id);
 
     await this.prisma.user.delete({
-      where: { id },
+      where: { userId: id },
     });
 
     return { message: 'User deleted successfully.' };
@@ -118,7 +118,7 @@ export class UsersService {
 
   private async ensureUserExists(id: number) {
     const user = await this.prisma.user.findUnique({
-      where: { id },
+      where: { userId: id },
     });
 
     if (!user) {
@@ -127,7 +127,7 @@ export class UsersService {
   }
 
   private sanitizeUser(user: {
-    id: number;
+    userId: number;
     email: string;
     name: string;
     dateOfBirth: Date | null;
@@ -139,7 +139,7 @@ export class UsersService {
     updatedAt: Date;
   }) {
     return {
-      id: user.id,
+      id: user.userId,
       email: user.email,
       name: user.name,
       dateOfBirth: user.dateOfBirth,
