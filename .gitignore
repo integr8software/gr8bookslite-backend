@@ -44,6 +44,8 @@ lerna-debug.log*
 .env.production.local
 .env.local
 !.env.example
+!.env.development.example
+!.env.production.example
 
 # Secrets and local credentials
 *.pem
