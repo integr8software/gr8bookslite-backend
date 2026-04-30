@@ -10,6 +10,9 @@ Focus areas:
 - email verification with 4-digit OTP
 - resend OTP
 - change email during verification
+- forgot password
+- reset password with email OTP
+- logout behavior
 - login restrictions before verification
 - free 15-day trial bootstrapping
 
@@ -39,6 +42,8 @@ Required actions:
 - verify 4-digit OTP
 - resend OTP
 - change email
+- request password reset code
+- reset password with code and new password
 
 Recommended rules:
 
@@ -106,7 +111,10 @@ Security requirements:
 - `POST /api/v1/auth/verify-email`
 - `POST /api/v1/auth/resend-verification`
 - `POST /api/v1/auth/change-verification-email`
+- `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/reset-password`
 - `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
 - `GET /api/v1/auth/me`
 
 ## Important Change From Current Repo

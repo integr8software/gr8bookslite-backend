@@ -55,4 +55,16 @@ export class AuthMailService {
 
     this.logger.debug(`Verification email queued for ${email}.`);
   }
+
+  async sendPasswordResetCode(email: string, code: string): Promise<void> {
+    await this.transporter.sendMail({
+      from: this.fromEmail,
+      to: email,
+      subject: 'Reset your password',
+      text: `Your password reset code is ${code}. This code will expire soon.`,
+      html: `<p>Your password reset code is <strong>${code}</strong>.</p><p>This code will expire soon.</p>`,
+    });
+
+    this.logger.debug(`Password reset email queued for ${email}.`);
+  }
 }

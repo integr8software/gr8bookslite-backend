@@ -19,9 +19,11 @@ import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { AuthMailService } from './services/auth-mail.service';
 import { OtpService } from './services/otp.service';
@@ -288,6 +290,125 @@ export class AuthService {
     };
   }
 
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.usersService.findByEmail(dto.email);
+
+    if (!user || !user.isActive || user.status !== UserStatus.ACTIVE) {
+      return {
+        message:
+          'If the email is registered, a password reset code will be sent.',
+      };
+    }
+
+    const resetCode = this.otpService.generateCode();
+    const codeHash = await this.otpService.hashCode(resetCode);
+    const expiresAt = this.buildVerificationExpiry();
+
+    const previousReset = await this.getLatestActiveVerification(
+      user.id,
+      user.email,
+      VerificationPurpose.PASSWORD_RESET,
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerificationCode.updateMany({
+        where: {
+          userId: user.id,
+          purpose: VerificationPurpose.PASSWORD_RESET,
+          consumedAt: null,
+        },
+        data: {
+          consumedAt: new Date(),
+        },
+      });
+
+      await tx.emailVerificationCode.create({
+        data: {
+          userId: user.id,
+          email: user.email,
+          purpose: VerificationPurpose.PASSWORD_RESET,
+          codeHash,
+          expiresAt,
+          resendCount: previousReset?.resendCount ?? 0,
+        },
+      });
+    });
+
+    await this.authMailService.sendPasswordResetCode(user.email, resetCode);
+
+    return {
+      message:
+        'If the email is registered, a password reset code will be sent.',
+      maskedEmail: this.otpService.maskEmail(user.email),
+    };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    if (dto.newPassword !== dto.confirmNewPassword) {
+      throw new BadRequestException('Passwords do not match.');
+    }
+
+    const user = await this.usersService.findByEmail(dto.email);
+
+    if (!user) {
+      throw new BadRequestException('Password reset request is invalid.');
+    }
+
+    const verification = await this.getLatestActiveVerification(
+      user.id,
+      dto.email,
+      VerificationPurpose.PASSWORD_RESET,
+    );
+
+    if (!verification) {
+      throw new BadRequestException('No active reset code was found.');
+    }
+
+    if (verification.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Reset code has expired.');
+    }
+
+    const isValidCode = await this.otpService.compareCode(
+      dto.code,
+      verification.codeHash,
+    );
+
+    if (!isValidCode) {
+      await this.prisma.emailVerificationCode.update({
+        where: { id: verification.id },
+        data: {
+          attemptCount: {
+            increment: 1,
+          },
+        },
+      });
+
+      throw new BadRequestException('Reset code is invalid.');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    const resetAt = new Date();
+
+    await this.prisma.$transaction([
+      this.prisma.emailVerificationCode.update({
+        where: { id: verification.id },
+        data: {
+          consumedAt: resetAt,
+        },
+      }),
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: hashedPassword,
+        },
+      }),
+    ]);
+
+    return {
+      message: 'Password has been reset successfully.',
+    };
+  }
+
   async login(dto: LoginDto) {
     const user = await this.usersService.findForAuthByEmail(dto.email);
 
@@ -386,6 +507,12 @@ export class AuthService {
     };
   }
 
+  logout() {
+    return {
+      message: 'Logged out successfully.',
+    };
+  }
+
   private buildAuthenticatedResponse(
     user: UserWithMemberships,
     companyId: number | null,
@@ -446,12 +573,16 @@ export class AuthService {
     return new Date(Date.now() + expirySeconds * 1000);
   }
 
-  private getLatestActiveVerification(userId: number, email: string) {
+  private getLatestActiveVerification(
+    userId: number,
+    email: string,
+    purpose: VerificationPurpose = VerificationPurpose.SIGNUP,
+  ) {
     return this.prisma.emailVerificationCode.findFirst({
       where: {
         userId,
         email,
-        purpose: VerificationPurpose.SIGNUP,
+        purpose,
         consumedAt: null,
       },
       orderBy: {
