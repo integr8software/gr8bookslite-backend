@@ -70,6 +70,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
-    return this.authService.getProfile(user.userId, user.companyId);
+    return this.authService.getProfile(user.id, user.companyId);
   }
 }

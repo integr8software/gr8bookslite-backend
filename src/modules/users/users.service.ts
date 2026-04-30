@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma, SystemRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { sanitizeUser } from '../../common/mappers/user.mapper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -43,7 +44,7 @@ export class UsersService {
       },
     });
 
-    return this.sanitizeUser(user);
+    return sanitizeUser(user);
   }
 
   async findAll() {
@@ -51,7 +52,7 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return users.map((user) => this.sanitizeUser(user));
+    return users.map((user) => sanitizeUser(user));
   }
 
   findByEmail(email: string) {
@@ -75,14 +76,14 @@ export class UsersService {
 
   async findById(id: number) {
     const user = await this.prisma.user.findUnique({
-      where: { userId: id },
+      where: { id },
     });
 
     if (!user) {
       throw new NotFoundException('User not found.');
     }
 
-    return this.sanitizeUser(user);
+    return sanitizeUser(user);
   }
 
   async update(id: number, dto: UpdateUserDto) {
@@ -99,18 +100,18 @@ export class UsersService {
     }
 
     const user = await this.prisma.user.update({
-      where: { userId: id },
+      where: { id },
       data,
     });
 
-    return this.sanitizeUser(user);
+    return sanitizeUser(user);
   }
 
   async remove(id: number) {
     await this.ensureUserExists(id);
 
     await this.prisma.user.delete({
-      where: { userId: id },
+      where: { id },
     });
 
     return { message: 'User deleted successfully.' };
@@ -118,37 +119,11 @@ export class UsersService {
 
   private async ensureUserExists(id: number) {
     const user = await this.prisma.user.findUnique({
-      where: { userId: id },
+      where: { id },
     });
 
     if (!user) {
       throw new NotFoundException('User not found.');
     }
-  }
-
-  private sanitizeUser(user: {
-    userId: number;
-    email: string;
-    name: string;
-    dateOfBirth: Date | null;
-    systemRole: SystemRole;
-    status: UserStatus;
-    isActive: boolean;
-    emailVerifiedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }) {
-    return {
-      id: user.userId,
-      email: user.email,
-      name: user.name,
-      dateOfBirth: user.dateOfBirth,
-      systemRole: user.systemRole,
-      status: user.status,
-      isActive: user.isActive,
-      emailVerifiedAt: user.emailVerifiedAt,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
   }
 }
