@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, SystemRole } from '@prisma/client';
+import { Prisma, SystemRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -38,6 +38,8 @@ export class UsersService {
         name: dto.name,
         passwordHash: hashedPassword,
         systemRole: dto.systemRole ?? SystemRole.STANDARD,
+        status: UserStatus.ACTIVE,
+        emailVerifiedAt: new Date(),
       },
     });
 
@@ -128,8 +130,11 @@ export class UsersService {
     id: number;
     email: string;
     name: string;
+    dateOfBirth: Date | null;
     systemRole: SystemRole;
+    status: UserStatus;
     isActive: boolean;
+    emailVerifiedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -137,8 +142,11 @@ export class UsersService {
       id: user.id,
       email: user.email,
       name: user.name,
+      dateOfBirth: user.dateOfBirth,
       systemRole: user.systemRole,
+      status: user.status,
       isActive: user.isActive,
+      emailVerifiedAt: user.emailVerifiedAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

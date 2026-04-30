@@ -8,25 +8,32 @@ datasource db {
 }
 
 model User {
-  id           Int          @id @default(autoincrement())
-  email        String       @unique
-  passwordHash String
-  name         String
-  systemRole   SystemRole   @default(STANDARD)
-  isActive     Boolean      @default(true)
-  memberships  Membership[]
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                Int                     @id @default(autoincrement())
+  email             String                  @unique
+  passwordHash      String
+  name              String
+  dateOfBirth       DateTime?
+  systemRole        SystemRole              @default(STANDARD)
+  status            UserStatus              @default(PENDING_VERIFICATION)
+  isActive          Boolean                 @default(true)
+  emailVerifiedAt   DateTime?
+  verificationCodes EmailVerificationCode[]
+  memberships       Membership[]
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
 }
 
 model Company {
-  id          Int          @id @default(autoincrement())
-  name        String
-  slug        String       @unique
-  isActive    Boolean      @default(true)
-  memberships Membership[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id               Int                   @id @default(autoincrement())
+  name             String
+  slug             String                @unique
+  isActive         Boolean               @default(true)
+  status           CompanyStatus         @default(PENDING)
+  memberships      Membership[]
+  tenantConnection TenantConnection?
+  subscriptions    CompanySubscription[]
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 }
 
 model Membership {
@@ -44,6 +51,70 @@ model Membership {
   @@index([companyId])
 }
 
+model TenantConnection {
+  id            Int          @id @default(autoincrement())
+  companyId     Int          @unique
+  dbName        String       @unique
+  databaseUrl   String
+  status        TenantStatus @default(PENDING)
+  schemaVersion String?
+  lastCheckedAt DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  company       Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model SubscriptionPlan {
+  id            Int                   @id @default(autoincrement())
+  code          String                @unique
+  name          String
+  description   String?
+  trialDays     Int                   @default(15)
+  isActive      Boolean               @default(true)
+  subscriptions CompanySubscription[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+}
+
+model CompanySubscription {
+  id          Int                @id @default(autoincrement())
+  companyId   Int
+  planId      Int
+  status      SubscriptionStatus @default(TRIALING)
+  startsAt    DateTime           @default(now())
+  trialEndsAt DateTime?
+  endsAt      DateTime?
+  canceledAt  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan        SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@index([companyId])
+  @@index([planId])
+  @@index([status])
+}
+
+model EmailVerificationCode {
+  id           Int                 @id @default(autoincrement())
+  userId       Int
+  email        String
+  purpose      VerificationPurpose @default(SIGNUP)
+  codeHash     String
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  resendCount  Int                 @default(0)
+  attemptCount Int                 @default(0)
+  lastSentAt   DateTime            @default(now())
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([email])
+  @@index([purpose])
+}
+
 enum SystemRole {
   SUPER_ADMIN
   STANDARD
@@ -52,4 +123,38 @@ enum SystemRole {
 enum MembershipRole {
   ADMIN
   USER
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+}
+
+enum CompanyStatus {
+  PENDING
+  PROVISIONING
+  ACTIVE
+  FAILED
+  SUSPENDED
+}
+
+enum TenantStatus {
+  PENDING
+  ACTIVE
+  FAILED
+  SUSPENDED
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+enum VerificationPurpose {
+  SIGNUP
+  EMAIL_CHANGE
+  PASSWORD_RESET
 }

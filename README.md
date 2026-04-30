@@ -39,9 +39,9 @@ This project already has the core backend foundation in place:
 
 - List users
 - Get single user
-- Create user
-- Update user
-- Delete user
+- Create user (`SUPER_ADMIN` only)
+- Update user (`SUPER_ADMIN` only)
+- Delete user (`SUPER_ADMIN` only)
 
 ## Tech Stack
 
@@ -90,11 +90,11 @@ Versioning is enabled globally using NestJS URI versioning, which keeps the API 
 
 ### Users
 
-- `GET /api/v1/users`
-- `POST /api/v1/users`
-- `GET /api/v1/users/:id`
-- `PATCH /api/v1/users/:id`
-- `DELETE /api/v1/users/:id`
+- `GET /api/v1/users` (`ADMIN`, `SUPER_ADMIN`)
+- `POST /api/v1/users` (`SUPER_ADMIN`)
+- `GET /api/v1/users/:id` (`ADMIN`, `SUPER_ADMIN`)
+- `PATCH /api/v1/users/:id` (`SUPER_ADMIN`)
+- `DELETE /api/v1/users/:id` (`SUPER_ADMIN`)
 
 ## Sample Request Payloads
 
@@ -119,7 +119,7 @@ Versioning is enabled globally using NestJS URI versioning, which keeps the API 
 }
 ```
 
-`companyId` is optional and is mainly needed when a user belongs to more than one company.
+`companyId` is optional when the user belongs to exactly one company. If the user belongs to multiple companies, the login response asks the client to choose a company first.
 
 ## Project Structure
 
@@ -147,7 +147,7 @@ Create a `.env` file based on `.env.example`.
 # Neon pooled connection string for the app/runtime
 DATABASE_URL="postgresql://<user>:<password>@<endpoint>-pooler.<region>.aws.neon.tech/<database>?sslmode=require&channel_binding=require"
 
-# Neon direct connection string for Prisma migrations and admin tasks
+# Direct connection string for Prisma CLI tasks
 DIRECT_URL="postgresql://<user>:<password>@<endpoint>.<region>.aws.neon.tech/<database>?sslmode=require&channel_binding=require"
 
 JWT_SECRET="replace-with-a-strong-random-secret"
@@ -157,8 +157,9 @@ JWT_EXPIRES_IN_SECONDS=86400
 ### Why Two Database URLs?
 
 - `DATABASE_URL` is used by the running NestJS application
-- `DIRECT_URL` is used by Prisma for migrations and admin tasks
-- This setup works well with Neon because pooled connections are better for app traffic, while direct connections are safer for schema changes
+- The Prisma schema reads `DATABASE_URL` for the datasource
+- Prisma CLI tasks also load `prisma.config.ts`, which requires `DIRECT_URL`
+- With Neon, pooled connections are better for app traffic, while direct connections are safer for schema changes
 
 ## Setup
 
@@ -169,7 +170,7 @@ npm install
 Then create your local environment file:
 
 ```bash
-copy .env.example .env
+cp .env.example .env
 ```
 
 ## Development
@@ -244,7 +245,7 @@ Typical onboarding flow for a teammate:
 ```bash
 # 1. clone the project
 # 2. create local env file
-copy .env.example .env
+cp .env.example .env
 
 # 3. paste the shared Neon connection strings
 # 4. install dependencies
