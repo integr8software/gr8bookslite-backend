@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  email        String       @unique
+  passwordHash String
+  name         String
+  systemRole   SystemRole   @default(STANDARD)
+  isActive     Boolean      @default(true)
+  memberships  Membership[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Company {
+  id          Int          @id @default(autoincrement())
+  name        String
+  slug        String       @unique
+  isActive    Boolean      @default(true)
+  memberships Membership[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Membership {
+  id        Int            @id @default(autoincrement())
+  userId    Int
+  companyId Int
+  role      MembershipRole @default(USER)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  company   Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+}
+
+enum SystemRole {
+  SUPER_ADMIN
+  STANDARD
+}
+
+enum MembershipRole {
+  ADMIN
+  USER
+}
