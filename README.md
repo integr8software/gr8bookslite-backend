@@ -144,6 +144,10 @@ prisma/
 Create a `.env` file based on `.env.example`.
 
 ```env
+# Runtime
+PORT=3000
+NODE_ENV="development"
+
 # Neon pooled connection string for the app/runtime
 DATABASE_URL="postgresql://<user>:<password>@<endpoint>-pooler.<region>.aws.neon.tech/<database>?sslmode=require&channel_binding=require"
 
@@ -184,7 +188,7 @@ npm run dev
 This command:
 
 - regenerates the Prisma client
-- starts NestJS in watch mode
+- starts NestJS in watch mode using `.env`
 
 If you are using Neon for the first time, run your migration before starting the app:
 

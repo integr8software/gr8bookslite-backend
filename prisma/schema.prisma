@@ -16,10 +16,10 @@ model User {
   systemRole        SystemRole              @default(STANDARD) @map("system_role")
   status            UserStatus              @default(PENDING_VERIFICATION)
   emailVerifiedAt   DateTime?               @map("email_verified_at")
-  verificationCodes EmailVerificationCode[]
-  memberships       Membership[]
   createdAt         DateTime                @default(now()) @map("created_at")
   updatedAt         DateTime                @updatedAt @map("updated_at")
+  verificationCodes EmailVerificationCode[]
+  memberships       Membership[]
 
   @@map("users")
 }
@@ -30,11 +30,11 @@ model Company {
   slug             String                @unique
   isActive         Boolean               @default(true) @map("is_active")
   status           CompanyStatus         @default(PENDING)
-  memberships      Membership[]
-  tenantConnection TenantConnection?
-  subscriptions    CompanySubscription[]
   createdAt        DateTime              @default(now()) @map("created_at")
   updatedAt        DateTime              @updatedAt @map("updated_at")
+  subscriptions    CompanySubscription[]
+  memberships      Membership[]
+  tenantConnection TenantConnection?
 
   @@map("companies")
 }
@@ -50,7 +50,6 @@ model Membership {
 
   @@id([userId, companyId])
   @@index([companyId])
-
   @@map("memberships")
 }
 
@@ -75,9 +74,9 @@ model SubscriptionPlan {
   description   String?
   trialDays     Int                   @default(15) @map("trial_days")
   isActive      Boolean               @default(true) @map("is_active")
-  subscriptions CompanySubscription[]
   createdAt     DateTime              @default(now()) @map("created_at")
   updatedAt     DateTime              @updatedAt @map("updated_at")
+  subscriptions CompanySubscription[]
 
   @@map("subscription_plans")
 }
@@ -94,12 +93,11 @@ model CompanySubscription {
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
   company            Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  plan               SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id], onDelete: Restrict)
+  plan               SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id])
 
   @@index([companyId])
   @@index([subscriptionPlanId])
   @@index([status])
-
   @@map("company_subscriptions")
 }
 
@@ -121,7 +119,6 @@ model EmailVerificationCode {
   @@index([userId])
   @@index([email])
   @@index([purpose])
-
   @@map("email_verification_codes")
 }
 
