@@ -1,22 +1,23 @@
-import { Type } from 'class-transformer';
-import { IsDate, IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, Matches } from 'class-validator';
 
 export class RegisterDto {
   @IsString()
   fullName!: string;
 
-  @Type(() => Date)
-  @IsDate()
-  dateOfBirth!: Date;
-
   @IsEmail()
   email!: string;
 
   @IsString()
-  @MinLength(8)
+  @Matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, {
+    message:
+      'Password must be at least 8 characters and include at least 1 uppercase letter, 1 number, and 1 special character.',
+  })
   password!: string;
 
   @IsString()
-  @MinLength(8)
+  @Matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, {
+    message:
+      'Confirm password must be at least 8 characters and include at least 1 uppercase letter, 1 number, and 1 special character.',
+  })
   confirmPassword!: string;
 }

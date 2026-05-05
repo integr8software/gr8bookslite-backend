@@ -71,7 +71,6 @@ export class AuthService {
         data: {
           email: dto.email,
           name: dto.fullName,
-          dateOfBirth: dto.dateOfBirth,
           passwordHash: hashedPassword,
           systemRole: SystemRole.STANDARD,
           status: UserStatus.PENDING_VERIFICATION,
