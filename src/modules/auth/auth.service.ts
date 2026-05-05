@@ -16,6 +16,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
+import { sanitizeUser } from '../../common/mappers/user.mapper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
@@ -70,7 +71,6 @@ export class AuthService {
         data: {
           email: dto.email,
           name: dto.fullName,
-          dateOfBirth: dto.dateOfBirth,
           passwordHash: hashedPassword,
           systemRole: SystemRole.STANDARD,
           status: UserStatus.PENDING_VERIFICATION,
@@ -79,7 +79,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.create({
         data: {
-          userId: createdUser.userId,
+          userId: createdUser.id,
           email: createdUser.email,
           purpose: VerificationPurpose.SIGNUP,
           codeHash,
@@ -118,7 +118,7 @@ export class AuthService {
     }
 
     const verification = await this.getLatestActiveVerification(
-      user.userId,
+      user.id,
       dto.email,
     );
 
@@ -136,16 +136,9 @@ export class AuthService {
     );
 
     if (!isValidCode) {
-      await this.prisma.emailVerificationCode.update({
-        where: {
-          emailVerificationCodeId: verification.emailVerificationCodeId,
-        },
-        data: {
-          attemptCount: {
-            increment: 1,
-          },
-        },
-      });
+      await this.incrementVerificationAttempt(
+        verification.id,
+      );
 
       throw new BadRequestException('Verification code is invalid.');
     }
@@ -153,16 +146,12 @@ export class AuthService {
     const verifiedAt = new Date();
 
     await this.prisma.$transaction([
-      this.prisma.emailVerificationCode.update({
-        where: {
-          emailVerificationCodeId: verification.emailVerificationCodeId,
-        },
-        data: {
-          consumedAt: verifiedAt,
-        },
-      }),
+      this.consumeVerificationCode(
+        verification.id,
+        verifiedAt,
+      ),
       this.prisma.user.update({
-        where: { userId: user.userId },
+        where: { id: user.id },
         data: {
           status: UserStatus.ACTIVE,
           emailVerifiedAt: verifiedAt,
@@ -194,14 +183,14 @@ export class AuthService {
     const expiresAt = this.buildVerificationExpiry();
 
     const previousVerification = await this.getLatestActiveVerification(
-      user.userId,
+      user.id,
       user.email,
     );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({
         where: {
-          userId: user.userId,
+          userId: user.id,
           purpose: VerificationPurpose.SIGNUP,
           consumedAt: null,
         },
@@ -212,7 +201,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.create({
         data: {
-          userId: user.userId,
+          userId: user.id,
           email: user.email,
           purpose: VerificationPurpose.SIGNUP,
           codeHash,
@@ -256,7 +245,7 @@ export class AuthService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
-        where: { userId: user.userId },
+        where: { id: user.id },
         data: {
           email: dto.newEmail,
         },
@@ -264,7 +253,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.updateMany({
         where: {
-          userId: user.userId,
+          userId: user.id,
           consumedAt: null,
         },
         data: {
@@ -274,7 +263,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.create({
         data: {
-          userId: user.userId,
+          userId: user.id,
           email: dto.newEmail,
           purpose: VerificationPurpose.SIGNUP,
           codeHash,
@@ -297,7 +286,7 @@ export class AuthService {
   async forgotPassword(dto: ForgotPasswordDto) {
     const user = await this.usersService.findByEmail(dto.email);
 
-    if (!user || !user.isActive || user.status !== UserStatus.ACTIVE) {
+    if (!user || user.status !== UserStatus.ACTIVE) {
       return {
         message:
           'If the email is registered, a password reset code will be sent.',
@@ -309,7 +298,7 @@ export class AuthService {
     const expiresAt = this.buildVerificationExpiry();
 
     const previousReset = await this.getLatestActiveVerification(
-      user.userId,
+      user.id,
       user.email,
       VerificationPurpose.PASSWORD_RESET,
     );
@@ -317,7 +306,7 @@ export class AuthService {
     await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({
         where: {
-          userId: user.userId,
+          userId: user.id,
           purpose: VerificationPurpose.PASSWORD_RESET,
           consumedAt: null,
         },
@@ -328,7 +317,7 @@ export class AuthService {
 
       await tx.emailVerificationCode.create({
         data: {
-          userId: user.userId,
+          userId: user.id,
           email: user.email,
           purpose: VerificationPurpose.PASSWORD_RESET,
           codeHash,
@@ -359,7 +348,7 @@ export class AuthService {
     }
 
     const verification = await this.getLatestActiveVerification(
-      user.userId,
+      user.id,
       dto.email,
       VerificationPurpose.PASSWORD_RESET,
     );
@@ -378,16 +367,9 @@ export class AuthService {
     );
 
     if (!isValidCode) {
-      await this.prisma.emailVerificationCode.update({
-        where: {
-          emailVerificationCodeId: verification.emailVerificationCodeId,
-        },
-        data: {
-          attemptCount: {
-            increment: 1,
-          },
-        },
-      });
+      await this.incrementVerificationAttempt(
+        verification.id,
+      );
 
       throw new BadRequestException('Reset code is invalid.');
     }
@@ -396,16 +378,12 @@ export class AuthService {
     const resetAt = new Date();
 
     await this.prisma.$transaction([
-      this.prisma.emailVerificationCode.update({
-        where: {
-          emailVerificationCodeId: verification.emailVerificationCodeId,
-        },
-        data: {
-          consumedAt: resetAt,
-        },
-      }),
+      this.consumeVerificationCode(
+        verification.id,
+        resetAt,
+      ),
       this.prisma.user.update({
-        where: { userId: user.userId },
+        where: { id: user.id },
         data: {
           passwordHash: hashedPassword,
         },
@@ -424,8 +402,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    if (!user.isActive) {
-      throw new UnauthorizedException('User account is inactive.');
+    if (user.status === UserStatus.SUSPENDED) {
+      throw new UnauthorizedException('User account is suspended.');
     }
 
     if (user.status !== UserStatus.ACTIVE || !user.emailVerifiedAt) {
@@ -486,12 +464,8 @@ export class AuthService {
 
     return {
       message: 'Company selection is required.',
-      user: this.sanitizeUser(user),
-      companies: user.memberships.map((membership) => ({
-        companyId: membership.companyId,
-        companyName: membership.company.name,
-        role: this.mapMembershipRole(membership.role),
-      })),
+      user: sanitizeUser(user),
+      companies: this.mapCompanies(user),
     };
   }
 
@@ -527,48 +501,17 @@ export class AuthService {
     role: AppRole,
   ) {
     const payload: JwtPayload = {
-      sub: user.userId,
-      userId: user.userId,
+      sub: user.id,
       companyId,
       role,
     };
 
     return {
       accessToken: this.jwtService.sign(payload),
-      user: this.sanitizeUser(user),
+      user: sanitizeUser(user),
       companyId,
       role,
-      companies: user.memberships.map((membership) => ({
-        companyId: membership.companyId,
-        companyName: membership.company.name,
-        role: this.mapMembershipRole(membership.role),
-      })),
-    };
-  }
-
-  private sanitizeUser(user: {
-    userId: number;
-    email: string;
-    name: string;
-    dateOfBirth: Date | null;
-    systemRole: SystemRole;
-    status: UserStatus;
-    isActive: boolean;
-    emailVerifiedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }) {
-    return {
-      id: user.userId,
-      email: user.email,
-      name: user.name,
-      dateOfBirth: user.dateOfBirth,
-      systemRole: user.systemRole,
-      status: user.status,
-      isActive: user.isActive,
-      emailVerifiedAt: user.emailVerifiedAt,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      companies: this.mapCompanies(user),
     };
   }
 
@@ -599,7 +542,42 @@ export class AuthService {
     });
   }
 
+  private incrementVerificationAttempt(id: number) {
+    return this.prisma.emailVerificationCode.update({
+      where: {
+        id,
+      },
+      data: {
+        attemptCount: {
+          increment: 1,
+        },
+      },
+    });
+  }
+
+  private consumeVerificationCode(
+    id: number,
+    consumedAt: Date,
+  ) {
+    return this.prisma.emailVerificationCode.update({
+      where: {
+        id,
+      },
+      data: {
+        consumedAt,
+      },
+    });
+  }
+
   private mapMembershipRole(role: MembershipRole): AppRole {
     return role === MembershipRole.ADMIN ? AppRole.ADMIN : AppRole.USER;
+  }
+
+  private mapCompanies(user: UserWithMemberships) {
+    return user.memberships.map((membership) => ({
+      companyId: membership.companyId,
+      companyName: membership.company.name,
+      role: this.mapMembershipRole(membership.role),
+    }));
   }
 }

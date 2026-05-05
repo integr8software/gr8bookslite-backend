@@ -24,13 +24,12 @@ async function main() {
 
   if (existingUser) {
     await prisma.user.update({
-      where: { userId: existingUser.userId },
+      where: { id: existingUser.id },
       data: {
         name,
         passwordHash,
         systemRole: SystemRole.SUPER_ADMIN,
         status: UserStatus.ACTIVE,
-        isActive: true,
         emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
       },
     });
@@ -46,7 +45,6 @@ async function main() {
       passwordHash,
       systemRole: SystemRole.SUPER_ADMIN,
       status: UserStatus.ACTIVE,
-      isActive: true,
       emailVerifiedAt: now,
     },
   });

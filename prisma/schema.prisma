@@ -8,96 +8,91 @@ datasource db {
 }
 
 model User {
-  userId            Int                     @id @default(autoincrement()) @map("user_id")
+  id                Int                     @id @default(autoincrement())
   email             String                  @unique
   passwordHash      String                  @map("password_hash")
   name              String
-  dateOfBirth       DateTime?               @map("date_of_birth")
   systemRole        SystemRole              @default(STANDARD) @map("system_role")
   status            UserStatus              @default(PENDING_VERIFICATION)
-  isActive          Boolean                 @default(true) @map("is_active")
   emailVerifiedAt   DateTime?               @map("email_verified_at")
-  verificationCodes EmailVerificationCode[]
-  memberships       Membership[]
   createdAt         DateTime                @default(now()) @map("created_at")
   updatedAt         DateTime                @updatedAt @map("updated_at")
+  verificationCodes EmailVerificationCode[]
+  memberships       Membership[]
 
   @@map("users")
 }
 
 model Company {
-  companyId        Int                   @id @default(autoincrement()) @map("company_id")
+  id               Int                   @id @default(autoincrement())
   name             String
   slug             String                @unique
   isActive         Boolean               @default(true) @map("is_active")
   status           CompanyStatus         @default(PENDING)
-  memberships      Membership[]
-  tenantConnection TenantConnection?
-  subscriptions    CompanySubscription[]
   createdAt        DateTime              @default(now()) @map("created_at")
   updatedAt        DateTime              @updatedAt @map("updated_at")
+  subscriptions    CompanySubscription[]
+  memberships      Membership[]
+  tenantConnection TenantConnection?
 
   @@map("companies")
 }
 
 model Membership {
-  membershipId Int            @id @default(autoincrement()) @map("membership_id")
-  userId       Int            @map("user_id")
-  companyId    Int            @map("company_id")
-  role         MembershipRole @default(USER)
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
-  company      Company        @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
-  user         User           @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userId    Int            @map("user_id")
+  companyId Int            @map("company_id")
+  role      MembershipRole @default(USER)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  company   Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, companyId])
-  @@index([userId])
+  @@id([userId, companyId])
   @@index([companyId])
   @@map("memberships")
 }
 
 model TenantConnection {
-  tenantConnectionId Int          @id @default(autoincrement()) @map("tenant_connection_id")
-  companyId          Int          @unique @map("company_id")
-  dbName             String       @unique @map("db_name")
-  databaseUrl        String       @map("database_url")
-  status             TenantStatus @default(PENDING)
-  schemaVersion      String?      @map("schema_version")
-  lastCheckedAt      DateTime?    @map("last_checked_at")
-  createdAt          DateTime     @default(now()) @map("created_at")
-  updatedAt          DateTime     @updatedAt @map("updated_at")
-  company            Company      @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
+  companyId     Int          @id @map("company_id")
+  dbName        String       @unique @map("db_name")
+  databaseUrl   String       @map("database_url")
+  status        TenantStatus @default(PENDING)
+  schemaVersion String?      @map("schema_version")
+  lastCheckedAt DateTime?    @map("last_checked_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  company       Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("tenant_connections")
 }
 
 model SubscriptionPlan {
-  subscriptionPlanId Int                   @id @default(autoincrement()) @map("subscription_plan_id")
-  code               String                @unique
-  name               String
-  description        String?
-  trialDays          Int                   @default(15) @map("trial_days")
-  isActive           Boolean               @default(true) @map("is_active")
-  subscriptions      CompanySubscription[]
-  createdAt          DateTime              @default(now()) @map("created_at")
-  updatedAt          DateTime              @updatedAt @map("updated_at")
+  id            Int                   @id @default(autoincrement())
+  code          String                @unique
+  name          String
+  description   String?
+  trialDays     Int                   @default(15) @map("trial_days")
+  isActive      Boolean               @default(true) @map("is_active")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+  subscriptions CompanySubscription[]
 
   @@map("subscription_plans")
 }
 
 model CompanySubscription {
-  companySubscriptionId Int                @id @default(autoincrement()) @map("company_subscription_id")
-  companyId             Int                @map("company_id")
-  subscriptionPlanId    Int                @map("subscription_plan_id")
-  status                SubscriptionStatus @default(TRIALING)
-  startsAt              DateTime           @default(now()) @map("starts_at")
-  trialEndsAt           DateTime?          @map("trial_ends_at")
-  endsAt                DateTime?          @map("ends_at")
-  canceledAt            DateTime?          @map("canceled_at")
-  createdAt             DateTime           @default(now()) @map("created_at")
-  updatedAt             DateTime           @updatedAt @map("updated_at")
-  company               Company            @relation(fields: [companyId], references: [companyId], onDelete: Cascade)
-  plan                  SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [subscriptionPlanId], onDelete: Restrict)
+  id                 Int                @id @default(autoincrement())
+  companyId          Int                @map("company_id")
+  subscriptionPlanId Int                @map("subscription_plan_id")
+  status             SubscriptionStatus @default(TRIALING)
+  startsAt           DateTime           @default(now()) @map("starts_at")
+  trialEndsAt        DateTime?          @map("trial_ends_at")
+  endsAt             DateTime?          @map("ends_at")
+  canceledAt         DateTime?          @map("canceled_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  company            Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan               SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id])
 
   @@index([companyId])
   @@index([subscriptionPlanId])
@@ -106,19 +101,19 @@ model CompanySubscription {
 }
 
 model EmailVerificationCode {
-  emailVerificationCodeId Int                 @id @default(autoincrement()) @map("email_verification_code_id")
-  userId                  Int                 @map("user_id")
-  email                   String
-  purpose                 VerificationPurpose @default(SIGNUP)
-  codeHash                String              @map("code_hash")
-  expiresAt               DateTime            @map("expires_at")
-  consumedAt              DateTime?           @map("consumed_at")
-  resendCount             Int                 @default(0) @map("resend_count")
-  attemptCount            Int                 @default(0) @map("attempt_count")
-  lastSentAt              DateTime            @default(now()) @map("last_sent_at")
-  createdAt               DateTime            @default(now()) @map("created_at")
-  updatedAt               DateTime            @updatedAt @map("updated_at")
-  user                    User                @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  id           Int                 @id @default(autoincrement())
+  userId       Int                 @map("user_id")
+  email        String
+  purpose      VerificationPurpose @default(SIGNUP)
+  codeHash     String              @map("code_hash")
+  expiresAt    DateTime            @map("expires_at")
+  consumedAt   DateTime?           @map("consumed_at")
+  resendCount  Int                 @default(0) @map("resend_count")
+  attemptCount Int                 @default(0) @map("attempt_count")
+  lastSentAt   DateTime            @default(now()) @map("last_sent_at")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([email])
