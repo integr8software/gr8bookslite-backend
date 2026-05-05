@@ -17,6 +17,7 @@ import * as bcrypt from 'bcrypt';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { sanitizeUser } from '../../common/mappers/user.mapper';
+import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
@@ -55,7 +56,8 @@ export class AuthService {
       throw new BadRequestException('Passwords do not match.');
     }
 
-    const existingUser = await this.usersService.findByEmail(dto.email);
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const existingUser = await this.usersService.findByEmail(normalizedEmail);
 
     if (existingUser) {
       throw new ConflictException('Email is already in use.');
@@ -69,7 +71,7 @@ export class AuthService {
     const user = await this.prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
         data: {
-          email: dto.email,
+          email: normalizedEmail,
           name: dto.fullName,
           passwordHash: hashedPassword,
           systemRole: SystemRole.STANDARD,
@@ -104,7 +106,8 @@ export class AuthService {
   }
 
   async verifyEmail(dto: VerifyEmailDto) {
-    const user = await this.usersService.findForAuthByEmail(dto.email);
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const user = await this.usersService.findForAuthByEmail(normalizedEmail);
 
     if (!user) {
       throw new BadRequestException('Verification request is invalid.');
@@ -119,7 +122,7 @@ export class AuthService {
 
     const verification = await this.getLatestActiveVerification(
       user.id,
-      dto.email,
+      normalizedEmail,
     );
 
     if (!verification) {
@@ -159,7 +162,9 @@ export class AuthService {
       }),
     ]);
 
-    const verifiedUser = await this.usersService.findForAuthByEmail(dto.email);
+    const verifiedUser = await this.usersService.findForAuthByEmail(
+      normalizedEmail,
+    );
 
     if (!verifiedUser) {
       throw new BadRequestException('Verified user could not be loaded.');
@@ -172,7 +177,8 @@ export class AuthService {
   }
 
   async resendVerification(dto: ResendVerificationDto) {
-    const user = await this.usersService.findByEmail(dto.email);
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const user = await this.usersService.findByEmail(normalizedEmail);
 
     if (!user || user.status !== UserStatus.PENDING_VERIFICATION) {
       throw new BadRequestException('User is not awaiting verification.');
@@ -223,17 +229,20 @@ export class AuthService {
   }
 
   async changeVerificationEmail(dto: ChangeVerificationEmailDto) {
-    if (dto.currentEmail === dto.newEmail) {
+    const currentEmail = normalizeEmail(dto.currentEmail) as string;
+    const newEmail = normalizeEmail(dto.newEmail) as string;
+
+    if (currentEmail === newEmail) {
       throw new BadRequestException('New email must be different.');
     }
 
-    const user = await this.usersService.findByEmail(dto.currentEmail);
+    const user = await this.usersService.findByEmail(currentEmail);
 
     if (!user || user.status !== UserStatus.PENDING_VERIFICATION) {
       throw new BadRequestException('User is not awaiting verification.');
     }
 
-    const userWithNewEmail = await this.usersService.findByEmail(dto.newEmail);
+    const userWithNewEmail = await this.usersService.findByEmail(newEmail);
 
     if (userWithNewEmail) {
       throw new ConflictException('Email is already in use.');
@@ -247,7 +256,7 @@ export class AuthService {
       await tx.user.update({
         where: { id: user.id },
         data: {
-          email: dto.newEmail,
+          email: newEmail,
         },
       });
 
@@ -264,7 +273,7 @@ export class AuthService {
       await tx.emailVerificationCode.create({
         data: {
           userId: user.id,
-          email: dto.newEmail,
+          email: newEmail,
           purpose: VerificationPurpose.SIGNUP,
           codeHash,
           expiresAt,
@@ -273,18 +282,19 @@ export class AuthService {
     });
 
     await this.authMailService.sendVerificationCode(
-      dto.newEmail,
+      newEmail,
       verificationCode,
     );
 
     return {
       message: 'Verification email updated.',
-      maskedEmail: this.otpService.maskEmail(dto.newEmail),
+      maskedEmail: this.otpService.maskEmail(newEmail),
     };
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
-    const user = await this.usersService.findByEmail(dto.email);
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const user = await this.usersService.findByEmail(normalizedEmail);
 
     if (!user || user.status !== UserStatus.ACTIVE) {
       return {
@@ -341,7 +351,8 @@ export class AuthService {
       throw new BadRequestException('Passwords do not match.');
     }
 
-    const user = await this.usersService.findByEmail(dto.email);
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const user = await this.usersService.findByEmail(normalizedEmail);
 
     if (!user) {
       throw new BadRequestException('Password reset request is invalid.');
@@ -349,7 +360,7 @@ export class AuthService {
 
     const verification = await this.getLatestActiveVerification(
       user.id,
-      dto.email,
+      normalizedEmail,
       VerificationPurpose.PASSWORD_RESET,
     );
 
@@ -396,7 +407,8 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.usersService.findForAuthByEmail(dto.email);
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const user = await this.usersService.findForAuthByEmail(normalizedEmail);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials.');

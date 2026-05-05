@@ -6,6 +6,7 @@ import {
 import { Prisma, SystemRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { sanitizeUser } from '../../common/mappers/user.mapper';
+import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -25,7 +26,8 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateUserDto) {
-    const existingUser = await this.findByEmail(dto.email);
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const existingUser = await this.findByEmail(normalizedEmail);
 
     if (existingUser) {
       throw new BadRequestException('Email is already in use.');
@@ -35,7 +37,7 @@ export class UsersService {
 
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email,
+        email: normalizedEmail,
         name: dto.name,
         passwordHash: hashedPassword,
         systemRole: dto.systemRole ?? SystemRole.STANDARD,
@@ -57,13 +59,13 @@ export class UsersService {
 
   findByEmail(email: string) {
     return this.prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizeEmail(email) as string },
     });
   }
 
   findForAuthByEmail(email: string): Promise<UserWithMemberships | null> {
     return this.prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizeEmail(email) as string },
       include: {
         memberships: {
           include: {
@@ -90,7 +92,7 @@ export class UsersService {
     await this.ensureUserExists(id);
 
     const data: Prisma.UserUpdateInput = {
-      email: dto.email,
+      email: dto.email ? (normalizeEmail(dto.email) as string) : dto.email,
       name: dto.name,
       systemRole: dto.systemRole,
     };
