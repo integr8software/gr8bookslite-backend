@@ -1,10 +1,13 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, SystemRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { AppRole } from '../../common/enums/app-role.enum';
+import { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { sanitizeUser } from '../../common/mappers/user.mapper';
 import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -16,6 +19,7 @@ type UserWithMemberships = Prisma.UserGetPayload<{
     memberships: {
       include: {
         company: true;
+        companyRole: true;
       };
     };
   };
@@ -49,8 +53,25 @@ export class UsersService {
     return sanitizeUser(user);
   }
 
-  async findAll() {
+  async findAll(authUser: AuthUser) {
+    if (authUser.role === AppRole.SUPER_ADMIN) {
+      const users = await this.prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return users.map((user) => sanitizeUser(user));
+    }
+
+    this.ensureCompanyContext(authUser);
+
     const users = await this.prisma.user.findMany({
+      where: {
+        memberships: {
+          some: {
+            companyId: authUser.companyId,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -70,19 +91,41 @@ export class UsersService {
         memberships: {
           include: {
             company: true,
+            companyRole: true,
           },
         },
       },
     });
   }
 
-  async findById(id: number) {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
+  async findById(id: number, authUser?: AuthUser) {
+    if (!authUser || authUser.role === AppRole.SUPER_ADMIN) {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found.');
+      }
+
+      return sanitizeUser(user);
+    }
+
+    this.ensureCompanyContext(authUser);
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id,
+        memberships: {
+          some: {
+            companyId: authUser.companyId,
+          },
+        },
+      },
     });
 
     if (!user) {
-      throw new NotFoundException('User not found.');
+      throw new NotFoundException('User not found in this company.');
     }
 
     return sanitizeUser(user);
@@ -126,6 +169,14 @@ export class UsersService {
 
     if (!user) {
       throw new NotFoundException('User not found.');
+    }
+  }
+
+  private ensureCompanyContext(authUser: AuthUser): asserts authUser is AuthUser & {
+    companyId: number;
+  } {
+    if (!authUser.companyId) {
+      throw new ForbiddenException('An active company context is required.');
     }
   }
 }

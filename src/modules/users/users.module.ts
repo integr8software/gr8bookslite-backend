@@ -1,12 +1,15 @@
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Module } from '@nestjs/common';
+import { AccessControlModule } from '../../common/access/access-control.module';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
+  imports: [AccessControlModule],
   controllers: [UsersController],
-  providers: [UsersService, RolesGuard, JwtAuthGuard],
+  providers: [UsersService, RolesGuard, PermissionsGuard, JwtAuthGuard],
   exports: [UsersService],
 })
 export class UsersModule {}

@@ -31,10 +31,6 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException('Authentication is required.');
     }
 
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
     return requiredRoles.includes(user.role);
   }
 }

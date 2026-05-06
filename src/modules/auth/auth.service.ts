@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
+  MembershipStatus,
   MembershipRole,
   Prisma,
   SystemRole,
@@ -14,7 +15,9 @@ import {
   VerificationPurpose,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { AccessControlService } from '../../common/access/access-control.service';
 import { AppRole } from '../../common/enums/app-role.enum';
+import { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { sanitizeUser } from '../../common/mappers/user.mapper';
 import { normalizeEmail } from '../../common/utils/email.util';
@@ -34,6 +37,7 @@ type UserWithMemberships = Prisma.UserGetPayload<{
   include: {
     memberships: {
       include: {
+        companyRole: true;
         company: true;
       };
     };
@@ -49,6 +53,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly authMailService: AuthMailService,
     private readonly otpService: OtpService,
+    private readonly accessControlService: AccessControlService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -100,6 +105,7 @@ export class AuthService {
     return {
       message: 'Verification code sent to your email.',
       verificationRequired: true,
+      nextStep: 'VERIFY_EMAIL',
       email: user.email,
       maskedEmail: this.otpService.maskEmail(user.email),
     };
@@ -114,10 +120,7 @@ export class AuthService {
     }
 
     if (user.status === UserStatus.ACTIVE && user.emailVerifiedAt) {
-      return {
-        ...this.buildAuthenticatedResponse(user, null, AppRole.USER),
-        requiresCompanySetup: user.memberships.length === 0,
-      };
+      return this.buildAuthenticatedResponse(user, null);
     }
 
     const verification = await this.getLatestActiveVerification(
@@ -170,10 +173,7 @@ export class AuthService {
       throw new BadRequestException('Verified user could not be loaded.');
     }
 
-    return {
-      ...this.buildAuthenticatedResponse(verifiedUser, null, AppRole.USER),
-      requiresCompanySetup: verifiedUser.memberships.length === 0,
-    };
+    return this.buildAuthenticatedResponse(verifiedUser, null);
   }
 
   async resendVerification(dto: ResendVerificationDto) {
@@ -434,18 +434,15 @@ export class AuthService {
     }
 
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
-      return this.buildAuthenticatedResponse(
-        user,
-        dto.companyId ?? null,
-        AppRole.SUPER_ADMIN,
-      );
+      return this.buildAuthenticatedResponse(user, dto.companyId ?? null);
     }
 
-    if (user.memberships.length === 0) {
-      return {
-        ...this.buildAuthenticatedResponse(user, null, AppRole.USER),
-        requiresCompanySetup: true,
-      };
+    const activeMemberships = user.memberships.filter(
+      (membership) => membership.status === MembershipStatus.ACTIVE,
+    );
+
+    if (activeMemberships.length === 0) {
+      return this.buildAuthenticatedResponse(user, null);
     }
 
     if (dto.companyId) {
@@ -457,46 +454,80 @@ export class AuthService {
         throw new UnauthorizedException('You do not belong to this company.');
       }
 
+      if (membership.status !== MembershipStatus.ACTIVE) {
+        throw new UnauthorizedException('Your company membership is not active.');
+      }
+
+      return this.buildAuthenticatedResponse(user, membership.companyId);
+    }
+
+    if (activeMemberships.length === 1) {
       return this.buildAuthenticatedResponse(
         user,
-        membership.companyId,
-        this.mapMembershipRole(membership.role),
+        activeMemberships[0].companyId,
       );
     }
 
-    if (user.memberships.length === 1) {
-      const membership = user.memberships[0];
-
-      return this.buildAuthenticatedResponse(
-        user,
-        membership.companyId,
-        this.mapMembershipRole(membership.role),
-      );
-    }
+    const onboarding = this.buildOnboardingState(user, null);
 
     return {
       message: 'Company selection is required.',
       user: sanitizeUser(user),
       companies: this.mapCompanies(user),
+      onboarding,
+      requiresCompanySetup: onboarding.requiresCompanySetup,
+      hasCompany: onboarding.hasCompany,
+      hasActiveCompany: onboarding.hasActiveCompany,
+      hasActiveCompanyContext: onboarding.hasActiveCompanyContext,
+      canManageCompany: onboarding.canManageCompany,
     };
   }
 
-  async getProfile(userId: number, companyId: number | null) {
-    const user = await this.usersService.findById(userId);
+  async getProfile(user: AuthUser) {
+    const profileUser = await this.usersService.findById(user.id);
 
     const memberships = await this.prisma.membership.findMany({
-      where: { userId },
-      include: { company: true },
+      where: { userId: user.id },
+      include: {
+        company: true,
+        companyRole: true,
+      },
     });
 
+    const activeAccess =
+      user.companyId == null
+        ? null
+        : await this.accessControlService.resolveAuthUser({
+            sub: user.id,
+            companyId: user.companyId,
+            role: user.role,
+            systemRole: user.systemRole,
+            membershipRole: user.membershipRole,
+            companyRoleId: user.companyRoleId,
+          });
+
+    const onboarding = this.buildOnboardingStateFromMemberships(
+      memberships,
+      user.companyId,
+    );
+
     return {
-      user,
-      activeCompanyId: companyId,
-      requiresCompanySetup: memberships.length === 0,
+      user: profileUser,
+      activeCompanyId: user.companyId,
+      activeAccess,
+      onboarding,
+      requiresCompanySetup: onboarding.requiresCompanySetup,
+      hasCompany: onboarding.hasCompany,
+      hasActiveCompany: onboarding.hasActiveCompany,
+      hasActiveCompanyContext: onboarding.hasActiveCompanyContext,
+      canManageCompany: onboarding.canManageCompany,
       companies: memberships.map((membership) => ({
         companyId: membership.companyId,
         companyName: membership.company.name,
         role: this.mapMembershipRole(membership.role),
+        membershipStatus: membership.status,
+        companyRoleId: membership.companyRoleId,
+        companyRoleCode: membership.companyRole?.code ?? null,
       })),
     };
   }
@@ -507,22 +538,37 @@ export class AuthService {
     };
   }
 
-  private buildAuthenticatedResponse(
+  private async buildAuthenticatedResponse(
     user: UserWithMemberships,
     companyId: number | null,
-    role: AppRole,
   ) {
+    const accessContext = this.buildJwtAccessContext(user, companyId);
     const payload: JwtPayload = {
       sub: user.id,
       companyId,
-      role,
+      role: accessContext.role,
+      systemRole: user.systemRole,
+      membershipRole: accessContext.membershipRole,
+      companyRoleId: accessContext.companyRoleId,
     };
+    const resolvedAccess =
+      companyId == null && user.systemRole !== SystemRole.SUPER_ADMIN
+        ? null
+        : await this.accessControlService.resolveAuthUser(payload);
+    const onboarding = this.buildOnboardingState(user, companyId);
 
     return {
       accessToken: this.jwtService.sign(payload),
       user: sanitizeUser(user),
       companyId,
-      role,
+      role: accessContext.role,
+      access: resolvedAccess,
+      onboarding,
+      requiresCompanySetup: onboarding.requiresCompanySetup,
+      hasCompany: onboarding.hasCompany,
+      hasActiveCompany: onboarding.hasActiveCompany,
+      hasActiveCompanyContext: onboarding.hasActiveCompanyContext,
+      canManageCompany: onboarding.canManageCompany,
       companies: this.mapCompanies(user),
     };
   }
@@ -590,6 +636,79 @@ export class AuthService {
       companyId: membership.companyId,
       companyName: membership.company.name,
       role: this.mapMembershipRole(membership.role),
+      membershipStatus: membership.status,
+      companyRoleId: membership.companyRoleId,
+      companyRoleCode: membership.companyRole?.code ?? null,
     }));
+  }
+
+  private buildJwtAccessContext(user: UserWithMemberships, companyId: number | null) {
+    if (user.systemRole === SystemRole.SUPER_ADMIN) {
+      return {
+        role: AppRole.SUPER_ADMIN,
+        membershipRole: null,
+        companyRoleId: null,
+      };
+    }
+
+    if (companyId == null) {
+      return {
+        role: AppRole.USER,
+        membershipRole: null,
+        companyRoleId: null,
+      };
+    }
+
+    const membership = user.memberships.find((item) => item.companyId === companyId);
+
+    return {
+      role: membership ? this.mapMembershipRole(membership.role) : AppRole.USER,
+      membershipRole: membership?.role ?? null,
+      companyRoleId: membership?.companyRoleId ?? null,
+    };
+  }
+
+  private buildOnboardingState(
+    user: UserWithMemberships,
+    activeCompanyId: number | null,
+  ) {
+    return this.buildOnboardingStateFromMemberships(
+      user.memberships,
+      activeCompanyId,
+    );
+  }
+
+  private buildOnboardingStateFromMemberships(
+    memberships: Array<{
+      companyId: number;
+      role: MembershipRole;
+      status: MembershipStatus;
+    }>,
+    activeCompanyId: number | null,
+  ) {
+    const activeMemberships = memberships.filter(
+      (membership) => membership.status === MembershipStatus.ACTIVE,
+    );
+    const activeMembership =
+      activeCompanyId == null
+        ? null
+        : activeMemberships.find(
+            (membership) => membership.companyId === activeCompanyId,
+          ) ?? null;
+
+    return {
+      emailVerified: true,
+      hasCompany: memberships.length > 0,
+      hasActiveCompany: activeMemberships.length > 0,
+      hasActiveCompanyContext: activeMembership !== null,
+      requiresCompanySetup: memberships.length === 0,
+      canManageCompany: activeMembership?.role === MembershipRole.ADMIN,
+      nextStep:
+        memberships.length === 0
+          ? 'COMPANY_SETUP'
+          : activeMembership === null
+            ? 'SELECT_COMPANY'
+            : 'APP_READY',
+    };
   }
 }
