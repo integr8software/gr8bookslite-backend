@@ -1,390 +1,272 @@
-# Database-Per-Company Plan
+# Database Multi-Company Plan
 
 ## Goal
 
-Move from a single shared multi-tenant database model to a split architecture:
+Keep PostgreSQL database for the whole platform while preventing:
 
-- one shared `control_plane` database for platform data
-- one separate tenant database per company for accounting and ERP data
+- company data mixing
+- accidental cross-company reads
+- accidental cross-company writes
+- unclear ownership of users, roles, and permissions
 
-This is the safest direction if we want stronger isolation, easier auditability, and a cleaner compliance story for BIR-facing discussions.
+This means we stay on a shared database, but every business-facing table must be tenant-aware through `company_id`.
 
-## Why This Fits The Current Repo
+## Core Access Model
 
-The current backend already has a natural separation between:
+### 1. `users`
 
-- platform identity and access data
-- future company-specific ERP data
+Global identity records.
 
-Today, the shared platform data is:
+- one user can belong to many companies
+- only `SUPER_ADMIN` is global
+- normal users become company-aware through membership
 
-- `User`
-- `Company`
-- `Membership`
+### 2. `companies`
 
-These should remain in a shared database.
+Tenant root.
 
-Future ERP modules such as accounting, invoicing, inventory, payroll, and reports should live in a dedicated database per company.
+- every company is the top isolation boundary
+- future `satellite` and `branch` levels will remain children of a company
+- we are not creating satellite or branch tables yet
 
-## Target Architecture
+### 3. `memberships`
 
-### 1. Shared Control Plane Database
+Join table between `users` and `companies`.
 
-This database holds platform-wide records only.
+- tells us which user belongs to which company
+- carries membership lifecycle and active state
+- points to a company-specific role
+- allows direct permission overrides when needed
 
-Recommended tables:
+### 4. `company_roles`
 
-- `users`
-- `companies`
-- `memberships`
-- `tenant_connections`
-- optional: `audit_events`
-- optional: `plans`
-- optional: `subscriptions`
-- optional: `feature_flags`
+Company-owned roles.
 
-Responsibilities:
+- each company manages its own roles
+- recommended starter roles: `ADMIN`, `USER`
+- can support future custom roles without schema redesign
 
-- authentication
-- authorization
-- company registry
-- user-to-company membership
-- tenant database discovery
-- provisioning state tracking
+### 5. `platform_modules`
 
-### 2. Per-Company Tenant Database
+Catalog of system modules such as:
 
-Each company gets its own operational database.
-
-Recommended modules/tables:
-
-- chart of accounts
-- customers
-- vendors
-- products
-- invoices
-- receipts
-- journal entries
-- ledgers
-- books of accounts
-- tax reports
+- dashboard
+- accounting
 - inventory
+- sales
+- purchases
 - payroll
+- reports
+- settings
 
-Responsibilities:
+### 6. `permissions`
 
-- all accounting transactions
-- all tax-relevant books and reports
-- all business records that must stay isolated per taxpayer/company
+Fine-grained permission catalog per module.
 
-## Database Boundary Rules
+Examples:
 
-### Shared Database Only
+- `inventory.products`
+- `inventory.stock_adjustment`
+- `sales.invoices`
+- `settings.users`
 
-Allowed in `control_plane`:
+Each permission can later be scoped to:
 
-- identity
-- auth
-- membership
-- company metadata
-- tenant connection metadata
-- platform-level audit events
+- `COMPANY`
+- `SATELLITE`
+- `BRANCH`
 
-Not allowed in `control_plane`:
+That makes the schema future-ready without creating operational unit tables today.
 
-- journal entries
-- invoices
-- accounting books
-- inventory transactions
-- payroll records
-- tax reports
+### 7. `company_role_permissions`
 
-### Tenant Database Only
+Role-to-permission matrix.
 
-Allowed in each tenant DB:
+- defines what an Admin or User can do inside a company
+- stores actions like view, create, update, delete, approve, export
 
-- financial transactions
-- accounting books
-- tax-relevant reports
-- operational ERP records
+### 8. `membership_permissions`
 
-This rule is important. Once ERP modules start growing, we should not mix company transactions back into the shared DB.
+Optional user-level overrides.
 
-## Mapping To Current Repo
+Use this when a company admin wants to adjust a single user beyond the base role.
 
-Current schema in [prisma/schema.prisma](/Users/integr8/Documents/GitHub/gr8lite-backend/prisma/schema.prisma:1):
+### 9. `company_modules`
 
-- `User`
-- `Company`
-- `Membership`
+Which modules are enabled for each company.
 
-These become the permanent shared schema.
+- a company may subscribe to a module but keep it disabled
+- permission checks should fail when the module is disabled even if the role allows it
 
-Add a new shared table:
+### 10. `audit_logs`
 
-### `TenantConnection`
+Tracks sensitive activity.
 
-Suggested fields:
+Recommended for:
 
-- `id`
-- `companyId`
-- `dbName`
-- `databaseUrl`
-- `status`
-- `schemaVersion`
-- `createdAt`
-- `updatedAt`
+- user creation
+- role assignment
+- permission changes
+- module enable/disable
+- company status changes
 
-Optional fields:
+## Isolation Rules
 
-- `region`
-- `backupBucket`
-- `lastBackupAt`
-- `lastMigrationAt`
-- `provisioningError`
-- `secretRef`
+### Mandatory Rule
 
-Notes:
+Every company-owned business table must contain:
 
-- prefer storing a secret reference or encrypted credential instead of plain DB passwords
-- add a unique constraint on `companyId`
+- `company_id`
 
-## Recommended NestJS Design
+Examples for future tables:
 
-Use two database access layers.
+- `customers`
+- `vendors`
+- `products`
+- `invoices`
+- `journal_entries`
+- `inventory_transactions`
 
-### 1. Shared Prisma Service
+### Query Rule
 
-Purpose:
+For non-super-admin requests:
 
-- connect to the shared `control_plane` database
-- used by auth and platform modules
+- never query by `id` alone for tenant-owned records
+- always query by `company_id` plus the record identifier
 
-Suggested ownership:
+Good example:
 
-- `auth`
-- `users`
-- `companies`
-- `memberships`
-- `tenant-admin`
-
-### 2. Tenant Prisma Factory
-
-Purpose:
-
-- resolve the active company
-- create or reuse a Prisma client for that company database
-- provide tenant-scoped database access to ERP modules
-
-Suggested behavior:
-
-- lookup tenant connection using `companyId`
-- cache Prisma clients by company
-- validate tenant status before use
-- close idle clients when needed
-
-## Request Lifecycle
-
-Recommended backend flow:
-
-1. User logs in through the shared database.
-2. JWT contains the active `companyId`.
-3. Request enters the app with authenticated user context.
-4. Tenant resolver loads the tenant connection for that `companyId`.
-5. App creates or reuses the Prisma client for that tenant.
-6. Tenant modules use that client for all company-specific operations.
-
-This keeps auth centralized while isolating the business records.
-
-## Suggested Folder Structure
-
-```text
-src/
-  common/
-    tenant/
-      tenant-context.ts
-      tenant-resolver.service.ts
-      tenant.guard.ts
-      tenant.interceptor.ts
-  modules/
-    platform/
-      auth/
-      users/
-      companies/
-      memberships/
-      tenant-admin/
-    tenant/
-      accounting/
-      sales/
-      purchases/
-      inventory/
-      payroll/
-      reports/
-  prisma/
-    shared-prisma.service.ts
-    tenant-prisma.factory.ts
-prisma/
-  schema.prisma
-  tenant.schema.prisma
+```ts
+where: {
+  id: invoiceId,
+  companyId: auth.companyId,
+}
 ```
 
-## Prisma Strategy
+Unsafe example:
 
-### Shared Schema
+```ts
+where: {
+  id: invoiceId,
+}
+```
 
-Keep the current shared schema in:
+### Constraint Rule
 
-- `prisma/schema.prisma`
+Prefer composite uniqueness for tenant data.
 
-This schema should contain:
+Good examples:
 
-- `User`
-- `Company`
-- `Membership`
-- `TenantConnection`
+- `@@unique([companyId, code])`
+- `@@unique([companyId, email])` if emails are company-local
+- `@@unique([companyId, externalId])`
 
-### Tenant Schema
+This avoids collisions and keeps records scoped correctly.
 
-Create a second Prisma schema:
+## Role Strategy
 
-- `prisma/tenant.schema.prisma`
+### Super Admin
 
-This schema should contain all ERP/accounting models.
+Global platform authority.
 
-Important rule:
+- can access all companies
+- can manage company lifecycle
+- can inspect global audit activity
+- should be used sparingly
 
-- every tenant DB should use the exact same tenant schema and migration history
+### Admin
 
-## Provisioning Flow
+Company-scoped authority.
 
-When a new company is registered:
+- only within memberships they hold
+- can manage users of their own company
+- can assign roles and permissions inside their own company
 
-1. Create the company in the shared DB.
-2. Create the default membership for the registering user.
-3. Provision a new tenant database.
-4. Run tenant migrations on that database.
-5. Save the tenant connection metadata in `TenantConnection`.
-6. Mark the company as ready for use.
+### User
 
-Suggested company lifecycle states:
+Company-scoped access.
 
-- `pending`
-- `provisioning`
-- `active`
-- `failed`
-- `suspended`
+- only sees the company they are acting inside
+- only accesses modules and actions granted by role or override
 
-This helps prevent partially created tenants from being used.
+## Future Satellite And Branch Readiness
 
-## Migration Strategy
+We are not creating `satellite` or `branch` tables yet.
 
-Because the repo is still early, the migration path is straightforward.
+The schema is ready because:
 
-### Phase 1. Declare The Shared DB As Control Plane
+- company remains the tenant root
+- permissions already support `COMPANY`, `SATELLITE`, and `BRANCH` scope levels
+- future operational unit tables can attach under one company without changing user identity structure
 
-- keep `User`, `Company`, and `Membership`
-- add `TenantConnection`
-- formalize the shared DB as the control plane
+Later we can add something like:
 
-### Phase 2. Introduce Tenant DB Infrastructure
+- `company_units`
+- `membership_unit_access`
+- `record_unit_scope`
 
-- add `tenant.schema.prisma`
-- add `tenant-prisma.factory.ts`
-- add tenant connection lookup and caching
+without redesigning the current authentication base.
 
-### Phase 3. Route ERP Modules To Tenant DBs
+## Recommended Backend Guardrails
 
-- all new accounting and ERP modules use tenant Prisma
-- no new transactional modules should be added to the shared DB
+### In JWT
 
-### Phase 4. Add Provisioning And Admin Tooling
+Keep:
 
-- tenant DB creation
-- tenant migration runner
-- health checks
-- tenant activation/deactivation
+- `sub`
+- `companyId`
+- high-level app role
 
-### Phase 5. Add Audit/Backup/Export Tooling
+Add later if needed:
 
-- per-company backup
-- per-company restore workflow
-- per-company export package
-- migration status visibility per tenant
+- `membershipId`
+- `companyRoleId`
 
-## Operational Requirements
+### In Services
 
-To support audits and compliance discussions, build these early:
+Before every tenant action:
 
-- backup per tenant database
-- restore procedure per tenant database
-- tenant-level migration tracking
-- tenant-level health status
-- immutable audit log for sensitive actions
-- tenant-level export for books and reports
+1. resolve active company from JWT
+2. confirm membership is active
+3. confirm module is enabled for the company
+4. confirm permission from role plus overrides
+5. filter queries by `companyId`
 
-Recommended audit events:
+### In Prisma Access
 
-- company created
-- tenant DB provisioned
-- tenant DB migrated
-- user granted access
-- user removed from company
-- company suspended
-- backup generated
-- export generated
+For tenant-owned entities:
 
-## Security Guidelines
+- create helper methods that always inject `companyId`
+- avoid raw unscoped `findUnique` for tenant tables
 
-- do not store raw tenant DB passwords in plain text if avoidable
-- prefer a secret manager or encrypted credential store
-- validate that the authenticated user belongs to the requested company
-- never let client input directly choose an arbitrary database connection
-- always resolve tenant DB from trusted shared metadata
+## Practical Seeder Direction
 
-## Tradeoffs
+Seed these base records:
 
-### Benefits
+- one `SUPER_ADMIN`
+- default modules
+- default permissions
+- default company roles per company:
+  - `ADMIN`
+  - `USER`
 
-- stronger company isolation
-- easier audit story
-- easier backup and restore per company
-- lower risk of cross-tenant data leakage
-- cleaner BIR-facing explanation
+Then when a new company is created:
 
-### Costs
+1. create the company
+2. create default company roles
+3. enable selected modules
+4. create admin membership
+5. attach role permissions
 
-- more infrastructure complexity
-- tenant provisioning workflow
-- per-tenant migration management
-- operational tooling overhead
+## Summary
 
-For this product, the tradeoff is reasonable and likely worth it.
+This shared-database design is safe if we stay disciplined:
 
-## Recommended Implementation Order
+- one database
+- one tenant root: `company`
+- one membership table for user-to-company access
+- one company role system
+- one permission matrix
+- one strict rule that all company-owned data must carry `company_id`
 
-1. Add `TenantConnection` to the shared schema.
-2. Keep current auth/users flow on the shared DB.
-3. Add `tenant.schema.prisma`.
-4. Build `shared-prisma.service.ts`.
-5. Build `tenant-prisma.factory.ts`.
-6. Add tenant resolver and request context.
-7. Add company provisioning flow.
-8. Start the first ERP module on tenant DBs only.
-9. Add backup/export/audit capabilities.
-
-## Immediate Next Steps For This Repo
-
-The next technical tasks should be:
-
-1. Update shared Prisma schema with `TenantConnection`.
-2. Add a second Prisma schema for tenant data.
-3. Refactor the current Prisma service into shared and tenant-aware layers.
-4. Add a tenant resolver based on `companyId` in JWT/user context.
-5. Create a provisioning service for new company databases.
-6. Define the first tenant-owned module, likely accounting or sales.
-
-## Practical Recommendation
-
-Do not continue building accounting data into the current shared schema.
-
-Use the current database as the shared control plane, and start all future ERP/accounting modules in a per-company tenant database model now while the codebase is still small.
+That gives us strong isolation now and a clean path for future satellite and branch support later.

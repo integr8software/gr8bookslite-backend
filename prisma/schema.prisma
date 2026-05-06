@@ -8,62 +8,210 @@ datasource db {
 }
 
 model User {
-  id                Int                     @id @default(autoincrement())
-  email             String                  @unique
-  passwordHash      String                  @map("password_hash")
-  name              String
-  systemRole        SystemRole              @default(STANDARD) @map("system_role")
-  status            UserStatus              @default(PENDING_VERIFICATION)
-  emailVerifiedAt   DateTime?               @map("email_verified_at")
-  createdAt         DateTime                @default(now()) @map("created_at")
-  updatedAt         DateTime                @updatedAt @map("updated_at")
-  verificationCodes EmailVerificationCode[]
-  memberships       Membership[]
+  id                 Int                     @id @default(autoincrement())
+  email              String                  @unique
+  passwordHash       String                  @map("password_hash")
+  name               String
+  systemRole         SystemRole              @default(STANDARD) @map("system_role")
+  status             UserStatus              @default(PENDING_VERIFICATION)
+  emailVerifiedAt    DateTime?               @map("email_verified_at")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+  verificationCodes  EmailVerificationCode[]
+  memberships        Membership[]
+  invitedMemberships Membership[]            @relation("MembershipInvitedBy")
+  createdAuditLogs   AuditLog[]              @relation("AuditActor")
+  targetedAuditLogs  AuditLog[]              @relation("AuditTargetUser")
 
   @@map("users")
 }
 
 model Company {
-  id               Int                   @id @default(autoincrement())
-  name             String
-  slug             String                @unique
-  isActive         Boolean               @default(true) @map("is_active")
-  status           CompanyStatus         @default(PENDING)
-  createdAt        DateTime              @default(now()) @map("created_at")
-  updatedAt        DateTime              @updatedAt @map("updated_at")
-  subscriptions    CompanySubscription[]
-  memberships      Membership[]
-  tenantConnection TenantConnection?
+  id             Int                   @id @default(autoincrement())
+  name           String
+  slug           String                @unique
+  legalName      String?               @map("legal_name")
+  companyCode    String?               @unique @map("company_code")
+  isActive       Boolean               @default(true) @map("is_active")
+  status         CompanyStatus         @default(PENDING)
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  subscriptions  CompanySubscription[]
+  memberships    Membership[]
+  roles          CompanyRole[]
+  enabledModules CompanyModule[]
+  auditLogs      AuditLog[]
 
   @@map("companies")
 }
 
 model Membership {
-  userId    Int            @map("user_id")
-  companyId Int            @map("company_id")
-  role      MembershipRole @default(USER)
-  createdAt DateTime       @default(now()) @map("created_at")
-  updatedAt DateTime       @updatedAt @map("updated_at")
-  company   Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              Int                    @map("user_id")
+  companyId           Int                    @map("company_id")
+  role                MembershipRole         @default(USER)
+  companyRoleId       Int?                   @map("company_role_id")
+  status              MembershipStatus       @default(ACTIVE)
+  accessScope         AccessScopeLevel       @default(COMPANY) @map("access_scope")
+  invitedByUserId     Int?                   @map("invited_by_user_id")
+  invitedAt           DateTime?              @map("invited_at")
+  joinedAt            DateTime?              @map("joined_at")
+  suspendedAt         DateTime?              @map("suspended_at")
+  lastAccessedAt      DateTime?              @map("last_accessed_at")
+  createdAt           DateTime               @default(now()) @map("created_at")
+  updatedAt           DateTime               @updatedAt @map("updated_at")
+  company             Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user                User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyRole         CompanyRole?           @relation(fields: [companyRoleId], references: [id], onDelete: SetNull)
+  invitedBy           User?                  @relation("MembershipInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  permissionOverrides MembershipPermission[]
 
   @@id([userId, companyId])
   @@index([companyId])
+  @@index([companyRoleId])
+  @@index([status])
+  @@index([companyId, status])
   @@map("memberships")
 }
 
-model TenantConnection {
-  companyId     Int          @id @map("company_id")
-  dbName        String       @unique @map("db_name")
-  databaseUrl   String       @map("database_url")
-  status        TenantStatus @default(PENDING)
-  schemaVersion String?      @map("schema_version")
-  lastCheckedAt DateTime?    @map("last_checked_at")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
-  company       Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+model CompanyRole {
+  id          Int                     @id @default(autoincrement())
+  companyId   Int                     @map("company_id")
+  code        String
+  name        String
+  description String?
+  roleType    CompanyRoleType         @default(CUSTOM) @map("role_type")
+  scopeLevel  AccessScopeLevel        @default(COMPANY) @map("scope_level")
+  isSystem    Boolean                 @default(false) @map("is_system")
+  isActive    Boolean                 @default(true) @map("is_active")
+  createdAt   DateTime                @default(now()) @map("created_at")
+  updatedAt   DateTime                @updatedAt @map("updated_at")
+  company     Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+  permissions CompanyRolePermission[]
 
-  @@map("tenant_connections")
+  @@unique([companyId, code])
+  @@index([companyId, isActive])
+  @@map("company_roles")
+}
+
+model PlatformModule {
+  id               Int             @id @default(autoincrement())
+  code             String          @unique
+  name             String
+  description      String?
+  sortOrder        Int             @default(0) @map("sort_order")
+  isActive         Boolean         @default(true) @map("is_active")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  permissions      Permission[]
+  enabledCompanies CompanyModule[]
+  auditLogs        AuditLog[]
+
+  @@map("platform_modules")
+}
+
+model Permission {
+  id                     Int                     @id @default(autoincrement())
+  moduleId               Int                     @map("module_id")
+  code                   String                  @unique
+  name                   String
+  description            String?
+  scopeLevel             AccessScopeLevel        @default(COMPANY) @map("scope_level")
+  requiresCompanyContext Boolean                 @default(true) @map("requires_company_context")
+  isActive               Boolean                 @default(true) @map("is_active")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+  module                 PlatformModule          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  rolePermissions        CompanyRolePermission[]
+  membershipOverrides    MembershipPermission[]
+
+  @@unique([moduleId, code])
+  @@index([moduleId, isActive])
+  @@map("permissions")
+}
+
+model CompanyRolePermission {
+  id            Int         @id @default(autoincrement())
+  companyRoleId Int         @map("company_role_id")
+  permissionId  Int         @map("permission_id")
+  canView       Boolean     @default(false) @map("can_view")
+  canCreate     Boolean     @default(false) @map("can_create")
+  canUpdate     Boolean     @default(false) @map("can_update")
+  canDelete     Boolean     @default(false) @map("can_delete")
+  canApprove    Boolean     @default(false) @map("can_approve")
+  canExport     Boolean     @default(false) @map("can_export")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  companyRole   CompanyRole @relation(fields: [companyRoleId], references: [id], onDelete: Cascade)
+  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([companyRoleId, permissionId])
+  @@index([permissionId])
+  @@map("company_role_permissions")
+}
+
+model MembershipPermission {
+  id                  Int        @id @default(autoincrement())
+  membershipUserId    Int        @map("membership_user_id")
+  membershipCompanyId Int        @map("membership_company_id")
+  permissionId        Int        @map("permission_id")
+  canView             Boolean?   @map("can_view")
+  canCreate           Boolean?   @map("can_create")
+  canUpdate           Boolean?   @map("can_update")
+  canDelete           Boolean?   @map("can_delete")
+  canApprove          Boolean?   @map("can_approve")
+  canExport           Boolean?   @map("can_export")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+  membership          Membership @relation(fields: [membershipUserId, membershipCompanyId], references: [userId, companyId], onDelete: Cascade)
+  permission          Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipUserId, membershipCompanyId, permissionId])
+  @@index([permissionId])
+  @@index([membershipCompanyId])
+  @@map("membership_permissions")
+}
+
+model CompanyModule {
+  id         Int            @id @default(autoincrement())
+  companyId  Int            @map("company_id")
+  moduleId   Int            @map("module_id")
+  isEnabled  Boolean        @default(true) @map("is_enabled")
+  enabledAt  DateTime?      @map("enabled_at")
+  disabledAt DateTime?      @map("disabled_at")
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+  company    Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  module     PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, moduleId])
+  @@index([moduleId])
+  @@index([companyId, isEnabled])
+  @@map("company_modules")
+}
+
+model AuditLog {
+  id           BigInt          @id @default(autoincrement())
+  companyId    Int?            @map("company_id")
+  actorUserId  Int?            @map("actor_user_id")
+  targetUserId Int?            @map("target_user_id")
+  moduleId     Int?            @map("module_id")
+  action       String
+  entityType   String          @map("entity_type")
+  entityId     String?         @map("entity_id")
+  metadata     Json?
+  ipAddress    String?         @map("ip_address")
+  userAgent    String?         @map("user_agent")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  company      Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  actorUser    User?           @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  targetUser   User?           @relation("AuditTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  module       PlatformModule? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
 }
 
 model SubscriptionPlan {
@@ -131,6 +279,25 @@ enum MembershipRole {
   USER
 }
 
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum CompanyRoleType {
+  ADMIN
+  USER
+  CUSTOM
+}
+
+enum AccessScopeLevel {
+  COMPANY
+  SATELLITE
+  BRANCH
+}
+
 enum UserStatus {
   PENDING_VERIFICATION
   ACTIVE
@@ -140,13 +307,6 @@ enum UserStatus {
 enum CompanyStatus {
   PENDING
   PROVISIONING
-  ACTIVE
-  FAILED
-  SUSPENDED
-}
-
-enum TenantStatus {
-  PENDING
   ACTIVE
   FAILED
   SUSPENDED
