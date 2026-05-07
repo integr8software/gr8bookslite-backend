@@ -10,6 +10,7 @@ datasource db {
 model User {
   id                 Int                     @id @default(autoincrement())
   email              String                  @unique
+  googleId           String?                 @unique @map("google_id")
   passwordHash       String                  @map("password_hash")
   name               String
   contactNumber      String?                 @map("contact_number")

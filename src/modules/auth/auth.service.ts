@@ -15,6 +15,7 @@ import {
   VerificationPurpose,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { AccessControlService } from '../../common/access/access-control.service';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -43,6 +44,12 @@ type UserWithMemberships = Prisma.UserGetPayload<{
     };
   };
 }>;
+
+type GoogleAuthIdentity = {
+  googleId: string;
+  email: string;
+  name: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -144,9 +151,7 @@ export class AuthService {
     );
 
     if (!isValidCode) {
-      await this.incrementVerificationAttempt(
-        verification.id,
-      );
+      await this.incrementVerificationAttempt(verification.id);
 
       throw new BadRequestException('Verification code is invalid.');
     }
@@ -154,10 +159,7 @@ export class AuthService {
     const verifiedAt = new Date();
 
     await this.prisma.$transaction([
-      this.consumeVerificationCode(
-        verification.id,
-        verifiedAt,
-      ),
+      this.consumeVerificationCode(verification.id, verifiedAt),
       this.prisma.user.update({
         where: { id: user.id },
         data: {
@@ -167,9 +169,8 @@ export class AuthService {
       }),
     ]);
 
-    const verifiedUser = await this.usersService.findForAuthByEmail(
-      normalizedEmail,
-    );
+    const verifiedUser =
+      await this.usersService.findForAuthByEmail(normalizedEmail);
 
     if (!verifiedUser) {
       throw new BadRequestException('Verified user could not be loaded.');
@@ -283,10 +284,7 @@ export class AuthService {
       });
     });
 
-    await this.authMailService.sendVerificationCode(
-      newEmail,
-      verificationCode,
-    );
+    await this.authMailService.sendVerificationCode(newEmail, verificationCode);
 
     return {
       message: 'Verification email updated.',
@@ -334,9 +332,7 @@ export class AuthService {
     );
 
     if (!isValidCode) {
-      await this.incrementVerificationAttempt(
-        verification.id,
-      );
+      await this.incrementVerificationAttempt(verification.id);
 
       throw new BadRequestException('Reset code is invalid.');
     }
@@ -345,10 +341,7 @@ export class AuthService {
     const resetAt = new Date();
 
     await this.prisma.$transaction([
-      this.consumeVerificationCode(
-        verification.id,
-        resetAt,
-      ),
+      this.consumeVerificationCode(verification.id, resetAt),
       this.prisma.user.update({
         where: { id: user.id },
         data: {
@@ -411,7 +404,9 @@ export class AuthService {
       }
 
       if (membership.status !== MembershipStatus.ACTIVE) {
-        throw new UnauthorizedException('Your company membership is not active.');
+        throw new UnauthorizedException(
+          'Your company membership is not active.',
+        );
       }
 
       return this.buildAuthenticatedResponse(user, membership.companyId);
@@ -437,6 +432,25 @@ export class AuthService {
       hasActiveCompanyContext: onboarding.hasActiveCompanyContext,
       canManageCompany: onboarding.canManageCompany,
     };
+  }
+
+  async buildGoogleAuthRedirectUrl(identity: GoogleAuthIdentity) {
+    try {
+      const authResponse = await this.loginWithGoogle(identity);
+      const params = new URLSearchParams({
+        accessToken: authResponse.accessToken,
+        redirectTo: '/onboarding',
+      });
+
+      return this.buildFrontendRedirectUrl('/google/callback', params);
+    } catch (error) {
+      const params = new URLSearchParams({
+        error:
+          error instanceof Error ? error.message : 'Google sign-in failed.',
+      });
+
+      return this.buildFrontendRedirectUrl('/google/callback', params);
+    }
   }
 
   async getProfile(user: AuthUser) {
@@ -586,6 +600,74 @@ export class AuthService {
     };
   }
 
+  private async loginWithGoogle(identity: GoogleAuthIdentity) {
+    const normalizedEmail = normalizeEmail(identity.email) as string;
+    const existingUser =
+      await this.usersService.findForAuthByEmail(normalizedEmail);
+
+    if (existingUser?.status === UserStatus.SUSPENDED) {
+      throw new UnauthorizedException('User account is suspended.');
+    }
+
+    if (
+      existingUser &&
+      existingUser.googleId &&
+      existingUser.googleId !== identity.googleId
+    ) {
+      throw new UnauthorizedException(
+        'Google account does not match this user.',
+      );
+    }
+
+    const verifiedAt = new Date();
+
+    if (!existingUser) {
+      const passwordHash = await bcrypt.hash(randomUUID(), 10);
+
+      await this.prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          googleId: identity.googleId,
+          passwordHash,
+          name: identity.name,
+          systemRole: SystemRole.STANDARD,
+          status: UserStatus.ACTIVE,
+          emailVerifiedAt: verifiedAt,
+        },
+      });
+    } else {
+      await this.prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          googleId: existingUser.googleId ?? identity.googleId,
+          name: existingUser.name || identity.name,
+          status: UserStatus.ACTIVE,
+          emailVerifiedAt: existingUser.emailVerifiedAt ?? verifiedAt,
+        },
+      });
+    }
+
+    const user = await this.usersService.findForAuthByEmail(normalizedEmail);
+
+    if (!user) {
+      throw new BadRequestException('Google user could not be loaded.');
+    }
+
+    return this.buildAuthenticatedResponse(user, null);
+  }
+
+  private buildFrontendRedirectUrl(path: string, params: URLSearchParams) {
+    const frontendBaseUrl = this.configService.get<string>(
+      'FRONTEND_BASE_URL',
+      'http://localhost:3001',
+    );
+    const url = new URL(path, frontendBaseUrl);
+
+    url.search = params.toString();
+
+    return url.toString();
+  }
+
   private buildVerificationExpiry(): Date {
     const expirySeconds = this.configService.get<number>(
       'EMAIL_VERIFICATION_EXPIRES_IN_SECONDS',
@@ -626,10 +708,7 @@ export class AuthService {
     });
   }
 
-  private consumeVerificationCode(
-    id: number,
-    consumedAt: Date,
-  ) {
+  private consumeVerificationCode(id: number, consumedAt: Date) {
     return this.prisma.emailVerificationCode.update({
       where: {
         id,
@@ -655,7 +734,10 @@ export class AuthService {
     }));
   }
 
-  private buildJwtAccessContext(user: UserWithMemberships, companyId: number | null) {
+  private buildJwtAccessContext(
+    user: UserWithMemberships,
+    companyId: number | null,
+  ) {
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
       return {
         role: AppRole.SUPER_ADMIN,
@@ -672,7 +754,9 @@ export class AuthService {
       };
     }
 
-    const membership = user.memberships.find((item) => item.companyId === companyId);
+    const membership = user.memberships.find(
+      (item) => item.companyId === companyId,
+    );
 
     return {
       role: membership ? this.mapMembershipRole(membership.role) : AppRole.USER,
@@ -705,9 +789,9 @@ export class AuthService {
     const activeMembership =
       activeCompanyId == null
         ? null
-        : activeMemberships.find(
+        : (activeMemberships.find(
             (membership) => membership.companyId === activeCompanyId,
-          ) ?? null;
+          ) ?? null);
 
     return {
       emailVerified: true,

@@ -84,6 +84,8 @@ Versioning is enabled globally using NestJS URI versioning, which keeps the API 
 
 ### Auth
 
+- `GET /api/v1/auth/google`
+- `GET /api/v1/auth/google/callback`
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
 - `GET /api/v1/auth/me`

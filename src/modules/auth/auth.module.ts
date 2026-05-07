@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthMailService } from './services/auth-mail.service';
 import { OtpService } from './services/otp.service';
+import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
@@ -38,6 +39,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtAuthGuard,
     AuthMailService,
     OtpService,
+    GoogleStrategy,
   ],
   exports: [AuthService, JwtAuthGuard],
 })

@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import type { Response } from 'express';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AuthService } from './auth.service';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
@@ -10,6 +19,7 @@ import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller({
@@ -65,6 +75,25 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Public()
+  @UseGuards(GoogleAuthGuard)
+  @Get('google')
+  googleAuth() {}
+
+  @Public()
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/callback')
+  async googleAuthCallback(
+    @Req() req: { user: unknown },
+    @Res() res: Response,
+  ) {
+    const redirectUrl = await this.authService.buildGoogleAuthRedirectUrl(
+      req.user as { googleId: string; email: string; name: string },
+    );
+
+    return res.redirect(redirectUrl);
   }
 
   @UseGuards(JwtAuthGuard)
