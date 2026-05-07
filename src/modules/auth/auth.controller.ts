@@ -50,6 +50,12 @@ export class AuthController {
   }
 
   @Public()
+  @Post('resend-forgot-password')
+  resendForgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.resendForgotPassword(dto);
+  }
+
+  @Public()
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);

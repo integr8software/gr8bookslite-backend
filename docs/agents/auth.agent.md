@@ -112,6 +112,7 @@ Security requirements:
 - `POST /api/v1/auth/resend-verification`
 - `POST /api/v1/auth/change-verification-email`
 - `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/resend-forgot-password`
 - `POST /api/v1/auth/reset-password`
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/logout`

@@ -295,57 +295,11 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
-    const normalizedEmail = normalizeEmail(dto.email) as string;
-    const user = await this.usersService.findByEmail(normalizedEmail);
+    return this.issuePasswordResetCode(dto, false);
+  }
 
-    if (!user || user.status !== UserStatus.ACTIVE) {
-      return {
-        message:
-          'If the email is registered, a password reset code will be sent.',
-      };
-    }
-
-    const resetCode = this.otpService.generateCode();
-    const codeHash = await this.otpService.hashCode(resetCode);
-    const expiresAt = this.buildVerificationExpiry();
-
-    const previousReset = await this.getLatestActiveVerification(
-      user.id,
-      user.email,
-      VerificationPurpose.PASSWORD_RESET,
-    );
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.emailVerificationCode.updateMany({
-        where: {
-          userId: user.id,
-          purpose: VerificationPurpose.PASSWORD_RESET,
-          consumedAt: null,
-        },
-        data: {
-          consumedAt: new Date(),
-        },
-      });
-
-      await tx.emailVerificationCode.create({
-        data: {
-          userId: user.id,
-          email: user.email,
-          purpose: VerificationPurpose.PASSWORD_RESET,
-          codeHash,
-          expiresAt,
-          resendCount: previousReset?.resendCount ?? 0,
-        },
-      });
-    });
-
-    await this.authMailService.sendPasswordResetCode(user.email, resetCode);
-
-    return {
-      message:
-        'If the email is registered, a password reset code will be sent.',
-      maskedEmail: this.otpService.maskEmail(user.email),
-    };
+  async resendForgotPassword(dto: ForgotPasswordDto) {
+    return this.issuePasswordResetCode(dto, true);
   }
 
   async resetPassword(dto: ResetPasswordDto) {
@@ -572,6 +526,63 @@ export class AuthService {
       hasActiveCompanyContext: onboarding.hasActiveCompanyContext,
       canManageCompany: onboarding.canManageCompany,
       companies: this.mapCompanies(user),
+    };
+  }
+
+  private async issuePasswordResetCode(
+    dto: ForgotPasswordDto,
+    isResend: boolean,
+  ) {
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const user = await this.usersService.findByEmail(normalizedEmail);
+
+    if (!user || user.status !== UserStatus.ACTIVE) {
+      return {
+        message:
+          'If the email is registered, a password reset code will be sent.',
+      };
+    }
+
+    const resetCode = this.otpService.generateCode();
+    const codeHash = await this.otpService.hashCode(resetCode);
+    const expiresAt = this.buildVerificationExpiry();
+
+    const previousReset = await this.getLatestActiveVerification(
+      user.id,
+      user.email,
+      VerificationPurpose.PASSWORD_RESET,
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerificationCode.updateMany({
+        where: {
+          userId: user.id,
+          purpose: VerificationPurpose.PASSWORD_RESET,
+          consumedAt: null,
+        },
+        data: {
+          consumedAt: new Date(),
+        },
+      });
+
+      await tx.emailVerificationCode.create({
+        data: {
+          userId: user.id,
+          email: user.email,
+          purpose: VerificationPurpose.PASSWORD_RESET,
+          codeHash,
+          expiresAt,
+          resendCount: (previousReset?.resendCount ?? 0) + (isResend ? 1 : 0),
+        },
+      });
+    });
+
+    await this.authMailService.sendPasswordResetCode(user.email, resetCode);
+
+    return {
+      message:
+        'If the email is registered, a password reset code will be sent.',
+      maskedEmail: this.otpService.maskEmail(user.email),
     };
   }
 
