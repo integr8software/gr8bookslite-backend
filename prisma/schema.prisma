@@ -12,6 +12,7 @@ model User {
   email              String                  @unique
   passwordHash       String                  @map("password_hash")
   name               String
+  contactNumber      String?                 @map("contact_number")
   systemRole         SystemRole              @default(STANDARD) @map("system_role")
   status             UserStatus              @default(PENDING_VERIFICATION)
   emailVerifiedAt    DateTime?               @map("email_verified_at")

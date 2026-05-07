@@ -43,6 +43,7 @@ export class UsersService {
       data: {
         email: normalizedEmail,
         name: dto.name,
+        contactNumber: dto.contactNumber?.trim() || null,
         passwordHash: hashedPassword,
         systemRole: dto.systemRole ?? SystemRole.STANDARD,
         status: UserStatus.ACTIVE,
@@ -137,6 +138,8 @@ export class UsersService {
     const data: Prisma.UserUpdateInput = {
       email: dto.email ? (normalizeEmail(dto.email) as string) : dto.email,
       name: dto.name,
+      contactNumber:
+        dto.contactNumber === undefined ? undefined : dto.contactNumber.trim() || null,
       systemRole: dto.systemRole,
     };
 

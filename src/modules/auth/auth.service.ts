@@ -69,6 +69,7 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const contactNumber = dto.contactNumber?.trim() || null;
     const verificationCode = this.otpService.generateCode();
     const codeHash = await this.otpService.hashCode(verificationCode);
     const expiresAt = this.buildVerificationExpiry();
@@ -78,6 +79,7 @@ export class AuthService {
         data: {
           email: normalizedEmail,
           name: dto.fullName,
+          contactNumber,
           passwordHash: hashedPassword,
           systemRole: SystemRole.STANDARD,
           status: UserStatus.PENDING_VERIFICATION,
