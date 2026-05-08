@@ -518,7 +518,11 @@ export class AuthService {
     const normalizedEmail = normalizeEmail(dto.email) as string;
     const user = await this.usersService.findByEmail(normalizedEmail);
 
-    if (!user || user.status !== UserStatus.ACTIVE) {
+    if (
+      !user ||
+      (user.status !== UserStatus.ACTIVE &&
+        user.status !== UserStatus.PENDING_VERIFICATION)
+    ) {
       return {
         message:
           'If the email is registered, a password reset code will be sent.',
