@@ -171,48 +171,7 @@ export class AuthService {
       throw new BadRequestException('User is not awaiting verification.');
     }
 
-    const verificationCode = this.otpService.generateCode();
-    const codeHash = await this.otpService.hashCode(verificationCode);
-    const expiresAt = this.buildVerificationExpiry();
-
-    const previousVerification = await this.getLatestActiveVerification(
-      user.id,
-      user.email,
-    );
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.emailVerificationCode.updateMany({
-        where: {
-          userId: user.id,
-          purpose: VerificationPurpose.SIGNUP,
-          consumedAt: null,
-        },
-        data: {
-          consumedAt: new Date(),
-        },
-      });
-
-      await tx.emailVerificationCode.create({
-        data: {
-          userId: user.id,
-          email: user.email,
-          purpose: VerificationPurpose.SIGNUP,
-          codeHash,
-          expiresAt,
-          resendCount: (previousVerification?.resendCount ?? 0) + 1,
-        },
-      });
-    });
-
-    await this.authMailService.sendVerificationCode(
-      user.email,
-      verificationCode,
-    );
-
-    return {
-      message: 'A new verification code was sent.',
-      maskedEmail: this.otpService.maskEmail(user.email),
-    };
+    return this.resendSignupVerificationCode(user);
   }
 
   async changeVerificationEmail(dto: ChangeVerificationEmailDto) {
@@ -387,12 +346,6 @@ export class AuthService {
       throw new UnauthorizedException('User account is suspended.');
     }
 
-    if (user.status !== UserStatus.ACTIVE || !user.emailVerifiedAt) {
-      throw new UnauthorizedException(
-        'Please verify your email before logging in.',
-      );
-    }
-
     const isPasswordValid = await bcrypt.compare(
       dto.password,
       user.passwordHash,
@@ -400,6 +353,20 @@ export class AuthService {
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials.');
+    }
+
+    if (user.status !== UserStatus.ACTIVE || !user.emailVerifiedAt) {
+      const verificationResponse =
+        await this.resendSignupVerificationCode(user);
+
+      throw new UnauthorizedException({
+        message:
+          'Please verify your email before logging in. A new verification code was sent.',
+        code: 'EMAIL_NOT_VERIFIED',
+        nextStep: 'VERIFY_EMAIL',
+        email: user.email,
+        maskedEmail: verificationResponse.maskedEmail,
+      });
     }
 
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
@@ -610,6 +577,54 @@ export class AuthService {
     );
 
     return new Date(Date.now() + expirySeconds * 1000);
+  }
+
+  private async resendSignupVerificationCode(user: {
+    id: number;
+    email: string;
+  }) {
+    const verificationCode = this.otpService.generateCode();
+    const codeHash = await this.otpService.hashCode(verificationCode);
+    const expiresAt = this.buildVerificationExpiry();
+
+    const previousVerification = await this.getLatestActiveVerification(
+      user.id,
+      user.email,
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerificationCode.updateMany({
+        where: {
+          userId: user.id,
+          purpose: VerificationPurpose.SIGNUP,
+          consumedAt: null,
+        },
+        data: {
+          consumedAt: new Date(),
+        },
+      });
+
+      await tx.emailVerificationCode.create({
+        data: {
+          userId: user.id,
+          email: user.email,
+          purpose: VerificationPurpose.SIGNUP,
+          codeHash,
+          expiresAt,
+          resendCount: (previousVerification?.resendCount ?? 0) + 1,
+        },
+      });
+    });
+
+    await this.authMailService.sendVerificationCode(
+      user.email,
+      verificationCode,
+    );
+
+    return {
+      message: 'A new verification code was sent.',
+      maskedEmail: this.otpService.maskEmail(user.email),
+    };
   }
 
   private buildPasswordResetToken(payload: PasswordResetTokenPayload) {
