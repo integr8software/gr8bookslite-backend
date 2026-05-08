@@ -9,6 +9,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyForgotPasswordCodeDto } from './dto/verify-forgot-password-code.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
@@ -53,6 +54,12 @@ export class AuthController {
   @Post('resend-forgot-password')
   resendForgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.resendForgotPassword(dto);
+  }
+
+  @Public()
+  @Post('verify-forgot-password-code')
+  verifyForgotPasswordCode(@Body() dto: VerifyForgotPasswordCodeDto) {
+    return this.authService.verifyForgotPasswordCode(dto);
   }
 
   @Public()

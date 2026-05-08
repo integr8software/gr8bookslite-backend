@@ -9,7 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 import {
   MembershipStatus,
   MembershipRole,
-  Prisma,
   SystemRole,
   UserStatus,
   VerificationPurpose,
@@ -22,6 +21,7 @@ import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { sanitizeUser } from '../../common/mappers/user.mapper';
 import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { UserWithMemberships } from '../users/types/user-with-memberships.type';
 import { UsersService } from '../users/users.service';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -29,20 +29,11 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyForgotPasswordCodeDto } from './dto/verify-forgot-password-code.dto';
+import type { PasswordResetTokenPayload } from './types/password-reset-token-payload.type';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { AuthMailService } from './services/auth-mail.service';
 import { OtpService } from './services/otp.service';
-
-type UserWithMemberships = Prisma.UserGetPayload<{
-  include: {
-    memberships: {
-      include: {
-        companyRole: true;
-        company: true;
-      };
-    };
-  };
-}>;
 
 @Injectable()
 export class AuthService {
@@ -144,9 +135,7 @@ export class AuthService {
     );
 
     if (!isValidCode) {
-      await this.incrementVerificationAttempt(
-        verification.id,
-      );
+      await this.incrementVerificationAttempt(verification.id);
 
       throw new BadRequestException('Verification code is invalid.');
     }
@@ -154,10 +143,7 @@ export class AuthService {
     const verifiedAt = new Date();
 
     await this.prisma.$transaction([
-      this.consumeVerificationCode(
-        verification.id,
-        verifiedAt,
-      ),
+      this.consumeVerificationCode(verification.id, verifiedAt),
       this.prisma.user.update({
         where: { id: user.id },
         data: {
@@ -167,9 +153,8 @@ export class AuthService {
       }),
     ]);
 
-    const verifiedUser = await this.usersService.findForAuthByEmail(
-      normalizedEmail,
-    );
+    const verifiedUser =
+      await this.usersService.findForAuthByEmail(normalizedEmail);
 
     if (!verifiedUser) {
       throw new BadRequestException('Verified user could not be loaded.');
@@ -283,10 +268,7 @@ export class AuthService {
       });
     });
 
-    await this.authMailService.sendVerificationCode(
-      newEmail,
-      verificationCode,
-    );
+    await this.authMailService.sendVerificationCode(newEmail, verificationCode);
 
     return {
       message: 'Verification email updated.',
@@ -302,11 +284,7 @@ export class AuthService {
     return this.issuePasswordResetCode(dto, true);
   }
 
-  async resetPassword(dto: ResetPasswordDto) {
-    if (dto.newPassword !== dto.confirmNewPassword) {
-      throw new BadRequestException('Passwords do not match.');
-    }
-
+  async verifyForgotPasswordCode(dto: VerifyForgotPasswordCodeDto) {
     const normalizedEmail = normalizeEmail(dto.email) as string;
     const user = await this.usersService.findByEmail(normalizedEmail);
 
@@ -334,28 +312,63 @@ export class AuthService {
     );
 
     if (!isValidCode) {
-      await this.incrementVerificationAttempt(
-        verification.id,
-      );
+      await this.incrementVerificationAttempt(verification.id);
 
       throw new BadRequestException('Reset code is invalid.');
     }
 
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-    const resetAt = new Date();
+    const verifiedAt = new Date();
 
-    await this.prisma.$transaction([
-      this.consumeVerificationCode(
-        verification.id,
-        resetAt,
-      ),
-      this.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          passwordHash: hashedPassword,
-        },
+    await this.consumeVerificationCode(verification.id, verifiedAt);
+
+    return {
+      message: 'Reset code verified successfully.',
+      resetToken: this.buildPasswordResetToken({
+        sub: user.id,
+        email: normalizedEmail,
+        purpose: 'PASSWORD_RESET',
+        verificationId: verification.id,
       }),
-    ]);
+    };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    if (dto.newPassword !== dto.confirmNewPassword) {
+      throw new BadRequestException('Passwords do not match.');
+    }
+
+    const resetTokenPayload = this.verifyPasswordResetToken(dto.resetToken);
+    const user = await this.usersService.findByEmail(resetTokenPayload.email);
+
+    if (!user) {
+      throw new BadRequestException('Password reset request is invalid.');
+    }
+
+    if (user.id !== resetTokenPayload.sub) {
+      throw new BadRequestException('Password reset request is invalid.');
+    }
+
+    const verification = await this.prisma.emailVerificationCode.findFirst({
+      where: {
+        id: resetTokenPayload.verificationId,
+        userId: user.id,
+        email: resetTokenPayload.email,
+        purpose: VerificationPurpose.PASSWORD_RESET,
+      },
+    });
+
+    if (!verification || verification.consumedAt == null) {
+      throw new BadRequestException('Password reset request is invalid.');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: hashedPassword,
+      },
+    });
 
     return {
       message: 'Password has been reset successfully.',
@@ -411,7 +424,9 @@ export class AuthService {
       }
 
       if (membership.status !== MembershipStatus.ACTIVE) {
-        throw new UnauthorizedException('Your company membership is not active.');
+        throw new UnauthorizedException(
+          'Your company membership is not active.',
+        );
       }
 
       return this.buildAuthenticatedResponse(user, membership.companyId);
@@ -587,12 +602,41 @@ export class AuthService {
   }
 
   private buildVerificationExpiry(): Date {
-    const expirySeconds = this.configService.get<number>(
-      'EMAIL_VERIFICATION_EXPIRES_IN_SECONDS',
-      300,
+    const expirySeconds = Number(
+      this.configService.get<string | number>(
+        'EMAIL_VERIFICATION_EXPIRES_IN_SECONDS',
+        300,
+      ),
     );
 
     return new Date(Date.now() + expirySeconds * 1000);
+  }
+
+  private buildPasswordResetToken(payload: PasswordResetTokenPayload) {
+    return this.jwtService.sign(payload, {
+      expiresIn: Number(
+        this.configService.get<string | number>(
+          'RESET_PASSWORD_TOKEN_EXPIRES_IN_SECONDS',
+          600,
+        ),
+      ),
+    });
+  }
+
+  private verifyPasswordResetToken(token: string): PasswordResetTokenPayload {
+    try {
+      const payload = this.jwtService.verify<PasswordResetTokenPayload>(token);
+
+      if (payload.purpose !== 'PASSWORD_RESET') {
+        throw new BadRequestException('Password reset token is invalid.');
+      }
+
+      return payload;
+    } catch {
+      throw new BadRequestException(
+        'Password reset token is invalid or expired.',
+      );
+    }
   }
 
   private getLatestActiveVerification(
@@ -626,10 +670,7 @@ export class AuthService {
     });
   }
 
-  private consumeVerificationCode(
-    id: number,
-    consumedAt: Date,
-  ) {
+  private consumeVerificationCode(id: number, consumedAt: Date) {
     return this.prisma.emailVerificationCode.update({
       where: {
         id,
@@ -655,7 +696,10 @@ export class AuthService {
     }));
   }
 
-  private buildJwtAccessContext(user: UserWithMemberships, companyId: number | null) {
+  private buildJwtAccessContext(
+    user: UserWithMemberships,
+    companyId: number | null,
+  ) {
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
       return {
         role: AppRole.SUPER_ADMIN,
@@ -672,7 +716,9 @@ export class AuthService {
       };
     }
 
-    const membership = user.memberships.find((item) => item.companyId === companyId);
+    const membership = user.memberships.find(
+      (item) => item.companyId === companyId,
+    );
 
     return {
       role: membership ? this.mapMembershipRole(membership.role) : AppRole.USER,
@@ -705,9 +751,9 @@ export class AuthService {
     const activeMembership =
       activeCompanyId == null
         ? null
-        : activeMemberships.find(
+        : (activeMemberships.find(
             (membership) => membership.companyId === activeCompanyId,
-          ) ?? null;
+          ) ?? null);
 
     return {
       emailVerified: true,

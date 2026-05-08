@@ -13,17 +13,7 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-
-type UserWithMemberships = Prisma.UserGetPayload<{
-  include: {
-    memberships: {
-      include: {
-        company: true;
-        companyRole: true;
-      };
-    };
-  };
-}>;
+import type { UserWithMemberships } from './types/user-with-memberships.type';
 
 @Injectable()
 export class UsersService {
@@ -139,7 +129,9 @@ export class UsersService {
       email: dto.email ? (normalizeEmail(dto.email) as string) : dto.email,
       name: dto.name,
       contactNumber:
-        dto.contactNumber === undefined ? undefined : dto.contactNumber.trim() || null,
+        dto.contactNumber === undefined
+          ? undefined
+          : dto.contactNumber.trim() || null,
       systemRole: dto.systemRole,
     };
 
@@ -175,7 +167,9 @@ export class UsersService {
     }
   }
 
-  private ensureCompanyContext(authUser: AuthUser): asserts authUser is AuthUser & {
+  private ensureCompanyContext(
+    authUser: AuthUser,
+  ): asserts authUser is AuthUser & {
     companyId: number;
   } {
     if (!authUser.companyId) {

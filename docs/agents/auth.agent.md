@@ -43,6 +43,7 @@ Required actions:
 - resend OTP
 - change email
 - request password reset code
+- verify password reset code
 - reset password with code and new password
 
 Recommended rules:
@@ -113,6 +114,7 @@ Security requirements:
 - `POST /api/v1/auth/change-verification-email`
 - `POST /api/v1/auth/forgot-password`
 - `POST /api/v1/auth/resend-forgot-password`
+- `POST /api/v1/auth/verify-forgot-password-code`
 - `POST /api/v1/auth/reset-password`
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/logout`

@@ -26,7 +26,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
           'change-me-in-production',
         ),
         signOptions: {
-          expiresIn: configService.get<number>('JWT_EXPIRES_IN_SECONDS', 86400),
+          expiresIn: Number(
+            configService.get<string | number>('JWT_EXPIRES_IN_SECONDS', 86400),
+          ),
         },
       }),
     }),
