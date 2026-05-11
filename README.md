@@ -2,6 +2,18 @@
 
 Backend API for a multi-tenant ERP system built with NestJS, Prisma, and PostgreSQL.
 
+## Architecture Priority
+
+Long-term maintainability is a project priority.
+
+- prefer a modular, clean architecture over short-term convenience
+- keep controllers thin and focused on HTTP concerns
+- keep services focused on orchestration and business flow
+- extract pure helpers into `utils/`
+- extract response shaping into `mappers/`
+- avoid letting large service files accumulate unrelated formatting, validation, mapping, and persistence logic
+- favor backend modules that can grow cleanly over time without turning into monolith files
+
 ## Current Progress
 
 This project already has the core backend foundation in place:
@@ -25,8 +37,8 @@ This project already has the core backend foundation in place:
 - JWT access token generation
 - Logged-in user profile endpoint
 - Multi-company login support
-- Automatic company creation during registration
-- Default company membership with `ADMIN` role for the registering user
+- Email verification before company onboarding
+- Post-auth onboarding state that continues into company setup
 
 ### Authorization
 
@@ -60,6 +72,8 @@ Current main entities:
 - `User`
 - `Company`
 - `Membership`
+- `SubscriptionPlan`
+- `CompanySubscription`
 
 Role structure:
 
@@ -71,6 +85,13 @@ This supports a multi-tenant setup where:
 - one user can belong to multiple companies
 - one company can have multiple users
 - each membership stores the user role inside that company
+
+Subscription ownership rule:
+
+- subscriptions belong to the `Company`, not the admin user
+- the registering account is the future company admin and primary billing contact for the company it creates during onboarding
+- when a company subscription expires or becomes unavailable, all memberships in that company lose access, including the admin
+- pre-company onboarding data is only temporary staging and is not an active subscription
 
 ## API Base URL
 
@@ -102,10 +123,10 @@ Versioning is enabled globally using NestJS URI versioning, which keeps the API 
 
 ```json
 {
-  "name": "Jason Doe",
+  "fullName": "Jason Doe",
   "email": "jason@example.com",
-  "password": "password123",
-  "companyName": "Gr8Books Lite"
+  "password": "Password1!",
+  "confirmPassword": "Password1!"
 }
 ```
 
@@ -132,6 +153,7 @@ src/
     interfaces/
   modules/
     auth/
+    onboarding/
     users/
   prisma/
 prisma/
@@ -275,9 +297,11 @@ npm run dev
 - [x] JWT authentication
 - [x] Role-based access control
 - [x] API versioning with `/api/v1`
-- [x] Registration flow with company creation
+- [x] Registration flow with email verification
+- [x] Initial onboarding backend for plan and billing staging
 - [x] Protected user endpoints
 - [ ] Company management module
+- [ ] Finalize company onboarding and create company-level subscriptions
 - [ ] ERP business modules
 - [ ] Refresh tokens
 - [ ] Audit logs
@@ -285,8 +309,11 @@ npm run dev
 
 ## Notes
 
-- Registration creates both a user and a company in one transaction.
+- Registration creates a user first and verifies email before company setup.
+- After onboarding is completed, the registering account should become the first `MembershipRole.ADMIN` member of the created company.
 - Users can belong to multiple companies through the `Membership` table.
+- Subscription enforcement is company-based, not user-based.
+- A temporary onboarding draft may exist before company creation, but it does not grant access and does not replace `CompanySubscription`.
 - `SUPER_ADMIN` can bypass normal role restrictions.
 - Global validation is enabled and unknown request fields are rejected.
 - Controllers are versioned with NestJS built-in URI versioning.
@@ -295,6 +322,8 @@ npm run dev
 ## Suggested Next Steps
 
 - Add company CRUD endpoints
+- Finish onboarding company-details endpoint that creates `Company`, `Membership`, and `CompanySubscription`
+- Add company user management so the admin can invite or create users under the company
 - Add invitation or membership assignment flow
 - Scope user listing by company for admin users
 - Add refresh token support

@@ -23,6 +23,7 @@ model User {
   invitedMemberships Membership[]            @relation("MembershipInvitedBy")
   createdAuditLogs   AuditLog[]              @relation("AuditActor")
   targetedAuditLogs  AuditLog[]              @relation("AuditTargetUser")
+  onboardingDraft    UserOnboardingDraft?
 
   @@map("users")
 }
@@ -216,23 +217,58 @@ model AuditLog {
 }
 
 model SubscriptionPlan {
-  id            Int                   @id @default(autoincrement())
-  code          String                @unique
-  name          String
-  description   String?
-  trialDays     Int                   @default(15) @map("trial_days")
-  isActive      Boolean               @default(true) @map("is_active")
-  createdAt     DateTime              @default(now()) @map("created_at")
-  updatedAt     DateTime              @updatedAt @map("updated_at")
-  subscriptions CompanySubscription[]
+  id                       Int                   @id @default(autoincrement())
+  code                     String                @unique
+  name                     String
+  description              String?
+  monthlyPriceInCents      Int                   @map("monthly_price_in_cents")
+  yearlyPriceInCents       Int                   @map("yearly_price_in_cents")
+  monthlyCompareAtInCents  Int?                  @map("monthly_compare_at_in_cents")
+  yearlyCompareAtInCents   Int?                  @map("yearly_compare_at_in_cents")
+  trialDays                Int                   @default(15) @map("trial_days")
+  isActive                 Boolean               @default(true) @map("is_active")
+  createdAt                DateTime              @default(now()) @map("created_at")
+  updatedAt                DateTime              @updatedAt @map("updated_at")
+  subscriptions            CompanySubscription[]
+  onboardingDrafts UserOnboardingDraft[]
 
   @@map("subscription_plans")
+}
+
+/// Temporary pre-company onboarding storage.
+/// This does not represent an active subscription owner.
+/// The real subscription must be created under CompanySubscription
+/// after company details are completed and a company record exists.
+model UserOnboardingDraft {
+  id                     Int               @id @default(autoincrement())
+  userId                 Int               @unique @map("user_id")
+  subscriptionPlanId     Int?              @map("subscription_plan_id")
+  billingCycle           BillingCycle?
+  cardholderName         String?           @map("cardholder_name")
+  billingEmail           String?           @map("billing_email")
+  billingAddress         String?           @map("billing_address")
+  cardLast4              String?           @map("card_last4")
+  cardBrand              String?           @map("card_brand")
+  cardExpiryMonth        Int?              @map("card_expiry_month")
+  cardExpiryYear         Int?              @map("card_expiry_year")
+  paymentMethodReference String?           @map("payment_method_reference")
+  planSelectedAt         DateTime?         @map("plan_selected_at")
+  billingCompletedAt     DateTime?         @map("billing_completed_at")
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionPlan       SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id], onDelete: SetNull)
+
+  @@index([subscriptionPlanId])
+  @@index([billingCompletedAt])
+  @@map("user_onboarding_drafts")
 }
 
 model CompanySubscription {
   id                 Int                @id @default(autoincrement())
   companyId          Int                @map("company_id")
   subscriptionPlanId Int                @map("subscription_plan_id")
+  billingCycle       BillingCycle       @default(MONTHLY) @map("billing_cycle")
   status             SubscriptionStatus @default(TRIALING)
   startsAt           DateTime           @default(now()) @map("starts_at")
   trialEndsAt        DateTime?          @map("trial_ends_at")
@@ -311,6 +347,11 @@ enum CompanyStatus {
   ACTIVE
   FAILED
   SUSPENDED
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
 }
 
 enum SubscriptionStatus {

@@ -4,11 +4,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
-  AccessScopeLevel,
   CompanyStatus,
   MembershipRole,
   MembershipStatus,
   Prisma,
+  SubscriptionStatus,
   SystemRole,
   UserStatus,
 } from '@prisma/client';
@@ -99,10 +99,13 @@ export class AccessControlService {
       payload.companyId,
     );
 
-    this.assertMembershipIsUsable(membership);
+    await this.assertMembershipIsUsable(membership);
 
     const enabledModules = await this.getEnabledModules(membership.companyId);
-    const permissions = this.buildEffectivePermissions(membership, enabledModules);
+    const permissions = this.buildEffectivePermissions(
+      membership,
+      enabledModules,
+    );
 
     return {
       id: user.id,
@@ -197,7 +200,9 @@ export class AccessControlService {
     return membership;
   }
 
-  private assertMembershipIsUsable(membership: MembershipAccessRecord): void {
+  private async assertMembershipIsUsable(
+    membership: MembershipAccessRecord,
+  ): Promise<void> {
     if (membership.status !== MembershipStatus.ACTIVE) {
       throw new UnauthorizedException('Your company membership is not active.');
     }
@@ -211,6 +216,44 @@ export class AccessControlService {
       membership.company.status === CompanyStatus.FAILED
     ) {
       throw new UnauthorizedException('This company is unavailable.');
+    }
+
+    const latestSubscription = await this.prisma.companySubscription.findFirst({
+      where: {
+        companyId: membership.companyId,
+      },
+      orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    if (!latestSubscription) {
+      return;
+    }
+
+    const now = Date.now();
+
+    if (
+      latestSubscription.status === SubscriptionStatus.CANCELED ||
+      latestSubscription.status === SubscriptionStatus.EXPIRED
+    ) {
+      throw new UnauthorizedException(
+        'This company subscription is no longer active.',
+      );
+    }
+
+    if (
+      latestSubscription.status === SubscriptionStatus.TRIALING &&
+      latestSubscription.trialEndsAt &&
+      latestSubscription.trialEndsAt.getTime() < now
+    ) {
+      throw new UnauthorizedException('This company trial has expired.');
+    }
+
+    if (
+      latestSubscription.status === SubscriptionStatus.ACTIVE &&
+      latestSubscription.endsAt &&
+      latestSubscription.endsAt.getTime() < now
+    ) {
+      throw new UnauthorizedException('This company subscription has expired.');
     }
   }
 
@@ -284,10 +327,11 @@ export class AccessControlService {
       });
     }
 
-    return Array.from(permissions.entries()).flatMap(([permissionCode, actions]) =>
-      Object.values(PermissionAction)
-        .filter((action) => actions[action])
-        .map((action) => this.buildPermissionKey(permissionCode, action)),
+    return Array.from(permissions.entries()).flatMap(
+      ([permissionCode, actions]) =>
+        Object.values(PermissionAction)
+          .filter((action) => actions[action])
+          .map((action) => this.buildPermissionKey(permissionCode, action)),
     );
   }
 

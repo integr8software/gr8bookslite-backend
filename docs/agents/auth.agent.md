@@ -14,7 +14,6 @@ Focus areas:
 - reset password with email OTP
 - logout behavior
 - login restrictions before verification
-- free 15-day trial bootstrapping
 
 ## Registration Flow
 
@@ -85,6 +84,7 @@ Free trial requirement:
 Recommended ownership:
 
 - the trial should be attached to the company subscription, not directly to the user
+- the registering account should become the first admin member of the company once onboarding is finalized
 
 Reason:
 
@@ -122,13 +122,15 @@ Security requirements:
 
 ## Important Change From Current Repo
 
-The current repo creates a company during registration and immediately authenticates the user.
+The current repo should not treat registration as company creation.
 
 For the flow described above, registration should move to:
 
 1. create pending user
 2. send OTP
 3. verify email
-4. then continue to company/workspace setup
+4. then continue to onboarding
+5. create company and company subscription only when company details are completed
+6. assign the registering account as the first company admin
 
 That is a cleaner fit for your new signup UX.
