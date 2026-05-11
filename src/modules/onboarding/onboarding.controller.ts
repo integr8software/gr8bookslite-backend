@@ -3,6 +3,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
+import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
 import { OnboardingService } from './onboarding.service';
 
@@ -38,5 +39,18 @@ export class OnboardingController {
     @Body() dto: SaveOnboardingBillingDto,
   ) {
     return this.onboardingService.saveBilling(user, dto);
+  }
+
+  @Post('company-details')
+  saveCompanyDetails(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: SaveOnboardingCompanyDetailsDto,
+  ) {
+    return this.onboardingService.saveCompanyDetails(user, dto);
+  }
+
+  @Post('complete')
+  complete(@CurrentUser() user: AuthUser) {
+    return this.onboardingService.complete(user);
   }
 }

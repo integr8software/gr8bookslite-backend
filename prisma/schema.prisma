@@ -29,20 +29,34 @@ model User {
 }
 
 model Company {
-  id             Int                   @id @default(autoincrement())
-  name           String
-  slug           String                @unique
-  legalName      String?               @map("legal_name")
-  companyCode    String?               @unique @map("company_code")
-  isActive       Boolean               @default(true) @map("is_active")
-  status         CompanyStatus         @default(PENDING)
-  createdAt      DateTime              @default(now()) @map("created_at")
-  updatedAt      DateTime              @updatedAt @map("updated_at")
-  subscriptions  CompanySubscription[]
-  memberships    Membership[]
-  roles          CompanyRole[]
-  enabledModules CompanyModule[]
-  auditLogs      AuditLog[]
+  id                    Int                   @id @default(autoincrement())
+  name                  String
+  slug                  String                @unique
+  legalName             String?               @map("legal_name")
+  companyCode           String?               @unique @map("company_code")
+  taxpayerType          TaxpayerType?         @map("taxpayer_type")
+  ownerLastName         String?               @map("owner_last_name")
+  ownerFirstName        String?               @map("owner_first_name")
+  ownerMiddleName       String?               @map("owner_middle_name")
+  organizationType      String?               @map("organization_type")
+  organizationTypeOther String?               @map("organization_type_other")
+  logoFileName          String?               @map("logo_file_name")
+  logoMimeType          String?               @map("logo_mime_type")
+  address               String?
+  tin                   String?
+  website               String?
+  contactNumber         String?               @map("contact_number")
+  reportStartDate       DateTime?             @map("report_start_date")
+  reportEndDate         DateTime?             @map("report_end_date")
+  isActive              Boolean               @default(true) @map("is_active")
+  status                CompanyStatus         @default(PENDING)
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  subscriptions         CompanySubscription[]
+  memberships           Membership[]
+  roles                 CompanyRole[]
+  enabledModules        CompanyModule[]
+  auditLogs             AuditLog[]
 
   @@map("companies")
 }
@@ -243,6 +257,21 @@ model UserOnboardingDraft {
   id                     Int               @id @default(autoincrement())
   userId                 Int               @unique @map("user_id")
   subscriptionPlanId     Int?              @map("subscription_plan_id")
+  taxpayerType           TaxpayerType?     @map("taxpayer_type")
+  ownerLastName          String?           @map("owner_last_name")
+  ownerFirstName         String?           @map("owner_first_name")
+  ownerMiddleName        String?           @map("owner_middle_name")
+  companyName            String?           @map("company_name")
+  organizationType       String?           @map("organization_type")
+  organizationTypeOther  String?           @map("organization_type_other")
+  logoFileName           String?           @map("logo_file_name")
+  logoMimeType           String?           @map("logo_mime_type")
+  address                String?
+  tin                    String?
+  website                String?
+  contactNumber          String?           @map("contact_number")
+  reportStartDate        DateTime?         @map("report_start_date")
+  reportEndDate          DateTime?         @map("report_end_date")
   billingCycle           BillingCycle?
   cardholderName         String?           @map("cardholder_name")
   billingEmail           String?           @map("billing_email")
@@ -254,6 +283,7 @@ model UserOnboardingDraft {
   paymentMethodReference String?           @map("payment_method_reference")
   planSelectedAt         DateTime?         @map("plan_selected_at")
   billingCompletedAt     DateTime?         @map("billing_completed_at")
+  companyDetailsCompletedAt DateTime?      @map("company_details_completed_at")
   createdAt              DateTime          @default(now()) @map("created_at")
   updatedAt              DateTime          @updatedAt @map("updated_at")
   user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -352,6 +382,11 @@ enum CompanyStatus {
 enum BillingCycle {
   MONTHLY
   YEARLY
+}
+
+enum TaxpayerType {
+  INDIVIDUAL
+  NON_INDIVIDUAL
 }
 
 enum SubscriptionStatus {
