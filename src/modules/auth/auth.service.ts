@@ -14,6 +14,7 @@ import {
   VerificationPurpose,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { AccessControlService } from '../../common/access/access-control.service';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -30,10 +31,13 @@ import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyForgotPasswordCodeDto } from './dto/verify-forgot-password-code.dto';
-import type { PasswordResetTokenPayload } from './types/password-reset-token-payload.type';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { AuthMailService } from './services/auth-mail.service';
+import { GoogleOAuthService } from './services/google-oauth.service';
 import { OtpService } from './services/otp.service';
+import type { GoogleCallbackParams } from './types/google-callback-params.type';
+import type { GoogleUserProfile } from './types/google-user-profile.type';
+import type { PasswordResetTokenPayload } from './types/password-reset-token-payload.type';
 
 @Injectable()
 export class AuthService {
@@ -43,6 +47,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly authMailService: AuthMailService,
+    private readonly googleOAuthService: GoogleOAuthService,
     private readonly otpService: OtpService,
     private readonly accessControlService: AccessControlService,
   ) {}
@@ -421,6 +426,59 @@ export class AuthService {
     };
   }
 
+  beginGoogleAuth(mode?: string) {
+    return this.googleOAuthService.beginAuth(mode);
+  }
+
+  async handleGoogleCallback(params: GoogleCallbackParams) {
+    const state = this.googleOAuthService.readState(params.state);
+    const mode = state.mode;
+
+    if (params.error) {
+      return this.googleOAuthService.buildFrontendRedirect({
+        mode,
+        error: 'Google sign-in was cancelled or could not be completed.',
+      });
+    }
+
+    if (!params.code || !params.state) {
+      return this.googleOAuthService.buildFrontendRedirect({
+        mode,
+        error: 'Google sign-in response was incomplete.',
+      });
+    }
+
+    if (!state.isValid) {
+      return this.googleOAuthService.buildFrontendRedirect({
+        mode,
+        error: 'Google sign-in state is invalid or expired.',
+      });
+    }
+
+    try {
+      const googleProfile = await this.googleOAuthService.fetchProfile(
+        params.code,
+      );
+      const authenticatedResponse =
+        await this.loginOrRegisterWithGoogleProfile(googleProfile);
+
+      return this.googleOAuthService.buildFrontendRedirect({
+        mode,
+        accessToken: authenticatedResponse.accessToken,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Google sign-in could not be completed.';
+
+      return this.googleOAuthService.buildFrontendRedirect({
+        mode,
+        error: message,
+      });
+    }
+  }
+
   async getProfile(user: AuthUser) {
     const profileUser = await this.usersService.findById(user.id);
 
@@ -509,6 +567,71 @@ export class AuthService {
       canManageCompany: onboarding.canManageCompany,
       companies: this.mapCompanies(user),
     };
+  }
+
+  private async loginOrRegisterWithGoogleProfile(profile: GoogleUserProfile) {
+    const normalizedEmail = normalizeEmail(profile.email) as string | null;
+
+    if (!normalizedEmail) {
+      throw new BadRequestException(
+        'Google did not return a valid email address.',
+      );
+    }
+
+    if (!profile.email_verified) {
+      throw new BadRequestException(
+        'Your Google account email address is not verified.',
+      );
+    }
+
+    const now = new Date();
+    const existingUser = await this.usersService.findByEmail(normalizedEmail);
+
+    if (existingUser?.status === UserStatus.SUSPENDED) {
+      throw new UnauthorizedException('User account is suspended.');
+    }
+
+    if (!existingUser) {
+      const passwordHash = await bcrypt.hash(
+        randomBytes(32).toString('hex'),
+        10,
+      );
+
+      await this.prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          name: profile.name?.trim() || normalizedEmail.split('@')[0],
+          contactNumber: null,
+          passwordHash,
+          systemRole: SystemRole.STANDARD,
+          status: UserStatus.ACTIVE,
+          emailVerifiedAt: now,
+        },
+      });
+    } else if (
+      existingUser.status !== UserStatus.ACTIVE ||
+      existingUser.emailVerifiedAt == null
+    ) {
+      await this.prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          status: UserStatus.ACTIVE,
+          emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
+          name:
+            existingUser.name?.trim().length > 0
+              ? existingUser.name
+              : (profile.name?.trim() ?? existingUser.name),
+        },
+      });
+    }
+
+    const user = await this.usersService.findForAuthByEmail(normalizedEmail);
+
+    if (!user) {
+      throw new BadRequestException('Google user account could not be loaded.');
+    }
+
+    return this.buildAuthenticatedResponse(user, null);
   }
 
   private async issuePasswordResetCode(

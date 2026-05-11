@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import type { Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -72,6 +81,32 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Public()
+  @Get('google')
+  googleAuth(
+    @Query('mode') mode: string | undefined,
+    @Res() response: Response,
+  ) {
+    response.redirect(this.authService.beginGoogleAuth(mode));
+  }
+
+  @Public()
+  @Get('google/callback')
+  async googleAuthCallback(
+    @Query('code') code: string | undefined,
+    @Query('state') state: string | undefined,
+    @Query('error') error: string | undefined,
+    @Res() response: Response,
+  ) {
+    response.redirect(
+      await this.authService.handleGoogleCallback({
+        code,
+        state,
+        error,
+      }),
+    );
   }
 
   @UseGuards(JwtAuthGuard)
