@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -6,6 +15,7 @@ import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
 import { OnboardingService } from './onboarding.service';
+import type { UploadedLogoFile } from './types/uploaded-logo-file.type';
 
 @UseGuards(JwtAuthGuard)
 @Controller({
@@ -14,6 +24,15 @@ import { OnboardingService } from './onboarding.service';
 })
 export class OnboardingController {
   constructor(private readonly onboardingService: OnboardingService) {}
+
+  @Post('company-logo')
+  @UseInterceptors(FileInterceptor('logo'))
+  uploadCompanyLogo(
+    @CurrentUser() user: AuthUser,
+    @UploadedFile() file: UploadedLogoFile | undefined,
+  ) {
+    return this.onboardingService.uploadCompanyLogo(user, file);
+  }
 
   @Get('plans')
   getPlans() {

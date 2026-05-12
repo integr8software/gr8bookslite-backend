@@ -82,6 +82,16 @@ export class SaveOnboardingCompanyDetailsDto {
   })
   logoMimeType?: string;
 
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  logoStoragePath?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  logoPublicUrl?: string;
+
   @IsString()
   @MinLength(5)
   address!: string;

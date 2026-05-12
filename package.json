@@ -21,6 +21,7 @@
     "db:migrate:create": "node scripts/run-with-env.cjs .env prisma migrate dev --create-only",
     "db:push:dev": "node scripts/run-with-env.cjs .env prisma db push",
     "db:seed:dev": "node scripts/run-with-env.cjs .env ts-node prisma/seed.ts",
+    "db:delete-user-owned-data:dev": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/deleteUserOwnedData.ts",
     "db:studio:dev": "node scripts/run-with-env.cjs .env prisma studio",
     "start": "nest start",
     "start:dev": "node scripts/run-with-env.cjs .env nest start --watch",

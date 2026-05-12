@@ -12,6 +12,8 @@ import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
 import { mapSubscriptionPlan } from './mappers/SubscriptionPlan.mapper';
+import { OnboardingLogoStorageService } from './services/onboarding-logo-storage.service';
+import type { UploadedLogoFile } from './types/uploaded-logo-file.type';
 import {
   detectCardBrand,
   getDigitsOnly,
@@ -23,14 +25,19 @@ import {
   isValidOnboardingDateValue,
 } from './utils/OnboardingDate.util';
 import {
+  buildCompanyLogoStoragePath,
   buildCompanyDisplayName,
   buildSlugBase,
   getTrialEndsAt,
 } from './utils/OnboardingFinalize.util';
+import { validateOnboardingLogoFile } from './utils/OnboardingLogoUpload.util';
 
 @Injectable()
 export class OnboardingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly onboardingLogoStorageService: OnboardingLogoStorageService,
+  ) {}
 
   async getPlans() {
     const plans = await this.prisma.subscriptionPlan.findMany({
@@ -90,6 +97,8 @@ export class OnboardingService {
               nonIndividualTypeOther: draft.organizationTypeOther,
               logoName: draft.logoFileName,
               logoMimeType: draft.logoMimeType,
+              logoStoragePath: draft.logoStoragePath,
+              logoPublicUrl: draft.logoPublicUrl,
               address: draft.address,
               tin: draft.tin,
               website: draft.website,
@@ -252,6 +261,8 @@ export class OnboardingService {
           : dto.nonIndividualTypeOther?.trim() || null,
         logoFileName: dto.logoName.trim(),
         logoMimeType: dto.logoMimeType?.trim() || null,
+        logoStoragePath: dto.logoStoragePath?.trim() || null,
+        logoPublicUrl: dto.logoPublicUrl?.trim() || null,
         address: dto.address.trim(),
         tin: dto.tin.trim(),
         website: dto.website?.trim() || null,
@@ -274,6 +285,8 @@ export class OnboardingService {
         nonIndividualTypeOther: updatedDraft.organizationTypeOther,
         logoName: updatedDraft.logoFileName,
         logoMimeType: updatedDraft.logoMimeType,
+        logoStoragePath: updatedDraft.logoStoragePath,
+        logoPublicUrl: updatedDraft.logoPublicUrl,
         address: updatedDraft.address,
         tin: updatedDraft.tin,
         website: updatedDraft.website,
@@ -330,6 +343,8 @@ export class OnboardingService {
           organizationTypeOther: draft.organizationTypeOther,
           logoFileName: draft.logoFileName,
           logoMimeType: draft.logoMimeType,
+          logoStoragePath: draft.logoStoragePath,
+          logoPublicUrl: draft.logoPublicUrl,
           address: draft.address,
           tin: draft.tin,
           website: draft.website,
@@ -339,6 +354,26 @@ export class OnboardingService {
           status: 'ACTIVE',
         },
       });
+
+      if (draft.logoStoragePath) {
+        const promotedLogo = await this.onboardingLogoStorageService.moveLogo({
+          sourcePath: draft.logoStoragePath,
+          destinationPath: buildCompanyLogoStoragePath(
+            company.id,
+            draft.logoStoragePath,
+          ),
+        });
+
+        await tx.company.update({
+          where: {
+            id: company.id,
+          },
+          data: {
+            logoStoragePath: promotedLogo.storagePath,
+            logoPublicUrl: promotedLogo.publicUrl,
+          },
+        });
+      }
 
       await tx.membership.create({
         data: {
@@ -394,6 +429,58 @@ export class OnboardingService {
       },
       nextStep: 'APP_READY',
       requiresReauthentication: true,
+    };
+  }
+
+  async uploadCompanyLogo(user: AuthUser, file: UploadedLogoFile | undefined) {
+    const validatedFile = validateOnboardingLogoFile(file);
+
+    const existingDraft = await this.prisma.userOnboardingDraft.findUnique({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        subscriptionPlanId: true,
+        billingCompletedAt: true,
+      },
+    });
+
+    if (
+      !existingDraft?.subscriptionPlanId ||
+      !existingDraft.billingCompletedAt
+    ) {
+      throw new BadRequestException(
+        'Complete plan selection and billing before uploading a logo.',
+      );
+    }
+
+    const upload = await this.onboardingLogoStorageService.uploadLogo({
+      userId: user.id,
+      fileName: validatedFile.originalname,
+      mimeType: validatedFile.mimetype,
+      fileBuffer: validatedFile.buffer,
+    });
+
+    await this.prisma.userOnboardingDraft.update({
+      where: {
+        userId: user.id,
+      },
+      data: {
+        logoFileName: upload.fileName,
+        logoMimeType: upload.mimeType,
+        logoStoragePath: upload.storagePath,
+        logoPublicUrl: upload.publicUrl,
+      },
+    });
+
+    return {
+      message: 'Company logo uploaded successfully.',
+      logo: {
+        fileName: upload.fileName,
+        mimeType: upload.mimeType,
+        storagePath: upload.storagePath,
+        publicUrl: upload.publicUrl,
+      },
     };
   }
 

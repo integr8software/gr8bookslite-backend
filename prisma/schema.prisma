@@ -42,6 +42,8 @@ model Company {
   organizationTypeOther String?               @map("organization_type_other")
   logoFileName          String?               @map("logo_file_name")
   logoMimeType          String?               @map("logo_mime_type")
+  logoStoragePath       String?               @map("logo_storage_path")
+  logoPublicUrl         String?               @map("logo_public_url")
   address               String?
   tin                   String?
   website               String?
@@ -266,6 +268,8 @@ model UserOnboardingDraft {
   organizationTypeOther  String?           @map("organization_type_other")
   logoFileName           String?           @map("logo_file_name")
   logoMimeType           String?           @map("logo_mime_type")
+  logoStoragePath        String?           @map("logo_storage_path")
+  logoPublicUrl          String?           @map("logo_public_url")
   address                String?
   tin                    String?
   website                String?

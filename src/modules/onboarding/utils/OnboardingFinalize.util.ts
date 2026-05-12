@@ -41,3 +41,12 @@ export function getTrialEndsAt(startDate: Date, trialDays: number) {
 
   return trialEndsAt;
 }
+
+export function buildCompanyLogoStoragePath(
+  companyId: number,
+  sourceStoragePath: string,
+) {
+  const fileName = sourceStoragePath.split('/').pop() || 'logo';
+
+  return `companies/company-${companyId}/logo/${fileName}`;
+}
