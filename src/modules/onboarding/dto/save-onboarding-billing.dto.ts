@@ -44,4 +44,10 @@ export class SaveOnboardingBillingDto {
   @IsString()
   @MinLength(5)
   billingAddress!: string;
+
+  @IsString()
+  @Matches(/^pm_[A-Za-z0-9]+$/, {
+    message: 'Enter a valid PayMongo payment method reference.',
+  })
+  paymentMethodId!: string;
 }

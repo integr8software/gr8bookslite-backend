@@ -215,8 +215,14 @@ This command:
 If you are using Neon for the first time, run your migration before starting the app:
 
 ```bash
-npm run db:migrate -- --name init
+npm run db:migrate:dev -- --name init
 ```
+
+## Prisma Workflow
+
+For the beginner-friendly Prisma command flow used in this repo, read:
+
+- [docs/PRISMA_WORKFLOW.md](/Users/integr8/Documents/GitHub/gr8lite-backend/docs/PRISMA_WORKFLOW.md)
 
 ## Useful Commands
 

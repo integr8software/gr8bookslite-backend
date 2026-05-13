@@ -1,13 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   MembershipRole,
   MembershipStatus,
   Prisma,
-  SubscriptionStatus,
 } from '@prisma/client';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import { BillingService } from '../billing/billing.service';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
@@ -28,14 +28,16 @@ import {
   buildCompanyLogoStoragePath,
   buildCompanyDisplayName,
   buildSlugBase,
-  getTrialEndsAt,
 } from './utils/OnboardingFinalize.util';
 import { validateOnboardingLogoFile } from './utils/OnboardingLogoUpload.util';
 
 @Injectable()
 export class OnboardingService {
+  private readonly logger = new Logger(OnboardingService.name);
+
   constructor(
     private readonly prisma: PrismaService,
+    private readonly billingService: BillingService,
     private readonly onboardingLogoStorageService: OnboardingLogoStorageService,
   ) {}
 
@@ -166,16 +168,54 @@ export class OnboardingService {
       },
     });
 
-    if (!existingDraft?.subscriptionPlanId || !existingDraft.billingCycle) {
+    if (
+      !existingDraft?.subscriptionPlanId ||
+      !existingDraft.billingCycle ||
+      !existingDraft.subscriptionPlan
+    ) {
       throw new BadRequestException(
         'Choose a subscription plan before saving billing details.',
       );
     }
 
+    if (!existingDraft.companyDetailsCompletedAt || !existingDraft.provisionedCompanyId) {
+      throw new BadRequestException(
+        'Complete company details before setting up billing.',
+      );
+    }
+
     this.validateBillingInput(dto);
+    const normalizedEmail = normalizeEmail(dto.billingEmail) as string;
+
+    const preparedSubscription =
+      await this.billingService.prepareCompanySubscription({
+        companyId: existingDraft.provisionedCompanyId,
+        ownerUserId: user.id,
+        planCode: existingDraft.subscriptionPlan.code,
+        billingCycle: existingDraft.billingCycle,
+        billingEmail: normalizedEmail,
+      });
 
     const cardDigits = getDigitsOnly(dto.cardNumber);
-    const normalizedEmail = normalizeEmail(dto.billingEmail) as string;
+    const paymentSetupState = preparedSubscription.pendingProviderActivation
+      ? 'pending_provider_activation'
+      : 'ready_for_confirmation';
+
+    const paymentResult = preparedSubscription.pendingProviderActivation
+      ? await this.billingService.recordPendingPaymentSetup({
+          companyId: existingDraft.provisionedCompanyId,
+          subscriptionId: preparedSubscription.subscription.id,
+          paymentMethodId: dto.paymentMethodId.trim(),
+          brand: detectCardBrand(cardDigits),
+          last4: cardDigits.slice(-4),
+          expMonth: dto.expiryMonth,
+          expYear: dto.expiryYear,
+        })
+      : await this.billingService.attachPaymentMethodForCompany({
+          companyId: existingDraft.provisionedCompanyId,
+          subscriptionId: preparedSubscription.subscription.id,
+          paymentMethodId: dto.paymentMethodId.trim(),
+        });
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({
       where: {
@@ -189,7 +229,7 @@ export class OnboardingService {
         cardBrand: detectCardBrand(cardDigits),
         cardExpiryMonth: dto.expiryMonth,
         cardExpiryYear: dto.expiryYear,
-        paymentMethodReference: `manual:${user.id}:${Date.now()}`,
+        paymentMethodReference: dto.paymentMethodId.trim(),
         billingCompletedAt: new Date(),
       },
       include: {
@@ -214,7 +254,12 @@ export class OnboardingService {
           : null,
         trialDays: updatedDraft.subscriptionPlan?.trialDays ?? 15,
       },
-      nextStep: 'COMPANY_DETAILS',
+      paymentIntent:
+        'paymentIntent' in paymentResult ? paymentResult.paymentIntent : undefined,
+      pendingProviderActivation:
+        preparedSubscription.pendingProviderActivation ?? false,
+      paymentSetupState,
+      nextStep: 'REVIEW_DETAILS',
     };
   }
 
@@ -228,12 +273,9 @@ export class OnboardingService {
       },
     });
 
-    if (
-      !existingDraft?.subscriptionPlanId ||
-      !existingDraft.billingCompletedAt
-    ) {
+    if (!existingDraft?.subscriptionPlanId || !existingDraft.billingCycle) {
       throw new BadRequestException(
-        'Complete plan selection and billing before saving company details.',
+        'Complete plan selection before saving company details.',
       );
     }
 
@@ -242,6 +284,78 @@ export class OnboardingService {
     const reportStartDate = new Date(`${dto.reportStartDate}T00:00:00.000Z`);
     const reportEndDate = new Date(`${dto.reportEndDate}T00:00:00.000Z`);
     const isIndividual = dto.taxpayerType === 'individual';
+
+    const companyName = buildCompanyDisplayName({
+      taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
+      companyName: dto.companyName ?? null,
+      ownerFirstName: dto.firstName ?? null,
+      ownerLastName: dto.lastName ?? null,
+    });
+
+    const legalName = isIndividual
+      ? companyName
+      : (dto.companyName?.trim() ?? companyName);
+    const slug = existingDraft.provisionedCompanyId
+      ? null
+      : await this.generateUniqueCompanySlug(this.prisma, companyName);
+
+    const provisionedCompany = existingDraft.provisionedCompanyId
+      ? await this.prisma.company.update({
+          where: { id: existingDraft.provisionedCompanyId },
+          data: {
+            name: companyName,
+            legalName,
+            taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
+            ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
+            ownerFirstName: isIndividual ? (dto.firstName?.trim() ?? null) : null,
+            ownerMiddleName: isIndividual ? dto.middleName?.trim() || null : null,
+            organizationType: isIndividual
+              ? null
+              : (dto.nonIndividualType?.trim() ?? null),
+            organizationTypeOther: isIndividual
+              ? null
+              : dto.nonIndividualTypeOther?.trim() || null,
+            logoFileName: dto.logoName.trim(),
+            logoMimeType: dto.logoMimeType?.trim() || null,
+            logoStoragePath: dto.logoStoragePath?.trim() || null,
+            logoPublicUrl: dto.logoPublicUrl?.trim() || null,
+            address: dto.address.trim(),
+            tin: dto.tin.trim(),
+            website: dto.website?.trim() || null,
+            contactNumber: dto.contactNumber.trim(),
+            reportStartDate,
+            reportEndDate,
+            status: 'PROVISIONING',
+          },
+        })
+      : await this.prisma.company.create({
+          data: {
+            name: companyName,
+            slug: slug!,
+            legalName,
+            taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
+            ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
+            ownerFirstName: isIndividual ? (dto.firstName?.trim() ?? null) : null,
+            ownerMiddleName: isIndividual ? dto.middleName?.trim() || null : null,
+            organizationType: isIndividual
+              ? null
+              : (dto.nonIndividualType?.trim() ?? null),
+            organizationTypeOther: isIndividual
+              ? null
+              : dto.nonIndividualTypeOther?.trim() || null,
+            logoFileName: dto.logoName.trim(),
+            logoMimeType: dto.logoMimeType?.trim() || null,
+            logoStoragePath: dto.logoStoragePath?.trim() || null,
+            logoPublicUrl: dto.logoPublicUrl?.trim() || null,
+            address: dto.address.trim(),
+            tin: dto.tin.trim(),
+            website: dto.website?.trim() || null,
+            contactNumber: dto.contactNumber.trim(),
+            reportStartDate,
+            reportEndDate,
+            status: 'PROVISIONING',
+          },
+        });
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({
       where: {
@@ -269,6 +383,7 @@ export class OnboardingService {
         contactNumber: dto.contactNumber.trim(),
         reportStartDate,
         reportEndDate,
+        provisionedCompanyId: provisionedCompany.id,
         companyDetailsCompletedAt: new Date(),
       },
     });
@@ -294,7 +409,7 @@ export class OnboardingService {
         reportStartDate: dto.reportStartDate,
         reportEndDate: dto.reportEndDate,
       },
-      nextStep: 'REVIEW_DETAILS',
+      nextStep: 'BILLING',
     };
   }
 
@@ -315,68 +430,34 @@ export class OnboardingService {
     }
 
     this.validateCompletionDraft(draft);
-    const subscriptionPlan = draft.subscriptionPlan;
-
     const completedAt = new Date();
-    const result = await this.prisma.$transaction(async (tx) => {
-      const companyName = buildCompanyDisplayName({
-        taxpayerType: draft.taxpayerType as 'INDIVIDUAL' | 'NON_INDIVIDUAL',
-        companyName: draft.companyName,
-        ownerFirstName: draft.ownerFirstName,
-        ownerLastName: draft.ownerLastName,
-      });
-      const slug = await this.generateUniqueCompanySlug(tx, companyName);
+    const provisionedCompanyId = draft.provisionedCompanyId!;
+    const shouldPromoteLogo = Boolean(
+      draft.logoStoragePath && draft.logoStoragePath.startsWith('onboarding/'),
+    );
 
-      const company = await tx.company.create({
+    const result = await this.prisma.$transaction(async (tx) => {
+      const company = await tx.company.update({
+        where: {
+          id: provisionedCompanyId,
+        },
         data: {
-          name: companyName,
-          slug,
-          legalName:
-            draft.taxpayerType === 'NON_INDIVIDUAL'
-              ? (draft.companyName?.trim() ?? companyName)
-              : companyName,
-          taxpayerType: draft.taxpayerType,
-          ownerLastName: draft.ownerLastName,
-          ownerFirstName: draft.ownerFirstName,
-          ownerMiddleName: draft.ownerMiddleName,
-          organizationType: draft.organizationType,
-          organizationTypeOther: draft.organizationTypeOther,
-          logoFileName: draft.logoFileName,
-          logoMimeType: draft.logoMimeType,
-          logoStoragePath: draft.logoStoragePath,
-          logoPublicUrl: draft.logoPublicUrl,
-          address: draft.address,
-          tin: draft.tin,
-          website: draft.website,
-          contactNumber: draft.contactNumber,
-          reportStartDate: draft.reportStartDate,
-          reportEndDate: draft.reportEndDate,
           status: 'ACTIVE',
         },
       });
 
-      if (draft.logoStoragePath) {
-        const promotedLogo = await this.onboardingLogoStorageService.moveLogo({
-          sourcePath: draft.logoStoragePath,
-          destinationPath: buildCompanyLogoStoragePath(
-            company.id,
-            draft.logoStoragePath,
-          ),
-        });
-
-        await tx.company.update({
-          where: {
-            id: company.id,
+      await tx.membership.upsert({
+        where: {
+          userId_companyId: {
+            userId: user.id,
+            companyId: company.id,
           },
-          data: {
-            logoStoragePath: promotedLogo.storagePath,
-            logoPublicUrl: promotedLogo.publicUrl,
-          },
-        });
-      }
-
-      await tx.membership.create({
-        data: {
+        },
+        update: {
+          status: MembershipStatus.ACTIVE,
+          joinedAt: completedAt,
+        },
+        create: {
           userId: user.id,
           companyId: company.id,
           role: MembershipRole.ADMIN,
@@ -385,19 +466,21 @@ export class OnboardingService {
         },
       });
 
-      const subscription = await tx.companySubscription.create({
-        data: {
+      const subscription = await tx.companySubscription.findFirst({
+        where: {
           companyId: company.id,
-          subscriptionPlanId: draft.subscriptionPlanId!,
-          billingCycle: draft.billingCycle!,
-          status: SubscriptionStatus.TRIALING,
-          startsAt: completedAt,
-          trialEndsAt: getTrialEndsAt(completedAt, subscriptionPlan.trialDays),
         },
         include: {
           plan: true,
         },
+        orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
       });
+
+      if (!subscription) {
+        throw new BadRequestException(
+          'Complete billing setup before finalizing onboarding.',
+        );
+      }
 
       await tx.userOnboardingDraft.delete({
         where: {
@@ -410,6 +493,32 @@ export class OnboardingService {
         subscription,
       };
     });
+
+    if (shouldPromoteLogo && draft.logoStoragePath) {
+      try {
+        const promotedLogo = await this.onboardingLogoStorageService.moveLogo({
+          sourcePath: draft.logoStoragePath,
+          destinationPath: buildCompanyLogoStoragePath(
+            result.company.id,
+            draft.logoStoragePath,
+          ),
+        });
+
+        await this.prisma.company.update({
+          where: {
+            id: result.company.id,
+          },
+          data: {
+            logoStoragePath: promotedLogo.storagePath,
+            logoPublicUrl: promotedLogo.publicUrl,
+          },
+        });
+      } catch (error) {
+        this.logger.warn(
+          `Unable to promote onboarding logo for company ${result.company.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+      }
+    }
 
     return {
       message: 'Onboarding completed successfully.',
@@ -446,11 +555,10 @@ export class OnboardingService {
     });
 
     if (
-      !existingDraft?.subscriptionPlanId ||
-      !existingDraft.billingCompletedAt
+      !existingDraft?.subscriptionPlanId
     ) {
       throw new BadRequestException(
-        'Complete plan selection and billing before uploading a logo.',
+        'Complete plan selection before uploading a logo.',
       );
     }
 
@@ -549,7 +657,11 @@ export class OnboardingService {
       );
     }
 
-    if (!draft.companyDetailsCompletedAt || !draft.taxpayerType) {
+    if (
+      !draft.companyDetailsCompletedAt ||
+      !draft.taxpayerType ||
+      !draft.provisionedCompanyId
+    ) {
       throw new BadRequestException(
         'Complete company details before finalizing onboarding.',
       );
@@ -557,7 +669,7 @@ export class OnboardingService {
   }
 
   private async generateUniqueCompanySlug(
-    tx: Prisma.TransactionClient,
+    tx: Pick<PrismaService, 'company'> | Prisma.TransactionClient,
     companyName: string,
   ) {
     const baseSlug = buildSlugBase(companyName);
