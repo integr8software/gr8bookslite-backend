@@ -641,10 +641,13 @@ export class AuthService {
     const normalizedEmail = normalizeEmail(dto.email) as string;
     const user = await this.usersService.findByEmail(normalizedEmail);
 
+    if (!user) {
+      throw new BadRequestException('Email is not registered.');
+    }
+
     if (
-      !user ||
-      (user.status !== UserStatus.ACTIVE &&
-        user.status !== UserStatus.PENDING_VERIFICATION)
+      user.status !== UserStatus.ACTIVE &&
+      user.status !== UserStatus.PENDING_VERIFICATION
     ) {
       return {
         message:
@@ -689,8 +692,7 @@ export class AuthService {
     await this.authMailService.sendPasswordResetCode(user.email, resetCode);
 
     return {
-      message:
-        'If the email is registered, a password reset code will be sent.',
+      message: 'A password reset code was sent to your email.',
       maskedEmail: this.otpService.maskEmail(user.email),
     };
   }
