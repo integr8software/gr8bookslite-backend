@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// =========================================================
+// Core Auth
+// =========================================================
+
 model User {
   id                 Int                     @id @default(autoincrement())
   email              String                  @unique
@@ -28,6 +32,10 @@ model User {
 
   @@map("users")
 }
+
+// =========================================================
+// Company & Access Control
+// =========================================================
 
 model Company {
   id                    Int                    @id @default(autoincrement())
@@ -61,10 +69,39 @@ model Company {
   memberships           Membership[]
   roles                 CompanyRole[]
   enabledModules        CompanyModule[]
+  units                 CompanyUnit[]
   auditLogs             AuditLog[]
   onboardingDrafts      UserOnboardingDraft[]   @relation("ProvisionedOnboardingCompany")
 
   @@map("companies")
+}
+
+model CompanyUnit {
+  id                     Int             @id @default(autoincrement())
+  companyId              Int             @map("company_id")
+  parentUnitId           Int?            @map("parent_unit_id")
+  type                   CompanyUnitType
+  code                   String?
+  name                   String
+  displayName            String?         @map("display_name")
+  tin                    String?
+  address                String?
+  contactNumber          String?         @map("contact_number")
+  email                  String?
+  isActive               Boolean         @default(true) @map("is_active")
+  inheritsCompanyProfile Boolean         @default(false) @map("inherits_company_profile")
+  canTransactSales       Boolean         @default(false) @map("can_transact_sales")
+  canHoldInventory       Boolean         @default(false) @map("can_hold_inventory")
+  createdAt              DateTime        @default(now()) @map("created_at")
+  updatedAt              DateTime        @updatedAt @map("updated_at")
+  company                Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parentUnit             CompanyUnit?    @relation("CompanyUnitHierarchy", fields: [parentUnitId], references: [id], onDelete: SetNull)
+  childUnits             CompanyUnit[]   @relation("CompanyUnitHierarchy")
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@index([parentUnitId])
+  @@map("company_units")
 }
 
 model Membership {
@@ -236,6 +273,10 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+// =========================================================
+// Billing
+// =========================================================
+
 model SubscriptionPlan {
   id                      Int                   @id @default(autoincrement())
   code                    String                @unique
@@ -259,6 +300,10 @@ model SubscriptionPlan {
 
   @@map("subscription_plans")
 }
+
+// =========================================================
+// Onboarding
+// =========================================================
 
 /// Temporary pre-company onboarding storage.
 /// This does not represent an active subscription owner.
@@ -465,6 +510,10 @@ model EmailVerificationCode {
   @@map("email_verification_codes")
 }
 
+// =========================================================
+// Enums
+// =========================================================
+
 enum SystemRole {
   SUPER_ADMIN
   STANDARD
@@ -492,6 +541,12 @@ enum AccessScopeLevel {
   COMPANY
   SATELLITE
   BRANCH
+}
+
+enum CompanyUnitType {
+  HEAD_OFFICE
+  BRANCH
+  SATELLITE
 }
 
 enum UserStatus {
