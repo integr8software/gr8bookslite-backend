@@ -343,6 +343,12 @@ export class PaymongoWebhookService {
     signatureParts: { t: string; te: string; li: string },
     isLiveMode: boolean,
   ) {
+    const timestamp = Number(signatureParts.t);
+
+    if (!Number.isFinite(timestamp)) {
+      throw new BadRequestException('Invalid PayMongo webhook signature timestamp.');
+    }
+
     const expectedSignature = crypto
       .createHmac('sha256', this.paymongoService.getWebhookSecret())
       .update(`${signatureParts.t}.${rawPayload}`)
@@ -354,10 +360,9 @@ export class PaymongoWebhookService {
       throw new BadRequestException('Invalid PayMongo webhook signature.');
     }
 
-    const timestamp = Number(signatureParts.t);
     const ageInSeconds = Math.abs(Date.now() - timestamp * 1000) / 1000;
 
-    if (Number.isFinite(timestamp) && ageInSeconds > this.paymongoService.getWebhookToleranceInSeconds()) {
+    if (ageInSeconds > this.paymongoService.getWebhookToleranceInSeconds()) {
       throw new BadRequestException('PayMongo webhook signature timestamp is outside the tolerance window.');
     }
   }
@@ -372,6 +377,10 @@ export class PaymongoWebhookService {
 
     if (!parts.t || parts.te === undefined || parts.li === undefined) {
       throw new BadRequestException('Invalid PayMongo signature header format.');
+    }
+
+    if (!/^\d+$/.test(parts.t)) {
+      throw new BadRequestException('Invalid PayMongo signature header timestamp.');
     }
 
     return {

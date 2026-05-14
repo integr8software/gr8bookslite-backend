@@ -20,7 +20,25 @@ import { getSubscriptionAccessDenialReason } from '../utils/subscription-access.
 
 type MembershipAccessRecord = Prisma.MembershipGetPayload<{
   include: {
-    company: true;
+    company: {
+      include: {
+        enabledModules: {
+          where: {
+            isEnabled: true;
+            module: {
+              isActive: true;
+            };
+          };
+          select: {
+            module: {
+              select: {
+                code: true;
+              };
+            };
+          };
+        };
+      };
+    };
     companyRole: {
       include: {
         permissions: {
@@ -101,7 +119,9 @@ export class AccessControlService {
 
     await this.assertMembershipIsUsable(membership);
 
-    const enabledModules = await this.getEnabledModules(membership.companyId);
+    const enabledModules = membership.company.enabledModules.map(
+      (item) => item.module.code,
+    );
     const permissions = this.buildEffectivePermissions(
       membership,
       enabledModules,
@@ -167,7 +187,25 @@ export class AccessControlService {
         },
       },
       include: {
-        company: true,
+        company: {
+          include: {
+            enabledModules: {
+              where: {
+                isEnabled: true,
+                module: {
+                  isActive: true,
+                },
+              },
+              select: {
+                module: {
+                  select: {
+                    code: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         companyRole: {
           include: {
             permissions: {
@@ -238,28 +276,6 @@ export class AccessControlService {
       throw new UnauthorizedException(denialReason);
     }
   }
-
-  private async getEnabledModules(companyId: number): Promise<string[]> {
-    const modules = await this.prisma.companyModule.findMany({
-      where: {
-        companyId,
-        isEnabled: true,
-        module: {
-          isActive: true,
-        },
-      },
-      select: {
-        module: {
-          select: {
-            code: true,
-          },
-        },
-      },
-    });
-
-    return modules.map((item) => item.module.code);
-  }
-
   private buildEffectivePermissions(
     membership: MembershipAccessRecord,
     enabledModules: string[],
