@@ -15,11 +15,6 @@ import { mapSubscriptionPlan } from './mappers/SubscriptionPlan.mapper';
 import { OnboardingLogoStorageService } from './services/onboarding-logo-storage.service';
 import type { UploadedLogoFile } from './types/uploaded-logo-file.type';
 import {
-  detectCardBrand,
-  getDigitsOnly,
-  passesLuhnCheck,
-} from './utils/BillingCard.util';
-import {
   getOnboardingDateParts,
   getSyncedReportEndDate,
   isValidOnboardingDateValue,
@@ -184,7 +179,6 @@ export class OnboardingService {
       );
     }
 
-    this.validateBillingInput(dto);
     const normalizedEmail = normalizeEmail(dto.billingEmail) as string;
 
     const preparedSubscription =
@@ -196,7 +190,6 @@ export class OnboardingService {
         billingEmail: normalizedEmail,
       });
 
-    const cardDigits = getDigitsOnly(dto.cardNumber);
     const paymentSetupState = preparedSubscription.pendingProviderActivation
       ? 'pending_provider_activation'
       : 'ready_for_confirmation';
@@ -206,8 +199,8 @@ export class OnboardingService {
           companyId: existingDraft.provisionedCompanyId,
           subscriptionId: preparedSubscription.subscription.id,
           paymentMethodId: dto.paymentMethodId.trim(),
-          brand: detectCardBrand(cardDigits),
-          last4: cardDigits.slice(-4),
+          brand: dto.cardBrand.trim(),
+          last4: dto.cardLast4,
           expMonth: dto.expiryMonth,
           expYear: dto.expiryYear,
         })
@@ -225,8 +218,8 @@ export class OnboardingService {
         cardholderName: dto.cardholderName.trim(),
         billingEmail: normalizedEmail,
         billingAddress: dto.billingAddress.trim(),
-        cardLast4: cardDigits.slice(-4),
-        cardBrand: detectCardBrand(cardDigits),
+        cardLast4: dto.cardLast4,
+        cardBrand: dto.cardBrand.trim(),
         cardExpiryMonth: dto.expiryMonth,
         cardExpiryYear: dto.expiryYear,
         paymentMethodReference: dto.paymentMethodId.trim(),
@@ -590,29 +583,6 @@ export class OnboardingService {
         publicUrl: upload.publicUrl,
       },
     };
-  }
-
-  private validateBillingInput(dto: SaveOnboardingBillingDto) {
-    const cardNumber = getDigitsOnly(dto.cardNumber);
-
-    if (cardNumber.length < 12 || cardNumber.length > 19) {
-      throw new BadRequestException('Enter a valid card number.');
-    }
-
-    if (!passesLuhnCheck(cardNumber)) {
-      throw new BadRequestException('Enter a valid card number.');
-    }
-
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-
-    if (
-      dto.expiryYear < currentYear ||
-      (dto.expiryYear === currentYear && dto.expiryMonth < currentMonth)
-    ) {
-      throw new BadRequestException('Card expiry date cannot be in the past.');
-    }
   }
 
   private validateCompanyDetailsInput(dto: SaveOnboardingCompanyDetailsDto) {

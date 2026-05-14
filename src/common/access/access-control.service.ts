@@ -8,7 +8,6 @@ import {
   MembershipRole,
   MembershipStatus,
   Prisma,
-  SubscriptionStatus,
   SystemRole,
   UserStatus,
 } from '@prisma/client';
@@ -17,6 +16,7 @@ import { PermissionAction } from '../enums/permission-action.enum';
 import { AuthUser } from '../interfaces/auth-user.interface';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { PrismaService } from '../../prisma/prisma.service';
+import { getSubscriptionAccessDenialReason } from '../utils/subscription-access.util';
 
 type MembershipAccessRecord = Prisma.MembershipGetPayload<{
   include: {
@@ -229,31 +229,13 @@ export class AccessControlService {
       return;
     }
 
-    const now = Date.now();
+    const denialReason = getSubscriptionAccessDenialReason(
+      latestSubscription,
+      new Date(),
+    );
 
-    if (
-      latestSubscription.status === SubscriptionStatus.CANCELED ||
-      latestSubscription.status === SubscriptionStatus.EXPIRED
-    ) {
-      throw new UnauthorizedException(
-        'This company subscription is no longer active.',
-      );
-    }
-
-    if (
-      latestSubscription.status === SubscriptionStatus.TRIALING &&
-      latestSubscription.trialEndsAt &&
-      latestSubscription.trialEndsAt.getTime() < now
-    ) {
-      throw new UnauthorizedException('This company trial has expired.');
-    }
-
-    if (
-      latestSubscription.status === SubscriptionStatus.ACTIVE &&
-      latestSubscription.endsAt &&
-      latestSubscription.endsAt.getTime() < now
-    ) {
-      throw new UnauthorizedException('This company subscription has expired.');
+    if (denialReason) {
+      throw new UnauthorizedException(denialReason);
     }
   }
 

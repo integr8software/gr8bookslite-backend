@@ -4,7 +4,6 @@ type CompanySubscriptionAccessRecord = {
   status: SubscriptionStatus;
   trialEndsAt: Date | null;
   endsAt: Date | null;
-  nextBillingAt?: Date | null;
 };
 
 export function getSubscriptionAccessDenialReason(
@@ -30,7 +29,7 @@ export function getSubscriptionAccessDenialReason(
       return null;
 
     case SubscriptionStatus.PAST_DUE:
-      return null;
+      return 'This company subscription is past due.';
 
     case SubscriptionStatus.INCOMPLETE:
       return 'This company subscription is awaiting initial payment.';

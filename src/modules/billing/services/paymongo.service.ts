@@ -98,7 +98,28 @@ export class PaymongoService {
   }
 
   async retrieveCustomerByEmail(email: string) {
-    return this.request('GET', `/customers?email=${encodeURIComponent(email)}`);
+    const payload = await this.request(
+      'GET',
+      `/customers?email=${encodeURIComponent(email)}`,
+    );
+
+    if (!payload) {
+      return null;
+    }
+
+    const data = payload.data;
+
+    if (Array.isArray(data)) {
+      const firstCustomer = data.find(
+        (entry) => entry && typeof entry === 'object' && !Array.isArray(entry),
+      );
+
+      return (firstCustomer as Record<string, unknown> | undefined) ?? null;
+    }
+
+    return data && typeof data === 'object' && !Array.isArray(data)
+      ? (data as Record<string, unknown>)
+      : null;
   }
 
   async cancelSubscription(subscriptionId: string) {
@@ -158,16 +179,17 @@ export class PaymongoService {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const payload = (await response.json().catch(() => null)) as
-      | Record<string, unknown>
-      | null;
+    const payload = (await response.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
 
     if (!response.ok) {
-      const message = this.getErrorMessage(payload) ?? 'PayMongo request failed.';
+      const message =
+        this.getErrorMessage(payload) ?? 'PayMongo request failed.';
+      const errorContext = this.getErrorLogContext(response.status, payload);
       this.logger.warn(
-        `${method} ${path} failed: ${message}${
-          payload ? ` | payload=${JSON.stringify(payload)}` : ''
-        }`,
+        `${method} ${path} failed: ${message} | ${JSON.stringify(errorContext)}`,
       );
       throw new BadGatewayException(message);
     }
@@ -207,5 +229,34 @@ export class PaymongoService {
     }
 
     return null;
+  }
+
+  private getErrorLogContext(
+    status: number,
+    payload: Record<string, unknown> | null,
+  ) {
+    const errors = Array.isArray(payload?.errors) ? payload.errors : [];
+    const firstError =
+      errors.length > 0
+        ? (errors[0] as {
+            code?: string;
+            title?: string;
+            detail?: string;
+            source?: {
+              pointer?: string;
+              attribute?: string;
+            };
+          })
+        : null;
+
+    return {
+      status,
+      errorCount: errors.length,
+      code: firstError?.code ?? null,
+      title: firstError?.title ?? null,
+      detail: firstError?.detail ?? null,
+      source:
+        firstError?.source?.pointer ?? firstError?.source?.attribute ?? null,
+    };
   }
 }

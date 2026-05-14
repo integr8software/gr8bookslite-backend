@@ -20,10 +20,14 @@ export class SaveOnboardingBillingDto {
   billingEmail!: string;
 
   @IsString()
-  @Matches(/^\d[\d -]*\d$|^\d$/, {
-    message: 'Card number can only contain digits, spaces, and hyphens.',
+  @Matches(/^\d{4}$/, {
+    message: 'Card last4 must contain exactly 4 digits.',
   })
-  cardNumber!: string;
+  cardLast4!: string;
+
+  @IsString()
+  @MinLength(2)
+  cardBrand!: string;
 
   @IsInt()
   @Min(1)
@@ -34,12 +38,6 @@ export class SaveOnboardingBillingDto {
   @Min(2000)
   @Max(9999)
   expiryYear!: number;
-
-  @IsString()
-  @Matches(/^\d{3,4}$/, {
-    message: 'Enter a valid CVC.',
-  })
-  cvc!: string;
 
   @IsString()
   @MinLength(5)

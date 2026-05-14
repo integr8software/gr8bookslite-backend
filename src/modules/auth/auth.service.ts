@@ -253,7 +253,7 @@ export class AuthService {
     const user = await this.usersService.findByEmail(normalizedEmail);
 
     if (!user) {
-      throw new BadRequestException('Password reset request is invalid.');
+      throw new BadRequestException('Reset code is invalid.');
     }
 
     const verification = await this.getLatestActiveVerification(
@@ -263,7 +263,7 @@ export class AuthService {
     );
 
     if (!verification) {
-      throw new BadRequestException('No active reset code was found.');
+      throw new BadRequestException('Reset code is invalid.');
     }
 
     if (verification.expiresAt.getTime() < Date.now()) {
@@ -642,7 +642,10 @@ export class AuthService {
     const user = await this.usersService.findByEmail(normalizedEmail);
 
     if (!user) {
-      throw new BadRequestException('Email is not registered.');
+      return {
+        message:
+          'If the email is registered, a password reset code will be sent.',
+      };
     }
 
     if (
@@ -692,8 +695,8 @@ export class AuthService {
     await this.authMailService.sendPasswordResetCode(user.email, resetCode);
 
     return {
-      message: 'A password reset code was sent to your email.',
-      maskedEmail: this.otpService.maskEmail(user.email),
+      message:
+        'If the email is registered, a password reset code will be sent.',
     };
   }
 

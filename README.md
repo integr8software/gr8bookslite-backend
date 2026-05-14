@@ -169,6 +169,7 @@ Create a `.env` file based on `.env.example`.
 # Runtime
 PORT=3000
 NODE_ENV="development"
+CORS_ALLOWED_ORIGINS="http://localhost:3001"
 
 # Neon pooled connection string for the app/runtime
 DATABASE_URL="postgresql://<user>:<password>@<endpoint>-pooler.<region>.aws.neon.tech/<database>?sslmode=require&channel_binding=require"
