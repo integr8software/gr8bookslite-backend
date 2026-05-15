@@ -1,10 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import {
   MembershipRole,
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
+import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
+import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
@@ -34,6 +37,7 @@ export class OnboardingService {
     private readonly prisma: PrismaService,
     private readonly billingService: BillingService,
     private readonly onboardingLogoStorageService: OnboardingLogoStorageService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async getPlans() {
@@ -514,6 +518,14 @@ export class OnboardingService {
     }
 
     return {
+      accessToken: this.jwtService.sign({
+        sub: user.id,
+        companyId: result.company.id,
+        role: AppRole.ADMIN,
+        systemRole: user.systemRole,
+        membershipRole: MembershipRole.ADMIN,
+        companyRoleId: null,
+      } satisfies JwtPayload),
       message: 'Onboarding completed successfully.',
       company: {
         id: result.company.id,
@@ -530,7 +542,7 @@ export class OnboardingService {
         trialEndsAt: result.subscription.trialEndsAt,
       },
       nextStep: 'APP_READY',
-      requiresReauthentication: true,
+      requiresReauthentication: false,
     };
   }
 
