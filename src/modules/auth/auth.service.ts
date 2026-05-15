@@ -378,37 +378,19 @@ export class AuthService {
       return this.buildAuthenticatedResponse(user, dto.companyId ?? null);
     }
 
-    const activeMemberships = user.memberships.filter(
-      (membership) => membership.status === MembershipStatus.ACTIVE,
-    );
+    const activeMemberships = this.getActiveMemberships(user);
 
     if (activeMemberships.length === 0) {
       return this.buildAuthenticatedResponse(user, null);
     }
 
-    if (dto.companyId) {
-      const membership = user.memberships.find(
-        (item) => item.companyId === dto.companyId,
-      );
+    const resolvedCompanyId = this.resolveDefaultCompanyContext(
+      user,
+      dto.companyId ?? null,
+    );
 
-      if (!membership) {
-        throw new UnauthorizedException('You do not belong to this company.');
-      }
-
-      if (membership.status !== MembershipStatus.ACTIVE) {
-        throw new UnauthorizedException(
-          'Your company membership is not active.',
-        );
-      }
-
-      return this.buildAuthenticatedResponse(user, membership.companyId);
-    }
-
-    if (activeMemberships.length === 1) {
-      return this.buildAuthenticatedResponse(
-        user,
-        activeMemberships[0].companyId,
-      );
+    if (resolvedCompanyId != null) {
+      return this.buildAuthenticatedResponse(user, resolvedCompanyId);
     }
 
     const onboarding = this.buildOnboardingState(user, null);
@@ -418,11 +400,6 @@ export class AuthService {
       user: sanitizeUser(user),
       companies: this.mapCompanies(user),
       onboarding,
-      requiresCompanySetup: onboarding.requiresCompanySetup,
-      hasCompany: onboarding.hasCompany,
-      hasActiveCompany: onboarding.hasActiveCompany,
-      hasActiveCompanyContext: onboarding.hasActiveCompanyContext,
-      canManageCompany: onboarding.canManageCompany,
     };
   }
 
@@ -502,21 +479,16 @@ export class AuthService {
             companyRoleId: user.companyRoleId,
           });
 
-    const onboarding = this.buildOnboardingStateFromMemberships(
-      memberships,
-      user.companyId,
-    );
+    const onboarding =
+      user.systemRole === SystemRole.SUPER_ADMIN
+        ? this.buildSuperAdminOnboardingState()
+        : this.buildOnboardingStateFromMemberships(memberships, user.companyId);
 
     return {
       user: profileUser,
       activeCompanyId: user.companyId,
       activeAccess,
       onboarding,
-      requiresCompanySetup: onboarding.requiresCompanySetup,
-      hasCompany: onboarding.hasCompany,
-      hasActiveCompany: onboarding.hasActiveCompany,
-      hasActiveCompanyContext: onboarding.hasActiveCompanyContext,
-      canManageCompany: onboarding.canManageCompany,
       companies: memberships.map((membership) => ({
         companyId: membership.companyId,
         companyName: membership.company.name,
@@ -560,11 +532,6 @@ export class AuthService {
       role: accessContext.role,
       access: resolvedAccess,
       onboarding,
-      requiresCompanySetup: onboarding.requiresCompanySetup,
-      hasCompany: onboarding.hasCompany,
-      hasActiveCompany: onboarding.hasActiveCompany,
-      hasActiveCompanyContext: onboarding.hasActiveCompanyContext,
-      canManageCompany: onboarding.canManageCompany,
       companies: this.mapCompanies(user),
     };
   }
@@ -635,18 +602,54 @@ export class AuthService {
       return this.buildAuthenticatedResponse(user, null);
     }
 
-    const activeMemberships = user.memberships.filter(
-      (membership) => membership.status === MembershipStatus.ACTIVE,
-    );
+    const resolvedCompanyId = this.resolveDefaultCompanyContext(user, null);
 
-    if (activeMemberships.length === 1) {
-      return this.buildAuthenticatedResponse(
-        user,
-        activeMemberships[0].companyId,
-      );
+    if (resolvedCompanyId != null) {
+      return this.buildAuthenticatedResponse(user, resolvedCompanyId);
     }
 
     return this.buildAuthenticatedResponse(user, null);
+  }
+
+  private getActiveMemberships(user: UserWithMemberships) {
+    return user.memberships.filter(
+      (membership) => membership.status === MembershipStatus.ACTIVE,
+    );
+  }
+
+  private resolveDefaultCompanyContext(
+    user: UserWithMemberships,
+    requestedCompanyId: number | null,
+  ) {
+    if (user.systemRole === SystemRole.SUPER_ADMIN) {
+      return requestedCompanyId;
+    }
+
+    const activeMemberships = this.getActiveMemberships(user);
+
+    if (requestedCompanyId != null) {
+      const membership = user.memberships.find(
+        (item) => item.companyId === requestedCompanyId,
+      );
+
+      if (!membership) {
+        throw new UnauthorizedException('You do not belong to this company.');
+      }
+
+      if (membership.status !== MembershipStatus.ACTIVE) {
+        throw new UnauthorizedException(
+          'Your company membership is not active.',
+        );
+      }
+
+      return membership.companyId;
+    }
+
+    if (activeMemberships.length === 1) {
+      return activeMemberships[0].companyId;
+    }
+
+    return null;
   }
 
   private async issuePasswordResetCode(
@@ -893,10 +896,26 @@ export class AuthService {
     user: UserWithMemberships,
     activeCompanyId: number | null,
   ) {
+    if (user.systemRole === SystemRole.SUPER_ADMIN) {
+      return this.buildSuperAdminOnboardingState();
+    }
+
     return this.buildOnboardingStateFromMemberships(
       user.memberships,
       activeCompanyId,
     );
+  }
+
+  private buildSuperAdminOnboardingState() {
+    return {
+      emailVerified: true,
+      hasCompany: false,
+      hasActiveCompany: false,
+      hasActiveCompanyContext: false,
+      requiresCompanySetup: false,
+      canManageCompany: false,
+      nextStep: 'APP_READY',
+    };
   }
 
   private buildOnboardingStateFromMemberships(
