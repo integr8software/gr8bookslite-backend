@@ -5,6 +5,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UsersModule } from './modules/users/users.module';
     DashboardModule,
     OnboardingModule,
     UsersModule,
+    BillingModule,
   ],
 })
 export class AppModule {}

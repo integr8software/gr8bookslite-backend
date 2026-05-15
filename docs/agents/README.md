@@ -7,6 +7,7 @@ Available agent docs:
 - `@auth.agent.md`
 - `@database.agent.md`
 - `@onboarding.agent.md`
+- `@billing.agent.md`
 
 Recommended ownership:
 
@@ -21,7 +22,5 @@ Suggested next agent docs later:
 
 - `tenant.agent.md`
   Covers per-company database provisioning and tenant resolution.
-- `billing.agent.md`
-  Covers paid plan upgrades, renewals, invoices, and subscription expiry handling.
 - `bir.agent.md`
   Covers compliance assumptions, audit trails, exports, and BIR-facing report requirements.

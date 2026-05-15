@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   const configService = app.get(ConfigService);
   const corsAllowedOrigins = (
     configService.get<string>('CORS_ALLOWED_ORIGINS') ?? ''
@@ -12,7 +12,6 @@ async function bootstrap() {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || corsAllowedOrigins.includes(origin)) {
