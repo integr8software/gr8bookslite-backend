@@ -631,6 +631,21 @@ export class AuthService {
       throw new BadRequestException('Google user account could not be loaded.');
     }
 
+    if (user.systemRole === SystemRole.SUPER_ADMIN) {
+      return this.buildAuthenticatedResponse(user, null);
+    }
+
+    const activeMemberships = user.memberships.filter(
+      (membership) => membership.status === MembershipStatus.ACTIVE,
+    );
+
+    if (activeMemberships.length === 1) {
+      return this.buildAuthenticatedResponse(
+        user,
+        activeMemberships[0].companyId,
+      );
+    }
+
     return this.buildAuthenticatedResponse(user, null);
   }
 
