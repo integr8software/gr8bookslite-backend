@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 
 const NamePattern = /^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$/;
-const TinPattern = /^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9,12}$/;
+const TinPattern = /^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{4}-\d{4}-\d{5}$|^\d{9,13}$/;
 const ContactNumberPattern = /^\+63 \d{3} \d{3} \d{4}$/;
 const DatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -98,7 +98,7 @@ export class SaveOnboardingCompanyDetailsDto {
 
   @IsString()
   @Matches(TinPattern, {
-    message: 'Enter a valid TIN (e.g. 123-456-789-000).',
+    message: 'Enter a valid TIN (e.g. 123-456-789-000 or 3242-3424-42432).',
   })
   tin!: string;
 
