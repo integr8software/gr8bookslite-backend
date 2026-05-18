@@ -2,17 +2,20 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { AccessControlModule } from '../../common/access/access-control.module';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthMailService } from './services/auth-mail.service';
+import { GoogleOAuthService } from './services/google-oauth.service';
 import { OtpService } from './services/otp.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
     ConfigModule,
+    AccessControlModule,
     UsersModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
@@ -24,7 +27,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
           'change-me-in-production',
         ),
         signOptions: {
-          expiresIn: configService.get<number>('JWT_EXPIRES_IN_SECONDS', 86400),
+          expiresIn: Number(
+            configService.get<string | number>('JWT_EXPIRES_IN_SECONDS', 86400),
+          ),
         },
       }),
     }),
@@ -35,8 +40,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtStrategy,
     JwtAuthGuard,
     AuthMailService,
+    GoogleOAuthService,
     OtpService,
   ],
-  exports: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard, AuthMailService],
 })
 export class AuthModule {}

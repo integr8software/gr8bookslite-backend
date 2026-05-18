@@ -1,0 +1,70 @@
+import { CompanySubscriptionDetails } from '../utils/BillingPrisma.util';
+
+export function mapCompanySubscription(subscription: CompanySubscriptionDetails) {
+  return {
+    id: subscription.id,
+    status: subscription.status,
+    billingCycle: subscription.billingCycle,
+    billingProvider: subscription.billingProvider,
+    startsAt: subscription.startsAt,
+    trialEndsAt: subscription.trialEndsAt,
+    currentPeriodStartAt: subscription.currentPeriodStartAt,
+    nextBillingAt: subscription.nextBillingAt,
+    endsAt: subscription.endsAt,
+    canceledAt: subscription.canceledAt,
+    cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+    failureCode: subscription.failureCode,
+    failureMessage: subscription.failureMessage,
+    providerReferences: {
+      customerId: subscription.externalCustomerId,
+      subscriptionId: subscription.externalSubscriptionId,
+      planId: subscription.externalPlanId,
+      paymentMethodId: subscription.externalPaymentMethodId,
+      latestInvoiceId: subscription.latestInvoiceExternalId,
+      latestPaymentIntentId: subscription.latestPaymentIntentId,
+    },
+    plan: {
+      code: subscription.plan.code,
+      name: subscription.plan.name,
+      description: subscription.plan.description,
+      currency: subscription.plan.currency,
+      trialDays: subscription.plan.trialDays,
+      monthlyPriceInCents: subscription.plan.monthlyPriceInCents,
+      yearlyPriceInCents: subscription.plan.yearlyPriceInCents,
+    },
+    billingCustomer: subscription.billingCustomer
+      ? {
+          id: subscription.billingCustomer.id,
+          email: subscription.billingCustomer.email,
+          name: subscription.billingCustomer.name,
+          phone: subscription.billingCustomer.phone,
+          externalCustomerId: subscription.billingCustomer.externalCustomerId,
+        }
+      : null,
+    paymentMethods: subscription.paymentMethods.map((paymentMethod) => ({
+      id: paymentMethod.id,
+      type: paymentMethod.type,
+      brand: paymentMethod.brand,
+      last4: paymentMethod.last4,
+      expMonth: paymentMethod.expMonth,
+      expYear: paymentMethod.expYear,
+      isDefault: paymentMethod.isDefault,
+      externalPaymentMethodId: paymentMethod.externalPaymentMethodId,
+    })),
+    invoices: subscription.invoices.map((invoice) => ({
+      id: invoice.id,
+      externalInvoiceId: invoice.externalInvoiceId,
+      externalPaymentIntentId: invoice.externalPaymentIntentId,
+      status: invoice.status,
+      billingReason: invoice.billingReason,
+      currency: invoice.currency,
+      amountDueInCents: invoice.amountDueInCents,
+      amountPaidInCents: invoice.amountPaidInCents,
+      dueAt: invoice.dueAt,
+      paidAt: invoice.paidAt,
+      finalizedAt: invoice.finalizedAt,
+      periodStartAt: invoice.periodStartAt,
+      periodEndAt: invoice.periodEndAt,
+    })),
+  };
+}

@@ -4,6 +4,7 @@ export interface SanitizedUser {
   id: number;
   email: string;
   name: string;
+  contactNumber: string | null;
   systemRole: SystemRole;
   status: UserStatus;
   emailVerifiedAt: Date | null;

@@ -5,6 +5,7 @@ type UserLike = {
   id: number;
   email: string;
   name: string;
+  contactNumber: string | null;
   systemRole: SystemRole;
   status: UserStatus;
   emailVerifiedAt: Date | null;
@@ -17,6 +18,7 @@ export function sanitizeUser(user: UserLike): SanitizedUser {
     id: user.id,
     email: user.email,
     name: user.name,
+    contactNumber: user.contactNumber,
     systemRole: user.systemRole,
     status: user.status,
     emailVerifiedAt: user.emailVerifiedAt,
