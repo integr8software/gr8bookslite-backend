@@ -3,6 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   CompanyStatus,
   MembershipRole,
@@ -66,7 +67,10 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
 
 @Injectable()
 export class AccessControlService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async resolveAuthUser(payload: JwtPayload): Promise<AuthUser> {
     const user = await this.prisma.user.findUnique({
@@ -270,12 +274,24 @@ export class AccessControlService {
     const denialReason = getSubscriptionAccessDenialReason(
       latestSubscription,
       new Date(),
+      {
+        allowProviderActivationFallback: this.isProviderFallbackAllowed(),
+      },
     );
 
     if (denialReason) {
       throw new UnauthorizedException(denialReason);
     }
   }
+
+  private isProviderFallbackAllowed() {
+    return (
+      this.configService
+        .get<string>('PAYMONGO_ALLOW_PROVIDER_FALLBACK', 'false')
+        .toLowerCase() === 'true'
+    );
+  }
+
   private buildEffectivePermissions(
     membership: MembershipAccessRecord,
     enabledModules: string[],

@@ -4,11 +4,17 @@ type CompanySubscriptionAccessRecord = {
   status: SubscriptionStatus;
   trialEndsAt: Date | null;
   endsAt: Date | null;
+  failureCode?: string | null;
+};
+
+type SubscriptionAccessOptions = {
+  allowProviderActivationFallback?: boolean;
 };
 
 export function getSubscriptionAccessDenialReason(
   subscription: CompanySubscriptionAccessRecord,
   now = new Date(),
+  options: SubscriptionAccessOptions = {},
 ): string | null {
   switch (subscription.status) {
     case SubscriptionStatus.ACTIVE:
@@ -32,6 +38,13 @@ export function getSubscriptionAccessDenialReason(
       return 'This company subscription is past due.';
 
     case SubscriptionStatus.INCOMPLETE:
+      if (
+        options.allowProviderActivationFallback &&
+        subscription.failureCode === 'pending_provider_activation'
+      ) {
+        return null;
+      }
+
       return 'This company subscription is awaiting initial payment.';
 
     case SubscriptionStatus.UNPAID:
