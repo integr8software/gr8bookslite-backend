@@ -14,7 +14,6 @@ Focus areas:
 - reset password with email OTP
 - logout behavior
 - login restrictions before verification
-- free 15-day trial bootstrapping
 
 ## Registration Flow
 
@@ -43,6 +42,7 @@ Required actions:
 - resend OTP
 - change email
 - request password reset code
+- verify password reset code
 - reset password with code and new password
 
 Recommended rules:
@@ -84,6 +84,7 @@ Free trial requirement:
 Recommended ownership:
 
 - the trial should be attached to the company subscription, not directly to the user
+- the registering account should become the first admin member of the company once onboarding is finalized
 
 Reason:
 
@@ -112,6 +113,8 @@ Security requirements:
 - `POST /api/v1/auth/resend-verification`
 - `POST /api/v1/auth/change-verification-email`
 - `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/resend-forgot-password`
+- `POST /api/v1/auth/verify-forgot-password-code`
 - `POST /api/v1/auth/reset-password`
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/logout`
@@ -119,13 +122,15 @@ Security requirements:
 
 ## Important Change From Current Repo
 
-The current repo creates a company during registration and immediately authenticates the user.
+The current repo should not treat registration as company creation.
 
 For the flow described above, registration should move to:
 
 1. create pending user
 2. send OTP
 3. verify email
-4. then continue to company/workspace setup
+4. then continue to onboarding
+5. create company and company subscription only when company details are completed
+6. assign the registering account as the first company admin
 
 That is a cleaner fit for your new signup UX.

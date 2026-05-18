@@ -1,4 +1,4 @@
-import { IsEmail, IsString, Matches } from 'class-validator';
+import { IsEmail, IsOptional, IsString, Matches } from 'class-validator';
 
 export class RegisterDto {
   @IsString()
@@ -6,6 +6,10 @@ export class RegisterDto {
 
   @IsEmail()
   email!: string;
+
+  @IsOptional()
+  @IsString()
+  contactNumber?: string;
 
   @IsString()
   @Matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, {

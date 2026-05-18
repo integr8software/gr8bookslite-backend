@@ -18,6 +18,10 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  contactNumber?: string;
+
+  @IsOptional()
+  @IsString()
   @MinLength(8)
   password?: string;
 
