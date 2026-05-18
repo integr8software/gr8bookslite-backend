@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { AccessControlModule } from '../../common/access/access-control.module';
 import { BillingModule } from '../billing/billing.module';
+import { AuthModule } from '../auth/auth.module';
 import { OnboardingController } from './onboarding.controller';
 import { OnboardingLogoStorageService } from './services/onboarding-logo-storage.service';
 import { OnboardingService } from './onboarding.service';
@@ -12,6 +13,7 @@ import { OnboardingService } from './onboarding.service';
     ConfigModule,
     AccessControlModule,
     BillingModule,
+    AuthModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

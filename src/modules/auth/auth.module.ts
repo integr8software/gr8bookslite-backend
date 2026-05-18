@@ -43,6 +43,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     GoogleOAuthService,
     OtpService,
   ],
-  exports: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard, AuthMailService],
 })
 export class AuthModule {}

@@ -11,6 +11,7 @@ import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
+import { AuthMailService } from '../auth/services/auth-mail.service';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
@@ -38,6 +39,7 @@ export class OnboardingService {
     private readonly billingService: BillingService,
     private readonly onboardingLogoStorageService: OnboardingLogoStorageService,
     private readonly jwtService: JwtService,
+    private readonly authMailService: AuthMailService,
   ) {}
 
   async getPlans() {
@@ -515,6 +517,32 @@ export class OnboardingService {
           `Unable to promote onboarding logo for company ${result.company.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
         );
       }
+    }
+
+    try {
+      const completedUser = await this.prisma.user.findUnique({
+        where: {
+          id: user.id,
+        },
+        select: {
+          email: true,
+          name: true,
+        },
+      });
+
+      if (!completedUser) {
+        throw new BadRequestException('User account was not found.');
+      }
+
+      await this.authMailService.sendOnboardingCongratulations(
+        completedUser.email,
+        completedUser.name,
+        result.company.name,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Unable to queue onboarding congratulations email for user ${user.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
 
     return {

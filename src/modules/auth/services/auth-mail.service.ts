@@ -67,4 +67,24 @@ export class AuthMailService {
 
     this.logger.debug(`Password reset email queued for ${email}.`);
   }
+
+  async sendOnboardingCongratulations(
+    email: string,
+    recipientName: string,
+    companyName: string,
+  ): Promise<void> {
+    await this.transporter.sendMail({
+      from: this.fromEmail,
+      to: email,
+      subject: 'Congratulations on completing your setup',
+      text: `Congratulations, ${recipientName}! Your onboarding for ${companyName} is complete. You can now start exploring your dashboard and setting up your workflow.`,
+      html: `
+        <p>Congratulations, <strong>${recipientName}</strong>!</p>
+        <p>Your onboarding for <strong>${companyName}</strong> is complete.</p>
+        <p>You can now start exploring your dashboard and setting up your workflow.</p>
+      `,
+    });
+
+    this.logger.debug(`Onboarding congratulations email queued for ${email}.`);
+  }
 }

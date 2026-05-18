@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   BillingCycle,
   BillingProvider,
@@ -47,6 +48,7 @@ export class BillingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paymongoService: PaymongoService,
+    private readonly configService: ConfigService,
   ) {}
 
   async listPlans() {
@@ -868,8 +870,34 @@ export class BillingService {
       return false;
     }
 
-    return error.message.includes(
+    const providerNotReadyMessages = [
       'Subscriptions is not yet configured for this organization.',
+      'no subscription payment methods are configured for this organization',
+    ];
+
+    if (
+      error.message.includes(
+        'Subscriptions is not yet configured for this organization.',
+      )
+    ) {
+      return true;
+    }
+
+    if (!this.isProviderFallbackEnabled()) {
+      return false;
+    }
+
+    return providerNotReadyMessages.some((message) =>
+      error.message.includes(message),
+    );
+  }
+
+  private isProviderFallbackEnabled() {
+    return (
+      this.configService
+        .get<string>('PAYMONGO_ALLOW_PROVIDER_FALLBACK', 'false')
+        .trim()
+        .toLowerCase() === 'true'
     );
   }
 
