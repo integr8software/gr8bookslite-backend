@@ -13,6 +13,7 @@ import {
   type RedisOptions,
 } from 'bullmq';
 import nodemailer, { type Transporter } from 'nodemailer';
+import { Resend, type CreateEmailOptions } from 'resend';
 
 type MailJobName =
   | 'verification-code'
@@ -37,12 +38,23 @@ type MailJobData =
       companyName: string;
     };
 
+type MailProvider = 'resend' | 'smtp' | 'json';
+
+type MailPayload = {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+};
+
 @Injectable()
 export class AuthMailService implements OnModuleInit, OnModuleDestroy {
   private static readonly queueName = 'mail';
 
   private readonly logger = new Logger(AuthMailService.name);
-  private readonly transporter: Transporter;
+  private readonly mailProvider: MailProvider;
+  private readonly resendClient?: Resend;
+  private readonly transporter?: Transporter;
   private readonly fromEmail: string;
   private readonly queueEnabled: boolean;
   private readonly jobOptions: JobsOptions = {
@@ -65,14 +77,24 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {
     this.queueEnabled =
       this.configService.get<string>('MAIL_QUEUE_ENABLED', 'false') === 'true';
-    const smtpUrl = this.configService.get<string>('SMTP_URL');
+    const smtpUrl = this.configService.get<string>('SMTP_URL')?.trim();
     this.fromEmail = this.configService.get<string>(
       'MAIL_FROM',
       'no-reply@example.com',
     );
+    const resendApiKey = this.configService
+      .get<string>('RESEND_API_KEY')
+      ?.trim();
+
+    if (resendApiKey) {
+      this.resendClient = new Resend(resendApiKey);
+      this.mailProvider = 'resend';
+      return;
+    }
 
     if (smtpUrl) {
       this.transporter = nodemailer.createTransport(smtpUrl);
+      this.mailProvider = 'smtp';
       return;
     }
 
@@ -91,6 +113,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
             }
           : undefined,
       });
+      this.mailProvider = 'smtp';
       return;
     }
 
@@ -98,9 +121,12 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     this.transporter = nodemailer.createTransport({
       jsonTransport: true,
     });
+    this.mailProvider = 'json';
   }
 
   onModuleInit() {
+    this.logger.log(`Mail provider configured: ${this.mailProvider}.`);
+
     if (!this.queueEnabled) {
       this.logger.log('Mail queue disabled; emails will be sent inline.');
       return;
@@ -213,8 +239,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     email: string,
     code: string,
   ): Promise<void> {
-    await this.transporter.sendMail({
-      from: this.fromEmail,
+    await this.sendMail({
       to: email,
       subject: 'Verify your account',
       text: `Your verification code is ${code}. This code will expire soon.`,
@@ -228,8 +253,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     email: string,
     code: string,
   ): Promise<void> {
-    await this.transporter.sendMail({
-      from: this.fromEmail,
+    await this.sendMail({
       to: email,
       subject: 'Reset your password',
       text: `Your password reset code is ${code}. This code will expire soon.`,
@@ -244,8 +268,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     recipientName: string,
     companyName: string,
   ): Promise<void> {
-    await this.transporter.sendMail({
-      from: this.fromEmail,
+    await this.sendMail({
       to: email,
       subject: 'Congratulations on completing your setup',
       text: `Congratulations, ${recipientName}! Your onboarding for ${companyName} is complete. You can now start exploring your dashboard and setting up your workflow.`,
@@ -257,6 +280,34 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.logger.debug(`Onboarding congratulations email sent for ${email}.`);
+  }
+
+  private async sendMail(payload: MailPayload) {
+    if (this.mailProvider === 'resend') {
+      if (!this.resendClient) {
+        throw new Error('Resend mail client is not configured.');
+      }
+
+      const response = await this.resendClient.emails.send({
+        from: this.fromEmail,
+        ...payload,
+      } satisfies CreateEmailOptions);
+
+      if (response?.error) {
+        throw new Error(response.error.message);
+      }
+
+      return;
+    }
+
+    if (!this.transporter) {
+      throw new Error('Mail transport is not configured.');
+    }
+
+    await this.transporter.sendMail({
+      from: this.fromEmail,
+      ...payload,
+    });
   }
 
   private getRedisConnectionOptions(): RedisOptions {
