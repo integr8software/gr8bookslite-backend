@@ -12,7 +12,6 @@ import {
   type JobsOptions,
   type RedisOptions,
 } from 'bullmq';
-import nodemailer, { type Transporter } from 'nodemailer';
 import { Resend, type CreateEmailOptions } from 'resend';
 
 type MailJobName =
@@ -38,7 +37,7 @@ type MailJobData =
       companyName: string;
     };
 
-type MailProvider = 'resend' | 'smtp' | 'json';
+type MailProvider = 'resend' | 'log';
 
 type MailPayload = {
   to: string;
@@ -54,7 +53,6 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(AuthMailService.name);
   private readonly mailProvider: MailProvider;
   private readonly resendClient?: Resend;
-  private readonly transporter?: Transporter;
   private readonly fromEmail: string;
   private readonly queueEnabled: boolean;
   private readonly jobOptions: JobsOptions = {
@@ -77,7 +75,6 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {
     this.queueEnabled =
       this.configService.get<string>('MAIL_QUEUE_ENABLED', 'false') === 'true';
-    const smtpUrl = this.configService.get<string>('SMTP_URL')?.trim();
     this.fromEmail = this.configService.get<string>(
       'MAIL_FROM',
       'no-reply@example.com',
@@ -92,36 +89,8 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    if (smtpUrl) {
-      this.transporter = nodemailer.createTransport(smtpUrl);
-      this.mailProvider = 'smtp';
-      return;
-    }
-
-    const host = this.configService.get<string>('SMTP_HOST');
-
-    if (host) {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port: this.configService.get<number>('SMTP_PORT', 587),
-        secure:
-          this.configService.get<string>('SMTP_SECURE', 'false') === 'true',
-        auth: this.configService.get<string>('SMTP_USER')
-          ? {
-              user: this.configService.get<string>('SMTP_USER'),
-              pass: this.configService.get<string>('SMTP_PASS'),
-            }
-          : undefined,
-      });
-      this.mailProvider = 'smtp';
-      return;
-    }
-
-    // Local fallback so development remains usable without SMTP credentials.
-    this.transporter = nodemailer.createTransport({
-      jsonTransport: true,
-    });
-    this.mailProvider = 'json';
+    // Local fallback so development remains usable without a Resend API key.
+    this.mailProvider = 'log';
   }
 
   onModuleInit() {
@@ -300,14 +269,12 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    if (!this.transporter) {
-      throw new Error('Mail transport is not configured.');
-    }
-
-    await this.transporter.sendMail({
-      from: this.fromEmail,
-      ...payload,
-    });
+    this.logger.warn(
+      `Mail delivery skipped because RESEND_API_KEY is not configured. Payload: ${JSON.stringify({
+        from: this.fromEmail,
+        ...payload,
+      })}`,
+    );
   }
 
   private getRedisConnectionOptions(): RedisOptions {
