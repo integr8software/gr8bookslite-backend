@@ -6,6 +6,10 @@ type UserLike = {
   email: string;
   name: string;
   contactNumber: string | null;
+  avatarFileName: string | null;
+  avatarMimeType: string | null;
+  avatarStoragePath: string | null;
+  avatarPublicUrl: string | null;
   systemRole: SystemRole;
   status: UserStatus;
   emailVerifiedAt: Date | null;
@@ -19,6 +23,10 @@ export function sanitizeUser(user: UserLike): SanitizedUser {
     email: user.email,
     name: user.name,
     contactNumber: user.contactNumber,
+    avatarFileName: user.avatarFileName,
+    avatarMimeType: user.avatarMimeType,
+    avatarStoragePath: user.avatarStoragePath,
+    avatarPublicUrl: user.avatarPublicUrl,
     systemRole: user.systemRole,
     status: user.status,
     emailVerifiedAt: user.emailVerifiedAt,

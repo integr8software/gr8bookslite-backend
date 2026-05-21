@@ -17,6 +17,10 @@ model User {
   passwordHash       String                  @map("password_hash")
   name               String
   contactNumber      String?                 @map("contact_number")
+  avatarFileName     String?                 @map("avatar_file_name")
+  avatarMimeType     String?                 @map("avatar_mime_type")
+  avatarStoragePath  String?                 @map("avatar_storage_path")
+  avatarPublicUrl    String?                 @map("avatar_public_url")
   systemRole         SystemRole              @default(STANDARD) @map("system_role")
   status             UserStatus              @default(PENDING_VERIFICATION)
   emailVerifiedAt    DateTime?               @map("email_verified_at")
@@ -71,7 +75,7 @@ model Company {
   enabledModules        CompanyModule[]
   units                 CompanyUnit[]
   auditLogs             AuditLog[]
-  onboardingDrafts      UserOnboardingDraft[]   @relation("ProvisionedOnboardingCompany")
+  onboardingDrafts      UserOnboardingDraft[]  @relation("ProvisionedOnboardingCompany")
 
   @@map("companies")
 }

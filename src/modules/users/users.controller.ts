@@ -7,8 +7,11 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -19,7 +22,9 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateOwnProfileDto } from './dto/update-own-profile.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import type { UploadedAvatarFile } from './types/uploaded-avatar-file.type';
 import { UsersService } from './users.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
@@ -44,6 +49,25 @@ export class UsersController {
   @Post()
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
+  }
+
+  @Patch('me')
+  updateMe(@CurrentUser() user: AuthUser, @Body() dto: UpdateOwnProfileDto) {
+    return this.usersService.updateOwnProfile(user.id, dto);
+  }
+
+  @Post('me/avatar')
+  @UseInterceptors(FileInterceptor('avatar'))
+  uploadAvatar(
+    @CurrentUser() user: AuthUser,
+    @UploadedFile() file: UploadedAvatarFile | undefined,
+  ) {
+    return this.usersService.uploadOwnAvatar(user.id, file);
+  }
+
+  @Delete('me/avatar')
+  removeAvatar(@CurrentUser() user: AuthUser) {
+    return this.usersService.removeOwnAvatar(user.id);
   }
 
   @Roles(AppRole.SUPER_ADMIN, AppRole.ADMIN)
