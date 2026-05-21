@@ -319,32 +319,25 @@ export class BillingService {
         throw error;
       }
 
-      const pendingSubscription =
-        await this.prisma.$transaction(async (tx) => {
-          const createdSubscription = await tx.companySubscription.create({
-            data: {
-              companyId,
-              subscriptionPlanId: plan.id,
-              billingCustomerId: billingCustomer.id,
-              billingCycle: input.billingCycle,
-              billingProvider: BillingProvider.PAYMONGO,
-              status: SubscriptionStatus.INCOMPLETE,
-              externalCustomerId: billingCustomer.externalCustomerId,
-              failureCode: this.pendingProviderActivationCode,
-              failureMessage: this.pendingProviderActivationMessage,
-              startsAt: new Date(),
-              rawProviderPayload: {
-                fallbackState: 'pending_billing_setup',
-                providerState: 'pending_provider_activation',
-              } as Prisma.InputJsonValue,
-            },
-          });
-
-          return tx.companySubscription.findUniqueOrThrow({
-            where: { id: createdSubscription.id },
-            include: companySubscriptionDetailsInclude,
-          });
-        });
+      const pendingSubscription = await this.prisma.companySubscription.create({
+        data: {
+          companyId,
+          subscriptionPlanId: plan.id,
+          billingCustomerId: billingCustomer.id,
+          billingCycle: input.billingCycle,
+          billingProvider: BillingProvider.PAYMONGO,
+          status: SubscriptionStatus.INCOMPLETE,
+          externalCustomerId: billingCustomer.externalCustomerId,
+          failureCode: this.pendingProviderActivationCode,
+          failureMessage: this.pendingProviderActivationMessage,
+          startsAt: new Date(),
+          rawProviderPayload: {
+            fallbackState: 'pending_billing_setup',
+            providerState: 'pending_provider_activation',
+          },
+        },
+        include: companySubscriptionDetailsInclude,
+      });
 
       return {
         message: this.pendingProviderActivationMessage,
