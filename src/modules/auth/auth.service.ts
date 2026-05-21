@@ -475,7 +475,7 @@ export class AuthService {
     const user = await this.usersService.findForAuthByEmail(normalizedEmail);
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials.');
+      throw new UnauthorizedException('Your account is not yet registered.');
     }
 
     if (user.status === UserStatus.SUSPENDED) {
