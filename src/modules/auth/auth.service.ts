@@ -24,6 +24,7 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { UserWithMemberships } from '../users/types/user-with-memberships.type';
 import { UsersService } from '../users/users.service';
+import { ChangeAuthenticatedPasswordDto } from './dto/change-authenticated-password.dto';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -31,6 +32,7 @@ import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyForgotPasswordCodeDto } from './dto/verify-forgot-password-code.dto';
+import { VerifyPasswordChangeCodeDto } from './dto/verify-password-change-code.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { AuthMailService } from './services/auth-mail.service';
 import { GoogleOAuthService } from './services/google-oauth.service';
@@ -336,6 +338,135 @@ export class AuthService {
 
     return {
       message: 'Password has been reset successfully.',
+    };
+  }
+
+  async requestPasswordChangeOtp(authUser: AuthUser) {
+    const user = await this.usersService.findById(authUser.id);
+    const resetCode = this.otpService.generateCode();
+    const codeHash = await this.otpService.hashCode(resetCode);
+    const expiresAt = this.buildVerificationExpiry();
+    const previousReset = await this.getLatestActiveVerification(
+      user.id,
+      user.email,
+      VerificationPurpose.PASSWORD_RESET,
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerificationCode.updateMany({
+        where: {
+          userId: user.id,
+          purpose: VerificationPurpose.PASSWORD_RESET,
+          consumedAt: null,
+        },
+        data: {
+          consumedAt: new Date(),
+        },
+      });
+
+      await tx.emailVerificationCode.create({
+        data: {
+          userId: user.id,
+          email: user.email,
+          purpose: VerificationPurpose.PASSWORD_RESET,
+          codeHash,
+          expiresAt,
+          resendCount: (previousReset?.resendCount ?? 0) + 1,
+        },
+      });
+    });
+
+    await this.authMailService.sendPasswordResetCode(user.email, resetCode);
+
+    return {
+      message: 'Password change OTP sent.',
+      maskedEmail: this.otpService.maskEmail(user.email),
+    };
+  }
+
+  async verifyPasswordChangeOtp(
+    authUser: AuthUser,
+    dto: VerifyPasswordChangeCodeDto,
+  ) {
+    const user = await this.usersService.findById(authUser.id);
+    const verification = await this.getLatestActiveVerification(
+      user.id,
+      user.email,
+      VerificationPurpose.PASSWORD_RESET,
+    );
+
+    if (!verification) {
+      throw new BadRequestException('Password change code is invalid.');
+    }
+
+    if (verification.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Password change code has expired.');
+    }
+
+    const isValidCode = await this.otpService.compareCode(
+      dto.code,
+      verification.codeHash,
+    );
+
+    if (!isValidCode) {
+      await this.incrementVerificationAttempt(verification.id);
+
+      throw new BadRequestException('Password change code is invalid.');
+    }
+
+    const verifiedAt = new Date();
+
+    await this.consumeVerificationCode(verification.id, verifiedAt);
+
+    return {
+      message: 'Password change code verified successfully.',
+      resetToken: this.buildPasswordResetToken({
+        sub: user.id,
+        email: user.email,
+        purpose: 'PASSWORD_RESET',
+        verificationId: verification.id,
+      }),
+    };
+  }
+
+  async changeAuthenticatedPassword(
+    authUser: AuthUser,
+    dto: ChangeAuthenticatedPasswordDto,
+  ) {
+    if (dto.newPassword !== dto.confirmNewPassword) {
+      throw new BadRequestException('Passwords do not match.');
+    }
+
+    const resetTokenPayload = this.verifyPasswordResetToken(dto.resetToken);
+
+    if (resetTokenPayload.sub !== authUser.id) {
+      throw new BadRequestException('Password change request is invalid.');
+    }
+
+    const verification = await this.prisma.emailVerificationCode.findFirst({
+      where: {
+        id: resetTokenPayload.verificationId,
+        userId: authUser.id,
+        email: resetTokenPayload.email,
+        purpose: VerificationPurpose.PASSWORD_RESET,
+      },
+    });
+
+    if (!verification || verification.consumedAt == null) {
+      throw new BadRequestException('Password change request is invalid.');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: authUser.id },
+      data: {
+        passwordHash: hashedPassword,
+      },
+    });
+
+    return {
+      message: 'Password changed successfully.',
     };
   }
 
