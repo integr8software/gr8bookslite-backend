@@ -5,6 +5,10 @@ export interface SanitizedUser {
   email: string;
   name: string;
   contactNumber: string | null;
+  avatarFileName: string | null;
+  avatarMimeType: string | null;
+  avatarStoragePath: string | null;
+  avatarPublicUrl: string | null;
   systemRole: SystemRole;
   status: UserStatus;
   emailVerifiedAt: Date | null;

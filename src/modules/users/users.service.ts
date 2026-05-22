@@ -13,11 +13,17 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserAvatarStorageService } from './services/user-avatar-storage.service';
+import type { UploadedAvatarFile } from './types/uploaded-avatar-file.type';
 import type { UserWithMemberships } from './types/user-with-memberships.type';
+import { validateUserAvatarFile } from './utils/UserAvatarUpload.util';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userAvatarStorageService: UserAvatarStorageService,
+  ) {}
 
   async create(dto: CreateUserDto) {
     const normalizedEmail = normalizeEmail(dto.email) as string;
@@ -143,6 +149,101 @@ export class UsersService {
       where: { id },
       data,
     });
+
+    return sanitizeUser(user);
+  }
+
+  async updateOwnProfile(
+    id: number,
+    dto: {
+      fullName?: string;
+      contactNumber?: string;
+    },
+  ) {
+    const name = dto.fullName?.trim();
+
+    if (dto.fullName !== undefined && !name) {
+      throw new BadRequestException('Full name is required.');
+    }
+
+    await this.ensureUserExists(id);
+
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: {
+        name,
+        contactNumber:
+          dto.contactNumber === undefined
+            ? undefined
+            : dto.contactNumber.trim() || null,
+      },
+    });
+
+    return sanitizeUser(user);
+  }
+
+  async uploadOwnAvatar(id: number, file: UploadedAvatarFile | undefined) {
+    const validatedFile = validateUserAvatarFile(file);
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        avatarStoragePath: true,
+      },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const upload = await this.userAvatarStorageService.uploadAvatar({
+      userId: id,
+      fileName: validatedFile.originalname,
+      mimeType: validatedFile.mimetype,
+      fileBuffer: validatedFile.buffer,
+    });
+
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: {
+        avatarFileName: upload.fileName,
+        avatarMimeType: upload.mimeType,
+        avatarStoragePath: upload.storagePath,
+        avatarPublicUrl: upload.publicUrl,
+      },
+    });
+
+    await this.userAvatarStorageService.removeAvatar(
+      existingUser.avatarStoragePath,
+    );
+
+    return sanitizeUser(user);
+  }
+
+  async removeOwnAvatar(id: number) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        avatarStoragePath: true,
+      },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: {
+        avatarFileName: null,
+        avatarMimeType: null,
+        avatarStoragePath: null,
+        avatarPublicUrl: null,
+      },
+    });
+
+    await this.userAvatarStorageService.removeAvatar(
+      existingUser.avatarStoragePath,
+    );
 
     return sanitizeUser(user);
   }
