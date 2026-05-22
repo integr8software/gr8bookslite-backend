@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   Query,
   Res,
@@ -12,6 +13,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AuthService } from './auth.service';
+import { ChangeAuthenticatedPasswordDto } from './dto/change-authenticated-password.dto';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -19,6 +21,7 @@ import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyForgotPasswordCodeDto } from './dto/verify-forgot-password-code.dto';
+import { VerifyPasswordChangeCodeDto } from './dto/verify-password-change-code.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
@@ -119,5 +122,29 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     return this.authService.getProfile(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/password/otp')
+  requestPasswordChangeOtp(@CurrentUser() user: AuthUser) {
+    return this.authService.requestPasswordChangeOtp(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/password/verify-otp')
+  verifyPasswordChangeOtp(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: VerifyPasswordChangeCodeDto,
+  ) {
+    return this.authService.verifyPasswordChangeOtp(user, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/password')
+  changeAuthenticatedPassword(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ChangeAuthenticatedPasswordDto,
+  ) {
+    return this.authService.changeAuthenticatedPassword(user, dto);
   }
 }
