@@ -59,6 +59,7 @@ model Company {
   logoPublicUrl         String?                @map("logo_public_url")
   address               String?
   tin                   String?
+  email                 String?
   website               String?
   contactNumber         String?                @map("contact_number")
   reportStartDate       DateTime?              @map("report_start_date")

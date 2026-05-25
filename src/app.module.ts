@@ -7,6 +7,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { BillingModule } from './modules/billing/billing.module';
     OnboardingModule,
     UsersModule,
     BillingModule,
+    WorkspaceCompaniesModule,
   ],
 })
 export class AppModule {}
