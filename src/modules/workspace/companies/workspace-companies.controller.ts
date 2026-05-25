@@ -7,8 +7,11 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { AppRole } from '../../../common/enums/app-role.enum';
@@ -19,6 +22,7 @@ import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
 import { CreateWorkspaceCompanyDto } from './dto/create-workspace-company.dto';
 import { UpdateCompanyUnitDto } from './dto/update-company-unit.dto';
 import { UpdateWorkspaceCompanyDto } from './dto/update-workspace-company.dto';
+import type { UploadedCompanyLogoFile } from './types/uploaded-company-logo-file.type';
 import { WorkspaceCompaniesService } from './workspace-companies.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -60,6 +64,16 @@ export class WorkspaceCompaniesController {
     @Body() dto: UpdateWorkspaceCompanyDto,
   ) {
     return this.workspaceCompaniesService.update(user, companyId, dto);
+  }
+
+  @Post(':companyId/logo')
+  @UseInterceptors(FileInterceptor('logo'))
+  uploadLogo(
+    @CurrentUser() user: AuthUser,
+    @Param('companyId', ParseIntPipe) companyId: number,
+    @UploadedFile() file: UploadedCompanyLogoFile | undefined,
+  ) {
+    return this.workspaceCompaniesService.uploadLogo(user, companyId, file);
   }
 
   @Delete(':companyId')

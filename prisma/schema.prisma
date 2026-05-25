@@ -296,6 +296,7 @@ model SubscriptionPlan {
   yearlyExternalPlanId    String?               @unique @map("yearly_external_plan_id")
   billingProvider         BillingProvider       @default(PAYMONGO) @map("billing_provider")
   billingMetadata         Json?                 @map("billing_metadata")
+  scope                   SubscriptionPlanScope @default(ONBOARDING)
   trialDays               Int                   @default(15) @map("trial_days")
   isActive                Boolean               @default(true) @map("is_active")
   createdAt               DateTime              @default(now()) @map("created_at")
@@ -580,6 +581,11 @@ enum TaxpayerType {
 
 enum BillingProvider {
   PAYMONGO
+}
+
+enum SubscriptionPlanScope {
+  ONBOARDING
+  ADDITIONAL_COMPANY
 }
 
 enum SubscriptionStatus {

@@ -1,4 +1,5 @@
 import type {
+  BillingCycle,
   CompanyStatus,
   CompanyUnitType,
   TaxpayerType,
@@ -49,6 +50,14 @@ export interface WorkspaceCompanyResponse {
   reportEndDate: Date | null;
   isActive: boolean;
   status: CompanyStatus;
+  subscriptionPlan: {
+    code: string;
+    name: string;
+    currency: string;
+    billingCycle: BillingCycle;
+    monthlyPriceInCents: number;
+    yearlyPriceInCents: number;
+  } | null;
   totalUsers?: number;
   totalUnits?: number;
   units?: CompanyUnitResponse[];

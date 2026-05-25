@@ -9,6 +9,7 @@ export function mapWorkspaceCompany(
   company: WorkspaceCompanyRecord,
 ): WorkspaceCompanyResponse {
   const units = 'units' in company ? company.units : undefined;
+  const subscription = company.subscriptions[0];
 
   return {
     id: company.id,
@@ -35,6 +36,16 @@ export function mapWorkspaceCompany(
     reportEndDate: company.reportEndDate,
     isActive: company.isActive,
     status: company.status,
+    subscriptionPlan: subscription
+      ? {
+          code: subscription.plan.code,
+          name: subscription.plan.name,
+          currency: subscription.plan.currency,
+          billingCycle: subscription.billingCycle,
+          monthlyPriceInCents: subscription.plan.monthlyPriceInCents,
+          yearlyPriceInCents: subscription.plan.yearlyPriceInCents,
+        }
+      : null,
     totalUsers: company._count?.memberships ?? undefined,
     totalUnits: company._count?.units ?? undefined,
     units: units?.map(mapCompanyUnit),

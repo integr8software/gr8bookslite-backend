@@ -13,6 +13,15 @@ export const WorkspaceCompanyListInclude = {
       },
     },
   },
+  subscriptions: {
+    take: 1,
+    orderBy: {
+      createdAt: 'desc',
+    },
+    include: {
+      plan: true,
+    },
+  },
 } satisfies Prisma.CompanyInclude;
 
 export const WorkspaceCompanyDetailsInclude = {

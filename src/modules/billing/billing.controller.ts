@@ -5,6 +5,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -24,8 +25,13 @@ export class BillingController {
   constructor(private readonly billingService: BillingService) {}
 
   @Get('plans')
-  listPlans() {
-    return this.billingService.listPlans();
+  listPlans(@Query('scope') scope?: string) {
+    return this.billingService.listPlans(scope);
+  }
+
+  @Get('payment-methods')
+  listPaymentMethods(@CurrentUser() user: AuthUser) {
+    return this.billingService.listPaymentMethods(user);
   }
 
   @Get('subscriptions/current')

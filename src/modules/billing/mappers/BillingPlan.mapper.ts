@@ -6,6 +6,7 @@ export function mapBillingPlan(plan: SubscriptionPlan) {
     name: plan.name,
     description: plan.description,
     currency: plan.currency,
+    scope: plan.scope,
     trialDays: plan.trialDays,
     pricing: {
       monthly: {

@@ -1,18 +1,68 @@
 import {
+  IsEnum,
   IsEmail,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   Matches,
+  Max,
+  Min,
   MinLength,
+  ValidateNested,
   ValidateIf,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { BillingCycle } from '@prisma/client';
 
 const NamePattern = /^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$/;
 const TinPattern =
   /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
 const ContactNumberPattern = /^\+63 [\d ]{7,14}$/;
 const DatePattern = /^\d{4}-\d{2}-\d{2}$/;
+const PaymentMethodPattern = /^pm_[A-Za-z0-9]+$/;
+
+export class CreateWorkspaceCompanyBillingDto {
+  @IsOptional()
+  @IsString()
+  planCode?: string;
+
+  @IsOptional()
+  @IsEnum(BillingCycle)
+  billingCycle?: BillingCycle;
+
+  @IsOptional()
+  @IsEmail()
+  billingEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(PaymentMethodPattern, {
+    message: 'Enter a valid PayMongo payment method reference.',
+  })
+  paymentMethodId?: string;
+
+  @IsOptional()
+  @IsString()
+  cardBrand?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}$/)
+  cardLast4?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  cardExpiryMonth?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(2000)
+  @Max(9999)
+  cardExpiryYear?: number;
+}
 
 export class CreateWorkspaceCompanyDto {
   @IsIn(['individual', 'non-individual'])
@@ -104,4 +154,9 @@ export class CreateWorkspaceCompanyDto {
   @IsOptional()
   @IsString()
   website?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateWorkspaceCompanyBillingDto)
+  billing?: CreateWorkspaceCompanyBillingDto;
 }

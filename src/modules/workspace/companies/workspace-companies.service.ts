@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  BillingCycle,
   CompanyStatus,
   CompanyUnitType,
   MembershipRole,
@@ -14,6 +15,8 @@ import {
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AuthMailService } from '../../auth/services/auth-mail.service';
+import { BillingService } from '../../billing/billing.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
 import { CreateWorkspaceCompanyDto } from './dto/create-workspace-company.dto';
 import { UpdateCompanyUnitDto } from './dto/update-company-unit.dto';
@@ -26,10 +29,17 @@ import {
   WorkspaceCompanyDetailsInclude,
   WorkspaceCompanyListInclude,
 } from './prisma/workspace-company.include';
+import { WorkspaceCompanyLogoStorageService } from './services/workspace-company-logo-storage.service';
+import type { UploadedCompanyLogoFile } from './types/uploaded-company-logo-file.type';
 
 @Injectable()
 export class WorkspaceCompaniesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authMailService: AuthMailService,
+    private readonly billingService: BillingService,
+    private readonly logoStorageService: WorkspaceCompanyLogoStorageService,
+  ) {}
 
   async findAll(user: AuthUser) {
     const companies = await this.prisma.company.findMany({
@@ -148,7 +158,56 @@ export class WorkspaceCompaniesService {
       });
     });
 
-    return mapWorkspaceCompany(company);
+    const billingSetup = await this.setupCompanyBilling({
+      companyId: company.id,
+      dto,
+      user,
+    });
+    await this.sendCompanyCreatedEmail(user, company.name);
+    const updatedCompany = await this.prisma.company.findUniqueOrThrow({
+      where: { id: company.id },
+      include: WorkspaceCompanyDetailsInclude,
+    });
+    const mappedCompany = mapWorkspaceCompany(updatedCompany);
+
+    return billingSetup
+      ? {
+          ...mappedCompany,
+          billingSetup,
+        }
+      : mappedCompany;
+  }
+
+  async uploadLogo(
+    user: AuthUser,
+    companyId: number,
+    file: UploadedCompanyLogoFile | undefined,
+  ) {
+    await this.ensureCompanyAdminAccess(user, companyId);
+    const validatedFile = validateCompanyLogoFile(file);
+    const upload = await this.logoStorageService.uploadLogo({
+      companyId,
+      fileBuffer: validatedFile.buffer,
+      fileName: validatedFile.originalname,
+      mimeType: validatedFile.mimetype,
+    });
+
+    const company = await this.prisma.company.update({
+      where: { id: companyId },
+      data: {
+        logoFileName: upload.fileName,
+        logoMimeType: upload.mimeType,
+        logoStoragePath: upload.storagePath,
+        logoPublicUrl: upload.publicUrl,
+      },
+      include: WorkspaceCompanyDetailsInclude,
+    });
+
+    return {
+      message: 'Company logo uploaded successfully.',
+      company: mapWorkspaceCompany(company),
+      logo: upload,
+    };
   }
 
   async update(
@@ -470,6 +529,89 @@ export class WorkspaceCompaniesService {
 
     return slug;
   }
+
+  private async setupCompanyBilling(input: {
+    companyId: number;
+    dto: CreateWorkspaceCompanyDto;
+    user: AuthUser;
+  }) {
+    const billing = input.dto.billing;
+
+    if (!billing?.planCode?.trim()) {
+      return undefined;
+    }
+
+    const preparedSubscription =
+      await this.billingService.prepareCompanySubscription({
+        companyId: input.companyId,
+        ownerUserId: input.user.id,
+        planCode: billing.planCode.trim(),
+        billingCycle: billing.billingCycle ?? BillingCycle.MONTHLY,
+        billingEmail: billing.billingEmail ?? input.dto.email,
+      });
+
+    if (!billing.paymentMethodId?.trim()) {
+      return {
+        subscription: preparedSubscription.subscription,
+        pendingProviderActivation:
+          preparedSubscription.pendingProviderActivation ?? false,
+        paymentSetup: preparedSubscription.paymentSetup,
+      };
+    }
+
+    const paymentResult = preparedSubscription.pendingProviderActivation
+      ? await this.billingService.recordPendingPaymentSetup({
+          companyId: input.companyId,
+          subscriptionId: preparedSubscription.subscription.id,
+          paymentMethodId: billing.paymentMethodId,
+          brand: billing.cardBrand,
+          last4: billing.cardLast4,
+          expMonth: billing.cardExpiryMonth,
+          expYear: billing.cardExpiryYear,
+        })
+      : await this.billingService.attachPaymentMethodForCompany({
+          companyId: input.companyId,
+          subscriptionId: preparedSubscription.subscription.id,
+          paymentMethodId: billing.paymentMethodId,
+        });
+
+    return {
+      subscription: paymentResult.subscription,
+      paymentIntent:
+        'paymentIntent' in paymentResult
+          ? paymentResult.paymentIntent
+          : undefined,
+      pendingProviderActivation:
+        paymentResult.pendingProviderActivation ??
+        preparedSubscription.pendingProviderActivation ??
+        false,
+      paymentSetup: preparedSubscription.paymentSetup,
+    };
+  }
+
+  private async sendCompanyCreatedEmail(user: AuthUser, companyName: string) {
+    const adminUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        email: true,
+        name: true,
+      },
+    });
+
+    if (!adminUser?.email) {
+      return;
+    }
+
+    try {
+      await this.authMailService.sendCompanyCreated(
+        adminUser.email,
+        adminUser.name || adminUser.email,
+        companyName,
+      );
+    } catch {
+      // Company creation should not fail because a notification failed.
+    }
+  }
 }
 
 function mapTaxpayerType(type: 'individual' | 'non-individual') {
@@ -544,4 +686,22 @@ function createUnitCode(value: string) {
       .replace(/^-+|-+$/g, '')
       .slice(0, 24) || `UNIT-${Date.now()}`
   );
+}
+
+function validateCompanyLogoFile(file: UploadedCompanyLogoFile | undefined) {
+  const maxLogoFileSizeInBytes = 5 * 1024 * 1024;
+
+  if (!file) {
+    throw new BadRequestException('Upload a logo image.');
+  }
+
+  if (!file.mimetype.startsWith('image/')) {
+    throw new BadRequestException('Only image files are allowed.');
+  }
+
+  if (file.size > maxLogoFileSizeInBytes) {
+    throw new BadRequestException('Logo must be 5MB or smaller.');
+  }
+
+  return file;
 }
