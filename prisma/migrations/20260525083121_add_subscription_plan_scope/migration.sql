@@ -1,2 +1,3 @@
--- DropIndex
-DROP INDEX "subscription_plans_scope_is_active_idx";
+-- This migration was created as an accidental index drop and was applied after
+-- the scope/index migration in one development database. Keep it as a no-op so
+-- fresh shadow database replays remain valid.

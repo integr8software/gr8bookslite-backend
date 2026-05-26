@@ -33,6 +33,7 @@ model User {
   targetedAuditLogs  AuditLog[]              @relation("AuditTargetUser")
   onboardingDraft    UserOnboardingDraft?
   billingCustomers   BillingCustomer[]
+  createdCompanies   Company[]               @relation("CompanyCreatedBy")
 
   @@map("users")
 }
@@ -64,6 +65,7 @@ model Company {
   contactNumber         String?                @map("contact_number")
   reportStartDate       DateTime?              @map("report_start_date")
   reportEndDate         DateTime?              @map("report_end_date")
+  createdByUserId       Int?                   @map("created_by_user_id")
   isActive              Boolean                @default(true) @map("is_active")
   status                CompanyStatus          @default(PENDING)
   createdAt             DateTime               @default(now()) @map("created_at")
@@ -77,7 +79,9 @@ model Company {
   units                 CompanyUnit[]
   auditLogs             AuditLog[]
   onboardingDrafts      UserOnboardingDraft[]  @relation("ProvisionedOnboardingCompany")
+  createdByUser         User?                  @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
+  @@index([createdByUserId])
   @@map("companies")
 }
 

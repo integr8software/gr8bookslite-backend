@@ -48,6 +48,12 @@ export interface WorkspaceCompanyResponse {
   contactNumber: string | null;
   reportStartDate: Date | null;
   reportEndDate: Date | null;
+  createdByUserId: number | null;
+  createdByUser: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
   isActive: boolean;
   status: CompanyStatus;
   subscriptionPlan: {

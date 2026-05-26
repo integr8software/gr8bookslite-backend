@@ -22,6 +22,13 @@ export const WorkspaceCompanyListInclude = {
       plan: true,
     },
   },
+  createdByUser: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  },
 } satisfies Prisma.CompanyInclude;
 
 export const WorkspaceCompanyDetailsInclude = {

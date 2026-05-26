@@ -34,6 +34,14 @@ export function mapWorkspaceCompany(
     contactNumber: company.contactNumber,
     reportStartDate: company.reportStartDate,
     reportEndDate: company.reportEndDate,
+    createdByUserId: company.createdByUserId,
+    createdByUser: company.createdByUser
+      ? {
+          id: company.createdByUser.id,
+          name: company.createdByUser.name,
+          email: company.createdByUser.email,
+        }
+      : null,
     isActive: company.isActive,
     status: company.status,
     subscriptionPlan: subscription

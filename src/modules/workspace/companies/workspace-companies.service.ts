@@ -107,6 +107,7 @@ export class WorkspaceCompaniesService {
           contactNumber: dto.contactNumber.trim(),
           reportStartDate: parseDate(dto.reportStartDate),
           reportEndDate: parseDate(dto.reportEndDate),
+          createdByUserId: user.id,
           status: CompanyStatus.ACTIVE,
           isActive: true,
         },

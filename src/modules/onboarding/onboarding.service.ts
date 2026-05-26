@@ -1,10 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import {
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-} from '@prisma/client';
+import { MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
@@ -179,7 +175,10 @@ export class OnboardingService {
       );
     }
 
-    if (!existingDraft.companyDetailsCompletedAt || !existingDraft.provisionedCompanyId) {
+    if (
+      !existingDraft.companyDetailsCompletedAt ||
+      !existingDraft.provisionedCompanyId
+    ) {
       throw new BadRequestException(
         'Complete company details before setting up billing.',
       );
@@ -254,7 +253,9 @@ export class OnboardingService {
         trialDays: updatedDraft.subscriptionPlan?.trialDays ?? 15,
       },
       paymentIntent:
-        'paymentIntent' in paymentResult ? paymentResult.paymentIntent : undefined,
+        'paymentIntent' in paymentResult
+          ? paymentResult.paymentIntent
+          : undefined,
       pendingProviderActivation:
         preparedSubscription.pendingProviderActivation ?? false,
       paymentSetupState,
@@ -306,8 +307,12 @@ export class OnboardingService {
             legalName,
             taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
             ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
-            ownerFirstName: isIndividual ? (dto.firstName?.trim() ?? null) : null,
-            ownerMiddleName: isIndividual ? dto.middleName?.trim() || null : null,
+            ownerFirstName: isIndividual
+              ? (dto.firstName?.trim() ?? null)
+              : null,
+            ownerMiddleName: isIndividual
+              ? dto.middleName?.trim() || null
+              : null,
             organizationType: isIndividual
               ? null
               : (dto.nonIndividualType?.trim() ?? null),
@@ -325,6 +330,7 @@ export class OnboardingService {
             reportStartDate,
             reportEndDate,
             status: 'PROVISIONING',
+            createdByUserId: user.id,
           },
         })
       : await this.prisma.company.create({
@@ -334,8 +340,12 @@ export class OnboardingService {
             legalName,
             taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
             ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
-            ownerFirstName: isIndividual ? (dto.firstName?.trim() ?? null) : null,
-            ownerMiddleName: isIndividual ? dto.middleName?.trim() || null : null,
+            ownerFirstName: isIndividual
+              ? (dto.firstName?.trim() ?? null)
+              : null,
+            ownerMiddleName: isIndividual
+              ? dto.middleName?.trim() || null
+              : null,
             organizationType: isIndividual
               ? null
               : (dto.nonIndividualType?.trim() ?? null),
@@ -353,6 +363,7 @@ export class OnboardingService {
             reportStartDate,
             reportEndDate,
             status: 'PROVISIONING',
+            createdByUserId: user.id,
           },
         });
 
@@ -442,6 +453,7 @@ export class OnboardingService {
         },
         data: {
           status: 'ACTIVE',
+          createdByUserId: user.id,
         },
       });
 
@@ -587,9 +599,7 @@ export class OnboardingService {
       },
     });
 
-    if (
-      !existingDraft?.subscriptionPlanId
-    ) {
+    if (!existingDraft?.subscriptionPlanId) {
       throw new BadRequestException(
         'Complete plan selection before uploading a logo.',
       );
