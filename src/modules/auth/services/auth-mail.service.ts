@@ -17,7 +17,8 @@ import { Resend, type CreateEmailOptions } from 'resend';
 type MailJobName =
   | 'verification-code'
   | 'password-reset-code'
-  | 'onboarding-congratulations';
+  | 'onboarding-congratulations'
+  | 'company-created';
 
 type MailJobData =
   | {
@@ -32,6 +33,12 @@ type MailJobData =
     }
   | {
       type: 'onboarding-congratulations';
+      email: string;
+      recipientName: string;
+      companyName: string;
+    }
+  | {
+      type: 'company-created';
       email: string;
       recipientName: string;
       companyName: string;
@@ -181,6 +188,24 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
+  async sendCompanyCreated(
+    email: string,
+    recipientName: string,
+    companyName: string,
+  ): Promise<void> {
+    if (this.mailQueue) {
+      await this.enqueueMail('company-created', {
+        type: 'company-created',
+        email,
+        recipientName,
+        companyName,
+      });
+      return;
+    }
+
+    await this.sendCompanyCreatedNow(email, recipientName, companyName);
+  }
+
   private async enqueueMail(name: MailJobName, data: MailJobData) {
     await this.mailQueue?.add(name, data);
     this.logger.debug(`Mail job queued for ${data.email}: ${name}.`);
@@ -196,6 +221,13 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
         return;
       case 'onboarding-congratulations':
         await this.sendOnboardingCongratulationsNow(
+          job.data.email,
+          job.data.recipientName,
+          job.data.companyName,
+        );
+        return;
+      case 'company-created':
+        await this.sendCompanyCreatedNow(
           job.data.email,
           job.data.recipientName,
           job.data.companyName,
@@ -251,6 +283,25 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     this.logger.debug(`Onboarding congratulations email sent for ${email}.`);
   }
 
+  private async sendCompanyCreatedNow(
+    email: string,
+    recipientName: string,
+    companyName: string,
+  ): Promise<void> {
+    await this.sendMail({
+      to: email,
+      subject: 'Company created successfully',
+      text: `Hi ${recipientName}, you have successfully created ${companyName}. You can now manage its plan, billing, branches, satellites, and users in Workspace.`,
+      html: `
+        <p>Hi <strong>${recipientName}</strong>,</p>
+        <p>You have successfully created <strong>${companyName}</strong>.</p>
+        <p>You can now manage its plan, billing, branches, satellites, and users in Workspace.</p>
+      `,
+    });
+
+    this.logger.debug(`Company created email sent for ${email}.`);
+  }
+
   private async sendMail(payload: MailPayload) {
     if (this.mailProvider === 'resend') {
       if (!this.resendClient) {
@@ -269,11 +320,13 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
+    const payloadText = JSON.stringify({
+      from: this.fromEmail,
+      ...payload,
+    });
+
     this.logger.warn(
-      `Mail delivery skipped because RESEND_API_KEY is not configured. Payload: ${JSON.stringify({
-        from: this.fromEmail,
-        ...payload,
-      })}`,
+      `Mail delivery skipped because RESEND_API_KEY is not configured. Payload: ${payloadText}`,
     );
   }
 
