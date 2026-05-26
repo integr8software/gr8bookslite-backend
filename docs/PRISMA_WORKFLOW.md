@@ -7,6 +7,7 @@ This is the safest beginner-friendly Prisma workflow for this repo.
 Use these commands most of the time:
 
 ```bash
+npm run db:status:dev
 npm run db:prepare:dev
 npm run db:migrate:dev -- --name your_feature_name
 npm run typecheck:clean
@@ -97,9 +98,8 @@ npm run typecheck:clean
 
 Use:
 
-```bash
+````bash
 npm run db:status:dev
-```
 
 ## Open Prisma Studio
 
@@ -107,7 +107,7 @@ Use:
 
 ```bash
 npm run db:studio:dev
-```
+````
 
 ## If your dev database is disposable and you want a clean rebuild
 

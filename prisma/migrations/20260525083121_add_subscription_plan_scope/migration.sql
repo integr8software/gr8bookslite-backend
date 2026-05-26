@@ -1,0 +1,3 @@
+-- This migration was created as an accidental index drop and was applied after
+-- the scope/index migration in one development database. Keep it as a no-op so
+-- fresh shadow database replays remain valid.

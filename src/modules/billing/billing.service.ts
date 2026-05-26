@@ -11,6 +11,7 @@ import {
   BillingProvider,
   MembershipRole,
   Prisma,
+  SubscriptionPlanScope,
   SubscriptionStatus,
 } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
@@ -51,19 +52,35 @@ export class BillingService {
     private readonly configService: ConfigService,
   ) {}
 
-  async listPlans() {
+  async listPlans(scope?: string) {
+    const normalizedScope = this.normalizePlanScope(scope);
     const plans = await this.prisma.subscriptionPlan.findMany({
       where: {
         isActive: true,
+        scope: normalizedScope,
       },
-      orderBy: {
-        id: 'asc',
-      },
+      orderBy: [{ scope: 'asc' }, { id: 'asc' }],
     });
 
     return {
       plans: plans.map(mapBillingPlan),
     };
+  }
+
+  private normalizePlanScope(scope?: string) {
+    if (!scope?.trim()) {
+      return SubscriptionPlanScope.ONBOARDING;
+    }
+
+    const normalizedScope = scope
+      .trim()
+      .toUpperCase() as SubscriptionPlanScope;
+
+    if (!Object.values(SubscriptionPlanScope).includes(normalizedScope)) {
+      throw new BadRequestException('Selected plan scope is invalid.');
+    }
+
+    return normalizedScope;
   }
 
   async getCurrentSubscription(user: AuthUser) {
@@ -79,6 +96,38 @@ export class BillingService {
 
     return {
       subscription: subscription ? mapCompanySubscription(subscription) : null,
+    };
+  }
+
+  async listPaymentMethods(user: AuthUser) {
+    const paymentMethods = await this.prisma.billingPaymentMethod.findMany({
+      where:
+        user.role === AppRole.SUPER_ADMIN
+          ? undefined
+          : {
+              company: {
+                memberships: {
+                  some: {
+                    userId: user.id,
+                    role: MembershipRole.ADMIN,
+                  },
+                },
+              },
+            },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    return {
+      paymentMethods: paymentMethods.map((paymentMethod) => ({
+        id: paymentMethod.id,
+        type: paymentMethod.type,
+        brand: paymentMethod.brand,
+        last4: paymentMethod.last4,
+        expMonth: paymentMethod.expMonth,
+        expYear: paymentMethod.expYear,
+        isDefault: paymentMethod.isDefault,
+        externalPaymentMethodId: paymentMethod.externalPaymentMethodId,
+      })),
     };
   }
 
