@@ -7,6 +7,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/master-plan-and-packages.module';
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspac
     OnboardingModule,
     UsersModule,
     BillingModule,
+    MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
   ],
 })

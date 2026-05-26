@@ -287,28 +287,101 @@ model AuditLog {
 // =========================================================
 
 model SubscriptionPlan {
-  id                      Int                   @id @default(autoincrement())
-  code                    String                @unique
+  id                      Int                            @id @default(autoincrement())
+  code                    String                         @unique
   name                    String
   description             String?
-  currency                String                @default("PHP")
-  monthlyPriceInCents     Int                   @map("monthly_price_in_cents")
-  yearlyPriceInCents      Int                   @map("yearly_price_in_cents")
-  monthlyCompareAtInCents Int?                  @map("monthly_compare_at_in_cents")
-  yearlyCompareAtInCents  Int?                  @map("yearly_compare_at_in_cents")
-  monthlyExternalPlanId   String?               @unique @map("monthly_external_plan_id")
-  yearlyExternalPlanId    String?               @unique @map("yearly_external_plan_id")
-  billingProvider         BillingProvider       @default(PAYMONGO) @map("billing_provider")
-  billingMetadata         Json?                 @map("billing_metadata")
-  scope                   SubscriptionPlanScope @default(ONBOARDING)
-  trialDays               Int                   @default(15) @map("trial_days")
-  isActive                Boolean               @default(true) @map("is_active")
-  createdAt               DateTime              @default(now()) @map("created_at")
-  updatedAt               DateTime              @updatedAt @map("updated_at")
+  currency                String                         @default("PHP")
+  monthlyPriceInCents     Int                            @map("monthly_price_in_cents")
+  yearlyPriceInCents      Int                            @map("yearly_price_in_cents")
+  monthlyCompareAtInCents Int?                           @map("monthly_compare_at_in_cents")
+  yearlyCompareAtInCents  Int?                           @map("yearly_compare_at_in_cents")
+  monthlyExternalPlanId   String?                        @unique @map("monthly_external_plan_id")
+  yearlyExternalPlanId    String?                        @unique @map("yearly_external_plan_id")
+  billingProvider         BillingProvider                @default(PAYMONGO) @map("billing_provider")
+  billingMetadata         Json?                          @map("billing_metadata")
+  scope                   SubscriptionPlanScope          @default(ONBOARDING)
+  status                  SubscriptionPlanStatus         @default(ACTIVE)
+  trialDays               Int                            @default(15) @map("trial_days")
+  isActive                Boolean                        @default(true) @map("is_active")
+  createdAt               DateTime                       @default(now()) @map("created_at")
+  updatedAt               DateTime                       @updatedAt @map("updated_at")
+  prices                  SubscriptionPlanPrice[]
+  usageRules              SubscriptionPlanUsageRule[]
+  discountTiers           SubscriptionPlanDiscountTier[]
+  modules                 SubscriptionPlanModule[]
   subscriptions           CompanySubscription[]
   onboardingDrafts        UserOnboardingDraft[]
 
+  @@index([scope, isActive], map: "subscription_plans_scope_is_active_idx")
   @@map("subscription_plans")
+}
+
+model SubscriptionPlanPrice {
+  id                   Int                   @id @default(autoincrement())
+  subscriptionPlanId   Int                   @map("subscription_plan_id")
+  billingCycle         BillingCycle          @map("billing_cycle")
+  intervalCount        Int                   @default(1) @map("interval_count")
+  intervalUnit         BillingIntervalUnit   @map("interval_unit")
+  priceInCents         Int                   @map("price_in_cents")
+  compareAtInCents     Int?                  @map("compare_at_in_cents")
+  externalPlanId       String?               @unique @map("external_plan_id")
+  billingMetadata      Json?                 @map("billing_metadata")
+  isActive             Boolean               @default(true) @map("is_active")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+  subscriptionPlan     SubscriptionPlan      @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+  companySubscriptions CompanySubscription[]
+
+  @@unique([subscriptionPlanId, billingCycle])
+  @@index([billingCycle, isActive])
+  @@map("subscription_plan_prices")
+}
+
+model SubscriptionPlanUsageRule {
+  id                 Int                     @id @default(autoincrement())
+  subscriptionPlanId Int                     @map("subscription_plan_id")
+  metric             SubscriptionUsageMetric
+  freeCount          Int                     @default(0) @map("free_count")
+  unitPriceInCents   Int                     @default(0) @map("unit_price_in_cents")
+  isActive           Boolean                 @default(true) @map("is_active")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+  subscriptionPlan   SubscriptionPlan        @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionPlanId, metric])
+  @@index([metric, isActive])
+  @@map("subscription_plan_usage_rules")
+}
+
+model SubscriptionPlanDiscountTier {
+  id                 Int                     @id @default(autoincrement())
+  subscriptionPlanId Int                     @map("subscription_plan_id")
+  metric             SubscriptionUsageMetric
+  thresholdCount     Int                     @map("threshold_count")
+  discountPercent    Decimal                 @map("discount_percent") @db.Decimal(5, 2)
+  isActive           Boolean                 @default(true) @map("is_active")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+  subscriptionPlan   SubscriptionPlan        @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionPlanId, metric, thresholdCount], map: "subscription_plan_discount_tiers_subscription_plan_id_metric_th")
+  @@index([metric, thresholdCount, isActive], map: "subscription_plan_discount_tiers_metric_threshold_count_is_acti")
+  @@map("subscription_plan_discount_tiers")
+}
+
+model SubscriptionPlanModule {
+  id                 Int              @id @default(autoincrement())
+  subscriptionPlanId Int              @map("subscription_plan_id")
+  moduleKey          String           @map("module_key")
+  isEnabled          Boolean          @default(true) @map("is_enabled")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  subscriptionPlan   SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionPlanId, moduleKey])
+  @@index([moduleKey, isEnabled])
+  @@map("subscription_plan_modules")
 }
 
 // =========================================================
@@ -369,6 +442,7 @@ model CompanySubscription {
   id                      Int                    @id @default(autoincrement())
   companyId               Int                    @map("company_id")
   subscriptionPlanId      Int                    @map("subscription_plan_id")
+  subscriptionPlanPriceId Int?                   @map("subscription_plan_price_id")
   billingCustomerId       Int?                   @map("billing_customer_id")
   billingCycle            BillingCycle           @default(MONTHLY) @map("billing_cycle")
   billingProvider         BillingProvider        @default(PAYMONGO) @map("billing_provider")
@@ -393,12 +467,14 @@ model CompanySubscription {
   updatedAt               DateTime               @updatedAt @map("updated_at")
   company                 Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
   plan                    SubscriptionPlan       @relation(fields: [subscriptionPlanId], references: [id])
+  planPrice               SubscriptionPlanPrice? @relation(fields: [subscriptionPlanPriceId], references: [id], onDelete: SetNull)
   billingCustomer         BillingCustomer?       @relation(fields: [billingCustomerId], references: [id], onDelete: SetNull)
   invoices                SubscriptionInvoice[]
   paymentMethods          BillingPaymentMethod[]
 
   @@index([companyId])
   @@index([subscriptionPlanId])
+  @@index([subscriptionPlanPriceId])
   @@index([billingCustomerId])
   @@index([status])
   @@index([companyId, status])
@@ -575,7 +651,21 @@ enum CompanyStatus {
 
 enum BillingCycle {
   MONTHLY
+  QUARTERLY
   YEARLY
+}
+
+enum BillingIntervalUnit {
+  DAY
+  MONTH
+  YEAR
+}
+
+enum SubscriptionUsageMetric {
+  COMPANY
+  BRANCH
+  SATELLITE
+  USER
 }
 
 enum TaxpayerType {
@@ -590,6 +680,12 @@ enum BillingProvider {
 enum SubscriptionPlanScope {
   ONBOARDING
   ADDITIONAL_COMPANY
+}
+
+enum SubscriptionPlanStatus {
+  ACTIVE
+  DRAFT
+  INACTIVE
 }
 
 enum SubscriptionStatus {

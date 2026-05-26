@@ -8,7 +8,8 @@ import {
 } from 'class-validator';
 
 const NamePattern = /^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$/;
-const TinPattern = /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
+const TinPattern =
+  /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
 const ContactNumberPattern = /^\+63 \d{3} \d{3} \d{4}$/;
 const DatePattern = /^\d{4}-\d{2}-\d{2}$/;
 

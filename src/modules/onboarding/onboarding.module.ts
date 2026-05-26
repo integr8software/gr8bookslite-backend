@@ -24,10 +24,7 @@ import { OnboardingService } from './onboarding.service';
         ),
         signOptions: {
           expiresIn: Number(
-            configService.get<string | number>(
-              'JWT_EXPIRES_IN_SECONDS',
-              86400,
-            ),
+            configService.get<string | number>('JWT_EXPIRES_IN_SECONDS', 86400),
           ),
         },
       }),

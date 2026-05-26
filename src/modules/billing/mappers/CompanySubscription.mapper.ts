@@ -1,6 +1,8 @@
 import { CompanySubscriptionDetails } from '../utils/BillingPrisma.util';
 
-export function mapCompanySubscription(subscription: CompanySubscriptionDetails) {
+export function mapCompanySubscription(
+  subscription: CompanySubscriptionDetails,
+) {
   return {
     id: subscription.id,
     status: subscription.status,
@@ -31,6 +33,44 @@ export function mapCompanySubscription(subscription: CompanySubscriptionDetails)
       trialDays: subscription.plan.trialDays,
       monthlyPriceInCents: subscription.plan.monthlyPriceInCents,
       yearlyPriceInCents: subscription.plan.yearlyPriceInCents,
+      selectedPrice: subscription.planPrice
+        ? {
+            id: subscription.planPrice.id,
+            billingCycle: subscription.planPrice.billingCycle,
+            intervalCount: subscription.planPrice.intervalCount,
+            intervalUnit: subscription.planPrice.intervalUnit,
+            priceInCents: subscription.planPrice.priceInCents,
+            compareAtInCents: subscription.planPrice.compareAtInCents,
+          }
+        : null,
+      prices: subscription.plan.prices.map((price) => ({
+        id: price.id,
+        billingCycle: price.billingCycle,
+        intervalCount: price.intervalCount,
+        intervalUnit: price.intervalUnit,
+        priceInCents: price.priceInCents,
+        compareAtInCents: price.compareAtInCents,
+      })),
+      usageRules: subscription.plan.usageRules.map((rule) => ({
+        id: rule.id,
+        metric: rule.metric,
+        freeCount: rule.freeCount,
+        unitPriceInCents: rule.unitPriceInCents,
+      })),
+      discountTiers: subscription.plan.discountTiers.map((tier) => ({
+        id: tier.id,
+        metric: tier.metric,
+        thresholdCount: tier.thresholdCount,
+        discountPercent: tier.discountPercent.toNumber(),
+      })),
+      moduleKeys: subscription.plan.modules
+        .filter((module) => module.isEnabled)
+        .map((module) => module.moduleKey),
+      modules: subscription.plan.modules.map((module) => ({
+        id: module.id,
+        moduleKey: module.moduleKey,
+        isEnabled: module.isEnabled,
+      })),
     },
     billingCustomer: subscription.billingCustomer
       ? {

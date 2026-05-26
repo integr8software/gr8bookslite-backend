@@ -18,7 +18,10 @@ export function getSubscriptionAccessDenialReason(
 ): string | null {
   switch (subscription.status) {
     case SubscriptionStatus.ACTIVE:
-      if (subscription.endsAt && subscription.endsAt.getTime() < now.getTime()) {
+      if (
+        subscription.endsAt &&
+        subscription.endsAt.getTime() < now.getTime()
+      ) {
         return 'This company subscription has expired.';
       }
 

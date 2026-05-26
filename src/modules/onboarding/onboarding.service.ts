@@ -26,6 +26,25 @@ import {
 } from './utils/OnboardingFinalize.util';
 import { validateOnboardingLogoFile } from './utils/OnboardingLogoUpload.util';
 
+const subscriptionPlanInclude =
+  Prisma.validator<Prisma.SubscriptionPlanInclude>()({
+    prices: {
+      where: { isActive: true },
+      orderBy: [{ billingCycle: 'asc' }],
+    },
+    usageRules: {
+      where: { isActive: true },
+      orderBy: [{ metric: 'asc' }],
+    },
+    discountTiers: {
+      where: { isActive: true },
+      orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
+    },
+    modules: {
+      orderBy: [{ moduleKey: 'asc' }],
+    },
+  });
+
 @Injectable()
 export class OnboardingService {
   private readonly logger = new Logger(OnboardingService.name);
@@ -43,6 +62,23 @@ export class OnboardingService {
       where: {
         isActive: true,
       },
+      include: {
+        prices: {
+          where: { isActive: true },
+          orderBy: [{ billingCycle: 'asc' }],
+        },
+        usageRules: {
+          where: { isActive: true },
+          orderBy: [{ metric: 'asc' }],
+        },
+        discountTiers: {
+          where: { isActive: true },
+          orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
+        },
+        modules: {
+          orderBy: [{ moduleKey: 'asc' }],
+        },
+      },
       orderBy: {
         id: 'asc',
       },
@@ -59,7 +95,9 @@ export class OnboardingService {
         userId: user.id,
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -142,7 +180,9 @@ export class OnboardingService {
         planSelectedAt: new Date(),
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -161,7 +201,9 @@ export class OnboardingService {
         userId: user.id,
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -231,7 +273,9 @@ export class OnboardingService {
         billingCompletedAt: new Date(),
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -429,7 +473,9 @@ export class OnboardingService {
         userId: user.id,
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -664,7 +710,11 @@ export class OnboardingService {
 
   private validateCompletionDraft(
     draft: Prisma.UserOnboardingDraftGetPayload<{
-      include: { subscriptionPlan: true };
+      include: {
+        subscriptionPlan: {
+          include: typeof subscriptionPlanInclude;
+        };
+      };
     }>,
   ) {
     if (!draft.subscriptionPlanId || !draft.subscriptionPlan) {
