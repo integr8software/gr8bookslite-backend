@@ -13,9 +13,6 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { Roles } from '../../../common/decorators/roles.decorator';
-import { AppRole } from '../../../common/enums/app-role.enum';
-import { RolesGuard } from '../../../common/guards/roles.guard';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
@@ -25,8 +22,7 @@ import { UpdateWorkspaceCompanyDto } from './dto/update-workspace-company.dto';
 import type { UploadedCompanyLogoFile } from './types/uploaded-company-logo-file.type';
 import { WorkspaceCompaniesService } from './workspace-companies.service';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(AppRole.SUPER_ADMIN, AppRole.ADMIN)
+@UseGuards(JwtAuthGuard)
 @Controller({
   path: 'workspace/companies',
   version: '1',

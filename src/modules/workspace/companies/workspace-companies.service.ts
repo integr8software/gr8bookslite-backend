@@ -79,7 +79,7 @@ export class WorkspaceCompaniesService {
   }
 
   async create(user: AuthUser, dto: CreateWorkspaceCompanyDto) {
-    this.ensureCanManageWorkspace(user);
+    await this.ensureCanManageWorkspace(user);
 
     const name = getCompanyName(dto);
     const slug = await this.createUniqueSlug(name);
@@ -419,8 +419,21 @@ export class WorkspaceCompaniesService {
     return mapCompanyUnit(unit);
   }
 
-  private ensureCanManageWorkspace(user: AuthUser) {
+  private async ensureCanManageWorkspace(user: AuthUser) {
     if (![AppRole.SUPER_ADMIN, AppRole.ADMIN].includes(user.role)) {
+      const adminMembership = await this.prisma.membership.findFirst({
+        where: {
+          userId: user.id,
+          role: MembershipRole.ADMIN,
+          status: MembershipStatus.ACTIVE,
+        },
+        select: { companyId: true },
+      });
+
+      if (adminMembership) {
+        return;
+      }
+
       throw new ForbiddenException(
         'Only admins can manage workspace companies.',
       );
@@ -450,8 +463,6 @@ export class WorkspaceCompaniesService {
     if (user.role === AppRole.SUPER_ADMIN) {
       return;
     }
-
-    this.ensureCanManageWorkspace(user);
 
     const membership = await this.prisma.membership.findUnique({
       where: {
