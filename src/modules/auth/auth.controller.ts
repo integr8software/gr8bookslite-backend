@@ -24,6 +24,10 @@ import { VerifyForgotPasswordCodeDto } from './dto/verify-forgot-password-code.d
 import { VerifyPasswordChangeCodeDto } from './dto/verify-password-change-code.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import {
+  clearAuthAccessTokenCookie,
+  setAuthAccessTokenCookie,
+} from './utils/auth-cookie.util';
 
 @Controller({
   path: 'auth',
@@ -40,8 +44,13 @@ export class AuthController {
 
   @Public()
   @Post('verify-email')
-  verifyEmail(@Body() dto: VerifyEmailDto) {
-    return this.authService.verifyEmail(dto);
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.verifyEmail(dto);
+    this.setCookieIfAuthenticated(response, result);
+    return result;
   }
 
   @Public()
@@ -82,8 +91,13 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.login(dto);
+    this.setCookieIfAuthenticated(response, result, dto.rememberMe ?? false);
+    return result;
   }
 
   @Public()
@@ -114,7 +128,8 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  logout() {
+  logout(@Res({ passthrough: true }) response: Response) {
+    clearAuthAccessTokenCookie(response);
     return this.authService.logout();
   }
 
@@ -146,5 +161,20 @@ export class AuthController {
     @Body() dto: ChangeAuthenticatedPasswordDto,
   ) {
     return this.authService.changeAuthenticatedPassword(user, dto);
+  }
+
+  private setCookieIfAuthenticated(
+    response: Response,
+    result: unknown,
+    rememberMe = false,
+  ) {
+    if (
+      result &&
+      typeof result === 'object' &&
+      'accessToken' in result &&
+      typeof result.accessToken === 'string'
+    ) {
+      setAuthAccessTokenCookie(response, result.accessToken, rememberMe);
+    }
   }
 }
