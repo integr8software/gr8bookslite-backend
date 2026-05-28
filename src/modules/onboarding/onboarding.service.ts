@@ -244,6 +244,7 @@ export class OnboardingService {
     const paymentResult = preparedSubscription.pendingProviderActivation
       ? await this.billingService.recordPendingPaymentSetup({
           companyId: existingDraft.provisionedCompanyId,
+          ownerUserId: user.id,
           subscriptionId: preparedSubscription.subscription.id,
           paymentMethodId: dto.paymentMethodId.trim(),
           brand: dto.cardBrand.trim(),
@@ -253,6 +254,7 @@ export class OnboardingService {
         })
       : await this.billingService.attachPaymentMethodForCompany({
           companyId: existingDraft.provisionedCompanyId,
+          ownerUserId: user.id,
           subscriptionId: preparedSubscription.subscription.id,
           paymentMethodId: dto.paymentMethodId.trim(),
         });

@@ -12,28 +12,29 @@ datasource db {
 // =========================================================
 
 model User {
-  id                 Int                     @id @default(autoincrement())
-  email              String                  @unique
-  passwordHash       String                  @map("password_hash")
-  name               String
-  contactNumber      String?                 @map("contact_number")
-  avatarFileName     String?                 @map("avatar_file_name")
-  avatarMimeType     String?                 @map("avatar_mime_type")
-  avatarStoragePath  String?                 @map("avatar_storage_path")
-  avatarPublicUrl    String?                 @map("avatar_public_url")
-  systemRole         SystemRole              @default(STANDARD) @map("system_role")
-  status             UserStatus              @default(PENDING_VERIFICATION)
-  emailVerifiedAt    DateTime?               @map("email_verified_at")
-  createdAt          DateTime                @default(now()) @map("created_at")
-  updatedAt          DateTime                @updatedAt @map("updated_at")
-  verificationCodes  EmailVerificationCode[]
-  memberships        Membership[]
-  invitedMemberships Membership[]            @relation("MembershipInvitedBy")
-  createdAuditLogs   AuditLog[]              @relation("AuditActor")
-  targetedAuditLogs  AuditLog[]              @relation("AuditTargetUser")
-  onboardingDraft    UserOnboardingDraft?
-  billingCustomers   BillingCustomer[]
-  createdCompanies   Company[]               @relation("CompanyCreatedBy")
+  id                    Int                     @id @default(autoincrement())
+  email                 String                  @unique
+  passwordHash          String                  @map("password_hash")
+  name                  String
+  contactNumber         String?                 @map("contact_number")
+  avatarFileName        String?                 @map("avatar_file_name")
+  avatarMimeType        String?                 @map("avatar_mime_type")
+  avatarStoragePath     String?                 @map("avatar_storage_path")
+  avatarPublicUrl       String?                 @map("avatar_public_url")
+  systemRole            SystemRole              @default(STANDARD) @map("system_role")
+  status                UserStatus              @default(PENDING_VERIFICATION)
+  emailVerifiedAt       DateTime?               @map("email_verified_at")
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
+  verificationCodes     EmailVerificationCode[]
+  memberships           Membership[]
+  invitedMemberships    Membership[]            @relation("MembershipInvitedBy")
+  createdAuditLogs      AuditLog[]              @relation("AuditActor")
+  targetedAuditLogs     AuditLog[]              @relation("AuditTargetUser")
+  onboardingDraft       UserOnboardingDraft?
+  billingCustomers      BillingCustomer[]
+  billingPaymentMethods BillingPaymentMethod[]
+  createdCompanies      Company[]               @relation("CompanyCreatedBy")
 
   @@map("users")
 }
@@ -533,6 +534,7 @@ model BillingPaymentMethod {
   id                      Int                  @id @default(autoincrement())
   companyId               Int                  @map("company_id")
   companySubscriptionId   Int?                 @map("company_subscription_id")
+  ownerUserId             Int?                 @map("owner_user_id")
   billingProvider         BillingProvider      @default(PAYMONGO) @map("billing_provider")
   externalPaymentMethodId String               @unique @map("external_payment_method_id")
   type                    String
@@ -547,9 +549,11 @@ model BillingPaymentMethod {
   updatedAt               DateTime             @updatedAt @map("updated_at")
   company                 Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companySubscription     CompanySubscription? @relation(fields: [companySubscriptionId], references: [id], onDelete: SetNull)
+  ownerUser               User?                @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
 
   @@index([companyId])
   @@index([companySubscriptionId])
+  @@index([ownerUserId])
   @@index([isDefault])
   @@map("billing_payment_methods")
 }

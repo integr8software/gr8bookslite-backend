@@ -114,25 +114,36 @@ export class BillingService {
 
   async listPaymentMethods(user: AuthUser) {
     const paymentMethods = await this.prisma.billingPaymentMethod.findMany({
-      where:
-        user.role === AppRole.SUPER_ADMIN
-          ? undefined
-          : {
-              company: {
-                memberships: {
-                  some: {
-                    userId: user.id,
-                    role: MembershipRole.ADMIN,
-                  },
-                },
+      where: {
+        ownerUserId: user.id,
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        companySubscription: {
+          select: {
+            id: true,
+            status: true,
+            plan: {
+              select: {
+                code: true,
+                name: true,
               },
             },
+          },
+        },
+      },
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
 
     return {
       paymentMethods: paymentMethods.map((paymentMethod) => ({
         id: paymentMethod.id,
+        ownerUserId: paymentMethod.ownerUserId,
         type: paymentMethod.type,
         brand: paymentMethod.brand,
         last4: paymentMethod.last4,
@@ -140,6 +151,20 @@ export class BillingService {
         expYear: paymentMethod.expYear,
         isDefault: paymentMethod.isDefault,
         externalPaymentMethodId: paymentMethod.externalPaymentMethodId,
+        company: {
+          id: paymentMethod.company.id,
+          name: paymentMethod.company.name,
+        },
+        subscription: paymentMethod.companySubscription
+          ? {
+              id: paymentMethod.companySubscription.id,
+              status: paymentMethod.companySubscription.status,
+              plan: {
+                code: paymentMethod.companySubscription.plan.code,
+                name: paymentMethod.companySubscription.plan.name,
+              },
+            }
+          : null,
       })),
     };
   }
@@ -454,6 +479,7 @@ export class BillingService {
 
     return this.attachPaymentMethodForCompany({
       companyId,
+      ownerUserId: user.id,
       subscriptionId,
       paymentMethodId: dto.paymentMethodId,
     });
@@ -461,6 +487,7 @@ export class BillingService {
 
   async attachPaymentMethodForCompany(input: {
     companyId: number;
+    ownerUserId: number;
     subscriptionId: number;
     paymentMethodId: string;
   }) {
@@ -500,6 +527,11 @@ export class BillingService {
       );
     }
 
+    await this.assertPaymentMethodAvailableForOwner({
+      ownerUserId: input.ownerUserId,
+      paymentMethodId: input.paymentMethodId,
+    });
+
     const remotePaymentIntent = await this.paymongoService.attachPaymentIntent(
       subscription.latestPaymentIntentId,
       input.paymentMethodId.trim(),
@@ -532,6 +564,7 @@ export class BillingService {
         },
         update: {
           companyId,
+          ownerUserId: input.ownerUserId,
           companySubscriptionId: subscription.id,
           isDefault: true,
           type: readProviderString(paymentMethodDetails?.type) ?? 'unknown',
@@ -543,6 +576,7 @@ export class BillingService {
         },
         create: {
           companyId,
+          ownerUserId: input.ownerUserId,
           companySubscriptionId: subscription.id,
           billingProvider: BillingProvider.PAYMONGO,
           externalPaymentMethodId: input.paymentMethodId.trim(),
@@ -599,6 +633,7 @@ export class BillingService {
 
   async recordPendingPaymentSetup(input: {
     companyId: number;
+    ownerUserId: number;
     subscriptionId: number;
     paymentMethodId: string;
     brand?: string | null;
@@ -618,6 +653,11 @@ export class BillingService {
       throw new NotFoundException('Subscription not found.');
     }
 
+    await this.assertPaymentMethodAvailableForOwner({
+      ownerUserId: input.ownerUserId,
+      paymentMethodId: input.paymentMethodId,
+    });
+
     const updatedSubscription = await this.prisma.$transaction(async (tx) => {
       await tx.billingPaymentMethod.upsert({
         where: {
@@ -625,6 +665,7 @@ export class BillingService {
         },
         update: {
           companyId: input.companyId,
+          ownerUserId: input.ownerUserId,
           companySubscriptionId: subscription.id,
           isDefault: true,
           type: 'card',
@@ -638,6 +679,7 @@ export class BillingService {
         },
         create: {
           companyId: input.companyId,
+          ownerUserId: input.ownerUserId,
           companySubscriptionId: subscription.id,
           billingProvider: BillingProvider.PAYMONGO,
           externalPaymentMethodId: input.paymentMethodId.trim(),
@@ -685,6 +727,30 @@ export class BillingService {
       subscription: mapCompanySubscription(updatedSubscription),
       pendingProviderActivation: true,
     };
+  }
+
+  private async assertPaymentMethodAvailableForOwner(input: {
+    ownerUserId: number;
+    paymentMethodId: string;
+  }) {
+    const existingPaymentMethod =
+      await this.prisma.billingPaymentMethod.findUnique({
+        where: {
+          externalPaymentMethodId: input.paymentMethodId.trim(),
+        },
+        select: {
+          ownerUserId: true,
+        },
+      });
+
+    if (
+      existingPaymentMethod &&
+      existingPaymentMethod.ownerUserId !== input.ownerUserId
+    ) {
+      throw new ForbiddenException(
+        'This saved payment method is not available to this admin account.',
+      );
+    }
   }
 
   async cancelSubscription(

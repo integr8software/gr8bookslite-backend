@@ -574,6 +574,7 @@ export class WorkspaceCompaniesService {
     const paymentResult = preparedSubscription.pendingProviderActivation
       ? await this.billingService.recordPendingPaymentSetup({
           companyId: input.companyId,
+          ownerUserId: input.user.id,
           subscriptionId: preparedSubscription.subscription.id,
           paymentMethodId: billing.paymentMethodId,
           brand: billing.cardBrand,
@@ -583,6 +584,7 @@ export class WorkspaceCompaniesService {
         })
       : await this.billingService.attachPaymentMethodForCompany({
           companyId: input.companyId,
+          ownerUserId: input.user.id,
           subscriptionId: preparedSubscription.subscription.id,
           paymentMethodId: billing.paymentMethodId,
         });
