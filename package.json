@@ -28,6 +28,7 @@
     "db:prepare:dev": "npm run db:format:dev && npm run db:validate:dev && npm run db:generate:dev",
     "db:seed:dev": "node scripts/run-with-env.cjs .env ts-node prisma/seed.ts",
     "db:delete-user-owned-data:dev": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/deleteUserOwnedData.ts",
+    "db:backfill-head-offices:dev": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/backfillCompanyHeadOffices.ts",
     "db:studio:dev": "node scripts/run-with-env.cjs .env prisma studio",
     "start": "nest start",
     "start:dev": "node scripts/run-with-env.cjs .env nest start --watch",

@@ -1,6 +1,11 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
+import {
+  CompanyUnitType,
+  MembershipRole,
+  MembershipStatus,
+  Prisma,
+} from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
@@ -412,6 +417,41 @@ export class OnboardingService {
             createdByUserId: user.id,
           },
         });
+
+    await this.prisma.companyUnit.upsert({
+      where: {
+        companyId_code: {
+          companyId: provisionedCompany.id,
+          code: 'HEAD-OFFICE',
+        },
+      },
+      update: {
+        displayName: `${provisionedCompany.name} Head Office`,
+        tin: provisionedCompany.tin,
+        address: provisionedCompany.address,
+        contactNumber: provisionedCompany.contactNumber,
+        email: provisionedCompany.email,
+        isActive: true,
+        inheritsCompanyProfile: true,
+        canTransactSales: true,
+        canHoldInventory: true,
+      },
+      create: {
+        companyId: provisionedCompany.id,
+        type: CompanyUnitType.HEAD_OFFICE,
+        code: 'HEAD-OFFICE',
+        name: 'Head Office',
+        displayName: `${provisionedCompany.name} Head Office`,
+        tin: provisionedCompany.tin,
+        address: provisionedCompany.address,
+        contactNumber: provisionedCompany.contactNumber,
+        email: provisionedCompany.email,
+        isActive: true,
+        inheritsCompanyProfile: true,
+        canTransactSales: true,
+        canHoldInventory: true,
+      },
+    });
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({
       where: {
