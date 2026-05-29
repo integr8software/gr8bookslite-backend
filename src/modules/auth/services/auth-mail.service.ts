@@ -18,7 +18,9 @@ type MailJobName =
   | 'verification-code'
   | 'password-reset-code'
   | 'onboarding-congratulations'
-  | 'company-created';
+  | 'company-created'
+  | 'workspace-user-invitation'
+  | 'workspace-user-activated';
 
 type MailJobData =
   | {
@@ -42,6 +44,19 @@ type MailJobData =
       email: string;
       recipientName: string;
       companyName: string;
+    }
+  | {
+      type: 'workspace-user-invitation';
+      email: string;
+      recipientName: string;
+      invitedByName: string;
+      companyNames: string[];
+      activationUrl: string;
+    }
+  | {
+      type: 'workspace-user-activated';
+      email: string;
+      recipientName: string;
     };
 
 type MailProvider = 'resend' | 'log';
@@ -206,6 +221,50 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     await this.sendCompanyCreatedNow(email, recipientName, companyName);
   }
 
+  async sendWorkspaceUserInvitation(
+    email: string,
+    recipientName: string,
+    invitedByName: string,
+    companyNames: string[],
+    activationUrl: string,
+  ): Promise<void> {
+    if (this.mailQueue) {
+      await this.enqueueMail('workspace-user-invitation', {
+        type: 'workspace-user-invitation',
+        email,
+        recipientName,
+        invitedByName,
+        companyNames,
+        activationUrl,
+      });
+      return;
+    }
+
+    await this.sendWorkspaceUserInvitationNow(
+      email,
+      recipientName,
+      invitedByName,
+      companyNames,
+      activationUrl,
+    );
+  }
+
+  async sendWorkspaceUserActivated(
+    email: string,
+    recipientName: string,
+  ): Promise<void> {
+    if (this.mailQueue) {
+      await this.enqueueMail('workspace-user-activated', {
+        type: 'workspace-user-activated',
+        email,
+        recipientName,
+      });
+      return;
+    }
+
+    await this.sendWorkspaceUserActivatedNow(email, recipientName);
+  }
+
   private async enqueueMail(name: MailJobName, data: MailJobData) {
     await this.mailQueue?.add(name, data);
     this.logger.debug(`Mail job queued for ${data.email}: ${name}.`);
@@ -231,6 +290,21 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
           job.data.email,
           job.data.recipientName,
           job.data.companyName,
+        );
+        return;
+      case 'workspace-user-invitation':
+        await this.sendWorkspaceUserInvitationNow(
+          job.data.email,
+          job.data.recipientName,
+          job.data.invitedByName,
+          job.data.companyNames,
+          job.data.activationUrl,
+        );
+        return;
+      case 'workspace-user-activated':
+        await this.sendWorkspaceUserActivatedNow(
+          job.data.email,
+          job.data.recipientName,
         );
         return;
     }
@@ -300,6 +374,50 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     });
 
     this.logger.debug(`Company created email sent for ${email}.`);
+  }
+
+  private async sendWorkspaceUserInvitationNow(
+    email: string,
+    recipientName: string,
+    invitedByName: string,
+    companyNames: string[],
+    activationUrl: string,
+  ): Promise<void> {
+    const companyList = companyNames.length
+      ? companyNames.join(', ')
+      : 'the selected workspace companies';
+
+    await this.sendMail({
+      to: email,
+      subject: 'Create your Gr8Books Neo password',
+      text: `Hi ${recipientName}, ${invitedByName} added you to ${companyList}. Create your password here: ${activationUrl}`,
+      html: `
+        <p>Hi <strong>${recipientName}</strong>,</p>
+        <p><strong>${invitedByName}</strong> added you to <strong>${companyList}</strong>.</p>
+        <p>Create your password to activate your workspace access.</p>
+        <p><a href="${activationUrl}">Create password</a></p>
+      `,
+    });
+
+    this.logger.debug(`Workspace user invitation email sent for ${email}.`);
+  }
+
+  private async sendWorkspaceUserActivatedNow(
+    email: string,
+    recipientName: string,
+  ): Promise<void> {
+    await this.sendMail({
+      to: email,
+      subject: 'Your Gr8Books Neo account is active',
+      text: `Hi ${recipientName}, your Gr8Books Neo account is now active. You can continue using your workspace access.`,
+      html: `
+        <p>Hi <strong>${recipientName}</strong>,</p>
+        <p>Your Gr8Books Neo account is now active.</p>
+        <p>You can continue using your workspace access.</p>
+      `,
+    });
+
+    this.logger.debug(`Workspace user activated email sent for ${email}.`);
   }
 
   private async sendMail(payload: MailPayload) {

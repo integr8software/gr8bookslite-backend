@@ -87,26 +87,27 @@ model Company {
 }
 
 model CompanyUnit {
-  id                     Int             @id @default(autoincrement())
-  companyId              Int             @map("company_id")
-  parentUnitId           Int?            @map("parent_unit_id")
+  id                     Int                    @id @default(autoincrement())
+  companyId              Int                    @map("company_id")
+  parentUnitId           Int?                   @map("parent_unit_id")
   type                   CompanyUnitType
   code                   String?
   name                   String
-  displayName            String?         @map("display_name")
+  displayName            String?                @map("display_name")
   tin                    String?
   address                String?
-  contactNumber          String?         @map("contact_number")
+  contactNumber          String?                @map("contact_number")
   email                  String?
-  isActive               Boolean         @default(true) @map("is_active")
-  inheritsCompanyProfile Boolean         @default(false) @map("inherits_company_profile")
-  canTransactSales       Boolean         @default(false) @map("can_transact_sales")
-  canHoldInventory       Boolean         @default(false) @map("can_hold_inventory")
-  createdAt              DateTime        @default(now()) @map("created_at")
-  updatedAt              DateTime        @updatedAt @map("updated_at")
-  company                Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  parentUnit             CompanyUnit?    @relation("CompanyUnitHierarchy", fields: [parentUnitId], references: [id], onDelete: SetNull)
-  childUnits             CompanyUnit[]   @relation("CompanyUnitHierarchy")
+  isActive               Boolean                @default(true) @map("is_active")
+  inheritsCompanyProfile Boolean                @default(false) @map("inherits_company_profile")
+  canTransactSales       Boolean                @default(false) @map("can_transact_sales")
+  canHoldInventory       Boolean                @default(false) @map("can_hold_inventory")
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  company                Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parentUnit             CompanyUnit?           @relation("CompanyUnitHierarchy", fields: [parentUnitId], references: [id], onDelete: SetNull)
+  childUnits             CompanyUnit[]          @relation("CompanyUnitHierarchy")
+  membershipAccess       MembershipUnitAccess[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -133,6 +134,7 @@ model Membership {
   companyRole         CompanyRole?           @relation(fields: [companyRoleId], references: [id], onDelete: SetNull)
   invitedBy           User?                  @relation("MembershipInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
   permissionOverrides MembershipPermission[]
+  unitAccess          MembershipUnitAccess[]
 
   @@id([userId, companyId])
   @@index([companyId])
@@ -140,6 +142,19 @@ model Membership {
   @@index([status])
   @@index([companyId, status])
   @@map("memberships")
+}
+
+model MembershipUnitAccess {
+  userId     Int         @map("user_id")
+  companyId  Int         @map("company_id")
+  unitId     Int         @map("unit_id")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  membership Membership  @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
+  unit       CompanyUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@id([userId, companyId, unitId])
+  @@index([companyId, unitId])
+  @@map("membership_unit_access")
 }
 
 model CompanyRole {
@@ -714,4 +729,5 @@ enum VerificationPurpose {
   SIGNUP
   EMAIL_CHANGE
   PASSWORD_RESET
+  WORKSPACE_INVITE
 }

@@ -24,6 +24,7 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { UserWithMemberships } from '../users/types/user-with-memberships.type';
 import { UsersService } from '../users/users.service';
+import { ActivateWorkspaceUserDto } from './dto/activate-workspace-user.dto';
 import { ChangeAuthenticatedPasswordDto } from './dto/change-authenticated-password.dto';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -40,6 +41,7 @@ import { OtpService } from './services/otp.service';
 import type { GoogleCallbackParams } from './types/google-callback-params.type';
 import type { GoogleUserProfile } from './types/google-user-profile.type';
 import type { PasswordResetTokenPayload } from './types/password-reset-token-payload.type';
+import type { WorkspaceInviteToken } from './types/workspace-invite-token.type';
 
 @Injectable()
 export class AuthService {
@@ -341,6 +343,64 @@ export class AuthService {
     };
   }
 
+  async activateWorkspaceUser(dto: ActivateWorkspaceUserDto) {
+    if (dto.newPassword !== dto.confirmNewPassword) {
+      throw new BadRequestException('Passwords do not match.');
+    }
+
+    if (!ActivateWorkspaceUserDto.isStrongPassword(dto.newPassword)) {
+      throw new BadRequestException(
+        'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+      );
+    }
+
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const user = await this.usersService.findByEmail(normalizedEmail);
+
+    if (!user || user.status !== UserStatus.PENDING_VERIFICATION) {
+      throw new BadRequestException('Invitation link is invalid.');
+    }
+
+    const invitation = await this.getLatestActiveVerification(
+      user.id,
+      normalizedEmail,
+      VerificationPurpose.WORKSPACE_INVITE,
+    );
+
+    if (!invitation) {
+      throw new BadRequestException('Invitation link is invalid.');
+    }
+
+    if (invitation.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Invitation link has expired.');
+    }
+
+    const isValidToken = await bcrypt.compare(dto.token, invitation.codeHash);
+
+    if (!isValidToken) {
+      await this.incrementVerificationAttempt(invitation.id);
+      throw new BadRequestException('Invitation link is invalid.');
+    }
+
+    const verifiedAt = new Date();
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.$transaction([
+      this.consumeVerificationCode(invitation.id, verifiedAt),
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: hashedPassword,
+          emailVerifiedAt: user.emailVerifiedAt ?? verifiedAt,
+        },
+      }),
+    ]);
+
+    return {
+      message: 'Password created. You can now log in to activate your account.',
+    };
+  }
+
   async requestPasswordChangeOtp(authUser: AuthUser) {
     const user = await this.usersService.findById(authUser.id);
     const resetCode = this.otpService.generateCode();
@@ -491,6 +551,30 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
+    if (
+      user.status === UserStatus.PENDING_VERIFICATION &&
+      user.emailVerifiedAt
+    ) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { status: UserStatus.ACTIVE },
+      });
+
+      await this.authMailService.sendWorkspaceUserActivated(
+        user.email,
+        user.name,
+      );
+
+      const activatedUser =
+        await this.usersService.findForAuthByEmail(normalizedEmail);
+
+      if (!activatedUser) {
+        throw new UnauthorizedException('Invalid credentials.');
+      }
+
+      return this.loginActivatedUser(activatedUser, dto.companyId ?? null);
+    }
+
     if (user.status !== UserStatus.ACTIVE || !user.emailVerifiedAt) {
       const verificationResponse =
         await this.resendSignupVerificationCode(user);
@@ -505,8 +589,53 @@ export class AuthService {
       });
     }
 
+    return this.loginActivatedUser(user, dto.companyId ?? null);
+  }
+
+  async createWorkspaceInviteToken(
+    userId: number,
+    email: string,
+  ): Promise<WorkspaceInviteToken> {
+    const rawToken = randomBytes(48).toString('base64url');
+    const tokenHash = await bcrypt.hash(rawToken, 10);
+    const expiresInSeconds = Number(
+      this.configService.get<string | number>(
+        'WORKSPACE_INVITE_EXPIRES_IN_SECONDS',
+        60 * 60 * 24 * 7,
+      ),
+    );
+    const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerificationCode.updateMany({
+        where: {
+          userId,
+          purpose: VerificationPurpose.WORKSPACE_INVITE,
+          consumedAt: null,
+        },
+        data: { consumedAt: new Date() },
+      });
+
+      await tx.emailVerificationCode.create({
+        data: {
+          userId,
+          email,
+          purpose: VerificationPurpose.WORKSPACE_INVITE,
+          codeHash: tokenHash,
+          expiresAt,
+        },
+      });
+    });
+
+    return { rawToken, tokenHash };
+  }
+
+  private loginActivatedUser(
+    user: UserWithMemberships,
+    requestedCompanyId: number | null,
+  ) {
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
-      return this.buildAuthenticatedResponse(user, dto.companyId ?? null);
+      return this.buildAuthenticatedResponse(user, requestedCompanyId);
     }
 
     const activeMemberships = this.getActiveMemberships(user);
@@ -517,7 +646,7 @@ export class AuthService {
 
     const resolvedCompanyId = this.resolveDefaultCompanyContext(
       user,
-      dto.companyId ?? null,
+      requestedCompanyId,
     );
 
     if (resolvedCompanyId != null) {

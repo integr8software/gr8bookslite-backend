@@ -13,6 +13,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AuthService } from './auth.service';
+import { ActivateWorkspaceUserDto } from './dto/activate-workspace-user.dto';
 import { ChangeAuthenticatedPasswordDto } from './dto/change-authenticated-password.dto';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -87,6 +88,12 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Public()
+  @Post('workspace-invitation/activate')
+  activateWorkspaceUser(@Body() dto: ActivateWorkspaceUserDto) {
+    return this.authService.activateWorkspaceUser(dto);
   }
 
   @Public()

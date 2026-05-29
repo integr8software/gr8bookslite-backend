@@ -9,6 +9,7 @@ import { UsersModule } from './modules/users/users.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/master-plan-and-packages.module';
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
+import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspac
     BillingModule,
     MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
+    WorkspaceUsersModule,
   ],
 })
 export class AppModule {}
