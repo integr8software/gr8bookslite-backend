@@ -1,4 +1,5 @@
 import {
+  IsEmail,
   IsIn,
   IsOptional,
   IsString,
@@ -102,6 +103,10 @@ export class SaveOnboardingCompanyDetailsDto {
     message: 'Enter a valid TIN in the format XXX-XXX-XXX or XXX-XXX-XXX-XXX.',
   })
   tin!: string;
+
+  @IsString()
+  @IsEmail({}, { message: 'Enter a valid company email.' })
+  companyEmail!: string;
 
   @IsString()
   @Matches(ContactNumberPattern, {
