@@ -306,11 +306,11 @@ export class WorkspaceCompaniesService {
       throw new NotFoundException('Company not found.');
     }
 
-    const type = dto.type as CompanyUnitType;
+    const type = dto.type;
     const parentUnit =
       type === CompanyUnitType.SATELLITE
         ? await this.resolveSatelliteParent(companyId, dto.parentUnitId)
-        : null;
+        : await this.resolveHeadOfficeParent(companyId);
 
     if (type === CompanyUnitType.BRANCH && !dto.tin?.trim()) {
       throw new BadRequestException('TIN is required for a branch.');
@@ -364,7 +364,9 @@ export class WorkspaceCompaniesService {
       current.type === CompanyUnitType.SATELLITE &&
       dto.parentUnitId !== undefined
         ? await this.resolveSatelliteParent(current.companyId, dto.parentUnitId)
-        : null;
+        : current.type === CompanyUnitType.BRANCH && !current.parentUnitId
+          ? await this.resolveHeadOfficeParent(current.companyId)
+          : null;
     const tin =
       current.type === CompanyUnitType.SATELLITE
         ? (parentUnit?.tin ?? current.tin)
@@ -380,7 +382,9 @@ export class WorkspaceCompaniesService {
         parentUnitId:
           current.type === CompanyUnitType.SATELLITE
             ? (parentUnit?.id ?? undefined)
-            : undefined,
+            : current.type === CompanyUnitType.BRANCH && !current.parentUnitId
+              ? (parentUnit?.id ?? undefined)
+              : undefined,
         code: cleanOptional(dto.code),
         name: cleanRequiredOptional(dto.name),
         displayName: cleanRequiredOptional(dto.name),
@@ -521,6 +525,17 @@ export class WorkspaceCompaniesService {
         },
       },
       orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  private async resolveHeadOfficeParent(companyId: number) {
+    return this.prisma.companyUnit.findFirst({
+      where: {
+        companyId,
+        type: CompanyUnitType.HEAD_OFFICE,
+        isActive: true,
+      },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
