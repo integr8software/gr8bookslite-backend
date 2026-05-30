@@ -752,6 +752,7 @@ export class AuthService {
       companies: memberships.map((membership) => ({
         companyId: membership.companyId,
         companyName: membership.company.name,
+        logoPublicUrl: membership.company.logoPublicUrl,
         role: this.mapMembershipRole(membership.role),
         membershipStatus: membership.status,
         companyRoleId: membership.companyRoleId,
@@ -1114,6 +1115,7 @@ export class AuthService {
     return user.memberships.map((membership) => ({
       companyId: membership.companyId,
       companyName: membership.company.name,
+      logoPublicUrl: membership.company.logoPublicUrl,
       role: this.mapMembershipRole(membership.role),
       membershipStatus: membership.status,
       companyRoleId: membership.companyRoleId,
