@@ -57,6 +57,9 @@ type MailJobData =
       type: 'workspace-user-activated';
       email: string;
       recipientName: string;
+      activatedUserName: string;
+      activatedUserEmail: string;
+      companyNames: string[];
     };
 
 type MailProvider = 'resend' | 'log';
@@ -252,17 +255,29 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
   async sendWorkspaceUserActivated(
     email: string,
     recipientName: string,
+    activatedUserName: string,
+    activatedUserEmail: string,
+    companyNames: string[],
   ): Promise<void> {
     if (this.mailQueue) {
       await this.enqueueMail('workspace-user-activated', {
         type: 'workspace-user-activated',
         email,
         recipientName,
+        activatedUserName,
+        activatedUserEmail,
+        companyNames,
       });
       return;
     }
 
-    await this.sendWorkspaceUserActivatedNow(email, recipientName);
+    await this.sendWorkspaceUserActivatedNow(
+      email,
+      recipientName,
+      activatedUserName,
+      activatedUserEmail,
+      companyNames,
+    );
   }
 
   private async enqueueMail(name: MailJobName, data: MailJobData) {
@@ -305,6 +320,9 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
         await this.sendWorkspaceUserActivatedNow(
           job.data.email,
           job.data.recipientName,
+          job.data.activatedUserName,
+          job.data.activatedUserEmail,
+          job.data.companyNames,
         );
         return;
     }
@@ -405,15 +423,21 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
   private async sendWorkspaceUserActivatedNow(
     email: string,
     recipientName: string,
+    activatedUserName: string,
+    activatedUserEmail: string,
+    companyNames: string[],
   ): Promise<void> {
+    const companyList =
+      companyNames.length > 0 ? companyNames.join(', ') : 'your workspace';
+
     await this.sendMail({
       to: email,
-      subject: 'Your Gr8Books Neo account is active',
-      text: `Hi ${recipientName}, your Gr8Books Neo account is now active. You can continue using your workspace access.`,
+      subject: 'Workspace user account activated',
+      text: `Hi ${recipientName}, ${activatedUserName} (${activatedUserEmail}) has activated their Gr8Books Neo account for ${companyList}.`,
       html: `
         <p>Hi <strong>${recipientName}</strong>,</p>
-        <p>Your Gr8Books Neo account is now active.</p>
-        <p>You can continue using your workspace access.</p>
+        <p><strong>${activatedUserName}</strong> (${activatedUserEmail}) has activated their Gr8Books Neo account.</p>
+        <p>Company access: ${companyList}</p>
       `,
     });
 

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -18,6 +19,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { normalizeEmail } from '../../../common/utils/email.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
@@ -58,17 +60,22 @@ export class WorkspaceUsersService {
     const { assignments, manageableCompanyIds } =
       await this.validateAssignments(user, dto);
     const actor = await this.getActor(user.id);
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email is already in use.');
+    }
+
     const passwordHash = await bcrypt.hash(randomBytes(32).toString('hex'), 12);
 
     const createdUser = await this.prisma.$transaction(async (tx) => {
-      const workspaceUser = await tx.user.upsert({
-        where: { email: dto.email.trim().toLowerCase() },
-        update: {
-          name: dto.name.trim(),
-          contactNumber: cleanOptional(dto.contactNumber),
-        },
-        create: {
-          email: dto.email.trim().toLowerCase(),
+      const workspaceUser = await tx.user.create({
+        data: {
+          email: normalizedEmail,
           passwordHash,
           name: dto.name.trim(),
           contactNumber: cleanOptional(dto.contactNumber),

@@ -560,10 +560,7 @@ export class AuthService {
         data: { status: UserStatus.ACTIVE },
       });
 
-      await this.authMailService.sendWorkspaceUserActivated(
-        user.email,
-        user.name,
-      );
+      await this.notifyWorkspaceUserActivated(user.id, user.name, user.email);
 
       const activatedUser =
         await this.usersService.findForAuthByEmail(normalizedEmail);
@@ -628,6 +625,89 @@ export class AuthService {
     });
 
     return { rawToken, tokenHash };
+  }
+
+  private async notifyWorkspaceUserActivated(
+    activatedUserId: number,
+    activatedUserName: string,
+    activatedUserEmail: string,
+  ) {
+    const memberships = await this.prisma.membership.findMany({
+      where: {
+        userId: activatedUserId,
+        status: MembershipStatus.ACTIVE,
+      },
+      select: {
+        invitedBy: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+        company: {
+          select: {
+            name: true,
+            memberships: {
+              where: {
+                role: MembershipRole.ADMIN,
+                status: MembershipStatus.ACTIVE,
+                userId: { not: activatedUserId },
+              },
+              select: {
+                user: {
+                  select: {
+                    email: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const recipients = new Map<
+      string,
+      { name: string; companyNames: Set<string> }
+    >();
+
+    for (const membership of memberships) {
+      const admins =
+        membership.invitedBy != null
+          ? [membership.invitedBy]
+          : membership.company.memberships.map(({ user }) => user);
+
+      for (const admin of admins) {
+        if (!admin.email || admin.email === activatedUserEmail) {
+          continue;
+        }
+
+        const existing = recipients.get(admin.email);
+
+        if (existing) {
+          existing.companyNames.add(membership.company.name);
+          continue;
+        }
+
+        recipients.set(admin.email, {
+          name: admin.name || admin.email,
+          companyNames: new Set([membership.company.name]),
+        });
+      }
+    }
+
+    await Promise.all(
+      [...recipients.entries()].map(([email, recipient]) =>
+        this.authMailService.sendWorkspaceUserActivated(
+          email,
+          recipient.name,
+          activatedUserName,
+          activatedUserEmail,
+          [...recipient.companyNames],
+        ),
+      ),
+    );
   }
 
   private loginActivatedUser(
