@@ -462,13 +462,8 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    const payloadText = JSON.stringify({
-      from: this.fromEmail,
-      ...payload,
-    });
-
     this.logger.warn(
-      `Mail delivery skipped because RESEND_API_KEY is not configured. Payload: ${payloadText}`,
+      `Mail delivery skipped because RESEND_API_KEY is not configured. Message type: ${payload.subject}; recipient: ${payload.to}.`,
     );
   }
 
