@@ -710,7 +710,7 @@ export class AuthService {
     );
   }
 
-  private loginActivatedUser(
+  private async loginActivatedUser(
     user: UserWithMemberships,
     requestedCompanyId: number | null,
   ) {
@@ -730,6 +730,7 @@ export class AuthService {
     );
 
     if (resolvedCompanyId != null) {
+      await this.markMembershipAccessed(user.id, resolvedCompanyId);
       return this.buildAuthenticatedResponse(user, resolvedCompanyId);
     }
 
@@ -741,6 +742,20 @@ export class AuthService {
       companies: this.mapCompanies(user),
       onboarding,
     };
+  }
+
+  private async markMembershipAccessed(userId: number, companyId: number) {
+    await this.prisma.membership.update({
+      where: {
+        userId_companyId: {
+          userId,
+          companyId,
+        },
+      },
+      data: {
+        lastAccessedAt: new Date(),
+      },
+    });
   }
 
   beginGoogleAuth(mode?: string) {
