@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -819,6 +820,11 @@ export class AuthService {
       include: {
         company: true,
         companyRole: true,
+        unitAccess: {
+          include: {
+            unit: true,
+          },
+        },
       },
     });
 
@@ -844,16 +850,39 @@ export class AuthService {
       activeCompanyId: user.companyId,
       activeAccess,
       onboarding,
-      companies: memberships.map((membership) => ({
-        companyId: membership.companyId,
-        companyName: membership.company.name,
-        logoPublicUrl: membership.company.logoPublicUrl,
-        role: this.mapMembershipRole(membership.role),
-        membershipStatus: membership.status,
-        companyRoleId: membership.companyRoleId,
-        companyRoleCode: membership.companyRole?.code ?? null,
-      })),
+      companies: memberships.map((membership) =>
+        this.mapProfileCompany(membership),
+      ),
     };
+  }
+
+  async switchCompanyContext(user: AuthUser, companyId: number) {
+    if (user.systemRole === SystemRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Super admin accounts use the master workspace.',
+      );
+    }
+
+    const authUser = await this.usersService.findForAuthById(user.id);
+
+    if (!authUser) {
+      throw new UnauthorizedException('User account was not found.');
+    }
+
+    if (authUser.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException('User account is not active.');
+    }
+
+    const resolvedCompanyId = this.resolveDefaultCompanyContext(
+      authUser,
+      companyId,
+    );
+
+    if (resolvedCompanyId == null) {
+      throw new ForbiddenException('Company access is required.');
+    }
+
+    return this.buildAuthenticatedResponse(authUser, resolvedCompanyId);
   }
 
   logout() {
@@ -1207,15 +1236,33 @@ export class AuthService {
   }
 
   private mapCompanies(user: UserWithMemberships) {
-    return user.memberships.map((membership) => ({
+    return user.memberships.map((membership) =>
+      this.mapProfileCompany(membership),
+    );
+  }
+
+  private mapProfileCompany(
+    membership: UserWithMemberships['memberships'][number],
+  ) {
+    return {
       companyId: membership.companyId,
       companyName: membership.company.name,
       logoPublicUrl: membership.company.logoPublicUrl,
       role: this.mapMembershipRole(membership.role),
       membershipStatus: membership.status,
+      accessScope: membership.accessScope,
       companyRoleId: membership.companyRoleId,
       companyRoleCode: membership.companyRole?.code ?? null,
-    }));
+      accessibleUnitIds: membership.unitAccess.map((access) => access.unitId),
+      units: membership.unitAccess.map((access) => ({
+        id: access.unit.id,
+        code: access.unit.code,
+        name: access.unit.name,
+        type: access.unit.type,
+        isActive: access.unit.isActive,
+        isMain: access.unit.type === 'HEAD_OFFICE',
+      })),
+    };
   }
 
   private buildJwtAccessContext(

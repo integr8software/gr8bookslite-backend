@@ -21,6 +21,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SwitchCompanyContextDto } from './dto/switch-company-context.dto';
 import { VerifyForgotPasswordCodeDto } from './dto/verify-forgot-password-code.dto';
 import { VerifyPasswordChangeCodeDto } from './dto/verify-password-change-code.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
@@ -144,6 +145,21 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     return this.authService.getProfile(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('context/company')
+  async switchCompanyContext(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: SwitchCompanyContextDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.switchCompanyContext(
+      user,
+      dto.companyId,
+    );
+    this.setCookieIfAuthenticated(response, result);
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)

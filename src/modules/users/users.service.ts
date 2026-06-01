@@ -89,6 +89,30 @@ export class UsersService {
           include: {
             company: true,
             companyRole: true,
+            unitAccess: {
+              include: {
+                unit: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  findForAuthById(id: number): Promise<UserWithMemberships | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        memberships: {
+          include: {
+            company: true,
+            companyRole: true,
+            unitAccess: {
+              include: {
+                unit: true,
+              },
+            },
           },
         },
       },
