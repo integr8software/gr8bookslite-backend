@@ -170,6 +170,13 @@ export class WorkspaceUsersService {
         },
       });
 
+      if (emailChanged) {
+        await tx.userAuthIdentity.updateMany({
+          where: { userId: workspaceUser.id },
+          data: { email: normalizedEmail },
+        });
+      }
+
       await this.replaceAssignments(tx, {
         actorUserId: user.id,
         manageableCompanyIds,

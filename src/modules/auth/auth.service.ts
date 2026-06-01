@@ -8,8 +8,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
+  AuthProvider,
   MembershipStatus,
   MembershipRole,
+  Prisma,
   SystemRole,
   UserStatus,
   VerificationPurpose,
@@ -86,6 +88,8 @@ export class AuthService {
           status: UserStatus.PENDING_VERIFICATION,
         },
       });
+
+      await this.upsertPasswordIdentity(tx, createdUser);
 
       await tx.emailVerificationCode.create({
         data: {
@@ -216,6 +220,15 @@ export class AuthService {
         },
       });
 
+      await tx.userAuthIdentity.updateMany({
+        where: {
+          userId: user.id,
+        },
+        data: {
+          email: newEmail,
+        },
+      });
+
       await tx.emailVerificationCode.updateMany({
         where: {
           userId: user.id,
@@ -332,11 +345,15 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordHash: hashedPassword,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: hashedPassword,
+        },
+      });
+
+      await this.upsertPasswordIdentity(tx, updatedUser);
     });
 
     return {
@@ -386,16 +403,24 @@ export class AuthService {
     const verifiedAt = new Date();
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
-    await this.prisma.$transaction([
-      this.consumeVerificationCode(invitation.id, verifiedAt),
-      this.prisma.user.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerificationCode.update({
+        where: { id: invitation.id },
+        data: {
+          consumedAt: verifiedAt,
+        },
+      });
+
+      const updatedUser = await tx.user.update({
         where: { id: user.id },
         data: {
           passwordHash: hashedPassword,
           emailVerifiedAt: user.emailVerifiedAt ?? verifiedAt,
         },
-      }),
-    ]);
+      });
+
+      await this.upsertPasswordIdentity(tx, updatedUser);
+    });
 
     return {
       message: 'Password created. You can now log in to activate your account.',
@@ -519,11 +544,15 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
-    await this.prisma.user.update({
-      where: { id: authUser.id },
-      data: {
-        passwordHash: hashedPassword,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: authUser.id },
+        data: {
+          passwordHash: hashedPassword,
+        },
+      });
+
+      await this.upsertPasswordIdentity(tx, updatedUser);
     });
 
     return {
@@ -541,6 +570,17 @@ export class AuthService {
 
     if (user.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('User account is suspended.');
+    }
+
+    const canUsePasswordLogin = await this.hasAuthIdentity(
+      user.id,
+      AuthProvider.PASSWORD,
+    );
+
+    if (!canUsePasswordLogin) {
+      throw new UnauthorizedException(
+        'This account uses Google sign-in. Continue with Google to sign in.',
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -923,10 +963,17 @@ export class AuthService {
 
   private async loginOrRegisterWithGoogleProfile(profile: GoogleUserProfile) {
     const normalizedEmail = normalizeEmail(profile.email) as string | null;
+    const googleSubject = profile.sub?.trim();
 
     if (!normalizedEmail) {
       throw new BadRequestException(
         'Google did not return a valid email address.',
+      );
+    }
+
+    if (!googleSubject) {
+      throw new BadRequestException(
+        'Google did not return a stable account identifier.',
       );
     }
 
@@ -937,7 +984,21 @@ export class AuthService {
     }
 
     const now = new Date();
-    const existingUser = await this.usersService.findByEmail(normalizedEmail);
+    const existingGoogleIdentity =
+      await this.prisma.userAuthIdentity.findUnique({
+        where: {
+          provider_providerUserId: {
+            provider: AuthProvider.GOOGLE,
+            providerUserId: googleSubject,
+          },
+        },
+        include: {
+          user: true,
+        },
+      });
+    const existingUser =
+      existingGoogleIdentity?.user ??
+      (await this.usersService.findByEmail(normalizedEmail));
 
     if (existingUser?.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('User account is suspended.');
@@ -949,31 +1010,47 @@ export class AuthService {
         10,
       );
 
-      await this.prisma.user.create({
-        data: {
+      await this.prisma.$transaction(async (tx) => {
+        const createdUser = await tx.user.create({
+          data: {
+            email: normalizedEmail,
+            name: profile.name?.trim() || normalizedEmail.split('@')[0],
+            contactNumber: null,
+            passwordHash,
+            systemRole: SystemRole.STANDARD,
+            status: UserStatus.ACTIVE,
+            emailVerifiedAt: now,
+          },
+        });
+
+        await this.upsertGoogleIdentity(tx, {
+          userId: createdUser.id,
           email: normalizedEmail,
-          name: profile.name?.trim() || normalizedEmail.split('@')[0],
-          contactNumber: null,
-          passwordHash,
-          systemRole: SystemRole.STANDARD,
-          status: UserStatus.ACTIVE,
-          emailVerifiedAt: now,
-        },
+          providerUserId: googleSubject,
+        });
       });
-    } else if (
-      existingUser.status !== UserStatus.ACTIVE ||
-      existingUser.emailVerifiedAt == null
-    ) {
-      await this.prisma.user.update({
-        where: { id: existingUser.id },
-        data: {
-          status: UserStatus.ACTIVE,
-          emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
-          name:
-            existingUser.name?.trim().length > 0
-              ? existingUser.name
-              : (profile.name?.trim() ?? existingUser.name),
-        },
+    } else {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: existingUser.id },
+          data: {
+            status:
+              existingUser.status === UserStatus.PENDING_VERIFICATION
+                ? UserStatus.ACTIVE
+                : undefined,
+            emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
+            name:
+              existingUser.name?.trim().length > 0
+                ? existingUser.name
+                : (profile.name?.trim() ?? existingUser.name),
+          },
+        });
+
+        await this.upsertGoogleIdentity(tx, {
+          userId: existingUser.id,
+          email: normalizedEmail,
+          providerUserId: googleSubject,
+        });
       });
     }
 
@@ -1061,6 +1138,19 @@ export class AuthService {
       };
     }
 
+    const canUsePasswordLogin = await this.hasAuthIdentity(
+      user.id,
+      AuthProvider.PASSWORD,
+    );
+
+    if (!canUsePasswordLogin) {
+      return {
+        code: 'GOOGLE_ACCOUNT_PASSWORD_NOT_ENABLED',
+        message:
+          'This account uses Google sign-in. Continue with Google, or set a password from account settings after signing in.',
+      };
+    }
+
     const resetCode = this.otpService.generateCode();
     const codeHash = await this.otpService.hashCode(resetCode);
     const expiresAt = this.buildVerificationExpiry();
@@ -1101,6 +1191,63 @@ export class AuthService {
       message:
         'If the email is registered, a password reset code will be sent.',
     };
+  }
+
+  private hasAuthIdentity(userId: number, provider: AuthProvider) {
+    return this.prisma.userAuthIdentity
+      .count({
+        where: {
+          userId,
+          provider,
+        },
+      })
+      .then((count) => count > 0);
+  }
+
+  private upsertPasswordIdentity(
+    tx: Prisma.TransactionClient,
+    user: { id: number; email: string },
+  ) {
+    return tx.userAuthIdentity.upsert({
+      where: {
+        userId_provider: {
+          userId: user.id,
+          provider: AuthProvider.PASSWORD,
+        },
+      },
+      update: {
+        email: user.email,
+      },
+      create: {
+        userId: user.id,
+        provider: AuthProvider.PASSWORD,
+        email: user.email,
+      },
+    });
+  }
+
+  private upsertGoogleIdentity(
+    tx: Prisma.TransactionClient,
+    params: { userId: number; email: string; providerUserId: string },
+  ) {
+    return tx.userAuthIdentity.upsert({
+      where: {
+        userId_provider: {
+          userId: params.userId,
+          provider: AuthProvider.GOOGLE,
+        },
+      },
+      update: {
+        email: params.email,
+        providerUserId: params.providerUserId,
+      },
+      create: {
+        userId: params.userId,
+        provider: AuthProvider.GOOGLE,
+        providerUserId: params.providerUserId,
+        email: params.email,
+      },
+    });
   }
 
   private buildVerificationExpiry(): Date {

@@ -32,11 +32,28 @@ model User {
   createdAuditLogs      AuditLog[]              @relation("AuditActor")
   targetedAuditLogs     AuditLog[]              @relation("AuditTargetUser")
   onboardingDraft       UserOnboardingDraft?
+  authIdentities        UserAuthIdentity[]
   billingCustomers      BillingCustomer[]
   billingPaymentMethods BillingPaymentMethod[]
   createdCompanies      Company[]               @relation("CompanyCreatedBy")
 
   @@map("users")
+}
+
+model UserAuthIdentity {
+  id             Int          @id @default(autoincrement())
+  userId         Int          @map("user_id")
+  provider       AuthProvider
+  providerUserId String?      @map("provider_user_id")
+  email          String
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@unique([userId, provider])
+  @@index([email])
+  @@map("user_auth_identities")
 }
 
 // =========================================================
@@ -659,6 +676,11 @@ enum UserStatus {
   PENDING_VERIFICATION
   ACTIVE
   SUSPENDED
+}
+
+enum AuthProvider {
+  PASSWORD
+  GOOGLE
 }
 
 enum CompanyStatus {
