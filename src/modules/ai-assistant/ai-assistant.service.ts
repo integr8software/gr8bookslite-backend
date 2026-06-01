@@ -8,6 +8,8 @@ import {
 } from './ai-assistant.types';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
+const PURCHASE_REQUEST_ADD_ROUTE =
+  '/purchasing/purchase-request/add?assistant=1';
 
 const moduleGuide = [
   {
@@ -130,13 +132,14 @@ export class AiAssistantService {
     return [
       'You are Neo AI, the Gr8BooksLite in-app assistant.',
       'Speak naturally and conversationally, not like a scripted command response.',
-      'For now, focus only on explaining modules and opening approved module pages. Do not open add forms, prefill forms, submit, approve, delete, or change records.',
+      'For now, focus on explaining modules, opening approved module pages, and preparing Purchase Request drafts for user review. Never submit, approve, delete, or save records.',
       'If the user asks you to introduce yourself, say that you are Neo AI and briefly explain that you can guide users through modules and open pages for review.',
       'Return only JSON matching this TypeScript shape:',
-      '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } }',
+      '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } }',
       'Only use routes from this module guide:',
       JSON.stringify(moduleGuide),
       'If the user asks to open a module, respond like: "Okay, got it. Give me a moment, I will open Purchase Request for you." and include a navigate action.',
+      'If the user asks to create or prepare a Purchase Request draft, extract item description, quantity, unit of measure, and unit price if present. Use an open_form action, do not save. Tell the user to review before saving.',
       'If the user asks what a module is for or how it works, explain it clearly and return action null.',
     ].join('\n');
   }
@@ -186,6 +189,20 @@ export class AiAssistantService {
       };
     }
 
+    if (
+      candidate.type === 'open_form' &&
+      candidate.target === 'purchase_request' &&
+      candidate.route === PURCHASE_REQUEST_ADD_ROUTE
+    ) {
+      return {
+        type: 'open_form',
+        target: 'purchase_request',
+        route: PURCHASE_REQUEST_ADD_ROUTE,
+        label: candidate.label,
+        prefill: candidate.prefill,
+      };
+    }
+
     return null;
   }
 
@@ -195,6 +212,29 @@ export class AiAssistantService {
 
   private createLocalDemoResponse(message: string): AiAssistantChatResponse {
     const normalized = message.toLowerCase();
+    const purchaseRequestPrefill = this.createPurchaseRequestPrefill(message);
+
+    if (purchaseRequestPrefill && this.isCreateIntent(normalized)) {
+      const item = purchaseRequestPrefill.items?.[0];
+      const itemSummary = item?.description
+        ? `${item.quantity ?? 1} ${item.description}`
+        : 'your requested item';
+      const priceSummary = item?.cost
+        ? ` at PHP ${item.cost} per ${item.uom ?? 'qty'}`
+        : '';
+
+      return {
+        message: `Okay, I will prepare a Purchase Request draft for ${itemSummary}${priceSummary}. Please review it before saving.`,
+        action: {
+          type: 'open_form',
+          target: 'purchase_request',
+          route: PURCHASE_REQUEST_ADD_ROUTE,
+          label: 'Purchase Request',
+          prefill: purchaseRequestPrefill,
+        },
+      };
+    }
+
     const module = this.findModule(normalized);
 
     if (module && this.isOpenIntent(normalized)) {
@@ -258,6 +298,10 @@ export class AiAssistantService {
     );
   }
 
+  private isCreateIntent(message: string) {
+    return /\b(create|prepare|make|draft|prefill|fill)\b/i.test(message);
+  }
+
   private isIntroIntent(message: string) {
     return /\b(introduce|who are you|what can you do|your system|help)\b/i.test(
       message,
@@ -272,5 +316,58 @@ export class AiAssistantService {
 
   private getModuleShortName(label: string) {
     return label.split('>').at(-1)?.trim() ?? label;
+  }
+
+  private createPurchaseRequestPrefill(message: string) {
+    const normalized = message.toLowerCase();
+
+    if (!normalized.includes('purchase request')) {
+      return null;
+    }
+
+    const quantityMatch = message.match(
+      /\b(\d+(?:\.\d+)?)\s+([a-z][a-z0-9\s-]*?)(?=\s+(?:with|at|for|priced?|cost|amount|worth)\b|$)/i,
+    );
+
+    if (!quantityMatch) {
+      return null;
+    }
+
+    const quantity = Number(quantityMatch[1]);
+    const description = quantityMatch[2]
+      ?.replace(/\b(?:pcs?|pieces?|qty|quantity|of|the)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const cost = this.extractUnitCost(message);
+
+    if (!Number.isFinite(quantity) || !description) {
+      return null;
+    }
+
+    return {
+      purchaseType: 'Goods',
+      remarks: 'Prepared by Neo AI. Please review before saving.',
+      items: [
+        {
+          description,
+          quantity,
+          uom: 'PC',
+          cost,
+        },
+      ],
+    };
+  }
+
+  private extractUnitCost(message: string) {
+    const priceMatch =
+      message.match(
+        /\b(?:price|priced|cost|amount)\s*(?:of|at|is|=|:)?\s*(?:php|pesos?|p|₱)?\s*(\d+(?:\.\d+)?)/i,
+      ) ??
+      message.match(/\b(?:php|pesos?|p|₱)\s*(\d+(?:\.\d+)?)/i) ??
+      message.match(/\b(\d+(?:\.\d+)?)\s*(?:php|pesos?)\b/i);
+
+    const cost = Number(priceMatch?.[1] ?? 0);
+
+    return Number.isFinite(cost) ? cost : 0;
   }
 }
