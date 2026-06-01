@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -39,6 +40,14 @@ export class WorkspaceUsersController {
     @Param('userId', ParseIntPipe) userId: number,
   ) {
     return this.workspaceUsersService.resendInvitation(user, userId);
+  }
+
+  @Delete(':userId/invitation')
+  cancelInvitation(
+    @CurrentUser() user: AuthUser,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    return this.workspaceUsersService.cancelInvitation(user, userId);
   }
 
   @Patch(':userId')

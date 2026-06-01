@@ -131,19 +131,40 @@ export class WorkspaceUsersService {
   async update(user: AuthUser, userId: number, dto: UpdateWorkspaceUserDto) {
     const { assignments, manageableCompanyIds } =
       await this.validateAssignments(user, dto);
+    const normalizedEmail = normalizeEmail(dto.email) as string;
     const existingUser = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true },
+      select: { id: true, email: true, status: true },
     });
 
     if (!existingUser) {
       throw new NotFoundException('Workspace user not found.');
     }
 
+    const emailChanged = normalizedEmail !== existingUser.email;
+
+    if (emailChanged && existingUser.status !== UserStatus.PENDING_VERIFICATION) {
+      throw new BadRequestException(
+        'Email can only be changed before the user activates the account.',
+      );
+    }
+
+    if (emailChanged) {
+      const userWithNewEmail = await this.prisma.user.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true },
+      });
+
+      if (userWithNewEmail) {
+        throw new ConflictException('Email is already in use.');
+      }
+    }
+
     const updatedUser = await this.prisma.$transaction(async (tx) => {
       const workspaceUser = await tx.user.update({
         where: { id: userId },
         data: {
+          email: emailChanged ? normalizedEmail : undefined,
           name: dto.name.trim(),
           contactNumber: cleanOptional(dto.contactNumber),
         },
@@ -160,6 +181,11 @@ export class WorkspaceUsersService {
     });
 
     const memberships = await this.findUserMemberships(updatedUser.id);
+
+    if (emailChanged && updatedUser.status === UserStatus.PENDING_VERIFICATION) {
+      const actor = await this.getActor(user.id);
+      await this.sendUserInvitationEmail(actor, updatedUser, assignments);
+    }
 
     return mapWorkspaceUserMemberships(memberships)[0];
   }
@@ -215,6 +241,63 @@ export class WorkspaceUsersService {
 
     return {
       message: `Invitation sent to ${targetUser.email}.`,
+    };
+  }
+
+  async cancelInvitation(user: AuthUser, userId: number) {
+    const manageableCompanyIds = await this.getManageableCompanyIds(user);
+
+    if (manageableCompanyIds.length === 0) {
+      throw new ForbiddenException(
+        'Admin access is required to cancel invites.',
+      );
+    }
+
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        status: true,
+        memberships: {
+          where: {
+            status: { not: MembershipStatus.REMOVED },
+          },
+          select: {
+            companyId: true,
+          },
+        },
+      },
+    });
+
+    if (!targetUser || targetUser.memberships.length === 0) {
+      throw new NotFoundException('Workspace user not found.');
+    }
+
+    if (targetUser.status !== UserStatus.PENDING_VERIFICATION) {
+      throw new BadRequestException(
+        'Only pending invitations can be cancelled.',
+      );
+    }
+
+    const manageableCompanyIdSet = new Set(manageableCompanyIds);
+    const hasBlockedMembership = targetUser.memberships.some(
+      (membership) => !manageableCompanyIdSet.has(membership.companyId),
+    );
+
+    if (hasBlockedMembership) {
+      throw new ForbiddenException(
+        'Admin access is required for every company assigned to this pending user.',
+      );
+    }
+
+    await this.prisma.user.delete({
+      where: { id: targetUser.id },
+    });
+
+    return {
+      id: targetUser.id,
+      message: `Invitation for ${targetUser.email} was cancelled.`,
     };
   }
 
