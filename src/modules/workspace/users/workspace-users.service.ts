@@ -44,8 +44,6 @@ export class WorkspaceUsersService {
       return [];
     }
 
-    await this.markCurrentMembershipAccessed(user, manageableCompanyIds);
-
     const memberships = await this.prisma.membership.findMany({
       where: {
         companyId: { in: manageableCompanyIds },
@@ -56,29 +54,6 @@ export class WorkspaceUsersService {
     });
 
     return mapWorkspaceUserMemberships(memberships);
-  }
-
-  private async markCurrentMembershipAccessed(
-    user: AuthUser,
-    manageableCompanyIds: number[],
-  ) {
-    if (
-      user.companyId == null ||
-      !manageableCompanyIds.includes(user.companyId)
-    ) {
-      return;
-    }
-
-    await this.prisma.membership.updateMany({
-      where: {
-        userId: user.id,
-        companyId: user.companyId,
-        status: MembershipStatus.ACTIVE,
-      },
-      data: {
-        lastAccessedAt: new Date(),
-      },
-    });
   }
 
   async create(user: AuthUser, dto: CreateWorkspaceUserDto) {
@@ -143,7 +118,10 @@ export class WorkspaceUsersService {
 
     const emailChanged = normalizedEmail !== existingUser.email;
 
-    if (emailChanged && existingUser.status !== UserStatus.PENDING_VERIFICATION) {
+    if (
+      emailChanged &&
+      existingUser.status !== UserStatus.PENDING_VERIFICATION
+    ) {
       throw new BadRequestException(
         'Email can only be changed before the user activates the account.',
       );
@@ -189,7 +167,10 @@ export class WorkspaceUsersService {
 
     const memberships = await this.findUserMemberships(updatedUser.id);
 
-    if (emailChanged && updatedUser.status === UserStatus.PENDING_VERIFICATION) {
+    if (
+      emailChanged &&
+      updatedUser.status === UserStatus.PENDING_VERIFICATION
+    ) {
       const actor = await this.getActor(user.id);
       await this.sendUserInvitationEmail(actor, updatedUser, assignments);
     }

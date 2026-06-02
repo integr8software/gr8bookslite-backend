@@ -869,17 +869,7 @@ export class AuthService {
       },
     });
 
-    const activeAccess =
-      user.companyId == null
-        ? null
-        : await this.accessControlService.resolveAuthUser({
-            sub: user.id,
-            companyId: user.companyId,
-            role: user.role,
-            systemRole: user.systemRole,
-            membershipRole: user.membershipRole,
-            companyRoleId: user.companyRoleId,
-          });
+    const activeAccess = user.companyId == null ? null : user;
 
     const onboarding =
       user.systemRole === SystemRole.SUPER_ADMIN
