@@ -15,8 +15,12 @@ export const BranchUserRoleInclude = {
 
 export const BranchUserMembershipInclude = {
   user: true,
-  companyRole: {
-    include: BranchUserRoleInclude,
+  unitAccess: {
+    include: {
+      companyRole: {
+        include: BranchUserRoleInclude,
+      },
+    },
   },
 } satisfies Prisma.MembershipInclude;
 

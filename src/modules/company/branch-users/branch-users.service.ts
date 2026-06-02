@@ -14,10 +14,7 @@ import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateBranchUserRoleDto } from './dto/update-branch-user-role.dto';
-import {
-  mapBranchUser,
-  mapBranchUserRole,
-} from './mappers/branch-user.mapper';
+import { mapBranchUser, mapBranchUserRole } from './mappers/branch-user.mapper';
 import {
   BranchUserMembershipInclude,
   BranchUserRoleInclude,
@@ -56,7 +53,7 @@ export class BranchUsersService {
         displayName: unit.displayName,
         type: unit.type,
       },
-      users: memberships.map(mapBranchUser),
+      users: memberships.map((membership) => mapBranchUser(membership, unitId)),
     };
   }
 
@@ -71,9 +68,7 @@ export class BranchUsersService {
         roleType: {
           not: CompanyRoleType.ADMIN,
         },
-        scopeLevel: {
-          in: [AccessScopeLevel.COMPANY, AccessScopeLevel.BRANCH],
-        },
+        scopeLevel: AccessScopeLevel.BRANCH,
       },
       include: BranchUserRoleInclude,
       orderBy: [{ isSystem: 'desc' }, { name: 'asc' }],
@@ -141,32 +136,37 @@ export class BranchUsersService {
         );
       }
 
-      const branchAssignableScopeLevels = new Set<AccessScopeLevel>([
-        AccessScopeLevel.COMPANY,
-        AccessScopeLevel.BRANCH,
-      ]);
-
-      if (!branchAssignableScopeLevels.has(role.scopeLevel)) {
+      if (role.scopeLevel !== AccessScopeLevel.BRANCH) {
         throw new BadRequestException(
           'Selected role is not available for branch access.',
         );
       }
     }
 
-    const updatedMembership = await this.prisma.membership.update({
+    await this.prisma.membershipUnitAccess.update({
+      where: {
+        userId_companyId_unitId: {
+          userId: targetUserId,
+          companyId: unit.companyId,
+          unitId,
+        },
+      },
+      data: {
+        companyRoleId,
+      },
+    });
+
+    const updatedMembership = await this.prisma.membership.findUniqueOrThrow({
       where: {
         userId_companyId: {
           userId: targetUserId,
           companyId: unit.companyId,
         },
       },
-      data: {
-        companyRoleId,
-      },
       include: BranchUserMembershipInclude,
     });
 
-    return mapBranchUser(updatedMembership);
+    return mapBranchUser(updatedMembership, unitId);
   }
 
   private async getUnitOrThrow(unitId: number) {

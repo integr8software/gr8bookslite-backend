@@ -162,15 +162,18 @@ model Membership {
 }
 
 model MembershipUnitAccess {
-  userId     Int         @map("user_id")
-  companyId  Int         @map("company_id")
-  unitId     Int         @map("unit_id")
-  createdAt  DateTime    @default(now()) @map("created_at")
-  membership Membership  @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
-  unit       CompanyUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  userId        Int          @map("user_id")
+  companyId     Int          @map("company_id")
+  unitId        Int          @map("unit_id")
+  companyRoleId Int?         @map("company_role_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  membership    Membership   @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
+  unit          CompanyUnit  @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  companyRole   CompanyRole? @relation(fields: [companyRoleId], references: [id], onDelete: SetNull)
 
   @@id([userId, companyId, unitId])
   @@index([companyId, unitId])
+  @@index([companyRoleId])
   @@map("membership_unit_access")
 }
 
@@ -188,6 +191,7 @@ model CompanyRole {
   updatedAt   DateTime                @updatedAt @map("updated_at")
   company     Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
   memberships Membership[]
+  unitAccess  MembershipUnitAccess[]
   permissions CompanyRolePermission[]
 
   @@unique([companyId, code])

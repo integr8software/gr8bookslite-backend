@@ -9,7 +9,12 @@ import type {
 
 export function mapBranchUser(
   membership: BranchUserMembershipRecord,
+  unitId: number,
 ): BranchUserResponse {
+  const branchAccess = membership.unitAccess.find(
+    (unitAccess) => unitAccess.unitId === unitId,
+  );
+
   return {
     id: membership.user.id,
     name: membership.user.name,
@@ -21,8 +26,8 @@ export function mapBranchUser(
     membershipStatus: membership.status,
     accessScope: membership.accessScope,
     lastAccessedAt: membership.lastAccessedAt?.toISOString() ?? null,
-    companyRole: membership.companyRole
-      ? mapBranchUserRole(membership.companyRole)
+    companyRole: branchAccess?.companyRole
+      ? mapBranchUserRole(branchAccess.companyRole)
       : null,
   };
 }
