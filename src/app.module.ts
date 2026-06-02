@@ -11,6 +11,7 @@ import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
 import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
+import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
     MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
     WorkspaceUsersModule,
+    BranchUsersModule,
     AiAssistantModule,
   ],
 })
