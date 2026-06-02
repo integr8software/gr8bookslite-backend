@@ -835,6 +835,22 @@ export class BillingService {
       ? (normalizeEmail(input.preferredEmail) as string)
       : null;
     const customerEmail = preferredEmail ?? input.fallbackEmail;
+    const existingOwnerCustomer =
+      await this.prisma.billingCustomer.findFirst({
+        where: {
+          ownerUserId: input.ownerUserId,
+          billingProvider: BillingProvider.PAYMONGO,
+          email: customerEmail,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+    if (existingOwnerCustomer) {
+      return existingOwnerCustomer;
+    }
+
     const { firstName, lastName } = this.resolveCustomerName({
       companyName: input.companyName,
       ownerFirstName: input.ownerFirstName,
@@ -873,19 +889,31 @@ export class BillingService {
     const remoteCustomerData = readProviderResponseData(remoteCustomer);
     const remoteCustomerAttributes =
       readProviderResponseAttributes(remoteCustomerData);
+    const externalCustomerId = readProviderString(remoteCustomerData.id);
+
+    if (!externalCustomerId) {
+      throw new BadRequestException(
+        'PayMongo customer response did not include an id.',
+      );
+    }
+
+    const existingExternalCustomer =
+      await this.prisma.billingCustomer.findUnique({
+        where: {
+          externalCustomerId,
+        },
+      });
+
+    if (existingExternalCustomer) {
+      return existingExternalCustomer;
+    }
 
     return this.prisma.billingCustomer.create({
       data: {
         companyId: input.companyId,
         ownerUserId: input.ownerUserId,
         billingProvider: BillingProvider.PAYMONGO,
-        externalCustomerId:
-          readProviderString(remoteCustomerData.id) ??
-          (() => {
-            throw new BadRequestException(
-              'PayMongo customer response did not include an id.',
-            );
-          })(),
+        externalCustomerId,
         email:
           readProviderString(remoteCustomerAttributes.email) ?? customerEmail,
         name:

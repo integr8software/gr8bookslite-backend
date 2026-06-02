@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
   AuthProvider,
+  CompanyStatus,
   MembershipStatus,
   MembershipRole,
   Prisma,
@@ -1394,6 +1395,10 @@ export class AuthService {
     return {
       companyId: membership.companyId,
       companyName: membership.company.name,
+      companyStatus: membership.company.status,
+      isCompanyActive:
+        membership.company.isActive &&
+        membership.company.status === CompanyStatus.ACTIVE,
       logoPublicUrl: membership.company.logoPublicUrl,
       role: this.mapMembershipRole(membership.role),
       membershipStatus: membership.status,

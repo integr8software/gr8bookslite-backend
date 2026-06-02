@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -34,6 +35,8 @@ import type { UploadedCompanyLogoFile } from './types/uploaded-company-logo-file
 
 @Injectable()
 export class WorkspaceCompaniesService {
+  private readonly logger = new Logger(WorkspaceCompaniesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly authMailService: AuthMailService,
@@ -159,11 +162,19 @@ export class WorkspaceCompaniesService {
       });
     });
 
-    const billingSetup = await this.setupCompanyBilling({
-      companyId: company.id,
-      dto,
-      user,
-    });
+    let billingSetup: Awaited<ReturnType<typeof this.setupCompanyBilling>>;
+
+    try {
+      billingSetup = await this.setupCompanyBilling({
+        companyId: company.id,
+        dto,
+        user,
+      });
+    } catch (error) {
+      await this.cleanupProvisionedCompany(company.id, error);
+      throw error;
+    }
+
     await this.sendCompanyCreatedEmail(user, company.name);
     const updatedCompany = await this.prisma.company.findUniqueOrThrow({
       where: { id: company.id },
@@ -616,6 +627,30 @@ export class WorkspaceCompaniesService {
         false,
       paymentSetup: preparedSubscription.paymentSetup,
     };
+  }
+
+  private async cleanupProvisionedCompany(companyId: number, error: unknown) {
+    try {
+      await this.prisma.company.delete({
+        where: {
+          id: companyId,
+        },
+      });
+    } catch (cleanupError) {
+      this.logger.warn(
+        `Unable to clean up company ${companyId} after billing setup failed: ${
+          cleanupError instanceof Error
+            ? cleanupError.message
+            : 'Unknown cleanup error'
+        }`,
+      );
+    }
+
+    this.logger.warn(
+      `Rolled back company ${companyId} after billing setup failed: ${
+        error instanceof Error ? error.message : 'Unknown billing error'
+      }`,
+    );
   }
 
   private async sendCompanyCreatedEmail(user: AuthUser, companyName: string) {
