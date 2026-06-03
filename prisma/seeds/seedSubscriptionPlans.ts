@@ -142,101 +142,100 @@ export async function seedSubscriptionPlans() {
       create: planData,
     });
 
-    await prisma.subscriptionPlanPrice.upsert({
-      where: {
-        subscriptionPlanId_billingCycle: {
-          subscriptionPlanId: subscriptionPlan.id,
-          billingCycle: 'MONTHLY',
-        },
-      },
-      update: {
-        intervalCount: 1,
-        intervalUnit: 'MONTH',
-        priceInCents: plan.monthlyPriceInCents,
-        compareAtInCents: plan.monthlyCompareAtInCents,
-        isActive: true,
-      },
-      create: {
-        subscriptionPlanId: subscriptionPlan.id,
-        billingCycle: 'MONTHLY',
-        intervalCount: 1,
-        intervalUnit: 'MONTH',
-        priceInCents: plan.monthlyPriceInCents,
-        compareAtInCents: plan.monthlyCompareAtInCents,
-        isActive: true,
-      },
-    });
-
-    await prisma.subscriptionPlanPrice.upsert({
-      where: {
-        subscriptionPlanId_billingCycle: {
-          subscriptionPlanId: subscriptionPlan.id,
-          billingCycle: 'YEARLY',
-        },
-      },
-      update: {
-        intervalCount: 1,
-        intervalUnit: 'YEAR',
-        priceInCents: plan.yearlyPriceInCents,
-        compareAtInCents: plan.yearlyCompareAtInCents,
-        isActive: true,
-      },
-      create: {
-        subscriptionPlanId: subscriptionPlan.id,
-        billingCycle: 'YEARLY',
-        intervalCount: 1,
-        intervalUnit: 'YEAR',
-        priceInCents: plan.yearlyPriceInCents,
-        compareAtInCents: plan.yearlyCompareAtInCents,
-        isActive: true,
-      },
-    });
-
-    for (const rule of defaultUsageRules) {
-      await prisma.subscriptionPlanUsageRule.upsert({
+    await Promise.all([
+      prisma.subscriptionPlanPrice.upsert({
         where: {
-          subscriptionPlanId_metric: {
+          subscriptionPlanId_billingCycle: {
             subscriptionPlanId: subscriptionPlan.id,
-            metric: rule.metric,
+            billingCycle: 'MONTHLY',
           },
         },
         update: {
-          freeCount: rule.freeCount,
-          unitPriceInCents: rule.unitPriceInCents,
+          intervalCount: 1,
+          intervalUnit: 'MONTH',
+          priceInCents: plan.monthlyPriceInCents,
+          compareAtInCents: plan.monthlyCompareAtInCents,
           isActive: true,
         },
         create: {
           subscriptionPlanId: subscriptionPlan.id,
-          metric: rule.metric,
-          freeCount: rule.freeCount,
-          unitPriceInCents: rule.unitPriceInCents,
+          billingCycle: 'MONTHLY',
+          intervalCount: 1,
+          intervalUnit: 'MONTH',
+          priceInCents: plan.monthlyPriceInCents,
+          compareAtInCents: plan.monthlyCompareAtInCents,
           isActive: true,
         },
-      });
-    }
-
-    for (const tier of defaultDiscountTiers) {
-      await prisma.subscriptionPlanDiscountTier.upsert({
+      }),
+      prisma.subscriptionPlanPrice.upsert({
         where: {
-          subscriptionPlanId_metric_thresholdCount: {
+          subscriptionPlanId_billingCycle: {
+            subscriptionPlanId: subscriptionPlan.id,
+            billingCycle: 'YEARLY',
+          },
+        },
+        update: {
+          intervalCount: 1,
+          intervalUnit: 'YEAR',
+          priceInCents: plan.yearlyPriceInCents,
+          compareAtInCents: plan.yearlyCompareAtInCents,
+          isActive: true,
+        },
+        create: {
+          subscriptionPlanId: subscriptionPlan.id,
+          billingCycle: 'YEARLY',
+          intervalCount: 1,
+          intervalUnit: 'YEAR',
+          priceInCents: plan.yearlyPriceInCents,
+          compareAtInCents: plan.yearlyCompareAtInCents,
+          isActive: true,
+        },
+      }),
+      ...defaultUsageRules.map((rule) =>
+        prisma.subscriptionPlanUsageRule.upsert({
+          where: {
+            subscriptionPlanId_metric: {
+              subscriptionPlanId: subscriptionPlan.id,
+              metric: rule.metric,
+            },
+          },
+          update: {
+            freeCount: rule.freeCount,
+            unitPriceInCents: rule.unitPriceInCents,
+            isActive: true,
+          },
+          create: {
+            subscriptionPlanId: subscriptionPlan.id,
+            metric: rule.metric,
+            freeCount: rule.freeCount,
+            unitPriceInCents: rule.unitPriceInCents,
+            isActive: true,
+          },
+        }),
+      ),
+      ...defaultDiscountTiers.map((tier) =>
+        prisma.subscriptionPlanDiscountTier.upsert({
+          where: {
+            subscriptionPlanId_metric_thresholdCount: {
+              subscriptionPlanId: subscriptionPlan.id,
+              metric: tier.metric,
+              thresholdCount: tier.thresholdCount,
+            },
+          },
+          update: {
+            discountPercent: tier.discountPercent,
+            isActive: true,
+          },
+          create: {
             subscriptionPlanId: subscriptionPlan.id,
             metric: tier.metric,
             thresholdCount: tier.thresholdCount,
+            discountPercent: tier.discountPercent,
+            isActive: true,
           },
-        },
-        update: {
-          discountPercent: tier.discountPercent,
-          isActive: true,
-        },
-        create: {
-          subscriptionPlanId: subscriptionPlan.id,
-          metric: tier.metric,
-          thresholdCount: tier.thresholdCount,
-          discountPercent: tier.discountPercent,
-          isActive: true,
-        },
-      });
-    }
+        }),
+      ),
+    ]);
 
     const enabledModuleKeys = [...new Set(moduleKeys)];
 
@@ -252,23 +251,25 @@ export async function seedSubscriptionPlans() {
       },
     });
 
-    for (const moduleKey of enabledModuleKeys) {
-      await prisma.subscriptionPlanModule.upsert({
-        where: {
-          subscriptionPlanId_moduleKey: {
+    await Promise.all(
+      enabledModuleKeys.map((moduleKey) =>
+        prisma.subscriptionPlanModule.upsert({
+          where: {
+            subscriptionPlanId_moduleKey: {
+              subscriptionPlanId: subscriptionPlan.id,
+              moduleKey,
+            },
+          },
+          update: {
+            isEnabled: true,
+          },
+          create: {
             subscriptionPlanId: subscriptionPlan.id,
             moduleKey,
+            isEnabled: true,
           },
-        },
-        update: {
-          isEnabled: true,
-        },
-        create: {
-          subscriptionPlanId: subscriptionPlan.id,
-          moduleKey,
-          isEnabled: true,
-        },
-      });
-    }
+        }),
+      ),
+    );
   }
 }

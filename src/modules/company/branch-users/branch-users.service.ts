@@ -197,6 +197,14 @@ export class BranchUsersService {
       return;
     }
 
+    if (
+      user.companyId === companyId &&
+      user.membershipStatus === MembershipStatus.ACTIVE &&
+      user.membershipRole === MembershipRole.ADMIN
+    ) {
+      return;
+    }
+
     const membership = await this.prisma.membership.findUnique({
       where: {
         userId_companyId: {
