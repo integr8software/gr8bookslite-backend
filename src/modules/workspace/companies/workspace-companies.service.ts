@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -34,6 +35,8 @@ import type { UploadedCompanyLogoFile } from './types/uploaded-company-logo-file
 
 @Injectable()
 export class WorkspaceCompaniesService {
+  private readonly logger = new Logger(WorkspaceCompaniesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly authMailService: AuthMailService,
@@ -159,11 +162,19 @@ export class WorkspaceCompaniesService {
       });
     });
 
-    const billingSetup = await this.setupCompanyBilling({
-      companyId: company.id,
-      dto,
-      user,
-    });
+    let billingSetup: Awaited<ReturnType<typeof this.setupCompanyBilling>>;
+
+    try {
+      billingSetup = await this.setupCompanyBilling({
+        companyId: company.id,
+        dto,
+        user,
+      });
+    } catch (error) {
+      await this.cleanupProvisionedCompany(company.id, error);
+      throw error;
+    }
+
     await this.sendCompanyCreatedEmail(user, company.name);
     const updatedCompany = await this.prisma.company.findUniqueOrThrow({
       where: { id: company.id },
@@ -306,11 +317,11 @@ export class WorkspaceCompaniesService {
       throw new NotFoundException('Company not found.');
     }
 
-    const type = dto.type as CompanyUnitType;
+    const type = dto.type;
     const parentUnit =
       type === CompanyUnitType.SATELLITE
         ? await this.resolveSatelliteParent(companyId, dto.parentUnitId)
-        : null;
+        : await this.resolveHeadOfficeParent(companyId);
 
     if (type === CompanyUnitType.BRANCH && !dto.tin?.trim()) {
       throw new BadRequestException('TIN is required for a branch.');
@@ -364,7 +375,9 @@ export class WorkspaceCompaniesService {
       current.type === CompanyUnitType.SATELLITE &&
       dto.parentUnitId !== undefined
         ? await this.resolveSatelliteParent(current.companyId, dto.parentUnitId)
-        : null;
+        : current.type === CompanyUnitType.BRANCH && !current.parentUnitId
+          ? await this.resolveHeadOfficeParent(current.companyId)
+          : null;
     const tin =
       current.type === CompanyUnitType.SATELLITE
         ? (parentUnit?.tin ?? current.tin)
@@ -380,7 +393,9 @@ export class WorkspaceCompaniesService {
         parentUnitId:
           current.type === CompanyUnitType.SATELLITE
             ? (parentUnit?.id ?? undefined)
-            : undefined,
+            : current.type === CompanyUnitType.BRANCH && !current.parentUnitId
+              ? (parentUnit?.id ?? undefined)
+              : undefined,
         code: cleanOptional(dto.code),
         name: cleanRequiredOptional(dto.name),
         displayName: cleanRequiredOptional(dto.name),
@@ -524,6 +539,17 @@ export class WorkspaceCompaniesService {
     });
   }
 
+  private async resolveHeadOfficeParent(companyId: number) {
+    return this.prisma.companyUnit.findFirst({
+      where: {
+        companyId,
+        type: CompanyUnitType.HEAD_OFFICE,
+        isActive: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
   private async createUniqueSlug(name: string) {
     const baseSlug = slugify(name);
     let slug = baseSlug;
@@ -574,6 +600,7 @@ export class WorkspaceCompaniesService {
     const paymentResult = preparedSubscription.pendingProviderActivation
       ? await this.billingService.recordPendingPaymentSetup({
           companyId: input.companyId,
+          ownerUserId: input.user.id,
           subscriptionId: preparedSubscription.subscription.id,
           paymentMethodId: billing.paymentMethodId,
           brand: billing.cardBrand,
@@ -583,6 +610,7 @@ export class WorkspaceCompaniesService {
         })
       : await this.billingService.attachPaymentMethodForCompany({
           companyId: input.companyId,
+          ownerUserId: input.user.id,
           subscriptionId: preparedSubscription.subscription.id,
           paymentMethodId: billing.paymentMethodId,
         });
@@ -599,6 +627,30 @@ export class WorkspaceCompaniesService {
         false,
       paymentSetup: preparedSubscription.paymentSetup,
     };
+  }
+
+  private async cleanupProvisionedCompany(companyId: number, error: unknown) {
+    try {
+      await this.prisma.company.delete({
+        where: {
+          id: companyId,
+        },
+      });
+    } catch (cleanupError) {
+      this.logger.warn(
+        `Unable to clean up company ${companyId} after billing setup failed: ${
+          cleanupError instanceof Error
+            ? cleanupError.message
+            : 'Unknown cleanup error'
+        }`,
+      );
+    }
+
+    this.logger.warn(
+      `Rolled back company ${companyId} after billing setup failed: ${
+        error instanceof Error ? error.message : 'Unknown billing error'
+      }`,
+    );
   }
 
   private async sendCompanyCreatedEmail(user: AuthUser, companyName: string) {

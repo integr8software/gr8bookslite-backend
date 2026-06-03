@@ -24,9 +24,7 @@ import { AttachCompanySubscriptionPaymentMethodDto } from './dto/attach-company-
 import { CancelCompanySubscriptionDto } from './dto/cancel-company-subscription.dto';
 import { SubscribeCompanyDto } from './dto/subscribe-company.dto';
 import { PaymongoService } from './services/paymongo.service';
-import {
-  companySubscriptionDetailsInclude,
-} from './utils/BillingPrisma.util';
+import { companySubscriptionDetailsInclude } from './utils/BillingPrisma.util';
 import {
   readFirstProviderArrayObject,
   readProviderNumber,
@@ -57,7 +55,24 @@ export class BillingService {
     const plans = await this.prisma.subscriptionPlan.findMany({
       where: {
         isActive: true,
-        scope: normalizedScope,
+        ...(normalizedScope ? { scope: normalizedScope } : {}),
+      },
+      include: {
+        prices: {
+          where: { isActive: true },
+          orderBy: [{ billingCycle: 'asc' }],
+        },
+        usageRules: {
+          where: { isActive: true },
+          orderBy: [{ metric: 'asc' }],
+        },
+        discountTiers: {
+          where: { isActive: true },
+          orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
+        },
+        modules: {
+          orderBy: [{ moduleKey: 'asc' }],
+        },
       },
       orderBy: [{ scope: 'asc' }, { id: 'asc' }],
     });
@@ -69,12 +84,10 @@ export class BillingService {
 
   private normalizePlanScope(scope?: string) {
     if (!scope?.trim()) {
-      return SubscriptionPlanScope.ONBOARDING;
+      return undefined;
     }
 
-    const normalizedScope = scope
-      .trim()
-      .toUpperCase() as SubscriptionPlanScope;
+    const normalizedScope = scope.trim().toUpperCase() as SubscriptionPlanScope;
 
     if (!Object.values(SubscriptionPlanScope).includes(normalizedScope)) {
       throw new BadRequestException('Selected plan scope is invalid.');
@@ -101,25 +114,36 @@ export class BillingService {
 
   async listPaymentMethods(user: AuthUser) {
     const paymentMethods = await this.prisma.billingPaymentMethod.findMany({
-      where:
-        user.role === AppRole.SUPER_ADMIN
-          ? undefined
-          : {
-              company: {
-                memberships: {
-                  some: {
-                    userId: user.id,
-                    role: MembershipRole.ADMIN,
-                  },
-                },
+      where: {
+        ownerUserId: user.id,
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        companySubscription: {
+          select: {
+            id: true,
+            status: true,
+            plan: {
+              select: {
+                code: true,
+                name: true,
               },
             },
+          },
+        },
+      },
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
 
     return {
       paymentMethods: paymentMethods.map((paymentMethod) => ({
         id: paymentMethod.id,
+        ownerUserId: paymentMethod.ownerUserId,
         type: paymentMethod.type,
         brand: paymentMethod.brand,
         last4: paymentMethod.last4,
@@ -127,6 +151,20 @@ export class BillingService {
         expYear: paymentMethod.expYear,
         isDefault: paymentMethod.isDefault,
         externalPaymentMethodId: paymentMethod.externalPaymentMethodId,
+        company: {
+          id: paymentMethod.company.id,
+          name: paymentMethod.company.name,
+        },
+        subscription: paymentMethod.companySubscription
+          ? {
+              id: paymentMethod.companySubscription.id,
+              status: paymentMethod.companySubscription.status,
+              plan: {
+                code: paymentMethod.companySubscription.plan.code,
+                name: paymentMethod.companySubscription.plan.name,
+              },
+            }
+          : null,
       })),
     };
   }
@@ -164,10 +202,26 @@ export class BillingService {
       where: {
         code: input.planCode.trim().toUpperCase(),
       },
+      include: {
+        prices: {
+          where: { isActive: true },
+          orderBy: [{ billingCycle: 'asc' }],
+        },
+      },
     });
 
     if (!plan || !plan.isActive) {
       throw new BadRequestException('Selected subscription plan is invalid.');
+    }
+
+    const planPrice = plan.prices.find(
+      (price) => price.billingCycle === input.billingCycle,
+    );
+
+    if (!planPrice) {
+      throw new BadRequestException(
+        'Selected billing interval is not available for this plan.',
+      );
     }
 
     const latestSubscription = await this.prisma.companySubscription.findFirst({
@@ -235,6 +289,7 @@ export class BillingService {
     try {
       const externalPlanId = await this.ensureExternalPlanId(
         plan,
+        planPrice,
         input.billingCycle,
       );
 
@@ -244,33 +299,43 @@ export class BillingService {
         metadata: {
           company_id: companyId,
           local_plan_code: plan.code,
+          local_plan_price_id: planPrice.id,
           local_billing_cycle: input.billingCycle,
         },
       });
 
-      const remoteSubscriptionData = readProviderResponseData(remoteSubscription);
+      const remoteSubscriptionData =
+        readProviderResponseData(remoteSubscription);
       const remoteSubscriptionAttributes = readProviderResponseAttributes(
         remoteSubscriptionData,
       );
       const latestInvoice = readProviderObject(
         remoteSubscriptionAttributes.latest_invoice,
       );
-      const latestInvoiceAttributes = readProviderObject(latestInvoice?.attributes);
-      const latestPaymentIntent = readProviderObject(latestInvoice?.payment_intent);
+      const latestInvoiceAttributes = readProviderObject(
+        latestInvoice?.attributes,
+      );
+      const latestPaymentIntent = readProviderObject(
+        latestInvoice?.payment_intent,
+      );
 
       const createdSubscription = await this.prisma.$transaction(async (tx) => {
         const subscription = await tx.companySubscription.create({
           data: {
             companyId,
             subscriptionPlanId: plan.id,
+            subscriptionPlanPriceId: planPrice.id,
             billingCustomerId: billingCustomer.id,
             billingCycle: input.billingCycle,
             billingProvider: BillingProvider.PAYMONGO,
             status: mapProviderSubscriptionStatus(
-              readProviderString(remoteSubscriptionAttributes.status) ?? 'incomplete',
+              readProviderString(remoteSubscriptionAttributes.status) ??
+                'incomplete',
             ),
             externalCustomerId: billingCustomer.externalCustomerId,
-            externalSubscriptionId: readProviderString(remoteSubscriptionData.id),
+            externalSubscriptionId: readProviderString(
+              remoteSubscriptionData.id,
+            ),
             externalPlanId,
             latestInvoiceExternalId: readProviderString(latestInvoice?.id),
             latestPaymentIntentId: readProviderString(latestPaymentIntent?.id),
@@ -278,7 +343,8 @@ export class BillingService {
               readProviderUnixDate(remoteSubscriptionAttributes.created_at) ??
               new Date(),
             currentPeriodStartAt:
-              readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? null,
+              readProviderUnixDate(remoteSubscriptionAttributes.created_at) ??
+              null,
             nextBillingAt: readProviderUnixDate(
               remoteSubscriptionAttributes.next_billing_schedule,
             ),
@@ -297,7 +363,8 @@ export class BillingService {
               externalPaymentIntentId: readProviderString(
                 latestPaymentIntent?.id,
               ),
-              status: readProviderString(latestInvoiceAttributes?.status) ?? 'draft',
+              status:
+                readProviderString(latestInvoiceAttributes?.status) ?? 'draft',
               billingReason:
                 readProviderString(latestInvoiceAttributes?.billing_reason) ??
                 'subscription_create',
@@ -322,7 +389,8 @@ export class BillingService {
               externalPaymentIntentId: readProviderString(
                 latestPaymentIntent?.id,
               ),
-              status: readProviderString(latestInvoiceAttributes?.status) ?? 'draft',
+              status:
+                readProviderString(latestInvoiceAttributes?.status) ?? 'draft',
               billingReason:
                 readProviderString(latestInvoiceAttributes?.billing_reason) ??
                 'subscription_create',
@@ -372,6 +440,7 @@ export class BillingService {
         data: {
           companyId,
           subscriptionPlanId: plan.id,
+          subscriptionPlanPriceId: planPrice.id,
           billingCustomerId: billingCustomer.id,
           billingCycle: input.billingCycle,
           billingProvider: BillingProvider.PAYMONGO,
@@ -410,6 +479,7 @@ export class BillingService {
 
     return this.attachPaymentMethodForCompany({
       companyId,
+      ownerUserId: user.id,
       subscriptionId,
       paymentMethodId: dto.paymentMethodId,
     });
@@ -417,6 +487,7 @@ export class BillingService {
 
   async attachPaymentMethodForCompany(input: {
     companyId: number;
+    ownerUserId: number;
     subscriptionId: number;
     paymentMethodId: string;
   }) {
@@ -456,24 +527,34 @@ export class BillingService {
       );
     }
 
+    await this.assertPaymentMethodAvailableForOwner({
+      ownerUserId: input.ownerUserId,
+      paymentMethodId: input.paymentMethodId,
+    });
+
     const remotePaymentIntent = await this.paymongoService.attachPaymentIntent(
       subscription.latestPaymentIntentId,
       input.paymentMethodId.trim(),
     );
 
-    const remotePaymentIntentData = readProviderResponseData(remotePaymentIntent);
+    const remotePaymentIntentData =
+      readProviderResponseData(remotePaymentIntent);
     const remotePaymentIntentAttributes = readProviderResponseAttributes(
       remotePaymentIntentData,
     );
     const latestPayment = readFirstProviderArrayObject(
       remotePaymentIntentAttributes.payments,
     );
-    const latestPaymentAttributes = readProviderObject(latestPayment?.attributes);
+    const latestPaymentAttributes = readProviderObject(
+      latestPayment?.attributes,
+    );
     const paymentMethodDetails = readProviderObject(
       latestPaymentAttributes?.payment_method_details,
     );
     const card = readProviderObject(paymentMethodDetails?.card);
-    const redirect = readProviderObject(remotePaymentIntentAttributes.next_action)?.redirect;
+    const redirect = readProviderObject(
+      remotePaymentIntentAttributes.next_action,
+    )?.redirect;
     const redirectUrl = readProviderString(readProviderObject(redirect)?.url);
 
     const updatedSubscription = await this.prisma.$transaction(async (tx) => {
@@ -483,6 +564,7 @@ export class BillingService {
         },
         update: {
           companyId,
+          ownerUserId: input.ownerUserId,
           companySubscriptionId: subscription.id,
           isDefault: true,
           type: readProviderString(paymentMethodDetails?.type) ?? 'unknown',
@@ -494,6 +576,7 @@ export class BillingService {
         },
         create: {
           companyId,
+          ownerUserId: input.ownerUserId,
           companySubscriptionId: subscription.id,
           billingProvider: BillingProvider.PAYMONGO,
           externalPaymentMethodId: input.paymentMethodId.trim(),
@@ -550,6 +633,7 @@ export class BillingService {
 
   async recordPendingPaymentSetup(input: {
     companyId: number;
+    ownerUserId: number;
     subscriptionId: number;
     paymentMethodId: string;
     brand?: string | null;
@@ -569,6 +653,11 @@ export class BillingService {
       throw new NotFoundException('Subscription not found.');
     }
 
+    await this.assertPaymentMethodAvailableForOwner({
+      ownerUserId: input.ownerUserId,
+      paymentMethodId: input.paymentMethodId,
+    });
+
     const updatedSubscription = await this.prisma.$transaction(async (tx) => {
       await tx.billingPaymentMethod.upsert({
         where: {
@@ -576,6 +665,7 @@ export class BillingService {
         },
         update: {
           companyId: input.companyId,
+          ownerUserId: input.ownerUserId,
           companySubscriptionId: subscription.id,
           isDefault: true,
           type: 'card',
@@ -589,6 +679,7 @@ export class BillingService {
         },
         create: {
           companyId: input.companyId,
+          ownerUserId: input.ownerUserId,
           companySubscriptionId: subscription.id,
           billingProvider: BillingProvider.PAYMONGO,
           externalPaymentMethodId: input.paymentMethodId.trim(),
@@ -636,6 +727,30 @@ export class BillingService {
       subscription: mapCompanySubscription(updatedSubscription),
       pendingProviderActivation: true,
     };
+  }
+
+  private async assertPaymentMethodAvailableForOwner(input: {
+    ownerUserId: number;
+    paymentMethodId: string;
+  }) {
+    const existingPaymentMethod =
+      await this.prisma.billingPaymentMethod.findUnique({
+        where: {
+          externalPaymentMethodId: input.paymentMethodId.trim(),
+        },
+        select: {
+          ownerUserId: true,
+        },
+      });
+
+    if (
+      existingPaymentMethod &&
+      existingPaymentMethod.ownerUserId !== input.ownerUserId
+    ) {
+      throw new ForbiddenException(
+        'This saved payment method is not available to this admin account.',
+      );
+    }
   }
 
   async cancelSubscription(
@@ -720,6 +835,22 @@ export class BillingService {
       ? (normalizeEmail(input.preferredEmail) as string)
       : null;
     const customerEmail = preferredEmail ?? input.fallbackEmail;
+    const existingOwnerCustomer =
+      await this.prisma.billingCustomer.findFirst({
+        where: {
+          ownerUserId: input.ownerUserId,
+          billingProvider: BillingProvider.PAYMONGO,
+          email: customerEmail,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+    if (existingOwnerCustomer) {
+      return existingOwnerCustomer;
+    }
+
     const { firstName, lastName } = this.resolveCustomerName({
       companyName: input.companyName,
       ownerFirstName: input.ownerFirstName,
@@ -745,9 +876,8 @@ export class BillingService {
         throw error;
       }
 
-      remoteCustomer = await this.paymongoService.retrieveCustomerByEmail(
-        customerEmail,
-      );
+      remoteCustomer =
+        await this.paymongoService.retrieveCustomerByEmail(customerEmail);
     }
 
     if (!remoteCustomer) {
@@ -757,26 +887,40 @@ export class BillingService {
     }
 
     const remoteCustomerData = readProviderResponseData(remoteCustomer);
-    const remoteCustomerAttributes = readProviderResponseAttributes(
-      remoteCustomerData,
-    );
+    const remoteCustomerAttributes =
+      readProviderResponseAttributes(remoteCustomerData);
+    const externalCustomerId = readProviderString(remoteCustomerData.id);
+
+    if (!externalCustomerId) {
+      throw new BadRequestException(
+        'PayMongo customer response did not include an id.',
+      );
+    }
+
+    const existingExternalCustomer =
+      await this.prisma.billingCustomer.findUnique({
+        where: {
+          externalCustomerId,
+        },
+      });
+
+    if (existingExternalCustomer) {
+      return existingExternalCustomer;
+    }
 
     return this.prisma.billingCustomer.create({
       data: {
         companyId: input.companyId,
         ownerUserId: input.ownerUserId,
         billingProvider: BillingProvider.PAYMONGO,
-        externalCustomerId:
-          readProviderString(remoteCustomerData.id) ??
-          (() => {
-            throw new BadRequestException('PayMongo customer response did not include an id.');
-          })(),
+        externalCustomerId,
         email:
           readProviderString(remoteCustomerAttributes.email) ?? customerEmail,
         name:
           readProviderString(remoteCustomerAttributes.name) ??
           `${firstName} ${lastName}`.trim(),
-        phone: readProviderString(remoteCustomerAttributes.phone) ?? normalizedPhone,
+        phone:
+          readProviderString(remoteCustomerAttributes.phone) ?? normalizedPhone,
         metadata: {
           companyId: input.companyId,
           ownerUserId: input.ownerUserId,
@@ -786,40 +930,42 @@ export class BillingService {
     });
   }
 
-  private async ensureExternalPlanId(plan: {
-    id: number;
-    code: string;
-    name: string;
-    description: string | null;
-    currency: string;
-    monthlyExternalPlanId: string | null;
-    yearlyExternalPlanId: string | null;
-    monthlyPriceInCents: number;
-    yearlyPriceInCents: number;
-    trialDays: number;
-  }, billingCycle: BillingCycle) {
-    const existingId =
-      billingCycle === BillingCycle.MONTHLY
-        ? plan.monthlyExternalPlanId
-        : plan.yearlyExternalPlanId;
-
-    if (existingId) {
-      return existingId;
+  private async ensureExternalPlanId(
+    plan: {
+      id: number;
+      code: string;
+      name: string;
+      description: string | null;
+      currency: string;
+      monthlyExternalPlanId: string | null;
+      yearlyExternalPlanId: string | null;
+      trialDays: number;
+    },
+    planPrice: {
+      id: number;
+      billingCycle: BillingCycle;
+      intervalCount: number;
+      intervalUnit: 'DAY' | 'MONTH' | 'YEAR';
+      priceInCents: number;
+      externalPlanId: string | null;
+    },
+    billingCycle: BillingCycle,
+  ) {
+    if (planPrice.externalPlanId) {
+      return planPrice.externalPlanId;
     }
 
     const remotePlan = await this.paymongoService.createPlan({
-      name: `${plan.name} ${billingCycle === BillingCycle.MONTHLY ? 'Monthly' : 'Yearly'}`,
+      name: `${plan.name} ${this.getBillingCycleLabel(billingCycle)}`,
       description: plan.description,
-      amountInCents:
-        billingCycle === BillingCycle.MONTHLY
-          ? plan.monthlyPriceInCents
-          : plan.yearlyPriceInCents,
+      amountInCents: planPrice.priceInCents,
       currency: plan.currency,
-      interval: billingCycle === BillingCycle.MONTHLY ? 'month' : 'year',
-      intervalCount: 1,
+      interval: this.getProviderInterval(planPrice.intervalUnit),
+      intervalCount: planPrice.intervalCount,
       trialDays: plan.trialDays,
       metadata: {
         local_plan_code: plan.code,
+        local_plan_price_id: planPrice.id,
         local_billing_cycle: billingCycle,
       },
     });
@@ -828,26 +974,64 @@ export class BillingService {
     const externalPlanId = readProviderString(remotePlanData.id);
 
     if (!externalPlanId) {
-      throw new BadRequestException('PayMongo plan response did not include an id.');
+      throw new BadRequestException(
+        'PayMongo plan response did not include an id.',
+      );
     }
 
-    await this.prisma.subscriptionPlan.update({
+    await this.prisma.subscriptionPlanPrice.update({
       where: {
-        id: plan.id,
+        id: planPrice.id,
       },
-      data:
-        billingCycle === BillingCycle.MONTHLY
-          ? {
-              monthlyExternalPlanId: externalPlanId,
-              billingMetadata: remotePlan as Prisma.InputJsonValue,
-            }
-          : {
-              yearlyExternalPlanId: externalPlanId,
-              billingMetadata: remotePlan as Prisma.InputJsonValue,
-            },
+      data: {
+        externalPlanId,
+        billingMetadata: remotePlan as Prisma.InputJsonValue,
+      },
     });
 
+    if (
+      billingCycle === BillingCycle.MONTHLY ||
+      billingCycle === BillingCycle.YEARLY
+    ) {
+      await this.prisma.subscriptionPlan.update({
+        where: {
+          id: plan.id,
+        },
+        data:
+          billingCycle === BillingCycle.MONTHLY
+            ? {
+                monthlyExternalPlanId: externalPlanId,
+                billingMetadata: remotePlan as Prisma.InputJsonValue,
+              }
+            : {
+                yearlyExternalPlanId: externalPlanId,
+                billingMetadata: remotePlan as Prisma.InputJsonValue,
+              },
+      });
+    }
+
     return externalPlanId;
+  }
+
+  private getBillingCycleLabel(billingCycle: BillingCycle) {
+    switch (billingCycle) {
+      case BillingCycle.MONTHLY:
+        return 'Monthly';
+      case BillingCycle.QUARTERLY:
+        return 'Quarterly';
+      case BillingCycle.YEARLY:
+        return 'Yearly';
+    }
+  }
+
+  private getProviderInterval(intervalUnit: 'DAY' | 'MONTH' | 'YEAR') {
+    if (intervalUnit === 'DAY') {
+      throw new BadRequestException(
+        'Daily billing intervals are not supported by PayMongo plans.',
+      );
+    }
+
+    return intervalUnit === 'MONTH' ? 'month' : 'year';
   }
 
   private async getCompanyAdminEmail(userId: number) {
@@ -968,5 +1152,4 @@ export class BillingService {
       throw new ForbiddenException('Only company admins can manage billing.');
     }
   }
-
 }

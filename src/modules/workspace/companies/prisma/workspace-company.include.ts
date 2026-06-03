@@ -29,6 +29,12 @@ export const WorkspaceCompanyListInclude = {
       email: true,
     },
   },
+  units: {
+    where: {
+      isActive: true,
+    },
+    orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
+  },
 } satisfies Prisma.CompanyInclude;
 
 export const WorkspaceCompanyDetailsInclude = {

@@ -12,30 +12,48 @@ datasource db {
 // =========================================================
 
 model User {
-  id                 Int                     @id @default(autoincrement())
-  email              String                  @unique
-  passwordHash       String                  @map("password_hash")
-  name               String
-  contactNumber      String?                 @map("contact_number")
-  avatarFileName     String?                 @map("avatar_file_name")
-  avatarMimeType     String?                 @map("avatar_mime_type")
-  avatarStoragePath  String?                 @map("avatar_storage_path")
-  avatarPublicUrl    String?                 @map("avatar_public_url")
-  systemRole         SystemRole              @default(STANDARD) @map("system_role")
-  status             UserStatus              @default(PENDING_VERIFICATION)
-  emailVerifiedAt    DateTime?               @map("email_verified_at")
-  createdAt          DateTime                @default(now()) @map("created_at")
-  updatedAt          DateTime                @updatedAt @map("updated_at")
-  verificationCodes  EmailVerificationCode[]
-  memberships        Membership[]
-  invitedMemberships Membership[]            @relation("MembershipInvitedBy")
-  createdAuditLogs   AuditLog[]              @relation("AuditActor")
-  targetedAuditLogs  AuditLog[]              @relation("AuditTargetUser")
-  onboardingDraft    UserOnboardingDraft?
-  billingCustomers   BillingCustomer[]
-  createdCompanies   Company[]               @relation("CompanyCreatedBy")
+  id                    Int                     @id @default(autoincrement())
+  email                 String                  @unique
+  passwordHash          String                  @map("password_hash")
+  name                  String
+  contactNumber         String?                 @map("contact_number")
+  avatarFileName        String?                 @map("avatar_file_name")
+  avatarMimeType        String?                 @map("avatar_mime_type")
+  avatarStoragePath     String?                 @map("avatar_storage_path")
+  avatarPublicUrl       String?                 @map("avatar_public_url")
+  systemRole            SystemRole              @default(STANDARD) @map("system_role")
+  status                UserStatus              @default(PENDING_VERIFICATION)
+  emailVerifiedAt       DateTime?               @map("email_verified_at")
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
+  verificationCodes     EmailVerificationCode[]
+  memberships           Membership[]
+  invitedMemberships    Membership[]            @relation("MembershipInvitedBy")
+  createdAuditLogs      AuditLog[]              @relation("AuditActor")
+  targetedAuditLogs     AuditLog[]              @relation("AuditTargetUser")
+  onboardingDraft       UserOnboardingDraft?
+  authIdentities        UserAuthIdentity[]
+  billingCustomers      BillingCustomer[]
+  billingPaymentMethods BillingPaymentMethod[]
+  createdCompanies      Company[]               @relation("CompanyCreatedBy")
 
   @@map("users")
+}
+
+model UserAuthIdentity {
+  id             Int          @id @default(autoincrement())
+  userId         Int          @map("user_id")
+  provider       AuthProvider
+  providerUserId String?      @map("provider_user_id")
+  email          String
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@unique([userId, provider])
+  @@index([email])
+  @@map("user_auth_identities")
 }
 
 // =========================================================
@@ -86,26 +104,27 @@ model Company {
 }
 
 model CompanyUnit {
-  id                     Int             @id @default(autoincrement())
-  companyId              Int             @map("company_id")
-  parentUnitId           Int?            @map("parent_unit_id")
+  id                     Int                    @id @default(autoincrement())
+  companyId              Int                    @map("company_id")
+  parentUnitId           Int?                   @map("parent_unit_id")
   type                   CompanyUnitType
   code                   String?
   name                   String
-  displayName            String?         @map("display_name")
+  displayName            String?                @map("display_name")
   tin                    String?
   address                String?
-  contactNumber          String?         @map("contact_number")
+  contactNumber          String?                @map("contact_number")
   email                  String?
-  isActive               Boolean         @default(true) @map("is_active")
-  inheritsCompanyProfile Boolean         @default(false) @map("inherits_company_profile")
-  canTransactSales       Boolean         @default(false) @map("can_transact_sales")
-  canHoldInventory       Boolean         @default(false) @map("can_hold_inventory")
-  createdAt              DateTime        @default(now()) @map("created_at")
-  updatedAt              DateTime        @updatedAt @map("updated_at")
-  company                Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  parentUnit             CompanyUnit?    @relation("CompanyUnitHierarchy", fields: [parentUnitId], references: [id], onDelete: SetNull)
-  childUnits             CompanyUnit[]   @relation("CompanyUnitHierarchy")
+  isActive               Boolean                @default(true) @map("is_active")
+  inheritsCompanyProfile Boolean                @default(false) @map("inherits_company_profile")
+  canTransactSales       Boolean                @default(false) @map("can_transact_sales")
+  canHoldInventory       Boolean                @default(false) @map("can_hold_inventory")
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  company                Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parentUnit             CompanyUnit?           @relation("CompanyUnitHierarchy", fields: [parentUnitId], references: [id], onDelete: SetNull)
+  childUnits             CompanyUnit[]          @relation("CompanyUnitHierarchy")
+  membershipAccess       MembershipUnitAccess[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -132,6 +151,7 @@ model Membership {
   companyRole         CompanyRole?           @relation(fields: [companyRoleId], references: [id], onDelete: SetNull)
   invitedBy           User?                  @relation("MembershipInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
   permissionOverrides MembershipPermission[]
+  unitAccess          MembershipUnitAccess[]
 
   @@id([userId, companyId])
   @@index([companyId])
@@ -139,6 +159,22 @@ model Membership {
   @@index([status])
   @@index([companyId, status])
   @@map("memberships")
+}
+
+model MembershipUnitAccess {
+  userId        Int          @map("user_id")
+  companyId     Int          @map("company_id")
+  unitId        Int          @map("unit_id")
+  companyRoleId Int?         @map("company_role_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  membership    Membership   @relation(fields: [userId, companyId], references: [userId, companyId], onDelete: Cascade)
+  unit          CompanyUnit  @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  companyRole   CompanyRole? @relation(fields: [companyRoleId], references: [id], onDelete: SetNull)
+
+  @@id([userId, companyId, unitId])
+  @@index([companyId, unitId])
+  @@index([companyRoleId])
+  @@map("membership_unit_access")
 }
 
 model CompanyRole {
@@ -155,6 +191,7 @@ model CompanyRole {
   updatedAt   DateTime                @updatedAt @map("updated_at")
   company     Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
   memberships Membership[]
+  unitAccess  MembershipUnitAccess[]
   permissions CompanyRolePermission[]
 
   @@unique([companyId, code])
@@ -287,28 +324,101 @@ model AuditLog {
 // =========================================================
 
 model SubscriptionPlan {
-  id                      Int                   @id @default(autoincrement())
-  code                    String                @unique
+  id                      Int                            @id @default(autoincrement())
+  code                    String                         @unique
   name                    String
   description             String?
-  currency                String                @default("PHP")
-  monthlyPriceInCents     Int                   @map("monthly_price_in_cents")
-  yearlyPriceInCents      Int                   @map("yearly_price_in_cents")
-  monthlyCompareAtInCents Int?                  @map("monthly_compare_at_in_cents")
-  yearlyCompareAtInCents  Int?                  @map("yearly_compare_at_in_cents")
-  monthlyExternalPlanId   String?               @unique @map("monthly_external_plan_id")
-  yearlyExternalPlanId    String?               @unique @map("yearly_external_plan_id")
-  billingProvider         BillingProvider       @default(PAYMONGO) @map("billing_provider")
-  billingMetadata         Json?                 @map("billing_metadata")
-  scope                   SubscriptionPlanScope @default(ONBOARDING)
-  trialDays               Int                   @default(15) @map("trial_days")
-  isActive                Boolean               @default(true) @map("is_active")
-  createdAt               DateTime              @default(now()) @map("created_at")
-  updatedAt               DateTime              @updatedAt @map("updated_at")
+  currency                String                         @default("PHP")
+  monthlyPriceInCents     Int                            @map("monthly_price_in_cents")
+  yearlyPriceInCents      Int                            @map("yearly_price_in_cents")
+  monthlyCompareAtInCents Int?                           @map("monthly_compare_at_in_cents")
+  yearlyCompareAtInCents  Int?                           @map("yearly_compare_at_in_cents")
+  monthlyExternalPlanId   String?                        @unique @map("monthly_external_plan_id")
+  yearlyExternalPlanId    String?                        @unique @map("yearly_external_plan_id")
+  billingProvider         BillingProvider                @default(PAYMONGO) @map("billing_provider")
+  billingMetadata         Json?                          @map("billing_metadata")
+  scope                   SubscriptionPlanScope          @default(ONBOARDING)
+  status                  SubscriptionPlanStatus         @default(ACTIVE)
+  trialDays               Int                            @default(15) @map("trial_days")
+  isActive                Boolean                        @default(true) @map("is_active")
+  createdAt               DateTime                       @default(now()) @map("created_at")
+  updatedAt               DateTime                       @updatedAt @map("updated_at")
+  prices                  SubscriptionPlanPrice[]
+  usageRules              SubscriptionPlanUsageRule[]
+  discountTiers           SubscriptionPlanDiscountTier[]
+  modules                 SubscriptionPlanModule[]
   subscriptions           CompanySubscription[]
   onboardingDrafts        UserOnboardingDraft[]
 
+  @@index([scope, isActive], map: "subscription_plans_scope_is_active_idx")
   @@map("subscription_plans")
+}
+
+model SubscriptionPlanPrice {
+  id                   Int                   @id @default(autoincrement())
+  subscriptionPlanId   Int                   @map("subscription_plan_id")
+  billingCycle         BillingCycle          @map("billing_cycle")
+  intervalCount        Int                   @default(1) @map("interval_count")
+  intervalUnit         BillingIntervalUnit   @map("interval_unit")
+  priceInCents         Int                   @map("price_in_cents")
+  compareAtInCents     Int?                  @map("compare_at_in_cents")
+  externalPlanId       String?               @unique @map("external_plan_id")
+  billingMetadata      Json?                 @map("billing_metadata")
+  isActive             Boolean               @default(true) @map("is_active")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+  subscriptionPlan     SubscriptionPlan      @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+  companySubscriptions CompanySubscription[]
+
+  @@unique([subscriptionPlanId, billingCycle])
+  @@index([billingCycle, isActive])
+  @@map("subscription_plan_prices")
+}
+
+model SubscriptionPlanUsageRule {
+  id                 Int                     @id @default(autoincrement())
+  subscriptionPlanId Int                     @map("subscription_plan_id")
+  metric             SubscriptionUsageMetric
+  freeCount          Int                     @default(0) @map("free_count")
+  unitPriceInCents   Int                     @default(0) @map("unit_price_in_cents")
+  isActive           Boolean                 @default(true) @map("is_active")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+  subscriptionPlan   SubscriptionPlan        @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionPlanId, metric])
+  @@index([metric, isActive])
+  @@map("subscription_plan_usage_rules")
+}
+
+model SubscriptionPlanDiscountTier {
+  id                 Int                     @id @default(autoincrement())
+  subscriptionPlanId Int                     @map("subscription_plan_id")
+  metric             SubscriptionUsageMetric
+  thresholdCount     Int                     @map("threshold_count")
+  discountPercent    Decimal                 @map("discount_percent") @db.Decimal(5, 2)
+  isActive           Boolean                 @default(true) @map("is_active")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+  subscriptionPlan   SubscriptionPlan        @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionPlanId, metric, thresholdCount], map: "subscription_plan_discount_tiers_subscription_plan_id_metric_th")
+  @@index([metric, thresholdCount, isActive], map: "subscription_plan_discount_tiers_metric_threshold_count_is_acti")
+  @@map("subscription_plan_discount_tiers")
+}
+
+model SubscriptionPlanModule {
+  id                 Int              @id @default(autoincrement())
+  subscriptionPlanId Int              @map("subscription_plan_id")
+  moduleKey          String           @map("module_key")
+  isEnabled          Boolean          @default(true) @map("is_enabled")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  subscriptionPlan   SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionPlanId, moduleKey])
+  @@index([moduleKey, isEnabled])
+  @@map("subscription_plan_modules")
 }
 
 // =========================================================
@@ -337,6 +447,7 @@ model UserOnboardingDraft {
   logoPublicUrl             String?           @map("logo_public_url")
   address                   String?
   tin                       String?
+  companyEmail              String?           @map("company_email")
   website                   String?
   contactNumber             String?           @map("contact_number")
   reportStartDate           DateTime?         @map("report_start_date")
@@ -369,6 +480,7 @@ model CompanySubscription {
   id                      Int                    @id @default(autoincrement())
   companyId               Int                    @map("company_id")
   subscriptionPlanId      Int                    @map("subscription_plan_id")
+  subscriptionPlanPriceId Int?                   @map("subscription_plan_price_id")
   billingCustomerId       Int?                   @map("billing_customer_id")
   billingCycle            BillingCycle           @default(MONTHLY) @map("billing_cycle")
   billingProvider         BillingProvider        @default(PAYMONGO) @map("billing_provider")
@@ -393,12 +505,14 @@ model CompanySubscription {
   updatedAt               DateTime               @updatedAt @map("updated_at")
   company                 Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
   plan                    SubscriptionPlan       @relation(fields: [subscriptionPlanId], references: [id])
+  planPrice               SubscriptionPlanPrice? @relation(fields: [subscriptionPlanPriceId], references: [id], onDelete: SetNull)
   billingCustomer         BillingCustomer?       @relation(fields: [billingCustomerId], references: [id], onDelete: SetNull)
   invoices                SubscriptionInvoice[]
   paymentMethods          BillingPaymentMethod[]
 
   @@index([companyId])
   @@index([subscriptionPlanId])
+  @@index([subscriptionPlanPriceId])
   @@index([billingCustomerId])
   @@index([status])
   @@index([companyId, status])
@@ -457,6 +571,7 @@ model BillingPaymentMethod {
   id                      Int                  @id @default(autoincrement())
   companyId               Int                  @map("company_id")
   companySubscriptionId   Int?                 @map("company_subscription_id")
+  ownerUserId             Int?                 @map("owner_user_id")
   billingProvider         BillingProvider      @default(PAYMONGO) @map("billing_provider")
   externalPaymentMethodId String               @unique @map("external_payment_method_id")
   type                    String
@@ -471,9 +586,11 @@ model BillingPaymentMethod {
   updatedAt               DateTime             @updatedAt @map("updated_at")
   company                 Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companySubscription     CompanySubscription? @relation(fields: [companySubscriptionId], references: [id], onDelete: SetNull)
+  ownerUser               User?                @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
 
   @@index([companyId])
   @@index([companySubscriptionId])
+  @@index([ownerUserId])
   @@index([isDefault])
   @@map("billing_payment_methods")
 }
@@ -565,6 +682,11 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum AuthProvider {
+  PASSWORD
+  GOOGLE
+}
+
 enum CompanyStatus {
   PENDING
   PROVISIONING
@@ -575,7 +697,21 @@ enum CompanyStatus {
 
 enum BillingCycle {
   MONTHLY
+  QUARTERLY
   YEARLY
+}
+
+enum BillingIntervalUnit {
+  DAY
+  MONTH
+  YEAR
+}
+
+enum SubscriptionUsageMetric {
+  COMPANY
+  BRANCH
+  SATELLITE
+  USER
 }
 
 enum TaxpayerType {
@@ -590,6 +726,12 @@ enum BillingProvider {
 enum SubscriptionPlanScope {
   ONBOARDING
   ADDITIONAL_COMPANY
+}
+
+enum SubscriptionPlanStatus {
+  ACTIVE
+  DRAFT
+  INACTIVE
 }
 
 enum SubscriptionStatus {
@@ -613,4 +755,5 @@ enum VerificationPurpose {
   SIGNUP
   EMAIL_CHANGE
   PASSWORD_RESET
+  WORKSPACE_INVITE
 }

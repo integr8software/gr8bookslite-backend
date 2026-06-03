@@ -6,6 +6,11 @@ export type UserWithMemberships = Prisma.UserGetPayload<{
       include: {
         company: true;
         companyRole: true;
+        unitAccess: {
+          include: {
+            unit: true;
+          };
+        };
       };
     };
   };

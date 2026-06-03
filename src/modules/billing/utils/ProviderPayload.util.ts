@@ -28,11 +28,15 @@ export function readFirstProviderArrayObject(value: unknown) {
     : null;
 }
 
-export function readProviderResponseData(payload: Record<string, unknown> | null) {
+export function readProviderResponseData(
+  payload: Record<string, unknown> | null,
+) {
   const data = payload?.data;
 
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    throw new BadRequestException('Unexpected billing provider response payload.');
+    throw new BadRequestException(
+      'Unexpected billing provider response payload.',
+    );
   }
 
   return data as Record<string, unknown>;
@@ -41,7 +45,11 @@ export function readProviderResponseData(payload: Record<string, unknown> | null
 export function readProviderResponseAttributes(data: Record<string, unknown>) {
   const attributes = data.attributes;
 
-  if (!attributes || typeof attributes !== 'object' || Array.isArray(attributes)) {
+  if (
+    !attributes ||
+    typeof attributes !== 'object' ||
+    Array.isArray(attributes)
+  ) {
     return {} as Record<string, unknown>;
   }
 

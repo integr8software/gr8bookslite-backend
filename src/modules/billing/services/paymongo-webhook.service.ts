@@ -36,12 +36,19 @@ export class PaymongoWebhookService {
     private readonly paymongoService: PaymongoService,
   ) {}
 
-  async handleWebhook(rawBody: Buffer | string | undefined, signatureHeader: string | undefined) {
+  async handleWebhook(
+    rawBody: Buffer | string | undefined,
+    signatureHeader: string | undefined,
+  ) {
     if (!rawBody || !signatureHeader) {
-      throw new BadRequestException('Missing webhook body or Paymongo-Signature header.');
+      throw new BadRequestException(
+        'Missing webhook body or Paymongo-Signature header.',
+      );
     }
 
-    const rawPayload = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : rawBody;
+    const rawPayload = Buffer.isBuffer(rawBody)
+      ? rawBody.toString('utf8')
+      : rawBody;
     const signatureParts = this.parseSignature(signatureHeader);
     const payload = this.parsePayload(rawPayload);
     const event = this.extractEvent(payload);
@@ -89,7 +96,8 @@ export class PaymongoWebhookService {
         eventType: event.eventType,
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Webhook processing failed.';
+      const message =
+        error instanceof Error ? error.message : 'Webhook processing failed.';
 
       await this.prisma.billingWebhookEvent.update({
         where: { id: webhookEvent.id },
@@ -99,7 +107,9 @@ export class PaymongoWebhookService {
         },
       });
 
-      this.logger.error(`Failed to process webhook ${event.eventType} (${event.eventId}): ${message}`);
+      this.logger.error(
+        `Failed to process webhook ${event.eventType} (${event.eventId}): ${message}`,
+      );
       throw new InternalServerErrorException('Webhook processing failed.');
     }
   }
@@ -126,7 +136,9 @@ export class PaymongoWebhookService {
         await this.processPaymentEvent(event);
         break;
       default:
-        this.logger.log(`Unhandled PayMongo webhook event received: ${event.eventType}`);
+        this.logger.log(
+          `Unhandled PayMongo webhook event received: ${event.eventType}`,
+        );
         break;
     }
 
@@ -157,7 +169,9 @@ export class PaymongoWebhookService {
     });
 
     if (!subscription) {
-      this.logger.warn(`Skipping ${event.eventType}: local subscription not found for ${subscriptionId}.`);
+      this.logger.warn(
+        `Skipping ${event.eventType}: local subscription not found for ${subscriptionId}.`,
+      );
       return;
     }
 
@@ -191,9 +205,11 @@ export class PaymongoWebhookService {
         nextBillingAt:
           readProviderUnixDate(attributes.next_billing_schedule) ??
           subscription.nextBillingAt,
-        startsAt: readProviderUnixDate(attributes.created_at) ?? subscription.startsAt,
+        startsAt:
+          readProviderUnixDate(attributes.created_at) ?? subscription.startsAt,
         canceledAt:
-          readProviderUnixDate(attributes.cancelled_at) ?? subscription.canceledAt,
+          readProviderUnixDate(attributes.cancelled_at) ??
+          subscription.canceledAt,
         currentPeriodStartAt:
           readProviderUnixDate(attributes.current_billing_period_start) ??
           subscription.currentPeriodStartAt,
@@ -220,7 +236,9 @@ export class PaymongoWebhookService {
     });
 
     if (!subscription) {
-      this.logger.warn(`Skipping ${event.eventType}: local subscription not found for ${subscriptionId}.`);
+      this.logger.warn(
+        `Skipping ${event.eventType}: local subscription not found for ${subscriptionId}.`,
+      );
       return;
     }
 
@@ -299,7 +317,8 @@ export class PaymongoWebhookService {
     const attributes = event.resourceAttributes;
     const paymentIntentId = readProviderString(attributes.payment_intent_id);
     const description = readProviderString(attributes.description);
-    const subscriptionIdFromDescription = description?.match(/subs_[A-Za-z0-9]+/)?.[0] ?? null;
+    const subscriptionIdFromDescription =
+      description?.match(/subs_[A-Za-z0-9]+/)?.[0] ?? null;
 
     const subscription = paymentIntentId
       ? await this.prisma.companySubscription.findFirst({
@@ -316,7 +335,9 @@ export class PaymongoWebhookService {
         : null;
 
     if (!subscription) {
-      this.logger.warn(`Skipping ${event.eventType}: no local subscription matched the payment event.`);
+      this.logger.warn(
+        `Skipping ${event.eventType}: no local subscription matched the payment event.`,
+      );
       return;
     }
 
@@ -346,7 +367,9 @@ export class PaymongoWebhookService {
     const timestamp = Number(signatureParts.t);
 
     if (!Number.isFinite(timestamp)) {
-      throw new BadRequestException('Invalid PayMongo webhook signature timestamp.');
+      throw new BadRequestException(
+        'Invalid PayMongo webhook signature timestamp.',
+      );
     }
 
     const expectedSignature = crypto
@@ -354,16 +377,23 @@ export class PaymongoWebhookService {
       .update(`${signatureParts.t}.${rawPayload}`)
       .digest('hex');
 
-    const providedSignature = isLiveMode ? signatureParts.li : signatureParts.te;
+    const providedSignature = isLiveMode
+      ? signatureParts.li
+      : signatureParts.te;
 
-    if (!providedSignature || !this.timingSafeEqual(expectedSignature, providedSignature)) {
+    if (
+      !providedSignature ||
+      !this.timingSafeEqual(expectedSignature, providedSignature)
+    ) {
       throw new BadRequestException('Invalid PayMongo webhook signature.');
     }
 
     const ageInSeconds = Math.abs(Date.now() - timestamp * 1000) / 1000;
 
     if (ageInSeconds > this.paymongoService.getWebhookToleranceInSeconds()) {
-      throw new BadRequestException('PayMongo webhook signature timestamp is outside the tolerance window.');
+      throw new BadRequestException(
+        'PayMongo webhook signature timestamp is outside the tolerance window.',
+      );
     }
   }
 
@@ -376,11 +406,15 @@ export class PaymongoWebhookService {
     );
 
     if (!parts.t || parts.te === undefined || parts.li === undefined) {
-      throw new BadRequestException('Invalid PayMongo signature header format.');
+      throw new BadRequestException(
+        'Invalid PayMongo signature header format.',
+      );
     }
 
     if (!/^\d+$/.test(parts.t)) {
-      throw new BadRequestException('Invalid PayMongo signature header timestamp.');
+      throw new BadRequestException(
+        'Invalid PayMongo signature header timestamp.',
+      );
     }
 
     return {
@@ -405,7 +439,9 @@ export class PaymongoWebhookService {
     const resource = payload.data?.attributes?.data;
 
     if (!eventId || !eventType || !resource?.attributes) {
-      throw new BadRequestException('PayMongo webhook payload is missing required event data.');
+      throw new BadRequestException(
+        'PayMongo webhook payload is missing required event data.',
+      );
     }
 
     return {
@@ -441,5 +477,4 @@ export class PaymongoWebhookService {
 
     return crypto.timingSafeEqual(aBuffer, bBuffer);
   }
-
 }

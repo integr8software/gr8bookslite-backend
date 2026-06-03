@@ -1,4 +1,5 @@
 import {
+  IsEmail,
   IsIn,
   IsOptional,
   IsString,
@@ -8,7 +9,8 @@ import {
 } from 'class-validator';
 
 const NamePattern = /^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$/;
-const TinPattern = /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
+const TinPattern =
+  /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
 const ContactNumberPattern = /^\+63 \d{3} \d{3} \d{4}$/;
 const DatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -101,6 +103,10 @@ export class SaveOnboardingCompanyDetailsDto {
     message: 'Enter a valid TIN in the format XXX-XXX-XXX or XXX-XXX-XXX-XXX.',
   })
   tin!: string;
+
+  @IsString()
+  @IsEmail({}, { message: 'Enter a valid company email.' })
+  companyEmail!: string;
 
   @IsString()
   @Matches(ContactNumberPattern, {

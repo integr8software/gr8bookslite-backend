@@ -1,14 +1,18 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
+  AuthProvider,
+  CompanyStatus,
   MembershipStatus,
   MembershipRole,
+  Prisma,
   SystemRole,
   UserStatus,
   VerificationPurpose,
@@ -24,6 +28,7 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { UserWithMemberships } from '../users/types/user-with-memberships.type';
 import { UsersService } from '../users/users.service';
+import { ActivateWorkspaceUserDto } from './dto/activate-workspace-user.dto';
 import { ChangeAuthenticatedPasswordDto } from './dto/change-authenticated-password.dto';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -40,6 +45,7 @@ import { OtpService } from './services/otp.service';
 import type { GoogleCallbackParams } from './types/google-callback-params.type';
 import type { GoogleUserProfile } from './types/google-user-profile.type';
 import type { PasswordResetTokenPayload } from './types/password-reset-token-payload.type';
+import type { WorkspaceInviteToken } from './types/workspace-invite-token.type';
 
 @Injectable()
 export class AuthService {
@@ -83,6 +89,8 @@ export class AuthService {
           status: UserStatus.PENDING_VERIFICATION,
         },
       });
+
+      await this.upsertPasswordIdentity(tx, createdUser);
 
       await tx.emailVerificationCode.create({
         data: {
@@ -213,6 +221,15 @@ export class AuthService {
         },
       });
 
+      await tx.userAuthIdentity.updateMany({
+        where: {
+          userId: user.id,
+        },
+        data: {
+          email: newEmail,
+        },
+      });
+
       await tx.emailVerificationCode.updateMany({
         where: {
           userId: user.id,
@@ -329,15 +346,85 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordHash: hashedPassword,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: hashedPassword,
+        },
+      });
+
+      await this.upsertPasswordIdentity(tx, updatedUser);
     });
 
     return {
       message: 'Password has been reset successfully.',
+    };
+  }
+
+  async activateWorkspaceUser(dto: ActivateWorkspaceUserDto) {
+    if (dto.newPassword !== dto.confirmNewPassword) {
+      throw new BadRequestException('Passwords do not match.');
+    }
+
+    if (!ActivateWorkspaceUserDto.isStrongPassword(dto.newPassword)) {
+      throw new BadRequestException(
+        'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+      );
+    }
+
+    const normalizedEmail = normalizeEmail(dto.email) as string;
+    const user = await this.usersService.findByEmail(normalizedEmail);
+
+    if (!user || user.status !== UserStatus.PENDING_VERIFICATION) {
+      throw new BadRequestException('Invitation link is invalid.');
+    }
+
+    const invitation = await this.getLatestActiveVerification(
+      user.id,
+      normalizedEmail,
+      VerificationPurpose.WORKSPACE_INVITE,
+    );
+
+    if (!invitation) {
+      throw new BadRequestException('Invitation link is invalid.');
+    }
+
+    if (invitation.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Invitation link has expired.');
+    }
+
+    const isValidToken = await bcrypt.compare(dto.token, invitation.codeHash);
+
+    if (!isValidToken) {
+      await this.incrementVerificationAttempt(invitation.id);
+      throw new BadRequestException('Invitation link is invalid.');
+    }
+
+    const verifiedAt = new Date();
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerificationCode.update({
+        where: { id: invitation.id },
+        data: {
+          consumedAt: verifiedAt,
+        },
+      });
+
+      const updatedUser = await tx.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: hashedPassword,
+          emailVerifiedAt: user.emailVerifiedAt ?? verifiedAt,
+        },
+      });
+
+      await this.upsertPasswordIdentity(tx, updatedUser);
+    });
+
+    return {
+      message: 'Password created. You can now log in to activate your account.',
     };
   }
 
@@ -458,11 +545,15 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
-    await this.prisma.user.update({
-      where: { id: authUser.id },
-      data: {
-        passwordHash: hashedPassword,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: authUser.id },
+        data: {
+          passwordHash: hashedPassword,
+        },
+      });
+
+      await this.upsertPasswordIdentity(tx, updatedUser);
     });
 
     return {
@@ -482,6 +573,17 @@ export class AuthService {
       throw new UnauthorizedException('User account is suspended.');
     }
 
+    const canUsePasswordLogin = await this.hasAuthIdentity(
+      user.id,
+      AuthProvider.PASSWORD,
+    );
+
+    if (!canUsePasswordLogin) {
+      throw new UnauthorizedException(
+        'This account uses Google sign-in. Continue with Google to sign in.',
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(
       dto.password,
       user.passwordHash,
@@ -489,6 +591,27 @@ export class AuthService {
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials.');
+    }
+
+    if (
+      user.status === UserStatus.PENDING_VERIFICATION &&
+      user.emailVerifiedAt
+    ) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { status: UserStatus.ACTIVE },
+      });
+
+      await this.notifyWorkspaceUserActivated(user.id, user.name, user.email);
+
+      const activatedUser =
+        await this.usersService.findForAuthByEmail(normalizedEmail);
+
+      if (!activatedUser) {
+        throw new UnauthorizedException('Invalid credentials.');
+      }
+
+      return this.loginActivatedUser(activatedUser, dto.companyId ?? null);
     }
 
     if (user.status !== UserStatus.ACTIVE || !user.emailVerifiedAt) {
@@ -505,8 +628,136 @@ export class AuthService {
       });
     }
 
+    return this.loginActivatedUser(user, dto.companyId ?? null);
+  }
+
+  async createWorkspaceInviteToken(
+    userId: number,
+    email: string,
+  ): Promise<WorkspaceInviteToken> {
+    const rawToken = randomBytes(48).toString('base64url');
+    const tokenHash = await bcrypt.hash(rawToken, 10);
+    const expiresInSeconds = Number(
+      this.configService.get<string | number>(
+        'WORKSPACE_INVITE_EXPIRES_IN_SECONDS',
+        60 * 60 * 24 * 7,
+      ),
+    );
+    const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerificationCode.updateMany({
+        where: {
+          userId,
+          purpose: VerificationPurpose.WORKSPACE_INVITE,
+          consumedAt: null,
+        },
+        data: { consumedAt: new Date() },
+      });
+
+      await tx.emailVerificationCode.create({
+        data: {
+          userId,
+          email,
+          purpose: VerificationPurpose.WORKSPACE_INVITE,
+          codeHash: tokenHash,
+          expiresAt,
+        },
+      });
+    });
+
+    return { rawToken, tokenHash };
+  }
+
+  private async notifyWorkspaceUserActivated(
+    activatedUserId: number,
+    activatedUserName: string,
+    activatedUserEmail: string,
+  ) {
+    const memberships = await this.prisma.membership.findMany({
+      where: {
+        userId: activatedUserId,
+        status: MembershipStatus.ACTIVE,
+      },
+      select: {
+        invitedBy: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+        company: {
+          select: {
+            name: true,
+            memberships: {
+              where: {
+                role: MembershipRole.ADMIN,
+                status: MembershipStatus.ACTIVE,
+                userId: { not: activatedUserId },
+              },
+              select: {
+                user: {
+                  select: {
+                    email: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const recipients = new Map<
+      string,
+      { name: string; companyNames: Set<string> }
+    >();
+
+    for (const membership of memberships) {
+      const admins =
+        membership.invitedBy != null
+          ? [membership.invitedBy]
+          : membership.company.memberships.map(({ user }) => user);
+
+      for (const admin of admins) {
+        if (!admin.email || admin.email === activatedUserEmail) {
+          continue;
+        }
+
+        const existing = recipients.get(admin.email);
+
+        if (existing) {
+          existing.companyNames.add(membership.company.name);
+          continue;
+        }
+
+        recipients.set(admin.email, {
+          name: admin.name || admin.email,
+          companyNames: new Set([membership.company.name]),
+        });
+      }
+    }
+
+    await Promise.all(
+      [...recipients.entries()].map(([email, recipient]) =>
+        this.authMailService.sendWorkspaceUserActivated(
+          email,
+          recipient.name,
+          activatedUserName,
+          activatedUserEmail,
+          [...recipient.companyNames],
+        ),
+      ),
+    );
+  }
+
+  private async loginActivatedUser(
+    user: UserWithMemberships,
+    requestedCompanyId: number | null,
+  ) {
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
-      return this.buildAuthenticatedResponse(user, dto.companyId ?? null);
+      return this.buildAuthenticatedResponse(user, requestedCompanyId);
     }
 
     const activeMemberships = this.getActiveMemberships(user);
@@ -517,10 +768,11 @@ export class AuthService {
 
     const resolvedCompanyId = this.resolveDefaultCompanyContext(
       user,
-      dto.companyId ?? null,
+      requestedCompanyId,
     );
 
     if (resolvedCompanyId != null) {
+      await this.markMembershipAccessed(user.id, resolvedCompanyId);
       return this.buildAuthenticatedResponse(user, resolvedCompanyId);
     }
 
@@ -532,6 +784,20 @@ export class AuthService {
       companies: this.mapCompanies(user),
       onboarding,
     };
+  }
+
+  private async markMembershipAccessed(userId: number, companyId: number) {
+    await this.prisma.membership.update({
+      where: {
+        userId_companyId: {
+          userId,
+          companyId,
+        },
+      },
+      data: {
+        lastAccessedAt: new Date(),
+      },
+    });
   }
 
   beginGoogleAuth(mode?: string) {
@@ -595,20 +861,15 @@ export class AuthService {
       include: {
         company: true,
         companyRole: true,
+        unitAccess: {
+          include: {
+            unit: true,
+          },
+        },
       },
     });
 
-    const activeAccess =
-      user.companyId == null
-        ? null
-        : await this.accessControlService.resolveAuthUser({
-            sub: user.id,
-            companyId: user.companyId,
-            role: user.role,
-            systemRole: user.systemRole,
-            membershipRole: user.membershipRole,
-            companyRoleId: user.companyRoleId,
-          });
+    const activeAccess = user.companyId == null ? null : user;
 
     const onboarding =
       user.systemRole === SystemRole.SUPER_ADMIN
@@ -620,15 +881,39 @@ export class AuthService {
       activeCompanyId: user.companyId,
       activeAccess,
       onboarding,
-      companies: memberships.map((membership) => ({
-        companyId: membership.companyId,
-        companyName: membership.company.name,
-        role: this.mapMembershipRole(membership.role),
-        membershipStatus: membership.status,
-        companyRoleId: membership.companyRoleId,
-        companyRoleCode: membership.companyRole?.code ?? null,
-      })),
+      companies: memberships.map((membership) =>
+        this.mapProfileCompany(membership),
+      ),
     };
+  }
+
+  async switchCompanyContext(user: AuthUser, companyId: number) {
+    if (user.systemRole === SystemRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Super admin accounts use the master workspace.',
+      );
+    }
+
+    const authUser = await this.usersService.findForAuthById(user.id);
+
+    if (!authUser) {
+      throw new UnauthorizedException('User account was not found.');
+    }
+
+    if (authUser.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException('User account is not active.');
+    }
+
+    const resolvedCompanyId = this.resolveDefaultCompanyContext(
+      authUser,
+      companyId,
+    );
+
+    if (resolvedCompanyId == null) {
+      throw new ForbiddenException('Company access is required.');
+    }
+
+    return this.buildAuthenticatedResponse(authUser, resolvedCompanyId);
   }
 
   logout() {
@@ -669,10 +954,17 @@ export class AuthService {
 
   private async loginOrRegisterWithGoogleProfile(profile: GoogleUserProfile) {
     const normalizedEmail = normalizeEmail(profile.email) as string | null;
+    const googleSubject = profile.sub?.trim();
 
     if (!normalizedEmail) {
       throw new BadRequestException(
         'Google did not return a valid email address.',
+      );
+    }
+
+    if (!googleSubject) {
+      throw new BadRequestException(
+        'Google did not return a stable account identifier.',
       );
     }
 
@@ -683,7 +975,21 @@ export class AuthService {
     }
 
     const now = new Date();
-    const existingUser = await this.usersService.findByEmail(normalizedEmail);
+    const existingGoogleIdentity =
+      await this.prisma.userAuthIdentity.findUnique({
+        where: {
+          provider_providerUserId: {
+            provider: AuthProvider.GOOGLE,
+            providerUserId: googleSubject,
+          },
+        },
+        include: {
+          user: true,
+        },
+      });
+    const existingUser =
+      existingGoogleIdentity?.user ??
+      (await this.usersService.findByEmail(normalizedEmail));
 
     if (existingUser?.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('User account is suspended.');
@@ -695,31 +1001,47 @@ export class AuthService {
         10,
       );
 
-      await this.prisma.user.create({
-        data: {
+      await this.prisma.$transaction(async (tx) => {
+        const createdUser = await tx.user.create({
+          data: {
+            email: normalizedEmail,
+            name: profile.name?.trim() || normalizedEmail.split('@')[0],
+            contactNumber: null,
+            passwordHash,
+            systemRole: SystemRole.STANDARD,
+            status: UserStatus.ACTIVE,
+            emailVerifiedAt: now,
+          },
+        });
+
+        await this.upsertGoogleIdentity(tx, {
+          userId: createdUser.id,
           email: normalizedEmail,
-          name: profile.name?.trim() || normalizedEmail.split('@')[0],
-          contactNumber: null,
-          passwordHash,
-          systemRole: SystemRole.STANDARD,
-          status: UserStatus.ACTIVE,
-          emailVerifiedAt: now,
-        },
+          providerUserId: googleSubject,
+        });
       });
-    } else if (
-      existingUser.status !== UserStatus.ACTIVE ||
-      existingUser.emailVerifiedAt == null
-    ) {
-      await this.prisma.user.update({
-        where: { id: existingUser.id },
-        data: {
-          status: UserStatus.ACTIVE,
-          emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
-          name:
-            existingUser.name?.trim().length > 0
-              ? existingUser.name
-              : (profile.name?.trim() ?? existingUser.name),
-        },
+    } else {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: existingUser.id },
+          data: {
+            status:
+              existingUser.status === UserStatus.PENDING_VERIFICATION
+                ? UserStatus.ACTIVE
+                : undefined,
+            emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
+            name:
+              existingUser.name?.trim().length > 0
+                ? existingUser.name
+                : (profile.name?.trim() ?? existingUser.name),
+          },
+        });
+
+        await this.upsertGoogleIdentity(tx, {
+          userId: existingUser.id,
+          email: normalizedEmail,
+          providerUserId: googleSubject,
+        });
       });
     }
 
@@ -807,6 +1129,19 @@ export class AuthService {
       };
     }
 
+    const canUsePasswordLogin = await this.hasAuthIdentity(
+      user.id,
+      AuthProvider.PASSWORD,
+    );
+
+    if (!canUsePasswordLogin) {
+      return {
+        code: 'GOOGLE_ACCOUNT_PASSWORD_NOT_ENABLED',
+        message:
+          'This account uses Google sign-in. Continue with Google, or set a password from account settings after signing in.',
+      };
+    }
+
     const resetCode = this.otpService.generateCode();
     const codeHash = await this.otpService.hashCode(resetCode);
     const expiresAt = this.buildVerificationExpiry();
@@ -847,6 +1182,63 @@ export class AuthService {
       message:
         'If the email is registered, a password reset code will be sent.',
     };
+  }
+
+  private hasAuthIdentity(userId: number, provider: AuthProvider) {
+    return this.prisma.userAuthIdentity
+      .count({
+        where: {
+          userId,
+          provider,
+        },
+      })
+      .then((count) => count > 0);
+  }
+
+  private upsertPasswordIdentity(
+    tx: Prisma.TransactionClient,
+    user: { id: number; email: string },
+  ) {
+    return tx.userAuthIdentity.upsert({
+      where: {
+        userId_provider: {
+          userId: user.id,
+          provider: AuthProvider.PASSWORD,
+        },
+      },
+      update: {
+        email: user.email,
+      },
+      create: {
+        userId: user.id,
+        provider: AuthProvider.PASSWORD,
+        email: user.email,
+      },
+    });
+  }
+
+  private upsertGoogleIdentity(
+    tx: Prisma.TransactionClient,
+    params: { userId: number; email: string; providerUserId: string },
+  ) {
+    return tx.userAuthIdentity.upsert({
+      where: {
+        userId_provider: {
+          userId: params.userId,
+          provider: AuthProvider.GOOGLE,
+        },
+      },
+      update: {
+        email: params.email,
+        providerUserId: params.providerUserId,
+      },
+      create: {
+        userId: params.userId,
+        provider: AuthProvider.GOOGLE,
+        providerUserId: params.providerUserId,
+        email: params.email,
+      },
+    });
   }
 
   private buildVerificationExpiry(): Date {
@@ -982,14 +1374,37 @@ export class AuthService {
   }
 
   private mapCompanies(user: UserWithMemberships) {
-    return user.memberships.map((membership) => ({
+    return user.memberships.map((membership) =>
+      this.mapProfileCompany(membership),
+    );
+  }
+
+  private mapProfileCompany(
+    membership: UserWithMemberships['memberships'][number],
+  ) {
+    return {
       companyId: membership.companyId,
       companyName: membership.company.name,
+      companyStatus: membership.company.status,
+      isCompanyActive:
+        membership.company.isActive &&
+        membership.company.status === CompanyStatus.ACTIVE,
+      logoPublicUrl: membership.company.logoPublicUrl,
       role: this.mapMembershipRole(membership.role),
       membershipStatus: membership.status,
+      accessScope: membership.accessScope,
       companyRoleId: membership.companyRoleId,
       companyRoleCode: membership.companyRole?.code ?? null,
-    }));
+      accessibleUnitIds: membership.unitAccess.map((access) => access.unitId),
+      units: membership.unitAccess.map((access) => ({
+        id: access.unit.id,
+        code: access.unit.code,
+        name: access.unit.name,
+        type: access.unit.type,
+        isActive: access.unit.isActive,
+        isMain: access.unit.type === 'HEAD_OFFICE',
+      })),
+    };
   }
 
   private buildJwtAccessContext(

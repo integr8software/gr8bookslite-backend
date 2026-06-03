@@ -7,7 +7,12 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/master-plan-and-packages.module';
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
+import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
+import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
+import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.module';
+import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
 
 @Module({
   imports: [
@@ -19,7 +24,12 @@ import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspac
     OnboardingModule,
     UsersModule,
     BillingModule,
+    MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
+    WorkspaceUsersModule,
+    BranchRolesModule,
+    BranchUsersModule,
+    AiAssistantModule,
   ],
 })
 export class AppModule {}
