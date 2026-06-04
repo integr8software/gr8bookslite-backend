@@ -95,6 +95,7 @@ model Company {
   roles                 CompanyRole[]
   enabledModules        CompanyModule[]
   units                 CompanyUnit[]
+  formSignatorySetups   FormSignatorySetup[]
   auditLogs             AuditLog[]
   onboardingDrafts      UserOnboardingDraft[]  @relation("ProvisionedOnboardingCompany")
   createdByUser         User?                  @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
@@ -125,6 +126,7 @@ model CompanyUnit {
   parentUnit             CompanyUnit?           @relation("CompanyUnitHierarchy", fields: [parentUnitId], references: [id], onDelete: SetNull)
   childUnits             CompanyUnit[]          @relation("CompanyUnitHierarchy")
   membershipAccess       MembershipUnitAccess[]
+  formSignatorySetups    FormSignatorySetup[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -211,6 +213,7 @@ model PlatformModule {
   permissions      Permission[]
   enabledCompanies CompanyModule[]
   auditLogs        AuditLog[]
+  formSignatorySetups FormSignatorySetup[]
 
   @@map("platform_modules")
 }
@@ -317,6 +320,42 @@ model AuditLog {
   @@index([actorUserId, createdAt])
   @@index([entityType, entityId])
   @@map("audit_logs")
+}
+
+model FormSignatorySetup {
+  id        Int                 @id @default(autoincrement())
+  companyId Int                 @map("company_id")
+  unitId    Int                 @map("unit_id")
+  moduleId  Int                 @map("module_id")
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  unit      CompanyUnit         @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  module    PlatformModule      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  rows      FormSignatoryRow[]
+
+  @@unique([companyId, unitId, moduleId])
+  @@index([companyId])
+  @@index([unitId])
+  @@index([moduleId])
+  @@map("form_signatory_setups")
+}
+
+model FormSignatoryRow {
+  id               Int                 @id @default(autoincrement())
+  setupId          Int                 @map("setup_id")
+  label            String
+  name             String
+  position         String?
+  signatureName    String?             @map("signature_name")
+  signatureImage   String?             @map("signature_image") @db.Text
+  signatureValidUntil DateTime?         @map("signature_valid_until")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  setup            FormSignatorySetup  @relation(fields: [setupId], references: [id], onDelete: Cascade)
+
+  @@index([setupId])
+  @@map("form_signatory_rows")
 }
 
 // =========================================================

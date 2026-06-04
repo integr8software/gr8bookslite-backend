@@ -13,6 +13,7 @@ import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.module';
 import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
+import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { BranchUsersModule } from './modules/company/branch-users/branch-users.m
     WorkspaceUsersModule,
     BranchRolesModule,
     BranchUsersModule,
+    FormSignatoriesModule,
     AiAssistantModule,
   ],
 })
