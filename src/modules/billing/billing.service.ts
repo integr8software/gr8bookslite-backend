@@ -23,7 +23,10 @@ import { mapCompanySubscription } from './mappers/CompanySubscription.mapper';
 import { AttachCompanySubscriptionPaymentMethodDto } from './dto/attach-company-subscription-payment-method.dto';
 import { CancelCompanySubscriptionDto } from './dto/cancel-company-subscription.dto';
 import { SubscribeCompanyDto } from './dto/subscribe-company.dto';
-import { PaymongoService } from './services/paymongo.service';
+import {
+  PaymongoRequestException,
+  PaymongoService,
+} from './services/paymongo.service';
 import { companySubscriptionDetailsInclude } from './utils/BillingPrisma.util';
 import {
   readFirstProviderArrayObject,
@@ -275,7 +278,8 @@ export class BillingService {
       );
     }
 
-    const billingCustomer = await this.ensureBillingCustomer({
+    const fallbackEmail = await this.getCompanyAdminEmail(input.ownerUserId);
+    const customerInput = {
       companyId,
       ownerUserId: input.ownerUserId,
       companyName: company.legalName?.trim() || company.name,
@@ -283,8 +287,34 @@ export class BillingService {
       ownerLastName: company.ownerLastName,
       contactNumber: company.contactNumber,
       preferredEmail: input.billingEmail ?? null,
-      fallbackEmail: await this.getCompanyAdminEmail(input.ownerUserId),
-    });
+      fallbackEmail,
+    };
+
+    if (this.isProviderFallbackEnabled()) {
+      const billingCustomer =
+        await this.ensurePendingProviderBillingCustomer(customerInput);
+      const pendingSubscription =
+        await this.createPendingProviderActivationSubscription({
+          companyId,
+          planId: plan.id,
+          planPriceId: planPrice.id,
+          billingCycle: input.billingCycle,
+          billingCustomerId: billingCustomer.id,
+          externalCustomerId: billingCustomer.externalCustomerId,
+        });
+
+      return {
+        message: this.pendingProviderActivationMessage,
+        subscription: mapCompanySubscription(pendingSubscription),
+        paymentSetup: {
+          latestInvoiceId: null,
+          latestPaymentIntentId: null,
+        },
+        pendingProviderActivation: true,
+      };
+    }
+
+    const billingCustomer = await this.ensureBillingCustomer(customerInput);
 
     try {
       const externalPlanId = await this.ensureExternalPlanId(
@@ -436,26 +466,15 @@ export class BillingService {
         throw error;
       }
 
-      const pendingSubscription = await this.prisma.companySubscription.create({
-        data: {
+      const pendingSubscription =
+        await this.createPendingProviderActivationSubscription({
           companyId,
-          subscriptionPlanId: plan.id,
-          subscriptionPlanPriceId: planPrice.id,
-          billingCustomerId: billingCustomer.id,
+          planId: plan.id,
+          planPriceId: planPrice.id,
           billingCycle: input.billingCycle,
-          billingProvider: BillingProvider.PAYMONGO,
-          status: SubscriptionStatus.INCOMPLETE,
+          billingCustomerId: billingCustomer.id,
           externalCustomerId: billingCustomer.externalCustomerId,
-          failureCode: this.pendingProviderActivationCode,
-          failureMessage: this.pendingProviderActivationMessage,
-          startsAt: new Date(),
-          rawProviderPayload: {
-            fallbackState: 'pending_billing_setup',
-            providerState: 'pending_provider_activation',
-          },
-        },
-        include: companySubscriptionDetailsInclude,
-      });
+        });
 
       return {
         message: this.pendingProviderActivationMessage,
@@ -467,6 +486,93 @@ export class BillingService {
         pendingProviderActivation: true,
       };
     }
+  }
+
+  private async createPendingProviderActivationSubscription(input: {
+    companyId: number;
+    planId: number;
+    planPriceId: number | null;
+    billingCycle: BillingCycle;
+    billingCustomerId: number;
+    externalCustomerId: string;
+  }) {
+    return this.prisma.companySubscription.create({
+      data: {
+        companyId: input.companyId,
+        subscriptionPlanId: input.planId,
+        subscriptionPlanPriceId: input.planPriceId,
+        billingCustomerId: input.billingCustomerId,
+        billingCycle: input.billingCycle,
+        billingProvider: BillingProvider.PAYMONGO,
+        status: SubscriptionStatus.INCOMPLETE,
+        externalCustomerId: input.externalCustomerId,
+        failureCode: this.pendingProviderActivationCode,
+        failureMessage: this.pendingProviderActivationMessage,
+        startsAt: new Date(),
+        rawProviderPayload: {
+          fallbackState: 'pending_billing_setup',
+          providerState: 'pending_provider_activation',
+        },
+      },
+      include: companySubscriptionDetailsInclude,
+    });
+  }
+
+  private async ensurePendingProviderBillingCustomer(input: {
+    companyId: number;
+    ownerUserId: number;
+    companyName: string;
+    contactNumber?: string | null;
+    preferredEmail?: string | null;
+    fallbackEmail: string;
+  }) {
+    const customerEmail = input.preferredEmail
+      ? (normalizeEmail(input.preferredEmail) as string)
+      : input.fallbackEmail;
+    const externalCustomerId = `pending_provider_activation_company_${input.companyId}`;
+
+    return this.prisma.billingCustomer.upsert({
+      where: {
+        companyId_billingProvider: {
+          companyId: input.companyId,
+          billingProvider: BillingProvider.PAYMONGO,
+        },
+      },
+      update: {
+        ownerUserId: input.ownerUserId,
+        externalCustomerId,
+        email: customerEmail,
+        name: input.companyName,
+        phone: this.normalizePaymongoPhone(input.contactNumber),
+        metadata: {
+          companyId: input.companyId,
+          ownerUserId: input.ownerUserId,
+          paymentSetupState: this.pendingProviderActivationCode,
+        },
+        rawProviderPayload: {
+          fallbackState: 'pending_billing_customer',
+          providerState: 'pending_provider_activation',
+        },
+      },
+      create: {
+        companyId: input.companyId,
+        ownerUserId: input.ownerUserId,
+        billingProvider: BillingProvider.PAYMONGO,
+        externalCustomerId,
+        email: customerEmail,
+        name: input.companyName,
+        phone: this.normalizePaymongoPhone(input.contactNumber),
+        metadata: {
+          companyId: input.companyId,
+          ownerUserId: input.ownerUserId,
+          paymentSetupState: this.pendingProviderActivationCode,
+        },
+        rawProviderPayload: {
+          fallbackState: 'pending_billing_customer',
+          providerState: 'pending_provider_activation',
+        },
+      },
+    });
   }
 
   async attachPaymentMethod(
@@ -557,66 +663,34 @@ export class BillingService {
     )?.redirect;
     const redirectUrl = readProviderString(readProviderObject(redirect)?.url);
 
-    const updatedSubscription = await this.prisma.$transaction(async (tx) => {
-      await tx.billingPaymentMethod.upsert({
-        where: {
-          externalPaymentMethodId: input.paymentMethodId.trim(),
-        },
-        update: {
-          companyId,
-          ownerUserId: input.ownerUserId,
-          companySubscriptionId: subscription.id,
-          isDefault: true,
-          type: readProviderString(paymentMethodDetails?.type) ?? 'unknown',
-          brand: readProviderString(card?.brand),
-          last4: readProviderString(card?.last4),
-          expMonth: readProviderNumber(card?.exp_month),
-          expYear: readProviderNumber(card?.exp_year),
-          rawProviderPayload: remotePaymentIntent as Prisma.InputJsonValue,
-        },
-        create: {
-          companyId,
-          ownerUserId: input.ownerUserId,
-          companySubscriptionId: subscription.id,
-          billingProvider: BillingProvider.PAYMONGO,
-          externalPaymentMethodId: input.paymentMethodId.trim(),
-          isDefault: true,
-          type: readProviderString(paymentMethodDetails?.type) ?? 'unknown',
-          brand: readProviderString(card?.brand),
-          last4: readProviderString(card?.last4),
-          expMonth: readProviderNumber(card?.exp_month),
-          expYear: readProviderNumber(card?.exp_year),
-          rawProviderPayload: remotePaymentIntent as Prisma.InputJsonValue,
-        },
-      });
+    await this.upsertDefaultPaymentMethod(this.prisma, {
+      companyId,
+      ownerUserId: input.ownerUserId,
+      subscriptionId: subscription.id,
+      paymentMethodId: input.paymentMethodId,
+      type: readProviderString(paymentMethodDetails?.type) ?? 'unknown',
+      brand: readProviderString(card?.brand),
+      last4: readProviderString(card?.last4),
+      expMonth: readProviderNumber(card?.exp_month),
+      expYear: readProviderNumber(card?.exp_year),
+      rawProviderPayload: remotePaymentIntent as Prisma.InputJsonValue,
+    });
 
-      await tx.billingPaymentMethod.updateMany({
-        where: {
-          companySubscriptionId: subscription.id,
-          externalPaymentMethodId: {
-            not: input.paymentMethodId.trim(),
-          },
-        },
-        data: {
-          isDefault: false,
-        },
-      });
+    await this.prisma.companySubscription.update({
+      where: {
+        id: subscription.id,
+      },
+      data: {
+        externalPaymentMethodId: input.paymentMethodId.trim(),
+        rawProviderPayload: remotePaymentIntent as Prisma.InputJsonValue,
+      },
+    });
 
-      await tx.companySubscription.update({
-        where: {
-          id: subscription.id,
-        },
-        data: {
-          externalPaymentMethodId: input.paymentMethodId.trim(),
-          rawProviderPayload: remotePaymentIntent as Prisma.InputJsonValue,
-        },
-      });
-
-      return tx.companySubscription.findUniqueOrThrow({
+    const updatedSubscription =
+      await this.prisma.companySubscription.findUniqueOrThrow({
         where: { id: subscription.id },
         include: companySubscriptionDetailsInclude,
       });
-    });
 
     return {
       message:
@@ -658,69 +732,35 @@ export class BillingService {
       paymentMethodId: input.paymentMethodId,
     });
 
-    const updatedSubscription = await this.prisma.$transaction(async (tx) => {
-      await tx.billingPaymentMethod.upsert({
-        where: {
-          externalPaymentMethodId: input.paymentMethodId.trim(),
-        },
-        update: {
-          companyId: input.companyId,
-          ownerUserId: input.ownerUserId,
-          companySubscriptionId: subscription.id,
-          isDefault: true,
-          type: 'card',
-          brand: input.brand ?? null,
-          last4: input.last4 ?? null,
-          expMonth: input.expMonth ?? null,
-          expYear: input.expYear ?? null,
-          metadata: {
-            paymentSetupState: this.pendingProviderActivationCode,
-          },
-        },
-        create: {
-          companyId: input.companyId,
-          ownerUserId: input.ownerUserId,
-          companySubscriptionId: subscription.id,
-          billingProvider: BillingProvider.PAYMONGO,
-          externalPaymentMethodId: input.paymentMethodId.trim(),
-          isDefault: true,
-          type: 'card',
-          brand: input.brand ?? null,
-          last4: input.last4 ?? null,
-          expMonth: input.expMonth ?? null,
-          expYear: input.expYear ?? null,
-          metadata: {
-            paymentSetupState: this.pendingProviderActivationCode,
-          },
-        },
-      });
+    await this.upsertDefaultPaymentMethod(this.prisma, {
+      companyId: input.companyId,
+      ownerUserId: input.ownerUserId,
+      subscriptionId: subscription.id,
+      paymentMethodId: input.paymentMethodId,
+      type: 'card',
+      brand: input.brand ?? null,
+      last4: input.last4 ?? null,
+      expMonth: input.expMonth ?? null,
+      expYear: input.expYear ?? null,
+      metadata: {
+        paymentSetupState: this.pendingProviderActivationCode,
+      },
+    });
 
-      await tx.billingPaymentMethod.updateMany({
-        where: {
-          companySubscriptionId: subscription.id,
-          externalPaymentMethodId: {
-            not: input.paymentMethodId.trim(),
-          },
-        },
-        data: {
-          isDefault: false,
-        },
-      });
+    await this.prisma.companySubscription.update({
+      where: {
+        id: subscription.id,
+      },
+      data: {
+        externalPaymentMethodId: input.paymentMethodId.trim(),
+      },
+    });
 
-      await tx.companySubscription.update({
-        where: {
-          id: subscription.id,
-        },
-        data: {
-          externalPaymentMethodId: input.paymentMethodId.trim(),
-        },
-      });
-
-      return tx.companySubscription.findUniqueOrThrow({
+    const updatedSubscription =
+      await this.prisma.companySubscription.findUniqueOrThrow({
         where: { id: subscription.id },
         include: companySubscriptionDetailsInclude,
       });
-    });
 
     return {
       message: this.pendingProviderActivationMessage,
@@ -751,6 +791,71 @@ export class BillingService {
         'This saved payment method is not available to this admin account.',
       );
     }
+  }
+
+  private async upsertDefaultPaymentMethod(
+    prisma: PrismaService | Prisma.TransactionClient,
+    input: {
+      companyId: number;
+      ownerUserId: number;
+      subscriptionId: number;
+      paymentMethodId: string;
+      type: string;
+      brand?: string | null;
+      last4?: string | null;
+      expMonth?: number | null;
+      expYear?: number | null;
+      metadata?: Prisma.InputJsonValue;
+      rawProviderPayload?: Prisma.InputJsonValue;
+    },
+  ) {
+    const paymentMethodId = input.paymentMethodId.trim();
+
+    await prisma.billingPaymentMethod.upsert({
+      where: {
+        externalPaymentMethodId: paymentMethodId,
+      },
+      update: {
+        companyId: input.companyId,
+        ownerUserId: input.ownerUserId,
+        companySubscriptionId: input.subscriptionId,
+        isDefault: true,
+        type: input.type,
+        brand: input.brand ?? null,
+        last4: input.last4 ?? null,
+        expMonth: input.expMonth ?? null,
+        expYear: input.expYear ?? null,
+        metadata: input.metadata,
+        rawProviderPayload: input.rawProviderPayload,
+      },
+      create: {
+        companyId: input.companyId,
+        ownerUserId: input.ownerUserId,
+        companySubscriptionId: input.subscriptionId,
+        billingProvider: BillingProvider.PAYMONGO,
+        externalPaymentMethodId: paymentMethodId,
+        isDefault: true,
+        type: input.type,
+        brand: input.brand ?? null,
+        last4: input.last4 ?? null,
+        expMonth: input.expMonth ?? null,
+        expYear: input.expYear ?? null,
+        metadata: input.metadata,
+        rawProviderPayload: input.rawProviderPayload,
+      },
+    });
+
+    await prisma.billingPaymentMethod.updateMany({
+      where: {
+        companySubscriptionId: input.subscriptionId,
+        externalPaymentMethodId: {
+          not: paymentMethodId,
+        },
+      },
+      data: {
+        isDefault: false,
+      },
+    });
   }
 
   async cancelSubscription(
@@ -835,17 +940,16 @@ export class BillingService {
       ? (normalizeEmail(input.preferredEmail) as string)
       : null;
     const customerEmail = preferredEmail ?? input.fallbackEmail;
-    const existingOwnerCustomer =
-      await this.prisma.billingCustomer.findFirst({
-        where: {
-          ownerUserId: input.ownerUserId,
-          billingProvider: BillingProvider.PAYMONGO,
-          email: customerEmail,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
+    const existingOwnerCustomer = await this.prisma.billingCustomer.findFirst({
+      where: {
+        ownerUserId: input.ownerUserId,
+        billingProvider: BillingProvider.PAYMONGO,
+        email: customerEmail,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
     if (existingOwnerCustomer) {
       return existingOwnerCustomer;
@@ -1096,6 +1200,13 @@ export class BillingService {
       return false;
     }
 
+    if (
+      error instanceof PaymongoRequestException &&
+      error.context.code === 'payment_method_not_configured'
+    ) {
+      return this.isProviderFallbackEnabled();
+    }
+
     const providerNotReadyMessages = [
       'Subscriptions is not yet configured for this organization.',
       'no subscription payment methods are configured for this organization',
@@ -1130,6 +1241,14 @@ export class BillingService {
   private isExistingCustomerEmailError(error: unknown) {
     if (!(error instanceof Error)) {
       return false;
+    }
+
+    if (
+      error instanceof PaymongoRequestException &&
+      error.context.code === 'resource_already_exists' &&
+      error.context.source === 'data.attributes.email'
+    ) {
+      return true;
     }
 
     return error.message.includes('A customer with this email already exists');
