@@ -1,0 +1,4944 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "AuthController_register_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/verify-email": {
+      "post": {
+        "operationId": "AuthController_verifyEmail_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/resend-verification": {
+      "post": {
+        "operationId": "AuthController_resendVerification_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/change-verification-email": {
+      "post": {
+        "operationId": "AuthController_changeVerificationEmail_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeVerificationEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "operationId": "AuthController_forgotPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/resend-forgot-password": {
+      "post": {
+        "operationId": "AuthController_resendForgotPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/verify-forgot-password-code": {
+      "post": {
+        "operationId": "AuthController_verifyForgotPasswordCode_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyForgotPasswordCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/workspace-invitation/activate": {
+      "post": {
+        "operationId": "AuthController_activateWorkspaceUser_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivateWorkspaceUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/google": {
+      "get": {
+        "operationId": "AuthController_googleAuth_v1",
+        "parameters": [
+          {
+            "name": "mode",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/google/callback": {
+      "get": {
+        "operationId": "AuthController_googleAuthCallback_v1",
+        "parameters": [
+          {
+            "name": "error",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "code",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "AuthController_me_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/context/company": {
+      "post": {
+        "operationId": "AuthController_switchCompanyContext_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchCompanyContextDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me/password/otp": {
+      "post": {
+        "operationId": "AuthController_requestPasswordChangeOtp_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me/password/verify-otp": {
+      "post": {
+        "operationId": "AuthController_verifyPasswordChangeOtp_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPasswordChangeCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me/password": {
+      "patch": {
+        "operationId": "AuthController_changeAuthenticatedPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeAuthenticatedPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "operationId": "UsersController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "post": {
+        "operationId": "UsersController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/v1/users/me": {
+      "patch": {
+        "operationId": "UsersController_updateMe_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOwnProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/v1/users/me/avatar": {
+      "post": {
+        "operationId": "UsersController_uploadAvatar_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_removeAvatar_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "operationId": "UsersController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "patch": {
+        "operationId": "UsersController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/v1/dashboard/workspace-overview": {
+      "get": {
+        "operationId": "DashboardController_getWorkspaceOverview_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "HealthController_getHealth_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/onboarding/company-logo": {
+      "post": {
+        "operationId": "OnboardingController_uploadCompanyLogo_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/plans": {
+      "get": {
+        "operationId": "OnboardingController_getPlans_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/draft": {
+      "get": {
+        "operationId": "OnboardingController_getDraft_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/plan": {
+      "post": {
+        "operationId": "OnboardingController_selectPlan_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectOnboardingPlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/billing": {
+      "post": {
+        "operationId": "OnboardingController_saveBilling_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveOnboardingBillingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/company-details": {
+      "post": {
+        "operationId": "OnboardingController_saveCompanyDetails_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveOnboardingCompanyDetailsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/complete": {
+      "post": {
+        "operationId": "OnboardingController_complete_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/billing/plans": {
+      "get": {
+        "operationId": "BillingController_listPlans_v1",
+        "parameters": [
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPlansResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/v1/billing/payment-methods": {
+      "get": {
+        "operationId": "BillingController_listPaymentMethods_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPaymentMethodsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/v1/billing/subscription-setup": {
+      "get": {
+        "operationId": "BillingController_getSubscriptionSetup_v1",
+        "parameters": [
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingSubscriptionSetupResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/v1/billing/subscriptions/current": {
+      "get": {
+        "operationId": "BillingController_getCurrentSubscription_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentSubscriptionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/v1/billing/subscriptions": {
+      "post": {
+        "operationId": "BillingController_subscribeCompany_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscribeCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscribeCompanyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/v1/billing/subscriptions/{subscriptionId}/attach-payment-method": {
+      "post": {
+        "operationId": "BillingController_attachPaymentMethod_v1",
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachCompanySubscriptionPaymentMethodDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachPaymentMethodResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/v1/billing/subscriptions/{subscriptionId}/cancel": {
+      "post": {
+        "operationId": "BillingController_cancelSubscription_v1",
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelCompanySubscriptionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelSubscriptionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/webhooks/paymongo": {
+      "post": {
+        "operationId": "PaymongoWebhookController_ingestWebhook",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PaymongoWebhook"
+        ]
+      }
+    },
+    "/api/v1/master/plan-and-packages": {
+      "get": {
+        "operationId": "MasterPlanAndPackagesController_listPlans_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "MasterPlanAndPackages"
+        ]
+      },
+      "post": {
+        "operationId": "MasterPlanAndPackagesController_createPlan_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMasterPlanAndPackageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "MasterPlanAndPackages"
+        ]
+      }
+    },
+    "/api/v1/workspace/companies": {
+      "get": {
+        "operationId": "WorkspaceCompaniesController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceCompanyResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      },
+      "post": {
+        "operationId": "WorkspaceCompaniesController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCompanyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      }
+    },
+    "/api/v1/workspace/companies/management-summary": {
+      "get": {
+        "operationId": "WorkspaceCompaniesController_getManagementSummary_v1",
+        "parameters": [
+          {
+            "name": "includeUsers",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCompanyManagementSummaryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      }
+    },
+    "/api/v1/workspace/companies/{companyId}": {
+      "get": {
+        "operationId": "WorkspaceCompaniesController_findOne_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCompanyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      },
+      "patch": {
+        "operationId": "WorkspaceCompaniesController_update_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspaceCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCompanyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      },
+      "delete": {
+        "operationId": "WorkspaceCompaniesController_deactivate_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCompanyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      }
+    },
+    "/api/v1/workspace/companies/{companyId}/logo": {
+      "post": {
+        "operationId": "WorkspaceCompaniesController_uploadLogo_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCompanyLogoUploadResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      }
+    },
+    "/api/v1/workspace/companies/{companyId}/units": {
+      "get": {
+        "operationId": "WorkspaceCompaniesController_findUnits_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceCompanyUnitResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      },
+      "post": {
+        "operationId": "WorkspaceCompaniesController_createUnit_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompanyUnitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCompanyUnitResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      }
+    },
+    "/api/v1/workspace/companies/units/{unitId}": {
+      "patch": {
+        "operationId": "WorkspaceCompaniesController_updateUnit_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyUnitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCompanyUnitResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      },
+      "delete": {
+        "operationId": "WorkspaceCompaniesController_deactivateUnit_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCompanyUnitResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Companies"
+        ]
+      }
+    },
+    "/api/v1/workspace/users": {
+      "get": {
+        "operationId": "WorkspaceUsersController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceUserResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Users"
+        ]
+      },
+      "post": {
+        "operationId": "WorkspaceUsersController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceUserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Users"
+        ]
+      }
+    },
+    "/api/v1/workspace/users/{userId}/resend-invitation": {
+      "post": {
+        "operationId": "WorkspaceUsersController_resendInvitation_v1",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceUserMessageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Users"
+        ]
+      }
+    },
+    "/api/v1/workspace/users/{userId}/invitation": {
+      "delete": {
+        "operationId": "WorkspaceUsersController_cancelInvitation_v1",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceUserCancelInvitationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Users"
+        ]
+      }
+    },
+    "/api/v1/workspace/users/{userId}": {
+      "patch": {
+        "operationId": "WorkspaceUsersController_update_v1",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspaceUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceUserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Users"
+        ]
+      }
+    },
+    "/api/v1/company/units/{unitId}/roles": {
+      "get": {
+        "operationId": "BranchRolesController_findAll_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "BranchRoles"
+        ]
+      },
+      "post": {
+        "operationId": "BranchRolesController_create_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBranchRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "BranchRoles"
+        ]
+      }
+    },
+    "/api/v1/company/units/{unitId}/roles/{roleId}": {
+      "get": {
+        "operationId": "BranchRolesController_findOne_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "BranchRoles"
+        ]
+      },
+      "patch": {
+        "operationId": "BranchRolesController_update_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBranchRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "BranchRoles"
+        ]
+      }
+    },
+    "/api/v1/company/units/{unitId}/roles/{roleId}/status": {
+      "patch": {
+        "operationId": "BranchRolesController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBranchRoleStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "BranchRoles"
+        ]
+      }
+    },
+    "/api/v1/company/units/{unitId}/users": {
+      "get": {
+        "operationId": "BranchUsersController_findAll_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "BranchUsers"
+        ]
+      }
+    },
+    "/api/v1/company/units/{unitId}/users/roles": {
+      "get": {
+        "operationId": "BranchUsersController_findAssignableRoles_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "BranchUsers"
+        ]
+      }
+    },
+    "/api/v1/company/units/{unitId}/users/{userId}/role": {
+      "patch": {
+        "operationId": "BranchUsersController_updateRole_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBranchUserRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BranchUsers"
+        ]
+      }
+    },
+    "/api/v1/maintenance/form-signatories": {
+      "get": {
+        "operationId": "FormSignatoriesController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSignatorySetupsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Form Signatories"
+        ]
+      },
+      "post": {
+        "operationId": "FormSignatoriesController_save_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFormSignatoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveFormSignatoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Form Signatories"
+        ]
+      }
+    },
+    "/api/v1/maintenance/form-signatories/options": {
+      "get": {
+        "operationId": "FormSignatoriesController_findOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSignatoryOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Form Signatories"
+        ]
+      }
+    },
+    "/api/v1/maintenance/form-signatories/bootstrap": {
+      "get": {
+        "operationId": "FormSignatoriesController_findBootstrap_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSignatoryBootstrapResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Form Signatories"
+        ]
+      }
+    },
+    "/api/v1/maintenance/form-signatories/resolve": {
+      "get": {
+        "operationId": "FormSignatoriesController_resolve_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "moduleCodes",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSignatorySetupContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Form Signatories"
+        ]
+      }
+    },
+    "/api/v1/maintenance/form-signatories/{setupId}": {
+      "get": {
+        "operationId": "FormSignatoriesController_findOne_v1",
+        "parameters": [
+          {
+            "name": "setupId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSignatorySetupContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Form Signatories"
+        ]
+      },
+      "patch": {
+        "operationId": "FormSignatoriesController_update_v1",
+        "parameters": [
+          {
+            "name": "setupId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFormSignatoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveFormSignatoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Form Signatories"
+        ]
+      }
+    },
+    "/api/v1/ai-assistant/chat": {
+      "post": {
+        "operationId": "AiAssistantController_chat_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiAssistantChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AiAssistant"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "GR8BooksLite API",
+    "description": "Versioned REST API for GR8BooksLite frontend clients.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "pattern": "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$"
+          },
+          "confirmPassword": {
+            "type": "string",
+            "pattern": "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$"
+          }
+        },
+        "required": [
+          "fullName",
+          "email",
+          "password",
+          "confirmPassword"
+        ]
+      },
+      "VerifyEmailDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4
+          }
+        },
+        "required": [
+          "email",
+          "code"
+        ]
+      },
+      "ResendVerificationDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ChangeVerificationEmailDto": {
+        "type": "object",
+        "properties": {
+          "currentEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "newEmail": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "currentEmail",
+          "newEmail"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "VerifyForgotPasswordCodeDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4
+          }
+        },
+        "required": [
+          "email",
+          "code"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "resetToken": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8
+          },
+          "confirmNewPassword": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "resetToken",
+          "newPassword",
+          "confirmNewPassword"
+        ]
+      },
+      "ActivateWorkspaceUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "token": {
+            "type": "string",
+            "minLength": 32
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8
+          },
+          "confirmNewPassword": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "token",
+          "newPassword",
+          "confirmNewPassword"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "rememberMe": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "SwitchCompanyContextDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "companyId"
+        ]
+      },
+      "VerifyPasswordChangeCodeDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4,
+            "pattern": "^\\d+$"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "ChangeAuthenticatedPasswordDto": {
+        "type": "object",
+        "properties": {
+          "resetToken": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8
+          },
+          "confirmNewPassword": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "resetToken",
+          "newPassword",
+          "confirmNewPassword"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "systemRole": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "STANDARD"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "UpdateOwnProfileDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "contactNumber": {
+            "type": "string",
+            "maxLength": 40
+          }
+        }
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "systemRole": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "STANDARD"
+            ]
+          }
+        }
+      },
+      "SelectOnboardingPlanDto": {
+        "type": "object",
+        "properties": {
+          "planCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "billingCycle": {
+            "type": "string",
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ]
+          }
+        },
+        "required": [
+          "planCode",
+          "billingCycle"
+        ]
+      },
+      "SaveOnboardingBillingDto": {
+        "type": "object",
+        "properties": {
+          "cardholderName": {
+            "type": "string",
+            "minLength": 2,
+            "pattern": "^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+          },
+          "billingEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "cardLast4": {
+            "type": "string",
+            "pattern": "^\\d{4}$"
+          },
+          "cardBrand": {
+            "type": "string",
+            "minLength": 2
+          },
+          "expiryMonth": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "expiryYear": {
+            "type": "number",
+            "minimum": 2000,
+            "maximum": 9999
+          },
+          "billingAddress": {
+            "type": "string",
+            "minLength": 5
+          },
+          "paymentMethodId": {
+            "type": "string",
+            "pattern": "^pm_[A-Za-z0-9]+$"
+          }
+        },
+        "required": [
+          "cardholderName",
+          "billingEmail",
+          "cardLast4",
+          "cardBrand",
+          "expiryMonth",
+          "expiryYear",
+          "billingAddress",
+          "paymentMethodId"
+        ]
+      },
+      "SaveOnboardingCompanyDetailsDto": {
+        "type": "object",
+        "properties": {
+          "taxpayerType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "non-individual"
+            ]
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "firstName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "middleName": {
+            "type": "string",
+            "pattern": "^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+          },
+          "companyName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "nonIndividualType": {
+            "type": "string",
+            "minLength": 2
+          },
+          "nonIndividualTypeOther": {
+            "type": "string",
+            "minLength": 2
+          },
+          "logoName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "logoMimeType": {
+            "type": "string",
+            "pattern": "^image\\/"
+          },
+          "logoStoragePath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "logoPublicUrl": {
+            "type": "string",
+            "minLength": 1
+          },
+          "address": {
+            "type": "string",
+            "minLength": 5
+          },
+          "tin": {
+            "type": "string"
+          },
+          "companyEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "reportStartDate": {
+            "type": "string"
+          },
+          "reportEndDate": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string",
+            "pattern": "^$|^(https?:\\/\\/)?([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}(\\/.*)?$"
+          }
+        },
+        "required": [
+          "taxpayerType",
+          "logoName",
+          "address",
+          "tin",
+          "companyEmail",
+          "contactNumber",
+          "reportStartDate",
+          "reportEndDate"
+        ]
+      },
+      "BillingPlanPriceResponseDto": {
+        "type": "object",
+        "properties": {
+          "amountInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "compareAtInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "isRemoteReady": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "amountInCents",
+          "compareAtInCents",
+          "isRemoteReady"
+        ]
+      },
+      "BillingPlanPricingResponseDto": {
+        "type": "object",
+        "properties": {
+          "monthly": {
+            "$ref": "#/components/schemas/BillingPlanPriceResponseDto"
+          },
+          "yearly": {
+            "$ref": "#/components/schemas/BillingPlanPriceResponseDto"
+          }
+        },
+        "required": [
+          "monthly",
+          "yearly"
+        ]
+      },
+      "BillingPlanDetailedPriceResponseDto": {
+        "type": "object",
+        "properties": {
+          "amountInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "compareAtInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "isRemoteReady": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "number"
+          },
+          "billingCycle": {
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "intervalCount": {
+            "type": "number"
+          },
+          "intervalUnit": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "amountInCents",
+          "compareAtInCents",
+          "isRemoteReady",
+          "id",
+          "billingCycle",
+          "intervalCount",
+          "intervalUnit",
+          "isActive"
+        ]
+      },
+      "BillingPlanUsageRuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "freeCount": {
+            "type": "number"
+          },
+          "unitPriceInCents": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "metric",
+          "freeCount",
+          "unitPriceInCents"
+        ]
+      },
+      "BillingPlanDiscountTierResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "thresholdCount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "metric",
+          "thresholdCount",
+          "discountPercent"
+        ]
+      },
+      "BillingPlanModuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "moduleKey": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "moduleKey",
+          "isEnabled"
+        ]
+      },
+      "BillingPlanResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "trialDays": {
+            "type": "number"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/BillingPlanPricingResponseDto"
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanDetailedPriceResponseDto"
+            }
+          },
+          "usageRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanUsageRuleResponseDto"
+            }
+          },
+          "discountTiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanDiscountTierResponseDto"
+            }
+          },
+          "moduleKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanModuleResponseDto"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "description",
+          "currency",
+          "scope",
+          "trialDays",
+          "pricing",
+          "prices",
+          "usageRules",
+          "discountTiers",
+          "moduleKeys",
+          "modules"
+        ]
+      },
+      "BillingPlansResponseDto": {
+        "type": "object",
+        "properties": {
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanResponseDto"
+            }
+          }
+        },
+        "required": [
+          "plans"
+        ]
+      },
+      "BillingPaymentMethodCompanyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "BillingPaymentMethodSubscriptionPlanResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      },
+      "BillingPaymentMethodSubscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/BillingPaymentMethodSubscriptionPlanResponseDto"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "plan"
+        ]
+      },
+      "BillingSavedPaymentMethodResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "last4": {
+            "type": "string",
+            "nullable": true
+          },
+          "expMonth": {
+            "type": "number",
+            "nullable": true
+          },
+          "expYear": {
+            "type": "number",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "externalPaymentMethodId": {
+            "type": "string"
+          },
+          "company": {
+            "$ref": "#/components/schemas/BillingPaymentMethodCompanyResponseDto"
+          },
+          "subscription": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BillingPaymentMethodSubscriptionResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "brand",
+          "last4",
+          "expMonth",
+          "expYear",
+          "isDefault",
+          "externalPaymentMethodId",
+          "company",
+          "subscription"
+        ]
+      },
+      "BillingPaymentMethodsResponseDto": {
+        "type": "object",
+        "properties": {
+          "paymentMethods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingSavedPaymentMethodResponseDto"
+            }
+          }
+        },
+        "required": [
+          "paymentMethods"
+        ]
+      },
+      "CompanySubscriptionProviderReferencesResponseDto": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "subscriptionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "planId": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentMethodId": {
+            "type": "string",
+            "nullable": true
+          },
+          "latestInvoiceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "latestPaymentIntentId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "customerId",
+          "subscriptionId",
+          "planId",
+          "paymentMethodId",
+          "latestInvoiceId",
+          "latestPaymentIntentId"
+        ]
+      },
+      "CompanySubscriptionSelectedPriceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "billingCycle": {
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "intervalCount": {
+            "type": "number"
+          },
+          "intervalUnit": {
+            "type": "string"
+          },
+          "priceInCents": {
+            "type": "number"
+          },
+          "compareAtInCents": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "billingCycle",
+          "intervalCount",
+          "intervalUnit",
+          "priceInCents",
+          "compareAtInCents"
+        ]
+      },
+      "CompanySubscriptionPlanResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "trialDays": {
+            "type": "number"
+          },
+          "monthlyPriceInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "yearlyPriceInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "selectedPrice": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanySubscriptionSelectedPriceResponseDto"
+              }
+            ]
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanySubscriptionSelectedPriceResponseDto"
+            }
+          },
+          "usageRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanUsageRuleResponseDto"
+            }
+          },
+          "discountTiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanDiscountTierResponseDto"
+            }
+          },
+          "moduleKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanModuleResponseDto"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "description",
+          "currency",
+          "trialDays",
+          "monthlyPriceInCents",
+          "yearlyPriceInCents",
+          "selectedPrice",
+          "prices",
+          "usageRules",
+          "discountTiers",
+          "moduleKeys",
+          "modules"
+        ]
+      },
+      "BillingCustomerResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "externalCustomerId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "phone",
+          "externalCustomerId"
+        ]
+      },
+      "BillingPaymentMethodResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "last4": {
+            "type": "string",
+            "nullable": true
+          },
+          "expMonth": {
+            "type": "number",
+            "nullable": true
+          },
+          "expYear": {
+            "type": "number",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "externalPaymentMethodId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "brand",
+          "last4",
+          "expMonth",
+          "expYear",
+          "isDefault",
+          "externalPaymentMethodId"
+        ]
+      },
+      "BillingInvoiceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "externalInvoiceId": {
+            "type": "string"
+          },
+          "externalPaymentIntentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "billingReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "amountDueInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "amountPaidInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "dueAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "paidAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "finalizedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "periodStartAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "periodEndAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "externalInvoiceId",
+          "externalPaymentIntentId",
+          "status",
+          "billingReason",
+          "currency",
+          "amountDueInCents",
+          "amountPaidInCents",
+          "dueAt",
+          "paidAt",
+          "finalizedAt",
+          "periodStartAt",
+          "periodEndAt"
+        ]
+      },
+      "CompanySubscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "INCOMPLETE",
+              "TRIALING",
+              "ACTIVE",
+              "PAST_DUE",
+              "UNPAID",
+              "INCOMPLETE_CANCELED",
+              "EXPIRED",
+              "CANCELED"
+            ],
+            "type": "string"
+          },
+          "billingCycle": {
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "billingProvider": {
+            "type": "string",
+            "enum": [
+              "PAYMONGO"
+            ]
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "trialEndsAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "currentPeriodStartAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "nextBillingAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "canceledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "cancelAtPeriodEnd": {
+            "type": "boolean"
+          },
+          "failureCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "failureMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerReferences": {
+            "$ref": "#/components/schemas/CompanySubscriptionProviderReferencesResponseDto"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/CompanySubscriptionPlanResponseDto"
+          },
+          "billingCustomer": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BillingCustomerResponseDto"
+              }
+            ]
+          },
+          "paymentMethods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPaymentMethodResponseDto"
+            }
+          },
+          "invoices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingInvoiceResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "billingCycle",
+          "billingProvider",
+          "startsAt",
+          "trialEndsAt",
+          "currentPeriodStartAt",
+          "nextBillingAt",
+          "endsAt",
+          "canceledAt",
+          "cancelAtPeriodEnd",
+          "failureCode",
+          "failureMessage",
+          "providerReferences",
+          "plan",
+          "billingCustomer",
+          "paymentMethods",
+          "invoices"
+        ]
+      },
+      "BillingSubscriptionSetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingPlanResponseDto"
+            }
+          },
+          "subscription": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanySubscriptionResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "plans",
+          "subscription"
+        ]
+      },
+      "CurrentSubscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "subscription": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanySubscriptionResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "subscription"
+        ]
+      },
+      "SubscribeCompanyDto": {
+        "type": "object",
+        "properties": {
+          "planCode": {
+            "type": "string"
+          },
+          "billingCycle": {
+            "type": "string",
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ]
+          }
+        },
+        "required": [
+          "planCode",
+          "billingCycle"
+        ]
+      },
+      "SubscribeCompanyResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/CompanySubscriptionResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "subscription"
+        ]
+      },
+      "AttachCompanySubscriptionPaymentMethodDto": {
+        "type": "object",
+        "properties": {
+          "paymentMethodId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "paymentMethodId"
+        ]
+      },
+      "PaymentIntentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "redirectUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "redirectUrl"
+        ]
+      },
+      "AttachPaymentMethodResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/CompanySubscriptionResponseDto"
+          },
+          "paymentIntent": {
+            "$ref": "#/components/schemas/PaymentIntentResponseDto"
+          },
+          "pendingProviderActivation": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "message",
+          "subscription",
+          "paymentIntent"
+        ]
+      },
+      "CancelCompanySubscriptionDto": {
+        "type": "object",
+        "properties": {
+          "cancelAtPeriodEnd": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CancelSubscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/CompanySubscriptionResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "subscription"
+        ]
+      },
+      "MasterPlanPriceDto": {
+        "type": "object",
+        "properties": {
+          "billingCycle": {
+            "type": "string",
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ]
+          },
+          "intervalCount": {
+            "type": "number",
+            "minimum": 1
+          },
+          "intervalUnit": {
+            "type": "string",
+            "enum": [
+              "DAY",
+              "MONTH",
+              "YEAR"
+            ]
+          },
+          "priceInCents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "compareAtInCents": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "billingCycle",
+          "intervalCount",
+          "intervalUnit",
+          "priceInCents"
+        ]
+      },
+      "MasterPlanUsageRuleDto": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "BRANCH",
+              "COMPANY",
+              "SATELLITE"
+            ]
+          },
+          "freeCount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "unitPriceInCents": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "metric",
+          "freeCount",
+          "unitPriceInCents"
+        ]
+      },
+      "MasterPlanDiscountTierDto": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "BRANCH",
+              "COMPANY",
+              "SATELLITE"
+            ]
+          },
+          "thresholdCount": {
+            "type": "number",
+            "minimum": 1
+          },
+          "discountPercent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "metric",
+          "thresholdCount",
+          "discountPercent"
+        ]
+      },
+      "CreateMasterPlanAndPackageDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 64
+          },
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "ONBOARDING",
+              "ADDITIONAL_COMPANY"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DRAFT",
+              "INACTIVE"
+            ]
+          },
+          "trialDays": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 365
+          },
+          "prices": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MasterPlanPriceDto"
+            }
+          },
+          "usageRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MasterPlanUsageRuleDto"
+            }
+          },
+          "discountTiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MasterPlanDiscountTierDto"
+            }
+          },
+          "moduleKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "scope",
+          "status",
+          "trialDays",
+          "prices",
+          "usageRules",
+          "discountTiers",
+          "moduleKeys"
+        ]
+      },
+      "WorkspaceCompanyCreatedByResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
+        ]
+      },
+      "WorkspaceCompanySubscriptionPlanResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "billingCycle": {
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "monthlyPriceInCents": {
+            "type": "number"
+          },
+          "yearlyPriceInCents": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "currency",
+          "billingCycle",
+          "monthlyPriceInCents",
+          "yearlyPriceInCents"
+        ]
+      },
+      "WorkspaceCompanyUnitResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "parentUnitId": {
+            "type": "number",
+            "nullable": true
+          },
+          "type": {
+            "enum": [
+              "HEAD_OFFICE",
+              "BRANCH",
+              "SATELLITE"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "tin": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "inheritsCompanyProfile": {
+            "type": "boolean"
+          },
+          "canTransactSales": {
+            "type": "boolean"
+          },
+          "canHoldInventory": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "parentUnitId",
+          "type",
+          "code",
+          "name",
+          "displayName",
+          "tin",
+          "address",
+          "contactNumber",
+          "email",
+          "isActive",
+          "inheritsCompanyProfile",
+          "canTransactSales",
+          "canHoldInventory",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "WorkspaceCompanyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "legalName": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxpayerType": {
+            "nullable": true,
+            "enum": [
+              "INDIVIDUAL",
+              "NON_INDIVIDUAL"
+            ],
+            "type": "string"
+          },
+          "ownerLastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "ownerFirstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "ownerMiddleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "organizationType": {
+            "type": "string",
+            "nullable": true
+          },
+          "organizationTypeOther": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoFileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoMimeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoStoragePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoPublicUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "tin": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "website": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportStartDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "reportEndDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "number",
+            "nullable": true
+          },
+          "createdByUser": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkspaceCompanyCreatedByResponseDto"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "PROVISIONING",
+              "ACTIVE",
+              "FAILED",
+              "SUSPENDED"
+            ],
+            "type": "string"
+          },
+          "subscriptionPlan": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkspaceCompanySubscriptionPlanResponseDto"
+              }
+            ]
+          },
+          "totalUsers": {
+            "type": "number"
+          },
+          "totalUnits": {
+            "type": "number"
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceCompanyUnitResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "legalName",
+          "companyCode",
+          "taxpayerType",
+          "ownerLastName",
+          "ownerFirstName",
+          "ownerMiddleName",
+          "organizationType",
+          "organizationTypeOther",
+          "logoFileName",
+          "logoMimeType",
+          "logoStoragePath",
+          "logoPublicUrl",
+          "address",
+          "tin",
+          "email",
+          "website",
+          "contactNumber",
+          "reportStartDate",
+          "reportEndDate",
+          "createdByUserId",
+          "createdByUser",
+          "isActive",
+          "status",
+          "subscriptionPlan",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "WorkspaceUserCompanyAssignmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "unitIds": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "companyId",
+          "unitIds"
+        ]
+      },
+      "WorkspaceUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "contactNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "lastLogin": {
+            "type": "string",
+            "nullable": true
+          },
+          "profileImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceUserCompanyAssignmentResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "contactNumber",
+          "status",
+          "lastLogin",
+          "profileImageUrl",
+          "companyAssignments",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "WorkspaceCompanyManagementSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "companies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceCompanyResponseDto"
+            }
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceUserResponseDto"
+            }
+          }
+        },
+        "required": [
+          "companies",
+          "users"
+        ]
+      },
+      "CreateWorkspaceCompanyBillingDto": {
+        "type": "object",
+        "properties": {
+          "planCode": {
+            "type": "string"
+          },
+          "billingCycle": {
+            "type": "string",
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ]
+          },
+          "billingEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "paymentMethodId": {
+            "type": "string"
+          },
+          "cardBrand": {
+            "type": "string"
+          },
+          "cardLast4": {
+            "type": "string",
+            "pattern": "^\\d{4}$"
+          },
+          "cardExpiryMonth": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "cardExpiryYear": {
+            "type": "number",
+            "minimum": 2000,
+            "maximum": 9999
+          }
+        }
+      },
+      "CreateWorkspaceCompanyDto": {
+        "type": "object",
+        "properties": {
+          "taxpayerType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "non-individual"
+            ]
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "firstName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "middleName": {
+            "type": "string",
+            "pattern": "^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+          },
+          "companyName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "nonIndividualType": {
+            "type": "string",
+            "minLength": 2
+          },
+          "nonIndividualTypeOther": {
+            "type": "string",
+            "minLength": 2
+          },
+          "logoFileName": {
+            "type": "string"
+          },
+          "logoMimeType": {
+            "type": "string"
+          },
+          "logoStoragePath": {
+            "type": "string"
+          },
+          "logoPublicUrl": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 5
+          },
+          "tin": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "reportStartDate": {
+            "type": "string"
+          },
+          "reportEndDate": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          },
+          "billing": {
+            "$ref": "#/components/schemas/CreateWorkspaceCompanyBillingDto"
+          }
+        },
+        "required": [
+          "taxpayerType",
+          "address",
+          "tin",
+          "email",
+          "contactNumber",
+          "reportStartDate",
+          "reportEndDate"
+        ]
+      },
+      "UpdateWorkspaceCompanyDto": {
+        "type": "object",
+        "properties": {
+          "taxpayerType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "non-individual"
+            ]
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "firstName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "middleName": {
+            "type": "string",
+            "pattern": "^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+          },
+          "companyName": {
+            "type": "string",
+            "minLength": 2
+          },
+          "nonIndividualType": {
+            "type": "string",
+            "minLength": 2
+          },
+          "nonIndividualTypeOther": {
+            "type": "string",
+            "minLength": 2
+          },
+          "logoFileName": {
+            "type": "string"
+          },
+          "logoMimeType": {
+            "type": "string"
+          },
+          "logoStoragePath": {
+            "type": "string"
+          },
+          "logoPublicUrl": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 5
+          },
+          "tin": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "reportStartDate": {
+            "type": "string"
+          },
+          "reportEndDate": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkspaceCompanyLogoUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "company": {
+            "$ref": "#/components/schemas/WorkspaceCompanyResponseDto"
+          },
+          "logo": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "message",
+          "company",
+          "logo"
+        ]
+      },
+      "CreateCompanyUnitDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "BRANCH",
+              "SATELLITE"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2
+          },
+          "code": {
+            "type": "string"
+          },
+          "tin": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 5
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "parentUnitId": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ]
+      },
+      "UpdateCompanyUnitDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2
+          },
+          "code": {
+            "type": "string"
+          },
+          "tin": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 5
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "parentUnitId": {
+            "type": "number"
+          }
+        }
+      },
+      "WorkspaceUserAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "unitIds": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 1
+            }
+          }
+        },
+        "required": [
+          "companyId",
+          "unitIds"
+        ]
+      },
+      "CreateWorkspaceUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "companyAssignments": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceUserAssignmentDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "companyAssignments"
+        ]
+      },
+      "WorkspaceUserMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "WorkspaceUserCancelInvitationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "message"
+        ]
+      },
+      "UpdateWorkspaceUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "companyAssignments": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceUserAssignmentDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "companyAssignments"
+        ]
+      },
+      "BranchRolePermissionDto": {
+        "type": "object",
+        "properties": {
+          "moduleCode": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "moduleName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 160
+          },
+          "permissionCode": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 160
+          },
+          "permissionName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 160
+          },
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
+          },
+          "canApprove": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "moduleCode",
+          "moduleName",
+          "permissionCode",
+          "permissionName"
+        ]
+      },
+      "CreateBranchRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "permissions": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchRolePermissionDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "permissions"
+        ]
+      },
+      "UpdateBranchRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "permissions": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchRolePermissionDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "permissions"
+        ]
+      },
+      "UpdateBranchRoleStatusDto": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isActive"
+        ]
+      },
+      "UpdateBranchUserRoleDto": {
+        "type": "object",
+        "properties": {
+          "companyRoleId": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1
+          }
+        }
+      },
+      "FormSignatoryUnitResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "displayName",
+          "type"
+        ]
+      },
+      "FormSignatoryModuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "FormSignatoryRowResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string",
+            "nullable": true
+          },
+          "signatureName": {
+            "type": "string",
+            "nullable": true
+          },
+          "signatureImage": {
+            "type": "string",
+            "nullable": true
+          },
+          "signatureValidUntil": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "name",
+          "position",
+          "signatureName",
+          "signatureImage",
+          "signatureValidUntil"
+        ]
+      },
+      "FormSignatorySetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/FormSignatoryUnitResponseDto"
+          },
+          "module": {
+            "$ref": "#/components/schemas/FormSignatoryModuleResponseDto"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormSignatoryRowResponseDto"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "unit",
+          "module",
+          "rows",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "FormSignatorySetupsResponseDto": {
+        "type": "object",
+        "properties": {
+          "setups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormSignatorySetupResponseDto"
+            }
+          }
+        },
+        "required": [
+          "setups"
+        ]
+      },
+      "FormSignatoryBranchOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "displayName",
+          "type"
+        ]
+      },
+      "FormSignatoryModuleOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "FormSignatoryOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormSignatoryBranchOptionResponseDto"
+            }
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormSignatoryModuleOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "branches",
+          "modules"
+        ]
+      },
+      "FormSignatoryBootstrapResponseDto": {
+        "type": "object",
+        "properties": {
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormSignatoryBranchOptionResponseDto"
+            }
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormSignatoryModuleOptionResponseDto"
+            }
+          },
+          "setups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormSignatorySetupResponseDto"
+            }
+          }
+        },
+        "required": [
+          "branches",
+          "modules",
+          "setups"
+        ]
+      },
+      "FormSignatorySetupContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "setup": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FormSignatorySetupResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "setup"
+        ]
+      },
+      "FormSignatoryRowDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "position": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "signatureName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "signatureImage": {
+            "type": "string"
+          },
+          "signatureValidUntil": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "name"
+        ]
+      },
+      "SaveFormSignatoryDto": {
+        "type": "object",
+        "properties": {
+          "unitId": {
+            "type": "number"
+          },
+          "moduleCode": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "moduleName": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "rows": {
+            "minItems": 1,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormSignatoryRowDto"
+            }
+          }
+        },
+        "required": [
+          "unitId",
+          "moduleCode",
+          "moduleName",
+          "rows"
+        ]
+      },
+      "SaveFormSignatoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "setup": {
+            "$ref": "#/components/schemas/FormSignatorySetupResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "setup"
+        ]
+      },
+      "AiAssistantChatMessageDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ]
+      },
+      "AiAssistantChatDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "currentPath": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiAssistantChatMessageDto"
+            }
+          }
+        },
+        "required": [
+          "message"
+        ]
+      }
+    }
+  }
+}

@@ -1,8 +1,13 @@
+import { getSubscriptionPlanPriceSummary } from '../../../common/utils/SubscriptionPlanPricing.util';
 import { CompanySubscriptionDetails } from '../utils/BillingPrisma.util';
 
 export function mapCompanySubscription(
   subscription: CompanySubscriptionDetails,
 ) {
+  const priceSummary = getSubscriptionPlanPriceSummary(
+    subscription.plan.prices,
+  );
+
   return {
     id: subscription.id,
     status: subscription.status,
@@ -31,8 +36,8 @@ export function mapCompanySubscription(
       description: subscription.plan.description,
       currency: subscription.plan.currency,
       trialDays: subscription.plan.trialDays,
-      monthlyPriceInCents: subscription.plan.monthlyPriceInCents,
-      yearlyPriceInCents: subscription.plan.yearlyPriceInCents,
+      monthlyPriceInCents: priceSummary.monthlyPriceInCents,
+      yearlyPriceInCents: priceSummary.yearlyPriceInCents,
       selectedPrice: subscription.planPrice
         ? {
             id: subscription.planPrice.id,

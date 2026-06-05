@@ -19,7 +19,15 @@ export const WorkspaceCompanyListInclude = {
       createdAt: 'desc',
     },
     include: {
-      plan: true,
+      plan: {
+        include: {
+          prices: {
+            where: {
+              isActive: true,
+            },
+          },
+        },
+      },
     },
   },
   createdByUser: {

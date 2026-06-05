@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -18,6 +19,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
+import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
 import { CreateWorkspaceCompanyDto } from './dto/create-workspace-company.dto';
 import { UpdateCompanyUnitDto } from './dto/update-company-unit.dto';
@@ -41,6 +43,7 @@ export class WorkspaceCompaniesService {
     private readonly prisma: PrismaService,
     private readonly authMailService: AuthMailService,
     private readonly billingService: BillingService,
+    private readonly workspaceUsersService: WorkspaceUsersService,
     private readonly logoStorageService: WorkspaceCompanyLogoStorageService,
   ) {}
 
@@ -66,6 +69,27 @@ export class WorkspaceCompaniesService {
     return companies.map(mapWorkspaceCompany);
   }
 
+  async getManagementSummary(user: AuthUser, includeUsers: boolean) {
+    const companiesPromise = this.findAll(user);
+
+    if (!includeUsers) {
+      return {
+        companies: await companiesPromise,
+        users: [],
+      };
+    }
+
+    const [companies, users] = await Promise.all([
+      companiesPromise,
+      this.workspaceUsersService.findAll(user),
+    ]);
+
+    return {
+      companies,
+      users,
+    };
+  }
+
   async findOne(user: AuthUser, companyId: number) {
     await this.ensureCompanyAccess(user, companyId);
 
@@ -85,6 +109,7 @@ export class WorkspaceCompaniesService {
     await this.ensureCanManageWorkspace(user);
 
     const name = getCompanyName(dto);
+    await this.ensureCompanyNameAvailable(name);
     const slug = await this.createUniqueSlug(name);
 
     const company = await this.prisma.$transaction(async (tx) => {
@@ -122,7 +147,6 @@ export class WorkspaceCompaniesService {
           type: CompanyUnitType.HEAD_OFFICE,
           code: 'HEAD-OFFICE',
           name: 'Head Office',
-          displayName: `${createdCompany.name} Head Office`,
           tin: createdCompany.tin,
           address: createdCompany.address,
           contactNumber: createdCompany.contactNumber,
@@ -197,12 +221,27 @@ export class WorkspaceCompaniesService {
   ) {
     await this.ensureCompanyAdminAccess(user, companyId);
     const validatedFile = validateCompanyLogoFile(file);
-    const upload = await this.logoStorageService.uploadLogo({
-      companyId,
-      fileBuffer: validatedFile.buffer,
-      fileName: validatedFile.originalname,
-      mimeType: validatedFile.mimetype,
-    });
+
+    let upload: Awaited<
+      ReturnType<WorkspaceCompanyLogoStorageService['uploadLogo']>
+    >;
+
+    try {
+      upload = await this.logoStorageService.uploadLogo({
+        companyId,
+        fileBuffer: validatedFile.buffer,
+        fileName: validatedFile.originalname,
+        mimeType: validatedFile.mimetype,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Logo upload failed for company ${companyId} (${validatedFile.originalname}, ${validatedFile.mimetype}): ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
 
     const company = await this.prisma.company.update({
       where: { id: companyId },
@@ -238,6 +277,7 @@ export class WorkspaceCompaniesService {
     }
 
     const nextName = getUpdatedCompanyName(current.name, dto);
+    await this.ensureCompanyNameAvailable(nextName, companyId);
 
     const company = await this.prisma.company.update({
       where: { id: companyId },
@@ -338,14 +378,18 @@ export class WorkspaceCompaniesService {
       );
     }
 
+    const code = await this.createAvailableUnitCode(
+      companyId,
+      dto.code?.trim() || createUnitCode(dto.name),
+    );
+
     const unit = await this.prisma.companyUnit.create({
       data: {
         companyId,
         parentUnitId: parentUnit?.id ?? null,
         type,
-        code: dto.code?.trim() || createUnitCode(dto.name),
+        code,
         name: dto.name.trim(),
-        displayName: dto.name.trim(),
         tin,
         address: dto.address?.trim() || null,
         contactNumber: dto.contactNumber?.trim() || null,
@@ -387,6 +431,12 @@ export class WorkspaceCompaniesService {
       throw new BadRequestException('TIN is required for a branch.');
     }
 
+    const nextCode = cleanOptional(dto.code);
+
+    if (nextCode) {
+      await this.ensureUnitCodeAvailable(current.companyId, nextCode, unitId);
+    }
+
     const unit = await this.prisma.companyUnit.update({
       where: { id: unitId },
       data: {
@@ -396,9 +446,8 @@ export class WorkspaceCompaniesService {
             : current.type === CompanyUnitType.BRANCH && !current.parentUnitId
               ? (parentUnit?.id ?? undefined)
               : undefined,
-        code: cleanOptional(dto.code),
+        code: nextCode,
         name: cleanRequiredOptional(dto.name),
-        displayName: cleanRequiredOptional(dto.name),
         tin,
         address: cleanOptional(dto.address),
         contactNumber: cleanOptional(dto.contactNumber),
@@ -568,6 +617,26 @@ export class WorkspaceCompaniesService {
     return slug;
   }
 
+  private async ensureCompanyNameAvailable(
+    name: string,
+    excludedCompanyId?: number,
+  ) {
+    const existingCompany = await this.prisma.company.findFirst({
+      where: {
+        name: {
+          equals: name.trim(),
+          mode: 'insensitive',
+        },
+        id: excludedCompanyId ? { not: excludedCompanyId } : undefined,
+      },
+      select: { id: true },
+    });
+
+    if (existingCompany) {
+      throw new ConflictException('Company name is already taken.');
+    }
+  }
+
   private async setupCompanyBilling(input: {
     companyId: number;
     dto: CreateWorkspaceCompanyDto;
@@ -651,6 +720,48 @@ export class WorkspaceCompaniesService {
         error instanceof Error ? error.message : 'Unknown billing error'
       }`,
     );
+  }
+
+  private async ensureUnitCodeAvailable(
+    companyId: number,
+    code: string,
+    excludedUnitId?: number,
+  ) {
+    const existingUnit = await this.prisma.companyUnit.findFirst({
+      where: {
+        companyId,
+        code,
+        id: excludedUnitId ? { not: excludedUnitId } : undefined,
+      },
+      select: { id: true },
+    });
+
+    if (existingUnit) {
+      throw new ConflictException(
+        'A branch or satellite with this code already exists for this company.',
+      );
+    }
+  }
+
+  private async createAvailableUnitCode(companyId: number, baseCode: string) {
+    let candidate = baseCode;
+    let suffix = 2;
+
+    while (
+      await this.prisma.companyUnit.findFirst({
+        where: {
+          companyId,
+          code: candidate,
+        },
+        select: { id: true },
+      })
+    ) {
+      const suffixText = `-${suffix}`;
+      candidate = `${baseCode.slice(0, 24 - suffixText.length)}${suffixText}`;
+      suffix += 1;
+    }
+
+    return candidate;
   }
 
   private async sendCompanyCreatedEmail(user: AuthUser, companyName: string) {

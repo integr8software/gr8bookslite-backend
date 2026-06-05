@@ -1,4 +1,5 @@
 import { Prisma, SubscriptionPlan } from '@prisma/client';
+import { getSubscriptionPlanPriceSummary } from '../../../common/utils/SubscriptionPlanPricing.util';
 import { formatPhpAmount } from '../utils/Pricing.util';
 
 type OnboardingSubscriptionPlanRecord = Prisma.SubscriptionPlanGetPayload<{
@@ -14,6 +15,7 @@ export function mapSubscriptionPlan(
   plan: SubscriptionPlan | OnboardingSubscriptionPlanRecord,
 ) {
   const prices = 'prices' in plan ? plan.prices : [];
+  const priceSummary = getSubscriptionPlanPriceSummary(prices);
   const usageRules = 'usageRules' in plan ? plan.usageRules : [];
   const discountTiers = 'discountTiers' in plan ? plan.discountTiers : [];
   const modules = 'modules' in plan ? plan.modules : [];
@@ -26,23 +28,23 @@ export function mapSubscriptionPlan(
     pricing: {
       currency: 'PHP',
       monthly: {
-        amountInCents: plan.monthlyPriceInCents,
-        display: formatPhpAmount(plan.monthlyPriceInCents),
+        amountInCents: priceSummary.monthlyPriceInCents,
+        display: formatPhpAmount(priceSummary.monthlyPriceInCents),
       },
       yearly: {
-        amountInCents: plan.yearlyPriceInCents,
-        display: formatPhpAmount(plan.yearlyPriceInCents),
+        amountInCents: priceSummary.yearlyPriceInCents,
+        display: formatPhpAmount(priceSummary.yearlyPriceInCents),
       },
-      monthlyCompareAt: plan.monthlyCompareAtInCents
+      monthlyCompareAt: priceSummary.monthlyCompareAtInCents
         ? {
-            amountInCents: plan.monthlyCompareAtInCents,
-            display: formatPhpAmount(plan.monthlyCompareAtInCents),
+            amountInCents: priceSummary.monthlyCompareAtInCents,
+            display: formatPhpAmount(priceSummary.monthlyCompareAtInCents),
           }
         : null,
-      yearlyCompareAt: plan.yearlyCompareAtInCents
+      yearlyCompareAt: priceSummary.yearlyCompareAtInCents
         ? {
-            amountInCents: plan.yearlyCompareAtInCents,
-            display: formatPhpAmount(plan.yearlyCompareAtInCents),
+            amountInCents: priceSummary.yearlyCompareAtInCents,
+            display: formatPhpAmount(priceSummary.yearlyCompareAtInCents),
           }
         : null,
     },

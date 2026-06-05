@@ -8,6 +8,24 @@ import { ConfigService } from '@nestjs/config';
 
 const DEFAULT_API_BASE_URL = 'https://api.paymongo.com/v1';
 
+export type PaymongoErrorContext = {
+  status: number;
+  errorCount: number;
+  code: string | null;
+  title: string | null;
+  detail: string | null;
+  source: string | null;
+};
+
+export class PaymongoRequestException extends BadGatewayException {
+  constructor(
+    message: string,
+    readonly context: PaymongoErrorContext,
+  ) {
+    super(message);
+  }
+}
+
 type PaymongoMetadata = Record<string, string | number | boolean | null>;
 
 type PaymongoRequestBody = {
@@ -98,6 +116,7 @@ export class PaymongoService {
   }
 
   async retrieveCustomerByEmail(email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
     const payload = await this.request(
       'GET',
       `/customers?email=${encodeURIComponent(email)}`,
@@ -110,15 +129,41 @@ export class PaymongoService {
     const data = payload.data;
 
     if (Array.isArray(data)) {
-      const firstCustomer = data.find(
-        (entry) => entry && typeof entry === 'object' && !Array.isArray(entry),
+      const customers = data as unknown[];
+      const matchingCustomer = customers.find((entry) =>
+        this.isCustomerEmailMatch(entry, normalizedEmail),
       );
+      const firstCustomer =
+        matchingCustomer ??
+        customers.find(
+          (entry) =>
+            entry && typeof entry === 'object' && !Array.isArray(entry),
+        );
 
       return (firstCustomer as Record<string, unknown> | undefined) ?? null;
     }
 
-    return data && typeof data === 'object' && !Array.isArray(data)
-      ? (data as Record<string, unknown>)
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return null;
+    }
+
+    if ('id' in data || this.isCustomerEmailMatch(data, normalizedEmail)) {
+      return data as Record<string, unknown>;
+    }
+
+    const nestedData = (data as Record<string, unknown>).data;
+
+    if (Array.isArray(nestedData)) {
+      const customers = nestedData as unknown[];
+      const matchingCustomer = customers.find((entry) =>
+        this.isCustomerEmailMatch(entry, normalizedEmail),
+      );
+
+      return (matchingCustomer as Record<string, unknown> | undefined) ?? null;
+    }
+
+    return this.isCustomerEmailMatch(nestedData, normalizedEmail)
+      ? (nestedData as Record<string, unknown>)
       : null;
   }
 
@@ -191,7 +236,7 @@ export class PaymongoService {
       this.logger.warn(
         `${method} ${path} failed: ${message} | ${JSON.stringify(errorContext)}`,
       );
-      throw new BadGatewayException(message);
+      throw new PaymongoRequestException(message, errorContext);
     }
 
     return payload;
@@ -202,6 +247,26 @@ export class PaymongoService {
       this.configService.get<string>('PAYMONGO_API_BASE_URL') ??
       DEFAULT_API_BASE_URL
     ).replace(/\/$/, '');
+  }
+
+  private isCustomerEmailMatch(value: unknown, normalizedEmail: string) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return false;
+    }
+
+    const record = value as Record<string, unknown>;
+    const attributes = record.attributes;
+    const candidateEmail =
+      typeof record.email === 'string'
+        ? record.email
+        : attributes &&
+            typeof attributes === 'object' &&
+            !Array.isArray(attributes) &&
+            typeof (attributes as Record<string, unknown>).email === 'string'
+          ? ((attributes as Record<string, unknown>).email as string)
+          : null;
+
+    return candidateEmail?.trim().toLowerCase() === normalizedEmail;
   }
 
   private getErrorMessage(payload: Record<string, unknown> | null) {
@@ -234,7 +299,7 @@ export class PaymongoService {
   private getErrorLogContext(
     status: number,
     payload: Record<string, unknown> | null,
-  ) {
+  ): PaymongoErrorContext {
     const errors = Array.isArray(payload?.errors) ? payload.errors : [];
     const firstError =
       errors.length > 0

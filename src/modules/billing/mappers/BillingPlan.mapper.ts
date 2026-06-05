@@ -1,4 +1,5 @@
 import { Prisma, SubscriptionPlan } from '@prisma/client';
+import { getSubscriptionPlanPriceSummary } from '../../../common/utils/SubscriptionPlanPricing.util';
 
 type BillingPlanRecord = Prisma.SubscriptionPlanGetPayload<{
   include: {
@@ -11,6 +12,7 @@ type BillingPlanRecord = Prisma.SubscriptionPlanGetPayload<{
 
 export function mapBillingPlan(plan: SubscriptionPlan | BillingPlanRecord) {
   const prices = 'prices' in plan ? plan.prices : [];
+  const priceSummary = getSubscriptionPlanPriceSummary(prices);
   const usageRules = 'usageRules' in plan ? plan.usageRules : [];
   const discountTiers = 'discountTiers' in plan ? plan.discountTiers : [];
   const modules = 'modules' in plan ? plan.modules : [];
@@ -24,14 +26,14 @@ export function mapBillingPlan(plan: SubscriptionPlan | BillingPlanRecord) {
     trialDays: plan.trialDays,
     pricing: {
       monthly: {
-        amountInCents: plan.monthlyPriceInCents,
-        compareAtInCents: plan.monthlyCompareAtInCents,
-        isRemoteReady: Boolean(plan.monthlyExternalPlanId),
+        amountInCents: priceSummary.monthlyPriceInCents,
+        compareAtInCents: priceSummary.monthlyCompareAtInCents,
+        isRemoteReady: priceSummary.isMonthlyRemoteReady,
       },
       yearly: {
-        amountInCents: plan.yearlyPriceInCents,
-        compareAtInCents: plan.yearlyCompareAtInCents,
-        isRemoteReady: Boolean(plan.yearlyExternalPlanId),
+        amountInCents: priceSummary.yearlyPriceInCents,
+        compareAtInCents: priceSummary.yearlyCompareAtInCents,
+        isRemoteReady: priceSummary.isYearlyRemoteReady,
       },
     },
     prices: prices.map((price) => ({

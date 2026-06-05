@@ -83,7 +83,6 @@ async function main() {
           type: CompanyUnitType.HEAD_OFFICE,
           code: 'HEAD-OFFICE',
           name: 'Head Office',
-          displayName: `${company.name} Head Office`,
           tin: company.tin,
           address: company.address,
           contactNumber: company.contactNumber,

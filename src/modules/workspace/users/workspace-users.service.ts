@@ -47,7 +47,11 @@ export class WorkspaceUsersService {
     const memberships = await this.prisma.membership.findMany({
       where: {
         companyId: { in: manageableCompanyIds },
+        role: MembershipRole.USER,
         status: { not: MembershipStatus.REMOVED },
+        user: {
+          systemRole: SystemRole.STANDARD,
+        },
       },
       include: WorkspaceUserMembershipInclude,
       orderBy: [{ user: { name: 'asc' } }, { companyId: 'asc' }],
