@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   CompanyUnitType,
@@ -347,6 +352,12 @@ export class OnboardingService {
     const legalName = isIndividual
       ? companyName
       : (dto.companyName?.trim() ?? companyName);
+
+    await this.ensureCompanyNameAvailable(
+      companyName,
+      existingDraft.provisionedCompanyId ?? undefined,
+    );
+
     const slug = existingDraft.provisionedCompanyId
       ? null
       : await this.generateUniqueCompanySlug(this.prisma, companyName);
@@ -806,5 +817,25 @@ export class OnboardingService {
     }
 
     return slug;
+  }
+
+  private async ensureCompanyNameAvailable(
+    name: string,
+    excludedCompanyId?: number,
+  ) {
+    const existingCompany = await this.prisma.company.findFirst({
+      where: {
+        name: {
+          equals: name.trim(),
+          mode: 'insensitive',
+        },
+        id: excludedCompanyId ? { not: excludedCompanyId } : undefined,
+      },
+      select: { id: true },
+    });
+
+    if (existingCompany) {
+      throw new ConflictException('Company name is already taken.');
+    }
   }
 }

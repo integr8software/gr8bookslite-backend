@@ -109,6 +109,7 @@ export class WorkspaceCompaniesService {
     await this.ensureCanManageWorkspace(user);
 
     const name = getCompanyName(dto);
+    await this.ensureCompanyNameAvailable(name);
     const slug = await this.createUniqueSlug(name);
 
     const company = await this.prisma.$transaction(async (tx) => {
@@ -220,12 +221,27 @@ export class WorkspaceCompaniesService {
   ) {
     await this.ensureCompanyAdminAccess(user, companyId);
     const validatedFile = validateCompanyLogoFile(file);
-    const upload = await this.logoStorageService.uploadLogo({
-      companyId,
-      fileBuffer: validatedFile.buffer,
-      fileName: validatedFile.originalname,
-      mimeType: validatedFile.mimetype,
-    });
+
+    let upload: Awaited<
+      ReturnType<WorkspaceCompanyLogoStorageService['uploadLogo']>
+    >;
+
+    try {
+      upload = await this.logoStorageService.uploadLogo({
+        companyId,
+        fileBuffer: validatedFile.buffer,
+        fileName: validatedFile.originalname,
+        mimeType: validatedFile.mimetype,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Logo upload failed for company ${companyId} (${validatedFile.originalname}, ${validatedFile.mimetype}): ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
 
     const company = await this.prisma.company.update({
       where: { id: companyId },
@@ -261,6 +277,7 @@ export class WorkspaceCompaniesService {
     }
 
     const nextName = getUpdatedCompanyName(current.name, dto);
+    await this.ensureCompanyNameAvailable(nextName, companyId);
 
     const company = await this.prisma.company.update({
       where: { id: companyId },
@@ -598,6 +615,26 @@ export class WorkspaceCompaniesService {
     }
 
     return slug;
+  }
+
+  private async ensureCompanyNameAvailable(
+    name: string,
+    excludedCompanyId?: number,
+  ) {
+    const existingCompany = await this.prisma.company.findFirst({
+      where: {
+        name: {
+          equals: name.trim(),
+          mode: 'insensitive',
+        },
+        id: excludedCompanyId ? { not: excludedCompanyId } : undefined,
+      },
+      select: { id: true },
+    });
+
+    if (existingCompany) {
+      throw new ConflictException('Company name is already taken.');
+    }
   }
 
   private async setupCompanyBilling(input: {

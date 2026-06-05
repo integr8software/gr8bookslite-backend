@@ -3,6 +3,7 @@ import type { INestApplication, NestMiddleware } from '@nestjs/common';
 import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { ConfigService } from '@nestjs/config';
 import type { NextFunction, Request, Response } from 'express';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 export function configureApp(app: INestApplication) {
   const configService = app.get(ConfigService);
@@ -20,6 +21,7 @@ export function configureApp(app: INestApplication) {
       transform: true,
     }),
   );
+  app.useGlobalFilters(new GlobalExceptionFilter());
 }
 
 function createCorsOptions(configService: ConfigService): CorsOptions {
