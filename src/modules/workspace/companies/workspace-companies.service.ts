@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -361,12 +362,17 @@ export class WorkspaceCompaniesService {
       );
     }
 
+    const code = await this.createAvailableUnitCode(
+      companyId,
+      dto.code?.trim() || createUnitCode(dto.name),
+    );
+
     const unit = await this.prisma.companyUnit.create({
       data: {
         companyId,
         parentUnitId: parentUnit?.id ?? null,
         type,
-        code: dto.code?.trim() || createUnitCode(dto.name),
+        code,
         name: dto.name.trim(),
         displayName: dto.name.trim(),
         tin,
@@ -410,6 +416,12 @@ export class WorkspaceCompaniesService {
       throw new BadRequestException('TIN is required for a branch.');
     }
 
+    const nextCode = cleanOptional(dto.code);
+
+    if (nextCode) {
+      await this.ensureUnitCodeAvailable(current.companyId, nextCode, unitId);
+    }
+
     const unit = await this.prisma.companyUnit.update({
       where: { id: unitId },
       data: {
@@ -419,7 +431,7 @@ export class WorkspaceCompaniesService {
             : current.type === CompanyUnitType.BRANCH && !current.parentUnitId
               ? (parentUnit?.id ?? undefined)
               : undefined,
-        code: cleanOptional(dto.code),
+        code: nextCode,
         name: cleanRequiredOptional(dto.name),
         displayName: cleanRequiredOptional(dto.name),
         tin,
@@ -674,6 +686,48 @@ export class WorkspaceCompaniesService {
         error instanceof Error ? error.message : 'Unknown billing error'
       }`,
     );
+  }
+
+  private async ensureUnitCodeAvailable(
+    companyId: number,
+    code: string,
+    excludedUnitId?: number,
+  ) {
+    const existingUnit = await this.prisma.companyUnit.findFirst({
+      where: {
+        companyId,
+        code,
+        id: excludedUnitId ? { not: excludedUnitId } : undefined,
+      },
+      select: { id: true },
+    });
+
+    if (existingUnit) {
+      throw new ConflictException(
+        'A branch or satellite with this code already exists for this company.',
+      );
+    }
+  }
+
+  private async createAvailableUnitCode(companyId: number, baseCode: string) {
+    let candidate = baseCode;
+    let suffix = 2;
+
+    while (
+      await this.prisma.companyUnit.findFirst({
+        where: {
+          companyId,
+          code: candidate,
+        },
+        select: { id: true },
+      })
+    ) {
+      const suffixText = `-${suffix}`;
+      candidate = `${baseCode.slice(0, 24 - suffixText.length)}${suffixText}`;
+      suffix += 1;
+    }
+
+    return candidate;
   }
 
   private async sendCompanyCreatedEmail(user: AuthUser, companyName: string) {
