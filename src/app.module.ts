@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './modules/auth/auth.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthModule } from './modules/health/health.module';
@@ -7,11 +10,28 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/master-plan-and-packages.module';
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
+import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
+import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
+import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.module';
+import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
+import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 60_000,
+    }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60_000,
+        limit: 300,
+      },
+    ]),
     PrismaModule,
     AuthModule,
     DashboardModule,
@@ -19,7 +39,19 @@ import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspac
     OnboardingModule,
     UsersModule,
     BillingModule,
+    MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
+    WorkspaceUsersModule,
+    BranchRolesModule,
+    BranchUsersModule,
+    FormSignatoriesModule,
+    AiAssistantModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

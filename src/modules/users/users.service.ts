@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, SystemRole, UserStatus } from '@prisma/client';
+import { AuthProvider, Prisma, SystemRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -35,16 +35,22 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        name: dto.name,
-        contactNumber: dto.contactNumber?.trim() || null,
-        passwordHash: hashedPassword,
-        systemRole: dto.systemRole ?? SystemRole.STANDARD,
-        status: UserStatus.ACTIVE,
-        emailVerifiedAt: new Date(),
-      },
+    const user = await this.prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          email: normalizedEmail,
+          name: dto.name,
+          contactNumber: dto.contactNumber?.trim() || null,
+          passwordHash: hashedPassword,
+          systemRole: dto.systemRole ?? SystemRole.STANDARD,
+          status: UserStatus.ACTIVE,
+          emailVerifiedAt: new Date(),
+        },
+      });
+
+      await this.upsertPasswordIdentity(tx, createdUser);
+
+      return createdUser;
     });
 
     return sanitizeUser(user);
@@ -89,6 +95,30 @@ export class UsersService {
           include: {
             company: true,
             companyRole: true,
+            unitAccess: {
+              include: {
+                unit: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  findForAuthById(id: number): Promise<UserWithMemberships | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        memberships: {
+          include: {
+            company: true,
+            companyRole: true,
+            unitAccess: {
+              include: {
+                unit: true,
+              },
+            },
           },
         },
       },
@@ -145,9 +175,24 @@ export class UsersService {
       data.passwordHash = await bcrypt.hash(dto.password, 10);
     }
 
-    const user = await this.prisma.user.update({
-      where: { id },
-      data,
+    const user = await this.prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id },
+        data,
+      });
+
+      if (dto.email) {
+        await tx.userAuthIdentity.updateMany({
+          where: { userId: updatedUser.id },
+          data: { email: updatedUser.email },
+        });
+      }
+
+      if (dto.password) {
+        await this.upsertPasswordIdentity(tx, updatedUser);
+      }
+
+      return updatedUser;
     });
 
     return sanitizeUser(user);
@@ -266,6 +311,28 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found.');
     }
+  }
+
+  private upsertPasswordIdentity(
+    tx: Prisma.TransactionClient,
+    user: { id: number; email: string },
+  ) {
+    return tx.userAuthIdentity.upsert({
+      where: {
+        userId_provider: {
+          userId: user.id,
+          provider: AuthProvider.PASSWORD,
+        },
+      },
+      update: {
+        email: user.email,
+      },
+      create: {
+        userId: user.id,
+        provider: AuthProvider.PASSWORD,
+        email: user.email,
+      },
+    });
   }
 
   private ensureCompanyContext(

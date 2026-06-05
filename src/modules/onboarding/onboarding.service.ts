@@ -1,6 +1,16 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
+import {
+  CompanyUnitType,
+  MembershipRole,
+  MembershipStatus,
+  Prisma,
+} from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
@@ -26,6 +36,25 @@ import {
 } from './utils/OnboardingFinalize.util';
 import { validateOnboardingLogoFile } from './utils/OnboardingLogoUpload.util';
 
+const subscriptionPlanInclude =
+  Prisma.validator<Prisma.SubscriptionPlanInclude>()({
+    prices: {
+      where: { isActive: true },
+      orderBy: [{ billingCycle: 'asc' }],
+    },
+    usageRules: {
+      where: { isActive: true },
+      orderBy: [{ metric: 'asc' }],
+    },
+    discountTiers: {
+      where: { isActive: true },
+      orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
+    },
+    modules: {
+      orderBy: [{ moduleKey: 'asc' }],
+    },
+  });
+
 @Injectable()
 export class OnboardingService {
   private readonly logger = new Logger(OnboardingService.name);
@@ -43,6 +72,23 @@ export class OnboardingService {
       where: {
         isActive: true,
       },
+      include: {
+        prices: {
+          where: { isActive: true },
+          orderBy: [{ billingCycle: 'asc' }],
+        },
+        usageRules: {
+          where: { isActive: true },
+          orderBy: [{ metric: 'asc' }],
+        },
+        discountTiers: {
+          where: { isActive: true },
+          orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
+        },
+        modules: {
+          orderBy: [{ moduleKey: 'asc' }],
+        },
+      },
       orderBy: {
         id: 'asc',
       },
@@ -59,7 +105,9 @@ export class OnboardingService {
         userId: user.id,
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -100,6 +148,7 @@ export class OnboardingService {
               logoPublicUrl: draft.logoPublicUrl,
               address: draft.address,
               tin: draft.tin,
+              companyEmail: draft.companyEmail,
               website: draft.website,
               contactNumber: draft.contactNumber,
               reportStartDate: draft.reportStartDate
@@ -142,7 +191,9 @@ export class OnboardingService {
         planSelectedAt: new Date(),
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -161,7 +212,9 @@ export class OnboardingService {
         userId: user.id,
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -202,6 +255,7 @@ export class OnboardingService {
     const paymentResult = preparedSubscription.pendingProviderActivation
       ? await this.billingService.recordPendingPaymentSetup({
           companyId: existingDraft.provisionedCompanyId,
+          ownerUserId: user.id,
           subscriptionId: preparedSubscription.subscription.id,
           paymentMethodId: dto.paymentMethodId.trim(),
           brand: dto.cardBrand.trim(),
@@ -211,6 +265,7 @@ export class OnboardingService {
         })
       : await this.billingService.attachPaymentMethodForCompany({
           companyId: existingDraft.provisionedCompanyId,
+          ownerUserId: user.id,
           subscriptionId: preparedSubscription.subscription.id,
           paymentMethodId: dto.paymentMethodId.trim(),
         });
@@ -231,7 +286,9 @@ export class OnboardingService {
         billingCompletedAt: new Date(),
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -295,6 +352,12 @@ export class OnboardingService {
     const legalName = isIndividual
       ? companyName
       : (dto.companyName?.trim() ?? companyName);
+
+    await this.ensureCompanyNameAvailable(
+      companyName,
+      existingDraft.provisionedCompanyId ?? undefined,
+    );
+
     const slug = existingDraft.provisionedCompanyId
       ? null
       : await this.generateUniqueCompanySlug(this.prisma, companyName);
@@ -325,6 +388,7 @@ export class OnboardingService {
             logoPublicUrl: dto.logoPublicUrl?.trim() || null,
             address: dto.address.trim(),
             tin: dto.tin.trim(),
+            email: normalizeEmail(dto.companyEmail) as string,
             website: dto.website?.trim() || null,
             contactNumber: dto.contactNumber.trim(),
             reportStartDate,
@@ -358,6 +422,7 @@ export class OnboardingService {
             logoPublicUrl: dto.logoPublicUrl?.trim() || null,
             address: dto.address.trim(),
             tin: dto.tin.trim(),
+            email: normalizeEmail(dto.companyEmail) as string,
             website: dto.website?.trim() || null,
             contactNumber: dto.contactNumber.trim(),
             reportStartDate,
@@ -366,6 +431,39 @@ export class OnboardingService {
             createdByUserId: user.id,
           },
         });
+
+    await this.prisma.companyUnit.upsert({
+      where: {
+        companyId_code: {
+          companyId: provisionedCompany.id,
+          code: 'HEAD-OFFICE',
+        },
+      },
+      update: {
+        tin: provisionedCompany.tin,
+        address: provisionedCompany.address,
+        contactNumber: provisionedCompany.contactNumber,
+        email: provisionedCompany.email,
+        isActive: true,
+        inheritsCompanyProfile: true,
+        canTransactSales: true,
+        canHoldInventory: true,
+      },
+      create: {
+        companyId: provisionedCompany.id,
+        type: CompanyUnitType.HEAD_OFFICE,
+        code: 'HEAD-OFFICE',
+        name: 'Head Office',
+        tin: provisionedCompany.tin,
+        address: provisionedCompany.address,
+        contactNumber: provisionedCompany.contactNumber,
+        email: provisionedCompany.email,
+        isActive: true,
+        inheritsCompanyProfile: true,
+        canTransactSales: true,
+        canHoldInventory: true,
+      },
+    });
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({
       where: {
@@ -389,6 +487,7 @@ export class OnboardingService {
         logoPublicUrl: dto.logoPublicUrl?.trim() || null,
         address: dto.address.trim(),
         tin: dto.tin.trim(),
+        companyEmail: normalizeEmail(dto.companyEmail) as string,
         website: dto.website?.trim() || null,
         contactNumber: dto.contactNumber.trim(),
         reportStartDate,
@@ -414,6 +513,7 @@ export class OnboardingService {
         logoPublicUrl: updatedDraft.logoPublicUrl,
         address: updatedDraft.address,
         tin: updatedDraft.tin,
+        companyEmail: updatedDraft.companyEmail,
         website: updatedDraft.website,
         contactNumber: updatedDraft.contactNumber,
         reportStartDate: dto.reportStartDate,
@@ -429,7 +529,9 @@ export class OnboardingService {
         userId: user.id,
       },
       include: {
-        subscriptionPlan: true,
+        subscriptionPlan: {
+          include: subscriptionPlanInclude,
+        },
       },
     });
 
@@ -664,7 +766,11 @@ export class OnboardingService {
 
   private validateCompletionDraft(
     draft: Prisma.UserOnboardingDraftGetPayload<{
-      include: { subscriptionPlan: true };
+      include: {
+        subscriptionPlan: {
+          include: typeof subscriptionPlanInclude;
+        };
+      };
     }>,
   ) {
     if (!draft.subscriptionPlanId || !draft.subscriptionPlan) {
@@ -711,5 +817,25 @@ export class OnboardingService {
     }
 
     return slug;
+  }
+
+  private async ensureCompanyNameAvailable(
+    name: string,
+    excludedCompanyId?: number,
+  ) {
+    const existingCompany = await this.prisma.company.findFirst({
+      where: {
+        name: {
+          equals: name.trim(),
+          mode: 'insensitive',
+        },
+        id: excludedCompanyId ? { not: excludedCompanyId } : undefined,
+      },
+      select: { id: true },
+    });
+
+    if (existingCompany) {
+      throw new ConflictException('Company name is already taken.');
+    }
   }
 }

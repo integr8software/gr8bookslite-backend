@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEmail,
   IsInt,
   IsOptional,
@@ -19,4 +20,8 @@ export class LoginDto {
   @Type(() => Number)
   @IsInt()
   companyId?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  rememberMe?: boolean;
 }

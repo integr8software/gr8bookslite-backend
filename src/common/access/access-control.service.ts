@@ -23,6 +23,10 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
   include: {
     company: {
       include: {
+        subscriptions: {
+          orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }];
+          take: 1;
+        };
         enabledModules: {
           where: {
             isEnabled: true;
@@ -121,7 +125,7 @@ export class AccessControlService {
       payload.companyId,
     );
 
-    await this.assertMembershipIsUsable(membership);
+    this.assertMembershipIsUsable(membership);
 
     const enabledModules = membership.company.enabledModules.map(
       (item) => item.module.code,
@@ -193,6 +197,10 @@ export class AccessControlService {
       include: {
         company: {
           include: {
+            subscriptions: {
+              orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+              take: 1,
+            },
             enabledModules: {
               where: {
                 isEnabled: true,
@@ -242,9 +250,7 @@ export class AccessControlService {
     return membership;
   }
 
-  private async assertMembershipIsUsable(
-    membership: MembershipAccessRecord,
-  ): Promise<void> {
+  private assertMembershipIsUsable(membership: MembershipAccessRecord): void {
     if (membership.status !== MembershipStatus.ACTIVE) {
       throw new UnauthorizedException('Your company membership is not active.');
     }
@@ -260,12 +266,7 @@ export class AccessControlService {
       throw new UnauthorizedException('This company is unavailable.');
     }
 
-    const latestSubscription = await this.prisma.companySubscription.findFirst({
-      where: {
-        companyId: membership.companyId,
-      },
-      orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
-    });
+    const latestSubscription = membership.company.subscriptions[0];
 
     if (!latestSubscription) {
       return;

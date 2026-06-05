@@ -8,11 +8,13 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AuthService } from './auth.service';
+import { ActivateWorkspaceUserDto } from './dto/activate-workspace-user.dto';
 import { ChangeAuthenticatedPasswordDto } from './dto/change-authenticated-password.dto';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -20,14 +22,25 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SwitchCompanyContextDto } from './dto/switch-company-context.dto';
 import { VerifyForgotPasswordCodeDto } from './dto/verify-forgot-password-code.dto';
 import { VerifyPasswordChangeCodeDto } from './dto/verify-password-change-code.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import {
+  clearAuthAccessTokenCookie,
+  setAuthAccessTokenCookie,
+} from './utils/auth-cookie.util';
 
 @Controller({
   path: 'auth',
   version: '1',
+})
+@Throttle({
+  default: {
+    limit: 30,
+    ttl: 60_000,
+  },
 })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -40,8 +53,13 @@ export class AuthController {
 
   @Public()
   @Post('verify-email')
-  verifyEmail(@Body() dto: VerifyEmailDto) {
-    return this.authService.verifyEmail(dto);
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.verifyEmail(dto);
+    this.setCookieIfAuthenticated(response, result);
+    return result;
   }
 
   @Public()
@@ -81,9 +99,20 @@ export class AuthController {
   }
 
   @Public()
+  @Post('workspace-invitation/activate')
+  activateWorkspaceUser(@Body() dto: ActivateWorkspaceUserDto) {
+    return this.authService.activateWorkspaceUser(dto);
+  }
+
+  @Public()
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.login(dto);
+    this.setCookieIfAuthenticated(response, result, dto.rememberMe ?? false);
+    return result;
   }
 
   @Public()
@@ -114,7 +143,8 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  logout() {
+  logout(@Res({ passthrough: true }) response: Response) {
+    clearAuthAccessTokenCookie(response);
     return this.authService.logout();
   }
 
@@ -122,6 +152,21 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     return this.authService.getProfile(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('context/company')
+  async switchCompanyContext(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: SwitchCompanyContextDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.switchCompanyContext(
+      user,
+      dto.companyId,
+    );
+    this.setCookieIfAuthenticated(response, result);
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -146,5 +191,20 @@ export class AuthController {
     @Body() dto: ChangeAuthenticatedPasswordDto,
   ) {
     return this.authService.changeAuthenticatedPassword(user, dto);
+  }
+
+  private setCookieIfAuthenticated(
+    response: Response,
+    result: unknown,
+    rememberMe = false,
+  ) {
+    if (
+      result &&
+      typeof result === 'object' &&
+      'accessToken' in result &&
+      typeof result.accessToken === 'string'
+    ) {
+      setAuthAccessTokenCookie(response, result.accessToken, rememberMe);
+    }
   }
 }

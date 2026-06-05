@@ -19,7 +19,15 @@ export const WorkspaceCompanyListInclude = {
       createdAt: 'desc',
     },
     include: {
-      plan: true,
+      plan: {
+        include: {
+          prices: {
+            where: {
+              isActive: true,
+            },
+          },
+        },
+      },
     },
   },
   createdByUser: {
@@ -28,6 +36,12 @@ export const WorkspaceCompanyListInclude = {
       name: true,
       email: true,
     },
+  },
+  units: {
+    where: {
+      isActive: true,
+    },
+    orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
   },
 } satisfies Prisma.CompanyInclude;
 

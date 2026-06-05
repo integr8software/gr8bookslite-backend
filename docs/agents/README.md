@@ -8,6 +8,7 @@ Available agent docs:
 - `@database.agent.md`
 - `@onboarding.agent.md`
 - `@billing.agent.md`
+- `ARCHITECTURE_MODULARITY_GUIDE.md`
 
 Recommended ownership:
 
@@ -17,6 +18,10 @@ Recommended ownership:
   Covers Prisma models, Postgres foreign keys, relation naming, cascades, and migration guardrails.
 - `onboarding.agent.md`
   Documents the onboarding flow, temporary pre-company staging, and the rule that subscriptions are enforced per company.
+- `billing.agent.md`
+  Covers billing subscriptions, plans, provider setup, and payment-related behavior.
+- `ARCHITECTURE_MODULARITY_GUIDE.md`
+  Covers backend/frontend folder placement, reusable utilities, mappers, types, strategies, loading boundaries, and anti-redundancy rules for agents.
 
 Suggested next agent docs later:
 

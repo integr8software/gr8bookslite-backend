@@ -1,10 +1,10 @@
-import { SystemRole, UserStatus } from '@prisma/client';
+import { AuthProvider, SystemRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { prisma } from './prismaClient';
 
 export async function seedSuperAdmin() {
-  const email = process.env.SUPERADMIN_EMAIL;
+  const email = process.env.SUPERADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.SUPERADMIN_PASSWORD;
   const name = process.env.SUPERADMIN_NAME ?? 'Platform Super Admin';
 
@@ -22,30 +22,57 @@ export async function seedSuperAdmin() {
   });
 
   if (existingUser) {
-    await prisma.user.update({
-      where: { id: existingUser.id },
-      data: {
-        name,
-        passwordHash,
-        systemRole: SystemRole.SUPER_ADMIN,
-        status: UserStatus.ACTIVE,
-        emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
-      },
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: { id: existingUser.id },
+        data: {
+          name,
+          passwordHash,
+          systemRole: SystemRole.SUPER_ADMIN,
+          status: UserStatus.ACTIVE,
+          emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
+        },
+      });
+
+      await tx.userAuthIdentity.upsert({
+        where: {
+          userId_provider: {
+            userId: user.id,
+            provider: AuthProvider.PASSWORD,
+          },
+        },
+        update: { email: user.email },
+        create: {
+          userId: user.id,
+          provider: AuthProvider.PASSWORD,
+          email: user.email,
+        },
+      });
     });
 
     console.log(`Updated superadmin account: ${email}`);
     return;
   }
 
-  await prisma.user.create({
-    data: {
-      email,
-      name,
-      passwordHash,
-      systemRole: SystemRole.SUPER_ADMIN,
-      status: UserStatus.ACTIVE,
-      emailVerifiedAt: now,
-    },
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        email,
+        name,
+        passwordHash,
+        systemRole: SystemRole.SUPER_ADMIN,
+        status: UserStatus.ACTIVE,
+        emailVerifiedAt: now,
+      },
+    });
+
+    await tx.userAuthIdentity.create({
+      data: {
+        userId: user.id,
+        provider: AuthProvider.PASSWORD,
+        email: user.email,
+      },
+    });
   });
 
   console.log(`Created superadmin account: ${email}`);

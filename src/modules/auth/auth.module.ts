@@ -11,6 +11,7 @@ import { AuthMailService } from './services/auth-mail.service';
 import { GoogleOAuthService } from './services/google-oauth.service';
 import { OtpService } from './services/otp.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { getJwtExpiresInSeconds, getJwtSecret } from './utils/jwt-config.util';
 
 @Module({
   imports: [
@@ -22,14 +23,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>(
-          'JWT_SECRET',
-          'change-me-in-production',
-        ),
+        secret: getJwtSecret(configService),
         signOptions: {
-          expiresIn: Number(
-            configService.get<string | number>('JWT_EXPIRES_IN_SECONDS', 86400),
-          ),
+          expiresIn: getJwtExpiresInSeconds(configService),
         },
       }),
     }),

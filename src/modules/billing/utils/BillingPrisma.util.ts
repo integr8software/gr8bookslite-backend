@@ -2,7 +2,26 @@ import { Prisma } from '@prisma/client';
 
 export const companySubscriptionDetailsInclude =
   Prisma.validator<Prisma.CompanySubscriptionInclude>()({
-    plan: true,
+    plan: {
+      include: {
+        prices: {
+          where: { isActive: true },
+          orderBy: [{ billingCycle: 'asc' }],
+        },
+        usageRules: {
+          where: { isActive: true },
+          orderBy: [{ metric: 'asc' }],
+        },
+        discountTiers: {
+          where: { isActive: true },
+          orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
+        },
+        modules: {
+          orderBy: [{ moduleKey: 'asc' }],
+        },
+      },
+    },
+    planPrice: true,
     billingCustomer: true,
     invoices: {
       orderBy: {
