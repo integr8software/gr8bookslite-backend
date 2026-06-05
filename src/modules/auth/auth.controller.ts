@@ -8,7 +8,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -149,12 +149,14 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @SkipThrottle()
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     return this.authService.getProfile(user);
   }
 
   @UseGuards(JwtAuthGuard)
+  @SkipThrottle()
   @Post('context/company')
   async switchCompanyContext(
     @CurrentUser() user: AuthUser,
