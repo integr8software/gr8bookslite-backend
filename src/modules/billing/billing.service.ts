@@ -1,10 +1,12 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import {
   BillingCycle,
@@ -14,6 +16,7 @@ import {
   SubscriptionPlanScope,
   SubscriptionStatus,
 } from '@prisma/client';
+import type { Cache } from 'cache-manager';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { normalizeEmail } from '../../common/utils/email.util';
@@ -51,37 +54,57 @@ export class BillingService {
     private readonly prisma: PrismaService,
     private readonly paymongoService: PaymongoService,
     private readonly configService: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   async listPlans(scope?: string) {
     const normalizedScope = this.normalizePlanScope(scope);
-    const plans = await this.prisma.subscriptionPlan.findMany({
-      where: {
-        isActive: true,
-        ...(normalizedScope ? { scope: normalizedScope } : {}),
+    const cacheKey = `billing:plans:${normalizedScope ?? 'all'}`;
+
+    return this.cacheManager.wrap(
+      cacheKey,
+      async () => {
+        const plans = await this.prisma.subscriptionPlan.findMany({
+          where: {
+            isActive: true,
+            ...(normalizedScope ? { scope: normalizedScope } : {}),
+          },
+          include: {
+            prices: {
+              where: { isActive: true },
+              orderBy: [{ billingCycle: 'asc' }],
+            },
+            usageRules: {
+              where: { isActive: true },
+              orderBy: [{ metric: 'asc' }],
+            },
+            discountTiers: {
+              where: { isActive: true },
+              orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
+            },
+            modules: {
+              orderBy: [{ moduleKey: 'asc' }],
+            },
+          },
+          orderBy: [{ scope: 'asc' }, { id: 'asc' }],
+        });
+
+        return {
+          plans: plans.map(mapBillingPlan),
+        };
       },
-      include: {
-        prices: {
-          where: { isActive: true },
-          orderBy: [{ billingCycle: 'asc' }],
-        },
-        usageRules: {
-          where: { isActive: true },
-          orderBy: [{ metric: 'asc' }],
-        },
-        discountTiers: {
-          where: { isActive: true },
-          orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
-        },
-        modules: {
-          orderBy: [{ moduleKey: 'asc' }],
-        },
-      },
-      orderBy: [{ scope: 'asc' }, { id: 'asc' }],
-    });
+      10 * 60 * 1000,
+    );
+  }
+  async getSubscriptionSetup(user: AuthUser, scope?: string) {
+    const [plansResponse, subscriptionResponse] = await Promise.all([
+      this.listPlans(scope),
+      this.getCurrentSubscription(user),
+    ]);
 
     return {
-      plans: plans.map(mapBillingPlan),
+      ...plansResponse,
+      ...subscriptionResponse,
     };
   }
 

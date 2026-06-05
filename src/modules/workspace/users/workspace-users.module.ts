@@ -9,5 +9,6 @@ import { WorkspaceUsersService } from './workspace-users.service';
   imports: [PrismaModule, AccessControlModule, AuthModule],
   controllers: [WorkspaceUsersController],
   providers: [WorkspaceUsersService],
+  exports: [WorkspaceUsersService],
 })
 export class WorkspaceUsersModule {}

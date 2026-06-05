@@ -1,15 +1,18 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   CompanyUnitType,
   MembershipRole,
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
+import type { Cache } from 'cache-manager';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -24,12 +27,40 @@ const FormSignatoryTransactionOptions = {
 
 @Injectable()
 export class FormSignatoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
 
   async findAll(user: AuthUser) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
 
+    return this.findAllForCompany(companyId);
+  }
+
+  async findOptions(user: AuthUser) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+
+    return this.findOptionsForCompany(companyId);
+  }
+
+  async findBootstrap(user: AuthUser) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const [optionsResponse, setupsResponse] = await Promise.all([
+      this.findOptionsForCompany(companyId),
+      this.findAllForCompany(companyId),
+    ]);
+
+    return {
+      ...optionsResponse,
+      ...setupsResponse,
+    };
+  }
+
+  private async findAllForCompany(companyId: number) {
     const setups = await this.prisma.formSignatorySetup.findMany({
       where: {
         companyId,
@@ -59,64 +90,67 @@ export class FormSignatoriesService {
     };
   }
 
-  async findOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+  private async findOptionsForCompany(companyId: number) {
+    return this.cacheManager.wrap(
+      `form-signatories:options:${companyId}`,
+      async () => {
+        const [units, companyModules, platformModules] = await Promise.all([
+          this.prisma.companyUnit.findMany({
+            where: {
+              companyId,
+              isActive: true,
+            },
+            orderBy: [{ type: 'asc' }, { name: 'asc' }],
+          }),
+          this.prisma.companyModule.findMany({
+            where: {
+              companyId,
+              isEnabled: true,
+              module: {
+                isActive: true,
+              },
+            },
+            include: {
+              module: true,
+            },
+            orderBy: {
+              module: {
+                name: 'asc',
+              },
+            },
+          }),
+          this.prisma.platformModule.findMany({
+            where: {
+              isActive: true,
+            },
+            orderBy: {
+              name: 'asc',
+            },
+          }),
+        ]);
+        const modules =
+          companyModules.length > 0
+            ? companyModules.map((companyModule) => companyModule.module)
+            : platformModules;
 
-    const [units, companyModules, platformModules] = await Promise.all([
-      this.prisma.companyUnit.findMany({
-        where: {
-          companyId,
-          isActive: true,
-        },
-        orderBy: [{ type: 'asc' }, { name: 'asc' }],
-      }),
-      this.prisma.companyModule.findMany({
-        where: {
-          companyId,
-          isEnabled: true,
-          module: {
-            isActive: true,
-          },
-        },
-        include: {
-          module: true,
-        },
-        orderBy: {
-          module: {
-            name: 'asc',
-          },
-        },
-      }),
-      this.prisma.platformModule.findMany({
-        where: {
-          isActive: true,
-        },
-        orderBy: {
-          name: 'asc',
-        },
-      }),
-    ]);
-    const modules =
-      companyModules.length > 0
-        ? companyModules.map((companyModule) => companyModule.module)
-        : platformModules;
-
-    return {
-      branches: units.map((unit) => ({
-        id: unit.id,
-        companyId: unit.companyId,
-        code: unit.code,
-        name: unit.name,
-        displayName: unit.displayName,
-        type: unit.type,
-      })),
-      modules: modules.map((module) => ({
-        id: module.id,
-        code: module.code,
-        name: module.name,
-      })),
-    };
+        return {
+          branches: units.map((unit) => ({
+            id: unit.id,
+            companyId: unit.companyId,
+            code: unit.code,
+            name: unit.name,
+            displayName: unit.displayName,
+            type: unit.type,
+          })),
+          modules: modules.map((module) => ({
+            id: module.id,
+            code: module.code,
+            name: module.name,
+          })),
+        };
+      },
+      60 * 1000,
+    );
   }
 
   async findOne(user: AuthUser, setupId: number) {

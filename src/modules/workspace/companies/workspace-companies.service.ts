@@ -18,6 +18,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
+import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
 import { CreateWorkspaceCompanyDto } from './dto/create-workspace-company.dto';
 import { UpdateCompanyUnitDto } from './dto/update-company-unit.dto';
@@ -41,6 +42,7 @@ export class WorkspaceCompaniesService {
     private readonly prisma: PrismaService,
     private readonly authMailService: AuthMailService,
     private readonly billingService: BillingService,
+    private readonly workspaceUsersService: WorkspaceUsersService,
     private readonly logoStorageService: WorkspaceCompanyLogoStorageService,
   ) {}
 
@@ -64,6 +66,27 @@ export class WorkspaceCompaniesService {
     });
 
     return companies.map(mapWorkspaceCompany);
+  }
+
+  async getManagementSummary(user: AuthUser, includeUsers: boolean) {
+    const companiesPromise = this.findAll(user);
+
+    if (!includeUsers) {
+      return {
+        companies: await companiesPromise,
+        users: [],
+      };
+    }
+
+    const [companies, users] = await Promise.all([
+      companiesPromise,
+      this.workspaceUsersService.findAll(user),
+    ]);
+
+    return {
+      companies,
+      users,
+    };
   }
 
   async findOne(user: AuthUser, companyId: number) {

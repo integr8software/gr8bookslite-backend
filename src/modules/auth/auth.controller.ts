@@ -8,6 +8,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -34,6 +35,12 @@ import {
 @Controller({
   path: 'auth',
   version: '1',
+})
+@Throttle({
+  default: {
+    limit: 30,
+    ttl: 60_000,
+  },
 })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

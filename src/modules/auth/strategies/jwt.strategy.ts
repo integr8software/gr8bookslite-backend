@@ -7,6 +7,7 @@ import {
   AuthAccessTokenCookieName,
   readCookieValue,
 } from '../utils/auth-cookie.util';
+import { getJwtSecret } from '../utils/jwt-config.util';
 
 type JwtRequest = {
   headers?: {
@@ -27,10 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         extractJwtFromCookie,
       ]),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>(
-        'JWT_SECRET',
-        'change-me-in-production',
-      ),
+      secretOrKey: getJwtSecret(configService),
     });
   }
 
