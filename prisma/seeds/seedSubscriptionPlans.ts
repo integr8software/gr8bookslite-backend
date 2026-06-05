@@ -121,7 +121,14 @@ export async function seedSubscriptionPlans() {
   });
 
   for (const plan of plans) {
-    const { moduleKeys, ...planData } = plan;
+    const {
+      moduleKeys,
+      monthlyPriceInCents,
+      yearlyPriceInCents,
+      monthlyCompareAtInCents,
+      yearlyCompareAtInCents,
+      ...planData
+    } = plan;
     const subscriptionPlan = await prisma.subscriptionPlan.upsert({
       where: {
         code: plan.code,
@@ -130,10 +137,6 @@ export async function seedSubscriptionPlans() {
         name: plan.name,
         description: plan.description,
         currency: plan.currency,
-        monthlyPriceInCents: plan.monthlyPriceInCents,
-        yearlyPriceInCents: plan.yearlyPriceInCents,
-        monthlyCompareAtInCents: plan.monthlyCompareAtInCents,
-        yearlyCompareAtInCents: plan.yearlyCompareAtInCents,
         scope: plan.scope,
         status: plan.status,
         trialDays: plan.trialDays,
@@ -153,8 +156,8 @@ export async function seedSubscriptionPlans() {
         update: {
           intervalCount: 1,
           intervalUnit: 'MONTH',
-          priceInCents: plan.monthlyPriceInCents,
-          compareAtInCents: plan.monthlyCompareAtInCents,
+          priceInCents: monthlyPriceInCents,
+          compareAtInCents: monthlyCompareAtInCents,
           isActive: true,
         },
         create: {
@@ -162,8 +165,8 @@ export async function seedSubscriptionPlans() {
           billingCycle: 'MONTHLY',
           intervalCount: 1,
           intervalUnit: 'MONTH',
-          priceInCents: plan.monthlyPriceInCents,
-          compareAtInCents: plan.monthlyCompareAtInCents,
+          priceInCents: monthlyPriceInCents,
+          compareAtInCents: monthlyCompareAtInCents,
           isActive: true,
         },
       }),
@@ -177,8 +180,8 @@ export async function seedSubscriptionPlans() {
         update: {
           intervalCount: 1,
           intervalUnit: 'YEAR',
-          priceInCents: plan.yearlyPriceInCents,
-          compareAtInCents: plan.yearlyCompareAtInCents,
+          priceInCents: yearlyPriceInCents,
+          compareAtInCents: yearlyCompareAtInCents,
           isActive: true,
         },
         create: {
@@ -186,8 +189,8 @@ export async function seedSubscriptionPlans() {
           billingCycle: 'YEARLY',
           intervalCount: 1,
           intervalUnit: 'YEAR',
-          priceInCents: plan.yearlyPriceInCents,
-          compareAtInCents: plan.yearlyCompareAtInCents,
+          priceInCents: yearlyPriceInCents,
+          compareAtInCents: yearlyCompareAtInCents,
           isActive: true,
         },
       }),

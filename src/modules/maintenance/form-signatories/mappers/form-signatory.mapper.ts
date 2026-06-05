@@ -14,7 +14,7 @@ export function mapFormSignatorySetup(setup: FormSignatorySetupPayload) {
       companyId: setup.unit.companyId,
       code: setup.unit.code,
       name: setup.unit.name,
-      displayName: setup.unit.displayName,
+      displayName: setup.unit.name,
       type: setup.unit.type,
     },
     module: {

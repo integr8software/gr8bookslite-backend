@@ -1,4 +1,5 @@
 import type { CompanyUnit } from '@prisma/client';
+import { getSubscriptionPlanPriceSummary } from '../../../../common/utils/SubscriptionPlanPricing.util';
 import type {
   CompanyUnitResponse,
   WorkspaceCompanyResponse,
@@ -10,6 +11,8 @@ export function mapWorkspaceCompany(
 ): WorkspaceCompanyResponse {
   const units = 'units' in company ? company.units : undefined;
   const subscription = company.subscriptions[0];
+  const subscriptionPrices = subscription?.plan.prices ?? [];
+  const priceSummary = getSubscriptionPlanPriceSummary(subscriptionPrices);
 
   return {
     id: company.id,
@@ -50,8 +53,8 @@ export function mapWorkspaceCompany(
           name: subscription.plan.name,
           currency: subscription.plan.currency,
           billingCycle: subscription.billingCycle,
-          monthlyPriceInCents: subscription.plan.monthlyPriceInCents,
-          yearlyPriceInCents: subscription.plan.yearlyPriceInCents,
+          monthlyPriceInCents: priceSummary.monthlyPriceInCents,
+          yearlyPriceInCents: priceSummary.yearlyPriceInCents,
         }
       : null,
     totalUsers: company._count?.memberships ?? undefined,
@@ -70,7 +73,7 @@ export function mapCompanyUnit(unit: CompanyUnit): CompanyUnitResponse {
     type: unit.type,
     code: unit.code,
     name: unit.name,
-    displayName: unit.displayName,
+    displayName: unit.name,
     tin: unit.tin,
     address: unit.address,
     contactNumber: unit.contactNumber,

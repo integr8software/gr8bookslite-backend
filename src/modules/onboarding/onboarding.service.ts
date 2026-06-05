@@ -429,7 +429,6 @@ export class OnboardingService {
         },
       },
       update: {
-        displayName: `${provisionedCompany.name} Head Office`,
         tin: provisionedCompany.tin,
         address: provisionedCompany.address,
         contactNumber: provisionedCompany.contactNumber,
@@ -444,7 +443,6 @@ export class OnboardingService {
         type: CompanyUnitType.HEAD_OFFICE,
         code: 'HEAD-OFFICE',
         name: 'Head Office',
-        displayName: `${provisionedCompany.name} Head Office`,
         tin: provisionedCompany.tin,
         address: provisionedCompany.address,
         contactNumber: provisionedCompany.contactNumber,

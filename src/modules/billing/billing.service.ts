@@ -1064,8 +1064,6 @@ export class BillingService {
       name: string;
       description: string | null;
       currency: string;
-      monthlyExternalPlanId: string | null;
-      yearlyExternalPlanId: string | null;
       trialDays: number;
     },
     planPrice: {
@@ -1115,27 +1113,6 @@ export class BillingService {
         billingMetadata: remotePlan as Prisma.InputJsonValue,
       },
     });
-
-    if (
-      billingCycle === BillingCycle.MONTHLY ||
-      billingCycle === BillingCycle.YEARLY
-    ) {
-      await this.prisma.subscriptionPlan.update({
-        where: {
-          id: plan.id,
-        },
-        data:
-          billingCycle === BillingCycle.MONTHLY
-            ? {
-                monthlyExternalPlanId: externalPlanId,
-                billingMetadata: remotePlan as Prisma.InputJsonValue,
-              }
-            : {
-                yearlyExternalPlanId: externalPlanId,
-                billingMetadata: remotePlan as Prisma.InputJsonValue,
-              },
-      });
-    }
 
     return externalPlanId;
   }

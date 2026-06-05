@@ -111,7 +111,6 @@ model CompanyUnit {
   type                   CompanyUnitType
   code                   String?
   name                   String
-  displayName            String?                @map("display_name")
   tin                    String?
   address                String?
   contactNumber          String?                @map("contact_number")
@@ -368,12 +367,6 @@ model SubscriptionPlan {
   name                    String
   description             String?
   currency                String                         @default("PHP")
-  monthlyPriceInCents     Int                            @map("monthly_price_in_cents")
-  yearlyPriceInCents      Int                            @map("yearly_price_in_cents")
-  monthlyCompareAtInCents Int?                           @map("monthly_compare_at_in_cents")
-  yearlyCompareAtInCents  Int?                           @map("yearly_compare_at_in_cents")
-  monthlyExternalPlanId   String?                        @unique @map("monthly_external_plan_id")
-  yearlyExternalPlanId    String?                        @unique @map("yearly_external_plan_id")
   billingProvider         BillingProvider                @default(PAYMONGO) @map("billing_provider")
   billingMetadata         Json?                          @map("billing_metadata")
   scope                   SubscriptionPlanScope          @default(ONBOARDING)

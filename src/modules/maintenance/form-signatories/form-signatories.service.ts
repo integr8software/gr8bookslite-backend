@@ -139,7 +139,7 @@ export class FormSignatoriesService {
             companyId: unit.companyId,
             code: unit.code,
             name: unit.name,
-            displayName: unit.displayName,
+            displayName: unit.name,
             type: unit.type,
           })),
           modules: modules.map((module) => ({
