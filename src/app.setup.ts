@@ -10,6 +10,7 @@ export function configureApp(app: INestApplication) {
 
   app.enableCors(createCorsOptions(configService));
   app.use(applySecurityHeaders as NestMiddleware['use']);
+  app.use(applyRootHealthCheck as NestMiddleware['use']);
   app.setGlobalPrefix('api');
   app.enableVersioning({
     type: VersioningType.URI,
@@ -57,4 +58,27 @@ function applySecurityHeaders(
   response.setHeader('Referrer-Policy', 'no-referrer');
   response.setHeader('Permissions-Policy', 'camera=(), microphone=()');
   next();
+}
+
+function applyRootHealthCheck(
+  request: Request,
+  response: Response,
+  next: NextFunction,
+) {
+  if (request.path !== '/' || !['GET', 'HEAD'].includes(request.method)) {
+    next();
+    return;
+  }
+
+  response.status(200);
+
+  if (request.method === 'HEAD') {
+    response.end();
+    return;
+  }
+
+  response.json({
+    status: 'ok',
+    service: 'gr8booksneo-backend',
+  });
 }
