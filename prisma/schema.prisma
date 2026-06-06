@@ -14,7 +14,7 @@ datasource db {
 model User {
   id                    Int                     @id @default(autoincrement())
   email                 String                  @unique
-  passwordHash          String                  @map("password_hash")
+  passwordHash          String?                 @map("password_hash")
   name                  String
   contactNumber         String?                 @map("contact_number")
   avatarFileName        String?                 @map("avatar_file_name")
@@ -54,6 +54,18 @@ model UserAuthIdentity {
   @@unique([userId, provider])
   @@index([email])
   @@map("user_auth_identities")
+}
+
+model AuthSessionHandoff {
+  id          Int       @id @default(autoincrement())
+  codeHash    String    @unique @map("code_hash")
+  accessToken String    @map("access_token")
+  expiresAt   DateTime  @map("expires_at")
+  consumedAt  DateTime? @map("consumed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("auth_session_handoffs")
 }
 
 // =========================================================
@@ -715,7 +727,6 @@ enum UserStatus {
 }
 
 enum AuthProvider {
-  PASSWORD
   GOOGLE
 }
 

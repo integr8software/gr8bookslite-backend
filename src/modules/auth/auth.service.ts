@@ -3,6 +3,8 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -18,7 +20,7 @@ import {
   VerificationPurpose,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { AccessControlService } from '../../common/access/access-control.service';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -49,6 +51,8 @@ import type { WorkspaceInviteToken } from './types/workspace-invite-token.type';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
@@ -69,7 +73,9 @@ export class AuthService {
     const existingUser = await this.usersService.findByEmail(normalizedEmail);
 
     if (existingUser) {
-      throw new ConflictException('Email is already in use.');
+      throw new ConflictException(
+        'An account already uses this email. Sign in or reset your password.',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -89,8 +95,6 @@ export class AuthService {
           status: UserStatus.PENDING_VERIFICATION,
         },
       });
-
-      await this.upsertPasswordIdentity(tx, createdUser);
 
       await tx.emailVerificationCode.create({
         data: {
@@ -303,6 +307,9 @@ export class AuthService {
     const verifiedAt = new Date();
 
     await this.consumeVerificationCode(verification.id, verifiedAt);
+    this.logger.log(
+      `Password reset code verified for user ${user.id}; verification ${verification.id}.`,
+    );
 
     return {
       message: 'Reset code verified successfully.',
@@ -346,19 +353,32 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
-    await this.prisma.$transaction(async (tx) => {
-      const updatedUser = await tx.user.update({
+    const updatedUser = await this.prisma.$transaction(async (tx) => {
+      return tx.user.update({
         where: { id: user.id },
         data: {
           passwordHash: hashedPassword,
         },
       });
-
-      await this.upsertPasswordIdentity(tx, updatedUser);
     });
+
+    if (
+      !updatedUser.passwordHash ||
+      !(await bcrypt.compare(dto.newPassword, updatedUser.passwordHash))
+    ) {
+      this.logger.error(
+        `Password reset persistence check failed for user ${user.id}.`,
+      );
+      throw new InternalServerErrorException(
+        'Password could not be saved. Please try again.',
+      );
+    }
+
+    this.logger.log(`Password reset completed for user ${user.id}.`);
 
     return {
       message: 'Password has been reset successfully.',
+      passwordLoginEnabled: true,
     };
   }
 
@@ -412,15 +432,13 @@ export class AuthService {
         },
       });
 
-      const updatedUser = await tx.user.update({
+      await tx.user.update({
         where: { id: user.id },
         data: {
           passwordHash: hashedPassword,
           emailVerifiedAt: user.emailVerifiedAt ?? verifiedAt,
         },
       });
-
-      await this.upsertPasswordIdentity(tx, updatedUser);
     });
 
     return {
@@ -439,7 +457,7 @@ export class AuthService {
       VerificationPurpose.PASSWORD_RESET,
     );
 
-    await this.prisma.$transaction(async (tx) => {
+    const verification = await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({
         where: {
           userId: user.id,
@@ -451,7 +469,7 @@ export class AuthService {
         },
       });
 
-      await tx.emailVerificationCode.create({
+      return tx.emailVerificationCode.create({
         data: {
           userId: user.id,
           email: user.email,
@@ -464,6 +482,9 @@ export class AuthService {
     });
 
     await this.authMailService.sendPasswordResetCode(user.email, resetCode);
+    this.logger.log(
+      `Password change code issued for user ${user.id}; verification ${verification.id}.`,
+    );
 
     return {
       message: 'Password change OTP sent.',
@@ -546,14 +567,12 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
     await this.prisma.$transaction(async (tx) => {
-      const updatedUser = await tx.user.update({
+      await tx.user.update({
         where: { id: authUser.id },
         data: {
           passwordHash: hashedPassword,
         },
       });
-
-      await this.upsertPasswordIdentity(tx, updatedUser);
     });
 
     return {
@@ -573,14 +592,12 @@ export class AuthService {
       throw new UnauthorizedException('User account is suspended.');
     }
 
-    const canUsePasswordLogin = await this.hasAuthIdentity(
-      user.id,
-      AuthProvider.PASSWORD,
-    );
-
-    if (!canUsePasswordLogin) {
+    if (!user.passwordHash) {
+      this.logger.warn(
+        `Password login rejected because user ${user.id} has no password hash.`,
+      );
       throw new UnauthorizedException(
-        'This account uses Google sign-in. Continue with Google to sign in.',
+        'This account does not have a password yet. Use Continue with Google or reset your password to create one.',
       );
     }
 
@@ -590,6 +607,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
+      this.logger.warn(`Password login rejected for user ${user.id}.`);
       throw new UnauthorizedException('Invalid credentials.');
     }
 
@@ -776,13 +794,9 @@ export class AuthService {
       return this.buildAuthenticatedResponse(user, resolvedCompanyId);
     }
 
-    const onboarding = this.buildOnboardingState(user, null);
-
     return {
+      ...(await this.buildAuthenticatedResponse(user, null)),
       message: 'Company selection is required.',
-      user: sanitizeUser(user),
-      companies: this.mapCompanies(user),
-      onboarding,
     };
   }
 
@@ -835,10 +849,13 @@ export class AuthService {
       );
       const authenticatedResponse =
         await this.loginOrRegisterWithGoogleProfile(googleProfile);
+      const handoffCode = await this.createGoogleSessionHandoff(
+        authenticatedResponse.accessToken,
+      );
 
       return this.googleOAuthService.buildFrontendRedirect({
         mode,
-        accessToken: authenticatedResponse.accessToken,
+        handoffCode,
       });
     } catch (error) {
       const message =
@@ -885,6 +902,47 @@ export class AuthService {
         this.mapProfileCompany(membership),
       ),
     };
+  }
+
+  async exchangeGoogleSession(handoffCode: string) {
+    const codeHash = this.hashSessionHandoffCode(handoffCode);
+    const now = new Date();
+
+    return this.prisma.$transaction(async (tx) => {
+      const handoff = await tx.authSessionHandoff.findUnique({
+        where: { codeHash },
+      });
+
+      if (
+        !handoff ||
+        handoff.consumedAt != null ||
+        handoff.expiresAt.getTime() <= now.getTime()
+      ) {
+        throw new BadRequestException(
+          'Google sign-in session is invalid or expired.',
+        );
+      }
+
+      const consumed = await tx.authSessionHandoff.updateMany({
+        where: {
+          id: handoff.id,
+          consumedAt: null,
+        },
+        data: {
+          consumedAt: now,
+        },
+      });
+
+      if (consumed.count !== 1) {
+        throw new BadRequestException(
+          'Google sign-in session is invalid or expired.',
+        );
+      }
+
+      return {
+        accessToken: handoff.accessToken,
+      };
+    });
   }
 
   async switchCompanyContext(user: AuthUser, companyId: number) {
@@ -995,30 +1053,29 @@ export class AuthService {
       throw new UnauthorizedException('User account is suspended.');
     }
 
-    if (!existingUser) {
-      const passwordHash = await bcrypt.hash(
-        randomBytes(32).toString('hex'),
-        10,
-      );
+    let resolvedUserId = existingUser?.id ?? null;
 
-      await this.prisma.$transaction(async (tx) => {
+    if (!existingUser) {
+      resolvedUserId = await this.prisma.$transaction(async (tx) => {
         const createdUser = await tx.user.create({
           data: {
             email: normalizedEmail,
             name: profile.name?.trim() || normalizedEmail.split('@')[0],
             contactNumber: null,
-            passwordHash,
+            passwordHash: null,
             systemRole: SystemRole.STANDARD,
             status: UserStatus.ACTIVE,
             emailVerifiedAt: now,
           },
         });
 
-        await this.upsertGoogleIdentity(tx, {
+        await this.linkGoogleIdentity(tx, {
           userId: createdUser.id,
           email: normalizedEmail,
           providerUserId: googleSubject,
         });
+
+        return createdUser.id;
       });
     } else {
       await this.prisma.$transaction(async (tx) => {
@@ -1037,7 +1094,7 @@ export class AuthService {
           },
         });
 
-        await this.upsertGoogleIdentity(tx, {
+        await this.linkGoogleIdentity(tx, {
           userId: existingUser.id,
           email: normalizedEmail,
           providerUserId: googleSubject,
@@ -1045,7 +1102,13 @@ export class AuthService {
       });
     }
 
-    const user = await this.usersService.findForAuthByEmail(normalizedEmail);
+    if (resolvedUserId == null) {
+      throw new BadRequestException(
+        'Google user account could not be resolved.',
+      );
+    }
+
+    const user = await this.usersService.findForAuthById(resolvedUserId);
 
     if (!user) {
       throw new BadRequestException('Google user account could not be loaded.');
@@ -1062,6 +1125,32 @@ export class AuthService {
     }
 
     return this.buildAuthenticatedResponse(user, null);
+  }
+
+  private async createGoogleSessionHandoff(accessToken: string) {
+    const handoffCode = randomBytes(32).toString('hex');
+    const now = new Date();
+
+    await this.prisma.$transaction([
+      this.prisma.authSessionHandoff.deleteMany({
+        where: {
+          OR: [{ expiresAt: { lt: now } }, { consumedAt: { not: null } }],
+        },
+      }),
+      this.prisma.authSessionHandoff.create({
+        data: {
+          codeHash: this.hashSessionHandoffCode(handoffCode),
+          accessToken,
+          expiresAt: new Date(now.getTime() + 2 * 60 * 1000),
+        },
+      }),
+    ]);
+
+    return handoffCode;
+  }
+
+  private hashSessionHandoffCode(handoffCode: string) {
+    return createHash('sha256').update(handoffCode).digest('hex');
   }
 
   private getActiveMemberships(user: UserWithMemberships) {
@@ -1102,7 +1191,19 @@ export class AuthService {
       return activeMemberships[0].companyId;
     }
 
-    return null;
+    return (
+      [...activeMemberships].sort((left, right) => {
+        const lastAccessDifference =
+          (right.lastAccessedAt?.getTime() ?? 0) -
+          (left.lastAccessedAt?.getTime() ?? 0);
+
+        if (lastAccessDifference !== 0) {
+          return lastAccessDifference;
+        }
+
+        return left.companyId - right.companyId;
+      })[0]?.companyId ?? null
+    );
   }
 
   private async issuePasswordResetCode(
@@ -1113,6 +1214,7 @@ export class AuthService {
     const user = await this.usersService.findByEmail(normalizedEmail);
 
     if (!user) {
+      this.logger.log('Password reset requested for an unknown account.');
       return {
         message:
           'If the email is registered, a password reset code will be sent.',
@@ -1123,22 +1225,12 @@ export class AuthService {
       user.status !== UserStatus.ACTIVE &&
       user.status !== UserStatus.PENDING_VERIFICATION
     ) {
+      this.logger.log(
+        `Password reset requested for unavailable user ${user.id} with status ${user.status}.`,
+      );
       return {
         message:
           'If the email is registered, a password reset code will be sent.',
-      };
-    }
-
-    const canUsePasswordLogin = await this.hasAuthIdentity(
-      user.id,
-      AuthProvider.PASSWORD,
-    );
-
-    if (!canUsePasswordLogin) {
-      return {
-        code: 'GOOGLE_ACCOUNT_PASSWORD_NOT_ENABLED',
-        message:
-          'This account uses Google sign-in. Continue with Google, or set a password from account settings after signing in.',
       };
     }
 
@@ -1152,7 +1244,7 @@ export class AuthService {
       VerificationPurpose.PASSWORD_RESET,
     );
 
-    await this.prisma.$transaction(async (tx) => {
+    const createdVerification = await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({
         where: {
           userId: user.id,
@@ -1164,7 +1256,7 @@ export class AuthService {
         },
       });
 
-      await tx.emailVerificationCode.create({
+      return tx.emailVerificationCode.create({
         data: {
           userId: user.id,
           email: user.email,
@@ -1177,6 +1269,9 @@ export class AuthService {
     });
 
     await this.authMailService.sendPasswordResetCode(user.email, resetCode);
+    this.logger.log(
+      `Password reset code issued for user ${user.id}; verification ${createdVerification.id}.`,
+    );
 
     return {
       message:
@@ -1184,59 +1279,46 @@ export class AuthService {
     };
   }
 
-  private hasAuthIdentity(userId: number, provider: AuthProvider) {
-    return this.prisma.userAuthIdentity
-      .count({
-        where: {
-          userId,
-          provider,
-        },
-      })
-      .then((count) => count > 0);
-  }
-
-  private upsertPasswordIdentity(
-    tx: Prisma.TransactionClient,
-    user: { id: number; email: string },
-  ) {
-    return tx.userAuthIdentity.upsert({
-      where: {
-        userId_provider: {
-          userId: user.id,
-          provider: AuthProvider.PASSWORD,
-        },
-      },
-      update: {
-        email: user.email,
-      },
-      create: {
-        userId: user.id,
-        provider: AuthProvider.PASSWORD,
-        email: user.email,
-      },
-    });
-  }
-
-  private upsertGoogleIdentity(
+  private async linkGoogleIdentity(
     tx: Prisma.TransactionClient,
     params: { userId: number; email: string; providerUserId: string },
   ) {
-    return tx.userAuthIdentity.upsert({
+    const existingIdentity = await tx.userAuthIdentity.findUnique({
       where: {
         userId_provider: {
           userId: params.userId,
           provider: AuthProvider.GOOGLE,
         },
       },
-      update: {
-        email: params.email,
-        providerUserId: params.providerUserId,
-      },
-      create: {
+    });
+
+    if (
+      existingIdentity?.providerUserId &&
+      existingIdentity.providerUserId !== params.providerUserId
+    ) {
+      throw new ConflictException(
+        'This email is already linked to a different Google account.',
+      );
+    }
+
+    if (existingIdentity) {
+      return tx.userAuthIdentity.update({
+        where: {
+          id: existingIdentity.id,
+        },
+        data: {
+          email: params.email,
+          providerUserId: params.providerUserId,
+        },
+      });
+    }
+
+    return tx.userAuthIdentity.create({
+      data: {
         userId: params.userId,
         provider: AuthProvider.GOOGLE,
-        providerUserId: params.providerUserId,
         email: params.email,
+        providerUserId: params.providerUserId,
       },
     });
   }
