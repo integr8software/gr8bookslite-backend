@@ -17,6 +17,7 @@ import { AuthService } from './auth.service';
 import { ActivateWorkspaceUserDto } from './dto/activate-workspace-user.dto';
 import { ChangeAuthenticatedPasswordDto } from './dto/change-authenticated-password.dto';
 import { ChangeVerificationEmailDto } from './dto/change-verification-email.dto';
+import { ExchangeGoogleSessionDto } from './dto/exchange-google-session.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -191,6 +192,18 @@ export class AuthController {
         error,
       }),
     );
+  }
+
+  @Public()
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60_000,
+    },
+  })
+  @Post('google/session')
+  exchangeGoogleSession(@Body() dto: ExchangeGoogleSessionDto) {
+    return this.authService.exchangeGoogleSession(dto.handoffCode);
   }
 
   @UseGuards(JwtAuthGuard)

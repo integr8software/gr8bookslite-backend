@@ -127,7 +127,7 @@ export class GoogleOAuthService {
 
   buildFrontendRedirect(params: {
     mode: GoogleAuthMode;
-    accessToken?: string;
+    handoffCode?: string;
     error?: string;
   }) {
     const { frontendCallbackUrl } = this.getConfig();
@@ -135,10 +135,8 @@ export class GoogleOAuthService {
 
     redirectUrl.searchParams.set('mode', params.mode);
 
-    if (params.accessToken) {
-      redirectUrl.hash = new URLSearchParams({
-        accessToken: params.accessToken,
-      }).toString();
+    if (params.handoffCode) {
+      redirectUrl.searchParams.set('handoffCode', params.handoffCode);
     }
 
     if (params.error) {
