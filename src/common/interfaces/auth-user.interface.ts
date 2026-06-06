@@ -14,6 +14,8 @@ export interface AuthUser {
   membershipRole: MembershipRole | null;
   membershipStatus: MembershipStatus | null;
   companyRoleId: number | null;
+  companyRoleCode: string | null;
+  companyRoleName: string | null;
   accessScope: AccessScopeLevel | null;
   enabledModules: string[];
   permissions: string[];
