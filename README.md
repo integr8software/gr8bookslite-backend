@@ -26,7 +26,7 @@ This project already has the core backend foundation in place:
 - Prisma schema and migrations for users, companies, and memberships
 - Global request validation with `class-validator`
 - Environment-based configuration using `@nestjs/config`
-- Neon-ready PostgreSQL connection setup for team collaboration
+- Separate local PostgreSQL and Neon staging database workflows
 
 ## Implemented Features
 
@@ -161,69 +161,54 @@ prisma/
   schema.prisma
 ```
 
-## Environment Variables
+## Database Environments
 
-Create a `.env` file based on `.env.example`.
+Database access is deliberately separated:
 
-```env
-# Runtime
-PORT=3000
-NODE_ENV="development"
-CORS_ALLOWED_ORIGINS="http://localhost:3001"
+| Environment | Database | Configuration source |
+| --- | --- | --- |
+| Local development | Local PostgreSQL | `.env` |
+| Render staging | Neon staging | Render environment variables |
+| Production | Separate production database | Hosting environment variables |
 
-# Neon pooled connection string for the app/runtime
-DATABASE_URL="postgresql://<user>:<password>@<endpoint>-pooler.<region>.aws.neon.tech/<database>?sslmode=require&channel_binding=require"
+Never put Neon credentials in the local `.env`. Local scripts explicitly load `.env`; deploy scripts do not load any env file.
 
-# Direct connection string for Prisma CLI tasks
-DIRECT_URL="postgresql://<user>:<password>@<endpoint>.<region>.aws.neon.tech/<database>?sslmode=require&channel_binding=require"
+## Local Setup
 
-JWT_SECRET="replace-with-a-strong-random-secret"
-JWT_EXPIRES_IN_SECONDS=86400
-```
-
-### Why Two Database URLs?
-
-- `DATABASE_URL` is used by the running NestJS application
-- The Prisma schema reads `DATABASE_URL` for the datasource
-- Prisma CLI tasks also load `prisma.config.ts`, which requires `DIRECT_URL`
-- With Neon, pooled connections are better for app traffic, while direct connections are safer for schema changes
-
-## Setup
+1. Install PostgreSQL and create the local database:
 
 ```bash
-npm install
+createdb -U postgres gr8bookslite_dev
 ```
 
-Then create your local environment file:
+2. Create `.env`, then install dependencies:
 
 ```bash
 cp .env.example .env
+npm install
 ```
 
-## Development
+3. Set both local database URLs in `.env`:
 
-Fastest development flow:
+```env
+DATABASE_URL="postgresql://postgres:your_password@localhost:5432/gr8bookslite_dev?schema=public"
+DIRECT_URL="postgresql://postgres:your_password@localhost:5432/gr8bookslite_dev?schema=public"
+```
+
+4. Apply migrations and start the API:
 
 ```bash
+npm run db:migrate:local
 npm run dev
 ```
 
-This command:
-
-- regenerates the Prisma client
-- starts NestJS in watch mode using `.env`
-
-If you are using Neon for the first time, run your migration before starting the app:
-
-```bash
-npm run db:migrate:dev -- --name init
-```
+`npm run dev` regenerates the Prisma client and starts NestJS in watch mode. The local wrapper requires `.env` and makes its values override exported shell variables, preventing an old Neon `DATABASE_URL` from being used accidentally.
 
 ## Prisma Workflow
 
 For the beginner-friendly Prisma command flow used in this repo, read:
 
-- [docs/PRISMA_WORKFLOW.md](/Users/integr8/Documents/GitHub/gr8lite-backend/docs/PRISMA_WORKFLOW.md)
+- [docs/PRISMA_WORKFLOW.md](docs/PRISMA_WORKFLOW.md)
 
 ## Useful Commands
 
@@ -234,20 +219,27 @@ npm run dev
 # run backend in debug watch mode
 npm run dev:debug
 
-# regenerate prisma client
-npm run db:generate
+# regenerate and validate Prisma locally
+npm run db:generate:local
+npm run db:validate:local
 
 # format prisma schema
 npm run db:format
 
-# create and apply a migration
-npm run db:migrate -- --name your_migration_name
+# create and apply a migration locally
+npm run db:migrate:local -- --name your_migration_name
 
-# push schema changes without migration
-npm run db:push
+# create a migration without applying it
+npm run db:migrate:create:local -- --name your_migration_name
 
-# open prisma studio
-npm run db:studio
+# inspect, reset, seed, or open the local database
+npm run db:status:local
+npm run db:reset:local
+npm run db:seed:local
+npm run db:studio:local
+
+# deploy committed migrations using host-provided environment variables
+npm run db:migrate:deploy
 
 # build project
 npm run build
@@ -262,37 +254,31 @@ npm run lint
 npm run test
 ```
 
-## Team Database Setup With Neon
+## Render And Neon Staging
 
-Recommended workflow for your team:
+Set `DATABASE_URL` and `DIRECT_URL` in the Render dashboard. Use the Neon pooled URL for `DATABASE_URL` and the Neon direct URL for `DIRECT_URL`. Do not upload `.env` to Render.
 
-- Create one shared Neon project for the backend
-- Invite teammates through a Neon organization or project collaborators
-- Store only `.env.example` in git, never commit the real `.env`
-- Keep Prisma migrations in git so every teammate gets the same schema history
-- Use the shared development branch in Neon for normal collaboration
-- Create extra Neon branches only for risky experiments or isolated testing
+Render commands:
 
-Typical onboarding flow for a teammate:
+```text
+Build Command: npm install && npm run build
+Start Command: npm run db:migrate:deploy && npm run start:prod
+```
+
+`db:migrate:deploy` uses Render's environment variables and only applies committed migrations. Schema changes must be created and tested against local PostgreSQL, committed under `prisma/migrations`, and deployed through Render. Do not run `migrate dev`, `db push`, or `migrate reset` against Neon staging.
+
+## Copy Neon Staging Data Locally
+
+Use the Neon direct connection string for the dump. The flags avoid restoring Neon-specific ownership and grants:
 
 ```bash
-# 1. clone the project
-# 2. create local env file
-cp .env.example .env
-
-# 3. paste the shared Neon connection strings
-# 4. install dependencies
-npm install
-
-# 5. generate prisma client
-npm run db:generate
-
-# 6. apply migrations
-npm run db:migrate
-
-# 7. start the backend
-npm run dev
+pg_dump --no-owner --no-acl "$NEON_DIRECT_URL" > neon_backup.sql
+dropdb -U postgres gr8bookslite_dev
+createdb -U postgres gr8bookslite_dev
+psql -U postgres -d gr8bookslite_dev < neon_backup.sql
 ```
+
+Backups can contain sensitive staging data. Store them only temporarily and never commit them. See [docs/agents/LOCAL_DATABASE_SETUP.md](docs/agents/LOCAL_DATABASE_SETUP.md) for the detailed workflow.
 
 ## Progress Checklist
 
