@@ -15,12 +15,18 @@ All commands ending in `:local` explicitly load `.env`.
 | `npm run db:migrate:create:local -- --name <name>` | Create a local migration without applying it |
 | `npm run db:status:local` | Check local migration status |
 | `npm run db:reset:local` | Wipe and rebuild the local database |
-| `npm run db:seed:local` | Seed the local database |
+| `npm run db:seed:local` | Run Prisma's registered seed against the local database |
 | `npm run db:studio:local` | Open Prisma Studio against the local database |
 | `npm run db:prepare:local` | Format, validate, and generate locally |
 | `npm run db:rebuild:local` | Reset, generate, and seed locally |
 
 `db:reset:local` and `db:rebuild:local` destroy local data. There is intentionally no `db push` script because normal schema changes must be represented by migrations.
+
+The local environment wrapper rejects non-local `DATABASE_URL` and `DIRECT_URL` hosts. Seeds and maintenance scripts also assert that `DATABASE_URL` points to `localhost`, `127.0.0.1`, or `::1` before modifying data.
+
+The seed always upserts subscription plans. It seeds a superadmin only when both `SUPERADMIN_EMAIL` and `SUPERADMIN_PASSWORD` are set; leaving both empty safely skips that account.
+
+The local user-owned-data cleanup deletes database records only by default. Remote storage deletion requires the explicit `--delete-storage` flag and should be used only after confirming the configured Supabase project is safe.
 
 ## Schema Change Workflow
 
