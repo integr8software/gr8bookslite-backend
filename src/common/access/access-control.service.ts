@@ -57,6 +57,23 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
         };
       };
     };
+    unitAccess: {
+      include: {
+        companyRole: {
+          include: {
+            permissions: {
+              include: {
+                permission: {
+                  include: {
+                    module: true;
+                  };
+                };
+              };
+            };
+          };
+        };
+      };
+    };
     permissionOverrides: {
       include: {
         permission: {
@@ -99,6 +116,8 @@ export class AccessControlService {
         membershipRole: null,
         membershipStatus: null,
         companyRoleId: null,
+        companyRoleCode: null,
+        companyRoleName: null,
         accessScope: null,
         enabledModules: [],
         permissions: [],
@@ -114,6 +133,8 @@ export class AccessControlService {
         membershipRole: null,
         membershipStatus: null,
         companyRoleId: null,
+        companyRoleCode: null,
+        companyRoleName: null,
         accessScope: null,
         enabledModules: [],
         permissions: [],
@@ -134,6 +155,11 @@ export class AccessControlService {
       membership,
       enabledModules,
     );
+    const effectiveCompanyRole =
+      membership.companyRole ??
+      membership.unitAccess.find((unitAccess) => unitAccess.companyRole)
+        ?.companyRole ??
+      null;
 
     return {
       id: user.id,
@@ -142,7 +168,9 @@ export class AccessControlService {
       systemRole: user.systemRole,
       membershipRole: membership.role,
       membershipStatus: membership.status,
-      companyRoleId: membership.companyRoleId,
+      companyRoleId: effectiveCompanyRole?.id ?? null,
+      companyRoleCode: effectiveCompanyRole?.code ?? null,
+      companyRoleName: effectiveCompanyRole?.name ?? null,
       accessScope: membership.accessScope,
       enabledModules,
       permissions,
@@ -231,6 +259,23 @@ export class AccessControlService {
             },
           },
         },
+        unitAccess: {
+          include: {
+            companyRole: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: {
+                      include: {
+                        module: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         permissionOverrides: {
           include: {
             permission: {
@@ -299,27 +344,41 @@ export class AccessControlService {
   ): string[] {
     const permissions = new Map<string, Record<PermissionAction, boolean>>();
 
-    for (const rolePermission of membership.companyRole?.permissions ?? []) {
+    const rolePermissions = [
+      ...(membership.companyRole?.permissions ?? []),
+      ...membership.unitAccess.flatMap(
+        (unitAccess) => unitAccess.companyRole?.permissions ?? [],
+      ),
+    ];
+
+    for (const rolePermission of rolePermissions) {
       const moduleCode = rolePermission.permission.module.code;
 
-      if (!enabledModules.includes(moduleCode)) {
+      if (enabledModules.length > 0 && !enabledModules.includes(moduleCode)) {
         continue;
       }
 
+      const current = permissions.get(rolePermission.permission.code);
       permissions.set(rolePermission.permission.code, {
-        [PermissionAction.VIEW]: rolePermission.canView,
-        [PermissionAction.CREATE]: rolePermission.canCreate,
-        [PermissionAction.UPDATE]: rolePermission.canUpdate,
-        [PermissionAction.DELETE]: rolePermission.canDelete,
-        [PermissionAction.APPROVE]: rolePermission.canApprove,
-        [PermissionAction.EXPORT]: rolePermission.canExport,
+        [PermissionAction.VIEW]:
+          Boolean(current?.view) || rolePermission.canView,
+        [PermissionAction.CREATE]:
+          Boolean(current?.create) || rolePermission.canCreate,
+        [PermissionAction.UPDATE]:
+          Boolean(current?.update) || rolePermission.canUpdate,
+        [PermissionAction.DELETE]:
+          Boolean(current?.delete) || rolePermission.canDelete,
+        [PermissionAction.APPROVE]:
+          Boolean(current?.approve) || rolePermission.canApprove,
+        [PermissionAction.EXPORT]:
+          Boolean(current?.export) || rolePermission.canExport,
       });
     }
 
     for (const override of membership.permissionOverrides) {
       const moduleCode = override.permission.module.code;
 
-      if (!enabledModules.includes(moduleCode)) {
+      if (enabledModules.length > 0 && !enabledModules.includes(moduleCode)) {
         continue;
       }
 
