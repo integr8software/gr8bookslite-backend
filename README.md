@@ -261,11 +261,11 @@ Set `DATABASE_URL` and `DIRECT_URL` in the Render dashboard. Use the Neon pooled
 Render commands:
 
 ```text
-Build Command: npm install && npm run build
+Build Command: npm ci --include=dev && npm run build
 Start Command: npm run db:migrate:deploy && npm run start:prod
 ```
 
-`db:migrate:deploy` uses Render's environment variables and only applies committed migrations. Schema changes must be created and tested against local PostgreSQL, committed under `prisma/migrations`, and deployed through Render. Do not run `migrate dev`, `db push`, or `migrate reset` against Neon staging.
+`--include=dev` is required because Render staging uses `NODE_ENV=production`, while the Nest CLI and TypeScript build tools are development dependencies. `db:migrate:deploy` uses Render's environment variables and only applies committed migrations. Schema changes must be created and tested against local PostgreSQL, committed under `prisma/migrations`, and deployed through Render. Do not run `migrate dev`, `db push`, or `migrate reset` against Neon staging.
 
 ## Copy Neon Staging Data Locally
 

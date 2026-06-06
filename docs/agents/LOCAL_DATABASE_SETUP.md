@@ -89,8 +89,8 @@ npm run build
 Commit `prisma/schema.prisma` and the generated `prisma/migrations` files. On Render, configure Neon staging URLs as environment variables and use:
 
 ```text
-Build Command: npm install && npm run build
+Build Command: npm ci --include=dev && npm run build
 Start Command: npm run db:migrate:deploy && npm run start:prod
 ```
 
-`db:migrate:deploy` applies committed migrations using Render's environment variables. Never run `migrate dev`, `migrate reset`, or `db push` against Neon staging.
+`--include=dev` installs the Nest CLI and TypeScript build tools even though Render staging uses `NODE_ENV=production`. `db:migrate:deploy` applies committed migrations using Render's environment variables. Never run `migrate dev`, `migrate reset`, or `db push` against Neon staging.
