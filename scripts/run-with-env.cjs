@@ -47,6 +47,35 @@ function loadEnvFile(fileName) {
   }
 }
 
+function assertLocalDatabaseUrls() {
+  const localDatabaseHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+  for (const variableName of ['DATABASE_URL', 'DIRECT_URL']) {
+    const value = process.env[variableName];
+
+    if (!value) {
+      console.error(`${variableName} is required in the local environment file.`);
+      process.exit(1);
+    }
+
+    let hostname;
+
+    try {
+      hostname = new URL(value).hostname;
+    } catch {
+      console.error(`${variableName} is not a valid PostgreSQL connection URL.`);
+      process.exit(1);
+    }
+
+    if (!localDatabaseHosts.has(hostname)) {
+      console.error(
+        `Refusing to use non-local ${variableName} host "${hostname}" through the local environment wrapper.`,
+      );
+      process.exit(1);
+    }
+  }
+}
+
 const [, , envFile, ...commandParts] = process.argv;
 
 if (!envFile || commandParts.length === 0) {
@@ -57,6 +86,7 @@ if (!envFile || commandParts.length === 0) {
 }
 
 loadEnvFile(envFile);
+assertLocalDatabaseUrls();
 
 const [command, ...args] = commandParts;
 const isWindows = process.platform === 'win32';

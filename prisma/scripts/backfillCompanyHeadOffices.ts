@@ -1,6 +1,5 @@
-import 'dotenv/config';
-
 import { CompanyUnitType } from '@prisma/client';
+import { assertLocalDatabase } from './assertLocalDatabase';
 import { prisma } from '../seeds/prismaClient';
 
 function getOptionValue(flag: string) {
@@ -37,6 +36,8 @@ function getCompanyIdFilter() {
 }
 
 async function main() {
+  assertLocalDatabase();
+
   const applyChanges = shouldApplyChanges();
   const companyId = getCompanyIdFilter();
 

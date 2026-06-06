@@ -202,7 +202,7 @@ npm run db:migrate:local
 npm run dev
 ```
 
-`npm run dev` regenerates the Prisma client and starts NestJS in watch mode. The local wrapper requires `.env` and makes its values override exported shell variables, preventing an old Neon `DATABASE_URL` from being used accidentally.
+`npm run dev` regenerates the Prisma client and starts NestJS in watch mode. The local wrapper requires `.env`, makes its values override exported shell variables, and rejects non-local database hosts. Seeds and maintenance scripts also refuse to modify a non-local database.
 
 ## Prisma Workflow
 

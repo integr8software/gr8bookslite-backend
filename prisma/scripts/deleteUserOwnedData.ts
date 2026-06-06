@@ -1,8 +1,8 @@
-import 'dotenv/config';
-
+import { assertLocalDatabase } from './assertLocalDatabase';
 import { prisma } from '../seeds/prismaClient';
 
 type DeleteUserOwnedDataOptions = {
+  deleteStorageFiles: boolean;
   email: string;
 };
 
@@ -31,6 +31,9 @@ function getDeleteUserOwnedDataOptions(): DeleteUserOwnedDataOptions {
   }
 
   return {
+    deleteStorageFiles:
+      process.argv.includes('--delete-storage') ||
+      process.env.DELETE_USER_STORAGE_FILES === 'true',
     email: email.trim().toLowerCase(),
   };
 }
@@ -140,6 +143,8 @@ async function deleteStorageFiles(storagePathsToDelete: string[]) {
 }
 
 async function main() {
+  assertLocalDatabase();
+
   const options = getDeleteUserOwnedDataOptions();
 
   const user = await prisma.user.findUnique({
@@ -192,7 +197,13 @@ async function main() {
   ].filter((value): value is string => Boolean(value));
 
   await deleteCompanyOwnedData(companyIdsToDelete, user.id);
-  await deleteStorageFiles(storagePathsToDelete);
+  if (options.deleteStorageFiles) {
+    await deleteStorageFiles(storagePathsToDelete);
+  } else if (storagePathsToDelete.length > 0) {
+    console.log(
+      `Skipped deletion of ${storagePathsToDelete.length} storage object(s). Re-run with --delete-storage only when the configured storage environment is safe.`,
+    );
+  }
 
   console.log(
     `Deleted user-owned data for ${options.email}. Removed ${companyIdsToDelete.length} company record(s).`,
