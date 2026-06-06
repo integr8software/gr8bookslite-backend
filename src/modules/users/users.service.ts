@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AuthProvider, Prisma, SystemRole, UserStatus } from '@prisma/client';
+import { Prisma, SystemRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -47,8 +47,6 @@ export class UsersService {
           emailVerifiedAt: new Date(),
         },
       });
-
-      await this.upsertPasswordIdentity(tx, createdUser);
 
       return createdUser;
     });
@@ -188,10 +186,6 @@ export class UsersService {
         });
       }
 
-      if (dto.password) {
-        await this.upsertPasswordIdentity(tx, updatedUser);
-      }
-
       return updatedUser;
     });
 
@@ -311,28 +305,6 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found.');
     }
-  }
-
-  private upsertPasswordIdentity(
-    tx: Prisma.TransactionClient,
-    user: { id: number; email: string },
-  ) {
-    return tx.userAuthIdentity.upsert({
-      where: {
-        userId_provider: {
-          userId: user.id,
-          provider: AuthProvider.PASSWORD,
-        },
-      },
-      update: {
-        email: user.email,
-      },
-      create: {
-        userId: user.id,
-        provider: AuthProvider.PASSWORD,
-        email: user.email,
-      },
-    });
   }
 
   private ensureCompanyContext(

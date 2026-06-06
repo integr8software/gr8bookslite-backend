@@ -15,8 +15,6 @@ import {
   SystemRole,
   UserStatus,
 } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { normalizeEmail } from '../../../common/utils/email.util';
@@ -74,13 +72,11 @@ export class WorkspaceUsersService {
       throw new ConflictException('Email is already in use.');
     }
 
-    const passwordHash = await bcrypt.hash(randomBytes(32).toString('hex'), 12);
-
     const createdUser = await this.prisma.$transaction(async (tx) => {
       const workspaceUser = await tx.user.create({
         data: {
           email: normalizedEmail,
-          passwordHash,
+          passwordHash: null,
           name: dto.name.trim(),
           contactNumber: cleanOptional(dto.contactNumber),
           systemRole: SystemRole.STANDARD,
