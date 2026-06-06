@@ -35,16 +35,15 @@ function parseEnvFile(content) {
 function loadEnvFile(fileName) {
   const fullPath = path.resolve(process.cwd(), fileName);
   if (!fs.existsSync(fullPath)) {
-    return;
+    console.error(`Environment file not found: ${fullPath}`);
+    process.exit(1);
   }
 
   const fileContents = fs.readFileSync(fullPath, 'utf8');
   const parsed = parseEnvFile(fileContents);
 
   for (const [key, value] of Object.entries(parsed)) {
-    if (process.env[key] === undefined) {
-      process.env[key] = value;
-    }
+    process.env[key] = value;
   }
 }
 
@@ -57,10 +56,7 @@ if (!envFile || commandParts.length === 0) {
   process.exit(1);
 }
 
-loadEnvFile('.env');
-if (envFile !== '.env') {
-  loadEnvFile(envFile);
-}
+loadEnvFile(envFile);
 
 const [command, ...args] = commandParts;
 const isWindows = process.platform === 'win32';
