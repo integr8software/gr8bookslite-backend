@@ -1,189 +1,73 @@
 # Prisma Workflow
 
-This is the safest beginner-friendly Prisma workflow for this repo.
+Local development uses local PostgreSQL through `.env`. Render staging uses Neon through environment variables configured in Render. Production must use a separate production database.
 
-## Quick Rule
+## Local Commands
 
-Use these commands most of the time:
+All commands ending in `:local` explicitly load `.env`.
+
+| Command | Purpose |
+| --- | --- |
+| `npm run db:generate:local` | Generate Prisma Client |
+| `npm run db:validate:local` | Validate Prisma schema and configuration |
+| `npm run db:format` | Format Prisma schema using local configuration |
+| `npm run db:migrate:local -- --name <name>` | Create and apply a local migration |
+| `npm run db:migrate:create:local -- --name <name>` | Create a local migration without applying it |
+| `npm run db:status:local` | Check local migration status |
+| `npm run db:reset:local` | Wipe and rebuild the local database |
+| `npm run db:seed:local` | Run Prisma's registered seed against the local database |
+| `npm run db:studio:local` | Open Prisma Studio against the local database |
+| `npm run db:prepare:local` | Format, validate, and generate locally |
+| `npm run db:rebuild:local` | Reset, generate, and seed locally |
+
+`db:reset:local` and `db:rebuild:local` destroy local data. There is intentionally no `db push` script because normal schema changes must be represented by migrations.
+
+The local environment wrapper rejects non-local `DATABASE_URL` and `DIRECT_URL` hosts. Seeds and maintenance scripts also assert that `DATABASE_URL` points to `localhost`, `127.0.0.1`, or `::1` before modifying data.
+
+The seed always upserts subscription plans. It seeds a superadmin only when both `SUPERADMIN_EMAIL` and `SUPERADMIN_PASSWORD` are set; leaving both empty safely skips that account.
+
+The local user-owned-data cleanup deletes database records only by default. Remote storage deletion requires the explicit `--delete-storage` flag and should be used only after confirming the configured Supabase project is safe.
+
+## Schema Change Workflow
+
+1. Edit `prisma/schema.prisma`.
+2. Prepare and validate locally:
 
 ```bash
-npm run db:status:dev
-npm run db:prepare:dev
-npm run db:migrate:dev -- --name your_feature_name
-npm run typecheck:clean
-npm run dev
+npm run db:prepare:local
 ```
 
-## Recommended Commands
-
-### Start normal backend development
+3. Create and apply a migration to local PostgreSQL:
 
 ```bash
-npm run dev
+npm run db:migrate:local -- --name add_billing_module
 ```
 
-This:
-
-- regenerates Prisma client
-- starts NestJS in watch mode
-
-If TypeScript cache gets weird, use:
+4. Review the generated SQL under `prisma/migrations`, then verify:
 
 ```bash
-npm run dev:clean
-```
-
-## When you change `prisma/schema.prisma`
-
-Run this first:
-
-```bash
-npm run db:prepare:dev
-```
-
-This:
-
-- formats Prisma schema
-- validates Prisma schema
-- regenerates Prisma client
-
-## Proper flow for a new database feature
-
-Example: adding billing, onboarding fields, or new tables.
-
-1. Edit `prisma/schema.prisma`
-2. Run:
-
-```bash
-npm run db:prepare:dev
-```
-
-3. Create and apply the migration:
-
-```bash
-npm run db:migrate:dev -- --name add_billing_module
-```
-
-4. Check types:
-
-```bash
-npm run typecheck:clean
-```
-
-5. Start the backend:
-
-```bash
-npm run dev
-```
-
-## If you only changed TypeScript code, not the schema
-
-Use:
-
-```bash
-npm run typecheck:clean
-npm run dev
-```
-
-## If Prisma client types look stale
-
-Use:
-
-```bash
-npm run db:generate:dev
-npm run typecheck:clean
-```
-
-## Check migration state
-
-Use:
-
-````bash
-npm run db:status:dev
-
-## Open Prisma Studio
-
-Use:
-
-```bash
-npm run db:studio:dev
-````
-
-## If your dev database is disposable and you want a clean rebuild
-
-Use:
-
-```bash
-npm run db:rebuild:dev
-```
-
-This:
-
-- resets the dev database
-- regenerates Prisma client
-- reseeds the database
-
-Only use this when it is safe to wipe development data.
-
-## When to use `db push`
-
-```bash
-npm run db:push:dev
-```
-
-Use `db push` only for quick experiments or temporary local prototyping.
-
-Avoid using `db push` as the normal team workflow because it can create drift between:
-
-- `schema.prisma`
-- migration history
-- actual database structure
-
-For normal feature work, prefer:
-
-```bash
-npm run db:migrate:dev -- --name your_feature_name
-```
-
-## Safe Default Workflow
-
-If you are unsure, use this exact order:
-
-```bash
-npm run db:prepare:dev
-npm run db:migrate:dev -- --name your_feature_name
 npm run typecheck:clean
 npm run build
 npm run dev
 ```
 
-## If migrations get weird
+5. Commit the schema and migration together. Render applies that committed migration to Neon staging during startup.
 
-Symptoms:
+## Staging And Production
 
-- drift detected
-- Prisma client types do not match schema
-- database columns/tables are missing unexpectedly
-- migration fails halfway
-
-Try these checks first:
+The deploy command does not load `.env`:
 
 ```bash
-npm run db:status:dev
-npm run db:generate:dev
-npm run typecheck:clean
+npm run db:migrate:deploy
 ```
 
-If the dev database is safe to wipe:
+It relies on `DATABASE_URL` and `DIRECT_URL` supplied by the hosting platform. Render staging must point to Neon staging; production must point to a separate production database.
 
-```bash
-npm run db:rebuild:dev
+Render configuration:
+
+```text
+Build Command: npm install && npm run build
+Start Command: npm run db:migrate:deploy && npm run start:prod
 ```
 
-## Team Guidance
-
-- Prefer `migrate dev` over `db push`
-- Prefer `typecheck:clean` after Prisma changes
-- Prefer `dev:clean` if watch mode behaves strangely
-- Keep migration names short and descriptive
-- Review generated SQL when the schema change is important
+Never run `migrate dev`, `migrate reset`, or `db push` against staging or production.

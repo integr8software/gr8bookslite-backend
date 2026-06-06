@@ -54,6 +54,8 @@ lerna-debug.log*
 *.cer
 *.der
 *.ovpn
+*.sql
+*.dump
 secrets/
 credentials/
 

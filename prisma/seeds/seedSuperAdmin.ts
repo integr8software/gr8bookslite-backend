@@ -8,9 +8,16 @@ export async function seedSuperAdmin() {
   const password = process.env.SUPERADMIN_PASSWORD;
   const name = process.env.SUPERADMIN_NAME ?? 'Platform Super Admin';
 
+  if (!email && !password) {
+    console.log(
+      'Skipped superadmin seed because SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD are not set.',
+    );
+    return;
+  }
+
   if (!email || !password) {
     throw new Error(
-      'SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD are required to seed the superadmin account.',
+      'Set both SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD, or leave both empty to skip the superadmin seed.',
     );
   }
 
