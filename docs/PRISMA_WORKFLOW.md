@@ -66,8 +66,8 @@ It relies on `DATABASE_URL` and `DIRECT_URL` supplied by the hosting platform. R
 Render configuration:
 
 ```text
-Build Command: npm install && npm run build
+Build Command: npm ci --include=dev && npm run build
 Start Command: npm run db:migrate:deploy && npm run start:prod
 ```
 
-Never run `migrate dev`, `migrate reset`, or `db push` against staging or production.
+Render staging has `NODE_ENV=production`, so `--include=dev` is required to install the Nest CLI and TypeScript build tools. Never run `migrate dev`, `migrate reset`, or `db push` against staging or production.
