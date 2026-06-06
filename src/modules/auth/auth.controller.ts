@@ -36,22 +36,28 @@ import {
   path: 'auth',
   version: '1',
 })
-@Throttle({
-  default: {
-    limit: 30,
-    ttl: 60_000,
-  },
-})
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60_000,
+    },
+  })
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60_000,
+    },
+  })
   @Post('verify-email')
   async verifyEmail(
     @Body() dto: VerifyEmailDto,
@@ -63,48 +69,96 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('resend-verification')
   resendVerification(@Body() dto: ResendVerificationDto) {
     return this.authService.resendVerification(dto);
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('change-verification-email')
   changeVerificationEmail(@Body() dto: ChangeVerificationEmailDto) {
     return this.authService.changeVerificationEmail(dto);
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('forgot-password')
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('resend-forgot-password')
   resendForgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.resendForgotPassword(dto);
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60_000,
+    },
+  })
   @Post('verify-forgot-password-code')
   verifyForgotPasswordCode(@Body() dto: VerifyForgotPasswordCodeDto) {
     return this.authService.verifyForgotPasswordCode(dto);
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60_000,
+    },
+  })
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60_000,
+    },
+  })
   @Post('workspace-invitation/activate')
   activateWorkspaceUser(@Body() dto: ActivateWorkspaceUserDto) {
     return this.authService.activateWorkspaceUser(dto);
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60_000,
+    },
+  })
   @Post('login')
   async login(
     @Body() dto: LoginDto,
@@ -116,6 +170,12 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60_000,
+    },
+  })
   @Get('google')
   googleAuth(
     @Query('mode') mode: string | undefined,
@@ -125,6 +185,12 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60_000,
+    },
+  })
   @Get('google/callback')
   async googleAuthCallback(
     @Query('code') code: string | undefined,
