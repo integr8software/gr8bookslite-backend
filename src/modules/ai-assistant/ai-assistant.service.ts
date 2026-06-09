@@ -54,7 +54,7 @@ const moduleGuide = [
   },
   {
     label: 'Maintenance > Financial Management > Charts of Accounts',
-    route: '/maintenance/financial-management/charts-of-accounts',
+    route: '/maintenance/charts-of-accounts',
     aliases: [
       'chart of accounts',
       'charts of accounts',
