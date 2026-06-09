@@ -113,14 +113,7 @@
         },
         "responses": {
           "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
+            "description": ""
           }
         },
         "tags": [
@@ -144,14 +137,7 @@
         },
         "responses": {
           "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
+            "description": ""
           }
         },
         "tags": [
@@ -308,6 +294,30 @@
         ],
         "responses": {
           "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/google/session": {
+      "post": {
+        "operationId": "AuthController_exchangeGoogleSession_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExchangeGoogleSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
             "description": ""
           }
         },
@@ -1410,6 +1420,54 @@
         ]
       }
     },
+    "/api/v1/workspace/audit-logs": {
+      "get": {
+        "operationId": "WorkspaceAuditLogsController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceAuditLogResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Audit Logs"
+        ]
+      }
+    },
+    "/api/v1/workspace/audit-logs/activity": {
+      "post": {
+        "operationId": "WorkspaceAuditLogsController_recordActivity_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordWorkspaceActivityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Workspace Audit Logs"
+        ]
+      }
+    },
     "/api/v1/workspace/users": {
       "get": {
         "operationId": "WorkspaceUsersController_findAll_v1",
@@ -2244,6 +2302,19 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "ExchangeGoogleSessionDto": {
+        "type": "object",
+        "properties": {
+          "handoffCode": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "handoffCode"
         ]
       },
       "SwitchCompanyContextDto": {
@@ -4335,6 +4406,105 @@
             "type": "number"
           }
         }
+      },
+      "WorkspaceAuditLogResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "number",
+            "nullable": true
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorUserId": {
+            "type": "number",
+            "nullable": true
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "actorRole": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "ipAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "module": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "companyName",
+          "actorUserId",
+          "actorName",
+          "actorRole",
+          "action",
+          "entityType",
+          "entityId",
+          "description",
+          "ipAddress",
+          "module",
+          "branchId",
+          "branchName",
+          "severity",
+          "createdAt"
+        ]
+      },
+      "RecordWorkspaceActivityDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "module": {
+            "type": "string",
+            "minLength": 1
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "module"
+        ]
       },
       "WorkspaceUserAssignmentDto": {
         "type": "object",

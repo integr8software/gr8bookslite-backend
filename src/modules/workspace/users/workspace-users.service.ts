@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -21,6 +22,7 @@ import { normalizeEmail } from '../../../common/utils/email.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
+import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { CreateWorkspaceUserDto } from './dto/create-workspace-user.dto';
 import { UpdateWorkspaceUserDto } from './dto/update-workspace-user.dto';
 import { mapWorkspaceUserMemberships } from './mappers/workspace-user.mapper';
@@ -28,11 +30,14 @@ import { WorkspaceUserMembershipInclude } from './prisma/workspace-user.include'
 
 @Injectable()
 export class WorkspaceUsersService {
+  private readonly logger = new Logger(WorkspaceUsersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
     private readonly authMailService: AuthMailService,
+    private readonly auditLogsService: WorkspaceAuditLogsService,
   ) {}
 
   async findAll(user: AuthUser) {
@@ -95,6 +100,13 @@ export class WorkspaceUsersService {
     });
 
     const memberships = await this.findUserMemberships(createdUser.id);
+    await this.recordUserAssignmentLogs({
+      action: 'CREATE',
+      actorUserId: user.id,
+      assignments,
+      description: `Workspace user ${createdUser.email} was invited.`,
+      targetUserId: createdUser.id,
+    });
 
     if (createdUser.status === UserStatus.PENDING_VERIFICATION) {
       await this.sendUserInvitationEmail(actor, createdUser, assignments);
@@ -166,6 +178,13 @@ export class WorkspaceUsersService {
     });
 
     const memberships = await this.findUserMemberships(updatedUser.id);
+    await this.recordUserAssignmentLogs({
+      action: 'UPDATE',
+      actorUserId: user.id,
+      assignments,
+      description: `Workspace user ${updatedUser.email} was updated.`,
+      targetUserId: updatedUser.id,
+    });
 
     if (
       emailChanged &&
@@ -226,6 +245,17 @@ export class WorkspaceUsersService {
       targetUser,
       targetUser.memberships.map((membership) => membership.company.name),
     );
+    await this.recordUserAssignmentLogs({
+      action: 'CREATE',
+      actorUserId: user.id,
+      assignments: manageableCompanyIds.map((companyId) => ({
+        accessScope: AccessScopeLevel.COMPANY,
+        companyId,
+        unitIds: [],
+      })),
+      description: `Invitation was resent to ${targetUser.email}.`,
+      targetUserId: targetUser.id,
+    });
 
     return {
       message: `Invitation sent to ${targetUser.email}.`,
@@ -278,6 +308,17 @@ export class WorkspaceUsersService {
         'Admin access is required for every company assigned to this pending user.',
       );
     }
+
+    await this.recordUserAssignmentLogs({
+      action: 'DELETE',
+      actorUserId: user.id,
+      assignments: targetUser.memberships.map((membership) => ({
+        accessScope: AccessScopeLevel.COMPANY,
+        companyId: membership.companyId,
+        unitIds: [],
+      })),
+      description: `Invitation for ${targetUser.email} was cancelled.`,
+    });
 
     await this.prisma.user.delete({
       where: { id: targetUser.id },
@@ -428,6 +469,59 @@ export class WorkspaceUsersService {
     });
   }
 
+  private async recordUserAssignmentLogs(input: {
+    action: string;
+    actorUserId: number;
+    assignments: {
+      companyId: number;
+      unitIds: number[];
+      accessScope: AccessScopeLevel;
+    }[];
+    description: string;
+    targetUserId?: number;
+  }) {
+    const unitIds = input.assignments.flatMap(
+      (assignment) => assignment.unitIds,
+    );
+    const units =
+      unitIds.length > 0
+        ? await this.prisma.companyUnit.findMany({
+            where: { id: { in: unitIds } },
+            select: { id: true, name: true },
+          })
+        : [];
+    const unitNameById = new Map(units.map((unit) => [unit.id, unit.name]));
+
+    for (const assignment of input.assignments) {
+      const branchNames = assignment.unitIds
+        .map((unitId) => unitNameById.get(unitId))
+        .filter(Boolean);
+
+      await this.auditLogsService.record({
+        actorUserId: input.actorUserId,
+        action: input.action,
+        companyId: assignment.companyId,
+        entityType: 'WorkspaceUser',
+        entityId: input.targetUserId,
+        targetUserId: input.targetUserId,
+        metadata: {
+          branchId:
+            assignment.unitIds.length === 1
+              ? String(assignment.unitIds[0])
+              : 'workspace',
+          branchName:
+            branchNames.length === 1
+              ? branchNames[0]
+              : branchNames.length > 1
+                ? 'Multiple branches'
+                : 'Workspace',
+          description: input.description,
+          module: 'User Management',
+        },
+      });
+    }
+  }
+
   private async getManageableCompanyIds(user: AuthUser) {
     if (user.role === AppRole.SUPER_ADMIN) {
       const companies = await this.prisma.company.findMany({
@@ -500,13 +594,21 @@ export class WorkspaceUsersService {
       inviteToken.rawToken,
     );
 
-    await this.authMailService.sendWorkspaceUserInvitation(
-      user.email,
-      user.name,
-      actor.name,
-      companyNames,
-      activationUrl,
-    );
+    void this.authMailService
+      .sendWorkspaceUserInvitation(
+        user.email,
+        user.name,
+        actor.name,
+        companyNames,
+        activationUrl,
+      )
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `Unable to queue workspace invitation email for user ${user.id}: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
+        );
+      });
   }
 
   private async getCompanyNamesForAssignments(
