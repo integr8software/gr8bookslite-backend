@@ -13,6 +13,7 @@ import { BillingModule } from './modules/billing/billing.module';
 import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/master-plan-and-packages.module';
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
 import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
+import { WorkspaceAuditLogsModule } from './modules/workspace/audit-logs/workspace-audit-logs.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.module';
 import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
@@ -42,6 +43,7 @@ import { FormSignatoriesModule } from './modules/maintenance/form-signatories/fo
     MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
     WorkspaceUsersModule,
+    WorkspaceAuditLogsModule,
     BranchRolesModule,
     BranchUsersModule,
     FormSignatoriesModule,

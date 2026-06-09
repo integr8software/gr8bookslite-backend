@@ -19,6 +19,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
+import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
 import { CreateWorkspaceCompanyDto } from './dto/create-workspace-company.dto';
@@ -45,6 +46,7 @@ export class WorkspaceCompaniesService {
     private readonly billingService: BillingService,
     private readonly workspaceUsersService: WorkspaceUsersService,
     private readonly logoStorageService: WorkspaceCompanyLogoStorageService,
+    private readonly auditLogsService: WorkspaceAuditLogsService,
   ) {}
 
   async findAll(user: AuthUser) {
@@ -200,6 +202,17 @@ export class WorkspaceCompaniesService {
     }
 
     await this.sendCompanyCreatedEmail(user, company.name);
+    await this.auditLogsService.record({
+      actorUserId: user.id,
+      action: 'CREATE',
+      companyId: company.id,
+      entityType: 'Company',
+      entityId: company.id,
+      metadata: {
+        description: `Company ${company.name} was created.`,
+        module: 'Company Management',
+      },
+    });
     const updatedCompany = await this.prisma.company.findUniqueOrThrow({
       where: { id: company.id },
       include: WorkspaceCompanyDetailsInclude,
@@ -312,6 +325,18 @@ export class WorkspaceCompaniesService {
       include: WorkspaceCompanyDetailsInclude,
     });
 
+    await this.auditLogsService.record({
+      actorUserId: user.id,
+      action: 'UPDATE',
+      companyId,
+      entityType: 'Company',
+      entityId: companyId,
+      metadata: {
+        description: `Company ${company.name} was updated.`,
+        module: 'Company Management',
+      },
+    });
+
     return mapWorkspaceCompany(company);
   }
 
@@ -325,6 +350,18 @@ export class WorkspaceCompaniesService {
         status: CompanyStatus.SUSPENDED,
       },
       include: WorkspaceCompanyDetailsInclude,
+    });
+
+    await this.auditLogsService.record({
+      actorUserId: user.id,
+      action: 'DELETE',
+      companyId,
+      entityType: 'Company',
+      entityId: companyId,
+      metadata: {
+        description: `Company ${company.name} was deactivated.`,
+        module: 'Company Management',
+      },
     });
 
     return mapWorkspaceCompany(company);
@@ -401,6 +438,20 @@ export class WorkspaceCompaniesService {
       },
     });
 
+    await this.auditLogsService.record({
+      actorUserId: user.id,
+      action: 'CREATE',
+      companyId,
+      entityType: 'CompanyUnit',
+      entityId: unit.id,
+      metadata: {
+        branchId: String(unit.id),
+        branchName: unit.name,
+        description: `${formatCompanyUnitType(unit.type)} ${unit.name} was created.`,
+        module: 'Branch Management',
+      },
+    });
+
     return mapCompanyUnit(unit);
   }
 
@@ -457,6 +508,20 @@ export class WorkspaceCompaniesService {
       },
     });
 
+    await this.auditLogsService.record({
+      actorUserId: user.id,
+      action: 'UPDATE',
+      companyId: unit.companyId,
+      entityType: 'CompanyUnit',
+      entityId: unit.id,
+      metadata: {
+        branchId: String(unit.id),
+        branchName: unit.name,
+        description: `${formatCompanyUnitType(unit.type)} ${unit.name} was updated.`,
+        module: 'Branch Management',
+      },
+    });
+
     return mapCompanyUnit(unit);
   }
 
@@ -478,6 +543,20 @@ export class WorkspaceCompaniesService {
     const unit = await this.prisma.companyUnit.update({
       where: { id: unitId },
       data: { isActive: false },
+    });
+
+    await this.auditLogsService.record({
+      actorUserId: user.id,
+      action: 'DELETE',
+      companyId: unit.companyId,
+      entityType: 'CompanyUnit',
+      entityId: unit.id,
+      metadata: {
+        branchId: String(unit.id),
+        branchName: unit.name,
+        description: `${formatCompanyUnitType(unit.type)} ${unit.name} was deactivated.`,
+        module: 'Branch Management',
+      },
     });
 
     return mapCompanyUnit(unit);
@@ -861,6 +940,14 @@ function createUnitCode(value: string) {
       .replace(/^-+|-+$/g, '')
       .slice(0, 24) || `UNIT-${Date.now()}`
   );
+}
+
+function formatCompanyUnitType(type: CompanyUnitType) {
+  if (type === CompanyUnitType.HEAD_OFFICE) {
+    return 'Head office';
+  }
+
+  return type === CompanyUnitType.SATELLITE ? 'Satellite' : 'Branch';
 }
 
 function validateCompanyLogoFile(file: UploadedCompanyLogoFile | undefined) {
