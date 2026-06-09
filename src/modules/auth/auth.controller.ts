@@ -5,11 +5,12 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -208,8 +209,11 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  logout() {
-    return this.authService.logout();
+  logout(@CurrentUser() user: AuthUser, @Req() request: Request) {
+    return this.authService.logout(user, {
+      ipAddress: getRequestIpAddress(request),
+      userAgent: request.headers['user-agent'] ?? null,
+    });
   }
 
   @UseGuards(JwtAuthGuard)
@@ -252,4 +256,14 @@ export class AuthController {
   ) {
     return this.authService.changeAuthenticatedPassword(user, dto);
   }
+}
+
+function getRequestIpAddress(request: Request) {
+  const forwardedFor = request.headers['x-forwarded-for'];
+
+  if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
+    return forwardedFor.split(',')[0]?.trim() || null;
+  }
+
+  return request.ip ?? request.socket.remoteAddress ?? null;
 }

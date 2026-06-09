@@ -585,10 +585,23 @@ export class AuthService {
     const user = await this.usersService.findForAuthByEmail(normalizedEmail);
 
     if (!user) {
+      await this.recordAuthAudit({
+        action: 'LOGIN',
+        email: normalizedEmail,
+        result: 'Failed',
+        reason: 'Account not found',
+      });
       throw new UnauthorizedException('Your account is not yet registered.');
     }
 
     if (user.status === UserStatus.SUSPENDED) {
+      await this.recordAuthAudit({
+        action: 'LOGIN',
+        email: user.email,
+        result: 'Failed',
+        reason: 'Account suspended',
+        user,
+      });
       throw new UnauthorizedException('User account is suspended.');
     }
 
@@ -596,6 +609,13 @@ export class AuthService {
       this.logger.warn(
         `Password login rejected because user ${user.id} has no password hash.`,
       );
+      await this.recordAuthAudit({
+        action: 'LOGIN',
+        email: user.email,
+        result: 'Failed',
+        reason: 'Password login is not enabled',
+        user,
+      });
       throw new UnauthorizedException(
         'This account does not have a password yet. Use Continue with Google or reset your password to create one.',
       );
@@ -608,6 +628,13 @@ export class AuthService {
 
     if (!isPasswordValid) {
       this.logger.warn(`Password login rejected for user ${user.id}.`);
+      await this.recordAuthAudit({
+        action: 'LOGIN',
+        email: user.email,
+        result: 'Failed',
+        reason: 'Invalid credentials',
+        user,
+      });
       throw new UnauthorizedException('Invalid credentials.');
     }
 
@@ -629,12 +656,31 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials.');
       }
 
-      return this.loginActivatedUser(activatedUser, dto.companyId ?? null);
+      const response = await this.loginActivatedUser(
+        activatedUser,
+        dto.companyId ?? null,
+      );
+      await this.recordAuthAudit({
+        action: 'LOGIN',
+        companyId: response.companyId,
+        email: activatedUser.email,
+        result: 'Success',
+        user: activatedUser,
+      });
+
+      return response;
     }
 
     if (user.status !== UserStatus.ACTIVE || !user.emailVerifiedAt) {
       const verificationResponse =
         await this.resendSignupVerificationCode(user);
+      await this.recordAuthAudit({
+        action: 'LOGIN',
+        email: user.email,
+        result: 'Failed',
+        reason: 'Email not verified',
+        user,
+      });
 
       throw new UnauthorizedException({
         message:
@@ -646,7 +692,16 @@ export class AuthService {
       });
     }
 
-    return this.loginActivatedUser(user, dto.companyId ?? null);
+    const response = await this.loginActivatedUser(user, dto.companyId ?? null);
+    await this.recordAuthAudit({
+      action: 'LOGIN',
+      companyId: response.companyId,
+      email: user.email,
+      result: 'Success',
+      user,
+    });
+
+    return response;
   }
 
   async createWorkspaceInviteToken(
@@ -974,10 +1029,70 @@ export class AuthService {
     return this.buildAuthenticatedResponse(authUser, resolvedCompanyId);
   }
 
-  logout() {
+  async logout(
+    user: AuthUser,
+    requestContext: { ipAddress?: string | null; userAgent?: string | null },
+  ) {
+    await this.recordAuthAudit({
+      action: 'LOGOUT',
+      companyId: user.companyId,
+      ipAddress: requestContext.ipAddress,
+      result: 'Success',
+      user,
+      userAgent: requestContext.userAgent,
+    });
+
     return {
       message: 'Logged out successfully.',
     };
+  }
+
+  private async recordAuthAudit(input: {
+    action: 'LOGIN' | 'LOGOUT';
+    companyId?: number | null;
+    email?: string;
+    ipAddress?: string | null;
+    reason?: string;
+    result: 'Success' | 'Failed';
+    user?: UserWithMemberships | AuthUser;
+    userAgent?: string | null;
+  }) {
+    const actionLabel = input.action === 'LOGIN' ? 'Login' : 'Logout';
+    const email = input.email ?? getAuditUserEmail(input.user);
+    const description =
+      input.result === 'Success'
+        ? `${actionLabel} succeeded${email ? ` for ${email}` : ''}.`
+        : `${actionLabel} failed${email ? ` for ${email}` : ''}${
+            input.reason ? `: ${input.reason}.` : '.'
+          }`;
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          action: input.action,
+          actorUserId: input.user?.id ?? null,
+          companyId: input.companyId ?? getAuditUserCompanyId(input.user),
+          entityId: email ?? null,
+          entityType: 'AuthSession',
+          ipAddress: input.ipAddress ?? null,
+          metadata: {
+            description,
+            email,
+            module: 'Authentication',
+            reason: input.reason,
+            result: input.result,
+            severity: input.result === 'Failed' ? 'Warning' : 'Info',
+          },
+          userAgent: input.userAgent ?? null,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Audit log write failed for ${input.action.toLowerCase()}: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
+    }
   }
 
   private async buildAuthenticatedResponse(
@@ -1579,4 +1694,32 @@ export class AuthService {
             : 'APP_READY',
     };
   }
+}
+
+function getAuditUserEmail(
+  user: UserWithMemberships | AuthUser | undefined,
+) {
+  return user && 'email' in user ? user.email : undefined;
+}
+
+function getAuditUserCompanyId(
+  user: UserWithMemberships | AuthUser | undefined,
+) {
+  if (!user) {
+    return null;
+  }
+
+  if ('companyId' in user) {
+    return user.companyId;
+  }
+
+  if ('memberships' in user) {
+    return (
+      user.memberships.find(
+        (membership) => membership.status === MembershipStatus.ACTIVE,
+      )?.companyId ?? null
+    );
+  }
+
+  return null;
 }
