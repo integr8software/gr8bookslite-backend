@@ -227,9 +227,29 @@ model PlatformModule {
   @@map("platform_modules")
 }
 
+model PlatformSubmodule {
+  id          Int            @id @default(autoincrement())
+  moduleId    Int            @map("module_id")
+  code        String         @unique
+  name        String
+  route       String?
+  sortOrder   Int            @default(0) @map("sort_order")
+  isActive    Boolean        @default(true) @map("is_active")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  module      PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  permissions Permission[]
+
+  @@unique([id, moduleId])
+  @@index([moduleId, isActive, sortOrder])
+  @@map("platform_submodules")
+}
+
 model Permission {
   id                     Int                     @id @default(autoincrement())
-  moduleId               Int                     @map("module_id")
+  targetType             PermissionTargetType    @default(MODULE) @map("target_type")
+  moduleId               Int?                    @map("module_id")
+  submoduleId            Int?                    @map("submodule_id")
   code                   String                  @unique
   name                   String
   description            String?
@@ -238,12 +258,14 @@ model Permission {
   isActive               Boolean                 @default(true) @map("is_active")
   createdAt              DateTime                @default(now()) @map("created_at")
   updatedAt              DateTime                @updatedAt @map("updated_at")
-  module                 PlatformModule          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module                 PlatformModule?         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  submodule              PlatformSubmodule?      @relation(fields: [submoduleId, moduleId], references: [id, moduleId], onDelete: Cascade)
   rolePermissions        CompanyRolePermission[]
   membershipOverrides    MembershipPermission[]
 
-  @@unique([moduleId, code])
   @@index([moduleId, isActive])
+  @@index([submoduleId, isActive])
+  @@index([targetType, isActive])
   @@map("permissions")
 }
 
@@ -256,6 +278,8 @@ model CompanyRolePermission {
   canUpdate     Boolean     @default(false) @map("can_update")
   canDelete     Boolean     @default(false) @map("can_delete")
   canApprove    Boolean     @default(false) @map("can_approve")
+  canCancel     Boolean     @default(false) @map("can_cancel")
+  canUncancel   Boolean     @default(false) @map("can_uncancel")
   canExport     Boolean     @default(false) @map("can_export")
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
@@ -277,6 +301,8 @@ model MembershipPermission {
   canUpdate           Boolean?   @map("can_update")
   canDelete           Boolean?   @map("can_delete")
   canApprove          Boolean?   @map("can_approve")
+  canCancel           Boolean?   @map("can_cancel")
+  canUncancel         Boolean?   @map("can_uncancel")
   canExport           Boolean?   @map("can_export")
   createdAt           DateTime   @default(now()) @map("created_at")
   updatedAt           DateTime   @updatedAt @map("updated_at")
@@ -707,6 +733,11 @@ enum AccessScopeLevel {
   COMPANY
   SATELLITE
   BRANCH
+}
+
+enum PermissionTargetType {
+  MODULE
+  SUBMODULE
 }
 
 enum CompanyUnitType {

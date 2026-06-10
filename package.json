@@ -25,6 +25,8 @@
     "db:seed:local": "node scripts/run-with-env.cjs .env prisma db seed",
     "db:delete-user-owned-data:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/deleteUserOwnedData.ts",
     "db:backfill-head-offices:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/backfillCompanyHeadOffices.ts",
+    "db:reset-permission-catalog:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/resetPermissionCatalog.ts",
+    "db:verify-permissions:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/verifyPermissionArchitecture.ts",
     "db:studio:local": "node scripts/run-with-env.cjs .env prisma studio",
     "db:migrate:deploy": "prisma migrate deploy",
     "start": "nest start",

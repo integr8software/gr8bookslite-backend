@@ -47,10 +47,34 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
     companyRole: {
       include: {
         permissions: {
+          where: {
+            permission: {
+              isActive: true;
+              OR: [
+                {
+                  targetType: 'MODULE';
+                  module: { isActive: true };
+                },
+                {
+                  targetType: 'SUBMODULE';
+                  module: { isActive: true };
+                  submodule: {
+                    isActive: true;
+                    module: { isActive: true };
+                  };
+                },
+              ];
+            };
+          };
           include: {
             permission: {
               include: {
                 module: true;
+                submodule: {
+                  include: {
+                    module: true;
+                  };
+                };
               };
             };
           };
@@ -62,10 +86,34 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
         companyRole: {
           include: {
             permissions: {
+              where: {
+                permission: {
+                  isActive: true;
+                  OR: [
+                    {
+                      targetType: 'MODULE';
+                      module: { isActive: true };
+                    },
+                    {
+                      targetType: 'SUBMODULE';
+                      module: { isActive: true };
+                      submodule: {
+                        isActive: true;
+                        module: { isActive: true };
+                      };
+                    },
+                  ];
+                };
+              };
               include: {
                 permission: {
                   include: {
                     module: true;
+                    submodule: {
+                      include: {
+                        module: true;
+                      };
+                    };
                   };
                 };
               };
@@ -75,10 +123,34 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
       };
     };
     permissionOverrides: {
+      where: {
+        permission: {
+          isActive: true;
+          OR: [
+            {
+              targetType: 'MODULE';
+              module: { isActive: true };
+            },
+            {
+              targetType: 'SUBMODULE';
+              module: { isActive: true };
+              submodule: {
+                isActive: true;
+                module: { isActive: true };
+              };
+            },
+          ];
+        };
+      };
       include: {
         permission: {
           include: {
             module: true;
+            submodule: {
+              include: {
+                module: true;
+              };
+            };
           };
         };
       };
@@ -190,12 +262,6 @@ export class AccessControlService {
       return false;
     }
 
-    const moduleCode = permissionCode.split('.')[0];
-
-    if (!moduleCode || !user.enabledModules.includes(moduleCode)) {
-      return false;
-    }
-
     return user.permissions.includes(
       this.buildPermissionKey(permissionCode, action),
     );
@@ -249,10 +315,34 @@ export class AccessControlService {
         companyRole: {
           include: {
             permissions: {
+              where: {
+                permission: {
+                  isActive: true,
+                  OR: [
+                    {
+                      targetType: 'MODULE',
+                      module: { isActive: true },
+                    },
+                    {
+                      targetType: 'SUBMODULE',
+                      module: { isActive: true },
+                      submodule: {
+                        isActive: true,
+                        module: { isActive: true },
+                      },
+                    },
+                  ],
+                },
+              },
               include: {
                 permission: {
                   include: {
                     module: true,
+                    submodule: {
+                      include: {
+                        module: true,
+                      },
+                    },
                   },
                 },
               },
@@ -264,10 +354,34 @@ export class AccessControlService {
             companyRole: {
               include: {
                 permissions: {
+                  where: {
+                    permission: {
+                      isActive: true,
+                      OR: [
+                        {
+                          targetType: 'MODULE',
+                          module: { isActive: true },
+                        },
+                        {
+                          targetType: 'SUBMODULE',
+                          module: { isActive: true },
+                          submodule: {
+                            isActive: true,
+                            module: { isActive: true },
+                          },
+                        },
+                      ],
+                    },
+                  },
                   include: {
                     permission: {
                       include: {
                         module: true,
+                        submodule: {
+                          include: {
+                            module: true,
+                          },
+                        },
                       },
                     },
                   },
@@ -277,10 +391,34 @@ export class AccessControlService {
           },
         },
         permissionOverrides: {
+          where: {
+            permission: {
+              isActive: true,
+              OR: [
+                {
+                  targetType: 'MODULE',
+                  module: { isActive: true },
+                },
+                {
+                  targetType: 'SUBMODULE',
+                  module: { isActive: true },
+                  submodule: {
+                    isActive: true,
+                    module: { isActive: true },
+                  },
+                },
+              ],
+            },
+          },
           include: {
             permission: {
               include: {
                 module: true,
+                submodule: {
+                  include: {
+                    module: true,
+                  },
+                },
               },
             },
           },
@@ -352,9 +490,15 @@ export class AccessControlService {
     ];
 
     for (const rolePermission of rolePermissions) {
-      const moduleCode = rolePermission.permission.module.code;
+      const moduleCode =
+        rolePermission.permission.module?.code ??
+        rolePermission.permission.submodule?.module.code;
 
-      if (enabledModules.length > 0 && !enabledModules.includes(moduleCode)) {
+      if (
+        moduleCode &&
+        enabledModules.length > 0 &&
+        !enabledModules.includes(moduleCode)
+      ) {
         continue;
       }
 
@@ -366,19 +510,27 @@ export class AccessControlService {
           Boolean(current?.create) || rolePermission.canCreate,
         [PermissionAction.UPDATE]:
           Boolean(current?.update) || rolePermission.canUpdate,
-        [PermissionAction.DELETE]:
-          Boolean(current?.delete) || rolePermission.canDelete,
-        [PermissionAction.APPROVE]:
-          Boolean(current?.approve) || rolePermission.canApprove,
+        [PermissionAction.DELETE]: false,
+        [PermissionAction.APPROVE]: false,
+        [PermissionAction.CANCEL]:
+          Boolean(current?.cancel) || rolePermission.canCancel,
+        [PermissionAction.UNCANCEL]:
+          Boolean(current?.uncancel) || rolePermission.canUncancel,
         [PermissionAction.EXPORT]:
           Boolean(current?.export) || rolePermission.canExport,
       });
     }
 
     for (const override of membership.permissionOverrides) {
-      const moduleCode = override.permission.module.code;
+      const moduleCode =
+        override.permission.module?.code ??
+        override.permission.submodule?.module.code;
 
-      if (enabledModules.length > 0 && !enabledModules.includes(moduleCode)) {
+      if (
+        moduleCode &&
+        enabledModules.length > 0 &&
+        !enabledModules.includes(moduleCode)
+      ) {
         continue;
       }
 
@@ -388,6 +540,8 @@ export class AccessControlService {
         [PermissionAction.UPDATE]: false,
         [PermissionAction.DELETE]: false,
         [PermissionAction.APPROVE]: false,
+        [PermissionAction.CANCEL]: false,
+        [PermissionAction.UNCANCEL]: false,
         [PermissionAction.EXPORT]: false,
       };
 
@@ -395,8 +549,10 @@ export class AccessControlService {
         [PermissionAction.VIEW]: override.canView ?? current.view,
         [PermissionAction.CREATE]: override.canCreate ?? current.create,
         [PermissionAction.UPDATE]: override.canUpdate ?? current.update,
-        [PermissionAction.DELETE]: override.canDelete ?? current.delete,
-        [PermissionAction.APPROVE]: override.canApprove ?? current.approve,
+        [PermissionAction.DELETE]: false,
+        [PermissionAction.APPROVE]: false,
+        [PermissionAction.CANCEL]: override.canCancel ?? current.cancel,
+        [PermissionAction.UNCANCEL]: override.canUncancel ?? current.uncancel,
         [PermissionAction.EXPORT]: override.canExport ?? current.export,
       });
     }

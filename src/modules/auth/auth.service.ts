@@ -1696,9 +1696,7 @@ export class AuthService {
   }
 }
 
-function getAuditUserEmail(
-  user: UserWithMemberships | AuthUser | undefined,
-) {
+function getAuditUserEmail(user: UserWithMemberships | AuthUser | undefined) {
   return user && 'email' in user ? user.email : undefined;
 }
 

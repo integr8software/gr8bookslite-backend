@@ -55,6 +55,8 @@ lerna-debug.log*
 *.der
 *.ovpn
 *.sql
+!prisma/migrations/**/migration.sql
+!prisma/scripts/resetPermissionCatalog.sql
 *.dump
 secrets/
 credentials/

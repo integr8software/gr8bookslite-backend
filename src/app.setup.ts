@@ -10,6 +10,7 @@ export function configureApp(app: INestApplication) {
 
   app.enableCors(createCorsOptions(configService));
   app.use(applySecurityHeaders as NestMiddleware['use']);
+  app.use(applyFaviconResponse as NestMiddleware['use']);
   app.use(applyRootHealthCheck as NestMiddleware['use']);
   app.setGlobalPrefix('api');
   app.enableVersioning({
@@ -58,6 +59,19 @@ function applySecurityHeaders(
   response.setHeader('Referrer-Policy', 'no-referrer');
   response.setHeader('Permissions-Policy', 'camera=(), microphone=()');
   next();
+}
+
+function applyFaviconResponse(
+  request: Request,
+  response: Response,
+  next: NextFunction,
+) {
+  if (request.path !== '/favicon.ico' || request.method !== 'GET') {
+    next();
+    return;
+  }
+
+  response.status(204).end();
 }
 
 function applyRootHealthCheck(

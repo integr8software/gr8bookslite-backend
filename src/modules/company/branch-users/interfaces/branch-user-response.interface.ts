@@ -8,7 +8,10 @@ export interface BranchUserRolePermissionResponse {
   canUpdate: boolean;
   canDelete: boolean;
   canApprove: boolean;
+  canCancel: boolean;
+  canUncancel: boolean;
   canExport: boolean;
+  actions: string[];
 }
 
 export interface BranchUserRoleResponse {

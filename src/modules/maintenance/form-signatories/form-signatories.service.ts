@@ -504,26 +504,28 @@ export class FormSignatoriesService {
 
   private async resolveModule(dto: SaveFormSignatoryDto) {
     const code = dto.moduleCode.trim();
-    const name = dto.moduleName.trim();
 
-    if (!code || !name) {
+    if (!code) {
       throw new BadRequestException('Select a module.');
     }
 
-    return this.prisma.platformModule.upsert({
+    const module = await this.prisma.platformModule.findUnique({
       where: {
         code,
       },
-      update: {
-        name,
-        isActive: true,
-      },
-      create: {
-        code,
-        name,
+      select: {
+        id: true,
+        code: true,
+        name: true,
         isActive: true,
       },
     });
+
+    if (!module?.isActive) {
+      throw new BadRequestException('Select an active module.');
+    }
+
+    return module;
   }
 
   private async recordFormSignatoryAudit(

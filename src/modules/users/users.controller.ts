@@ -15,6 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { PermissionCodes } from '../../common/constants/permission-codes.constant';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { PermissionAction } from '../../common/enums/permission-action.enum';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
@@ -37,7 +38,7 @@ export class UsersController {
 
   @Roles(AppRole.SUPER_ADMIN, AppRole.ADMIN)
   @Permissions({
-    permission: 'settings.users',
+    permission: PermissionCodes.USERS,
     action: PermissionAction.VIEW,
   })
   @Get()
@@ -72,7 +73,7 @@ export class UsersController {
 
   @Roles(AppRole.SUPER_ADMIN, AppRole.ADMIN)
   @Permissions({
-    permission: 'settings.users',
+    permission: PermissionCodes.USERS,
     action: PermissionAction.VIEW,
   })
   @Get(':id')
