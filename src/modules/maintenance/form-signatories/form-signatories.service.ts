@@ -19,6 +19,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { SaveFormSignatoryDto } from './dto/save-form-signatory.dto';
 import { mapFormSignatorySetup } from './mappers/form-signatory.mapper';
 import { FormSignatorySetupInclude } from './prisma/form-signatory.include';
+import { WorkspaceAuditLogsService } from '../../workspace/audit-logs/workspace-audit-logs.service';
 
 const FormSignatoryTransactionOptions = {
   maxWait: 10_000,
@@ -30,6 +31,7 @@ export class FormSignatoriesService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly auditLogsService: WorkspaceAuditLogsService,
   ) {}
 
   async findAll(user: AuthUser) {
@@ -277,6 +279,8 @@ export class FormSignatoriesService {
       });
     }, FormSignatoryTransactionOptions);
 
+    await this.recordFormSignatoryAudit(user, setup, 'CREATE');
+
     return {
       message: 'Form signatory setup saved.',
       setup: mapFormSignatorySetup(setup),
@@ -296,6 +300,11 @@ export class FormSignatoriesService {
       },
       select: {
         id: true,
+        _count: {
+          select: {
+            rows: true,
+          },
+        },
       },
     });
 
@@ -357,6 +366,11 @@ export class FormSignatoriesService {
         include: FormSignatorySetupInclude,
       });
     }, FormSignatoryTransactionOptions);
+
+    const auditAction =
+      rows.length < currentSetup._count.rows ? 'DELETE' : 'UPDATE';
+
+    await this.recordFormSignatoryAudit(user, setup, auditAction);
 
     return {
       message: 'Form signatory setup saved.',
@@ -508,6 +522,36 @@ export class FormSignatoriesService {
         code,
         name,
         isActive: true,
+      },
+    });
+  }
+
+  private async recordFormSignatoryAudit(
+    user: AuthUser,
+    setup: Prisma.FormSignatorySetupGetPayload<{
+      include: typeof FormSignatorySetupInclude;
+    }>,
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
+  ) {
+    const verb =
+      action === 'CREATE'
+        ? 'created'
+        : action === 'DELETE'
+          ? 'deleted'
+          : 'updated';
+
+    await this.auditLogsService.record({
+      actorUserId: user.id,
+      action,
+      companyId: setup.companyId,
+      entityType: 'FormSignatorySetup',
+      entityId: setup.id,
+      metadata: {
+        branchId: String(setup.unitId),
+        branchName: setup.unit.name,
+        description: `Form Signatory for ${setup.module.name} was ${verb}.`,
+        module: 'Form Signatory',
+        recordId: String(setup.id),
       },
     });
   }

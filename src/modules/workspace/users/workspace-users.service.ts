@@ -503,7 +503,6 @@ export class WorkspaceUsersService {
         companyId: assignment.companyId,
         entityType: 'WorkspaceUser',
         entityId: input.targetUserId,
-        targetUserId: input.targetUserId,
         metadata: {
           branchId:
             assignment.unitIds.length === 1

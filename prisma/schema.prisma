@@ -30,7 +30,6 @@ model User {
   memberships           Membership[]
   invitedMemberships    Membership[]            @relation("MembershipInvitedBy")
   createdAuditLogs      AuditLog[]              @relation("AuditActor")
-  targetedAuditLogs     AuditLog[]              @relation("AuditTargetUser")
   onboardingDraft       UserOnboardingDraft?
   authIdentities        UserAuthIdentity[]
   billingCustomers      BillingCustomer[]
@@ -223,7 +222,6 @@ model PlatformModule {
   updatedAt        DateTime        @updatedAt @map("updated_at")
   permissions      Permission[]
   enabledCompanies CompanyModule[]
-  auditLogs        AuditLog[]
   formSignatorySetups FormSignatorySetup[]
 
   @@map("platform_modules")
@@ -313,8 +311,6 @@ model AuditLog {
   id           BigInt          @id @default(autoincrement())
   companyId    Int?            @map("company_id")
   actorUserId  Int?            @map("actor_user_id")
-  targetUserId Int?            @map("target_user_id")
-  moduleId     Int?            @map("module_id")
   action       String
   entityType   String          @map("entity_type")
   entityId     String?         @map("entity_id")
@@ -324,8 +320,6 @@ model AuditLog {
   createdAt    DateTime        @default(now()) @map("created_at")
   company      Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
   actorUser    User?           @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
-  targetUser   User?           @relation("AuditTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
-  module       PlatformModule? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
 
   @@index([companyId, createdAt])
   @@index([actorUserId, createdAt])

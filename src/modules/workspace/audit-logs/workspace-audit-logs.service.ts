@@ -50,7 +50,6 @@ export class WorkspaceAuditLogsService {
             ? null
             : String(input.entityId),
         metadata: input.metadata ?? undefined,
-        targetUserId: input.targetUserId ?? null,
         ipAddress: input.ipAddress ?? null,
         userAgent: input.userAgent ?? null,
       },
@@ -60,6 +59,7 @@ export class WorkspaceAuditLogsService {
   async recordActivity(user: AuthUser, input: RecordWorkspaceActivityInput) {
     const moduleName = input.module.trim();
     const path = input.path.trim();
+    const action = input.action?.trim() || 'VIEW';
 
     if (!moduleName || !path) {
       return { message: 'Activity ignored.' };
@@ -67,16 +67,20 @@ export class WorkspaceAuditLogsService {
 
     await this.record({
       actorUserId: user.id,
-      action: 'VIEW',
+      action,
       companyId: user.companyId,
-      entityType: 'ModuleView',
-      entityId: path,
+      entityType: input.entityType?.trim() || 'ModuleView',
+      entityId: input.entityId?.trim() || path,
       ipAddress: input.ipAddress,
       userAgent: input.userAgent,
       metadata: {
         branchId: input.branchId,
         branchName: input.branchName,
-        description: `${moduleName} was opened.`,
+        description:
+          input.description?.trim() ||
+          (action.toUpperCase() === 'VIEW'
+            ? `${moduleName} was opened.`
+            : `${moduleName} activity was recorded.`),
         module: moduleName,
         path,
       },
