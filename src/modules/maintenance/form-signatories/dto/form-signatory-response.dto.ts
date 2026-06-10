@@ -52,6 +52,9 @@ export class FormSignatoryRowResponseDto {
 
   @ApiProperty({ nullable: true })
   signatureValidUntil!: string | null;
+
+  @ApiProperty({ nullable: true })
+  isThisTemporary!: boolean | null;
 }
 
 export class FormSignatorySetupResponseDto {

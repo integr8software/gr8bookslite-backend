@@ -361,6 +361,7 @@ model FormSignatoryRow {
   signatureName    String?             @map("signature_name")
   signatureImage   String?             @map("signature_image") @db.Text
   signatureValidUntil DateTime?         @map("signature_valid_until")
+  isThisTemporary  Boolean?            @map("is_this_temporary")
   createdAt        DateTime            @default(now()) @map("created_at")
   updatedAt        DateTime            @updatedAt @map("updated_at")
   setup            FormSignatorySetup  @relation(fields: [setupId], references: [id], onDelete: Cascade)

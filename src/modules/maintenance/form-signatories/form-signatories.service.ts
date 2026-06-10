@@ -383,47 +383,46 @@ export class FormSignatoriesService {
     setupId: number,
     rows: ReturnType<FormSignatoriesService['normalizeRows']>,
   ) {
-    const [hasSortOrder, hasSignatureValidity] = await Promise.all([
-      hasTableColumn(tx, 'form_signatory_rows', 'sort_order'),
-      hasTableColumn(tx, 'form_signatory_rows', 'signature_valid_until'),
-    ]);
+    const [hasSortOrder, hasSignatureValidity, hasIsThisTemporary] =
+      await Promise.all([
+        hasTableColumn(tx, 'form_signatory_rows', 'sort_order'),
+        hasTableColumn(tx, 'form_signatory_rows', 'signature_valid_until'),
+        hasTableColumn(tx, 'form_signatory_rows', 'is_this_temporary'),
+      ]);
 
     for (const [index, row] of rows.entries()) {
-      if (hasSortOrder && hasSignatureValidity) {
-        await tx.$executeRaw`
-          INSERT INTO "form_signatory_rows"
-            ("setup_id", "sort_order", "label", "name", "position", "signature_name", "signature_image", "signature_valid_until", "updated_at")
-          VALUES
-            (${setupId}, ${index + 1}, ${row.label}, ${row.name}, ${row.position}, ${row.signatureName}, ${row.signatureImage}, ${row.signatureValidUntil}, CURRENT_TIMESTAMP)
-        `;
-        continue;
-      }
-
-      if (hasSortOrder) {
-        await tx.$executeRaw`
-          INSERT INTO "form_signatory_rows"
-            ("setup_id", "sort_order", "label", "name", "position", "signature_name", "signature_image", "updated_at")
-          VALUES
-            (${setupId}, ${index + 1}, ${row.label}, ${row.name}, ${row.position}, ${row.signatureName}, ${row.signatureImage}, CURRENT_TIMESTAMP)
-        `;
-        continue;
-      }
-
-      if (hasSignatureValidity) {
-        await tx.$executeRaw`
-          INSERT INTO "form_signatory_rows"
-            ("setup_id", "label", "name", "position", "signature_name", "signature_image", "signature_valid_until", "updated_at")
-          VALUES
-            (${setupId}, ${row.label}, ${row.name}, ${row.position}, ${row.signatureName}, ${row.signatureImage}, ${row.signatureValidUntil}, CURRENT_TIMESTAMP)
-        `;
-        continue;
-      }
+      const columns = [
+        '"setup_id"',
+        ...(hasSortOrder ? ['"sort_order"'] : []),
+        '"label"',
+        '"name"',
+        '"position"',
+        '"signature_name"',
+        '"signature_image"',
+        ...(hasSignatureValidity ? ['"signature_valid_until"'] : []),
+        ...(hasIsThisTemporary ? ['"is_this_temporary"'] : []),
+        '"updated_at"',
+      ];
+      const values = [
+        Prisma.sql`${setupId}`,
+        ...(hasSortOrder ? [Prisma.sql`${index + 1}`] : []),
+        Prisma.sql`${row.label}`,
+        Prisma.sql`${row.name}`,
+        Prisma.sql`${row.position}`,
+        Prisma.sql`${row.signatureName}`,
+        Prisma.sql`${row.signatureImage}`,
+        ...(hasSignatureValidity
+          ? [Prisma.sql`${row.signatureValidUntil}`]
+          : []),
+        ...(hasIsThisTemporary ? [Prisma.sql`${row.isThisTemporary}`] : []),
+        Prisma.sql`CURRENT_TIMESTAMP`,
+      ];
 
       await tx.$executeRaw`
         INSERT INTO "form_signatory_rows"
-          ("setup_id", "label", "name", "position", "signature_name", "signature_image", "updated_at")
+          (${Prisma.join(columns.map((column) => Prisma.raw(column)))})
         VALUES
-          (${setupId}, ${row.label}, ${row.name}, ${row.position}, ${row.signatureName}, ${row.signatureImage}, CURRENT_TIMESTAMP)
+          (${Prisma.join(values)})
       `;
     }
   }
@@ -432,45 +431,10 @@ export class FormSignatoriesService {
     tx: Prisma.TransactionClient,
     setupId: number,
   ): Promise<ReturnType<FormSignatoriesService['normalizeRows']>> {
-    const hasSignatureValidity = await hasTableColumn(
-      tx,
-      'form_signatory_rows',
-      'signature_valid_until',
-    );
-
-    if (hasSignatureValidity) {
-      const rows = await tx.$queryRaw<
-        Array<{
-          label: string;
-          name: string;
-          position: string | null;
-          signatureName: string | null;
-          signatureImage: string | null;
-          signatureValidUntil: Date | string | null;
-        }>
-      >`
-        SELECT
-          "label",
-          "name",
-          "position",
-          "signature_name" AS "signatureName",
-          "signature_image" AS "signatureImage",
-          "signature_valid_until" AS "signatureValidUntil"
-        FROM "form_signatory_rows"
-        WHERE "setup_id" = ${setupId}
-        ORDER BY "id" ASC
-      `;
-
-      return rows.map((row) => ({
-        label: row.label,
-        name: row.name,
-        position: row.position,
-        signatureName: row.signatureName,
-        signatureImage: row.signatureImage,
-        signatureValidUntil: parseOptionalDbDate(row.signatureValidUntil),
-      }));
-    }
-
+    const [hasSignatureValidity, hasIsThisTemporary] = await Promise.all([
+      hasTableColumn(tx, 'form_signatory_rows', 'signature_valid_until'),
+      hasTableColumn(tx, 'form_signatory_rows', 'is_this_temporary'),
+    ]);
     const rows = await tx.$queryRaw<
       Array<{
         label: string;
@@ -478,6 +442,8 @@ export class FormSignatoriesService {
         position: string | null;
         signatureName: string | null;
         signatureImage: string | null;
+        signatureValidUntil?: Date | string | null;
+        isThisTemporary?: boolean | null;
       }>
     >`
       SELECT
@@ -486,6 +452,8 @@ export class FormSignatoriesService {
         "position",
         "signature_name" AS "signatureName",
         "signature_image" AS "signatureImage"
+        ${hasSignatureValidity ? Prisma.sql`, "signature_valid_until" AS "signatureValidUntil"` : Prisma.empty}
+        ${hasIsThisTemporary ? Prisma.sql`, "is_this_temporary" AS "isThisTemporary"` : Prisma.empty}
       FROM "form_signatory_rows"
       WHERE "setup_id" = ${setupId}
       ORDER BY "id" ASC
@@ -497,7 +465,8 @@ export class FormSignatoriesService {
       position: row.position,
       signatureName: row.signatureName,
       signatureImage: row.signatureImage,
-      signatureValidUntil: null,
+      signatureValidUntil: parseOptionalDbDate(row.signatureValidUntil ?? null),
+      isThisTemporary: row.isThisTemporary ?? null,
     }));
   }
 
@@ -509,6 +478,7 @@ export class FormSignatoriesService {
       signatureName: cleanOptional(row.signatureName),
       signatureImage: cleanOptional(row.signatureImage),
       signatureValidUntil: parseOptionalDate(row.signatureValidUntil),
+      isThisTemporary: normalizeOptionalBoolean(row.isThisTemporary),
     }));
 
     if (rows.some((row) => !row.label)) {
@@ -642,6 +612,10 @@ function parseOptionalDate(value: string | undefined) {
   return new Date(value);
 }
 
+function normalizeOptionalBoolean(value: boolean | null | undefined) {
+  return value === true || value === false ? value : null;
+}
+
 function parseOptionalDbDate(value: Date | string | null) {
   if (!value) {
     return null;
@@ -681,6 +655,11 @@ function createRowKey(
     row.signatureName ?? '',
     row.signatureImage ?? '',
     row.signatureValidUntil?.toISOString() ?? '',
+    row.isThisTemporary === true
+      ? 'true'
+      : row.isThisTemporary === false
+        ? 'false'
+        : '',
   ].join('\u001f');
 }
 
