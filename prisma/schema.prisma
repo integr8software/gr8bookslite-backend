@@ -212,16 +212,18 @@ model CompanyRole {
 }
 
 model PlatformModule {
-  id               Int             @id @default(autoincrement())
-  code             String          @unique
-  name             String
-  description      String?
-  sortOrder        Int             @default(0) @map("sort_order")
-  isActive         Boolean         @default(true) @map("is_active")
-  createdAt        DateTime        @default(now()) @map("created_at")
-  updatedAt        DateTime        @updatedAt @map("updated_at")
-  permissions      Permission[]
-  enabledCompanies CompanyModule[]
+  id                  Int                  @id @default(autoincrement())
+  code                String               @unique
+  name                String
+  description         String?
+  sortOrder           Int                  @default(0) @map("sort_order")
+  isActive            Boolean              @default(true) @map("is_active")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  submodules          PlatformSubmodule[]
+  permissions         Permission[]
+  enabledCompanies    CompanyModule[]
+  auditLogs           AuditLog[]
   formSignatorySetups FormSignatorySetup[]
 
   @@map("platform_modules")
@@ -334,18 +336,20 @@ model CompanyModule {
 }
 
 model AuditLog {
-  id           BigInt          @id @default(autoincrement())
-  companyId    Int?            @map("company_id")
-  actorUserId  Int?            @map("actor_user_id")
-  action       String
-  entityType   String          @map("entity_type")
-  entityId     String?         @map("entity_id")
-  metadata     Json?
-  ipAddress    String?         @map("ip_address")
-  userAgent    String?         @map("user_agent")
-  createdAt    DateTime        @default(now()) @map("created_at")
-  company      Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  actorUser    User?           @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  id               BigInt          @id @default(autoincrement())
+  companyId        Int?            @map("company_id")
+  actorUserId      Int?            @map("actor_user_id")
+  action           String
+  entityType       String          @map("entity_type")
+  entityId         String?         @map("entity_id")
+  metadata         Json?
+  ipAddress        String?         @map("ip_address")
+  userAgent        String?         @map("user_agent")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  company          Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  actorUser        User?           @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  platformModule   PlatformModule? @relation(fields: [platformModuleId], references: [id])
+  platformModuleId Int?
 
   @@index([companyId, createdAt])
   @@index([actorUserId, createdAt])
@@ -354,15 +358,15 @@ model AuditLog {
 }
 
 model FormSignatorySetup {
-  id        Int                 @id @default(autoincrement())
-  companyId Int                 @map("company_id")
-  unitId    Int                 @map("unit_id")
-  moduleId  Int                 @map("module_id")
-  createdAt DateTime            @default(now()) @map("created_at")
-  updatedAt DateTime            @updatedAt @map("updated_at")
-  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  unit      CompanyUnit         @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  module    PlatformModule      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  id        Int                @id @default(autoincrement())
+  companyId Int                @map("company_id")
+  unitId    Int                @map("unit_id")
+  moduleId  Int                @map("module_id")
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+  company   Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  unit      CompanyUnit        @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  module    PlatformModule     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   rows      FormSignatoryRow[]
 
   @@unique([companyId, unitId, moduleId])
@@ -373,18 +377,18 @@ model FormSignatorySetup {
 }
 
 model FormSignatoryRow {
-  id               Int                 @id @default(autoincrement())
-  setupId          Int                 @map("setup_id")
-  label            String
-  name             String
-  position         String?
-  signatureName    String?             @map("signature_name")
-  signatureImage   String?             @map("signature_image") @db.Text
-  signatureValidUntil DateTime?         @map("signature_valid_until")
-  isThisTemporary  Boolean?            @map("is_this_temporary")
-  createdAt        DateTime            @default(now()) @map("created_at")
-  updatedAt        DateTime            @updatedAt @map("updated_at")
-  setup            FormSignatorySetup  @relation(fields: [setupId], references: [id], onDelete: Cascade)
+  id                  Int                @id @default(autoincrement())
+  setupId             Int                @map("setup_id")
+  label               String
+  name                String
+  position            String?
+  signatureName       String?            @map("signature_name")
+  signatureImage      String?            @map("signature_image") @db.Text
+  signatureValidUntil DateTime?          @map("signature_valid_until")
+  isThisTemporary     Boolean?           @map("is_this_temporary")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+  setup               FormSignatorySetup @relation(fields: [setupId], references: [id], onDelete: Cascade)
 
   @@index([setupId])
   @@map("form_signatory_rows")
@@ -395,25 +399,25 @@ model FormSignatoryRow {
 // =========================================================
 
 model SubscriptionPlan {
-  id                      Int                            @id @default(autoincrement())
-  code                    String                         @unique
-  name                    String
-  description             String?
-  currency                String                         @default("PHP")
-  billingProvider         BillingProvider                @default(PAYMONGO) @map("billing_provider")
-  billingMetadata         Json?                          @map("billing_metadata")
-  scope                   SubscriptionPlanScope          @default(ONBOARDING)
-  status                  SubscriptionPlanStatus         @default(ACTIVE)
-  trialDays               Int                            @default(15) @map("trial_days")
-  isActive                Boolean                        @default(true) @map("is_active")
-  createdAt               DateTime                       @default(now()) @map("created_at")
-  updatedAt               DateTime                       @updatedAt @map("updated_at")
-  prices                  SubscriptionPlanPrice[]
-  usageRules              SubscriptionPlanUsageRule[]
-  discountTiers           SubscriptionPlanDiscountTier[]
-  modules                 SubscriptionPlanModule[]
-  subscriptions           CompanySubscription[]
-  onboardingDrafts        UserOnboardingDraft[]
+  id               Int                            @id @default(autoincrement())
+  code             String                         @unique
+  name             String
+  description      String?
+  currency         String                         @default("PHP")
+  billingProvider  BillingProvider                @default(PAYMONGO) @map("billing_provider")
+  billingMetadata  Json?                          @map("billing_metadata")
+  scope            SubscriptionPlanScope          @default(ONBOARDING)
+  status           SubscriptionPlanStatus         @default(ACTIVE)
+  trialDays        Int                            @default(15) @map("trial_days")
+  isActive         Boolean                        @default(true) @map("is_active")
+  createdAt        DateTime                       @default(now()) @map("created_at")
+  updatedAt        DateTime                       @updatedAt @map("updated_at")
+  prices           SubscriptionPlanPrice[]
+  usageRules       SubscriptionPlanUsageRule[]
+  discountTiers    SubscriptionPlanDiscountTier[]
+  modules          SubscriptionPlanModule[]
+  subscriptions    CompanySubscription[]
+  onboardingDrafts UserOnboardingDraft[]
 
   @@index([scope, isActive], map: "subscription_plans_scope_is_active_idx")
   @@map("subscription_plans")

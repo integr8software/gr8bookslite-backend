@@ -11,12 +11,16 @@ describe('FormSignatoriesService permission catalog ownership', () => {
     const cacheManager = {
       wrap: jest.fn(),
     };
+    const auditLogsService = {
+      recordActivity: jest.fn(),
+    };
 
     return {
       prisma,
       service: new FormSignatoriesService(
         prisma as never,
         cacheManager as never,
+        auditLogsService as never,
       ),
     };
   }
