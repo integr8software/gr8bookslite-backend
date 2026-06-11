@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { assertDatabaseEnvironment } = require('./env/database-guard.cjs');
+const { resolveCommand } = require('./env/command-resolver.cjs');
 
 const projectRoot = process.cwd();
 const hasHostDatabaseEnvironment =
@@ -33,13 +34,9 @@ if (hasLocalEnvironmentFile) {
     process.exit(1);
   }
 
-  command = path.join(
-    projectRoot,
-    'node_modules',
-    '.bin',
-    process.platform === 'win32' ? 'prisma.cmd' : 'prisma',
-  );
-  args = ['generate'];
+  const resolved = resolveCommand('prisma', ['generate'], projectRoot);
+  command = resolved.command;
+  args = resolved.args;
 } else {
   console.error(
     'Cannot generate Prisma Client: provide hosting database environment variables or create a local .env file.',
@@ -50,7 +47,6 @@ if (hasLocalEnvironmentFile) {
 const child = spawn(command, args, {
   stdio: 'inherit',
   env: process.env,
-  shell: process.platform === 'win32' && command.endsWith('.cmd'),
 });
 
 child.on('exit', (code, signal) => {

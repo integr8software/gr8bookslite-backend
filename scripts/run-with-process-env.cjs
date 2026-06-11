@@ -1,6 +1,6 @@
-const path = require('path');
 const { spawn } = require('child_process');
 const { assertDatabaseEnvironment } = require('./env/database-guard.cjs');
+const { resolveCommand } = require('./env/command-resolver.cjs');
 
 const [, , expectedEnvironment, ...commandParts] = process.argv;
 
@@ -29,39 +29,11 @@ try {
 }
 
 const [command, ...args] = commandParts;
-const isWindows = process.platform === 'win32';
-const resolvedCommand =
-  command === 'nest'
-    ? path.resolve(
-        process.cwd(),
-        'node_modules',
-        '.bin',
-        isWindows ? 'nest.cmd' : 'nest',
-      )
-    : command === 'prisma'
-      ? path.resolve(
-          process.cwd(),
-          'node_modules',
-          '.bin',
-          isWindows ? 'prisma.cmd' : 'prisma',
-        )
-      : command === 'ts-node'
-        ? path.resolve(
-            process.cwd(),
-            'node_modules',
-            '.bin',
-            isWindows ? 'ts-node.cmd' : 'ts-node',
-          )
-        : command === 'node'
-          ? process.execPath
-          : command;
+const resolved = resolveCommand(command, args);
 
-const useCmdShim = isWindows && resolvedCommand.toLowerCase().endsWith('.cmd');
-
-const child = spawn(resolvedCommand, args, {
+const child = spawn(resolved.command, resolved.args, {
   stdio: 'inherit',
   env: process.env,
-  shell: useCmdShim,
 });
 
 child.on('exit', (code, signal) => {
