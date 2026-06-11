@@ -55,7 +55,7 @@ const moduleGuide = [
       'Use Sales Invoice to bill customers for delivered goods or completed services.',
   },
   {
-    label: 'Maintenance > Financial Management > Charts of Accounts',
+    label: 'Maintenance > Charts of Accounts',
     route: '/maintenance/charts-of-accounts',
     aliases: [
       'chart of accounts',
