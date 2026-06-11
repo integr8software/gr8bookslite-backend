@@ -8,6 +8,10 @@
   "scripts": {
     "build": "nest build",
     "dev": "npm run db:generate:local && node scripts/run-with-env.cjs .env nest start --watch",
+    "dev:shared": "npm run db:generate:shared && dotenv -e .env.shared-dev -- nest start --watch",
+    "db:generate:shared": "dotenv -e .env.shared-dev -- prisma generate",
+    "db:status:shared": "dotenv -e .env.shared-dev -- prisma migrate status",
+    "db:studio:shared": "dotenv -e .env.shared-dev -- prisma studio",
     "dev:debug": "npm run db:generate:local && node scripts/run-with-env.cjs .env nest start --debug --watch",
     "dev:clean": "rm -f tsconfig.tsbuildinfo && npm run dev",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -76,6 +80,7 @@
     "@types/node": "^24.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^7.0.0",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
