@@ -7,7 +7,6 @@ export type CreateWorkspaceAuditLogInput = {
   entityType: string;
   entityId?: string | number | null;
   metadata?: Prisma.InputJsonValue;
-  targetUserId?: number | null;
   ipAddress?: string | null;
   userAgent?: string | null;
 };
@@ -17,6 +16,10 @@ export type RecordWorkspaceActivityInput = {
   module: string;
   branchId?: string;
   branchName?: string;
+  action?: string;
+  description?: string;
+  entityType?: string;
+  entityId?: string;
   ipAddress?: string | null;
   userAgent?: string | null;
 };

@@ -37,6 +37,10 @@ export class WorkspaceAuditLogsController {
       module: dto.module,
       branchId: dto.branchId,
       branchName: dto.branchName,
+      action: dto.action,
+      description: dto.description,
+      entityType: dto.entityType,
+      entityId: dto.entityId,
       ipAddress: getWorkspaceAuditLogRequestIpAddress(request),
       userAgent: request.headers['user-agent'] ?? null,
     });

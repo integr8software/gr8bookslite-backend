@@ -25,6 +25,7 @@ export function mapFormSignatorySetup(setup: FormSignatorySetupPayload) {
     rows: setup.rows.map((row) => {
       const rowWithValidity = row as typeof row & {
         signatureValidUntil?: Date | null;
+        isThisTemporary?: boolean | null;
       };
 
       return {
@@ -36,6 +37,7 @@ export function mapFormSignatorySetup(setup: FormSignatorySetupPayload) {
         signatureImage: row.signatureImage,
         signatureValidUntil:
           rowWithValidity.signatureValidUntil?.toISOString() ?? null,
+        isThisTemporary: rowWithValidity.isThisTemporary ?? null,
       };
     }),
     createdAt: setup.createdAt.toISOString(),

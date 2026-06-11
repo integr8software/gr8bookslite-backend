@@ -32,6 +32,14 @@ export class BranchRolesController {
     return this.branchRolesService.findAll(user, unitId);
   }
 
+  @Get('permission-catalog')
+  getPermissionCatalog(
+    @CurrentUser() user: AuthUser,
+    @Param('unitId', ParseIntPipe) unitId: number,
+  ) {
+    return this.branchRolesService.getPermissionCatalog(user, unitId);
+  }
+
   @Get(':roleId')
   findOne(
     @CurrentUser() user: AuthUser,
