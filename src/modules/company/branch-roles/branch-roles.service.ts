@@ -11,6 +11,11 @@ import {
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
+import { ActivePermissionActions } from '../../../common/constants/active-permission-actions.constant';
+import {
+  PermissionCodes,
+  PlatformModuleCodes,
+} from '../../../common/constants/permission-codes.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -21,11 +26,37 @@ import { UpdateBranchRoleDto } from './dto/update-branch-role.dto';
 import { mapBranchRole } from './mappers/branch-role.mapper';
 import { BranchRoleInclude } from './prisma/branch-role.include';
 
-type NormalizedBranchRolePermission = Required<BranchRolePermissionDto>;
+type NormalizedBranchRolePermission = {
+  moduleCode: string;
+  moduleName: string;
+  permissionCode: string;
+  permissionName: string;
+  canView: boolean;
+  canCreate: boolean;
+  canUpdate: boolean;
+  canCancel: boolean;
+  canUncancel: boolean;
+  canExport: boolean;
+};
 
 type ResolvedBranchRolePermission = NormalizedBranchRolePermission & {
   permissionId: number;
 };
+
+const LegacyPettyCashReplenishmentPermissionCode =
+  'cash-disbursement-petty-cash-replenishment';
+const LegacyPettyCashFundReplenishmentPermissionCode =
+  'cash-disbursement-petty-cash-fund-replenishment';
+const PettyCashFundReplenishmentPermissionCode =
+  PermissionCodes.PETTY_CASH_FUND_REPLENISHMENT;
+const PettyCashAdvanceReplenishmentPermissionCode =
+  PermissionCodes.PETTY_CASH_ADVANCE_REPLENISHMENT;
+const LegacyPettyCashAdvanceReplenishmentPermissionCode =
+  'cash-disbursement-petty-cash-advance-replenishment';
+const LegacyPettyCashAdvancePermissionCode =
+  'cash-disbursement-petty-cash-advance';
+const LegacyAccountsPayableVoucherPermissionCode =
+  'accounts-payable-accounts-payable-voucher';
 
 @Injectable()
 export class BranchRolesService {
@@ -60,6 +91,70 @@ export class BranchRolesService {
 
     return {
       role: mapBranchRole(role),
+    };
+  }
+
+  async getPermissionCatalog(user: AuthUser, unitId: number) {
+    const unit = await this.getUnitOrThrow(unitId);
+    await this.ensureCanManageBranchRoles(user, unit.companyId);
+
+    const modules = await this.prisma.platformModule.findMany({
+      where: {
+        isActive: true,
+        submodules: {
+          some: {
+            isActive: true,
+            permissions: {
+              some: {
+                isActive: true,
+              },
+            },
+          },
+        },
+      },
+      select: {
+        code: true,
+        name: true,
+        submodules: {
+          where: {
+            isActive: true,
+            permissions: {
+              some: {
+                isActive: true,
+              },
+            },
+          },
+          select: {
+            code: true,
+            name: true,
+            permissions: {
+              where: {
+                isActive: true,
+              },
+              select: {
+                code: true,
+              },
+              orderBy: [{ name: 'asc' }],
+              take: 1,
+            },
+          },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        },
+      },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+
+    return {
+      modules: modules.map((module) => ({
+        code: module.code,
+        name: module.name,
+        submodules: module.submodules.map((submodule) => ({
+          code: submodule.code,
+          name: submodule.name,
+          permissionCode: submodule.permissions[0].code,
+          actions: ActivePermissionActions,
+        })),
+      })),
     };
   }
 
@@ -197,8 +292,8 @@ export class BranchRolesService {
         canView: permission.canView,
         canCreate: permission.canCreate,
         canUpdate: permission.canUpdate,
-        canDelete: permission.canDelete,
-        canApprove: permission.canApprove,
+        canCancel: permission.canCancel,
+        canUncancel: permission.canUncancel,
         canExport: permission.canExport,
       })),
     });
@@ -209,42 +304,44 @@ export class BranchRolesService {
     const resolvedPermissions: ResolvedBranchRolePermission[] = [];
 
     for (const permission of normalizedPermissions) {
-      const module = await this.prisma.platformModule.upsert({
+      const permissionRecord = await this.prisma.permission.findUnique({
         where: {
-          code: permission.moduleCode,
+          code: permission.permissionCode,
         },
-        update: {
-          name: permission.moduleName,
-          isActive: true,
-        },
-        create: {
-          code: permission.moduleCode,
-          name: permission.moduleName,
-          isActive: true,
+        include: {
+          module: true,
+          submodule: {
+            include: {
+              module: true,
+            },
+          },
         },
       });
 
-      const permissionRecord = await this.prisma.permission.upsert({
-        where: {
-          code: permission.permissionCode,
-        },
-        update: {
-          moduleId: module.id,
-          name: permission.permissionName,
-          scopeLevel: AccessScopeLevel.BRANCH,
-          isActive: true,
-        },
-        create: {
-          moduleId: module.id,
-          code: permission.permissionCode,
-          name: permission.permissionName,
-          scopeLevel: AccessScopeLevel.BRANCH,
-          isActive: true,
-        },
-      });
+      const isCatalogEntryActive =
+        permissionRecord?.isActive &&
+        (permissionRecord.submodule
+          ? permissionRecord.submodule.isActive &&
+            permissionRecord.submodule.module.isActive
+          : permissionRecord.module?.isActive);
+
+      if (!isCatalogEntryActive) {
+        throw new BadRequestException(
+          `Unsupported permission code: ${permission.permissionCode}.`,
+        );
+      }
 
       resolvedPermissions.push({
         ...permission,
+        moduleCode:
+          permissionRecord.module?.code ??
+          permissionRecord.submodule?.module.code ??
+          '',
+        moduleName:
+          permissionRecord.module?.name ??
+          permissionRecord.submodule?.module.name ??
+          '',
+        permissionName: permissionRecord.name,
         permissionId: permissionRecord.id,
       });
     }
@@ -259,36 +356,124 @@ export class BranchRolesService {
     >();
 
     for (const permission of permissions) {
-      const moduleCode = permission.moduleCode.trim();
-      const permissionCode = permission.permissionCode.trim();
+      const normalizedPermission =
+        this.normalizePermissionCatalogEntry(permission);
+      const moduleCode = normalizedPermission.moduleCode?.trim() ?? '';
+      const permissionCode = normalizedPermission.permissionCode.trim();
 
-      if (!moduleCode || !permissionCode) {
+      if (!permissionCode) {
         continue;
       }
 
       const hasActionAccess = Boolean(
+        permission.actions?.some((action) => action !== 'view') ||
         permission.canCreate ||
         permission.canUpdate ||
-        permission.canDelete ||
-        permission.canApprove ||
+        permission.canCancel ||
+        permission.canUncancel ||
         permission.canExport,
       );
+      const actions = new Set(permission.actions ?? []);
+
+      const current = normalizedPermissions.get(permissionCode);
+      const nextPermission = {
+        moduleCode,
+        moduleName: normalizedPermission.moduleName?.trim() ?? '',
+        permissionCode,
+        permissionName: normalizedPermission.permissionName?.trim() ?? '',
+        canView: Boolean(
+          actions.has('view') || permission.canView || hasActionAccess,
+        ),
+        canCreate: Boolean(actions.has('create') || permission.canCreate),
+        canUpdate: Boolean(actions.has('update') || permission.canUpdate),
+        canCancel: Boolean(actions.has('cancel') || permission.canCancel),
+        canUncancel: Boolean(actions.has('uncancel') || permission.canUncancel),
+        canExport: Boolean(actions.has('export') || permission.canExport),
+      };
 
       normalizedPermissions.set(permissionCode, {
-        moduleCode,
-        moduleName: permission.moduleName.trim(),
-        permissionCode,
-        permissionName: permission.permissionName.trim(),
-        canView: Boolean(permission.canView || hasActionAccess),
-        canCreate: Boolean(permission.canCreate),
-        canUpdate: Boolean(permission.canUpdate),
-        canDelete: Boolean(permission.canDelete),
-        canApprove: Boolean(permission.canApprove),
-        canExport: Boolean(permission.canExport),
+        ...nextPermission,
+        moduleCode: nextPermission.moduleCode || current?.moduleCode || '',
+        moduleName: nextPermission.moduleName || current?.moduleName || '',
+        permissionName:
+          nextPermission.permissionName || current?.permissionName || '',
+        canView: Boolean(current?.canView || nextPermission.canView),
+        canCreate: Boolean(current?.canCreate || nextPermission.canCreate),
+        canUpdate: Boolean(current?.canUpdate || nextPermission.canUpdate),
+        canCancel: Boolean(current?.canCancel || nextPermission.canCancel),
+        canUncancel: Boolean(
+          current?.canUncancel || nextPermission.canUncancel,
+        ),
+        canExport: Boolean(current?.canExport || nextPermission.canExport),
       });
     }
 
     return [...normalizedPermissions.values()];
+  }
+
+  private normalizePermissionCatalogEntry(permission: BranchRolePermissionDto) {
+    const permissionCode = permission.permissionCode.trim();
+    let canonicalPermission: {
+      code: string;
+      name: string;
+      moduleCode: string;
+      moduleName: string;
+    } | null = null;
+
+    if (
+      permissionCode === LegacyPettyCashReplenishmentPermissionCode ||
+      permissionCode === LegacyPettyCashFundReplenishmentPermissionCode ||
+      permissionCode === PettyCashFundReplenishmentPermissionCode
+    ) {
+      canonicalPermission = {
+        code: PettyCashFundReplenishmentPermissionCode,
+        name: 'Petty Cash Fund Replenishment',
+        moduleCode: PlatformModuleCodes.CASH_DISBURSEMENT,
+        moduleName: 'Cash Disbursement',
+      };
+    } else if (
+      permissionCode === LegacyPettyCashAdvanceReplenishmentPermissionCode ||
+      permissionCode === PettyCashAdvanceReplenishmentPermissionCode
+    ) {
+      canonicalPermission = {
+        code: PettyCashAdvanceReplenishmentPermissionCode,
+        name: 'Petty Cash Advance Replenishment',
+        moduleCode: PlatformModuleCodes.CASH_DISBURSEMENT,
+        moduleName: 'Cash Disbursement',
+      };
+    } else if (
+      permissionCode === LegacyPettyCashAdvancePermissionCode ||
+      permissionCode === PermissionCodes.PETTY_CASH_ADVANCE
+    ) {
+      canonicalPermission = {
+        code: PermissionCodes.PETTY_CASH_ADVANCE,
+        name: 'Petty Cash Advance',
+        moduleCode: PlatformModuleCodes.CASH_DISBURSEMENT,
+        moduleName: 'Cash Disbursement',
+      };
+    } else if (
+      permissionCode === LegacyAccountsPayableVoucherPermissionCode ||
+      permissionCode === PermissionCodes.ACCOUNTS_PAYABLE_VOUCHER
+    ) {
+      canonicalPermission = {
+        code: PermissionCodes.ACCOUNTS_PAYABLE_VOUCHER,
+        name: 'Accounts Payable Voucher',
+        moduleCode: PlatformModuleCodes.ACCOUNTS_PAYABLE,
+        moduleName: 'Accounts Payable',
+      };
+    }
+
+    if (!canonicalPermission) {
+      return permission;
+    }
+
+    return {
+      ...permission,
+      moduleCode: canonicalPermission.moduleCode,
+      moduleName: canonicalPermission.moduleName,
+      permissionCode: canonicalPermission.code,
+      permissionName: canonicalPermission.name,
+    };
   }
 
   private normalizeRoleCode(name: string) {

@@ -2,7 +2,7 @@ export enum PermissionAction {
   VIEW = 'view',
   CREATE = 'create',
   UPDATE = 'update',
-  DELETE = 'delete',
-  APPROVE = 'approve',
+  CANCEL = 'cancel',
+  UNCANCEL = 'uncancel',
   EXPORT = 'export',
 }

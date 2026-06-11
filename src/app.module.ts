@@ -18,10 +18,14 @@ import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.module';
 import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
+import { validateEnvironment } from './config/environment';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validate: validateEnvironment,
+    }),
     CacheModule.register({
       isGlobal: true,
       ttl: 60_000,

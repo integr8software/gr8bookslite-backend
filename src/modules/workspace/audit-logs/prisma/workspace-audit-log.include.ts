@@ -13,11 +13,6 @@ export const WorkspaceAuditLogListInclude = {
       name: true,
     },
   },
-  module: {
-    select: {
-      name: true,
-    },
-  },
 } satisfies Prisma.AuditLogInclude;
 
 export type WorkspaceAuditLogRecord = Prisma.AuditLogGetPayload<{

@@ -1675,6 +1675,29 @@
         ]
       }
     },
+    "/api/v1/company/units/{unitId}/roles/permission-catalog": {
+      "get": {
+        "operationId": "BranchRolesController_getPermissionCatalog_v1",
+        "parameters": [
+          {
+            "name": "unitId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "BranchRoles"
+        ]
+      }
+    },
     "/api/v1/company/units/{unitId}/roles/{roleId}": {
       "get": {
         "operationId": "BranchRolesController_findOne_v1",
@@ -2111,8 +2134,8 @@
     }
   },
   "info": {
-    "title": "GR8BooksLite API",
-    "description": "Versioned REST API for GR8BooksLite frontend clients.",
+    "title": "GR8Books Neo API",
+    "description": "Versioned REST API for GR8Books Neo frontend clients.",
     "version": "1.0",
     "contact": {}
   },
@@ -4457,9 +4480,6 @@
           "branchName": {
             "type": "string"
           },
-          "severity": {
-            "type": "string"
-          },
           "createdAt": {
             "type": "string"
           }
@@ -4479,7 +4499,6 @@
           "module",
           "branchId",
           "branchName",
-          "severity",
           "createdAt"
         ]
       },
@@ -4498,6 +4517,18 @@
             "type": "string"
           },
           "branchName": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
             "type": "string"
           }
         },
@@ -4624,13 +4655,27 @@
           },
           "permissionCode": {
             "type": "string",
-            "minLength": 2,
+            "minLength": 1,
             "maxLength": 160
           },
           "permissionName": {
             "type": "string",
             "minLength": 2,
             "maxLength": 160
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "view",
+                "create",
+                "update",
+                "cancel",
+                "uncancel",
+                "export"
+              ]
+            }
           },
           "canView": {
             "type": "boolean"
@@ -4641,10 +4686,10 @@
           "canUpdate": {
             "type": "boolean"
           },
-          "canDelete": {
+          "canCancel": {
             "type": "boolean"
           },
-          "canApprove": {
+          "canUncancel": {
             "type": "boolean"
           },
           "canExport": {
@@ -4810,6 +4855,10 @@
           "signatureValidUntil": {
             "type": "string",
             "nullable": true
+          },
+          "isThisTemporary": {
+            "type": "boolean",
+            "nullable": true
           }
         },
         "required": [
@@ -4819,7 +4868,8 @@
           "position",
           "signatureName",
           "signatureImage",
-          "signatureValidUntil"
+          "signatureValidUntil",
+          "isThisTemporary"
         ]
       },
       "FormSignatorySetupResponseDto": {
@@ -5016,6 +5066,10 @@
           },
           "signatureValidUntil": {
             "type": "string"
+          },
+          "isThisTemporary": {
+            "type": "boolean",
+            "nullable": true
           }
         },
         "required": [

@@ -1,20 +1,10 @@
 import { assertLocalDatabase } from './scripts/assertLocalDatabase';
-import { prisma } from './seeds/prismaClient';
+import { runSeedTask } from './scripts/runSeedTask';
+import { seedLocalFixtures } from './seeds/seedLocalFixtures';
 import { seedSubscriptionPlans } from './seeds/seedSubscriptionPlans';
-import { seedSuperAdmin } from './seeds/seedSuperAdmin';
 
-async function main() {
+void runSeedTask('Local Prisma seed', async () => {
   assertLocalDatabase();
   await seedSubscriptionPlans();
-  await seedSuperAdmin();
-}
-
-main()
-  .catch((error: unknown) => {
-    console.error('Failed to seed database.');
-    console.error(error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  await seedLocalFixtures();
+});

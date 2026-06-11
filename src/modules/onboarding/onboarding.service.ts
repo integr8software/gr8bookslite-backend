@@ -10,6 +10,8 @@ import {
   MembershipRole,
   MembershipStatus,
   Prisma,
+  SubscriptionPlanScope,
+  SubscriptionPlanStatus,
 } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -71,6 +73,8 @@ export class OnboardingService {
     const plans = await this.prisma.subscriptionPlan.findMany({
       where: {
         isActive: true,
+        scope: SubscriptionPlanScope.ONBOARDING,
+        status: SubscriptionPlanStatus.ACTIVE,
       },
       include: {
         prices: {
@@ -171,7 +175,12 @@ export class OnboardingService {
       },
     });
 
-    if (!plan || !plan.isActive) {
+    if (
+      !plan ||
+      !plan.isActive ||
+      plan.scope !== SubscriptionPlanScope.ONBOARDING ||
+      plan.status !== SubscriptionPlanStatus.ACTIVE
+    ) {
       throw new BadRequestException('Selected subscription plan is invalid.');
     }
 

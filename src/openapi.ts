@@ -7,8 +7,8 @@ export const OpenApiJsonPath = 'api/docs-json';
 
 export function createOpenApiDocument(app: INestApplication) {
   const config = new DocumentBuilder()
-    .setTitle('GR8BooksLite API')
-    .setDescription('Versioned REST API for GR8BooksLite frontend clients.')
+    .setTitle('GR8Books Neo API')
+    .setDescription('Versioned REST API for GR8Books Neo frontend clients.')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -37,7 +37,7 @@ export function setupOpenApi(app: INestApplication) {
     {
       jsonDocumentUrl: OpenApiJsonPath,
       useGlobalPrefix: false,
-      customSiteTitle: 'GR8BooksLite API Docs',
+      customSiteTitle: 'GR8Books Neo API Docs',
     },
   );
 }

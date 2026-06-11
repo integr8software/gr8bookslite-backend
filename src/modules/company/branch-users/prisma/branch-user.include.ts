@@ -2,10 +2,34 @@ import { Prisma } from '@prisma/client';
 
 export const BranchUserRoleInclude = {
   permissions: {
+    where: {
+      permission: {
+        isActive: true,
+        OR: [
+          {
+            targetType: 'MODULE',
+            module: { isActive: true },
+          },
+          {
+            targetType: 'SUBMODULE',
+            module: { isActive: true },
+            submodule: {
+              isActive: true,
+              module: { isActive: true },
+            },
+          },
+        ],
+      },
+    },
     include: {
       permission: {
         include: {
           module: true,
+          submodule: {
+            include: {
+              module: true,
+            },
+          },
         },
       },
     },

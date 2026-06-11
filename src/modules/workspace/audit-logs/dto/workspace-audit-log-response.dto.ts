@@ -44,8 +44,5 @@ export class WorkspaceAuditLogResponseDto {
   branchName: string;
 
   @ApiProperty()
-  severity: string;
-
-  @ApiProperty()
   createdAt: string;
 }

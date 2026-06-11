@@ -1,80 +1,7 @@
-const fs = require('fs');
-const path = require('path');
 const { spawn } = require('child_process');
-
-function parseEnvFile(content) {
-  const env = {};
-
-  for (const rawLine of content.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) {
-      continue;
-    }
-
-    const equalsIndex = line.indexOf('=');
-    if (equalsIndex === -1) {
-      continue;
-    }
-
-    const key = line.slice(0, equalsIndex).trim();
-    let value = line.slice(equalsIndex + 1).trim();
-
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-
-    env[key] = value;
-  }
-
-  return env;
-}
-
-function loadEnvFile(fileName) {
-  const fullPath = path.resolve(process.cwd(), fileName);
-  if (!fs.existsSync(fullPath)) {
-    console.error(`Environment file not found: ${fullPath}`);
-    process.exit(1);
-  }
-
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const parsed = parseEnvFile(fileContents);
-
-  for (const [key, value] of Object.entries(parsed)) {
-    process.env[key] = value;
-  }
-}
-
-function assertLocalDatabaseUrls() {
-  const localDatabaseHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
-
-  for (const variableName of ['DATABASE_URL', 'DIRECT_URL']) {
-    const value = process.env[variableName];
-
-    if (!value) {
-      console.error(`${variableName} is required in the local environment file.`);
-      process.exit(1);
-    }
-
-    let hostname;
-
-    try {
-      hostname = new URL(value).hostname;
-    } catch {
-      console.error(`${variableName} is not a valid PostgreSQL connection URL.`);
-      process.exit(1);
-    }
-
-    if (!localDatabaseHosts.has(hostname)) {
-      console.error(
-        `Refusing to use non-local ${variableName} host "${hostname}" through the local environment wrapper.`,
-      );
-      process.exit(1);
-    }
-  }
-}
+const { assertDatabaseEnvironment } = require('./env/database-guard.cjs');
+const { resolveCommand } = require('./env/command-resolver.cjs');
+const { loadEnvFile } = require('./env/env-loader.cjs');
 
 const [, , envFile, ...commandParts] = process.argv;
 
@@ -85,38 +12,23 @@ if (!envFile || commandParts.length === 0) {
   process.exit(1);
 }
 
-loadEnvFile(envFile);
-assertLocalDatabaseUrls();
+try {
+  loadEnvFile(envFile);
+  const result = assertDatabaseEnvironment(process.env, commandParts);
+  console.log(
+    `Database guard approved ${result.operation} for APP_ENV=${result.appEnvironment}.`,
+  );
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
 
 const [command, ...args] = commandParts;
-const isWindows = process.platform === 'win32';
-const resolvedCommand =
-  command === 'nest'
-    ? path.resolve(process.cwd(), 'node_modules', '.bin', isWindows ? 'nest.cmd' : 'nest')
-    : command === 'prisma'
-      ? path.resolve(
-          process.cwd(),
-          'node_modules',
-          '.bin',
-          isWindows ? 'prisma.cmd' : 'prisma',
-        )
-      : command === 'ts-node'
-        ? path.resolve(
-            process.cwd(),
-            'node_modules',
-            '.bin',
-            isWindows ? 'ts-node.cmd' : 'ts-node',
-          )
-    : command === 'node'
-      ? process.execPath
-      : command;
+const resolved = resolveCommand(command, args);
 
-const useCmdShim = isWindows && resolvedCommand.toLowerCase().endsWith('.cmd');
-
-const child = spawn(resolvedCommand, args, {
+const child = spawn(resolved.command, resolved.args, {
   stdio: 'inherit',
   env: process.env,
-  shell: useCmdShim,
 });
 
 child.on('exit', (code, signal) => {

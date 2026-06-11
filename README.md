@@ -165,11 +165,11 @@ prisma/
 
 Database access is deliberately separated:
 
-| Environment | Database | Configuration source |
-| --- | --- | --- |
-| Local development | Local PostgreSQL | `.env` |
-| Render staging | Neon staging | Render environment variables |
-| Production | Separate production database | Hosting environment variables |
+| Environment       | Database                     | Configuration source          |
+| ----------------- | ---------------------------- | ----------------------------- |
+| Local development | Local PostgreSQL             | `.env`                        |
+| Render staging    | Neon staging                 | Render environment variables  |
+| Production        | Separate production database | Hosting environment variables |
 
 Never put Neon credentials in the local `.env`. Local scripts explicitly load `.env`; deploy scripts do not load any env file.
 
@@ -234,12 +234,14 @@ npm run db:migrate:create:local -- --name your_migration_name
 
 # inspect, reset, seed, or open the local database
 npm run db:status:local
+npm run db:verify:local
 npm run db:reset:local
 npm run db:seed:local
+npm run db:bootstrap-admin:local
 npm run db:studio:local
 
 # deploy committed migrations using host-provided environment variables
-npm run db:migrate:deploy
+npm run db:migrate:staging
 
 # build project
 npm run build
@@ -262,10 +264,11 @@ Render commands:
 
 ```text
 Build Command: npm ci --include=dev && npm run build
-Start Command: npm run db:migrate:deploy && npm run start:prod
+Pre-Deploy Command: npm run db:migrate:staging && npm run db:verify:staging
+Start Command: npm run start:staging
 ```
 
-`--include=dev` is required because Render staging uses `NODE_ENV=production`, while the Nest CLI and TypeScript build tools are development dependencies. `db:migrate:deploy` uses Render's environment variables and only applies committed migrations. Schema changes must be created and tested against local PostgreSQL, committed under `prisma/migrations`, and deployed through Render. Do not run `migrate dev`, `db push`, or `migrate reset` against Neon staging.
+`--include=dev` is required because Render staging uses `NODE_ENV=production`, while the Nest CLI and TypeScript build tools are development dependencies. `db:migrate:staging` runs separately before application startup, requires `APP_ENV=staging`, validates the configured database fingerprint, and only applies committed migrations. `db:verify:staging` then checks connectivity, migration status, and the permission architecture. `start:staging` validates the same environment before starting the server and never runs migrations. Schema changes must be created and tested against local PostgreSQL, committed under `prisma/migrations`, and deployed through Render. Do not run `migrate dev`, `db push`, or `migrate reset` against Neon staging.
 
 ## Copy Neon Staging Data Locally
 

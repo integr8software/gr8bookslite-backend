@@ -1,4 +1,10 @@
-import { IsISO8601, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsISO8601,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class FormSignatoryRowDto {
   @IsString()
@@ -26,4 +32,8 @@ export class FormSignatoryRowDto {
   @IsOptional()
   @IsISO8601()
   signatureValidUntil?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isThisTemporary?: boolean | null;
 }
