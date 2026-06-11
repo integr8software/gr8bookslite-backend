@@ -127,13 +127,11 @@ describe('BranchRolesService permission architecture', () => {
         canCreate: true,
         canCancel: true,
         canUncancel: true,
-        canApprove: false,
-        canDelete: false,
       }),
     ]);
   });
 
-  it('maps legacy replenishment and delete fields to PCFR cancel access', async () => {
+  it('maps legacy replenishment codes to PCFR cancel access', async () => {
     const { prisma, service } = createService();
     prisma.permission.findUnique.mockResolvedValue({
       id: 100,
@@ -163,7 +161,7 @@ describe('BranchRolesService permission architecture', () => {
         moduleName: 'Cash Disbursement',
         permissionCode: 'cash-disbursement-petty-cash-fund-replenishment',
         permissionName: 'Petty Cash Fund Replenishment',
-        canDelete: true,
+        actions: ['cancel'],
       },
     ]);
 
@@ -177,7 +175,6 @@ describe('BranchRolesService permission architecture', () => {
     expect(resolved[0]).toEqual(
       expect.objectContaining({
         canView: true,
-        canDelete: true,
         canCancel: true,
       }),
     );
@@ -393,8 +390,6 @@ describe('BranchRolesService permission architecture', () => {
           canView: true,
           canCreate: true,
           canUpdate: false,
-          canDelete: true,
-          canApprove: true,
           canCancel: true,
           canUncancel: false,
           canExport: false,

@@ -52,14 +52,6 @@ export class BranchRolePermissionDto {
 
   @IsOptional()
   @IsBoolean()
-  canDelete?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  canApprove?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
   canCancel?: boolean;
 
   @IsOptional()

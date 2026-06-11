@@ -26,8 +26,6 @@ export function mapBranchRole(role: BranchRoleRecord): BranchRoleResponse {
       canView: rolePermission.canView,
       canCreate: rolePermission.canCreate,
       canUpdate: rolePermission.canUpdate,
-      canDelete: rolePermission.canDelete,
-      canApprove: rolePermission.canApprove,
       canCancel: rolePermission.canCancel,
       canUncancel: rolePermission.canUncancel,
       canExport: rolePermission.canExport,

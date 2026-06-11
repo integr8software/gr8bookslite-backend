@@ -34,8 +34,6 @@ type NormalizedBranchRolePermission = {
   canView: boolean;
   canCreate: boolean;
   canUpdate: boolean;
-  canDelete: boolean;
-  canApprove: boolean;
   canCancel: boolean;
   canUncancel: boolean;
   canExport: boolean;
@@ -294,8 +292,6 @@ export class BranchRolesService {
         canView: permission.canView,
         canCreate: permission.canCreate,
         canUpdate: permission.canUpdate,
-        canDelete: permission.canDelete,
-        canApprove: permission.canApprove,
         canCancel: permission.canCancel,
         canUncancel: permission.canUncancel,
         canExport: permission.canExport,
@@ -373,8 +369,6 @@ export class BranchRolesService {
         permission.actions?.some((action) => action !== 'view') ||
         permission.canCreate ||
         permission.canUpdate ||
-        permission.canDelete ||
-        permission.canApprove ||
         permission.canCancel ||
         permission.canUncancel ||
         permission.canExport,
@@ -392,11 +386,7 @@ export class BranchRolesService {
         ),
         canCreate: Boolean(actions.has('create') || permission.canCreate),
         canUpdate: Boolean(actions.has('update') || permission.canUpdate),
-        canDelete: Boolean(permission.canDelete),
-        canApprove: Boolean(permission.canApprove),
-        canCancel: Boolean(
-          actions.has('cancel') || permission.canCancel || permission.canDelete,
-        ),
+        canCancel: Boolean(actions.has('cancel') || permission.canCancel),
         canUncancel: Boolean(actions.has('uncancel') || permission.canUncancel),
         canExport: Boolean(actions.has('export') || permission.canExport),
       };
@@ -410,8 +400,6 @@ export class BranchRolesService {
         canView: Boolean(current?.canView || nextPermission.canView),
         canCreate: Boolean(current?.canCreate || nextPermission.canCreate),
         canUpdate: Boolean(current?.canUpdate || nextPermission.canUpdate),
-        canDelete: Boolean(current?.canDelete || nextPermission.canDelete),
-        canApprove: Boolean(current?.canApprove || nextPermission.canApprove),
         canCancel: Boolean(current?.canCancel || nextPermission.canCancel),
         canUncancel: Boolean(
           current?.canUncancel || nextPermission.canUncancel,

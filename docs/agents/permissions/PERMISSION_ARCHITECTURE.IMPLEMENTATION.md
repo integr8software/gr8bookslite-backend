@@ -7,12 +7,14 @@
 - Added target and module/submodule consistency constraints.
 - Removed the redundant single-column permission/submodule foreign key after
   representing the stronger composite module-consistency relation in Prisma.
-- Added `can_cancel` and `can_uncancel` while retaining legacy `can_delete` and `can_approve`.
+- Added `can_cancel` and `can_uncancel`, migrated legacy delete grants to
+  cancel, and removed the retired `can_delete` and `can_approve` columns.
 - Copied existing delete grants and overrides into cancel during migration.
 - Added the backend-owned permission catalog endpoint:
   `GET /api/v1/company/units/:unitId/roles/permission-catalog`.
 - Changed role writes to validate existing permission codes instead of upserting catalog rows.
-- Added the preferred `{ permissionCode, actions }` role payload while retaining legacy boolean payload compatibility.
+- Standardized role writes on `{ permissionCode, actions }` using only the six
+  active actions.
 - Updated effective permission resolution for submodule targets, cancel, and uncancel.
 - Updated the User Role screen to fetch the backend catalog and show:
   `View`, `Create`, `Update`, `Cancel`, `Uncancel`, and `Export`.
@@ -24,9 +26,8 @@
   and permission codes to stable uppercase abbreviations.
 - Added an idempotent backend catalog migration for all 65 current sidebar
   resources, including routes and deterministic module/submodule ordering.
-- Added focused regression tests for preferred and legacy role payloads,
-  unsupported codes/actions, catalog order, short-code module resolution, and
-  deprecated action suppression.
+- Added focused regression tests for role payloads, unsupported codes/actions,
+  catalog order, and short-code module resolution.
 - Corrected the legacy replenishment migration so membership overrides are
   merged with null-as-inherit semantics and explicit conflicts abort the
   migration instead of silently dropping data.
@@ -45,13 +46,19 @@
 
 ## Deployment Order
 
-1. Deploy the backend migration and backend application.
-2. Verify the catalog endpoint and existing roles.
-3. Deploy the frontend application.
-4. Test creating and editing a role.
+Use two releases when removing the legacy permission columns:
 
-The backend remains compatible with the legacy role payload during rollout. The
-new frontend requires the new catalog endpoint.
+1. Deploy the backend and frontend code that no longer reads or writes
+   `can_delete` and `can_approve`, without deploying the drop-column migration.
+2. Verify the catalog endpoint, effective permissions, and existing roles.
+3. Deploy `20260611070157_drop_legacy_permission_actions` in the next release.
+4. Run `npm run db:verify:<environment>` and test creating/editing a role.
+
+This order prevents the previous backend revision from querying columns that
+have already been removed while a new revision is being promoted.
+
+The backend and frontend now use the final active action contract. Deploy the
+backend migration and backend application before deploying the frontend.
 
 ## DBeaver Verification
 
@@ -108,19 +115,17 @@ WHERE p.module_id <> sm.module_id;
 
 The query above must return zero rows.
 
-Confirm legacy delete values were copied to cancel:
+Confirm the retired permission columns no longer exist:
 
 ```sql
-SELECT COUNT(*) AS missing_role_cancel_migrations
-FROM company_role_permissions
-WHERE can_delete = true AND can_cancel = false;
-
-SELECT COUNT(*) AS missing_override_cancel_migrations
-FROM membership_permissions
-WHERE can_delete IS NOT NULL AND can_cancel IS DISTINCT FROM can_delete;
+SELECT table_name, column_name
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name IN ('company_role_permissions', 'membership_permissions')
+  AND column_name IN ('can_delete', 'can_approve');
 ```
 
-Both queries must return zero.
+The query must return zero rows.
 
 Confirm assignments no longer point to inactive legacy permissions:
 
@@ -153,7 +158,7 @@ Invalid permission targets: 0
 Module/submodule mismatches: 0
 Role assignments to inactive permissions: 0
 Membership overrides to inactive permissions: 0
-Delete grants missing their cancel migration: 0
+Legacy permission columns: 0
 PCFR module code: cash-disbursement
 PCFR submodule code: PCFR
 ```
@@ -163,7 +168,7 @@ Role-assignment rows changed from 131 to 137 because the legacy aggregate
 permissions. No legacy assignment rows remain attached to inactive
 permissions.
 
-The complete 48-migration chain was also applied to a newly created temporary
+The complete migration chain was also applied to a newly created temporary
 database. The permission architecture verifier passed on that fresh database,
 `prisma migrate status` reported it up to date, and `prisma migrate diff`
 reported no difference between the migrated database and `schema.prisma`.

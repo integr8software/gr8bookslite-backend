@@ -1,19 +1,24 @@
 const path = require('path');
 const { spawn } = require('child_process');
 const { assertDatabaseEnvironment } = require('./env/database-guard.cjs');
-const { loadEnvFile } = require('./env/env-loader.cjs');
 
-const [, , envFile, ...commandParts] = process.argv;
+const [, , expectedEnvironment, ...commandParts] = process.argv;
 
-if (!envFile || commandParts.length === 0) {
+if (!expectedEnvironment || commandParts.length === 0) {
   console.error(
-    'Usage: node scripts/run-with-env.cjs <env-file> <command> [args...]',
+    'Usage: node scripts/run-with-process-env.cjs <expected-app-env> <command> [args...]',
+  );
+  process.exit(1);
+}
+
+if (process.env.APP_ENV !== expectedEnvironment) {
+  console.error(
+    `Refusing command: expected APP_ENV=${expectedEnvironment}, received APP_ENV=${process.env.APP_ENV ?? '(missing)'}.`,
   );
   process.exit(1);
 }
 
 try {
-  loadEnvFile(envFile);
   const result = assertDatabaseEnvironment(process.env, commandParts);
   console.log(
     `Database guard approved ${result.operation} for APP_ENV=${result.appEnvironment}.`,

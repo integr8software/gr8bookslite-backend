@@ -510,8 +510,6 @@ export class AccessControlService {
           Boolean(current?.create) || rolePermission.canCreate,
         [PermissionAction.UPDATE]:
           Boolean(current?.update) || rolePermission.canUpdate,
-        [PermissionAction.DELETE]: false,
-        [PermissionAction.APPROVE]: false,
         [PermissionAction.CANCEL]:
           Boolean(current?.cancel) || rolePermission.canCancel,
         [PermissionAction.UNCANCEL]:
@@ -538,8 +536,6 @@ export class AccessControlService {
         [PermissionAction.VIEW]: false,
         [PermissionAction.CREATE]: false,
         [PermissionAction.UPDATE]: false,
-        [PermissionAction.DELETE]: false,
-        [PermissionAction.APPROVE]: false,
         [PermissionAction.CANCEL]: false,
         [PermissionAction.UNCANCEL]: false,
         [PermissionAction.EXPORT]: false,
@@ -549,8 +545,6 @@ export class AccessControlService {
         [PermissionAction.VIEW]: override.canView ?? current.view,
         [PermissionAction.CREATE]: override.canCreate ?? current.create,
         [PermissionAction.UPDATE]: override.canUpdate ?? current.update,
-        [PermissionAction.DELETE]: false,
-        [PermissionAction.APPROVE]: false,
         [PermissionAction.CANCEL]: override.canCancel ?? current.cancel,
         [PermissionAction.UNCANCEL]: override.canUncancel ?? current.uncancel,
         [PermissionAction.EXPORT]: override.canExport ?? current.export,

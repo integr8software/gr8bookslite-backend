@@ -102,18 +102,25 @@ Recommended Render commands:
 Build Command:
 npm ci --include=dev && npm run build
 
+Pre-Deploy Command:
+npm run db:migrate:staging && npm run db:verify:staging
+
 Start Command:
-npm run db:migrate:deploy && npm run start:prod
+npm run start:staging
 ```
 
-`npm run db:migrate:deploy` runs:
+`npm run db:migrate:staging` runs:
 
 ```bash
 prisma migrate deploy
 ```
 
-It does not load the local `.env`. It uses the environment variables supplied
-by Render and only applies committed migrations.
+It does not load the local `.env`. It requires `APP_ENV=staging`, validates the
+approved database fingerprint, uses the environment variables supplied by
+Render, and only applies committed migrations. The verification command then
+checks connectivity, migration status, and the permission architecture. The
+separate start command validates the same staging identity and never runs
+migrations.
 
 Never run these against Neon staging:
 
@@ -417,8 +424,8 @@ Avoid trying to manually reverse complex data migrations during an incident.
 
 ## Questions For Architecture Review
 
-1. Should Render run migrations in the backend start command, or should
-   migrations run as a separate pre-deploy job?
+1. How should the separate Render pre-deploy migration job automate database
+   backups and post-migration verification?
 2. Should Neon staging use a fresh database/branch per major refactor?
 3. What is the safest way to reconcile an already-applied migration whose SQL
    checksum changed?

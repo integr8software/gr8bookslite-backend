@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const { assertDatabaseEnvironment } = require('./env/database-guard.cjs');
 
 const projectRoot = process.cwd();
 const hasHostDatabaseEnvironment =
@@ -19,6 +20,19 @@ if (hasLocalEnvironmentFile) {
     'generate',
   ];
 } else if (hasHostDatabaseEnvironment) {
+  try {
+    const result = assertDatabaseEnvironment(process.env, [
+      'prisma',
+      'generate',
+    ]);
+    console.log(
+      `Database guard approved ${result.operation} for APP_ENV=${result.appEnvironment}.`,
+    );
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+
   command = path.join(
     projectRoot,
     'node_modules',

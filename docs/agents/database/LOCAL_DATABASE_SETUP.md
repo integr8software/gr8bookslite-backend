@@ -90,7 +90,8 @@ Commit `prisma/schema.prisma` and the generated `prisma/migrations` files. On Re
 
 ```text
 Build Command: npm ci --include=dev && npm run build
-Start Command: npm run db:migrate:deploy && npm run start:prod
+Pre-Deploy Command: npm run db:migrate:staging && npm run db:verify:staging
+Start Command: npm run start:staging
 ```
 
-`--include=dev` installs the Nest CLI and TypeScript build tools even though Render staging uses `NODE_ENV=production`. `db:migrate:deploy` applies committed migrations using Render's environment variables. Never run `migrate dev`, `migrate reset`, or `db push` against Neon staging.
+`--include=dev` installs the Nest CLI and TypeScript build tools even though Render staging uses `NODE_ENV=production`. The separate pre-deploy command requires `APP_ENV=staging`, validates the configured database fingerprint, applies committed migrations, and verifies migration status and the permission architecture using Render's environment variables. `start:staging` starts the application only after pre-deploy succeeds and never runs migrations. Never run `migrate dev`, `migrate reset`, or `db push` against Neon staging.

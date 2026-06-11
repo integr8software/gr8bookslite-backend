@@ -2,7 +2,7 @@ import { PermissionAction } from '../enums/permission-action.enum';
 import { AccessControlService } from './access-control.service';
 
 describe('AccessControlService permission architecture', () => {
-  it('exposes cancel and uncancel without exposing legacy delete or approve', () => {
+  it('exposes the active cancel and uncancel actions', () => {
     const service = new AccessControlService({} as never, {} as never);
     const membership = {
       companyRole: {
@@ -11,8 +11,6 @@ describe('AccessControlService permission architecture', () => {
             canView: true,
             canCreate: false,
             canUpdate: false,
-            canDelete: true,
-            canApprove: true,
             canCancel: true,
             canUncancel: true,
             canExport: false,
@@ -48,8 +46,6 @@ describe('AccessControlService permission architecture', () => {
         `PCFR:${PermissionAction.UNCANCEL}`,
       ]),
     );
-    expect(permissions).not.toContain(`PCFR:${PermissionAction.DELETE}`);
-    expect(permissions).not.toContain(`PCFR:${PermissionAction.APPROVE}`);
   });
 
   it('filters permissions using the related module instead of code prefixes', () => {
@@ -61,8 +57,6 @@ describe('AccessControlService permission architecture', () => {
             canView: true,
             canCreate: false,
             canUpdate: false,
-            canDelete: false,
-            canApprove: false,
             canCancel: false,
             canUncancel: false,
             canExport: false,
@@ -89,7 +83,9 @@ describe('AccessControlService permission architecture', () => {
     };
 
     expect(
-      permissionBuilder.buildEffectivePermissions(membership, ['cash-disbursement']),
+      permissionBuilder.buildEffectivePermissions(membership, [
+        'cash-disbursement',
+      ]),
     ).toContain('PCFR:view');
     expect(
       permissionBuilder.buildEffectivePermissions(membership, ['OTHER']),

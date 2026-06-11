@@ -23,8 +23,7 @@ async function main() {
     moduleMismatches,
     inactiveRoleAssignments,
     inactiveMembershipOverrides,
-    missingRoleCancelMigrations,
-    missingOverrideCancelMigrations,
+    legacyPermissionColumns,
     activePermissionsWithInactiveTargets,
     invalidActiveSubmodulePermissions,
     invalidAbbreviatedSubmoduleCodes,
@@ -100,19 +99,16 @@ async function main() {
         WHERE "permission"."is_active" = false
       `,
     ),
-    prisma.companyRolePermission.count({
-      where: {
-        canDelete: true,
-        canCancel: false,
-      },
-    }),
     count(
       prisma.$queryRaw<CountResult[]>`
         SELECT COUNT(*) AS "count"
-        FROM "membership_permissions"
-        WHERE
-          "can_delete" IS NOT NULL
-          AND "can_cancel" IS DISTINCT FROM "can_delete"
+        FROM "information_schema"."columns"
+        WHERE "table_schema" = 'public'
+          AND "table_name" IN (
+            'company_role_permissions',
+            'membership_permissions'
+          )
+          AND "column_name" IN ('can_delete', 'can_approve')
       `,
     ),
     count(
@@ -241,8 +237,7 @@ async function main() {
     matchingModules: moduleMismatches === 0,
     noInactiveRoleAssignments: inactiveRoleAssignments === 0,
     noInactiveMembershipOverrides: inactiveMembershipOverrides === 0,
-    roleDeleteMigratedToCancel: missingRoleCancelMigrations === 0,
-    overrideDeleteMigratedToCancel: missingOverrideCancelMigrations === 0,
+    noLegacyPermissionColumns: legacyPermissionColumns === 0,
     activeCatalogPaths: activePermissionsWithInactiveTargets === 0,
     canonicalSubmodulePermissions: invalidActiveSubmodulePermissions === 0,
     abbreviatedSubmoduleCodes: invalidAbbreviatedSubmoduleCodes === 0,

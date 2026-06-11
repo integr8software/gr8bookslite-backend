@@ -223,7 +223,6 @@ model PlatformModule {
   submodules          PlatformSubmodule[]
   permissions         Permission[]
   enabledCompanies    CompanyModule[]
-  auditLogs           AuditLog[]
   formSignatorySetups FormSignatorySetup[]
 
   @@map("platform_modules")
@@ -278,8 +277,6 @@ model CompanyRolePermission {
   canView       Boolean     @default(false) @map("can_view")
   canCreate     Boolean     @default(false) @map("can_create")
   canUpdate     Boolean     @default(false) @map("can_update")
-  canDelete     Boolean     @default(false) @map("can_delete")
-  canApprove    Boolean     @default(false) @map("can_approve")
   canCancel     Boolean     @default(false) @map("can_cancel")
   canUncancel   Boolean     @default(false) @map("can_uncancel")
   canExport     Boolean     @default(false) @map("can_export")
@@ -301,8 +298,6 @@ model MembershipPermission {
   canView             Boolean?   @map("can_view")
   canCreate           Boolean?   @map("can_create")
   canUpdate           Boolean?   @map("can_update")
-  canDelete           Boolean?   @map("can_delete")
-  canApprove          Boolean?   @map("can_approve")
   canCancel           Boolean?   @map("can_cancel")
   canUncancel         Boolean?   @map("can_uncancel")
   canExport           Boolean?   @map("can_export")
@@ -336,20 +331,18 @@ model CompanyModule {
 }
 
 model AuditLog {
-  id               BigInt          @id @default(autoincrement())
-  companyId        Int?            @map("company_id")
-  actorUserId      Int?            @map("actor_user_id")
-  action           String
-  entityType       String          @map("entity_type")
-  entityId         String?         @map("entity_id")
-  metadata         Json?
-  ipAddress        String?         @map("ip_address")
-  userAgent        String?         @map("user_agent")
-  createdAt        DateTime        @default(now()) @map("created_at")
-  company          Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  actorUser        User?           @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
-  platformModule   PlatformModule? @relation(fields: [platformModuleId], references: [id])
-  platformModuleId Int?
+  id          BigInt   @id @default(autoincrement())
+  companyId   Int?     @map("company_id")
+  actorUserId Int?     @map("actor_user_id")
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String?  @map("entity_id")
+  metadata    Json?
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+  company     Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  actorUser   User?    @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
 
   @@index([companyId, createdAt])
   @@index([actorUserId, createdAt])
