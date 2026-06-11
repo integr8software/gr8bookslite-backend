@@ -20,9 +20,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/verify-email": {
@@ -44,9 +42,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/resend-verification": {
@@ -68,9 +64,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/change-verification-email": {
@@ -92,9 +86,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/forgot-password": {
@@ -116,9 +108,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/resend-forgot-password": {
@@ -140,9 +130,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/verify-forgot-password-code": {
@@ -164,9 +152,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/reset-password": {
@@ -188,9 +174,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/workspace-invitation/activate": {
@@ -212,9 +196,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/login": {
@@ -243,9 +225,7 @@
             }
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/google": {
@@ -264,9 +244,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/google/callback": {
@@ -297,9 +275,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/google/session": {
@@ -321,9 +297,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/logout": {
@@ -335,9 +309,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/me": {
@@ -349,9 +321,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/context/company": {
@@ -373,9 +343,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/me/password/otp": {
@@ -387,9 +355,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/me/password/verify-otp": {
@@ -411,9 +377,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/auth/me/password": {
@@ -435,9 +399,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/api/v1/users": {
@@ -459,9 +421,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       },
       "post": {
         "operationId": "UsersController_create_v1",
@@ -488,9 +448,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/api/v1/users/me": {
@@ -519,9 +477,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/api/v1/users/me/avatar": {
@@ -540,9 +496,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       },
       "delete": {
         "operationId": "UsersController_removeAvatar_v1",
@@ -559,9 +513,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/api/v1/users/{id}": {
@@ -589,9 +541,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       },
       "patch": {
         "operationId": "UsersController_update_v1",
@@ -627,9 +577,7 @@
             }
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       },
       "delete": {
         "operationId": "UsersController_remove_v1",
@@ -648,9 +596,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/api/v1/dashboard/workspace-overview": {
@@ -662,9 +608,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Dashboard"
-        ]
+        "tags": ["Dashboard"]
       }
     },
     "/api/v1/health": {
@@ -676,9 +620,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Health"
-        ]
+        "tags": ["Health"]
       }
     },
     "/api/v1/onboarding/company-logo": {
@@ -690,9 +632,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/api/v1/onboarding/plans": {
@@ -704,9 +644,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/api/v1/onboarding/draft": {
@@ -718,9 +656,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/api/v1/onboarding/plan": {
@@ -742,9 +678,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/api/v1/onboarding/billing": {
@@ -766,9 +700,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/api/v1/onboarding/company-details": {
@@ -790,9 +722,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/api/v1/onboarding/complete": {
@@ -804,9 +734,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/api/v1/billing/plans": {
@@ -834,9 +762,7 @@
             }
           }
         },
-        "tags": [
-          "Billing"
-        ]
+        "tags": ["Billing"]
       }
     },
     "/api/v1/billing/payment-methods": {
@@ -855,9 +781,7 @@
             }
           }
         },
-        "tags": [
-          "Billing"
-        ]
+        "tags": ["Billing"]
       }
     },
     "/api/v1/billing/subscription-setup": {
@@ -885,9 +809,7 @@
             }
           }
         },
-        "tags": [
-          "Billing"
-        ]
+        "tags": ["Billing"]
       }
     },
     "/api/v1/billing/subscriptions/current": {
@@ -906,9 +828,7 @@
             }
           }
         },
-        "tags": [
-          "Billing"
-        ]
+        "tags": ["Billing"]
       }
     },
     "/api/v1/billing/subscriptions": {
@@ -937,9 +857,7 @@
             }
           }
         },
-        "tags": [
-          "Billing"
-        ]
+        "tags": ["Billing"]
       }
     },
     "/api/v1/billing/subscriptions/{subscriptionId}/attach-payment-method": {
@@ -977,9 +895,7 @@
             }
           }
         },
-        "tags": [
-          "Billing"
-        ]
+        "tags": ["Billing"]
       }
     },
     "/api/v1/billing/subscriptions/{subscriptionId}/cancel": {
@@ -1017,9 +933,7 @@
             }
           }
         },
-        "tags": [
-          "Billing"
-        ]
+        "tags": ["Billing"]
       }
     },
     "/api/webhooks/paymongo": {
@@ -1031,9 +945,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "PaymongoWebhook"
-        ]
+        "tags": ["PaymongoWebhook"]
       }
     },
     "/api/v1/master/plan-and-packages": {
@@ -1045,9 +957,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "MasterPlanAndPackages"
-        ]
+        "tags": ["MasterPlanAndPackages"]
       },
       "post": {
         "operationId": "MasterPlanAndPackagesController_createPlan_v1",
@@ -1067,9 +977,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "MasterPlanAndPackages"
-        ]
+        "tags": ["MasterPlanAndPackages"]
       }
     },
     "/api/v1/workspace/companies": {
@@ -1091,9 +999,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       },
       "post": {
         "operationId": "WorkspaceCompaniesController_create_v1",
@@ -1120,9 +1026,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       }
     },
     "/api/v1/workspace/companies/management-summary": {
@@ -1150,9 +1054,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       }
     },
     "/api/v1/workspace/companies/{companyId}": {
@@ -1180,9 +1082,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       },
       "patch": {
         "operationId": "WorkspaceCompaniesController_update_v1",
@@ -1218,9 +1118,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       },
       "delete": {
         "operationId": "WorkspaceCompaniesController_deactivate_v1",
@@ -1246,9 +1144,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       }
     },
     "/api/v1/workspace/companies/{companyId}/logo": {
@@ -1276,9 +1172,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       }
     },
     "/api/v1/workspace/companies/{companyId}/units": {
@@ -1309,9 +1203,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       },
       "post": {
         "operationId": "WorkspaceCompaniesController_createUnit_v1",
@@ -1347,9 +1239,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       }
     },
     "/api/v1/workspace/companies/units/{unitId}": {
@@ -1387,9 +1277,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       },
       "delete": {
         "operationId": "WorkspaceCompaniesController_deactivateUnit_v1",
@@ -1415,9 +1303,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Companies"
-        ]
+        "tags": ["Workspace Companies"]
       }
     },
     "/api/v1/workspace/audit-logs": {
@@ -1439,9 +1325,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Audit Logs"
-        ]
+        "tags": ["Workspace Audit Logs"]
       }
     },
     "/api/v1/workspace/audit-logs/activity": {
@@ -1463,9 +1347,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Workspace Audit Logs"
-        ]
+        "tags": ["Workspace Audit Logs"]
       }
     },
     "/api/v1/workspace/users": {
@@ -1487,9 +1369,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Users"
-        ]
+        "tags": ["Workspace Users"]
       },
       "post": {
         "operationId": "WorkspaceUsersController_create_v1",
@@ -1516,9 +1396,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Users"
-        ]
+        "tags": ["Workspace Users"]
       }
     },
     "/api/v1/workspace/users/{userId}/resend-invitation": {
@@ -1546,9 +1424,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Users"
-        ]
+        "tags": ["Workspace Users"]
       }
     },
     "/api/v1/workspace/users/{userId}/invitation": {
@@ -1576,9 +1452,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Users"
-        ]
+        "tags": ["Workspace Users"]
       }
     },
     "/api/v1/workspace/users/{userId}": {
@@ -1616,9 +1490,7 @@
             }
           }
         },
-        "tags": [
-          "Workspace Users"
-        ]
+        "tags": ["Workspace Users"]
       }
     },
     "/api/v1/company/units/{unitId}/roles": {
@@ -1639,9 +1511,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "BranchRoles"
-        ]
+        "tags": ["BranchRoles"]
       },
       "post": {
         "operationId": "BranchRolesController_create_v1",
@@ -1670,9 +1540,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "BranchRoles"
-        ]
+        "tags": ["BranchRoles"]
       }
     },
     "/api/v1/company/units/{unitId}/roles/{roleId}": {
@@ -1701,9 +1569,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "BranchRoles"
-        ]
+        "tags": ["BranchRoles"]
       },
       "patch": {
         "operationId": "BranchRolesController_update_v1",
@@ -1740,9 +1606,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "BranchRoles"
-        ]
+        "tags": ["BranchRoles"]
       }
     },
     "/api/v1/company/units/{unitId}/roles/{roleId}/status": {
@@ -1781,9 +1645,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "BranchRoles"
-        ]
+        "tags": ["BranchRoles"]
       }
     },
     "/api/v1/company/units/{unitId}/users": {
@@ -1804,9 +1666,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "BranchUsers"
-        ]
+        "tags": ["BranchUsers"]
       }
     },
     "/api/v1/company/units/{unitId}/users/roles": {
@@ -1827,9 +1687,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "BranchUsers"
-        ]
+        "tags": ["BranchUsers"]
       }
     },
     "/api/v1/company/units/{unitId}/users/{userId}/role": {
@@ -1875,9 +1733,7 @@
             }
           }
         },
-        "tags": [
-          "BranchUsers"
-        ]
+        "tags": ["BranchUsers"]
       }
     },
     "/api/v1/maintenance/form-signatories": {
@@ -1896,9 +1752,7 @@
             }
           }
         },
-        "tags": [
-          "Form Signatories"
-        ]
+        "tags": ["Form Signatories"]
       },
       "post": {
         "operationId": "FormSignatoriesController_save_v1",
@@ -1925,9 +1779,7 @@
             }
           }
         },
-        "tags": [
-          "Form Signatories"
-        ]
+        "tags": ["Form Signatories"]
       }
     },
     "/api/v1/maintenance/form-signatories/options": {
@@ -1946,9 +1798,7 @@
             }
           }
         },
-        "tags": [
-          "Form Signatories"
-        ]
+        "tags": ["Form Signatories"]
       }
     },
     "/api/v1/maintenance/form-signatories/bootstrap": {
@@ -1967,9 +1817,7 @@
             }
           }
         },
-        "tags": [
-          "Form Signatories"
-        ]
+        "tags": ["Form Signatories"]
       }
     },
     "/api/v1/maintenance/form-signatories/resolve": {
@@ -2005,9 +1853,7 @@
             }
           }
         },
-        "tags": [
-          "Form Signatories"
-        ]
+        "tags": ["Form Signatories"]
       }
     },
     "/api/v1/maintenance/form-signatories/{setupId}": {
@@ -2035,9 +1881,7 @@
             }
           }
         },
-        "tags": [
-          "Form Signatories"
-        ]
+        "tags": ["Form Signatories"]
       },
       "patch": {
         "operationId": "FormSignatoriesController_update_v1",
@@ -2073,9 +1917,7 @@
             }
           }
         },
-        "tags": [
-          "Form Signatories"
-        ]
+        "tags": ["Form Signatories"]
       }
     },
     "/api/v1/ai-assistant/chat": {
@@ -2104,15 +1946,13 @@
             }
           }
         },
-        "tags": [
-          "AiAssistant"
-        ]
+        "tags": ["AiAssistant"]
       }
     }
   },
   "info": {
-    "title": "GR8BooksLite API",
-    "description": "Versioned REST API for GR8BooksLite frontend clients.",
+    "title": "GR8Books Neo API",
+    "description": "Versioned REST API for GR8Books Neo frontend clients.",
     "version": "1.0",
     "contact": {}
   },
@@ -2149,12 +1989,7 @@
             "pattern": "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$"
           }
         },
-        "required": [
-          "fullName",
-          "email",
-          "password",
-          "confirmPassword"
-        ]
+        "required": ["fullName", "email", "password", "confirmPassword"]
       },
       "VerifyEmailDto": {
         "type": "object",
@@ -2169,10 +2004,7 @@
             "maxLength": 4
           }
         },
-        "required": [
-          "email",
-          "code"
-        ]
+        "required": ["email", "code"]
       },
       "ResendVerificationDto": {
         "type": "object",
@@ -2182,9 +2014,7 @@
             "format": "email"
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "ChangeVerificationEmailDto": {
         "type": "object",
@@ -2198,10 +2028,7 @@
             "format": "email"
           }
         },
-        "required": [
-          "currentEmail",
-          "newEmail"
-        ]
+        "required": ["currentEmail", "newEmail"]
       },
       "ForgotPasswordDto": {
         "type": "object",
@@ -2211,9 +2038,7 @@
             "format": "email"
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "VerifyForgotPasswordCodeDto": {
         "type": "object",
@@ -2228,10 +2053,7 @@
             "maxLength": 4
           }
         },
-        "required": [
-          "email",
-          "code"
-        ]
+        "required": ["email", "code"]
       },
       "ResetPasswordDto": {
         "type": "object",
@@ -2248,11 +2070,7 @@
             "minLength": 8
           }
         },
-        "required": [
-          "resetToken",
-          "newPassword",
-          "confirmNewPassword"
-        ]
+        "required": ["resetToken", "newPassword", "confirmNewPassword"]
       },
       "ActivateWorkspaceUserDto": {
         "type": "object",
@@ -2274,12 +2092,7 @@
             "minLength": 8
           }
         },
-        "required": [
-          "email",
-          "token",
-          "newPassword",
-          "confirmNewPassword"
-        ]
+        "required": ["email", "token", "newPassword", "confirmNewPassword"]
       },
       "LoginDto": {
         "type": "object",
@@ -2299,10 +2112,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "ExchangeGoogleSessionDto": {
         "type": "object",
@@ -2313,9 +2123,7 @@
             "maxLength": 64
           }
         },
-        "required": [
-          "handoffCode"
-        ]
+        "required": ["handoffCode"]
       },
       "SwitchCompanyContextDto": {
         "type": "object",
@@ -2325,9 +2133,7 @@
             "minimum": 1
           }
         },
-        "required": [
-          "companyId"
-        ]
+        "required": ["companyId"]
       },
       "VerifyPasswordChangeCodeDto": {
         "type": "object",
@@ -2339,9 +2145,7 @@
             "pattern": "^\\d+$"
           }
         },
-        "required": [
-          "code"
-        ]
+        "required": ["code"]
       },
       "ChangeAuthenticatedPasswordDto": {
         "type": "object",
@@ -2358,11 +2162,7 @@
             "minLength": 8
           }
         },
-        "required": [
-          "resetToken",
-          "newPassword",
-          "confirmNewPassword"
-        ]
+        "required": ["resetToken", "newPassword", "confirmNewPassword"]
       },
       "CreateUserDto": {
         "type": "object",
@@ -2383,17 +2183,10 @@
           },
           "systemRole": {
             "type": "string",
-            "enum": [
-              "SUPER_ADMIN",
-              "STANDARD"
-            ]
+            "enum": ["SUPER_ADMIN", "STANDARD"]
           }
         },
-        "required": [
-          "name",
-          "email",
-          "password"
-        ]
+        "required": ["name", "email", "password"]
       },
       "UpdateOwnProfileDto": {
         "type": "object",
@@ -2427,10 +2220,7 @@
           },
           "systemRole": {
             "type": "string",
-            "enum": [
-              "SUPER_ADMIN",
-              "STANDARD"
-            ]
+            "enum": ["SUPER_ADMIN", "STANDARD"]
           }
         }
       },
@@ -2443,17 +2233,10 @@
           },
           "billingCycle": {
             "type": "string",
-            "enum": [
-              "MONTHLY",
-              "QUARTERLY",
-              "YEARLY"
-            ]
+            "enum": ["MONTHLY", "QUARTERLY", "YEARLY"]
           }
         },
-        "required": [
-          "planCode",
-          "billingCycle"
-        ]
+        "required": ["planCode", "billingCycle"]
       },
       "SaveOnboardingBillingDto": {
         "type": "object",
@@ -2510,10 +2293,7 @@
         "properties": {
           "taxpayerType": {
             "type": "string",
-            "enum": [
-              "individual",
-              "non-individual"
-            ]
+            "enum": ["individual", "non-individual"]
           },
           "lastName": {
             "type": "string",
@@ -2606,11 +2386,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "amountInCents",
-          "compareAtInCents",
-          "isRemoteReady"
-        ]
+        "required": ["amountInCents", "compareAtInCents", "isRemoteReady"]
       },
       "BillingPlanPricingResponseDto": {
         "type": "object",
@@ -2622,10 +2398,7 @@
             "$ref": "#/components/schemas/BillingPlanPriceResponseDto"
           }
         },
-        "required": [
-          "monthly",
-          "yearly"
-        ]
+        "required": ["monthly", "yearly"]
       },
       "BillingPlanDetailedPriceResponseDto": {
         "type": "object",
@@ -2645,11 +2418,7 @@
             "type": "number"
           },
           "billingCycle": {
-            "enum": [
-              "MONTHLY",
-              "QUARTERLY",
-              "YEARLY"
-            ],
+            "enum": ["MONTHLY", "QUARTERLY", "YEARLY"],
             "type": "string"
           },
           "intervalCount": {
@@ -2692,12 +2461,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "id",
-          "metric",
-          "freeCount",
-          "unitPriceInCents"
-        ]
+        "required": ["id", "metric", "freeCount", "unitPriceInCents"]
       },
       "BillingPlanDiscountTierResponseDto": {
         "type": "object",
@@ -2718,12 +2482,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "id",
-          "metric",
-          "thresholdCount",
-          "discountPercent"
-        ]
+        "required": ["id", "metric", "thresholdCount", "discountPercent"]
       },
       "BillingPlanModuleResponseDto": {
         "type": "object",
@@ -2738,11 +2497,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "id",
-          "moduleKey",
-          "isEnabled"
-        ]
+        "required": ["id", "moduleKey", "isEnabled"]
       },
       "BillingPlanResponseDto": {
         "type": "object",
@@ -2825,9 +2580,7 @@
             }
           }
         },
-        "required": [
-          "plans"
-        ]
+        "required": ["plans"]
       },
       "BillingPaymentMethodCompanyResponseDto": {
         "type": "object",
@@ -2839,10 +2592,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name"
-        ]
+        "required": ["id", "name"]
       },
       "BillingPaymentMethodSubscriptionPlanResponseDto": {
         "type": "object",
@@ -2854,10 +2604,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "code",
-          "name"
-        ]
+        "required": ["code", "name"]
       },
       "BillingPaymentMethodSubscriptionResponseDto": {
         "type": "object",
@@ -2872,11 +2619,7 @@
             "$ref": "#/components/schemas/BillingPaymentMethodSubscriptionPlanResponseDto"
           }
         },
-        "required": [
-          "id",
-          "status",
-          "plan"
-        ]
+        "required": ["id", "status", "plan"]
       },
       "BillingSavedPaymentMethodResponseDto": {
         "type": "object",
@@ -2945,9 +2688,7 @@
             }
           }
         },
-        "required": [
-          "paymentMethods"
-        ]
+        "required": ["paymentMethods"]
       },
       "CompanySubscriptionProviderReferencesResponseDto": {
         "type": "object",
@@ -2993,11 +2734,7 @@
             "type": "number"
           },
           "billingCycle": {
-            "enum": [
-              "MONTHLY",
-              "QUARTERLY",
-              "YEARLY"
-            ],
+            "enum": ["MONTHLY", "QUARTERLY", "YEARLY"],
             "type": "string"
           },
           "intervalCount": {
@@ -3129,13 +2866,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "id",
-          "email",
-          "name",
-          "phone",
-          "externalCustomerId"
-        ]
+        "required": ["id", "email", "name", "phone", "externalCustomerId"]
       },
       "BillingPaymentMethodResponseDto": {
         "type": "object",
@@ -3274,18 +3005,12 @@
             "type": "string"
           },
           "billingCycle": {
-            "enum": [
-              "MONTHLY",
-              "QUARTERLY",
-              "YEARLY"
-            ],
+            "enum": ["MONTHLY", "QUARTERLY", "YEARLY"],
             "type": "string"
           },
           "billingProvider": {
             "type": "string",
-            "enum": [
-              "PAYMONGO"
-            ]
+            "enum": ["PAYMONGO"]
           },
           "startsAt": {
             "format": "date-time",
@@ -3396,10 +3121,7 @@
             ]
           }
         },
-        "required": [
-          "plans",
-          "subscription"
-        ]
+        "required": ["plans", "subscription"]
       },
       "CurrentSubscriptionResponseDto": {
         "type": "object",
@@ -3414,9 +3136,7 @@
             ]
           }
         },
-        "required": [
-          "subscription"
-        ]
+        "required": ["subscription"]
       },
       "SubscribeCompanyDto": {
         "type": "object",
@@ -3426,17 +3146,10 @@
           },
           "billingCycle": {
             "type": "string",
-            "enum": [
-              "MONTHLY",
-              "QUARTERLY",
-              "YEARLY"
-            ]
+            "enum": ["MONTHLY", "QUARTERLY", "YEARLY"]
           }
         },
-        "required": [
-          "planCode",
-          "billingCycle"
-        ]
+        "required": ["planCode", "billingCycle"]
       },
       "SubscribeCompanyResponseDto": {
         "type": "object",
@@ -3448,10 +3161,7 @@
             "$ref": "#/components/schemas/CompanySubscriptionResponseDto"
           }
         },
-        "required": [
-          "message",
-          "subscription"
-        ]
+        "required": ["message", "subscription"]
       },
       "AttachCompanySubscriptionPaymentMethodDto": {
         "type": "object",
@@ -3460,9 +3170,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "paymentMethodId"
-        ]
+        "required": ["paymentMethodId"]
       },
       "PaymentIntentResponseDto": {
         "type": "object",
@@ -3480,11 +3188,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "id",
-          "status",
-          "redirectUrl"
-        ]
+        "required": ["id", "status", "redirectUrl"]
       },
       "AttachPaymentMethodResponseDto": {
         "type": "object",
@@ -3502,11 +3206,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "message",
-          "subscription",
-          "paymentIntent"
-        ]
+        "required": ["message", "subscription", "paymentIntent"]
       },
       "CancelCompanySubscriptionDto": {
         "type": "object",
@@ -3526,21 +3226,14 @@
             "$ref": "#/components/schemas/CompanySubscriptionResponseDto"
           }
         },
-        "required": [
-          "message",
-          "subscription"
-        ]
+        "required": ["message", "subscription"]
       },
       "MasterPlanPriceDto": {
         "type": "object",
         "properties": {
           "billingCycle": {
             "type": "string",
-            "enum": [
-              "MONTHLY",
-              "QUARTERLY",
-              "YEARLY"
-            ]
+            "enum": ["MONTHLY", "QUARTERLY", "YEARLY"]
           },
           "intervalCount": {
             "type": "number",
@@ -3548,11 +3241,7 @@
           },
           "intervalUnit": {
             "type": "string",
-            "enum": [
-              "DAY",
-              "MONTH",
-              "YEAR"
-            ]
+            "enum": ["DAY", "MONTH", "YEAR"]
           },
           "priceInCents": {
             "type": "number",
@@ -3576,12 +3265,7 @@
         "properties": {
           "metric": {
             "type": "string",
-            "enum": [
-              "USER",
-              "BRANCH",
-              "COMPANY",
-              "SATELLITE"
-            ]
+            "enum": ["USER", "BRANCH", "COMPANY", "SATELLITE"]
           },
           "freeCount": {
             "type": "number",
@@ -3592,23 +3276,14 @@
             "minimum": 0
           }
         },
-        "required": [
-          "metric",
-          "freeCount",
-          "unitPriceInCents"
-        ]
+        "required": ["metric", "freeCount", "unitPriceInCents"]
       },
       "MasterPlanDiscountTierDto": {
         "type": "object",
         "properties": {
           "metric": {
             "type": "string",
-            "enum": [
-              "USER",
-              "BRANCH",
-              "COMPANY",
-              "SATELLITE"
-            ]
+            "enum": ["USER", "BRANCH", "COMPANY", "SATELLITE"]
           },
           "thresholdCount": {
             "type": "number",
@@ -3620,11 +3295,7 @@
             "maximum": 100
           }
         },
-        "required": [
-          "metric",
-          "thresholdCount",
-          "discountPercent"
-        ]
+        "required": ["metric", "thresholdCount", "discountPercent"]
       },
       "CreateMasterPlanAndPackageDto": {
         "type": "object",
@@ -3646,18 +3317,11 @@
           },
           "scope": {
             "type": "string",
-            "enum": [
-              "ONBOARDING",
-              "ADDITIONAL_COMPANY"
-            ]
+            "enum": ["ONBOARDING", "ADDITIONAL_COMPANY"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "DRAFT",
-              "INACTIVE"
-            ]
+            "enum": ["ACTIVE", "DRAFT", "INACTIVE"]
           },
           "trialDays": {
             "type": "number",
@@ -3715,11 +3379,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "email"
-        ]
+        "required": ["id", "name", "email"]
       },
       "WorkspaceCompanySubscriptionPlanResponseDto": {
         "type": "object",
@@ -3734,11 +3394,7 @@
             "type": "string"
           },
           "billingCycle": {
-            "enum": [
-              "MONTHLY",
-              "QUARTERLY",
-              "YEARLY"
-            ],
+            "enum": ["MONTHLY", "QUARTERLY", "YEARLY"],
             "type": "string"
           },
           "monthlyPriceInCents": {
@@ -3771,11 +3427,7 @@
             "nullable": true
           },
           "type": {
-            "enum": [
-              "HEAD_OFFICE",
-              "BRANCH",
-              "SATELLITE"
-            ],
+            "enum": ["HEAD_OFFICE", "BRANCH", "SATELLITE"],
             "type": "string"
           },
           "code": {
@@ -3868,10 +3520,7 @@
           },
           "taxpayerType": {
             "nullable": true,
-            "enum": [
-              "INDIVIDUAL",
-              "NON_INDIVIDUAL"
-            ],
+            "enum": ["INDIVIDUAL", "NON_INDIVIDUAL"],
             "type": "string"
           },
           "ownerLastName": {
@@ -4041,10 +3690,7 @@
             }
           }
         },
-        "required": [
-          "companyId",
-          "unitIds"
-        ]
+        "required": ["companyId", "unitIds"]
       },
       "WorkspaceUserResponseDto": {
         "type": "object",
@@ -4117,10 +3763,7 @@
             }
           }
         },
-        "required": [
-          "companies",
-          "users"
-        ]
+        "required": ["companies", "users"]
       },
       "CreateWorkspaceCompanyBillingDto": {
         "type": "object",
@@ -4130,11 +3773,7 @@
           },
           "billingCycle": {
             "type": "string",
-            "enum": [
-              "MONTHLY",
-              "QUARTERLY",
-              "YEARLY"
-            ]
+            "enum": ["MONTHLY", "QUARTERLY", "YEARLY"]
           },
           "billingEmail": {
             "type": "string",
@@ -4167,10 +3806,7 @@
         "properties": {
           "taxpayerType": {
             "type": "string",
-            "enum": [
-              "individual",
-              "non-individual"
-            ]
+            "enum": ["individual", "non-individual"]
           },
           "lastName": {
             "type": "string",
@@ -4250,10 +3886,7 @@
         "properties": {
           "taxpayerType": {
             "type": "string",
-            "enum": [
-              "individual",
-              "non-individual"
-            ]
+            "enum": ["individual", "non-individual"]
           },
           "lastName": {
             "type": "string",
@@ -4329,21 +3962,14 @@
             "type": "object"
           }
         },
-        "required": [
-          "message",
-          "company",
-          "logo"
-        ]
+        "required": ["message", "company", "logo"]
       },
       "CreateCompanyUnitDto": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "BRANCH",
-              "SATELLITE"
-            ]
+            "enum": ["BRANCH", "SATELLITE"]
           },
           "name": {
             "type": "string",
@@ -4370,10 +3996,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "type",
-          "name"
-        ]
+        "required": ["type", "name"]
       },
       "UpdateCompanyUnitDto": {
         "type": "object",
@@ -4501,10 +4124,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "path",
-          "module"
-        ]
+        "required": ["path", "module"]
       },
       "WorkspaceUserAssignmentDto": {
         "type": "object",
@@ -4522,10 +4142,7 @@
             }
           }
         },
-        "required": [
-          "companyId",
-          "unitIds"
-        ]
+        "required": ["companyId", "unitIds"]
       },
       "CreateWorkspaceUserDto": {
         "type": "object",
@@ -4549,11 +4166,7 @@
             }
           }
         },
-        "required": [
-          "name",
-          "email",
-          "companyAssignments"
-        ]
+        "required": ["name", "email", "companyAssignments"]
       },
       "WorkspaceUserMessageResponseDto": {
         "type": "object",
@@ -4562,9 +4175,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "message"
-        ]
+        "required": ["message"]
       },
       "WorkspaceUserCancelInvitationResponseDto": {
         "type": "object",
@@ -4576,10 +4187,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "message"
-        ]
+        "required": ["id", "message"]
       },
       "UpdateWorkspaceUserDto": {
         "type": "object",
@@ -4603,11 +4211,7 @@
             }
           }
         },
-        "required": [
-          "name",
-          "email",
-          "companyAssignments"
-        ]
+        "required": ["name", "email", "companyAssignments"]
       },
       "BranchRolePermissionDto": {
         "type": "object",
@@ -4679,10 +4283,7 @@
             }
           }
         },
-        "required": [
-          "name",
-          "permissions"
-        ]
+        "required": ["name", "permissions"]
       },
       "UpdateBranchRoleDto": {
         "type": "object",
@@ -4705,10 +4306,7 @@
             }
           }
         },
-        "required": [
-          "name",
-          "permissions"
-        ]
+        "required": ["name", "permissions"]
       },
       "UpdateBranchRoleStatusDto": {
         "type": "object",
@@ -4717,9 +4315,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "isActive"
-        ]
+        "required": ["isActive"]
       },
       "UpdateBranchUserRoleDto": {
         "type": "object",
@@ -4755,14 +4351,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "companyId",
-          "code",
-          "name",
-          "displayName",
-          "type"
-        ]
+        "required": ["id", "companyId", "code", "name", "displayName", "type"]
       },
       "FormSignatoryModuleResponseDto": {
         "type": "object",
@@ -4777,11 +4366,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "code",
-          "name"
-        ]
+        "required": ["id", "code", "name"]
       },
       "FormSignatoryRowResponseDto": {
         "type": "object",
@@ -4870,9 +4455,7 @@
             }
           }
         },
-        "required": [
-          "setups"
-        ]
+        "required": ["setups"]
       },
       "FormSignatoryBranchOptionResponseDto": {
         "type": "object",
@@ -4898,14 +4481,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "companyId",
-          "code",
-          "name",
-          "displayName",
-          "type"
-        ]
+        "required": ["id", "companyId", "code", "name", "displayName", "type"]
       },
       "FormSignatoryModuleOptionResponseDto": {
         "type": "object",
@@ -4920,11 +4496,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "code",
-          "name"
-        ]
+        "required": ["id", "code", "name"]
       },
       "FormSignatoryOptionsResponseDto": {
         "type": "object",
@@ -4942,10 +4514,7 @@
             }
           }
         },
-        "required": [
-          "branches",
-          "modules"
-        ]
+        "required": ["branches", "modules"]
       },
       "FormSignatoryBootstrapResponseDto": {
         "type": "object",
@@ -4969,11 +4538,7 @@
             }
           }
         },
-        "required": [
-          "branches",
-          "modules",
-          "setups"
-        ]
+        "required": ["branches", "modules", "setups"]
       },
       "FormSignatorySetupContainerResponseDto": {
         "type": "object",
@@ -4988,9 +4553,7 @@
             ]
           }
         },
-        "required": [
-          "setup"
-        ]
+        "required": ["setup"]
       },
       "FormSignatoryRowDto": {
         "type": "object",
@@ -5018,10 +4581,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "label",
-          "name"
-        ]
+        "required": ["label", "name"]
       },
       "SaveFormSignatoryDto": {
         "type": "object",
@@ -5046,12 +4606,7 @@
             }
           }
         },
-        "required": [
-          "unitId",
-          "moduleCode",
-          "moduleName",
-          "rows"
-        ]
+        "required": ["unitId", "moduleCode", "moduleName", "rows"]
       },
       "SaveFormSignatoryResponseDto": {
         "type": "object",
@@ -5063,30 +4618,21 @@
             "$ref": "#/components/schemas/FormSignatorySetupResponseDto"
           }
         },
-        "required": [
-          "message",
-          "setup"
-        ]
+        "required": ["message", "setup"]
       },
       "AiAssistantChatMessageDto": {
         "type": "object",
         "properties": {
           "role": {
             "type": "string",
-            "enum": [
-              "user",
-              "assistant"
-            ]
+            "enum": ["user", "assistant"]
           },
           "content": {
             "type": "string",
             "maxLength": 4000
           }
         },
-        "required": [
-          "role",
-          "content"
-        ]
+        "required": ["role", "content"]
       },
       "AiAssistantChatDto": {
         "type": "object",
@@ -5105,9 +4651,7 @@
             }
           }
         },
-        "required": [
-          "message"
-        ]
+        "required": ["message"]
       }
     }
   }

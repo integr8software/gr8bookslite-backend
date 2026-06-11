@@ -8,6 +8,8 @@ import {
 } from './ai-assistant.types';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
+const PRODUCT_NAME = 'Gr8Books Neo';
+const SHORT_PRODUCT_NAME_PATTERN = /\bGr8Books\b(?!\s+Neo)/gi;
 const PURCHASE_REQUEST_ADD_ROUTE =
   '/purchasing/purchase-request/add?assistant=1';
 
@@ -130,10 +132,11 @@ export class AiAssistantService {
 
   private createSystemPrompt() {
     return [
-      'You are Neo AI, the Gr8BooksLite in-app assistant.',
+      `You are Neo AI, the ${PRODUCT_NAME} in-app assistant.`,
       'Speak naturally and conversationally, not like a scripted command response.',
+      `Always refer to the product as "${PRODUCT_NAME}". Do not shorten it to "Gr8Books".`,
       'For now, focus on explaining modules, opening approved module pages, and preparing Purchase Request drafts for user review. Never submit, approve, delete, or save records.',
-      'If the user asks you to introduce yourself, say that you are Neo AI and briefly explain that you can guide users through modules and open pages for review.',
+      `If the user asks you to introduce yourself, say: "Hi there! I'm Neo AI, your in-app assistant for ${PRODUCT_NAME}. I can help you understand different modules and open specific pages for you to review."`,
       'Return only JSON matching this TypeScript shape:',
       '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } }',
       'Only use routes from this module guide:',
@@ -147,8 +150,7 @@ export class AiAssistantService {
   private normalizeResponse(text?: string): AiAssistantChatResponse {
     if (!text) {
       return {
-        message:
-          'I am Neo AI, your Gr8BooksLite assistant. I can guide you through modules, open approved pages, and prepare forms for your review. What would you like to do?',
+        message: `I am Neo AI, your ${PRODUCT_NAME} assistant. I can guide you through modules, open approved pages, and prepare forms for your review. What would you like to do?`,
         action: null,
       };
     }
@@ -158,16 +160,20 @@ export class AiAssistantService {
       return {
         message:
           typeof parsed.message === 'string'
-            ? parsed.message
+            ? this.normalizeProductName(parsed.message)
             : 'I prepared the next step for you.',
         action: this.normalizeAction(parsed.action),
       };
     } catch {
       return {
-        message: text,
+        message: this.normalizeProductName(text),
         action: null,
       };
     }
+  }
+
+  private normalizeProductName(message: string) {
+    return message.replace(SHORT_PRODUCT_NAME_PATTERN, PRODUCT_NAME);
   }
 
   private normalizeAction(action: unknown): AiAssistantAction | null {
@@ -252,8 +258,7 @@ export class AiAssistantService {
 
     if (this.isGreetingIntent(normalized)) {
       return {
-        message:
-          'Hello. I am Neo AI. I can explain Gr8BooksLite modules or open the right module page when you need it.',
+        message: `Hello. I am Neo AI. I can explain ${PRODUCT_NAME} modules or open the right module page when you need it.`,
         action: null,
       };
     }
@@ -271,8 +276,7 @@ export class AiAssistantService {
 
     if (this.isIntroIntent(normalized)) {
       return {
-        message:
-          'I am Neo AI. I can explain Gr8BooksLite modules and open the right module page for you. For example, you can ask me to explain Purchase Request, open Charts of Accounts, or guide you to Sales Invoice.',
+        message: `I am Neo AI. I can explain ${PRODUCT_NAME} modules and open the right module page for you. For example, you can ask me to explain Purchase Request, open Charts of Accounts, or guide you to Sales Invoice.`,
         action: null,
       };
     }
