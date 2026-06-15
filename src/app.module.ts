@@ -19,6 +19,7 @@ import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.m
 import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { validateEnvironment } from './config/environment';
+import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { validateEnvironment } from './config/environment';
     BranchRolesModule,
     BranchUsersModule,
     FormSignatoriesModule,
+    TransactionNumberSequencesModule,
     AiAssistantModule,
   ],
   providers: [
