@@ -8,10 +8,12 @@ import {
   MinLength,
 } from 'class-validator';
 
+const NamePattern = /^[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*$/u;
+
 export class SaveOnboardingBillingDto {
   @IsString()
   @MinLength(2)
-  @Matches(/^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$/, {
+  @Matches(NamePattern, {
     message: 'Cardholder name must contain letters only.',
   })
   cardholderName!: string;
