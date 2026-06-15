@@ -28,10 +28,11 @@ async function loadRepositoryChecksums() {
       migrationName,
       'migration.sql',
     );
-    const sql = await readFile(sqlPath);
+    const sql = await readFile(sqlPath, 'utf8');
+    const normalizedSql = sql.replace(/\r\n/g, '\n');
     checksums.set(
       migrationName,
-      createHash('sha256').update(sql).digest('hex'),
+      createHash('sha256').update(normalizedSql).digest('hex'),
     );
   }
 
@@ -73,6 +74,7 @@ async function main() {
   const modifiedMigrations = appliedHistory
     .filter(
       (migration) =>
+        repositoryChecksums.has(migration.migrationName) &&
         repositoryChecksums.get(migration.migrationName) !== migration.checksum,
     )
     .map((migration) => migration.migrationName);
