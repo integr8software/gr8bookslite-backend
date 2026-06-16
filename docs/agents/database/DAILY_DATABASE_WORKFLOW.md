@@ -53,11 +53,23 @@ shared migration while another developer is changing the same database.
 
 ```bash
 git pull
-npm install
+npm ci
 npm run db:migrate:local
-npm run db:generate:local
 npm run db:verify:local
+npm run typecheck
+npm test
 npm run dev
+```
+
+Use `npm ci` after pulling when `package.json` or `package-lock.json` changed,
+so local dependencies match the committed lockfile exactly. `db:migrate:local`
+generates Prisma Client after applying migrations, so a separate
+`db:generate:local` is usually unnecessary.
+
+For a shorter everyday confidence check after pulling migrations, run:
+
+```bash
+npm run db:migrate:local && npm run db:verify:local && npm run typecheck
 ```
 
 If migration-history verification reports a modified applied migration, stop.
