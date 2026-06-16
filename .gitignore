@@ -65,6 +65,7 @@ credentials/
 # temp directory
 .temp
 .tmp
+/tmp
 
 # Runtime data
 pids
