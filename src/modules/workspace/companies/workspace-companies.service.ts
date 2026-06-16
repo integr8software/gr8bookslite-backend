@@ -374,8 +374,17 @@ export class WorkspaceCompaniesService {
       where: { companyId },
       orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
     });
+    const headOfficeTin = units.find(
+      (unit) => unit.type === CompanyUnitType.HEAD_OFFICE,
+    )?.tin;
 
-    return units.map(mapCompanyUnit);
+    return units
+      .map((unit) =>
+        unit.type === CompanyUnitType.SATELLITE && headOfficeTin
+          ? { ...unit, tin: headOfficeTin }
+          : unit,
+      )
+      .map(mapCompanyUnit);
   }
 
   async createUnit(
@@ -399,6 +408,10 @@ export class WorkspaceCompaniesService {
       type === CompanyUnitType.SATELLITE
         ? await this.resolveSatelliteParent(companyId, dto.parentUnitId)
         : await this.resolveHeadOfficeParent(companyId);
+    const headOffice =
+      type === CompanyUnitType.SATELLITE
+        ? await this.resolveHeadOfficeParent(companyId)
+        : null;
 
     if (type === CompanyUnitType.BRANCH && !dto.tin?.trim()) {
       throw new BadRequestException('TIN is required for a branch.');
@@ -406,12 +419,12 @@ export class WorkspaceCompaniesService {
 
     const tin =
       type === CompanyUnitType.SATELLITE
-        ? parentUnit?.tin || company.tin
+        ? headOffice?.tin || company.tin
         : dto.tin?.trim();
 
     if (!tin) {
       throw new BadRequestException(
-        'A satellite requires an active head office or branch with TIN.',
+        'A satellite requires an active head office with TIN.',
       );
     }
 
@@ -473,9 +486,13 @@ export class WorkspaceCompaniesService {
         : current.type === CompanyUnitType.BRANCH && !current.parentUnitId
           ? await this.resolveHeadOfficeParent(current.companyId)
           : null;
+    const headOffice =
+      current.type === CompanyUnitType.SATELLITE
+        ? await this.resolveHeadOfficeParent(current.companyId)
+        : null;
     const tin =
       current.type === CompanyUnitType.SATELLITE
-        ? (parentUnit?.tin ?? current.tin)
+        ? (headOffice?.tin ?? current.tin)
         : cleanOptional(dto.tin);
 
     if (current.type === CompanyUnitType.BRANCH && dto.tin === '') {

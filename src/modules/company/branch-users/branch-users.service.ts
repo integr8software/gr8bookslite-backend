@@ -31,6 +31,7 @@ export class BranchUsersService {
     const memberships = await this.prisma.membership.findMany({
       where: {
         companyId: unit.companyId,
+        role: MembershipRole.USER,
         status: {
           not: MembershipStatus.REMOVED,
         },
@@ -92,6 +93,7 @@ export class BranchUsersService {
       where: {
         userId: targetUserId,
         companyId: unit.companyId,
+        role: MembershipRole.USER,
         status: {
           not: MembershipStatus.REMOVED,
         },
