@@ -18,6 +18,7 @@ import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.module';
 import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
+import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { validateEnvironment } from './config/environment';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
 
@@ -52,6 +53,7 @@ import { TransactionNumberSequencesModule } from './modules/system-administratio
     BranchRolesModule,
     BranchUsersModule,
     FormSignatoriesModule,
+    ChartOfAccountsModule,
     TransactionNumberSequencesModule,
     AiAssistantModule,
   ],

@@ -107,6 +107,8 @@ model Company {
   enabledModules        CompanyModule[]
   units                 CompanyUnit[]
   formSignatorySetups   FormSignatorySetup[]
+  chartAccounts         ChartAccount[]
+  bankAccounts          BankAccount[]
   auditLogs             AuditLog[]
   onboardingDrafts      UserOnboardingDraft[]  @relation("ProvisionedOnboardingCompany")
   createdByUser         User?                  @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
@@ -408,6 +410,64 @@ model TransactionNumberSequence {
   @@index([branchUnitId])
   @@index([permissionId])
   @@map("transaction_number_sequences")
+}
+
+model ChartAccount {
+  id               BigInt             @id @default(autoincrement())
+  companyId        Int                @map("company_id")
+  parentAccountId  BigInt?            @map("parent_account_id")
+  accountCode      String             @map("account_code") @db.VarChar(20)
+  accountTitle     String             @map("account_title") @db.VarChar(250)
+  accountLevel     ChartAccountLevel  @map("account_level")
+  accountType      ChartAccountType?  @map("account_type")
+  accountNature    AccountNature?     @map("account_nature")
+  accountGroup     String?            @map("account_group") @db.VarChar(50)
+  reportAlias      String?            @map("report_alias") @db.VarChar(250)
+  class            String?            @db.VarChar(50)
+  isPostingAccount Boolean            @default(false) @map("is_posting_account")
+  withSubsidiary   Boolean            @default(false) @map("with_subsidiary")
+  contraAccount    Boolean            @default(false) @map("contra_account")
+  showTotal        Boolean            @default(false) @map("show_total")
+  orderNo          Int?               @map("order_no")
+  status           ChartAccountStatus @default(ACTIVE)
+  currencyCode     String?            @map("currency_code") @db.VarChar(10)
+  whoCreated       String?            @map("who_created") @db.VarChar(50)
+  whoModified      String?            @map("who_modified") @db.VarChar(50)
+  deletedAt        DateTime?          @map("deleted_at")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  company          Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parentAccount    ChartAccount?      @relation("ChartAccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Restrict)
+  childAccounts    ChartAccount[]     @relation("ChartAccountHierarchy")
+  bankAccounts     BankAccount[]
+
+  @@unique([companyId, accountCode], map: "chart_accounts_company_account_code_key")
+  @@index([parentAccountId], map: "chart_accounts_parent_account_id_idx")
+  @@index([status], map: "chart_accounts_status_idx")
+  @@index([companyId, status], map: "chart_accounts_company_status_idx")
+  @@map("chart_accounts")
+}
+
+model BankAccount {
+  id            BigInt             @id @default(autoincrement())
+  companyId     Int                @map("company_id")
+  coaId         BigInt             @map("coa_id")
+  bankName      String             @map("bank_name") @db.VarChar(100)
+  branch        String?            @db.VarChar(100)
+  accountNumber String             @map("account_number") @db.VarChar(100)
+  accountName   String             @map("account_name") @db.VarChar(250)
+  currencyCode  String?            @map("currency_code") @db.VarChar(10)
+  isDefault     Boolean            @default(false) @map("is_default")
+  status        ChartAccountStatus @default(ACTIVE)
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+  company       Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  coa           ChartAccount       @relation(fields: [coaId], references: [id], onDelete: Restrict)
+
+  @@index([coaId], map: "bank_accounts_coa_id_idx")
+  @@index([status], map: "bank_accounts_status_idx")
+  @@index([companyId, status], map: "bank_accounts_company_status_idx")
+  @@map("bank_accounts")
 }
 
 // =========================================================
@@ -853,6 +913,32 @@ enum TransactionNumberInputMode {
 }
 
 enum TransactionNumberStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ChartAccountLevel {
+  MAJOR
+  SUB1
+  SUB2
+  SUB3
+  SPECIFIC
+}
+
+enum ChartAccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum AccountNature {
+  DEBIT
+  CREDIT
+}
+
+enum ChartAccountStatus {
   ACTIVE
   INACTIVE
 }
