@@ -37,6 +37,12 @@ create another migration instead.
 Only apply migrations that have already been reviewed and committed:
 
 ```bash
+npm run sync:push
+```
+
+Expanded form:
+
+```bash
 npm run db:verify-migrations:shared
 npm run db:migrate:shared
 npm run db:verify:shared
@@ -50,6 +56,12 @@ Create a database backup before a risky or destructive migration. Do not run the
 shared migration while another developer is changing the same database.
 
 ## Teammate Pulls New Migrations
+
+```bash
+npm run sync:pull
+```
+
+Expanded form:
 
 ```bash
 git pull

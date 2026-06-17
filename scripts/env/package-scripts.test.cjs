@@ -78,6 +78,18 @@ test('migration history verification is available for every environment', () => 
   }
 });
 
+test('sync scripts automate shared push and local pull workflows', () => {
+  assert.equal(
+    scripts['sync:push'],
+    'npm run db:verify-migrations:shared && npm run db:migrate:shared && npm run db:verify:shared',
+  );
+
+  assert.equal(
+    scripts['sync:pull'],
+    'git pull && npm ci && npm run db:migrate:local && npm run db:verify:local && npm run typecheck && npm test && npm run dev',
+  );
+});
+
 test('seed scripts separate reference data, fixtures, and admin bootstrap', () => {
   for (const environment of ['local', 'shared', 'staging', 'production']) {
     assert.match(

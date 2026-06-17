@@ -80,9 +80,7 @@ npm run dev
 6. Apply reviewed, committed migrations to shared development:
 
 ```bash
-npm run db:verify-migrations:shared
-npm run db:migrate:shared
-npm run db:verify:shared
+npm run sync:push
 ```
 
 See `docs/DAILY_DATABASE_WORKFLOW.md` for the complete developer and teammate
