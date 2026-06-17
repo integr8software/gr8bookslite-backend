@@ -833,9 +833,9 @@ export class AuthService {
       return this.buildAuthenticatedResponse(user, requestedCompanyId);
     }
 
-    const activeMemberships = this.getActiveMemberships(user);
+    const usableMemberships = this.getUsableMemberships(user);
 
-    if (activeMemberships.length === 0) {
+    if (usableMemberships.length === 0) {
       return this.buildAuthenticatedResponse(user, null);
     }
 
@@ -1268,9 +1268,9 @@ export class AuthService {
     return createHash('sha256').update(handoffCode).digest('hex');
   }
 
-  private getActiveMemberships(user: UserWithMemberships) {
+  private getUsableMemberships(user: UserWithMemberships) {
     return user.memberships.filter(
-      (membership) => membership.status === MembershipStatus.ACTIVE,
+      (membership) => this.isMembershipUsable(membership),
     );
   }
 
@@ -1282,7 +1282,7 @@ export class AuthService {
       return requestedCompanyId;
     }
 
-    const activeMemberships = this.getActiveMemberships(user);
+    const usableMemberships = this.getUsableMemberships(user);
 
     if (requestedCompanyId != null) {
       const membership = user.memberships.find(
@@ -1299,15 +1299,19 @@ export class AuthService {
         );
       }
 
+      if (!this.isMembershipCompanyUsable(membership)) {
+        throw new UnauthorizedException('This company is inactive.');
+      }
+
       return membership.companyId;
     }
 
-    if (activeMemberships.length === 1) {
-      return activeMemberships[0].companyId;
+    if (usableMemberships.length === 1) {
+      return usableMemberships[0].companyId;
     }
 
     return (
-      [...activeMemberships].sort((left, right) => {
+      [...usableMemberships].sort((left, right) => {
         const lastAccessDifference =
           (right.lastAccessedAt?.getTime() ?? 0) -
           (left.lastAccessedAt?.getTime() ?? 0);
@@ -1318,6 +1322,25 @@ export class AuthService {
 
         return left.companyId - right.companyId;
       })[0]?.companyId ?? null
+    );
+  }
+
+  private isMembershipUsable(
+    membership: UserWithMemberships['memberships'][number],
+  ) {
+    return (
+      membership.status === MembershipStatus.ACTIVE &&
+      this.isMembershipCompanyUsable(membership)
+    );
+  }
+
+  private isMembershipCompanyUsable(
+    membership: UserWithMemberships['memberships'][number],
+  ) {
+    return (
+      membership.company.isActive &&
+      membership.company.status !== CompanyStatus.SUSPENDED &&
+      membership.company.status !== CompanyStatus.FAILED
     );
   }
 
@@ -1666,23 +1689,31 @@ export class AuthService {
       companyId: number;
       role: MembershipRole;
       status: MembershipStatus;
+      company: {
+        isActive: boolean;
+        status: CompanyStatus;
+      };
     }>,
     activeCompanyId: number | null,
   ) {
-    const activeMemberships = memberships.filter(
-      (membership) => membership.status === MembershipStatus.ACTIVE,
+    const usableMemberships = memberships.filter(
+      (membership) =>
+        membership.status === MembershipStatus.ACTIVE &&
+        membership.company.isActive &&
+        membership.company.status !== CompanyStatus.SUSPENDED &&
+        membership.company.status !== CompanyStatus.FAILED,
     );
     const activeMembership =
       activeCompanyId == null
         ? null
-        : (activeMemberships.find(
+        : (usableMemberships.find(
             (membership) => membership.companyId === activeCompanyId,
           ) ?? null);
 
     return {
       emailVerified: true,
       hasCompany: memberships.length > 0,
-      hasActiveCompany: activeMemberships.length > 0,
+      hasActiveCompany: usableMemberships.length > 0,
       hasActiveCompanyContext: activeMembership !== null,
       requiresCompanySetup: memberships.length === 0,
       canManageCompany: activeMembership?.role === MembershipRole.ADMIN,
