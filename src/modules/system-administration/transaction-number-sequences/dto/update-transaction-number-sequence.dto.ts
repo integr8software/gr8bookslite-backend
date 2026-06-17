@@ -26,6 +26,11 @@ export class UpdateTransactionNumberSequenceDto {
   @MaxLength(40)
   prefix!: string;
 
+  @IsString()
+  @MaxLength(40)
+  @IsOptional()
+  suffix?: string;
+
   @Type(() => Number)
   @IsInt()
   @Min(1)

@@ -79,7 +79,7 @@ export class TransactionNumberSequencesService {
     ]);
 
     if (!permission) {
-      throw new NotFoundException('Transaction type not found.');
+      throw new NotFoundException('Transaction module not found.');
     }
 
     const branchUnitIds =
@@ -99,12 +99,13 @@ export class TransactionNumberSequencesService {
       prefix: dto.prefix.trim(),
       startingNumber: dto.startingNumber,
       status: mapStatus(dto.status),
+      suffix: dto.suffix?.trim() ?? '',
     } satisfies Omit<
       Prisma.TransactionNumberSequenceUncheckedCreateInput,
       'branchUnitId' | 'permissionId'
     >;
 
-    if (!data.prefix) {
+    if (data.inputMode === TransactionNumberInputMode.AUTO && !data.prefix) {
       throw new BadRequestException('Complete the numbering setup.');
     }
 
@@ -243,6 +244,13 @@ export class TransactionNumberSequencesService {
         },
         companyId,
         isActive: true,
+        type: {
+          in: [
+            CompanyUnitType.HEAD_OFFICE,
+            CompanyUnitType.BRANCH,
+            CompanyUnitType.SATELLITE,
+          ],
+        },
       },
       select: {
         id: true,
@@ -310,7 +318,7 @@ export class TransactionNumberSequencesService {
       membership.role !== MembershipRole.ADMIN
     ) {
       throw new ForbiddenException(
-        'Admin access is required to manage transaction number setups.',
+        'Admin access is required to manage transaction module numbering.',
       );
     }
   }

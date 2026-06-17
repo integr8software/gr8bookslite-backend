@@ -11,6 +11,7 @@ CREATE TABLE "transaction_number_sequences" (
     "permission_id" INTEGER NOT NULL,
     "input_mode" "TransactionNumberInputMode" NOT NULL DEFAULT 'AUTO',
     "prefix" TEXT NOT NULL,
+    "suffix" TEXT NOT NULL DEFAULT '',
     "padding" INTEGER NOT NULL DEFAULT 6,
     "starting_number" INTEGER NOT NULL DEFAULT 1,
     "current_number" INTEGER NOT NULL DEFAULT 1,

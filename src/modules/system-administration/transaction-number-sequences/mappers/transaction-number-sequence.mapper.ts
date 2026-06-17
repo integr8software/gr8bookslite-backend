@@ -11,6 +11,7 @@ type SequenceSummary = Pick<
   | 'prefix'
   | 'startingNumber'
   | 'status'
+  | 'suffix'
 >;
 
 export function mapPermissionTransactionNumberSetup({
@@ -22,8 +23,12 @@ export function mapPermissionTransactionNumberSetup({
   permission: PermissionSummary;
   sequences: SequenceSummary[];
 }) {
-  const firstSequence = sequences[0];
-  const branchUnitIds = sequences.map((sequence) => sequence.branchUnitId);
+  const activeBranchIdSet = new Set(activeBranchIds);
+  const scopedSequences = sequences.filter((sequence) =>
+    activeBranchIdSet.has(sequence.branchUnitId),
+  );
+  const firstSequence = scopedSequences[0];
+  const branchUnitIds = scopedSequences.map((sequence) => sequence.branchUnitId);
   const coversEveryBranch =
     activeBranchIds.length > 0 &&
     activeBranchIds.every((branchId) => branchUnitIds.includes(branchId));
@@ -36,6 +41,7 @@ export function mapPermissionTransactionNumberSetup({
     moduleName: permission.name,
     inputMode: firstSequence?.inputMode === 'MANUAL' ? 'Manual' : 'Auto',
     prefix: firstSequence?.prefix ?? permission.code,
+    suffix: firstSequence?.suffix ?? '',
     padding: firstSequence?.padding ?? 6,
     startingNumber: firstSequence?.startingNumber ?? 1,
     currentNumber: firstSequence?.currentNumber ?? 1,

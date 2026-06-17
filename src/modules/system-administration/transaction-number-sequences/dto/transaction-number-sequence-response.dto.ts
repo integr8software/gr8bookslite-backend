@@ -11,6 +11,7 @@ export class TransactionNumberSequenceResponseDto {
   moduleName!: string;
   inputMode!: 'Auto' | 'Manual';
   prefix!: string;
+  suffix!: string;
   padding!: number;
   startingNumber!: number;
   currentNumber!: number;

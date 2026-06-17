@@ -398,6 +398,7 @@ model TransactionNumberSequence {
   permissionId   Int                        @map("permission_id")
   inputMode      TransactionNumberInputMode @default(AUTO) @map("input_mode")
   prefix         String
+  suffix         String                     @default("")
   padding        Int                        @default(6)
   startingNumber Int                        @default(1) @map("starting_number")
   currentNumber  Int                        @default(1) @map("current_number")
