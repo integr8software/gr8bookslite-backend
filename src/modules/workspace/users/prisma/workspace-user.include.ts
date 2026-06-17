@@ -16,6 +16,15 @@ export const WorkspaceUserMembershipInclude = {
   unitAccess: {
     select: {
       unitId: true,
+      unit: {
+        select: {
+          id: true,
+          companyId: true,
+          type: true,
+          name: true,
+          isActive: true,
+        },
+      },
     },
   },
 } satisfies Prisma.MembershipInclude;

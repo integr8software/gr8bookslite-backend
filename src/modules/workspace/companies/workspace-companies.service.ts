@@ -10,6 +10,7 @@ import {
   BillingCycle,
   CompanyStatus,
   CompanyUnitType,
+  AccessScopeLevel,
   MembershipRole,
   MembershipStatus,
   TaxpayerType,
@@ -368,10 +369,16 @@ export class WorkspaceCompaniesService {
   }
 
   async findUnits(user: AuthUser, companyId: number) {
-    await this.ensureCompanyAccess(user, companyId);
+    const accessibleUnitIds = await this.getAccessibleUnitIdsForUnitList(
+      user,
+      companyId,
+    );
 
     const units = await this.prisma.companyUnit.findMany({
-      where: { companyId },
+      where: {
+        companyId,
+        id: accessibleUnitIds ? { in: accessibleUnitIds } : undefined,
+      },
       orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
     });
     const headOfficeTin = units.find(
@@ -385,6 +392,47 @@ export class WorkspaceCompaniesService {
           : unit,
       )
       .map(mapCompanyUnit);
+  }
+
+  private async getAccessibleUnitIdsForUnitList(
+    user: AuthUser,
+    companyId: number,
+  ) {
+    if (user.role === AppRole.SUPER_ADMIN) {
+      return null;
+    }
+
+    const membership = await this.prisma.membership.findUnique({
+      where: {
+        userId_companyId: {
+          userId: user.id,
+          companyId,
+        },
+      },
+      select: {
+        role: true,
+        status: true,
+        accessScope: true,
+        unitAccess: {
+          select: {
+            unitId: true,
+          },
+        },
+      },
+    });
+
+    if (!membership || membership.status === MembershipStatus.REMOVED) {
+      throw new NotFoundException('Company not found.');
+    }
+
+    if (
+      membership.role === MembershipRole.ADMIN ||
+      membership.accessScope === AccessScopeLevel.COMPANY
+    ) {
+      return null;
+    }
+
+    return membership.unitAccess.map((access) => access.unitId);
   }
 
   async createUnit(
