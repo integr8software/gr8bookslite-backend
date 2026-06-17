@@ -179,7 +179,7 @@ export class TransactionNumberSequencesService {
   }
 
   private async findPermissions() {
-    return this.prisma.permission.findMany({
+    const permissions = await this.prisma.permission.findMany({
       where: {
         isActive: true,
         requiresCompanyContext: true,
@@ -189,16 +189,30 @@ export class TransactionNumberSequencesService {
         module: {
           isActive: true,
         },
+        submodule: {
+          isActive: true,
+        },
       },
       select: {
         code: true,
         id: true,
         name: true,
+        submodule: {
+          select: {
+            configurationTypes: true,
+          },
+        },
       },
       orderBy: {
         name: 'asc',
       },
     });
+
+    return permissions.filter(
+      (permission) =>
+        Array.isArray(permission.submodule?.configurationTypes) &&
+        permission.submodule.configurationTypes.includes('Registry'),
+    );
   }
 
   private async findSequences(companyId: number) {

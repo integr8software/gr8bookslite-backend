@@ -127,6 +127,7 @@ export class BranchRolesService {
           select: {
             code: true,
             name: true,
+            configurationTypes: true,
             permissions: {
               where: {
                 isActive: true,
@@ -151,6 +152,7 @@ export class BranchRolesService {
         submodules: module.submodules.map((submodule) => ({
           code: submodule.code,
           name: submodule.name,
+          configurationTypes: submodule.configurationTypes,
           permissionCode: submodule.permissions[0].code,
           actions: ActivePermissionActions,
         })),

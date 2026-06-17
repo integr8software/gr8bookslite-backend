@@ -71,12 +71,17 @@ Run again with ${Confirmation} to reset and rebuild the canonical catalog.
     resolve(
       'prisma/migrations/20260610120000_seed_backend_permission_catalog/migration.sql',
     ),
-    resolve('prisma/migrations/20260610124000_use_cd_module_code/migration.sql'),
+    resolve(
+      'prisma/migrations/20260610124000_use_cd_module_code/migration.sql',
+    ),
     resolve(
       'prisma/migrations/20260610131000_use_apv_pca_permission_codes/migration.sql',
     ),
     resolve(
       'prisma/migrations/20260610150000_abbreviate_submodule_permission_codes/migration.sql',
+    ),
+    resolve(
+      'prisma/migrations/20260617090000_add_platform_submodule_configuration_types/migration.sql',
     ),
   ];
 

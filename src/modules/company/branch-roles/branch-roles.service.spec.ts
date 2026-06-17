@@ -46,6 +46,7 @@ describe('BranchRolesService permission architecture', () => {
           {
             code: 'PCFR',
             name: 'Petty Cash Fund Replenishment',
+            configurationTypes: ['Transaction', 'Registry'],
             permissions: [{ code: 'PCFR' }],
           },
         ],
@@ -62,6 +63,7 @@ describe('BranchRolesService permission architecture', () => {
               {
                 code: 'PCFR',
                 name: 'Petty Cash Fund Replenishment',
+                configurationTypes: ['Transaction', 'Registry'],
                 permissionCode: 'PCFR',
                 actions: [
                   'view',

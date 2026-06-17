@@ -1,6 +1,6 @@
 import { prisma } from '../seeds/prismaClient';
 
-const ExpectedActiveCatalogEntries = 65;
+const ExpectedActiveCatalogEntries = 67;
 const ExpectedActiveModules = 12;
 
 type CountResult = {

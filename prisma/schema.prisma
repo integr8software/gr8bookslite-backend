@@ -232,17 +232,18 @@ model PlatformModule {
 }
 
 model PlatformSubmodule {
-  id          Int            @id @default(autoincrement())
-  moduleId    Int            @map("module_id")
-  code        String         @unique
-  name        String
-  route       String?
-  sortOrder   Int            @default(0) @map("sort_order")
-  isActive    Boolean        @default(true) @map("is_active")
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
-  module      PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  permissions Permission[]
+  id                 Int            @id @default(autoincrement())
+  moduleId           Int            @map("module_id")
+  code               String         @unique
+  name               String
+  route              String?
+  sortOrder          Int            @default(0) @map("sort_order")
+  configurationTypes Json           @default("[]") @map("configuration_types")
+  isActive           Boolean        @default(true) @map("is_active")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  module             PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  permissions        Permission[]
 
   @@unique([id, moduleId])
   @@index([moduleId, isActive, sortOrder])
