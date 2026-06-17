@@ -83,6 +83,14 @@ npm run dev
 npm run sync:push
 ```
 
+Or run the expanded workflow:
+
+```bash
+npm run db:verify-migrations:shared
+npm run db:migrate:shared
+npm run db:verify:shared
+```
+
 See `docs/DAILY_DATABASE_WORKFLOW.md` for the complete developer and teammate
 workflow.
 
