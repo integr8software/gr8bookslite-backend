@@ -355,6 +355,78 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model Region {
+  id                 Int                @id @default(autoincrement())
+  psgcCode           String             @unique @map("psgc_code") @db.VarChar(20)
+  code               String             @unique @map("region_code") @db.VarChar(20)
+  name               String
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  provinces          Province[]
+  cityMunicipalities CityMunicipality[]
+  barangays          Barangay[]
+
+  @@index([name])
+  @@map("regions")
+}
+
+model Province {
+  id                 Int                @id @default(autoincrement())
+  psgcCode           String             @unique @map("psgc_code") @db.VarChar(20)
+  code               String             @unique @map("province_code") @db.VarChar(20)
+  name               String
+  regionCode         String             @map("region_code") @db.VarChar(20)
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  region             Region             @relation(fields: [regionCode], references: [code], onDelete: Restrict)
+  cityMunicipalities CityMunicipality[]
+  barangays          Barangay[]
+
+  @@index([regionCode])
+  @@index([name])
+  @@map("provinces")
+}
+
+model CityMunicipality {
+  id           Int        @id @default(autoincrement())
+  psgcCode     String     @unique @map("psgc_code") @db.VarChar(20)
+  code         String     @unique @map("city_municipality_code") @db.VarChar(20)
+  name         String
+  regionCode   String     @map("region_code") @db.VarChar(20)
+  provinceCode String     @map("province_code") @db.VarChar(20)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  region       Region     @relation(fields: [regionCode], references: [code], onDelete: Restrict)
+  province     Province   @relation(fields: [provinceCode], references: [code], onDelete: Restrict)
+  barangays    Barangay[]
+
+  @@index([regionCode])
+  @@index([provinceCode])
+  @@index([name])
+  @@map("city_municipalities")
+}
+
+model Barangay {
+  id                   Int              @id @default(autoincrement())
+  psgcCode             String           @unique @map("psgc_code") @db.VarChar(20)
+  code                 String           @unique @map("barangay_code") @db.VarChar(20)
+  name                 String
+  regionCode           String           @map("region_code") @db.VarChar(20)
+  provinceCode         String           @map("province_code") @db.VarChar(20)
+  cityMunicipalityCode String           @map("city_municipality_code") @db.VarChar(20)
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+  region               Region           @relation(fields: [regionCode], references: [code], onDelete: Restrict)
+  province             Province         @relation(fields: [provinceCode], references: [code], onDelete: Restrict)
+  cityMunicipality     CityMunicipality @relation(fields: [cityMunicipalityCode], references: [code], onDelete: Restrict)
+
+  @@index([regionCode])
+  @@index([provinceCode])
+  @@index([cityMunicipalityCode])
+  @@index([name])
+  @@map("barangays")
+}
+
 model FormSignatorySetup {
   id        Int                @id @default(autoincrement())
   companyId Int                @map("company_id")

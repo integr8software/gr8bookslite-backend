@@ -8,6 +8,7 @@ Available agent docs:
 - `@database.agent.md`
 - `@onboarding.agent.md`
 - `@billing.agent.md`
+- `address-api.md`
 - `ARCHITECTURE_MODULARITY_GUIDE.md`
 
 Recommended ownership:
@@ -20,6 +21,8 @@ Recommended ownership:
   Documents the onboarding flow, temporary pre-company staging, and the rule that subscriptions are enforced per company.
 - `billing.agent.md`
   Covers billing subscriptions, plans, provider setup, and payment-related behavior.
+- `address-api.md`
+  Documents reusable Philippine address reference tables, seed data, hierarchy routes, and autocomplete API behavior.
 - `ARCHITECTURE_MODULARITY_GUIDE.md`
   Covers backend/frontend folder placement, reusable utilities, mappers, types, strategies, loading boundaries, and anti-redundancy rules for agents.
 

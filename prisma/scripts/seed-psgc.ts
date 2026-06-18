@@ -1,8 +1,6 @@
 import { seedAddressReferences } from '../seeds/seedAddressReferences';
-import { seedSubscriptionPlans } from '../seeds/seedSubscriptionPlans';
 import { runSeedTask } from './runSeedTask';
 
-void runSeedTask('Reference seed', async () => {
+void runSeedTask('Address reference seed', async () => {
   await seedAddressReferences();
-  await seedSubscriptionPlans();
 });
