@@ -1,2 +1,2 @@
 ALTER TABLE "transaction_number_sequences"
-ADD COLUMN "suffix" TEXT NOT NULL DEFAULT '';
+ADD COLUMN IF NOT EXISTS "suffix" TEXT NOT NULL DEFAULT '';
