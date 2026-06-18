@@ -232,18 +232,19 @@ model PlatformModule {
 }
 
 model PlatformSubmodule {
-  id                 Int            @id @default(autoincrement())
-  moduleId           Int            @map("module_id")
-  code               String         @unique
+  id                 Int                         @id @default(autoincrement())
+  moduleId           Int                         @map("module_id")
+  code               String                      @unique
   name               String
   route              String?
-  sortOrder          Int            @default(0) @map("sort_order")
-  configurationTypes Json           @default("[]") @map("configuration_types")
-  isActive           Boolean        @default(true) @map("is_active")
-  createdAt          DateTime       @default(now()) @map("created_at")
-  updatedAt          DateTime       @updatedAt @map("updated_at")
-  module             PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  sortOrder          Int                         @default(0) @map("sort_order")
+  configurationTypes Json                        @default("[]") @map("configuration_types")
+  isActive           Boolean                     @default(true) @map("is_active")
+  createdAt          DateTime                    @default(now()) @map("created_at")
+  updatedAt          DateTime                    @updatedAt @map("updated_at")
+  module             PlatformModule              @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   permissions        Permission[]
+  transactionNumbers TransactionNumberSequence[]
 
   @@unique([id, moduleId])
   @@index([moduleId, isActive, sortOrder])
@@ -251,23 +252,22 @@ model PlatformSubmodule {
 }
 
 model Permission {
-  id                     Int                         @id @default(autoincrement())
-  targetType             PermissionTargetType        @default(MODULE) @map("target_type")
-  moduleId               Int?                        @map("module_id")
-  submoduleId            Int?                        @map("submodule_id")
-  code                   String                      @unique
+  id                     Int                     @id @default(autoincrement())
+  targetType             PermissionTargetType    @default(MODULE) @map("target_type")
+  moduleId               Int?                    @map("module_id")
+  submoduleId            Int?                    @map("submodule_id")
+  code                   String                  @unique
   name                   String
   description            String?
-  scopeLevel             AccessScopeLevel            @default(COMPANY) @map("scope_level")
-  requiresCompanyContext Boolean                     @default(true) @map("requires_company_context")
-  isActive               Boolean                     @default(true) @map("is_active")
-  createdAt              DateTime                    @default(now()) @map("created_at")
-  updatedAt              DateTime                    @updatedAt @map("updated_at")
-  module                 PlatformModule?             @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  submodule              PlatformSubmodule?          @relation(fields: [submoduleId, moduleId], references: [id, moduleId], onDelete: Cascade)
+  scopeLevel             AccessScopeLevel        @default(COMPANY) @map("scope_level")
+  requiresCompanyContext Boolean                 @default(true) @map("requires_company_context")
+  isActive               Boolean                 @default(true) @map("is_active")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+  module                 PlatformModule?         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  submodule              PlatformSubmodule?      @relation(fields: [submoduleId, moduleId], references: [id, moduleId], onDelete: Cascade)
   rolePermissions        CompanyRolePermission[]
   membershipOverrides    MembershipPermission[]
-  transactionNumbers     TransactionNumberSequence[]
 
   @@index([moduleId, isActive])
   @@index([submoduleId, isActive])
@@ -465,24 +465,24 @@ model FormSignatoryRow {
 }
 
 model TransactionNumberSequence {
-  id             Int                        @id @default(autoincrement())
-  branchUnitId   Int                        @map("branch_unit_id")
-  permissionId   Int                        @map("permission_id")
-  inputMode      TransactionNumberInputMode @default(AUTO) @map("input_mode")
-  prefix         String
-  suffix         String                     @default("")
-  padding        Int                        @default(6)
-  startingNumber Int                        @default(1) @map("starting_number")
-  currentNumber  Int                        @default(1) @map("current_number")
-  status         TransactionNumberStatus    @default(ACTIVE)
-  createdAt      DateTime                   @default(now()) @map("created_at")
-  updatedAt      DateTime                   @updatedAt @map("updated_at")
-  branchUnit     CompanyUnit                @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
-  permission     Permission                 @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  id                  Int                        @id @default(autoincrement())
+  branchUnitId        Int                        @map("branch_unit_id")
+  platformSubmoduleId Int                        @map("platform_submodule_id")
+  inputMode           TransactionNumberInputMode @default(AUTO) @map("input_mode")
+  prefix              String
+  suffix              String                     @default("")
+  padding             Int                        @default(6)
+  startingNumber      Int                        @default(1) @map("starting_number")
+  currentNumber       Int                        @default(1) @map("current_number")
+  status              TransactionNumberStatus    @default(ACTIVE)
+  createdAt           DateTime                   @default(now()) @map("created_at")
+  updatedAt           DateTime                   @updatedAt @map("updated_at")
+  branchUnit          CompanyUnit                @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
+  platformSubmodule   PlatformSubmodule          @relation(fields: [platformSubmoduleId], references: [id], onDelete: Cascade)
 
-  @@unique([permissionId, branchUnitId])
+  @@unique([platformSubmoduleId, branchUnitId])
   @@index([branchUnitId])
-  @@index([permissionId])
+  @@index([platformSubmoduleId])
   @@map("transaction_number_sequences")
 }
 
