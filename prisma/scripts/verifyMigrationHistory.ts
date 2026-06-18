@@ -10,6 +10,11 @@ type MigrationRecord = {
   rolledBackAt: Date | null;
 };
 
+type RepositoryChecksum = {
+  canonical: string;
+  platform: string;
+};
+
 const migrationsDirectory = path.resolve(process.cwd(), 'prisma/migrations');
 
 // Keep verified hosted checksum exceptions explicit instead of rewriting
@@ -38,7 +43,7 @@ async function loadRepositoryChecksums() {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
-  const checksums = new Map<string, string>();
+  const checksums = new Map<string, RepositoryChecksum>();
 
   for (const migrationName of migrationNames) {
     const sqlPath = path.join(
@@ -48,10 +53,12 @@ async function loadRepositoryChecksums() {
     );
     const sql = await readFile(sqlPath, 'utf8');
     const normalizedSql = sql.replace(/\r\n/g, '\n');
-    checksums.set(
-      migrationName,
-      createHash('sha256').update(normalizedSql).digest('hex'),
-    );
+    checksums.set(migrationName, {
+      canonical: createHash('sha256').update(normalizedSql).digest('hex'),
+      // Prisma records the bytes it applies. On a Windows checkout those bytes
+      // can contain CRLF even though the canonical repository form uses LF.
+      platform: createHash('sha256').update(sql).digest('hex'),
+    });
   }
 
   return checksums;
@@ -93,7 +100,9 @@ async function main() {
     .filter(
       (migration) =>
         repositoryChecksums.has(migration.migrationName) &&
-        repositoryChecksums.get(migration.migrationName) !== migration.checksum,
+        !Object.values(
+          repositoryChecksums.get(migration.migrationName)!,
+        ).includes(migration.checksum),
     );
   const acceptedLegacyMigrations = checksumMismatches.filter((migration) =>
     acceptedLegacyChecksums
@@ -110,7 +119,8 @@ async function main() {
     .map((migration) => ({
       migrationName: migration.migrationName,
       databaseChecksum: migration.checksum,
-      repositoryChecksum: repositoryChecksums.get(migration.migrationName)!,
+      repositoryChecksum: repositoryChecksums.get(migration.migrationName)!
+        .canonical,
     }));
   const pendingMigrations = [...repositoryChecksums.keys()].filter(
     (migrationName) => !appliedNames.has(migrationName),
