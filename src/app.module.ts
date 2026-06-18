@@ -15,6 +15,7 @@ import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspac
 import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
 import { WorkspaceAuditLogsModule } from './modules/workspace/audit-logs/workspace-audit-logs.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
+import { AlphanumericTaxCodesModule } from './modules/alphanumeric-tax-codes/alphanumeric-tax-codes.module';
 import { AddressModule } from './modules/address/address.module';
 import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.module';
 import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
@@ -48,6 +49,7 @@ import { TransactionNumberSequencesModule } from './modules/system-administratio
     UsersModule,
     BillingModule,
     AddressModule,
+    AlphanumericTaxCodesModule,
     MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
     WorkspaceUsersModule,

@@ -427,6 +427,28 @@ model Barangay {
   @@map("barangays")
 }
 
+model AlphanumericTaxCode {
+  id              Int      @id @default(autoincrement())
+  sourceKey       String   @unique @map("source_key") @db.VarChar(40)
+  transactionType String   @map("transaction_type") @db.VarChar(40)
+  taxType         String   @map("tax_type") @db.VarChar(40)
+  taxCode         String   @map("tax_code") @db.VarChar(40)
+  taxDescription  String   @map("tax_description")
+  taxRate         Decimal  @map("tax_rate") @db.Decimal(8, 4)
+  taxAlias        String?  @map("tax_alias") @db.VarChar(40)
+  atc             String?  @db.VarChar(40)
+  officialAtcCode String?  @map("official_atc_code") @db.VarChar(40)
+  natureOfIncome  String?  @map("nature_of_income")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([transactionType])
+  @@index([taxType])
+  @@index([taxCode])
+  @@index([officialAtcCode])
+  @@map("alphanumeric_tax_codes")
+}
+
 model FormSignatorySetup {
   id        Int                @id @default(autoincrement())
   companyId Int                @map("company_id")

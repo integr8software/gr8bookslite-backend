@@ -1036,6 +1036,667 @@
         ]
       }
     },
+    "/api/v1/regions": {
+      "get": {
+        "operationId": "AddressController_listRegions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}": {
+      "get": {
+        "operationId": "AddressController_getRegion_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/provinces": {
+      "get": {
+        "operationId": "AddressController_listRegionProvinces_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/districts": {
+      "get": {
+        "operationId": "AddressController_listRegionDistricts_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/cities": {
+      "get": {
+        "operationId": "AddressController_listRegionCities_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/municipalities": {
+      "get": {
+        "operationId": "AddressController_listRegionMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/cities-municipalities": {
+      "get": {
+        "operationId": "AddressController_listRegionCitiesMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/sub-municipalities": {
+      "get": {
+        "operationId": "AddressController_listRegionSubMunicipalities_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/barangays": {
+      "get": {
+        "operationId": "AddressController_listRegionBarangays_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces": {
+      "get": {
+        "operationId": "AddressController_listProvinces_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}": {
+      "get": {
+        "operationId": "AddressController_getProvince_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/cities": {
+      "get": {
+        "operationId": "AddressController_listProvinceCities_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/municipalities": {
+      "get": {
+        "operationId": "AddressController_listProvinceMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/cities-municipalities": {
+      "get": {
+        "operationId": "AddressController_listProvinceCitiesMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/sub-municipalities": {
+      "get": {
+        "operationId": "AddressController_listProvinceSubMunicipalities_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/barangays": {
+      "get": {
+        "operationId": "AddressController_listProvinceBarangays_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/cities-municipalities": {
+      "get": {
+        "operationId": "AddressController_listCitiesMunicipalities_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/cities-municipalities/{cityMunicipalityCode}": {
+      "get": {
+        "operationId": "AddressController_getCityMunicipality_v1",
+        "parameters": [
+          {
+            "name": "cityMunicipalityCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/cities-municipalities/{cityMunicipalityCode}/barangays": {
+      "get": {
+        "operationId": "AddressController_listCityMunicipalityBarangays_v1",
+        "parameters": [
+          {
+            "name": "cityMunicipalityCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/barangays": {
+      "get": {
+        "operationId": "AddressController_listBarangays_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provinceCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cityMunicipalityCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/address/autocomplete": {
+      "get": {
+        "operationId": "AddressController_listAutocomplete_v1",
+        "parameters": [
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "regionCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provinceCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cityMunicipalityCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_listTaxCodes_v1",
+        "parameters": [
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "officialAtcCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes/autocomplete": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_listAutocomplete_v1",
+        "parameters": [
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "officialAtcCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes/transaction-types": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_listTransactionTypes_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes/tax-types": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_listTaxTypes_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes/{sourceKey}": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_getTaxCode_v1",
+        "parameters": [
+          {
+            "name": "sourceKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
     "/api/v1/master/plan-and-packages": {
       "get": {
         "operationId": "MasterPlanAndPackagesController_listPlans_v1",
