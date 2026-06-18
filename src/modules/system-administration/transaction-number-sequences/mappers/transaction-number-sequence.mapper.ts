@@ -1,6 +1,9 @@
-import type { Permission, TransactionNumberSequence } from '@prisma/client';
+import type {
+  PlatformSubmodule,
+  TransactionNumberSequence,
+} from '@prisma/client';
 
-type PermissionSummary = Pick<Permission, 'code' | 'id' | 'name'>;
+type PlatformSubmoduleSummary = Pick<PlatformSubmodule, 'code' | 'id' | 'name'>;
 type SequenceSummary = Pick<
   TransactionNumberSequence,
   | 'branchUnitId'
@@ -14,13 +17,13 @@ type SequenceSummary = Pick<
   | 'suffix'
 >;
 
-export function mapPermissionTransactionNumberSetup({
+export function mapPlatformSubmoduleTransactionNumberSetup({
   activeBranchIds,
-  permission,
+  platformSubmodule,
   sequences,
 }: {
   activeBranchIds: number[];
-  permission: PermissionSummary;
+  platformSubmodule: PlatformSubmoduleSummary;
   sequences: SequenceSummary[];
 }) {
   const activeBranchIdSet = new Set(activeBranchIds);
@@ -28,19 +31,21 @@ export function mapPermissionTransactionNumberSetup({
     activeBranchIdSet.has(sequence.branchUnitId),
   );
   const firstSequence = scopedSequences[0];
-  const branchUnitIds = scopedSequences.map((sequence) => sequence.branchUnitId);
+  const branchUnitIds = scopedSequences.map(
+    (sequence) => sequence.branchUnitId,
+  );
   const coversEveryBranch =
     activeBranchIds.length > 0 &&
     activeBranchIds.every((branchId) => branchUnitIds.includes(branchId));
   const scope = sequences.length === 0 || coversEveryBranch ? 'all' : 'branch';
 
   return {
-    id: permission.id,
-    permissionId: permission.id,
-    moduleCode: permission.code,
-    moduleName: permission.name,
+    id: platformSubmodule.id,
+    platformSubmoduleId: platformSubmodule.id,
+    moduleCode: platformSubmodule.code,
+    moduleName: platformSubmodule.name,
     inputMode: firstSequence?.inputMode === 'MANUAL' ? 'Manual' : 'Auto',
-    prefix: firstSequence?.prefix ?? permission.code,
+    prefix: firstSequence?.prefix ?? platformSubmodule.code,
     suffix: firstSequence?.suffix ?? '',
     padding: firstSequence?.padding ?? 6,
     startingNumber: firstSequence?.startingNumber ?? 1,

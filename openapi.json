@@ -2101,6 +2101,336 @@
         ]
       }
     },
+    "/api/v1/maintenance/chart-of-accounts": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MAJOR",
+                "SUB1",
+                "SUB2",
+                "SUB3",
+                "SPECIFIC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      },
+      "post": {
+        "operationId": "ChartOfAccountsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChartAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountSaveResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/tree": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findTree_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountTreeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/next-code": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findNextCode_v1",
+        "parameters": [
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MAJOR",
+                "SUB1",
+                "SUB2",
+                "SUB3",
+                "SPECIFIC"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountNextCodeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/{id}": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      },
+      "patch": {
+        "operationId": "ChartOfAccountsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChartAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountSaveResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/{id}/status": {
+      "patch": {
+        "operationId": "ChartOfAccountsController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChartAccountStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountSaveResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/system-administration/transaction-number-sequences/bootstrap": {
+      "get": {
+        "operationId": "TransactionNumberSequencesController_findBootstrap_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSequenceBootstrapResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transaction Number Sequences"
+        ]
+      }
+    },
+    "/api/v1/system-administration/transaction-number-sequences/{platformSubmoduleId}": {
+      "patch": {
+        "operationId": "TransactionNumberSequencesController_update_v1",
+        "parameters": [
+          {
+            "name": "platformSubmoduleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionNumberSequenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveTransactionNumberSequenceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transaction Number Sequences"
+        ]
+      }
+    },
     "/api/v1/ai-assistant/chat": {
       "post": {
         "operationId": "AiAssistantController_chat_v1",
@@ -2483,8 +2813,7 @@
         "properties": {
           "cardholderName": {
             "type": "string",
-            "minLength": 2,
-            "pattern": "^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+            "minLength": 2
           },
           "billingEmail": {
             "type": "string",
@@ -2547,8 +2876,7 @@
             "minLength": 2
           },
           "middleName": {
-            "type": "string",
-            "pattern": "^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+            "type": "string"
           },
           "companyName": {
             "type": "string",
@@ -4051,6 +4379,43 @@
           "updatedAt"
         ]
       },
+      "WorkspaceUserAssignedUnitResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "type": {
+            "enum": [
+              "HEAD_OFFICE",
+              "BRANCH",
+              "SATELLITE"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "type",
+          "name",
+          "displayName",
+          "isActive"
+        ]
+      },
       "WorkspaceUserCompanyAssignmentResponseDto": {
         "type": "object",
         "properties": {
@@ -4062,11 +4427,18 @@
             "items": {
               "type": "number"
             }
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceUserAssignedUnitResponseDto"
+            }
           }
         },
         "required": [
           "companyId",
-          "unitIds"
+          "unitIds",
+          "units"
         ]
       },
       "WorkspaceUserResponseDto": {
@@ -4204,8 +4576,7 @@
             "minLength": 2
           },
           "middleName": {
-            "type": "string",
-            "pattern": "^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+            "type": "string"
           },
           "companyName": {
             "type": "string",
@@ -4287,8 +4658,7 @@
             "minLength": 2
           },
           "middleName": {
-            "type": "string",
-            "pattern": "^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+            "type": "string"
           },
           "companyName": {
             "type": "string",
@@ -5120,6 +5490,763 @@
         "required": [
           "message",
           "setup"
+        ]
+      },
+      "ChartAccountBankAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "coaId": {
+            "type": "number"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "coaId",
+          "bankName",
+          "branch",
+          "accountNumber",
+          "accountName",
+          "currencyCode",
+          "isDefault",
+          "status"
+        ]
+      },
+      "ChartAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "parentAccountId": {
+            "type": "number",
+            "nullable": true
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountLevel": {
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ],
+            "type": "string"
+          },
+          "accountType": {
+            "nullable": true,
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "nullable": true,
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "accountGroup": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "class": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          },
+          "withSubsidiary": {
+            "type": "boolean"
+          },
+          "contraAccount": {
+            "type": "boolean"
+          },
+          "showTotal": {
+            "type": "boolean"
+          },
+          "orderNo": {
+            "type": "number",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "deletedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountBankAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "parentAccountId",
+          "accountCode",
+          "accountTitle",
+          "accountLevel",
+          "accountType",
+          "accountNature",
+          "accountGroup",
+          "reportAlias",
+          "class",
+          "isPostingAccount",
+          "withSubsidiary",
+          "contraAccount",
+          "showTotal",
+          "orderNo",
+          "status",
+          "currencyCode",
+          "deletedAt",
+          "createdAt",
+          "updatedAt",
+          "bankAccounts"
+        ]
+      },
+      "ChartAccountListResponseDto": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "accounts"
+        ]
+      },
+      "ChartAccountTreeNodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "parentAccountId": {
+            "type": "number",
+            "nullable": true
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountLevel": {
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ],
+            "type": "string"
+          },
+          "accountType": {
+            "nullable": true,
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "nullable": true,
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "accountGroup": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "class": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          },
+          "withSubsidiary": {
+            "type": "boolean"
+          },
+          "contraAccount": {
+            "type": "boolean"
+          },
+          "showTotal": {
+            "type": "boolean"
+          },
+          "orderNo": {
+            "type": "number",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "deletedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountBankAccountResponseDto"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountTreeNodeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "parentAccountId",
+          "accountCode",
+          "accountTitle",
+          "accountLevel",
+          "accountType",
+          "accountNature",
+          "accountGroup",
+          "reportAlias",
+          "class",
+          "isPostingAccount",
+          "withSubsidiary",
+          "contraAccount",
+          "showTotal",
+          "orderNo",
+          "status",
+          "currencyCode",
+          "deletedAt",
+          "createdAt",
+          "updatedAt",
+          "bankAccounts",
+          "children"
+        ]
+      },
+      "ChartAccountTreeResponseDto": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountTreeNodeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "accounts"
+        ]
+      },
+      "ChartAccountNextCodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountCode"
+        ]
+      },
+      "ChartAccountContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/ChartAccountResponseDto"
+          }
+        },
+        "required": [
+          "account"
+        ]
+      },
+      "CreateChartAccountDto": {
+        "type": "object",
+        "properties": {
+          "parentAccountId": {
+            "type": "string"
+          },
+          "accountLevel": {
+            "type": "string",
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ]
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ]
+          },
+          "accountNature": {
+            "type": "string",
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ]
+          },
+          "accountGroup": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "reportAlias": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "class": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          },
+          "withSubsidiary": {
+            "type": "boolean"
+          },
+          "contraAccount": {
+            "type": "boolean"
+          },
+          "showTotal": {
+            "type": "boolean"
+          },
+          "orderNo": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          }
+        },
+        "required": [
+          "accountLevel",
+          "accountTitle"
+        ]
+      },
+      "ChartAccountSaveResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "account": {
+            "$ref": "#/components/schemas/ChartAccountResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "account"
+        ]
+      },
+      "UpdateChartAccountDto": {
+        "type": "object",
+        "properties": {
+          "parentAccountId": {
+            "type": "string"
+          },
+          "accountLevel": {
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ],
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "accountType": {
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "accountGroup": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "reportAlias": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "class": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          },
+          "withSubsidiary": {
+            "type": "boolean"
+          },
+          "contraAccount": {
+            "type": "boolean"
+          },
+          "showTotal": {
+            "type": "boolean"
+          },
+          "orderNo": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          }
+        }
+      },
+      "UpdateChartAccountStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "TransactionNumberBranchResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "TransactionNumberSequenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "platformSubmoduleId": {
+            "type": "number"
+          },
+          "moduleCode": {
+            "type": "string"
+          },
+          "moduleName": {
+            "type": "string"
+          },
+          "inputMode": {
+            "type": "string",
+            "enum": [
+              "Auto",
+              "Manual"
+            ]
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "suffix": {
+            "type": "string"
+          },
+          "padding": {
+            "type": "number"
+          },
+          "startingNumber": {
+            "type": "number"
+          },
+          "currentNumber": {
+            "type": "number"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "branch"
+            ]
+          },
+          "branchUnitId": {
+            "type": "number",
+            "nullable": true
+          },
+          "branchUnitIds": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "platformSubmoduleId",
+          "moduleCode",
+          "moduleName",
+          "inputMode",
+          "prefix",
+          "suffix",
+          "padding",
+          "startingNumber",
+          "currentNumber",
+          "scope",
+          "branchUnitId",
+          "branchUnitIds",
+          "status"
+        ]
+      },
+      "TransactionNumberSequenceBootstrapResponseDto": {
+        "type": "object",
+        "properties": {
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionNumberBranchResponseDto"
+            }
+          },
+          "sequences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionNumberSequenceResponseDto"
+            }
+          }
+        },
+        "required": [
+          "branches",
+          "sequences"
+        ]
+      },
+      "UpdateTransactionNumberSequenceDto": {
+        "type": "object",
+        "properties": {
+          "moduleCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "moduleName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "inputMode": {
+            "type": "string",
+            "enum": [
+              "Auto",
+              "Manual"
+            ]
+          },
+          "prefix": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "suffix": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "padding": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "startingNumber": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currentNumber": {
+            "type": "number",
+            "minimum": 0
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "branch"
+            ]
+          },
+          "branchUnitIds": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
+          }
+        },
+        "required": [
+          "moduleCode",
+          "moduleName",
+          "inputMode",
+          "prefix",
+          "padding",
+          "startingNumber",
+          "currentNumber",
+          "scope",
+          "branchUnitIds",
+          "status"
+        ]
+      },
+      "SaveTransactionNumberSequenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "sequence": {
+            "$ref": "#/components/schemas/TransactionNumberSequenceResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "sequence"
         ]
       },
       "AiAssistantChatMessageDto": {
