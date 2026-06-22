@@ -1,2 +1,1 @@
--- AlterTable
-ALTER TABLE "psgc_barangays" ALTER COLUMN "updated_at" DROP DEFAULT;
+ALTER TABLE IF EXISTS "barangays" ALTER COLUMN "updated_at" DROP DEFAULT;
