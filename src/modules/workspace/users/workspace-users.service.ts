@@ -96,6 +96,12 @@ export class WorkspaceUsersService {
         assignments,
       });
 
+      await tx.$executeRaw`
+        UPDATE "users"
+        SET "updated_at" = NULL
+        WHERE "id" = ${workspaceUser.id}
+      `;
+
       return workspaceUser;
     });
 

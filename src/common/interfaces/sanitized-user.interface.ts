@@ -13,5 +13,5 @@ export interface SanitizedUser {
   status: UserStatus;
   emailVerifiedAt: Date | null;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
 }

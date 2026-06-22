@@ -20,6 +20,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
+import { seedDefaultTermsForCompany } from '../../maintenance/terms/default-terms';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
@@ -160,6 +161,8 @@ export class WorkspaceCompaniesService {
           canHoldInventory: true,
         },
       });
+
+      await seedDefaultTermsForCompany(tx, createdCompany.id);
 
       if (user.role !== AppRole.SUPER_ADMIN) {
         await tx.membership.upsert({

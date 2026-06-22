@@ -25,5 +25,5 @@ export interface WorkspaceUserResponse {
   profileImageUrl: string | null;
   companyAssignments: WorkspaceUserCompanyAssignmentResponse[];
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
 }
