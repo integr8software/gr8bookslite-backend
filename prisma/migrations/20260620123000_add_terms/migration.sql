@@ -67,3 +67,5 @@ SELECT
 FROM "companies" AS "company"
 CROSS JOIN "default_terms"
 ON CONFLICT DO NOTHING;
+
+ALTER TABLE "terms" ALTER COLUMN "updated_at" DROP DEFAULT;
