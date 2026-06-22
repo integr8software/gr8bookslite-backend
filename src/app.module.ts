@@ -14,6 +14,7 @@ import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
 import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
 import { WorkspaceAuditLogsModule } from './modules/workspace/audit-logs/workspace-audit-logs.module';
+import { TablePreferencesModule } from './modules/workspace/table-preferences/table-preferences.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import { AlphanumericTaxCodesModule } from './modules/alphanumeric-tax-codes/alphanumeric-tax-codes.module';
 import { AddressModule } from './modules/address/address.module';
@@ -21,6 +22,7 @@ import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.m
 import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
+import { TermsModule } from './modules/maintenance/terms/terms.module';
 import { validateEnvironment } from './config/environment';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
 
@@ -54,10 +56,12 @@ import { TransactionNumberSequencesModule } from './modules/system-administratio
     WorkspaceCompaniesModule,
     WorkspaceUsersModule,
     WorkspaceAuditLogsModule,
+    TablePreferencesModule,
     BranchRolesModule,
     BranchUsersModule,
     FormSignatoriesModule,
     ChartOfAccountsModule,
+    TermsModule,
     TransactionNumberSequencesModule,
     AiAssistantModule,
   ],

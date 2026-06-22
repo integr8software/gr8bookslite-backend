@@ -60,8 +60,8 @@ export class WorkspaceUserResponseDto {
   @ApiProperty()
   createdAt!: Date;
 
-  @ApiProperty()
-  updatedAt!: Date;
+  @ApiProperty({ nullable: true })
+  updatedAt!: Date | null;
 }
 
 export class WorkspaceUserMessageResponseDto {

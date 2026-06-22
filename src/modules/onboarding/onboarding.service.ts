@@ -20,6 +20,7 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
+import { seedDefaultTermsForCompany } from '../maintenance/terms/default-terms';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
@@ -473,6 +474,8 @@ export class OnboardingService {
         canHoldInventory: true,
       },
     });
+
+    await seedDefaultTermsForCompany(this.prisma, provisionedCompany.id);
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({
       where: {

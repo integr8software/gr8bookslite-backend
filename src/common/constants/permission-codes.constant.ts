@@ -3,6 +3,7 @@ export const PermissionCodes = {
   PETTY_CASH_ADVANCE: 'PCA',
   PETTY_CASH_ADVANCE_REPLENISHMENT: 'PCAR',
   PETTY_CASH_FUND_REPLENISHMENT: 'PCFR',
+  TERM_MANAGEMENT: 'TM',
   USERS: 'U',
 } as const;
 
