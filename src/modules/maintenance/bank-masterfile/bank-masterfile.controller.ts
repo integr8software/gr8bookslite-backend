@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { BankMasterfileService } from './bank-masterfile.service';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dto';
+import { ImportBankAccountsDto } from './dto/import-bank-accounts.dto';
 import { UpdateBankAccountStatusDto } from './dto/update-bank-account-status.dto';
 import { UpdateBankAccountDto } from './dto/update-bank-account.dto';
 
@@ -41,6 +42,7 @@ export class BankMasterfileController {
   getNextAccountCode(@CurrentUser() user: AuthUser) {
     return this.bankMasterfileService.getNextAccountCode(user);
   }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Bank account retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
@@ -51,6 +53,14 @@ export class BankMasterfileController {
   @ApiCreatedResponse({ description: 'Bank account created.' })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateBankAccountDto) {
     return this.bankMasterfileService.create(user, dto);
+  }
+  @Post('import')
+  @ApiCreatedResponse({ description: 'Bank accounts imported.' })
+  importBankAccounts(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ImportBankAccountsDto,
+  ) {
+    return this.bankMasterfileService.importBankAccounts(user, dto);
   }
 
   @Patch(':id')

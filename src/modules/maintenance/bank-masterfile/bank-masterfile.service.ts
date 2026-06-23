@@ -22,6 +22,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dto';
+import { ImportBankAccountsDto } from './dto/import-bank-accounts.dto';
 import { UpdateBankAccountStatusDto } from './dto/update-bank-account-status.dto';
 import { UpdateBankAccountDto } from './dto/update-bank-account.dto';
 import { mapBankAccount } from './mappers/bank-account.mapper';
@@ -178,6 +179,90 @@ export class BankMasterfileService {
     }
   }
 
+  async importBankAccounts(user: AuthUser, dto: ImportBankAccountsDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    this.ensureCan(user, companyId, PermissionAction.CREATE);
+
+    dto.banks.forEach((bank) => this.validateBankInput(bank));
+    this.ensureNoDuplicateImportedBankAccounts(dto.banks);
+    this.ensureNoDuplicateImportedAccountCodes(dto.banks);
+    this.ensureAtMostOneDefaultImportedBank(dto.banks);
+    await this.ensureImportedBankAccountsAvailable(companyId, dto.banks);
+    await this.ensureImportedAccountCodesAvailable(companyId, dto.banks);
+
+    try {
+      const bankAccounts = await this.prisma.$transaction(async (tx) => {
+        const cashInBankAccount = await this.findCashInBankParentOrThrow(
+          companyId,
+          tx,
+        );
+
+        if (dto.banks.some((bank) => bank.isDefault === true)) {
+          await tx.bankAccount.updateMany({
+            where: { companyId, isDefault: true },
+            data: { isDefault: false },
+          });
+        }
+
+        const createdBankAccountIds: bigint[] = [];
+
+        for (const bank of dto.banks) {
+          const accountCode = bank.accountCode?.trim()
+            ? await this.validateManualAccountCode(companyId, bank.accountCode, tx)
+            : await this.generateNextCashInBankAccountCode(
+                companyId,
+                cashInBankAccount.id,
+                cashInBankAccount.accountCode,
+                tx,
+              );
+          const accountName = this.resolveAccountName(bank);
+          const chartAccount = await tx.chartAccount.create({
+            data: {
+              companyId,
+              parentAccountId: cashInBankAccount.id,
+              accountCode,
+              accountTitle: accountName,
+              accountLevel: ChartAccountLevel.SPECIFIC,
+              accountType: ChartAccountType.ASSET,
+              accountNature: AccountNature.DEBIT,
+              accountGroup: CashInBankGroup,
+              isPostingAccount: true,
+              currencyCode: cleanCurrencyCode(bank.currencyCode),
+              status: bank.status ?? ChartAccountStatus.ACTIVE,
+              whoCreated: String(user.id),
+            },
+          });
+          const bankAccount = await tx.bankAccount.create({
+            data: {
+              companyId,
+              coaId: chartAccount.id,
+              ...this.toCreateBankAccountData(bank, accountName),
+              status: bank.status ?? ChartAccountStatus.ACTIVE,
+              createdByUserId: user.id,
+            },
+            select: { id: true },
+          });
+
+          createdBankAccountIds.push(bankAccount.id);
+        }
+
+        return tx.bankAccount.findMany({
+          where: { id: { in: createdBankAccountIds } },
+          include: BankAccountInclude,
+          orderBy: [{ bankName: 'asc' }, { id: 'asc' }],
+        });
+      }, BankMasterfileTransactionOptions);
+
+      return {
+        message: `${bankAccounts.length} bank account${bankAccounts.length === 1 ? '' : 's'} imported successfully.`,
+        bankAccounts: bankAccounts.map(mapBankAccount),
+      };
+    } catch (error) {
+      this.throwFriendlyPrismaError(error);
+      throw error;
+    }
+  }
   async update(user: AuthUser, id: string, dto: UpdateBankAccountDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
@@ -327,25 +412,26 @@ export class BankMasterfileService {
     return [{ [sortBy]: sortDirection }, { id: 'asc' }];
   }
 
-  private getStatistics(companyId: number) {
-    return this.prisma.bankAccount
-      .groupBy({
+  async getStatistics(companyId: number) {
+    const [groups, defaultBanks] = await Promise.all([
+      this.prisma.bankAccount.groupBy({
         by: ['status'],
         where: { companyId },
         _count: { _all: true },
-      })
-      .then((groups) => ({
-        totalBanks: groups.reduce(
-          (total, group) => total + group._count._all,
-          0,
-        ),
-        activeBanks:
-          groups.find((group) => group.status === ChartAccountStatus.ACTIVE)
-            ?._count._all ?? 0,
-        inactiveBanks:
-          groups.find((group) => group.status === ChartAccountStatus.INACTIVE)
-            ?._count._all ?? 0,
-      }));
+      }),
+      this.prisma.bankAccount.count({ where: { companyId, isDefault: true } }),
+    ]);
+
+    return {
+      totalBanks: groups.reduce((total, group) => total + group._count._all, 0),
+      activeBanks:
+        groups.find((group) => group.status === ChartAccountStatus.ACTIVE)
+          ?._count._all ?? 0,
+      inactiveBanks:
+        groups.find((group) => group.status === ChartAccountStatus.INACTIVE)
+          ?._count._all ?? 0,
+      defaultBanks,
+    };
   }
 
   private async findCashInBankParentOrThrow(
@@ -386,7 +472,7 @@ export class BankMasterfileService {
     companyId: number,
     parentAccountId: bigint,
     parentAccountCode: string,
-    tx: Prisma.TransactionClient,
+    tx: Prisma.TransactionClient | PrismaService,
   ) {
     const siblings = await tx.chartAccount.findMany({
       where: {
@@ -408,7 +494,7 @@ export class BankMasterfileService {
   private async validateManualAccountCode(
     companyId: number,
     accountCode: string,
-    tx: Prisma.TransactionClient,
+    tx: Prisma.TransactionClient | PrismaService,
   ) {
     const normalizedAccountCode = accountCode.trim();
     const existingAccount = await tx.chartAccount.findFirst({
@@ -496,7 +582,103 @@ export class BankMasterfileService {
       );
     }
   }
+  private ensureNoDuplicateImportedBankAccounts(banks: CreateBankAccountDto[]) {
+    const seenKeys = new Set<string>();
 
+    for (const bank of banks) {
+      const key = getBankAccountIdentityKey(bank);
+
+      if (seenKeys.has(key)) {
+        throw new ConflictException(
+          `Duplicate bank account in import: ${bank.bankName.trim()} ${bank.accountNumber.trim()}.`,
+        );
+      }
+
+      seenKeys.add(key);
+    }
+  }
+
+  private ensureNoDuplicateImportedAccountCodes(banks: CreateBankAccountDto[]) {
+    const seenCodes = new Set<string>();
+
+    for (const bank of banks) {
+      const accountCode = bank.accountCode?.trim();
+
+      if (!accountCode) {
+        continue;
+      }
+
+      if (seenCodes.has(accountCode)) {
+        throw new ConflictException(
+          `Duplicate account code in import: ${accountCode}.`,
+        );
+      }
+
+      seenCodes.add(accountCode);
+    }
+  }
+
+  private ensureAtMostOneDefaultImportedBank(banks: CreateBankAccountDto[]) {
+    const defaultBanks = banks.filter((bank) => bank.isDefault === true);
+
+    if (defaultBanks.length > 1) {
+      throw new BadRequestException(
+        'Only one imported bank account can be marked as default.',
+      );
+    }
+  }
+
+  private async ensureImportedBankAccountsAvailable(
+    companyId: number,
+    banks: CreateBankAccountDto[],
+  ) {
+    const importKeys = new Set(banks.map(getBankAccountIdentityKey));
+    const existingBankAccounts = await this.prisma.bankAccount.findMany({
+      where: { companyId },
+      select: {
+        bankName: true,
+        branch: true,
+        accountNumber: true,
+      },
+    });
+    const existingBankAccount = existingBankAccounts.find((bank) =>
+      importKeys.has(getBankAccountIdentityKey(bank)),
+    );
+
+    if (existingBankAccount) {
+      throw new ConflictException(
+        `Bank account already exists: ${existingBankAccount.bankName} ${existingBankAccount.accountNumber}.`,
+      );
+    }
+  }
+
+  private async ensureImportedAccountCodesAvailable(
+    companyId: number,
+    banks: CreateBankAccountDto[],
+  ) {
+    const accountCodes = banks
+      .map((bank) => bank.accountCode?.trim())
+      .filter((accountCode): accountCode is string => Boolean(accountCode));
+
+    if (accountCodes.length === 0) {
+      return;
+    }
+
+    const existingAccount = await this.prisma.chartAccount.findFirst({
+      where: {
+        companyId,
+        accountCode: { in: accountCodes },
+        deletedAt: null,
+      },
+      select: { accountCode: true },
+    });
+
+    if (existingAccount) {
+      throw new ConflictException(
+        `Chart account code already exists: ${existingAccount.accountCode}.`,
+      );
+    }
+  }
   private async findBankAccountOrThrow(
     companyId: number,
     bankAccountId: bigint,
@@ -666,6 +848,7 @@ export class BankMasterfileService {
       canCreate: this.can(user, companyId, PermissionAction.CREATE),
       canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
       canExport: this.can(user, companyId, PermissionAction.EXPORT),
+      canImport: this.can(user, companyId, PermissionAction.CREATE),
     };
   }
 
@@ -759,6 +942,21 @@ function scoreCashInBankCandidate(account: CashInBankCandidate) {
 
 function normalizeAccountLabel(value: string | null) {
   return value?.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() ?? '';
+}
+type BankAccountIdentity = {
+  bankName: string;
+  branch?: string | null;
+  accountNumber: string;
+};
+
+function getBankAccountIdentityKey(bank: BankAccountIdentity) {
+  return [bank.bankName, bank.branch ?? '', bank.accountNumber]
+    .map((value) => normalizeIdentityValue(value))
+    .join('|');
+}
+
+function normalizeIdentityValue(value: string) {
+  return value.trim().toLowerCase();
 }
 function cleanOptional(value: string | null | undefined) {
   if (value === undefined || value === null) {
