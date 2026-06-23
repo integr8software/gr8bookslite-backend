@@ -23,6 +23,7 @@ import { BranchUsersModule } from './modules/company/branch-users/branch-users.m
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { TermsModule } from './modules/maintenance/terms/terms.module';
+import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
 import { validateEnvironment } from './config/environment';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
 
@@ -62,6 +63,7 @@ import { TransactionNumberSequencesModule } from './modules/system-administratio
     FormSignatoriesModule,
     ChartOfAccountsModule,
     TermsModule,
+    BankMasterfileModule,
     TransactionNumberSequencesModule,
     AiAssistantModule,
   ],
