@@ -1,8 +1,10 @@
 import { ConfigService } from '@nestjs/config';
 import { AiAssistantService } from './ai-assistant.service';
 import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant-audio-file.type';
+import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 
 describe('AiAssistantService', () => {
+  const user = { id: 42 } as AuthUser;
   const createService = (apiKey?: string) =>
     new AiAssistantService({
       get: jest.fn().mockReturnValue(apiKey),
@@ -61,7 +63,7 @@ describe('AiAssistantService', () => {
     });
 
     await expect(
-      createService('gemini-api-key').transcribe(file),
+      createService('gemini-api-key').transcribe(user, file),
     ).rejects.toThrow('Audio recording is too large.');
   });
 
@@ -76,10 +78,10 @@ describe('AiAssistantService', () => {
 
     const service = createService('gemini-api-key');
     const requests = Array.from({ length: 4 }, () =>
-      service.transcribe(createAudioFile()),
+      service.transcribe(user, createAudioFile()),
     );
 
-    await expect(service.transcribe(createAudioFile())).rejects.toThrow(
+    await expect(service.transcribe(user, createAudioFile())).rejects.toThrow(
       'Neo AI voice transcription is busy. Please try again shortly.',
     );
 
@@ -101,7 +103,10 @@ describe('AiAssistantService', () => {
     });
 
     await expect(Promise.all(requests)).resolves.toEqual(
-      Array.from({ length: 4 }, () => ({ transcript: 'hello' })),
+      Array.from({ length: 4 }, () => ({
+        status: 'completed',
+        transcript: 'hello',
+      })),
     );
   });
 });

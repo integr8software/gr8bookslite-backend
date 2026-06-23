@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Get,
+  Param,
   Post,
   UploadedFile,
   UseGuards,
@@ -8,6 +10,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   AiAssistantService,
@@ -43,7 +47,18 @@ export class AiAssistantController {
       },
     }),
   )
-  transcribe(@UploadedFile() file: UploadedAiAssistantAudioFile | undefined) {
-    return this.aiAssistantService.transcribe(file);
+  transcribe(
+    @CurrentUser() user: AuthUser,
+    @UploadedFile() file: UploadedAiAssistantAudioFile | undefined,
+  ) {
+    return this.aiAssistantService.transcribe(user, file);
+  }
+
+  @Get('transcribe/:jobId')
+  getTranscriptionJob(
+    @CurrentUser() user: AuthUser,
+    @Param('jobId') jobId: string,
+  ) {
+    return this.aiAssistantService.getTranscriptionJob(user, jobId);
   }
 }
