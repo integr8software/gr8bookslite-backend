@@ -12,6 +12,7 @@ import {
   Prisma,
   SubscriptionPlanScope,
   SubscriptionPlanStatus,
+  SubscriptionStatus,
 } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -183,6 +184,31 @@ export class OnboardingService {
       plan.status !== SubscriptionPlanStatus.ACTIVE
     ) {
       throw new BadRequestException('Selected subscription plan is invalid.');
+    }
+
+    const existingDraft = await this.prisma.userOnboardingDraft.findUnique({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        subscriptionPlanId: true,
+        billingCycle: true,
+        provisionedCompanyId: true,
+      },
+    });
+
+    const selectionChanged =
+      existingDraft?.subscriptionPlanId !== undefined &&
+      existingDraft.subscriptionPlanId !== null &&
+      (existingDraft.subscriptionPlanId !== plan.id ||
+        existingDraft.billingCycle !== dto.billingCycle);
+
+    if (selectionChanged && existingDraft.provisionedCompanyId) {
+      await this.billingService.supersedeOnboardingSubscriptionsForPlanChange({
+        companyId: existingDraft.provisionedCompanyId,
+        nextPlanId: plan.id,
+        nextBillingCycle: dto.billingCycle,
+      });
     }
 
     const draft = await this.prisma.userOnboardingDraft.upsert({
@@ -403,6 +429,7 @@ export class OnboardingService {
             contactNumber: dto.contactNumber.trim(),
             reportStartDate,
             reportEndDate,
+            isActive: false,
             status: 'PROVISIONING',
             createdByUserId: user.id,
           },
@@ -437,6 +464,7 @@ export class OnboardingService {
             contactNumber: dto.contactNumber.trim(),
             reportStartDate,
             reportEndDate,
+            isActive: false,
             status: 'PROVISIONING',
             createdByUserId: user.id,
           },
@@ -566,6 +594,7 @@ export class OnboardingService {
           id: provisionedCompanyId,
         },
         data: {
+          isActive: true,
           status: 'ACTIVE',
           createdByUserId: user.id,
         },
@@ -594,6 +623,17 @@ export class OnboardingService {
       const subscription = await tx.companySubscription.findFirst({
         where: {
           companyId: company.id,
+          subscriptionPlanId: draft.subscriptionPlanId!,
+          billingCycle: draft.billingCycle!,
+          status: {
+            in: [
+              SubscriptionStatus.INCOMPLETE,
+              SubscriptionStatus.TRIALING,
+              SubscriptionStatus.ACTIVE,
+              SubscriptionStatus.PAST_DUE,
+              SubscriptionStatus.UNPAID,
+            ],
+          },
         },
         include: {
           plan: true,

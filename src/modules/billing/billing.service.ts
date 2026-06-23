@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   BillingCycle,
   BillingProvider,
+  CompanyStatus,
   MembershipRole,
   Prisma,
   SubscriptionPlanScope,
@@ -879,6 +880,97 @@ export class BillingService {
         isDefault: false,
       },
     });
+  }
+
+  async supersedeOnboardingSubscriptionsForPlanChange(input: {
+    companyId: number;
+    nextPlanId: number;
+    nextBillingCycle: BillingCycle;
+  }) {
+    const company = await this.prisma.company.findFirst({
+      where: {
+        id: input.companyId,
+        status: CompanyStatus.PROVISIONING,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!company) {
+      return;
+    }
+
+    const subscriptions = await this.prisma.companySubscription.findMany({
+      where: {
+        companyId: input.companyId,
+        status: {
+          in: [SubscriptionStatus.INCOMPLETE, SubscriptionStatus.TRIALING],
+        },
+        OR: [
+          {
+            subscriptionPlanId: {
+              not: input.nextPlanId,
+            },
+          },
+          {
+            billingCycle: {
+              not: input.nextBillingCycle,
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        status: true,
+        externalSubscriptionId: true,
+      },
+      orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    for (const subscription of subscriptions) {
+      let remoteCancellation: Record<string, unknown> | null = null;
+
+      if (subscription.externalSubscriptionId) {
+        remoteCancellation = await this.paymongoService.cancelSubscription(
+          subscription.externalSubscriptionId,
+        );
+      }
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.companySubscription.update({
+          where: {
+            id: subscription.id,
+          },
+          data: {
+            cancelAtPeriodEnd: false,
+            canceledAt: new Date(),
+            status:
+              subscription.status === SubscriptionStatus.INCOMPLETE
+                ? SubscriptionStatus.INCOMPLETE_CANCELED
+                : SubscriptionStatus.CANCELED,
+            failureCode: 'superseded_by_onboarding_plan_change',
+            failureMessage:
+              'Subscription was superseded by an onboarding plan change.',
+            ...(remoteCancellation
+              ? {
+                  rawProviderPayload:
+                    remoteCancellation as Prisma.InputJsonValue,
+                }
+              : {}),
+          },
+        });
+
+        await tx.billingPaymentMethod.updateMany({
+          where: {
+            companySubscriptionId: subscription.id,
+          },
+          data: {
+            isDefault: false,
+          },
+        });
+      });
+    }
   }
 
   async cancelSubscription(
