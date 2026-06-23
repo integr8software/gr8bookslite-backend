@@ -1,4 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  RequestTimeoutException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AiAssistantChatDto } from './dto/ai-assistant-chat.dto';
 import {
@@ -6,12 +12,27 @@ import {
   AiAssistantChatResponse,
   GeminiGenerateContentResponse,
 } from './ai-assistant.types';
+import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant-audio-file.type';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const PRODUCT_NAME = 'Gr8Books Neo';
 const SHORT_PRODUCT_NAME_PATTERN = /\bGr8Books\b(?!\s+Neo)/gi;
 const PURCHASE_REQUEST_ADD_ROUTE =
   '/purchasing/purchase-request/add?assistant=1';
+export const MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES = 4 * 1024 * 1024;
+const GEMINI_TRANSCRIPTION_TIMEOUT_MS = 90_000;
+const MAX_CONCURRENT_TRANSCRIPTIONS = 4;
+const SUPPORTED_TRANSCRIPTION_AUDIO_TYPES = new Set([
+  'audio/webm',
+  'audio/ogg',
+  'audio/wav',
+  'audio/wave',
+  'audio/x-wav',
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/mp4',
+  'audio/aac',
+]);
 
 const moduleGuide = [
   {
@@ -71,6 +92,8 @@ const moduleGuide = [
 
 @Injectable()
 export class AiAssistantService {
+  private activeTranscriptions = 0;
+
   constructor(private readonly configService: ConfigService) {}
 
   async chat(dto: AiAssistantChatDto): Promise<AiAssistantChatResponse> {
@@ -130,6 +153,88 @@ export class AiAssistantService {
     }
   }
 
+  async transcribe(file: UploadedAiAssistantAudioFile | undefined) {
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
+
+    if (!apiKey) {
+      throw new BadRequestException(
+        'Neo AI voice transcription is not configured.',
+      );
+    }
+
+    this.validateTranscriptionAudio(file);
+    this.reserveTranscriptionSlot();
+
+    const abortController = new AbortController();
+    const timeout = setTimeout(
+      () => abortController.abort(),
+      GEMINI_TRANSCRIPTION_TIMEOUT_MS,
+    );
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: abortController.signal,
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  {
+                    text: 'Transcribe this audio into plain text. Return only the transcript. If there is no clear speech, return an empty string.',
+                  },
+                  {
+                    inlineData: {
+                      mimeType: this.normalizeAudioMimeType(file.mimetype),
+                      data: file.buffer.toString('base64'),
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0,
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new BadRequestException(
+          'Neo AI could not transcribe that audio. Please try again.',
+        );
+      }
+
+      const payload = (await response.json()) as GeminiGenerateContentResponse;
+      const transcript =
+        payload.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
+
+      return { transcript };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new RequestTimeoutException(
+          'Neo AI transcription took too long. Please try a shorter recording.',
+        );
+      }
+
+      throw new BadRequestException(
+        'Neo AI could not transcribe that audio. Please try again.',
+      );
+    } finally {
+      this.releaseTranscriptionSlot();
+      clearTimeout(timeout);
+    }
+  }
+
   private createSystemPrompt() {
     return [
       `You are Neo AI, the ${PRODUCT_NAME} in-app assistant.`,
@@ -170,6 +275,49 @@ export class AiAssistantService {
         action: null,
       };
     }
+  }
+
+  private validateTranscriptionAudio(
+    file: UploadedAiAssistantAudioFile | undefined,
+  ): asserts file is UploadedAiAssistantAudioFile {
+    if (!file) {
+      throw new BadRequestException('Audio recording is required.');
+    }
+
+    if (!file.buffer?.length) {
+      throw new BadRequestException('Audio recording is empty.');
+    }
+
+    if (file.size > MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES) {
+      throw new BadRequestException('Audio recording is too large.');
+    }
+
+    if (
+      !SUPPORTED_TRANSCRIPTION_AUDIO_TYPES.has(
+        this.normalizeAudioMimeType(file.mimetype),
+      )
+    ) {
+      throw new BadRequestException('Audio format is not supported.');
+    }
+  }
+
+  private reserveTranscriptionSlot() {
+    if (this.activeTranscriptions >= MAX_CONCURRENT_TRANSCRIPTIONS) {
+      throw new HttpException(
+        'Neo AI voice transcription is busy. Please try again shortly.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    this.activeTranscriptions += 1;
+  }
+
+  private releaseTranscriptionSlot() {
+    this.activeTranscriptions = Math.max(0, this.activeTranscriptions - 1);
+  }
+
+  private normalizeAudioMimeType(mimeType: string) {
+    return mimeType.split(';')[0] || mimeType;
   }
 
   private normalizeProductName(message: string) {

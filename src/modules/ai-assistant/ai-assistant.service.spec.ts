@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { AiAssistantService } from './ai-assistant.service';
+import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant-audio-file.type';
 
 describe('AiAssistantService', () => {
   const createService = (apiKey?: string) =>
@@ -53,4 +54,68 @@ describe('AiAssistantService', () => {
       action: null,
     });
   });
+
+  it('rejects oversized voice transcription audio', async () => {
+    const file = createAudioFile({
+      size: 4 * 1024 * 1024 + 1,
+    });
+
+    await expect(
+      createService('gemini-api-key').transcribe(file),
+    ).rejects.toThrow('Audio recording is too large.');
+  });
+
+  it('limits concurrent voice transcriptions', async () => {
+    const resolveFetches: Array<(value: Response) => void> = [];
+    jest.spyOn(globalThis, 'fetch').mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetches.push(resolve);
+        }),
+    );
+
+    const service = createService('gemini-api-key');
+    const requests = Array.from({ length: 4 }, () =>
+      service.transcribe(createAudioFile()),
+    );
+
+    await expect(service.transcribe(createAudioFile())).rejects.toThrow(
+      'Neo AI voice transcription is busy. Please try again shortly.',
+    );
+
+    const response = {
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [{ text: 'hello' }],
+            },
+          },
+        ],
+      }),
+    } as unknown as Response;
+
+    resolveFetches.forEach((resolveFetch) => {
+      resolveFetch(response);
+    });
+
+    await expect(Promise.all(requests)).resolves.toEqual(
+      Array.from({ length: 4 }, () => ({ transcript: 'hello' })),
+    );
+  });
 });
+
+function createAudioFile(
+  overrides: Partial<UploadedAiAssistantAudioFile> = {},
+): UploadedAiAssistantAudioFile {
+  const buffer = Buffer.from('audio');
+
+  return {
+    buffer,
+    mimetype: 'audio/webm',
+    originalname: 'recording.webm',
+    size: buffer.length,
+    ...overrides,
+  };
+}
