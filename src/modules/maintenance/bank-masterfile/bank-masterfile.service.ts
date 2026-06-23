@@ -75,6 +75,25 @@ export class BankMasterfileService {
       permissions: this.getPermissions(user, companyId),
     };
   }
+  async getNextAccountCode(user: AuthUser) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    this.ensureCan(user, companyId, PermissionAction.CREATE);
+
+    const cashInBankAccount = await this.findCashInBankParentOrThrow(companyId);
+    const accountCode = await this.generateNextCashInBankAccountCode(
+      companyId,
+      cashInBankAccount.id,
+      cashInBankAccount.accountCode,
+      this.prisma,
+    );
+
+    return {
+      accountCode,
+      parentAccountCode: cashInBankAccount.accountCode,
+      parentAccountTitle: cashInBankAccount.accountTitle,
+    };
+  }
 
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);

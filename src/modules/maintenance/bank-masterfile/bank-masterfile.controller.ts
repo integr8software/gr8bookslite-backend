@@ -36,6 +36,11 @@ export class BankMasterfileController {
     return this.bankMasterfileService.findAll(user, query);
   }
 
+  @Get('next-account-code')
+  @ApiOkResponse({ description: 'Next bank account code generated.' })
+  getNextAccountCode(@CurrentUser() user: AuthUser) {
+    return this.bankMasterfileService.getNextAccountCode(user);
+  }
   @Get(':id')
   @ApiOkResponse({ description: 'Bank account retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
