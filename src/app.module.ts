@@ -26,6 +26,7 @@ import { TermsModule } from './modules/maintenance/terms/terms.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
 import { validateEnvironment } from './config/environment';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { TransactionNumberSequencesModule } from './modules/system-administratio
       },
     ]),
     PrismaModule,
+    StorageModule,
     AuthModule,
     DashboardModule,
     HealthModule,

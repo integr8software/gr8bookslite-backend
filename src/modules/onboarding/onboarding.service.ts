@@ -585,7 +585,9 @@ export class OnboardingService {
     const completedAt = new Date();
     const provisionedCompanyId = draft.provisionedCompanyId!;
     const shouldPromoteLogo = Boolean(
-      draft.logoStoragePath && draft.logoStoragePath.startsWith('onboarding/'),
+      draft.logoStoragePath &&
+      (draft.logoStoragePath.startsWith('onboarding/') ||
+        draft.logoStoragePath.startsWith('company-logos/onboarding-user-')),
     );
 
     const result = await this.prisma.$transaction(async (tx) => {

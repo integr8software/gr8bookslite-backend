@@ -3,11 +3,14 @@ import type { INestApplication, NestMiddleware } from '@nestjs/common';
 import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { ConfigService } from '@nestjs/config';
 import type { NextFunction, Request, Response } from 'express';
+import express from 'express';
+import path from 'node:path';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 export function configureApp(app: INestApplication) {
   const configService = app.get(ConfigService);
 
+  configureLocalStorageStaticServing(app, configService);
   app.enableCors(createCorsOptions(configService));
   app.use(applySecurityHeaders as NestMiddleware['use']);
   app.use(applyFaviconResponse as NestMiddleware['use']);
@@ -24,6 +27,53 @@ export function configureApp(app: INestApplication) {
     }),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
+}
+
+export function shouldServeLocalStorage(publicUrl: string | undefined) {
+  if (!publicUrl?.trim()) {
+    return false;
+  }
+
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(publicUrl);
+  } catch {
+    return false;
+  }
+
+  return (
+    ['localhost', '127.0.0.1', '::1'].includes(parsedUrl.hostname) &&
+    parsedUrl.pathname.replace(/\/+$/, '') === '/storage'
+  );
+}
+
+function configureLocalStorageStaticServing(
+  app: INestApplication,
+  configService: ConfigService,
+) {
+  const publicUrl = configService.get<string>('VPS_STORAGE_PUBLIC_URL');
+
+  if (!shouldServeLocalStorage(publicUrl)) {
+    return;
+  }
+
+  const storageRoot = configService.get<string>('VPS_STORAGE_ROOT', '').trim();
+
+  if (!storageRoot) {
+    throw new Error(
+      'VPS_STORAGE_ROOT is required when VPS_STORAGE_PUBLIC_URL points to localhost /storage.',
+    );
+  }
+
+  app.use(
+    '/storage',
+    express.static(path.resolve(process.cwd(), storageRoot), {
+      dotfiles: 'deny',
+      fallthrough: true,
+      index: false,
+    }) as NestMiddleware['use'],
+  );
 }
 
 function createCorsOptions(configService: ConfigService): CorsOptions {

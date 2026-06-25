@@ -48,5 +48,5 @@ export function buildCompanyLogoStoragePath(
 ) {
   const fileName = sourceStoragePath.split('/').pop() || 'logo';
 
-  return `companies/company-${companyId}/logo/${fileName}`;
+  return `company-logos/company-${companyId}/${fileName}`;
 }
