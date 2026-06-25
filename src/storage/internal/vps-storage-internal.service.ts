@@ -12,8 +12,8 @@ import {
   encodeStoragePath,
   sanitizeRelativePath,
   validateStorageEnvironment,
-  validateStorageFolder,
 } from '../storage-path.util';
+import { StorageFolders, type StorageFolder } from '../storage.types';
 
 type UploadedStorageFile = {
   originalname: string;
@@ -39,7 +39,7 @@ export class VpsStorageInternalService {
     }
 
     const storageEnv = validateStorageEnvironment(input.storageEnv);
-    const folder = validateStorageFolder(input.folder);
+    const folder = this.validateFolderPath(input.folder);
     const fileName = `${Date.now()}-${randomUUID()}-${buildSafeFileName(
       input.file.originalname,
     )}`;
@@ -77,12 +77,31 @@ export class VpsStorageInternalService {
 
   private validateStoredRelativePath(value: string) {
     const relativePath = sanitizeRelativePath(value);
-    const [storageEnv, ...folderSegments] = relativePath.split('/');
+    const [storageEnv, folder, ...remainingSegments] = relativePath.split('/');
 
     validateStorageEnvironment(storageEnv);
-    validateStorageFolder(folderSegments.join('/'));
+    this.validateRootFolder(folder);
+
+    if (remainingSegments.length === 0) {
+      throw new BadRequestException('Invalid storage path.');
+    }
 
     return relativePath;
+  }
+
+  private validateFolderPath(value: string) {
+    const folderPath = sanitizeRelativePath(value);
+    const [folder] = folderPath.split('/');
+
+    this.validateRootFolder(folder);
+
+    return folderPath;
+  }
+
+  private validateRootFolder(value: string | undefined) {
+    if (!value || !StorageFolders.includes(value as StorageFolder)) {
+      throw new BadRequestException('Invalid storage folder.');
+    }
   }
 
   private resolveInsideRoot(relativePath: string) {

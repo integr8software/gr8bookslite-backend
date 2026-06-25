@@ -70,6 +70,42 @@ describe('VpsStorageInternalService', () => {
     await expect(stat(path.join(root, result.relativePath))).rejects.toThrow();
   });
 
+  it('accepts stored delete paths with storage env and nested folders', async () => {
+    const result = await service.upload({
+      authorization: 'Bearer test-secret',
+      storageEnv: 'shared-dev',
+      folder: 'avatars/user-4',
+      file: {
+        originalname: 'avatar.jpg',
+        mimetype: 'image/jpeg',
+        size: 12,
+        buffer: Buffer.from('avatar-bytes'),
+      },
+    });
+
+    await expect(
+      service.delete({
+        authorization: 'Bearer test-secret',
+        relativePath: result.relativePath,
+      }),
+    ).resolves.toEqual({
+      deleted: true,
+      relativePath: result.relativePath,
+    });
+  });
+
+  it('treats missing but safe files as successful deletes', async () => {
+    await expect(
+      service.delete({
+        authorization: 'Bearer test-secret',
+        relativePath: 'staging/company-logos/company-1/missing.png',
+      }),
+    ).resolves.toEqual({
+      deleted: true,
+      relativePath: 'staging/company-logos/company-1/missing.png',
+    });
+  });
+
   it('rejects unauthorized requests', async () => {
     await expect(
       service.upload({
