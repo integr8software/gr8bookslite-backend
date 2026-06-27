@@ -1,6 +1,34 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/storage/internal/upload": {
+      "post": {
+        "operationId": "VpsStorageInternalController_upload_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "VpsStorageInternal"
+        ]
+      }
+    },
+    "/api/v1/storage/internal/file": {
+      "delete": {
+        "operationId": "VpsStorageInternalController_delete_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "VpsStorageInternal"
+        ]
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "operationId": "AuthController_register_v1",
@@ -1099,7 +1127,14 @@
     "/api/v1/regions/{regionCode}/districts": {
       "get": {
         "operationId": "AddressController_listRegionDistricts_v1",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1182,7 +1217,14 @@
     "/api/v1/regions/{regionCode}/sub-municipalities": {
       "get": {
         "operationId": "AddressController_listRegionSubMunicipalities_v1",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1325,7 +1367,14 @@
     "/api/v1/provinces/{provinceCode}/sub-municipalities": {
       "get": {
         "operationId": "AddressController_listProvinceSubMunicipalities_v1",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1566,7 +1615,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
-              "maximum": 100,
+              "maximum": 1000,
               "type": "number"
             }
           }
@@ -1631,7 +1680,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
-              "maximum": 100,
+              "maximum": 1000,
               "type": "number"
             }
           }
@@ -2279,6 +2328,60 @@
         },
         "tags": [
           "Workspace Users"
+        ]
+      }
+    },
+    "/api/v1/workspace/table-preferences/{moduleKey}": {
+      "get": {
+        "operationId": "TablePreferencesController_findOne_v1",
+        "parameters": [
+          {
+            "name": "moduleKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Table preference retrieved."
+          }
+        },
+        "tags": [
+          "Table Preferences"
+        ]
+      },
+      "put": {
+        "operationId": "TablePreferencesController_save_v1",
+        "parameters": [
+          {
+            "name": "moduleKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTablePreferenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Table preference saved."
+          }
+        },
+        "tags": [
+          "Table Preferences"
         ]
       }
     },
@@ -3031,6 +3134,454 @@
         ]
       }
     },
+    "/api/v1/maintenance/financial-management/terms": {
+      "get": {
+        "operationId": "TermsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DAY",
+                "MONTH",
+                "YEAR"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "dateMode",
+                "period",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Term list retrieved."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      },
+      "post": {
+        "operationId": "TermsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Term created."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/terms/{id}": {
+      "get": {
+        "operationId": "TermsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Term retrieved."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      },
+      "patch": {
+        "operationId": "TermsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Term updated."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/terms/import": {
+      "post": {
+        "operationId": "TermsController_importTerms_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportTermsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Terms imported."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile": {
+      "get": {
+        "operationId": "BankMasterfileController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bankName",
+                "branch",
+                "accountName",
+                "accountNumber",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank accounts retrieved."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      },
+      "post": {
+        "operationId": "BankMasterfileController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bank account created."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile/next-account-code": {
+      "get": {
+        "operationId": "BankMasterfileController_getNextAccountCode_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Next bank account code generated."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile/{id}": {
+      "get": {
+        "operationId": "BankMasterfileController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank account retrieved."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      },
+      "patch": {
+        "operationId": "BankMasterfileController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBankAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bank account updated."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile/import": {
+      "post": {
+        "operationId": "BankMasterfileController_importBankAccounts_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportBankAccountsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bank accounts imported."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile/{id}/status": {
+      "patch": {
+        "operationId": "BankMasterfileController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBankAccountStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bank account status updated."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/system-administration/approval-management/modules": {
+      "get": {
+        "operationId": "ApprovalManagementController_findModules_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalManagementModulesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Approval Management"
+        ]
+      }
+    },
     "/api/v1/system-administration/transaction-number-sequences/bootstrap": {
       "get": {
         "operationId": "TransactionNumberSequencesController_findBootstrap_v1",
@@ -3052,12 +3603,12 @@
         ]
       }
     },
-    "/api/v1/system-administration/transaction-number-sequences/{platformSubmoduleId}": {
+    "/api/v1/system-administration/transaction-number-sequences/{moduleId}": {
       "patch": {
         "operationId": "TransactionNumberSequencesController_update_v1",
         "parameters": [
           {
-            "name": "platformSubmoduleId",
+            "name": "moduleId",
             "required": true,
             "in": "path",
             "schema": {
@@ -3092,6 +3643,137 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/user-sidebar/customization": {
+      "get": {
+        "operationId": "UserSidebarController_getCustomization_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      },
+      "put": {
+        "operationId": "UserSidebarController_save_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveUserSidebarDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/user-sidebar/reset": {
+      "post": {
+        "operationId": "UserSidebarController_reset_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applyScope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      }
+    },
     "/api/v1/ai-assistant/chat": {
       "post": {
         "operationId": "AiAssistantController_chat_v1",
@@ -3108,6 +3790,57 @@
         },
         "responses": {
           "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AiAssistant"
+        ]
+      }
+    },
+    "/api/v1/ai-assistant/transcribe": {
+      "post": {
+        "operationId": "AiAssistantController_transcribe_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AiAssistant"
+        ]
+      }
+    },
+    "/api/v1/ai-assistant/transcribe/{jobId}": {
+      "get": {
+        "operationId": "AiAssistantController_getTranscriptionJob_v1",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -3398,8 +4131,8 @@
           "systemRole": {
             "type": "string",
             "enum": [
-              "SUPER_ADMIN",
-              "STANDARD"
+              "STANDARD",
+              "SUPER_ADMIN"
             ]
           }
         },
@@ -3442,8 +4175,8 @@
           "systemRole": {
             "type": "string",
             "enum": [
-              "SUPER_ADMIN",
-              "STANDARD"
+              "STANDARD",
+              "SUPER_ADMIN"
             ]
           }
         }
@@ -5141,7 +5874,8 @@
           },
           "updatedAt": {
             "format": "date-time",
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -5537,12 +6271,10 @@
         "type": "object",
         "properties": {
           "path": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "module": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "branchId": {
             "type": "string"
@@ -5562,11 +6294,7 @@
           "entityId": {
             "type": "string"
           }
-        },
-        "required": [
-          "path",
-          "module"
-        ]
+        }
       },
       "WorkspaceUserAssignmentDto": {
         "type": "object",
@@ -5669,6 +6397,17 @@
           "name",
           "email",
           "companyAssignments"
+        ]
+      },
+      "SaveTablePreferenceDto": {
+        "type": "object",
+        "properties": {
+          "configuration": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "configuration"
         ]
       },
       "BranchRolePermissionDto": {
@@ -6697,6 +7436,277 @@
           "status"
         ]
       },
+      "CreateTermDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "dateMode": {
+            "type": "string",
+            "enum": [
+              "DAY",
+              "MONTH",
+              "YEAR"
+            ]
+          },
+          "period": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "dateMode",
+          "period"
+        ]
+      },
+      "ImportTermsDto": {
+        "type": "object",
+        "properties": {
+          "terms": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateTermDto"
+            }
+          }
+        },
+        "required": [
+          "terms"
+        ]
+      },
+      "UpdateTermDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "dateMode": {
+            "enum": [
+              "DAY",
+              "MONTH",
+              "YEAR"
+            ],
+            "type": "string"
+          },
+          "period": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "CreateBankAccountDto": {
+        "type": "object",
+        "properties": {
+          "bankName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "branch": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountName": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "accountType": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesStart": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesEnd": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesDigits": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "currencyExchangeRate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "accountCode": {
+            "type": "string",
+            "pattern": "^\\d{10}$"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "bankName",
+          "accountNumber"
+        ]
+      },
+      "ImportBankAccountsDto": {
+        "type": "object",
+        "properties": {
+          "banks": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateBankAccountDto"
+            }
+          }
+        },
+        "required": [
+          "banks"
+        ]
+      },
+      "UpdateBankAccountDto": {
+        "type": "object",
+        "properties": {
+          "bankName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "branch": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountName": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "accountType": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesStart": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesEnd": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesDigits": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "currencyExchangeRate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "accountCode": {
+            "type": "string",
+            "pattern": "^\\d{10}$"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "UpdateBankAccountStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ApprovalManagementModuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "ApprovalManagementModulesResponseDto": {
+        "type": "object",
+        "properties": {
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalManagementModuleResponseDto"
+            }
+          }
+        },
+        "required": [
+          "modules"
+        ]
+      },
       "TransactionNumberBranchResponseDto": {
         "type": "object",
         "properties": {
@@ -6723,7 +7733,7 @@
           "id": {
             "type": "number"
           },
-          "platformSubmoduleId": {
+          "moduleId": {
             "type": "number"
           },
           "moduleCode": {
@@ -6757,8 +7767,8 @@
           "scope": {
             "type": "string",
             "enum": [
-              "all",
-              "branch"
+              "branch",
+              "all"
             ]
           },
           "branchUnitId": {
@@ -6781,7 +7791,7 @@
         },
         "required": [
           "id",
-          "platformSubmoduleId",
+          "moduleId",
           "moduleCode",
           "moduleName",
           "inputMode",
@@ -6908,6 +7918,76 @@
         "required": [
           "message",
           "sequence"
+        ]
+      },
+      "UserSidebarTreeItemDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "itemType": {
+            "type": "string",
+            "enum": [
+              "SECTION",
+              "CONTAINER",
+              "LINK"
+            ]
+          },
+          "moduleId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "iconName": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "itemType",
+          "children"
+        ]
+      },
+      "SaveUserSidebarDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "minimum": 0
+          },
+          "applyScope": {
+            "type": "string",
+            "enum": [
+              "CURRENT_BRANCH",
+              "ALL_BRANCHES"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "items"
         ]
       },
       "AiAssistantChatMessageDto": {

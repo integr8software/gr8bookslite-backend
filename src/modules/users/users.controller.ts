@@ -12,10 +12,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { getModuleCatalogCodeByRoute } from '../../../prisma/seeds/moduleCatalog';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { PermissionCodes } from '../../common/constants/permission-codes.constant';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { PermissionAction } from '../../common/enums/permission-action.enum';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
@@ -28,6 +28,10 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import type { UploadedAvatarFile } from './types/uploaded-avatar-file.type';
 import { UsersService } from './users.service';
 
+const UsersPermissionCode = getModuleCatalogCodeByRoute(
+  '/system-administration/user-management/users',
+);
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller({
   path: 'users',
@@ -38,7 +42,7 @@ export class UsersController {
 
   @Roles(AppRole.SUPER_ADMIN, AppRole.ADMIN)
   @Permissions({
-    permission: PermissionCodes.USERS,
+    permission: UsersPermissionCode,
     action: PermissionAction.VIEW,
   })
   @Get()
@@ -73,7 +77,7 @@ export class UsersController {
 
   @Roles(AppRole.SUPER_ADMIN, AppRole.ADMIN)
   @Permissions({
-    permission: PermissionCodes.USERS,
+    permission: UsersPermissionCode,
     action: PermissionAction.VIEW,
   })
   @Get(':id')

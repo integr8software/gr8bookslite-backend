@@ -33,6 +33,36 @@ const acceptedLegacyChecksums = new Map<string, Set<string>>([
       '7cf7a469999b228ad66758dee59fc59a59371b8b7fe1c13821314d25b7a17d82',
     ]),
   ],
+  [
+    '20260606120000_align_role_permission_catalog',
+    new Set([
+      'f0387fb911d464cfeb8101cfaff7474c331f10b1d8ef3cf5566176b793e4dfc4',
+    ]),
+  ],
+  [
+    '20260610120000_seed_backend_permission_catalog',
+    new Set([
+      '80ebcfeb06abf3f4e622b4b493179bbb2a6129d4e6559f813bafbd6071c4e777',
+    ]),
+  ],
+  [
+    '20260610123000_merge_legacy_permission_catalog',
+    new Set([
+      'e3e81e0e519f52cbedb721ccdbbcf13d7e7449b3d82ce26b740ffa10e69c0c96',
+    ]),
+  ],
+  [
+    '20260610150000_abbreviate_submodule_permission_codes',
+    new Set([
+      'ee3d1c234484444ac6e25320dd1f86209a04314eb6f90ffa9daa3d3dbfdcbb4a',
+    ]),
+  ],
+  [
+    '20260623090000_add_bank_masterfile_fields',
+    new Set([
+      '3bbc87c72b77fd1aab31629b046a3adc900c41e7a0b817b251821e75e72f7563',
+    ]),
+  ],
 ]);
 
 async function loadRepositoryChecksums() {

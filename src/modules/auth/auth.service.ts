@@ -1269,8 +1269,8 @@ export class AuthService {
   }
 
   private getUsableMemberships(user: UserWithMemberships) {
-    return user.memberships.filter(
-      (membership) => this.isMembershipUsable(membership),
+    return user.memberships.filter((membership) =>
+      this.isMembershipUsable(membership),
     );
   }
 

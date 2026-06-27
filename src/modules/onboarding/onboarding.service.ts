@@ -22,6 +22,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
 import { seedDefaultTermsForCompany } from '../maintenance/terms/default-terms';
+import { materializeDefaultUserSidebar } from '../company/user-sidebar/user-sidebar.defaults';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
@@ -580,6 +581,7 @@ export class OnboardingService {
         'Complete the onboarding draft before finalizing setup.',
       );
     }
+    const selectedPlan = draft.subscriptionPlan;
 
     this.validateCompletionDraft(draft);
     const completedAt = new Date();
@@ -646,6 +648,44 @@ export class OnboardingService {
       if (!subscription) {
         throw new BadRequestException(
           'Complete billing setup before finalizing onboarding.',
+        );
+      }
+
+      for (const planModule of selectedPlan.modules.filter(
+        (item) => item.isEnabled,
+      )) {
+        await tx.companyModule.upsert({
+          where: {
+            companyId_moduleId: {
+              companyId: company.id,
+              moduleId: planModule.moduleId,
+            },
+          },
+          update: {
+            isEnabled: true,
+            enabledAt: completedAt,
+            disabledAt: null,
+          },
+          create: {
+            companyId: company.id,
+            moduleId: planModule.moduleId,
+            isEnabled: true,
+            enabledAt: completedAt,
+          },
+        });
+      }
+
+      const headOffice = await tx.companyUnit.findFirst({
+        where: { companyId: company.id, code: 'HEAD-OFFICE', isActive: true },
+        select: { id: true },
+      });
+
+      if (headOffice) {
+        await materializeDefaultUserSidebar(
+          tx,
+          company.id,
+          headOffice.id,
+          user.id,
         );
       }
 

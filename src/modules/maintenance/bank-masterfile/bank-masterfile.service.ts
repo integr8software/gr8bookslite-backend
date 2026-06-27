@@ -14,11 +14,11 @@ import {
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
-import { PermissionCodes } from '../../../common/constants/permission-codes.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { getModuleCatalogCodeByRoute } from '../../../../prisma/seeds/moduleCatalog';
 import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dto';
@@ -32,6 +32,9 @@ const DefaultPage = 1;
 const DefaultLimit = 500;
 const BaseCurrencyCode = 'PHP';
 const CashInBankGroup = 'Cash in Bank';
+const BankMasterfilePermissionCode = getModuleCatalogCodeByRoute(
+  '/maintenance/bank-masterfile',
+);
 const BankMasterfileTransactionOptions = {
   maxWait: 10_000,
   timeout: 30_000,
@@ -832,7 +835,7 @@ export class BankMasterfileService {
 
     if (
       user.companyId === companyId &&
-      user.permissions.includes(`${PermissionCodes.BANK_MASTERFILE}:${action}`)
+      user.permissions.includes(`${BankMasterfilePermissionCode}:${action}`)
     ) {
       return;
     }
@@ -859,7 +862,7 @@ export class BankMasterfileService {
 
     return (
       user.companyId === companyId &&
-      user.permissions.includes(`${PermissionCodes.BANK_MASTERFILE}:${action}`)
+      user.permissions.includes(`${BankMasterfilePermissionCode}:${action}`)
     );
   }
 

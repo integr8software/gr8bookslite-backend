@@ -21,6 +21,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
 import { seedDefaultTermsForCompany } from '../../maintenance/terms/default-terms';
+import { materializeDefaultUserSidebar } from '../../company/user-sidebar/user-sidebar.defaults';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
@@ -145,7 +146,7 @@ export class WorkspaceCompaniesService {
         },
       });
 
-      await tx.companyUnit.create({
+      const headOffice = await tx.companyUnit.create({
         data: {
           companyId: createdCompany.id,
           type: CompanyUnitType.HEAD_OFFICE,
@@ -163,7 +164,19 @@ export class WorkspaceCompaniesService {
       });
 
       await seedDefaultTermsForCompany(tx, createdCompany.id);
-
+      const activeModules = await tx.module.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      await tx.companyModule.createMany({
+        data: activeModules.map((module) => ({
+          companyId: createdCompany.id,
+          moduleId: module.id,
+          isEnabled: true,
+          enabledAt: new Date(),
+        })),
+        skipDuplicates: true,
+      });
       if (user.role !== AppRole.SUPER_ADMIN) {
         await tx.membership.upsert({
           where: {
@@ -184,6 +197,12 @@ export class WorkspaceCompaniesService {
             joinedAt: new Date(),
           },
         });
+        await materializeDefaultUserSidebar(
+          tx,
+          createdCompany.id,
+          headOffice.id,
+          user.id,
+        );
       }
 
       return tx.company.findUniqueOrThrow({
@@ -501,6 +520,22 @@ export class WorkspaceCompaniesService {
         canHoldInventory: true,
       },
     });
+
+    const memberships = await this.prisma.membership.findMany({
+      where: { companyId, status: MembershipStatus.ACTIVE },
+      select: { userId: true },
+    });
+
+    for (const membership of memberships) {
+      await this.prisma.$transaction((tx) =>
+        materializeDefaultUserSidebar(
+          tx,
+          companyId,
+          unit.id,
+          membership.userId,
+        ),
+      );
+    }
 
     await this.auditLogsService.record({
       actorUserId: user.id,

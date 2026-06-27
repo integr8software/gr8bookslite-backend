@@ -39,6 +39,16 @@ export class MasterPlanAndPackagesService {
     if (normalizedModuleKeys.length === 0) {
       throw new BadRequestException('Select at least one module.');
     }
+    const selectedModules = await this.prisma.module.findMany({
+      where: { code: { in: normalizedModuleKeys }, isActive: true },
+      select: { id: true, code: true },
+    });
+    if (selectedModules.length !== normalizedModuleKeys.length) {
+      throw new BadRequestException('One or more module codes are invalid.');
+    }
+    const moduleIdByCode = new Map(
+      selectedModules.map((module) => [module.code, module.id]),
+    );
 
     const monthlyPrice = normalizedPrices.find(
       (price) => price.billingCycle === BillingCycle.MONTHLY,
@@ -104,6 +114,7 @@ export class MasterPlanAndPackagesService {
         modules: {
           create: normalizedModuleKeys.map((moduleKey) => ({
             moduleKey,
+            moduleId: moduleIdByCode.get(moduleKey)!,
             isEnabled: true,
           })),
         },

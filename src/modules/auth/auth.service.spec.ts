@@ -1,4 +1,8 @@
-import { CompanyStatus, MembershipRole, MembershipStatus } from '@prisma/client';
+import {
+  CompanyStatus,
+  MembershipRole,
+  MembershipStatus,
+} from '@prisma/client';
 import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 

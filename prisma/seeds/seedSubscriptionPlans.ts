@@ -1,27 +1,9 @@
 import { prisma } from './prismaClient';
+import { AccountingModuleCodes, InventoryModuleCodes } from './moduleCatalog';
 
-const accountingModuleKeys = [
-  'dashboard-overview',
-  'maintenance-financial-management-charts-of-accounts',
-  'cash-receipt-official-receipt',
-  'cash-disbursement-disbursement-voucher',
-  'accounts-payable-accounts-payable-voucher',
-  'general-journal-journal-voucher',
-  'sales-service-invoice',
-  'reports-financial',
-] as const;
+const accountingModuleKeys = AccountingModuleCodes;
 
-const inventoryModuleKeys = [
-  'maintenance-items',
-  'maintenance-item-management-items',
-  'maintenance-warehouse-management',
-  'inventory-inventory-account',
-  'inventory-receiving-report',
-  'inventory-material-request',
-  'inventory-pick-list',
-  'purchasing-purchase-request',
-  'purchasing-purchase-order',
-] as const;
+const inventoryModuleKeys = InventoryModuleCodes;
 
 const plans = [
   {
@@ -255,8 +237,10 @@ export async function seedSubscriptionPlans() {
     });
 
     await Promise.all(
-      enabledModuleKeys.map((moduleKey) =>
-        prisma.subscriptionPlanModule.upsert({
+      enabledModuleKeys.map(async (moduleKey) => {
+        const module = await prisma.module.findUnique({ where: { code: moduleKey }, select: { id: true } });
+        if (!module) throw new Error(`Subscription plan references missing module code: ${moduleKey}`);
+        return prisma.subscriptionPlanModule.upsert({
           where: {
             subscriptionPlanId_moduleKey: {
               subscriptionPlanId: subscriptionPlan.id,
@@ -269,10 +253,11 @@ export async function seedSubscriptionPlans() {
           create: {
             subscriptionPlanId: subscriptionPlan.id,
             moduleKey,
+            moduleId: module.id,
             isEnabled: true,
           },
-        }),
-      ),
+        });
+      }),
     );
   }
 }
