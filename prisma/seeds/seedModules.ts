@@ -8,50 +8,24 @@ import { ModuleCatalog } from './moduleCatalog';
  */
 export async function seedModules() {
   for (const catalogModule of ModuleCatalog) {
-    const existingByCode = await prisma.module.findUnique({
+    const module = await prisma.module.upsert({
       where: { code: catalogModule.code },
-      select: { id: true },
+      update: {
+        name: catalogModule.name,
+        icon: catalogModule.icon ?? null,
+        category: catalogModule.category ?? ModuleCategory.STANDARD,
+        type: catalogModule.type ?? [],
+        isActive: true,
+      },
+      create: {
+        code: catalogModule.code,
+        name: catalogModule.name,
+        icon: catalogModule.icon ?? null,
+        category: catalogModule.category ?? ModuleCategory.STANDARD,
+        type: catalogModule.type ?? [],
+        isActive: true,
+      },
     });
-    const existingByRoute = existingByCode
-      ? null
-      : await prisma.module.findFirst({
-          where: { route: catalogModule.route },
-          select: { id: true, code: true },
-        });
-
-    const module = existingByRoute
-      ? await prisma.module.update({
-          where: { id: existingByRoute.id },
-          data: {
-            code: catalogModule.code,
-            name: catalogModule.name,
-            route: catalogModule.route,
-            icon: catalogModule.icon ?? null,
-            category: catalogModule.category ?? ModuleCategory.STANDARD,
-            type: catalogModule.type ?? [],
-            isActive: true,
-          },
-        })
-      : await prisma.module.upsert({
-          where: { code: catalogModule.code },
-          update: {
-            name: catalogModule.name,
-            route: catalogModule.route,
-            icon: catalogModule.icon ?? null,
-            category: catalogModule.category ?? ModuleCategory.STANDARD,
-            type: catalogModule.type ?? [],
-            isActive: true,
-          },
-          create: {
-            code: catalogModule.code,
-            name: catalogModule.name,
-            route: catalogModule.route,
-            icon: catalogModule.icon ?? null,
-            category: catalogModule.category ?? ModuleCategory.STANDARD,
-            type: catalogModule.type ?? [],
-            isActive: true,
-          },
-        });
 
     await prisma.permission.upsert({
       where: { code: catalogModule.code },

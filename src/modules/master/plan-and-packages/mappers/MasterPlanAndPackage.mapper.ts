@@ -14,6 +14,20 @@ export const masterPlanAndPackageInclude =
     modules: {
       orderBy: [{ moduleKey: 'asc' }],
     },
+    systems: {
+      include: {
+        system: {
+          include: {
+            modules: {
+              include: { module: true },
+              where: { isActive: true, module: { isActive: true } },
+              orderBy: [{ sortOrder: 'asc' }, { module: { name: 'asc' } }],
+            },
+          },
+        },
+      },
+      orderBy: [{ system: { sortOrder: 'asc' } }],
+    },
   });
 
 export type MasterPlanAndPackageRecord = Prisma.SubscriptionPlanGetPayload<{
@@ -67,15 +81,47 @@ export function mapMasterPlanAndPackage(plan: MasterPlanAndPackageRecord) {
       discountPercent: tier.discountPercent.toNumber(),
       isActive: tier.isActive,
     })),
-    moduleKeys: plan.modules
+    systemCodes: plan.systems
+      .filter((system) => system.isEnabled)
+      .map((system) => system.system.code),
+    systems: plan.systems.map((planSystem) => ({
+      id: planSystem.system.id,
+      code: planSystem.system.code,
+      name: planSystem.system.name,
+      description: planSystem.system.description ?? '',
+      moduleCount: planSystem.system.modules.length,
+      isEnabled: planSystem.isEnabled,
+    })),
+    moduleKeys: derivePlanModules(plan).map((module) => module.code),
+    modules: derivePlanModules(plan).map((module) => ({
+      id: module.id,
+      moduleKey: module.code,
+      name: module.name,
+      isEnabled: true,
+    })),
+    legacyModuleKeys: plan.modules
       .filter((module) => module.isEnabled)
       .map((module) => module.moduleKey),
-    modules: plan.modules.map((module) => ({
-      id: module.id,
-      moduleKey: module.moduleKey,
-      isEnabled: module.isEnabled,
-    })),
     createdAt: plan.createdAt,
     updatedAt: plan.updatedAt,
   };
+}
+
+function derivePlanModules(plan: MasterPlanAndPackageRecord) {
+  const modulesById = new Map<
+    number,
+    MasterPlanAndPackageRecord['systems'][number]['system']['modules'][number]['module']
+  >();
+
+  for (const planSystem of plan.systems) {
+    if (!planSystem.isEnabled || !planSystem.system.isActive) continue;
+    for (const systemModule of planSystem.system.modules) {
+      modulesById.set(systemModule.module.id, systemModule.module);
+    }
+  }
+
+  return [...modulesById.values()].sort(
+    (left, right) =>
+      left.name.localeCompare(right.name) || left.code.localeCompare(right.code),
+  );
 }

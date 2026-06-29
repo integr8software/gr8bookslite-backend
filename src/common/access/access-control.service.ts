@@ -593,9 +593,7 @@ function buildFallbackUserModuleItem(
   module: EnabledUserModuleRecord,
 ): AuthUserModuleItem {
   const permission = module.permissions[0];
-  const routeKey = module.route
-    ? module.route.slice(1).replaceAll('/', '-')
-    : module.code.toLowerCase();
+  const routeKey = `module-${module.code.toLowerCase()}`;
 
   return {
     id: -module.id,
@@ -607,8 +605,6 @@ function buildFallbackUserModuleItem(
     sortOrder: Number.MAX_SAFE_INTEGER,
     moduleId: module.id,
     moduleCode: module.code,
-    href: module.route,
-    route: module.route,
     permissionCode: permission?.code ?? null,
     requiredActions: permission ? ['view'] : [],
     category: module.category,
@@ -646,8 +642,6 @@ function buildUserModuleTree(items: UserModuleRecord[]) {
           sortOrder: item.sortOrder,
           moduleId: item.moduleId,
           moduleCode: item.module?.code ?? null,
-          href: item.module?.route ?? null,
-          route: item.module?.route ?? null,
           permissionCode: permission?.code ?? null,
           requiredActions: permission ? ['view'] : [],
           category: item.module?.category ?? null,

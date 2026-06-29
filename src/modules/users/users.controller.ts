@@ -12,7 +12,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { getModuleCatalogCodeByRoute } from '../../../prisma/seeds/moduleCatalog';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -28,9 +27,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import type { UploadedAvatarFile } from './types/uploaded-avatar-file.type';
 import { UsersService } from './users.service';
 
-const UsersPermissionCode = getModuleCatalogCodeByRoute(
-  '/system-administration/user-management/users',
-);
+const UsersPermissionCode = 'U';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller({

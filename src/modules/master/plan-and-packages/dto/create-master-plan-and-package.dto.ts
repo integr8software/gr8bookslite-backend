@@ -113,5 +113,5 @@ export class CreateMasterPlanAndPackageDto {
 
   @IsArray()
   @IsString({ each: true })
-  moduleKeys!: string[];
+  systemCodes!: string[];
 }

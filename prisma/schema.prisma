@@ -242,7 +242,6 @@ model Module {
   name                  String
   description           String?
   icon                  String?                     @map("default_icon_name")
-  route                 String?
   category              ModuleCategory              @default(STANDARD)
   type                  Json                        @default("[]") @map("module_types")
   isActive              Boolean                     @default(true) @map("is_active")
@@ -253,9 +252,70 @@ model Module {
   formSignatorySetups   FormSignatorySetup[]
   transactionNumbers    TransactionNumberSequence[]
   subscriptionPlanLinks SubscriptionPlanModule[]
+  systemLinks           ModuleSystemModule[]
+  systemSidebar         ModuleSystemSidebar[]
   moduleSidebar         PlatformModuleSidebar[]
 
   @@map("modules")
+}
+
+model ModuleSystem {
+  id           Int                      @id @default(autoincrement())
+  code         String                   @unique
+  name         String
+  description  String?
+  sortOrder    Int                      @default(0) @map("sort_order")
+  isActive     Boolean                  @default(true) @map("is_active")
+  createdAt    DateTime                 @default(now()) @map("created_at")
+  updatedAt    DateTime                 @updatedAt @map("updated_at")
+  modules      ModuleSystemModule[]
+  planLinks    SubscriptionPlanSystem[]
+  sidebarItems ModuleSystemSidebar[]
+
+  @@index([isActive, sortOrder])
+  @@map("module_systems")
+}
+
+model ModuleSystemModule {
+  id        Int          @id @default(autoincrement())
+  systemId  Int          @map("system_id")
+  moduleId  Int          @map("module_id")
+  sortOrder Int          @default(0) @map("sort_order")
+  isActive  Boolean      @default(true) @map("is_active")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  system    ModuleSystem @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  module    Module       @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([systemId, moduleId])
+  @@index([moduleId, isActive])
+  @@index([systemId, isActive, sortOrder])
+  @@map("module_system_modules")
+}
+
+model ModuleSystemSidebar {
+  id          Int                   @id @default(autoincrement())
+  systemId    Int                   @map("system_id")
+  parentId    Int?                  @map("parent_id")
+  moduleId    Int?                  @map("module_id")
+  itemType    SidebarItemType       @map("item_type")
+  key         String
+  label       String
+  description String?
+  iconName    String?               @map("icon_name")
+  sortOrder   Int                   @default(0) @map("sort_order")
+  isVisible   Boolean               @default(true) @map("is_visible")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+  system      ModuleSystem          @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  module      Module?               @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  parent      ModuleSystemSidebar?  @relation("ModuleSystemSidebarTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    ModuleSystemSidebar[] @relation("ModuleSystemSidebarTree")
+
+  @@unique([systemId, key])
+  @@index([systemId, parentId, sortOrder])
+  @@index([moduleId])
+  @@map("module_system_sidebar")
 }
 
 model Permission {
@@ -648,6 +708,7 @@ model SubscriptionPlan {
   usageRules       SubscriptionPlanUsageRule[]
   discountTiers    SubscriptionPlanDiscountTier[]
   modules          SubscriptionPlanModule[]
+  systems          SubscriptionPlanSystem[]
   subscriptions    CompanySubscription[]
   onboardingDrafts UserOnboardingDraft[]
 
@@ -724,6 +785,22 @@ model SubscriptionPlanModule {
   @@index([moduleKey, isEnabled])
   @@index([moduleId, isEnabled])
   @@map("subscription_plan_modules")
+}
+
+model SubscriptionPlanSystem {
+  id                 Int              @id @default(autoincrement())
+  subscriptionPlanId Int              @map("subscription_plan_id")
+  systemId           Int              @map("system_id")
+  isEnabled          Boolean          @default(true) @map("is_enabled")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  subscriptionPlan   SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+  system             ModuleSystem     @relation(fields: [systemId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionPlanId, systemId])
+  @@index([systemId, isEnabled])
+  @@index([subscriptionPlanId, isEnabled])
+  @@map("subscription_plan_systems")
 }
 
 // =========================================================

@@ -58,6 +58,18 @@ const subscriptionPlanInclude =
     modules: {
       orderBy: [{ moduleKey: 'asc' }],
     },
+    systems: {
+      include: {
+        system: {
+          include: {
+            modules: {
+              include: { module: true },
+              where: { isActive: true, module: { isActive: true } },
+            },
+          },
+        },
+      },
+    },
   });
 
 @Injectable()
@@ -92,8 +104,17 @@ export class OnboardingService {
           where: { isActive: true },
           orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
         },
-        modules: {
-          orderBy: [{ moduleKey: 'asc' }],
+        systems: {
+          include: {
+            system: {
+              include: {
+                modules: {
+                  include: { module: true },
+                  where: { isActive: true, module: { isActive: true } },
+                },
+              },
+            },
+          },
         },
       },
       orderBy: {
@@ -651,14 +672,20 @@ export class OnboardingService {
         );
       }
 
-      for (const planModule of selectedPlan.modules.filter(
-        (item) => item.isEnabled,
-      )) {
+      const selectedModuleIds = new Set(
+        selectedPlan.systems.flatMap((planSystem) =>
+          planSystem.isEnabled && planSystem.system.isActive
+            ? planSystem.system.modules.map((item) => item.moduleId)
+            : [],
+        ),
+      );
+
+      for (const moduleId of selectedModuleIds) {
         await tx.companyModule.upsert({
           where: {
             companyId_moduleId: {
               companyId: company.id,
-              moduleId: planModule.moduleId,
+              moduleId,
             },
           },
           update: {
@@ -668,7 +695,7 @@ export class OnboardingService {
           },
           create: {
             companyId: company.id,
-            moduleId: planModule.moduleId,
+            moduleId,
             isEnabled: true,
             enabledAt: completedAt,
           },

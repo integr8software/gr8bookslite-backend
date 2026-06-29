@@ -10,6 +10,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { ModuleSystemsModule } from './modules/master/module-systems/module-systems.module';
 import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/master-plan-and-packages.module';
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
 import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
@@ -57,6 +58,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     BillingModule,
     AddressModule,
     AlphanumericTaxCodesModule,
+    ModuleSystemsModule,
     MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
     WorkspaceUsersModule,

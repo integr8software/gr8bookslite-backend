@@ -102,7 +102,11 @@ describe('AccessControlService permission architecture', () => {
         ) => {
           byBranch: Array<{
             branchUnitId: number;
-            items: Array<{ label: string; href: string | null }>;
+            items: Array<{
+              key: string;
+              label: string;
+              moduleCode: string | null;
+            }>;
           }>;
         };
       }
@@ -121,7 +125,6 @@ describe('AccessControlService permission architecture', () => {
                 name: 'Term Management',
                 description: null,
                 icon: 'calendar',
-                route: '/maintenance/term-management',
                 category: 'STANDARD',
                 permissions: [{ code: 'TM' }],
               },
@@ -138,9 +141,60 @@ describe('AccessControlService permission architecture', () => {
         items: [
           expect.objectContaining({
             label: 'Term Management',
-            href: '/maintenance/term-management',
+            key: 'module-tm',
+            moduleCode: 'TM',
           }),
         ],
+      }),
+    );
+  });
+
+  it('builds enabled fallback modules from module code only', () => {
+    const service = new AccessControlService({} as never, {} as never);
+    const modules = (
+      service as unknown as {
+        buildUserModules: (
+          membershipRecord: unknown,
+          permissions: string[],
+        ) => {
+          byBranch: Array<{
+            branchUnitId: number;
+            items: Array<{
+              key: string;
+              moduleCode: string | null;
+            }>;
+          }>;
+        };
+      }
+    ).buildUserModules(
+      {
+        role: 'USER',
+        unitAccess: [{ unitId: 10 }],
+        company: {
+          moduleSidebar: [],
+          enabledModules: [
+            {
+              moduleId: 5,
+              module: {
+                id: 5,
+                code: 'TM',
+                name: 'Term Management',
+                description: null,
+                icon: 'calendar',
+                category: 'STANDARD',
+                permissions: [{ code: 'TM' }],
+              },
+            },
+          ],
+        },
+      },
+      ['TM:view'],
+    );
+
+    expect(modules.byBranch[0].items[0]).toEqual(
+      expect.objectContaining({
+        key: 'module-tm',
+        moduleCode: 'TM',
       }),
     );
   });

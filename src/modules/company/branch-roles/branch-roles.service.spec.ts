@@ -35,9 +35,12 @@ describe('BranchRolesService permission architecture', () => {
 
     return {
       prisma,
-      service: new BranchRolesService(prisma as never, {
-        syncScopeAfterPermissionChange: jest.fn(),
-      } as never),
+      service: new BranchRolesService(
+        prisma as never,
+        {
+          syncScopeAfterPermissionChange: jest.fn(),
+        } as never,
+      ),
     };
   }
 
@@ -462,7 +465,6 @@ describe('BranchRolesService permission architecture', () => {
               moduleId: 40,
               code: 'PCFR',
               name: 'Petty Cash Fund Replenishment',
-              route: '/cash-disbursement/petty-cash-fund-replenishment',
               sortOrder: 60,
               isActive: true,
               createdAt: new Date(),

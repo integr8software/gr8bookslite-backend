@@ -18,7 +18,6 @@ import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { getModuleCatalogCodeByRoute } from '../../../../prisma/seeds/moduleCatalog';
 import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dto';
@@ -32,9 +31,7 @@ const DefaultPage = 1;
 const DefaultLimit = 500;
 const BaseCurrencyCode = 'PHP';
 const CashInBankGroup = 'Cash in Bank';
-const BankMasterfilePermissionCode = getModuleCatalogCodeByRoute(
-  '/maintenance/bank-masterfile',
-);
+const BankMasterfilePermissionCode = 'BM';
 const BankMasterfileTransactionOptions = {
   maxWait: 10_000,
   timeout: 30_000,
@@ -212,7 +209,11 @@ export class BankMasterfileService {
 
         for (const bank of dto.banks) {
           const accountCode = bank.accountCode?.trim()
-            ? await this.validateManualAccountCode(companyId, bank.accountCode, tx)
+            ? await this.validateManualAccountCode(
+                companyId,
+                bank.accountCode,
+                tx,
+              )
             : await this.generateNextCashInBankAccountCode(
                 companyId,
                 cashInBankAccount.id,
@@ -928,7 +929,9 @@ function scoreCashInBankCandidate(account: CashInBankCandidate) {
     return 90;
   }
 
-  if (labels.some((label) => label.includes('cash') && label.includes('bank'))) {
+  if (
+    labels.some((label) => label.includes('cash') && label.includes('bank'))
+  ) {
     return 80;
   }
 
@@ -944,7 +947,12 @@ function scoreCashInBankCandidate(account: CashInBankCandidate) {
 }
 
 function normalizeAccountLabel(value: string | null) {
-  return value?.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() ?? '';
+  return (
+    value
+      ?.toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim() ?? ''
+  );
 }
 type BankAccountIdentity = {
   bankName: string;

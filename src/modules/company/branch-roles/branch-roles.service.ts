@@ -15,7 +15,6 @@ import { ActivePermissionActions } from '../../../common/constants/active-permis
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { getModuleCatalogCodeByRoute } from '../../../../prisma/seeds/moduleCatalog';
 import { UserSidebarService } from '../user-sidebar/user-sidebar.service';
 import { BranchRolePermissionDto } from './dto/branch-role-permission.dto';
 import { CreateBranchRoleDto } from './dto/create-branch-role.dto';
@@ -65,18 +64,10 @@ const LegacyPettyCashReplenishmentPermissionCode =
   'cash-disbursement-petty-cash-replenishment';
 const LegacyPettyCashFundReplenishmentPermissionCode =
   'cash-disbursement-petty-cash-fund-replenishment';
-const PettyCashFundReplenishmentPermissionCode =
-  getModuleCatalogCodeByRoute('/cash-disbursement/petty-cash-fund-replenishment');
-const PettyCashAdvanceReplenishmentPermissionCode =
-  getModuleCatalogCodeByRoute(
-    '/cash-disbursement/petty-cash-advance-replenishment',
-  );
-const PettyCashAdvancePermissionCode = getModuleCatalogCodeByRoute(
-  '/cash-disbursement/petty-cash-advance',
-);
-const AccountsPayableVoucherPermissionCode = getModuleCatalogCodeByRoute(
-  '/accounts-payable/accounts-payable-voucher',
-);
+const PettyCashFundReplenishmentPermissionCode = 'PCFR';
+const PettyCashAdvanceReplenishmentPermissionCode = 'PCAR';
+const PettyCashAdvancePermissionCode = 'PCA';
+const AccountsPayableVoucherPermissionCode = 'APV';
 const LegacyPettyCashAdvanceReplenishmentPermissionCode =
   'cash-disbursement-petty-cash-advance-replenishment';
 const LegacyPettyCashAdvancePermissionCode =
@@ -228,10 +219,7 @@ export class BranchRolesService {
       number | null,
       Array<{ id: number; moduleId: number | null }>
     >,
-    modulesById: Map<
-      number,
-      PermissionCatalogModule
-    >,
+    modulesById: Map<number, PermissionCatalogModule>,
     assignedModuleIds: Set<number>,
   ) {
     const modules: PermissionCatalogLeaf[] = [];

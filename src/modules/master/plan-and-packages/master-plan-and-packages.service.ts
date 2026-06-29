@@ -29,25 +29,25 @@ export class MasterPlanAndPackagesService {
 
   async createPlan(dto: CreateMasterPlanAndPackageDto) {
     const normalizedCode = this.normalizeCode(dto.code);
-    const normalizedModuleKeys = this.normalizeModuleKeys(dto.moduleKeys);
+    const normalizedSystemCodes = this.normalizeCodes(dto.systemCodes);
     const normalizedPrices = this.normalizePrices(dto.prices);
     const normalizedUsageRules = this.normalizeUsageRules(dto.usageRules);
     const normalizedDiscountTiers = this.normalizeDiscountTiers(
       dto.discountTiers,
     );
 
-    if (normalizedModuleKeys.length === 0) {
-      throw new BadRequestException('Select at least one module.');
+    if (normalizedSystemCodes.length === 0) {
+      throw new BadRequestException('Select at least one system.');
     }
-    const selectedModules = await this.prisma.module.findMany({
-      where: { code: { in: normalizedModuleKeys }, isActive: true },
+    const selectedSystems = await this.prisma.moduleSystem.findMany({
+      where: { code: { in: normalizedSystemCodes }, isActive: true },
       select: { id: true, code: true },
     });
-    if (selectedModules.length !== normalizedModuleKeys.length) {
-      throw new BadRequestException('One or more module codes are invalid.');
+    if (selectedSystems.length !== normalizedSystemCodes.length) {
+      throw new BadRequestException('One or more system codes are invalid.');
     }
-    const moduleIdByCode = new Map(
-      selectedModules.map((module) => [module.code, module.id]),
+    const systemIdByCode = new Map(
+      selectedSystems.map((system) => [system.code, system.id]),
     );
 
     const monthlyPrice = normalizedPrices.find(
@@ -111,10 +111,9 @@ export class MasterPlanAndPackagesService {
             isActive,
           })),
         },
-        modules: {
-          create: normalizedModuleKeys.map((moduleKey) => ({
-            moduleKey,
-            moduleId: moduleIdByCode.get(moduleKey)!,
+        systems: {
+          create: normalizedSystemCodes.map((systemCode) => ({
+            systemId: systemIdByCode.get(systemCode)!,
             isEnabled: true,
           })),
         },
@@ -132,12 +131,12 @@ export class MasterPlanAndPackagesService {
     return code.trim().toUpperCase().replace(/\s+/g, '_');
   }
 
-  private normalizeModuleKeys(moduleKeys: string[]) {
+  private normalizeCodes(codes: string[]) {
     return [
       ...new Set(
-        moduleKeys
-          .map((moduleKey) => moduleKey.trim())
-          .filter((moduleKey) => moduleKey.length > 0),
+        codes
+          .map((code) => code.trim().toUpperCase())
+          .filter((code) => code.length > 0),
       ),
     ];
   }

@@ -17,15 +17,12 @@ import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { getModuleCatalogCodeByRoute } from '../../../../prisma/seeds/moduleCatalog';
 import { CreateTermDto } from './dto/create-term.dto';
 import { GetTermListQueryDto } from './dto/get-term-list-query.dto';
 import { ImportTermsDto } from './dto/import-terms.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
 
-const TermManagementPermissionCode = getModuleCatalogCodeByRoute(
-  '/maintenance/term-management',
-);
+const TermManagementPermissionCode = 'TM';
 
 const DefaultPage = 1;
 const DefaultLimit = 500;

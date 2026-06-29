@@ -51,8 +51,16 @@ export const UserSidebarIconNames = [
 
 type UserSidebarTransaction = Pick<
   Prisma.TransactionClient,
-  'platformModuleSidebar' | 'module' | 'companyModule'
+  | 'platformModuleSidebar'
+  | 'module'
+  | 'companyModule'
+  | 'companySubscription'
+  | 'moduleSystemSidebar'
 >;
+
+type SystemSidebarItem = Awaited<
+  ReturnType<UserSidebarTransaction['moduleSystemSidebar']['findMany']>
+>[number];
 
 type UserSidebarScope = {
   companyId: number;
@@ -324,17 +332,6 @@ const DefaultUserSidebarItems: readonly DefaultUserSidebarItem[] = [
   },
 ] as const;
 
-const LinkKeyOverrides: Record<string, string> = {
-  '/dashboard': 'dashboard-overview',
-  '/maintenance/form-signatory': 'system-administration-form-signatory',
-  '/system-administration/user-management/users': 'maintenance-users',
-  '/system-administration/user-management/user-role': 'maintenance-user-role',
-  '/system-administration/approval-management': 'maintenance-approval',
-  '/system-administration/audit-trail': 'maintenance-audit',
-  '/system-administration/transaction-number-setup': 'transaction-number-setup',
-  '/system-administration/mail-maintenance': 'maintenance-mail',
-};
-
 export async function materializeDefaultUserSidebar(
   tx: UserSidebarTransaction,
   companyId: number,
@@ -362,7 +359,7 @@ export async function materializeDefaultUserSidebar(
       isActive: true,
       id: { in: Array.from(permittedModuleIds) },
     },
-    orderBy: [{ route: 'asc' }, { code: 'asc' }],
+    orderBy: [{ name: 'asc' }, { code: 'asc' }],
   });
   const existingItems = options.force
     ? []
@@ -381,17 +378,34 @@ export async function materializeDefaultUserSidebar(
   );
   const modulesByCode = new Map(modules.map((module) => [module.code, module]));
 
-  for (const [index, item] of DefaultUserSidebarItems.entries()) {
-    await materializeDefaultUserSidebarItem(tx, {
+  const systemSidebarItems = await getSystemSidebarItems(
+    tx,
+    companyId,
+    permittedModuleIds,
+  );
+
+  if (systemSidebarItems.length > 0) {
+    await materializeSystemSidebarItems(tx, {
       existingKeys,
       existingModuleIds,
-      item,
-      modulesByCode,
+      items: systemSidebarItems,
       parentId: null,
       scope,
-      sortOrder: index,
       unassigned,
     });
+  } else {
+    for (const [index, item] of DefaultUserSidebarItems.entries()) {
+      await materializeDefaultUserSidebarItem(tx, {
+        existingKeys,
+        existingModuleIds,
+        item,
+        modulesByCode,
+        parentId: null,
+        scope,
+        sortOrder: index,
+        unassigned,
+      });
+    }
   }
 
   if (unassigned.size) {
@@ -405,6 +419,169 @@ export async function materializeDefaultUserSidebar(
   return !existing || options.force || unassigned.size > 0;
 }
 
+async function getSystemSidebarItems(
+  tx: UserSidebarTransaction,
+  companyId: number,
+  permittedModuleIds: Set<number>,
+) {
+  const subscriptions = await tx.companySubscription.findMany({
+    where: {
+      companyId,
+      status: {
+        in: ['INCOMPLETE', 'TRIALING', 'ACTIVE', 'PAST_DUE', 'UNPAID'],
+      },
+    },
+    include: {
+      plan: {
+        include: {
+          systems: {
+            where: { isEnabled: true, system: { isActive: true } },
+            include: {
+              system: {
+                include: {
+                  sidebarItems: {
+                    where: { isVisible: true },
+                    include: { module: true },
+                    orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+                  },
+                },
+              },
+            },
+            orderBy: [{ system: { sortOrder: 'asc' } }],
+          },
+        },
+      },
+    },
+    orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+  });
+
+  const items: (SystemSidebarItem & { systemCode: string })[] = [];
+  for (const subscription of subscriptions) {
+    for (const planSystem of subscription.plan.systems) {
+      for (const item of planSystem.system.sidebarItems) {
+        if (
+          item.itemType === 'LINK' &&
+          (!item.moduleId || !permittedModuleIds.has(item.moduleId))
+        ) {
+          continue;
+        }
+        items.push({ ...item, systemCode: planSystem.system.code });
+      }
+    }
+  }
+
+  return items;
+}
+
+async function materializeSystemSidebarItems(
+  tx: UserSidebarTransaction,
+  {
+    existingKeys,
+    existingModuleIds,
+    items,
+    parentId,
+    scope,
+    unassigned,
+  }: {
+    existingKeys: Set<string>;
+    existingModuleIds: Set<number>;
+    items: (SystemSidebarItem & { systemCode: string })[];
+    parentId: number | null;
+    scope: UserSidebarScope;
+    unassigned: Set<number>;
+  },
+) {
+  const childrenByParentId = new Map<number | null, typeof items>();
+  for (const item of items) {
+    const siblings = childrenByParentId.get(item.parentId) ?? [];
+    siblings.push(item);
+    childrenByParentId.set(item.parentId, siblings);
+  }
+
+  const createItem = async (
+    item: (typeof items)[number],
+    nextParentId: number | null,
+    sortOrder: number,
+  ) => {
+    const key = `${item.systemCode.toLowerCase()}-${item.key}`;
+    if (existingKeys.has(key)) return null;
+
+    if (item.itemType === 'LINK') {
+      if (!item.moduleId || existingModuleIds.has(item.moduleId)) return null;
+      const link = await tx.platformModuleSidebar.create({
+        data: {
+          ...scope,
+          parentId: nextParentId,
+          moduleId: item.moduleId,
+          itemType: 'LINK',
+          key,
+          label: item.label,
+          description: item.description,
+          iconName: nextParentId == null ? item.iconName : null,
+          sortOrder,
+        },
+        select: { id: true },
+      });
+      existingKeys.add(key);
+      existingModuleIds.add(item.moduleId);
+      unassigned.delete(item.moduleId);
+      return link.id;
+    }
+
+    if (!hasAvailableSystemSidebarChild(item.id, childrenByParentId, existingModuleIds)) {
+      return null;
+    }
+
+    const container = await tx.platformModuleSidebar.create({
+      data: {
+        ...scope,
+        parentId: nextParentId,
+        itemType: item.itemType,
+        key,
+        label: item.label,
+        description: item.description,
+        iconName: item.iconName,
+        sortOrder,
+      },
+      select: { id: true },
+    });
+    existingKeys.add(key);
+
+    for (const [childIndex, child] of (
+      childrenByParentId.get(item.id) ?? []
+    ).entries()) {
+      await createItem(child, container.id, childIndex);
+    }
+
+    return container.id;
+  };
+
+  for (const [index, item] of (childrenByParentId.get(parentId) ?? []).entries()) {
+    await createItem(item, parentId, index);
+  }
+}
+
+function hasAvailableSystemSidebarChild(
+  itemId: number,
+  childrenByParentId: Map<
+    number | null,
+    (SystemSidebarItem & { systemCode: string })[]
+  >,
+  existingModuleIds: Set<number>,
+): boolean {
+  for (const child of childrenByParentId.get(itemId) ?? []) {
+    if (child.itemType === 'LINK') {
+      if (child.moduleId && !existingModuleIds.has(child.moduleId)) return true;
+      continue;
+    }
+    if (hasAvailableSystemSidebarChild(child.id, childrenByParentId, existingModuleIds)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 async function materializeParentlessModules(
   tx: UserSidebarTransaction,
   scope: UserSidebarScope,
@@ -412,14 +589,7 @@ async function materializeParentlessModules(
   existingKeys: Set<string>,
 ) {
   for (const [index, module] of modules.entries()) {
-    if (!module.route)
-      throw new Error(
-        `Module ${module.code} has no route and cannot be placed in the default sidebar.`,
-      );
-
-    const linkKey =
-      LinkKeyOverrides[module.route] ??
-      module.route.slice(1).replaceAll('/', '-');
+    const linkKey = `module-${module.code.toLowerCase()}`;
     if (existingKeys.has(linkKey)) continue;
 
     await tx.platformModuleSidebar.create({
@@ -465,10 +635,6 @@ async function materializeDefaultUserSidebarItem(
   if (item.itemType === 'LINK') {
     const module = modulesByCode.get(item.code);
     if (!module || existingModuleIds.has(module.id)) return null;
-    if (!module.route)
-      throw new Error(
-        `Module ${module.code} has no route and cannot be placed in the default sidebar.`,
-      );
     if (existingKeys.has(item.key)) return null;
 
     const link = await tx.platformModuleSidebar.create({

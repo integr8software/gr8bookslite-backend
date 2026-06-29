@@ -16,8 +16,6 @@ export interface AuthUserModuleItem {
   sortOrder: number;
   moduleId: number | null;
   moduleCode: string | null;
-  href: string | null;
-  route: string | null;
   permissionCode: string | null;
   requiredActions: string[];
   category: unknown;

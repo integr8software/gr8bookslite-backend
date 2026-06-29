@@ -1,9 +1,4 @@
 import { prisma } from './prismaClient';
-import { AccountingModuleCodes, InventoryModuleCodes } from './moduleCatalog';
-
-const accountingModuleKeys = AccountingModuleCodes;
-
-const inventoryModuleKeys = InventoryModuleCodes;
 
 const plans = [
   {
@@ -15,24 +10,24 @@ const plans = [
     yearlyPriceInCents: 399000,
     monthlyCompareAtInCents: 49900,
     yearlyCompareAtInCents: 478800,
-    moduleKeys: accountingModuleKeys,
     scope: 'ONBOARDING',
     status: 'ACTIVE',
     trialDays: 15,
+    systemCodes: ['ACCOUNTING'],
   },
   {
-    code: 'ACCOUNTING_INVENTORY',
-    name: 'Accounting & Inventory',
-    description: 'Accounting and inventory plan with a 15-day free trial.',
+    code: 'ACCOUNTING_TRADING',
+    name: 'Accounting Trading',
+    description: 'Accounting trading plan with a 15-day free trial.',
     currency: 'PHP',
     monthlyPriceInCents: 49900,
     yearlyPriceInCents: 499000,
     monthlyCompareAtInCents: 59900,
     yearlyCompareAtInCents: 598800,
-    moduleKeys: [...accountingModuleKeys, ...inventoryModuleKeys],
     scope: 'ONBOARDING',
     status: 'ACTIVE',
     trialDays: 15,
+    systemCodes: ['ACCOUNTING_TRADING'],
   },
   {
     code: 'ADDITIONAL_COMPANY_ACCOUNTING',
@@ -43,25 +38,25 @@ const plans = [
     yearlyPriceInCents: 399000,
     monthlyCompareAtInCents: 49900,
     yearlyCompareAtInCents: 478800,
-    moduleKeys: accountingModuleKeys,
     scope: 'ADDITIONAL_COMPANY',
     status: 'ACTIVE',
     trialDays: 0,
+    systemCodes: ['ACCOUNTING'],
   },
   {
-    code: 'ADDITIONAL_COMPANY_ACCOUNTING_INVENTORY',
-    name: 'Accounting & Inventory',
+    code: 'ADDITIONAL_COMPANY_ACCOUNTING_TRADING',
+    name: 'Accounting Trading',
     description:
-      'Additional company accounting and inventory plan without a free trial.',
+      'Additional company accounting trading plan without a free trial.',
     currency: 'PHP',
     monthlyPriceInCents: 49900,
     yearlyPriceInCents: 499000,
     monthlyCompareAtInCents: 59900,
     yearlyCompareAtInCents: 598800,
-    moduleKeys: [...accountingModuleKeys, ...inventoryModuleKeys],
     scope: 'ADDITIONAL_COMPANY',
     status: 'ACTIVE',
     trialDays: 0,
+    systemCodes: ['ACCOUNTING_TRADING'],
   },
 ] as const;
 
@@ -94,7 +89,13 @@ const defaultDiscountTiers = [
 export async function seedSubscriptionPlans() {
   await prisma.subscriptionPlan.updateMany({
     where: {
-      code: 'ADDITIONAL_COMPANY',
+      code: {
+        in: [
+          'ADDITIONAL_COMPANY',
+          'ACCOUNTING_INVENTORY',
+          'ADDITIONAL_COMPANY_ACCOUNTING_INVENTORY',
+        ],
+      },
     },
     data: {
       isActive: false,
@@ -104,11 +105,11 @@ export async function seedSubscriptionPlans() {
 
   for (const plan of plans) {
     const {
-      moduleKeys,
       monthlyPriceInCents,
       yearlyPriceInCents,
       monthlyCompareAtInCents,
       yearlyCompareAtInCents,
+      systemCodes,
       ...planData
     } = plan;
     const subscriptionPlan = await prisma.subscriptionPlan.upsert({
@@ -222,42 +223,41 @@ export async function seedSubscriptionPlans() {
       ),
     ]);
 
-    const enabledModuleKeys = [...new Set(moduleKeys)];
+    const systems = await prisma.moduleSystem.findMany({
+      where: { code: { in: [...systemCodes] }, isActive: true },
+      select: { id: true, code: true },
+    });
+    const systemIdByCode = new Map(
+      systems.map((system) => [system.code, system.id]),
+    );
 
-    await prisma.subscriptionPlanModule.updateMany({
+    await prisma.subscriptionPlanSystem.deleteMany({
       where: {
         subscriptionPlanId: subscriptionPlan.id,
-        moduleKey: {
-          notIn: enabledModuleKeys,
+        systemId: {
+          notIn: systems.map((system) => system.id),
         },
-      },
-      data: {
-        isEnabled: false,
       },
     });
 
-    await Promise.all(
-      enabledModuleKeys.map(async (moduleKey) => {
-        const module = await prisma.module.findUnique({ where: { code: moduleKey }, select: { id: true } });
-        if (!module) throw new Error(`Subscription plan references missing module code: ${moduleKey}`);
-        return prisma.subscriptionPlanModule.upsert({
-          where: {
-            subscriptionPlanId_moduleKey: {
-              subscriptionPlanId: subscriptionPlan.id,
-              moduleKey,
-            },
-          },
-          update: {
-            isEnabled: true,
-          },
-          create: {
+    for (const systemCode of systemCodes) {
+      const systemId = systemIdByCode.get(systemCode);
+      if (!systemId) continue;
+
+      await prisma.subscriptionPlanSystem.upsert({
+        where: {
+          subscriptionPlanId_systemId: {
             subscriptionPlanId: subscriptionPlan.id,
-            moduleKey,
-            moduleId: module.id,
-            isEnabled: true,
+            systemId,
           },
-        });
-      }),
-    );
+        },
+        update: { isEnabled: true },
+        create: {
+          subscriptionPlanId: subscriptionPlan.id,
+          systemId,
+          isEnabled: true,
+        },
+      });
+    }
   }
 }
