@@ -6,7 +6,7 @@ export class TransactionNumberBranchResponseDto {
 
 export class TransactionNumberSequenceResponseDto {
   id!: number;
-  platformSubmoduleId!: number;
+  moduleId!: number;
   moduleCode!: string;
   moduleName!: string;
   inputMode!: 'Auto' | 'Manual';

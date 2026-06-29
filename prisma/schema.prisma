@@ -36,6 +36,7 @@ model User {
   billingPaymentMethods BillingPaymentMethod[]
   createdCompanies      Company[]               @relation("CompanyCreatedBy")
   tablePreferences      UserTablePreference[]
+  moduleSidebar         PlatformModuleSidebar[]
 
   @@map("users")
 }
@@ -73,39 +74,40 @@ model AuthSessionHandoff {
 // =========================================================
 
 model Company {
-  id                    Int                    @id @default(autoincrement())
+  id                    Int                     @id @default(autoincrement())
   name                  String
-  slug                  String                 @unique
-  legalName             String?                @map("legal_name")
-  companyCode           String?                @unique @map("company_code")
-  taxpayerType          TaxpayerType?          @map("taxpayer_type")
-  ownerLastName         String?                @map("owner_last_name")
-  ownerFirstName        String?                @map("owner_first_name")
-  ownerMiddleName       String?                @map("owner_middle_name")
-  organizationType      String?                @map("organization_type")
-  organizationTypeOther String?                @map("organization_type_other")
-  logoFileName          String?                @map("logo_file_name")
-  logoMimeType          String?                @map("logo_mime_type")
-  logoStoragePath       String?                @map("logo_storage_path")
-  logoPublicUrl         String?                @map("logo_public_url")
+  slug                  String                  @unique
+  legalName             String?                 @map("legal_name")
+  companyCode           String?                 @unique @map("company_code")
+  taxpayerType          TaxpayerType?           @map("taxpayer_type")
+  ownerLastName         String?                 @map("owner_last_name")
+  ownerFirstName        String?                 @map("owner_first_name")
+  ownerMiddleName       String?                 @map("owner_middle_name")
+  organizationType      String?                 @map("organization_type")
+  organizationTypeOther String?                 @map("organization_type_other")
+  logoFileName          String?                 @map("logo_file_name")
+  logoMimeType          String?                 @map("logo_mime_type")
+  logoStoragePath       String?                 @map("logo_storage_path")
+  logoPublicUrl         String?                 @map("logo_public_url")
   address               String?
   tin                   String?
   email                 String?
   website               String?
-  contactNumber         String?                @map("contact_number")
-  reportStartDate       DateTime?              @map("report_start_date")
-  reportEndDate         DateTime?              @map("report_end_date")
-  createdByUserId       Int?                   @map("created_by_user_id")
-  isActive              Boolean                @default(true) @map("is_active")
-  status                CompanyStatus          @default(PENDING)
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
+  contactNumber         String?                 @map("contact_number")
+  reportStartDate       DateTime?               @map("report_start_date")
+  reportEndDate         DateTime?               @map("report_end_date")
+  createdByUserId       Int?                    @map("created_by_user_id")
+  isActive              Boolean                 @default(true) @map("is_active")
+  status                CompanyStatus           @default(PENDING)
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
   subscriptions         CompanySubscription[]
   billingCustomers      BillingCustomer[]
   billingPaymentMethods BillingPaymentMethod[]
   memberships           Membership[]
   roles                 CompanyRole[]
   enabledModules        CompanyModule[]
+  moduleSidebar         PlatformModuleSidebar[]
   units                 CompanyUnit[]
   formSignatorySetups   FormSignatorySetup[]
   chartAccounts         ChartAccount[]
@@ -113,8 +115,8 @@ model Company {
   terms                 Term[]
   userTablePreferences  UserTablePreference[]
   auditLogs             AuditLog[]
-  onboardingDrafts      UserOnboardingDraft[]  @relation("ProvisionedOnboardingCompany")
-  createdByUser         User?                  @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  onboardingDrafts      UserOnboardingDraft[]   @relation("ProvisionedOnboardingCompany")
+  createdByUser         User?                   @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@index([createdByUserId])
   @@map("companies")
@@ -143,6 +145,7 @@ model CompanyUnit {
   membershipAccess       MembershipUnitAccess[]
   formSignatorySetups    FormSignatorySetup[]
   transactionNumbers     TransactionNumberSequence[]
+  moduleSidebar          PlatformModuleSidebar[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -233,48 +236,31 @@ model CompanyRole {
   @@map("company_roles")
 }
 
-model PlatformModule {
-  id                  Int                  @id @default(autoincrement())
-  code                String               @unique
-  name                String
-  description         String?
-  sortOrder           Int                  @default(0) @map("sort_order")
-  isActive            Boolean              @default(true) @map("is_active")
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @updatedAt @map("updated_at")
-  submodules          PlatformSubmodule[]
-  permissions         Permission[]
-  enabledCompanies    CompanyModule[]
-  formSignatorySetups FormSignatorySetup[]
+model Module {
+  id                    Int                         @id @default(autoincrement())
+  code                  String                      @unique
+  name                  String
+  description           String?
+  icon                  String?                     @map("default_icon_name")
+  route                 String?
+  category              ModuleCategory              @default(STANDARD)
+  type                  Json                        @default("[]") @map("module_types")
+  isActive              Boolean                     @default(true) @map("is_active")
+  createdAt             DateTime                    @default(now()) @map("created_at")
+  updatedAt             DateTime                    @updatedAt @map("updated_at")
+  permissions           Permission[]
+  enabledCompanies      CompanyModule[]
+  formSignatorySetups   FormSignatorySetup[]
+  transactionNumbers    TransactionNumberSequence[]
+  subscriptionPlanLinks SubscriptionPlanModule[]
+  moduleSidebar         PlatformModuleSidebar[]
 
-  @@map("platform_modules")
-}
-
-model PlatformSubmodule {
-  id                 Int                         @id @default(autoincrement())
-  moduleId           Int                         @map("module_id")
-  code               String                      @unique
-  name               String
-  route              String?
-  sortOrder          Int                         @default(0) @map("sort_order")
-  configurationTypes Json                        @default("[]") @map("configuration_types")
-  isActive           Boolean                     @default(true) @map("is_active")
-  createdAt          DateTime                    @default(now()) @map("created_at")
-  updatedAt          DateTime                    @updatedAt @map("updated_at")
-  module             PlatformModule              @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  permissions        Permission[]
-  transactionNumbers TransactionNumberSequence[]
-
-  @@unique([id, moduleId])
-  @@index([moduleId, isActive, sortOrder])
-  @@map("platform_submodules")
+  @@map("modules")
 }
 
 model Permission {
   id                     Int                     @id @default(autoincrement())
-  targetType             PermissionTargetType    @default(MODULE) @map("target_type")
-  moduleId               Int?                    @map("module_id")
-  submoduleId            Int?                    @map("submodule_id")
+  moduleId               Int                     @map("module_id")
   code                   String                  @unique
   name                   String
   description            String?
@@ -283,14 +269,11 @@ model Permission {
   isActive               Boolean                 @default(true) @map("is_active")
   createdAt              DateTime                @default(now()) @map("created_at")
   updatedAt              DateTime                @updatedAt @map("updated_at")
-  module                 PlatformModule?         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  submodule              PlatformSubmodule?      @relation(fields: [submoduleId, moduleId], references: [id, moduleId], onDelete: Cascade)
+  module                 Module                  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   rolePermissions        CompanyRolePermission[]
   membershipOverrides    MembershipPermission[]
 
   @@index([moduleId, isActive])
-  @@index([submoduleId, isActive])
-  @@index([targetType, isActive])
   @@map("permissions")
 }
 
@@ -337,21 +320,51 @@ model MembershipPermission {
 }
 
 model CompanyModule {
-  id         Int            @id @default(autoincrement())
-  companyId  Int            @map("company_id")
-  moduleId   Int            @map("module_id")
-  isEnabled  Boolean        @default(true) @map("is_enabled")
-  enabledAt  DateTime?      @map("enabled_at")
-  disabledAt DateTime?      @map("disabled_at")
-  createdAt  DateTime       @default(now()) @map("created_at")
-  updatedAt  DateTime       @updatedAt @map("updated_at")
-  company    Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  module     PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  id         Int       @id @default(autoincrement())
+  companyId  Int       @map("company_id")
+  moduleId   Int       @map("module_id")
+  isEnabled  Boolean   @default(true) @map("is_enabled")
+  enabledAt  DateTime? @map("enabled_at")
+  disabledAt DateTime? @map("disabled_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  module     Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, moduleId])
   @@index([moduleId])
   @@index([companyId, isEnabled])
   @@map("company_modules")
+}
+
+model PlatformModuleSidebar {
+  id           Int                     @id @default(autoincrement())
+  companyId    Int                     @map("company_id")
+  branchUnitId Int                     @map("branch_unit_id")
+  userId       Int                     @map("user_id")
+  parentId     Int?                    @map("parent_id")
+  moduleId     Int?                    @map("module_id")
+  itemType     SidebarItemType         @map("item_type")
+  key          String
+  label        String
+  description  String?
+  iconName     String?                 @map("icon_name")
+  sortOrder    Int                     @default(0) @map("sort_order")
+  version      Int                     @default(1)
+  createdAt    DateTime                @default(now()) @map("created_at")
+  updatedAt    DateTime                @updatedAt @map("updated_at")
+  company      Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit   CompanyUnit             @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module       Module?                 @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  parent       PlatformModuleSidebar?  @relation("PlatformModuleSidebarTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     PlatformModuleSidebar[] @relation("PlatformModuleSidebarTree")
+
+  @@unique([companyId, branchUnitId, userId, key], map: "platform_module_sidebar_scope_key_uq")
+  @@unique([companyId, branchUnitId, userId, moduleId], map: "platform_module_sidebar_scope_module_uq")
+  @@index([companyId, branchUnitId, userId, parentId, sortOrder], map: "platform_module_sidebar_scope_tree_idx")
+  @@index([userId, companyId, branchUnitId])
+  @@map("platform_module_sidebar_items")
 }
 
 model AuditLog {
@@ -477,7 +490,7 @@ model FormSignatorySetup {
   updatedAt DateTime           @updatedAt @map("updated_at")
   company   Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   unit      CompanyUnit        @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  module    PlatformModule     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module    Module             @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   rows      FormSignatoryRow[]
 
   @@unique([companyId, unitId, moduleId])
@@ -506,24 +519,24 @@ model FormSignatoryRow {
 }
 
 model TransactionNumberSequence {
-  id                  Int                        @id @default(autoincrement())
-  branchUnitId        Int                        @map("branch_unit_id")
-  platformSubmoduleId Int                        @map("platform_submodule_id")
-  inputMode           TransactionNumberInputMode @default(AUTO) @map("input_mode")
-  prefix              String
-  suffix              String                     @default("")
-  padding             Int                        @default(6)
-  startingNumber      Int                        @default(1) @map("starting_number")
-  currentNumber       Int                        @default(1) @map("current_number")
-  status              TransactionNumberStatus    @default(ACTIVE)
-  createdAt           DateTime                   @default(now()) @map("created_at")
-  updatedAt           DateTime                   @updatedAt @map("updated_at")
-  branchUnit          CompanyUnit                @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
-  platformSubmodule   PlatformSubmodule          @relation(fields: [platformSubmoduleId], references: [id], onDelete: Cascade)
+  id             Int                        @id @default(autoincrement())
+  branchUnitId   Int                        @map("branch_unit_id")
+  moduleId       Int                        @map("module_id")
+  inputMode      TransactionNumberInputMode @default(AUTO) @map("input_mode")
+  prefix         String
+  suffix         String                     @default("")
+  padding        Int                        @default(6)
+  startingNumber Int                        @default(1) @map("starting_number")
+  currentNumber  Int                        @default(1) @map("current_number")
+  status         TransactionNumberStatus    @default(ACTIVE)
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @updatedAt @map("updated_at")
+  branchUnit     CompanyUnit                @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
+  module         Module                     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
-  @@unique([platformSubmoduleId, branchUnitId])
+  @@unique([moduleId, branchUnitId])
   @@index([branchUnitId])
-  @@index([platformSubmoduleId])
+  @@index([moduleId])
   @@map("transaction_number_sequences")
 }
 
@@ -699,13 +712,17 @@ model SubscriptionPlanModule {
   id                 Int              @id @default(autoincrement())
   subscriptionPlanId Int              @map("subscription_plan_id")
   moduleKey          String           @map("module_key")
+  moduleId           Int              @map("module_id")
   isEnabled          Boolean          @default(true) @map("is_enabled")
   createdAt          DateTime         @default(now()) @map("created_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")
   subscriptionPlan   SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+  module             Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
+  @@unique([subscriptionPlanId, moduleId])
   @@unique([subscriptionPlanId, moduleKey])
   @@index([moduleKey, isEnabled])
+  @@index([moduleId, isEnabled])
   @@map("subscription_plan_modules")
 }
 
@@ -958,9 +975,16 @@ enum AccessScopeLevel {
   BRANCH
 }
 
-enum PermissionTargetType {
-  MODULE
-  SUBMODULE
+enum SidebarItemType {
+  SECTION
+  CONTAINER
+  LINK
+}
+
+enum ModuleCategory {
+  MASTER
+  WORKSPACE
+  STANDARD
 }
 
 enum CompanyUnitType {

@@ -43,7 +43,6 @@
     "db:bootstrap-admin:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/bootstrap-admin.ts",
     "db:delete-user-owned-data:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/deleteUserOwnedData.ts",
     "db:backfill-head-offices:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/backfillCompanyHeadOffices.ts",
-    "db:reset-permission-catalog:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/resetPermissionCatalog.ts",
     "db:verify-migrations:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/verifyMigrationHistory.ts",
     "db:verify-migrations:shared": "node scripts/run-with-env.cjs .env.shared-dev ts-node prisma/scripts/verifyMigrationHistory.ts",
     "db:verify-migrations:staging": "node scripts/run-with-process-env.cjs staging ts-node prisma/scripts/verifyMigrationHistory.ts",

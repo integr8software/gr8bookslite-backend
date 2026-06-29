@@ -15,6 +15,7 @@ import {
 import { AppRole } from '../enums/app-role.enum';
 import { PermissionAction } from '../enums/permission-action.enum';
 import { AuthUser } from '../interfaces/auth-user.interface';
+import type { AuthUserModuleItem } from '../interfaces/auth-user.interface';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { getSubscriptionAccessDenialReason } from '../utils/subscription-access.util';
@@ -35,12 +36,37 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
             };
           };
           select: {
+            moduleId: true;
             module: {
-              select: {
-                code: true;
+              include: {
+                permissions: {
+                  where: {
+                    isActive: true;
+                  };
+                  orderBy: {
+                    id: 'asc';
+                  };
+                };
               };
             };
           };
+        };
+        moduleSidebar: {
+          include: {
+            module: {
+              include: {
+                permissions: {
+                  where: {
+                    isActive: true;
+                  };
+                  orderBy: {
+                    id: 'asc';
+                  };
+                };
+              };
+            };
+          };
+          orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }];
         };
       };
     };
@@ -50,32 +76,12 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
           where: {
             permission: {
               isActive: true;
-              OR: [
-                {
-                  targetType: 'MODULE';
-                  module: { isActive: true };
-                },
-                {
-                  targetType: 'SUBMODULE';
-                  module: { isActive: true };
-                  submodule: {
-                    isActive: true;
-                    module: { isActive: true };
-                  };
-                },
-              ];
+              module: { isActive: true };
             };
           };
           include: {
             permission: {
-              include: {
-                module: true;
-                submodule: {
-                  include: {
-                    module: true;
-                  };
-                };
-              };
+              include: { module: true };
             };
           };
         };
@@ -89,32 +95,12 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
               where: {
                 permission: {
                   isActive: true;
-                  OR: [
-                    {
-                      targetType: 'MODULE';
-                      module: { isActive: true };
-                    },
-                    {
-                      targetType: 'SUBMODULE';
-                      module: { isActive: true };
-                      submodule: {
-                        isActive: true;
-                        module: { isActive: true };
-                      };
-                    },
-                  ];
+                  module: { isActive: true };
                 };
               };
               include: {
                 permission: {
-                  include: {
-                    module: true;
-                    submodule: {
-                      include: {
-                        module: true;
-                      };
-                    };
-                  };
+                  include: { module: true };
                 };
               };
             };
@@ -126,32 +112,12 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
       where: {
         permission: {
           isActive: true;
-          OR: [
-            {
-              targetType: 'MODULE';
-              module: { isActive: true };
-            },
-            {
-              targetType: 'SUBMODULE';
-              module: { isActive: true };
-              submodule: {
-                isActive: true;
-                module: { isActive: true };
-              };
-            },
-          ];
+          module: { isActive: true };
         };
       };
       include: {
         permission: {
-          include: {
-            module: true;
-            submodule: {
-              include: {
-                module: true;
-              };
-            };
-          };
+          include: { module: true };
         };
       };
     };
@@ -193,6 +159,7 @@ export class AccessControlService {
         accessScope: null,
         enabledModules: [],
         permissions: [],
+        userModules: { items: [], byBranch: [] },
       };
     }
 
@@ -210,6 +177,7 @@ export class AccessControlService {
         accessScope: null,
         enabledModules: [],
         permissions: [],
+        userModules: { items: [], byBranch: [] },
       };
     }
 
@@ -227,6 +195,7 @@ export class AccessControlService {
       membership,
       enabledModules,
     );
+    const userModules = this.buildUserModules(membership, permissions);
     const effectiveCompanyRole =
       membership.companyRole ??
       membership.unitAccess.find((unitAccess) => unitAccess.companyRole)
@@ -246,6 +215,7 @@ export class AccessControlService {
       accessScope: membership.accessScope,
       enabledModules,
       permissions,
+      userModules,
     };
   }
 
@@ -303,12 +273,40 @@ export class AccessControlService {
                 },
               },
               select: {
+                moduleId: true,
                 module: {
-                  select: {
-                    code: true,
+                  include: {
+                    permissions: {
+                      where: {
+                        isActive: true,
+                      },
+                      orderBy: {
+                        id: 'asc',
+                      },
+                    },
                   },
                 },
               },
+            },
+            moduleSidebar: {
+              where: {
+                userId,
+              },
+              include: {
+                module: {
+                  include: {
+                    permissions: {
+                      where: {
+                        isActive: true,
+                      },
+                      orderBy: {
+                        id: 'asc',
+                      },
+                    },
+                  },
+                },
+              },
+              orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
             },
           },
         },
@@ -318,32 +316,12 @@ export class AccessControlService {
               where: {
                 permission: {
                   isActive: true,
-                  OR: [
-                    {
-                      targetType: 'MODULE',
-                      module: { isActive: true },
-                    },
-                    {
-                      targetType: 'SUBMODULE',
-                      module: { isActive: true },
-                      submodule: {
-                        isActive: true,
-                        module: { isActive: true },
-                      },
-                    },
-                  ],
+                  module: { isActive: true },
                 },
               },
               include: {
                 permission: {
-                  include: {
-                    module: true,
-                    submodule: {
-                      include: {
-                        module: true,
-                      },
-                    },
-                  },
+                  include: { module: true },
                 },
               },
             },
@@ -357,32 +335,12 @@ export class AccessControlService {
                   where: {
                     permission: {
                       isActive: true,
-                      OR: [
-                        {
-                          targetType: 'MODULE',
-                          module: { isActive: true },
-                        },
-                        {
-                          targetType: 'SUBMODULE',
-                          module: { isActive: true },
-                          submodule: {
-                            isActive: true,
-                            module: { isActive: true },
-                          },
-                        },
-                      ],
+                      module: { isActive: true },
                     },
                   },
                   include: {
                     permission: {
-                      include: {
-                        module: true,
-                        submodule: {
-                          include: {
-                            module: true,
-                          },
-                        },
-                      },
+                      include: { module: true },
                     },
                   },
                 },
@@ -394,32 +352,12 @@ export class AccessControlService {
           where: {
             permission: {
               isActive: true,
-              OR: [
-                {
-                  targetType: 'MODULE',
-                  module: { isActive: true },
-                },
-                {
-                  targetType: 'SUBMODULE',
-                  module: { isActive: true },
-                  submodule: {
-                    isActive: true,
-                    module: { isActive: true },
-                  },
-                },
-              ],
+              module: { isActive: true },
             },
           },
           include: {
             permission: {
-              include: {
-                module: true,
-                submodule: {
-                  include: {
-                    module: true,
-                  },
-                },
-              },
+              include: { module: true },
             },
           },
         },
@@ -490,9 +428,7 @@ export class AccessControlService {
     ];
 
     for (const rolePermission of rolePermissions) {
-      const moduleCode =
-        rolePermission.permission.module?.code ??
-        rolePermission.permission.submodule?.module.code;
+      const moduleCode = getPermissionModuleCode(rolePermission.permission);
 
       if (
         moduleCode &&
@@ -520,9 +456,7 @@ export class AccessControlService {
     }
 
     for (const override of membership.permissionOverrides) {
-      const moduleCode =
-        override.permission.module?.code ??
-        override.permission.submodule?.module.code;
+      const moduleCode = getPermissionModuleCode(override.permission);
 
       if (
         moduleCode &&
@@ -559,6 +493,76 @@ export class AccessControlService {
     );
   }
 
+  private buildUserModules(
+    membership: MembershipAccessRecord,
+    permissions: string[],
+  ) {
+    const permissionSet = new Set(permissions);
+    const hasAdminModuleAccess = membership.role === MembershipRole.ADMIN;
+    const enabledModuleIds = new Set(
+      membership.company.enabledModules.map((item) => item.moduleId),
+    );
+    const permittedItems = membership.company.moduleSidebar.filter((item) => {
+      if (item.itemType !== 'LINK') {
+        return true;
+      }
+
+      if (!item.module || !item.moduleId || !item.module.isActive) {
+        return false;
+      }
+
+      if (!enabledModuleIds.has(item.moduleId)) {
+        return false;
+      }
+
+      return (
+        hasAdminModuleAccess ||
+        item.module.permissions.some((permission) =>
+          Object.values(PermissionAction).some((action) =>
+            permissionSet.has(this.buildPermissionKey(permission.code, action)),
+          ),
+        )
+      );
+    });
+    const permittedSidebarModuleIds = new Set(
+      permittedItems.flatMap((item) =>
+        item.itemType === 'LINK' && item.moduleId ? [item.moduleId] : [],
+      ),
+    );
+    const fallbackItems = membership.company.enabledModules
+      .filter((item) => !permittedSidebarModuleIds.has(item.moduleId))
+      .filter(
+        (item) =>
+          hasAdminModuleAccess ||
+          item.module.permissions.some((permission) =>
+            Object.values(PermissionAction).some((action) =>
+              permissionSet.has(
+                this.buildPermissionKey(permission.code, action),
+              ),
+            ),
+          ),
+      )
+      .map((item) => buildFallbackUserModuleItem(item.module));
+
+    const branchIds = Array.from(
+      new Set([
+        ...membership.unitAccess.map((item) => item.unitId),
+        ...permittedItems.map((item) => item.branchUnitId),
+      ]),
+    );
+    const byBranch = branchIds.map((branchUnitId) => ({
+      branchUnitId,
+      items: [
+        ...buildUserModuleTree(
+          permittedItems.filter((item) => item.branchUnitId === branchUnitId),
+        ),
+        ...fallbackItems,
+      ],
+    }));
+
+    return { items: byBranch[0]?.items ?? fallbackItems, byBranch };
+  }
+
   private buildPermissionKey(
     permissionCode: string,
     action: PermissionAction,
@@ -569,4 +573,88 @@ export class AccessControlService {
   private mapMembershipRole(role: MembershipRole): AppRole {
     return role === MembershipRole.ADMIN ? AppRole.ADMIN : AppRole.USER;
   }
+}
+
+function getPermissionModuleCode(permission: {
+  module?: { code: string } | null;
+}) {
+  const legacy = permission as typeof permission & {
+    submodule?: { module: { code: string } } | null;
+  };
+  return permission.module?.code ?? legacy.submodule?.module.code;
+}
+
+type UserModuleRecord =
+  MembershipAccessRecord['company']['moduleSidebar'][number];
+type EnabledUserModuleRecord =
+  MembershipAccessRecord['company']['enabledModules'][number]['module'];
+
+function buildFallbackUserModuleItem(
+  module: EnabledUserModuleRecord,
+): AuthUserModuleItem {
+  const permission = module.permissions[0];
+  const routeKey = module.route
+    ? module.route.slice(1).replaceAll('/', '-')
+    : module.code.toLowerCase();
+
+  return {
+    id: -module.id,
+    key: routeKey || module.code.toLowerCase(),
+    label: module.name,
+    description: module.description,
+    itemType: 'LINK',
+    iconName: module.icon,
+    sortOrder: Number.MAX_SAFE_INTEGER,
+    moduleId: module.id,
+    moduleCode: module.code,
+    href: module.route,
+    route: module.route,
+    permissionCode: permission?.code ?? null,
+    requiredActions: permission ? ['view'] : [],
+    category: module.category,
+    children: [],
+  };
+}
+
+function buildUserModuleTree(items: UserModuleRecord[]) {
+  const byParent = new Map<number | null, UserModuleRecord[]>();
+
+  for (const item of items) {
+    const siblings = byParent.get(item.parentId) ?? [];
+    siblings.push(item);
+    byParent.set(item.parentId, siblings);
+  }
+
+  const visit = (parentId: number | null): AuthUserModuleItem[] =>
+    (byParent.get(parentId) ?? []).flatMap((item) => {
+      const children = visit(item.id);
+
+      if (item.itemType !== 'LINK' && !children.length) {
+        return [];
+      }
+
+      const permission = item.module?.permissions[0];
+
+      return [
+        {
+          id: item.id,
+          key: item.key,
+          label: item.label,
+          description: item.description,
+          itemType: item.itemType,
+          iconName: item.iconName,
+          sortOrder: item.sortOrder,
+          moduleId: item.moduleId,
+          moduleCode: item.module?.code ?? null,
+          href: item.module?.route ?? null,
+          route: item.module?.route ?? null,
+          permissionCode: permission?.code ?? null,
+          requiredActions: permission ? ['view'] : [],
+          category: item.module?.category ?? null,
+          children,
+        },
+      ];
+    });
+
+  return visit(null);
 }

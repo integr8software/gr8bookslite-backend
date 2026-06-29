@@ -202,27 +202,13 @@ Natural acronym collisions are resolved with a minimally expanded code:
 Reports, and `SVI` for Service Invoice. The migration preserves submodule and
 permission IDs, so existing role grants and membership overrides remain linked.
 
-## Local Catalog Reset
+## Local Catalog Rollback
 
-Use the guarded local reset only when old development data should be discarded
-instead of migrated. Preview the affected row counts first:
-
-```sh
-npm run db:reset-permission-catalog:local
-```
-
-The preview changes nothing. To permanently remove the old catalog and roles,
-then rebuild the canonical catalog in one PostgreSQL transaction:
-
-```sh
-npm run db:reset-permission-catalog:local -- --confirm=RESET_PERMISSION_CATALOG
-npm run db:verify-permissions:local
-```
-
-The command accepts only a local PostgreSQL host. It removes all company roles,
-role permission assignments, membership permission overrides, company module
-selections, and form signatory setups. Users, companies, memberships, and audit
-logs are preserved. Audit-log rows that referenced an old module retain the log
+The guarded local permission catalog reset was retired with the Module
+migration. Use the user-sidebar reset API for presentation resets, or restore a
+local database snapshot when the catalog itself needs rollback. Run
+`npm run db:verify-permissions:local` after any rollback. Audit-log rows that
+referenced an old module retain the log
 but have a null module reference.
 
 The rebuilt catalog uses descriptive lowercase slug codes for modules and

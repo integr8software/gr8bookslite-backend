@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiParam } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../../common/decorators/public.decorator';
 import { AddressService } from './address.service';
@@ -29,6 +30,7 @@ export class AddressController {
   }
 
   @Get('regions/:regionCode/districts')
+  @ApiParam({ name: 'regionCode' })
   listRegionDistricts() {
     return this.addressService.emptyDistricts();
   }
@@ -49,6 +51,7 @@ export class AddressController {
   }
 
   @Get('regions/:regionCode/sub-municipalities')
+  @ApiParam({ name: 'regionCode' })
   listRegionSubMunicipalities() {
     return this.addressService.emptySubMunicipalities();
   }
@@ -86,6 +89,7 @@ export class AddressController {
   }
 
   @Get('provinces/:provinceCode/sub-municipalities')
+  @ApiParam({ name: 'provinceCode' })
   listProvinceSubMunicipalities() {
     return this.addressService.emptySubMunicipalities();
   }

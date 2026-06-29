@@ -20,6 +20,7 @@ const ENVIRONMENT_RULES = {
       'maintenance',
       'prisma:db:seed',
       'prisma:migrate:dev',
+      'prisma:migrate:resolve',
       'prisma:migrate:reset',
       'prisma:studio',
       'seed:fixtures',

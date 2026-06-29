@@ -170,7 +170,6 @@ Hosted staging and production commands use whatever environment variables are pr
 | `db:seed:local` | Local | Run local seed | Yes; wrapper and seed assertion |
 | `db:delete-user-owned-data:local` | Local | Delete selected user-owned data | Destructive but locally guarded and scoped |
 | `db:backfill-head-offices:local` | Local | Preview/apply head-office backfill | Yes; local-only and apply flag |
-| `db:reset-permission-catalog:local` | Local | Preview/reset permission catalog | Destructive but locally guarded and confirmed |
 | `db:verify-permissions:local` | Local | Verify permission catalog | Yes; read-only local verification |
 | `db:studio:local` | Local | Open Prisma Studio | Caution; writable UI, but locally guarded |
 | `db:studio:shared` | Shared development | Open Prisma Studio on shared DB | **High caution; writable shared UI** |

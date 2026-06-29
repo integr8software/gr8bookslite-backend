@@ -15,14 +15,8 @@ export function mapBranchRole(role: BranchRoleRecord): BranchRoleResponse {
       permissionId: rolePermission.permissionId,
       permissionCode: rolePermission.permission.code,
       permissionName: rolePermission.permission.name,
-      moduleCode:
-        rolePermission.permission.module?.code ??
-        rolePermission.permission.submodule?.module.code ??
-        '',
-      moduleName:
-        rolePermission.permission.module?.name ??
-        rolePermission.permission.submodule?.module.name ??
-        '',
+      moduleCode: getModule(rolePermission.permission).code,
+      moduleName: getModule(rolePermission.permission).name,
       canView: rolePermission.canView,
       canCreate: rolePermission.canCreate,
       canUpdate: rolePermission.canUpdate,
@@ -39,4 +33,13 @@ export function mapBranchRole(role: BranchRoleRecord): BranchRoleResponse {
       ].filter((action): action is string => action !== null),
     })),
   };
+}
+
+function getModule(permission: {
+  module?: { code: string; name: string } | null;
+}) {
+  const legacy = permission as typeof permission & {
+    submodule?: { module: { code: string; name: string } } | null;
+  };
+  return permission.module ?? legacy.submodule!.module;
 }

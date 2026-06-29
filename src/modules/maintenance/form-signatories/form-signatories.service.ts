@@ -96,7 +96,7 @@ export class FormSignatoriesService {
     return this.cacheManager.wrap(
       `form-signatories:options:${companyId}`,
       async () => {
-        const [units, companyModules, platformModules] = await Promise.all([
+        const [units, companyModules, allModules] = await Promise.all([
           this.prisma.companyUnit.findMany({
             where: {
               companyId,
@@ -121,7 +121,7 @@ export class FormSignatoriesService {
               },
             },
           }),
-          this.prisma.platformModule.findMany({
+          this.prisma.module.findMany({
             where: {
               isActive: true,
             },
@@ -133,7 +133,7 @@ export class FormSignatoriesService {
         const modules =
           companyModules.length > 0
             ? companyModules.map((companyModule) => companyModule.module)
-            : platformModules;
+            : allModules;
 
         return {
           branches: units.map((unit) => ({
@@ -189,7 +189,7 @@ export class FormSignatoriesService {
       throw new BadRequestException('Select a module.');
     }
 
-    const modules = await this.prisma.platformModule.findMany({
+    const modules = await this.prisma.module.findMany({
       where: {
         code: {
           in: codes,
@@ -509,7 +509,7 @@ export class FormSignatoriesService {
       throw new BadRequestException('Select a module.');
     }
 
-    const module = await this.prisma.platformModule.findUnique({
+    const module = await this.prisma.module.findUnique({
       where: {
         code,
       },

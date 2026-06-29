@@ -1,9 +1,6 @@
-import type {
-  PlatformSubmodule,
-  TransactionNumberSequence,
-} from '@prisma/client';
+import type { Module, TransactionNumberSequence } from '@prisma/client';
 
-type PlatformSubmoduleSummary = Pick<PlatformSubmodule, 'code' | 'id' | 'name'>;
+type ModuleSummary = Pick<Module, 'code' | 'id' | 'name'>;
 type SequenceSummary = Pick<
   TransactionNumberSequence,
   | 'branchUnitId'
@@ -17,13 +14,13 @@ type SequenceSummary = Pick<
   | 'suffix'
 >;
 
-export function mapPlatformSubmoduleTransactionNumberSetup({
+export function mapModuleTransactionNumberSetup({
   activeBranchIds,
-  platformSubmodule,
+  module,
   sequences,
 }: {
   activeBranchIds: number[];
-  platformSubmodule: PlatformSubmoduleSummary;
+  module: ModuleSummary;
   sequences: SequenceSummary[];
 }) {
   const activeBranchIdSet = new Set(activeBranchIds);
@@ -40,12 +37,12 @@ export function mapPlatformSubmoduleTransactionNumberSetup({
   const scope = sequences.length === 0 || coversEveryBranch ? 'all' : 'branch';
 
   return {
-    id: platformSubmodule.id,
-    platformSubmoduleId: platformSubmodule.id,
-    moduleCode: platformSubmodule.code,
-    moduleName: platformSubmodule.name,
+    id: module.id,
+    moduleId: module.id,
+    moduleCode: module.code,
+    moduleName: module.name,
     inputMode: firstSequence?.inputMode === 'MANUAL' ? 'Manual' : 'Auto',
-    prefix: firstSequence?.prefix ?? platformSubmodule.code,
+    prefix: firstSequence?.prefix ?? module.code,
     suffix: firstSequence?.suffix ?? '',
     padding: firstSequence?.padding ?? 6,
     startingNumber: firstSequence?.startingNumber ?? 1,
