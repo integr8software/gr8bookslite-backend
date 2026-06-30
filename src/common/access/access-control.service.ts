@@ -550,15 +550,24 @@ export class AccessControlService {
         ...permittedItems.map((item) => item.branchUnitId),
       ]),
     );
-    const byBranch = branchIds.map((branchUnitId) => ({
-      branchUnitId,
-      items: [
-        ...buildUserModuleTree(
-          permittedItems.filter((item) => item.branchUnitId === branchUnitId),
-        ),
-        ...fallbackItems,
-      ],
-    }));
+    const byBranch = branchIds.map((branchUnitId) => {
+      const branchAccess = membership.unitAccess.find(
+        (item) => item.unitId === branchUnitId,
+      );
+
+      return {
+        branchUnitId,
+        companyRoleId: branchAccess?.companyRole?.id ?? null,
+        companyRoleCode: branchAccess?.companyRole?.code ?? null,
+        companyRoleName: branchAccess?.companyRole?.name ?? null,
+        items: [
+          ...buildUserModuleTree(
+            permittedItems.filter((item) => item.branchUnitId === branchUnitId),
+          ),
+          ...fallbackItems,
+        ],
+      };
+    });
 
     return { items: byBranch[0]?.items ?? fallbackItems, byBranch };
   }

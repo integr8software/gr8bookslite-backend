@@ -88,6 +88,28 @@ describe('BranchRolesService permission architecture', () => {
     );
   });
 
+  it('lists only roles scoped to the requested branch unit', async () => {
+    const { prisma, service } = createService({
+      companyRole: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    });
+    const companyRole = prisma as typeof prisma & {
+      companyRole: { findMany: jest.Mock };
+    };
+
+    await service.findAll(superAdmin, 10);
+
+    expect(companyRole.companyRole.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          companyId: 20,
+          unitId: 10,
+        }),
+      }),
+    );
+  });
+
   it('keeps a root sidebar module in its own top-level group', async () => {
     const { prisma, service } = createService();
     prisma.module.findMany.mockResolvedValue([
@@ -431,6 +453,7 @@ describe('BranchRolesService permission architecture', () => {
       isSystem: false,
       isActive: true,
       companyId: 20,
+      unitId: 10,
       createdAt: new Date(),
       updatedAt: new Date(),
       permissions: [

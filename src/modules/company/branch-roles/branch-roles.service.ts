@@ -89,6 +89,7 @@ export class BranchRolesService {
     const roles = await this.prisma.companyRole.findMany({
       where: {
         companyId: unit.companyId,
+        unitId: unit.id,
         roleType: {
           not: CompanyRoleType.ADMIN,
         },
@@ -107,7 +108,7 @@ export class BranchRolesService {
     const unit = await this.getUnitOrThrow(unitId);
     await this.ensureCanManageBranchRoles(user, unit.companyId);
 
-    const role = await this.getRoleOrThrow(unit.companyId, roleId);
+    const role = await this.getRoleOrThrow(unit.companyId, unit.id, roleId);
 
     return {
       role: mapBranchRole(role),
@@ -262,13 +263,14 @@ export class BranchRolesService {
 
     const code = this.normalizeRoleCode(dto.name);
     this.ensureRoleCodeIsUsable(code);
-    await this.ensureRoleCodeAvailable(unit.companyId, code);
+    await this.ensureRoleCodeAvailable(unit.companyId, unit.id, code);
     const rolePermissions = await this.resolveRolePermissions(dto.permissions);
 
     const role = await this.prisma.$transaction(async (tx) => {
       const createdRole = await tx.companyRole.create({
         data: {
           companyId: unit.companyId,
+          unitId: unit.id,
           code,
           name: dto.name.trim(),
           description: dto.description?.trim() || null,
@@ -303,12 +305,16 @@ export class BranchRolesService {
   ) {
     const unit = await this.getUnitOrThrow(unitId);
     await this.ensureCanManageBranchRoles(user, unit.companyId);
-    const existingRole = await this.getRoleOrThrow(unit.companyId, roleId);
+    const existingRole = await this.getRoleOrThrow(
+      unit.companyId,
+      unit.id,
+      roleId,
+    );
     this.ensureRoleIsEditable(existingRole);
 
     const code = this.normalizeRoleCode(dto.name);
     this.ensureRoleCodeIsUsable(code);
-    await this.ensureRoleCodeAvailable(unit.companyId, code, roleId);
+    await this.ensureRoleCodeAvailable(unit.companyId, unit.id, code, roleId);
     const rolePermissions = await this.resolveRolePermissions(dto.permissions);
 
     const role = await this.prisma.$transaction(async (tx) => {
@@ -348,7 +354,11 @@ export class BranchRolesService {
   ) {
     const unit = await this.getUnitOrThrow(unitId);
     await this.ensureCanManageBranchRoles(user, unit.companyId);
-    const existingRole = await this.getRoleOrThrow(unit.companyId, roleId);
+    const existingRole = await this.getRoleOrThrow(
+      unit.companyId,
+      unit.id,
+      roleId,
+    );
     this.ensureRoleIsEditable(existingRole);
 
     const role = await this.prisma.companyRole.update({
@@ -598,12 +608,14 @@ export class BranchRolesService {
 
   private async ensureRoleCodeAvailable(
     companyId: number,
+    unitId: number,
     code: string,
     roleId?: number,
   ) {
     const existingRole = await this.prisma.companyRole.findFirst({
       where: {
         companyId,
+        unitId,
         code,
         id: roleId ? { not: roleId } : undefined,
       },
@@ -636,11 +648,16 @@ export class BranchRolesService {
     }
   }
 
-  private async getRoleOrThrow(companyId: number, roleId: number) {
+  private async getRoleOrThrow(
+    companyId: number,
+    unitId: number,
+    roleId: number,
+  ) {
     const role = await this.prisma.companyRole.findFirst({
       where: {
         id: roleId,
         companyId,
+        unitId,
         roleType: {
           not: CompanyRoleType.ADMIN,
         },

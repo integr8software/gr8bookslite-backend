@@ -69,6 +69,7 @@ export class BranchUsersService {
     const roles = await this.prisma.companyRole.findMany({
       where: {
         companyId: unit.companyId,
+        unitId: unit.id,
         isActive: true,
         roleType: {
           not: CompanyRoleType.ADMIN,
@@ -122,6 +123,7 @@ export class BranchUsersService {
         where: {
           id: companyRoleId,
           companyId: unit.companyId,
+          unitId: unit.id,
           isActive: true,
         },
         select: {

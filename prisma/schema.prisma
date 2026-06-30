@@ -146,6 +146,7 @@ model CompanyUnit {
   formSignatorySetups    FormSignatorySetup[]
   transactionNumbers     TransactionNumberSequence[]
   moduleSidebar          PlatformModuleSidebar[]
+  roles                  CompanyRole[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -217,6 +218,7 @@ model MembershipUnitAccess {
 model CompanyRole {
   id          Int                     @id @default(autoincrement())
   companyId   Int                     @map("company_id")
+  unitId      Int?                    @map("unit_id")
   code        String
   name        String
   description String?
@@ -227,12 +229,14 @@ model CompanyRole {
   createdAt   DateTime                @default(now()) @map("created_at")
   updatedAt   DateTime                @updatedAt @map("updated_at")
   company     Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  unit        CompanyUnit?            @relation(fields: [unitId], references: [id], onDelete: Cascade)
   memberships Membership[]
   unitAccess  MembershipUnitAccess[]
   permissions CompanyRolePermission[]
 
-  @@unique([companyId, code])
+  @@unique([companyId, unitId, code])
   @@index([companyId, isActive])
+  @@index([unitId])
   @@map("company_roles")
 }
 

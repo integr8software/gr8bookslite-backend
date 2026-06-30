@@ -39,6 +39,9 @@ export interface AuthUser {
     items: AuthUserModuleItem[];
     byBranch: Array<{
       branchUnitId: number;
+      companyRoleId: number | null;
+      companyRoleCode: string | null;
+      companyRoleName: string | null;
       items: AuthUserModuleItem[];
     }>;
   };
