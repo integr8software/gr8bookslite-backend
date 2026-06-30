@@ -10,7 +10,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 export function configureApp(app: INestApplication) {
   const configService = app.get(ConfigService);
 
-  configureLocalStorageStaticServing(app, configService);
+  configureVpsStorageStaticServing(app, configService);
   app.enableCors(createCorsOptions(configService));
   app.use(applySecurityHeaders as NestMiddleware['use']);
   app.use(applyFaviconResponse as NestMiddleware['use']);
@@ -30,6 +30,22 @@ export function configureApp(app: INestApplication) {
 }
 
 export function shouldServeLocalStorage(publicUrl: string | undefined) {
+  return shouldServeStoragePublicUrl(publicUrl);
+}
+
+export function shouldServeVpsStaticStorage(config: {
+  provider: string | undefined;
+  publicUrl: string | undefined;
+  storageRoot: string | undefined;
+}) {
+  return (
+    config.provider?.trim().toLowerCase() === 'vps' &&
+    Boolean(config.storageRoot?.trim()) &&
+    shouldServeStoragePublicUrl(config.publicUrl)
+  );
+}
+
+function shouldServeStoragePublicUrl(publicUrl: string | undefined) {
   if (!publicUrl?.trim()) {
     return false;
   }
@@ -42,33 +58,30 @@ export function shouldServeLocalStorage(publicUrl: string | undefined) {
     return false;
   }
 
-  return (
-    ['localhost', '127.0.0.1', '::1'].includes(parsedUrl.hostname) &&
-    parsedUrl.pathname.replace(/\/+$/, '') === '/storage'
-  );
+  return parsedUrl.pathname.replace(/\/+$/, '') === '/storage';
 }
 
-function configureLocalStorageStaticServing(
+function configureVpsStorageStaticServing(
   app: INestApplication,
   configService: ConfigService,
 ) {
+  const provider = configService.get<string>('STORAGE_PROVIDER');
   const publicUrl = configService.get<string>('VPS_STORAGE_PUBLIC_URL');
-
-  if (!shouldServeLocalStorage(publicUrl)) {
-    return;
-  }
-
   const storageRoot = configService.get<string>('VPS_STORAGE_ROOT', '').trim();
 
-  if (!storageRoot) {
-    throw new Error(
-      'VPS_STORAGE_ROOT is required when VPS_STORAGE_PUBLIC_URL points to localhost /storage.',
-    );
+  if (
+    !shouldServeVpsStaticStorage({
+      provider,
+      publicUrl,
+      storageRoot,
+    })
+  ) {
+    return;
   }
 
   app.use(
     '/storage',
-    express.static(path.resolve(process.cwd(), storageRoot), {
+    express.static(path.resolve(storageRoot), {
       dotfiles: 'deny',
       fallthrough: true,
       index: false,
