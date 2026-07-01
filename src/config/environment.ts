@@ -47,6 +47,7 @@ function validateStorageEnvironment(environment: Record<string, unknown>) {
       'STORAGE_ENV',
       'VPS_STORAGE_API_URL',
       'VPS_STORAGE_PUBLIC_URL',
+      'VPS_STORAGE_ROOT',
       'VPS_STORAGE_SECRET',
     ]);
 

@@ -8,6 +8,10 @@ const COMMON_READ_OPERATIONS = [
   'prisma:migrate:status',
   'verify',
 ];
+const SAFE_INFRASTRUCTURE_SEED_OPERATIONS = [
+  'materialize:user-sidebars',
+  'provision:platform',
+];
 
 const ENVIRONMENT_RULES = {
   local: {
@@ -23,6 +27,7 @@ const ENVIRONMENT_RULES = {
       'prisma:migrate:resolve',
       'prisma:migrate:reset',
       'prisma:studio',
+      ...SAFE_INFRASTRUCTURE_SEED_OPERATIONS,
       'seed:fixtures',
       'seed:reference',
     ],
@@ -35,6 +40,7 @@ const ENVIRONMENT_RULES = {
       ...COMMON_READ_OPERATIONS,
       'prisma:migrate:deploy',
       'prisma:studio',
+      ...SAFE_INFRASTRUCTURE_SEED_OPERATIONS,
       'seed:reference',
     ],
   },
@@ -46,6 +52,7 @@ const ENVIRONMENT_RULES = {
       'prisma:generate',
       'prisma:migrate:deploy',
       'prisma:migrate:status',
+      ...SAFE_INFRASTRUCTURE_SEED_OPERATIONS,
       'seed:reference',
       'verify',
     ],
@@ -58,16 +65,21 @@ const ENVIRONMENT_RULES = {
       'prisma:generate',
       'prisma:migrate:deploy',
       'prisma:migrate:status',
+      ...SAFE_INFRASTRUCTURE_SEED_OPERATIONS,
       'seed:reference',
       'verify',
     ],
     confirmationByOperation: {
-      'prisma:migrate:deploy': {
-        variable: 'CONFIRM_PRODUCTION_MIGRATION',
-        value: 'true',
-      },
       'seed:reference': {
         variable: 'CONFIRM_PRODUCTION_REFERENCE_SEED',
+        value: 'true',
+      },
+      'materialize:user-sidebars': {
+        variable: 'ALLOW_PRODUCTION_SAFE_SEED',
+        value: 'true',
+      },
+      'provision:platform': {
+        variable: 'ALLOW_PRODUCTION_SAFE_SEED',
         value: 'true',
       },
     },

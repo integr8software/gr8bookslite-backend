@@ -10,6 +10,7 @@ describe('validateEnvironment', () => {
       STORAGE_ENV: appEnvironment === 'staging' ? 'staging' : 'local',
       VPS_STORAGE_API_URL: 'http://storage.example.com/api/v1/storage/internal',
       VPS_STORAGE_PUBLIC_URL: 'http://storage.example.com',
+      VPS_STORAGE_ROOT: './storage',
       VPS_STORAGE_SECRET: 'test-secret',
     };
 
@@ -37,6 +38,7 @@ describe('validateEnvironment', () => {
         VPS_STORAGE_API_URL:
           'http://storage.example.com/api/v1/storage/internal',
         VPS_STORAGE_PUBLIC_URL: 'http://storage.example.com',
+        VPS_STORAGE_ROOT: './storage',
         VPS_STORAGE_SECRET: 'test-secret',
       }),
     ).toThrow(
@@ -54,6 +56,7 @@ describe('validateEnvironment', () => {
         VPS_STORAGE_API_URL:
           'http://storage.example.com/api/v1/storage/internal',
         VPS_STORAGE_PUBLIC_URL: 'http://storage.example.com',
+        VPS_STORAGE_ROOT: './storage',
         VPS_STORAGE_SECRET: 'test-secret',
       }),
     ).toThrow(
@@ -70,6 +73,7 @@ describe('validateEnvironment', () => {
       STORAGE_ENV: 'staging',
       VPS_STORAGE_API_URL: 'http://storage.example.com/api/v1/storage/internal',
       VPS_STORAGE_PUBLIC_URL: 'http://storage.example.com',
+      VPS_STORAGE_ROOT: './storage',
       VPS_STORAGE_SECRET: 'test-secret',
     };
 
@@ -83,7 +87,7 @@ describe('validateEnvironment', () => {
         STORAGE_PROVIDER: 'vps',
       }),
     ).toThrow(
-      'Missing required environment value(s): STORAGE_ENV, VPS_STORAGE_API_URL, VPS_STORAGE_PUBLIC_URL, VPS_STORAGE_SECRET.',
+      'Missing required environment value(s): STORAGE_ENV, VPS_STORAGE_API_URL, VPS_STORAGE_PUBLIC_URL, VPS_STORAGE_ROOT, VPS_STORAGE_SECRET.',
     );
   });
 
@@ -96,6 +100,7 @@ describe('validateEnvironment', () => {
         VPS_STORAGE_API_URL:
           'http://storage.example.com/api/v1/storage/internal',
         VPS_STORAGE_PUBLIC_URL: 'http://storage.example.com',
+        VPS_STORAGE_ROOT: './storage',
         VPS_STORAGE_SECRET: 'test-secret',
       }),
     ).toThrow(

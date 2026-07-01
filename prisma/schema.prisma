@@ -322,6 +322,19 @@ model ModuleSystemSidebar {
   @@map("module_system_sidebar")
 }
 
+model PlatformVersion {
+  id             Int      @id @default(1)
+  currentVersion String   @map("current_version")
+  checksum       String
+  status         String   @default("APPLIED")
+  appliedBy      String?  @map("applied_by")
+  appliedAt      DateTime @default(now()) @map("applied_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_versions")
+}
+
 model Permission {
   id                     Int                     @id @default(autoincrement())
   moduleId               Int                     @map("module_id")
