@@ -29,8 +29,8 @@ export class AiAssistantController {
   constructor(private readonly aiAssistantService: AiAssistantService) {}
 
   @Post('chat')
-  chat(@Body() dto: AiAssistantChatDto) {
-    return this.aiAssistantService.chat(dto);
+  chat(@CurrentUser() user: AuthUser, @Body() dto: AiAssistantChatDto) {
+    return this.aiAssistantService.chat(user, dto);
   }
 
   @Post('transcribe')

@@ -4,7 +4,11 @@ import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 
 describe('AiAssistantService', () => {
-  const user = { id: 42 } as AuthUser;
+  const user = {
+    id: 42,
+    companyId: 1,
+    permissions: ['TM:view', 'TM:create', 'TM:update'],
+  } as AuthUser;
   const createService = (apiKey?: string) =>
     new AiAssistantService({
       get: jest.fn().mockReturnValue(apiKey),
@@ -15,7 +19,7 @@ describe('AiAssistantService', () => {
   });
 
   it('uses Gr8Books Neo in the local greeting', async () => {
-    const response = await createService().chat({ message: 'hello' });
+    const response = await createService().chat(user, { message: 'hello' });
 
     expect(response).toEqual({
       message:
@@ -46,13 +50,99 @@ describe('AiAssistantService', () => {
       }),
     } as unknown as Response);
 
-    const response = await createService('gemini-api-key').chat({
+    const response = await createService('gemini-api-key').chat(user, {
       message: 'who are you?',
     });
 
     expect(response).toEqual({
       message:
         "Hi there! I'm Neo AI, your in-app assistant for Gr8Books Neo. I can help you understand different modules and open specific pages for you to review.",
+      action: null,
+    });
+  });
+
+  it('normalizes generated Term Management actions', async () => {
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    message: 'Showing inactive terms.',
+                    action: {
+                      type: 'term_management',
+                      moduleCode: 'TM',
+                      command: 'filter_status',
+                      label: 'Term Management',
+                      status: 'Inactive',
+                    },
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    } as unknown as Response);
+
+    const response = await createService('gemini-api-key').chat(user, {
+      message: 'show inactive terms',
+    });
+
+    expect(response).toEqual({
+      message: 'Showing inactive terms.',
+      action: {
+        type: 'term_management',
+        moduleCode: 'TM',
+        command: 'filter_status',
+        label: 'Term Management',
+        status: 'Inactive',
+      },
+    });
+  });
+
+  it('blocks generated Term Management actions when the user lacks permission', async () => {
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    message: 'Preparing a term edit preview.',
+                    action: {
+                      type: 'term_management',
+                      moduleCode: 'TM',
+                      command: 'preview_edit',
+                      targetTermName: 'Net 30',
+                    },
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    } as unknown as Response);
+
+    const response = await createService('gemini-api-key').chat(
+      {
+        ...user,
+        permissions: ['TM:view'],
+      } as AuthUser,
+      {
+        message: 'edit Net 30',
+      },
+    );
+
+    expect(response).toEqual({
+      message:
+        'You can view Term Management, but you do not have permission to edit terms.',
       action: null,
     });
   });
