@@ -32,6 +32,7 @@ const DefaultLimit = 500;
 const BaseCurrencyCode = 'PHP';
 const CashInBankGroup = 'Cash in Bank';
 const BankMasterfilePermissionCode = 'BM';
+const CashInBankParentRole = 'CASH_IN_BANK_PARENT';
 const BankMasterfileTransactionOptions = {
   maxWait: 10_000,
   timeout: 30_000,
@@ -442,6 +443,26 @@ export class BankMasterfileService {
     companyId: number,
     tx: Prisma.TransactionClient | PrismaService = this.prisma,
   ) {
+    const mappedAccount = await tx.companyDefaultAccount.findFirst({
+      where: {
+        companyId,
+        moduleCode: BankMasterfilePermissionCode,
+        accountRole: CashInBankParentRole,
+        status: ChartAccountStatus.ACTIVE,
+        chartAccount: {
+          companyId,
+          status: ChartAccountStatus.ACTIVE,
+          deletedAt: null,
+          accountLevel: ChartAccountLevel.SUB3,
+        },
+      },
+      include: { chartAccount: true },
+    });
+
+    if (mappedAccount?.chartAccount) {
+      return mappedAccount.chartAccount;
+    }
+
     const accounts = await tx.chartAccount.findMany({
       where: {
         companyId,
@@ -700,20 +721,7 @@ export class BankMasterfileService {
   }
 
   private resolveAccountName(dto: CreateBankAccountDto | UpdateBankAccountDto) {
-    const explicitName = dto.accountName?.trim();
-
-    if (explicitName) {
-      return explicitName;
-    }
-
-    return [
-      'Cash in Bank',
-      dto.bankName?.trim(),
-      dto.branch?.trim(),
-      dto.accountNumber?.trim(),
-    ]
-      .filter(Boolean)
-      .join(' - ');
+    return ['Cash in Bank', dto.bankName?.trim()].filter(Boolean).join(' - ');
   }
 
   private toCreateBankAccountData(

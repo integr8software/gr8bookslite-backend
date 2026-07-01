@@ -36,6 +36,7 @@ const ChartAccountTransactionOptions = {
   maxWait: 10_000,
   timeout: 30_000,
 };
+const CompanyEditableAccountLevel = ChartAccountLevel.SPECIFIC;
 
 @Injectable()
 export class ChartOfAccountsService {
@@ -132,6 +133,7 @@ export class ChartOfAccountsService {
       ? await this.findActiveParentAccount(companyId, parentAccountId)
       : null;
 
+    this.assertCompanyEditableAccountLevel(query.accountLevel);
     assertCanCreateAccountLevel(
       parentAccount?.accountLevel ?? null,
       query.accountLevel,
@@ -151,6 +153,7 @@ export class ChartOfAccountsService {
   async create(user: AuthUser, dto: CreateChartAccountDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
+    this.assertCompanyEditableAccountLevel(dto.accountLevel);
     const parentAccountId = parseOptionalBigIntId(
       dto.parentAccountId,
       'parentAccountId',
@@ -207,7 +210,28 @@ export class ChartOfAccountsService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
     const accountId = parseBigIntId(id);
-    await this.findAccountOrThrow(companyId, accountId);
+    const existingAccount = await this.findAccountOrThrow(companyId, accountId);
+    this.assertCompanyEditableAccount(existingAccount);
+
+    if (
+      dto.accountLevel !== undefined &&
+      dto.accountLevel !== CompanyEditableAccountLevel
+    ) {
+      throw new BadRequestException(
+        'Only Specific accounts can be managed from the company Chart of Accounts.',
+      );
+    }
+
+    if (
+      dto.parentAccountId !== undefined &&
+      dto.parentAccountId !==
+        (existingAccount.parentAccountId?.toString() ?? undefined)
+    ) {
+      throw new BadRequestException(
+        'Specific accounts cannot be reparented from the company Chart of Accounts.',
+      );
+    }
+
     const parentAccountId = parseOptionalBigIntId(
       dto.parentAccountId,
       'parentAccountId',
@@ -293,7 +317,8 @@ export class ChartOfAccountsService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
     const accountId = parseBigIntId(id);
-    await this.findAccountOrThrow(companyId, accountId);
+    const existingAccount = await this.findAccountOrThrow(companyId, accountId);
+    this.assertCompanyEditableAccount(existingAccount);
 
     if (dto.status === ChartAccountStatus.INACTIVE) {
       const activeChildCount = await this.prisma.chartAccount.count({
@@ -414,6 +439,20 @@ export class ChartOfAccountsService {
     }
 
     return parentAccount;
+  }
+
+  private assertCompanyEditableAccountLevel(accountLevel: ChartAccountLevel) {
+    if (accountLevel !== CompanyEditableAccountLevel) {
+      throw new BadRequestException(
+        'Only Specific accounts can be managed from the company Chart of Accounts.',
+      );
+    }
+  }
+
+  private assertCompanyEditableAccount(
+    account: Pick<ChartAccountPayload, 'accountLevel'>,
+  ) {
+    this.assertCompanyEditableAccountLevel(account.accountLevel);
   }
 
   private toChartAccountData(
