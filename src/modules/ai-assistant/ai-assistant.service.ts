@@ -12,6 +12,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Job, Queue, Worker } from 'bullmq';
 import type { JobsOptions, RedisOptions } from 'bullmq';
+import { MembershipRole, MembershipStatus } from '@prisma/client';
+import { AppRole } from '../../common/enums/app-role.enum';
+import { PermissionAction } from '../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AiAssistantChatDto } from './dto/ai-assistant-chat.dto';
 import {
@@ -26,6 +29,7 @@ const PRODUCT_NAME = 'Gr8Books Neo';
 const SHORT_PRODUCT_NAME_PATTERN = /\bGr8Books\b(?!\s+Neo)/gi;
 const PURCHASE_REQUEST_ADD_ROUTE =
   '/purchasing/purchase-request/add?assistant=1';
+const TERM_MANAGEMENT_PERMISSION_CODE = 'TM';
 export const MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES = 4 * 1024 * 1024;
 const GEMINI_TRANSCRIPTION_TIMEOUT_MS = 90_000;
 const MAX_CONCURRENT_TRANSCRIPTIONS = 4;
@@ -95,6 +99,29 @@ const moduleGuide = [
     actions: ['navigate', 'explain'],
     notes:
       'Use Charts of Accounts to maintain the account codes and names used for posting accounting entries.',
+  },
+  {
+    label: 'Maintenance > Term Management',
+    moduleCode: 'TM',
+    aliases: [
+      'term management',
+      'term',
+      'terms',
+      'payment term',
+      'payment terms',
+      'due term',
+      'datemode',
+    ],
+    actions: [
+      'open',
+      'explain',
+      'search',
+      'filter_status',
+      'prepare_add',
+      'preview_edit',
+    ],
+    notes:
+      'Use Term Management to maintain payment term definitions, including term name, datemode, period, and active status.',
   },
 ];
 
@@ -168,11 +195,14 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     await this.transcriptionQueue?.close();
   }
 
-  async chat(dto: AiAssistantChatDto): Promise<AiAssistantChatResponse> {
+  async chat(
+    user: AuthUser,
+    dto: AiAssistantChatDto,
+  ): Promise<AiAssistantChatResponse> {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
 
     if (!apiKey) {
-      return this.createLocalDemoResponse(dto.message);
+      return this.createLocalDemoResponse(user, dto.message);
     }
 
     try {
@@ -213,15 +243,15 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       );
 
       if (!response.ok) {
-        return this.createLocalDemoResponse(dto.message);
+        return this.createLocalDemoResponse(user, dto.message);
       }
 
       const payload = (await response.json()) as GeminiGenerateContentResponse;
       const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
 
-      return this.normalizeResponse(text);
+      return this.normalizeResponse(user, text);
     } catch {
-      return this.createLocalDemoResponse(dto.message);
+      return this.createLocalDemoResponse(user, dto.message);
     }
   }
 
@@ -403,19 +433,25 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       `You are Neo AI, the ${PRODUCT_NAME} in-app assistant.`,
       'Speak naturally and conversationally, not like a scripted command response.',
       `Always refer to the product as "${PRODUCT_NAME}". Do not shorten it to "Gr8Books".`,
-      'For now, focus on explaining modules, opening approved module pages, and preparing Purchase Request drafts for user review. Never submit, approve, delete, or save records.',
+      'For now, focus on explaining modules, opening approved module pages, preparing Purchase Request drafts, and preparing Term Management previews for user review. Never submit, approve, delete, or save records.',
       `If the user asks you to introduce yourself, say: "Hi there! I'm Neo AI, your in-app assistant for ${PRODUCT_NAME}. I can help you understand different modules and open specific pages for you to review."`,
       'Return only JSON matching this TypeScript shape:',
-      '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } }',
-      'Only use routes from this module guide:',
+      '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } | { "type": "term_management", "moduleCode": "TM", "command": "open" | "search" | "filter_status" | "prepare_add" | "preview_edit", "label"?: string, "query"?: string, "status"?: "Active" | "Inactive", "prefill"?: { "name"?: string, "description"?: string, "datemode"?: "Day" | "Month" | "Year", "period"?: string, "status"?: "Active" | "Inactive" }, "targetTermName"?: string } }',
+      'Use route only for navigate and open_form actions. Use moduleCode for module-specific actions such as Term Management.',
+      'Use only these approved modules and module identities:',
       JSON.stringify(moduleGuide),
       'If the user asks to open a module, respond like: "Okay, got it. Give me a moment, I will open Purchase Request for you." and include a navigate action.',
+      'If the user asks to open Term Management, return a term_management action with command "open"; do not return a frontend route for Term Management.',
       'If the user asks to create or prepare a Purchase Request draft, extract item description, quantity, unit of measure, and unit price if present. Use an open_form action, do not save. Tell the user to review before saving.',
+      'If the user asks about Term Management filtering, searching, adding, or editing, return a term_management action. For add or edit, prepare a preview only and explicitly tell the user to review before saving. Required add preview fields are name, datemode, period, and status. Negative or decimal periods are invalid. Period 0 means the term does not add time.',
       'If the user asks what a module is for or how it works, explain it clearly and return action null.',
     ].join('\n');
   }
 
-  private normalizeResponse(text?: string): AiAssistantChatResponse {
+  private normalizeResponse(
+    user: AuthUser,
+    text?: string,
+  ): AiAssistantChatResponse {
     if (!text) {
       return {
         message: `I am Neo AI, your ${PRODUCT_NAME} assistant. I can guide you through modules, open approved pages, and prepare forms for your review. What would you like to do?`,
@@ -425,12 +461,15 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
     try {
       const parsed = JSON.parse(text) as AiAssistantChatResponse;
+      const actionResult = this.normalizeAction(user, parsed.action);
+
       return {
         message:
-          typeof parsed.message === 'string'
+          actionResult.denialMessage ??
+          (typeof parsed.message === 'string'
             ? this.normalizeProductName(parsed.message)
-            : 'I prepared the next step for you.',
-        action: this.normalizeAction(parsed.action),
+            : 'I prepared the next step for you.'),
+        action: actionResult.action,
       };
     } catch {
       return {
@@ -531,9 +570,12 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return message.replace(SHORT_PRODUCT_NAME_PATTERN, PRODUCT_NAME);
   }
 
-  private normalizeAction(action: unknown): AiAssistantAction | null {
+  private normalizeAction(
+    user: AuthUser,
+    action: unknown,
+  ): AiAssistantActionPermissionResult {
     if (!action || typeof action !== 'object') {
-      return null;
+      return { action: null };
     }
 
     const candidate = action as Partial<AiAssistantAction>;
@@ -544,9 +586,11 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       this.isAllowedRoute(candidate.route)
     ) {
       return {
-        type: 'navigate',
-        route: candidate.route,
-        label: candidate.label,
+        action: {
+          type: 'navigate',
+          route: candidate.route,
+          label: candidate.label,
+        },
       };
     }
 
@@ -556,22 +600,62 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       candidate.route === PURCHASE_REQUEST_ADD_ROUTE
     ) {
       return {
-        type: 'open_form',
-        target: 'purchase_request',
-        route: PURCHASE_REQUEST_ADD_ROUTE,
-        label: candidate.label,
-        prefill: candidate.prefill,
+        action: {
+          type: 'open_form',
+          target: 'purchase_request',
+          route: PURCHASE_REQUEST_ADD_ROUTE,
+          label: candidate.label,
+          prefill: candidate.prefill,
+        },
       };
     }
 
-    return null;
+    if (
+      candidate.type === 'term_management' &&
+      candidate.moduleCode === 'TM' &&
+      this.isAllowedTermManagementCommand(candidate.command)
+    ) {
+      const permissionDenialMessage =
+        this.getTermManagementPermissionDenialMessage(user, candidate.command);
+
+      if (permissionDenialMessage) {
+        return {
+          action: null,
+          denialMessage: permissionDenialMessage,
+        };
+      }
+
+      return {
+        action: {
+          type: 'term_management',
+          moduleCode: 'TM',
+          command: candidate.command,
+          label: candidate.label,
+          query:
+            typeof candidate.query === 'string' ? candidate.query : undefined,
+          status: this.normalizeTermStatus(candidate.status),
+          prefill: this.normalizeTermManagementPrefill(candidate.prefill),
+          targetTermName:
+            typeof candidate.targetTermName === 'string'
+              ? candidate.targetTermName
+              : undefined,
+        },
+      };
+    }
+
+    return { action: null };
   }
 
   private isAllowedRoute(route?: string) {
-    return moduleGuide.some((module) => module.route === route);
+    return moduleGuide.some(
+      (module) => 'route' in module && module.route === route,
+    );
   }
 
-  private createLocalDemoResponse(message: string): AiAssistantChatResponse {
+  private createLocalDemoResponse(
+    user: AuthUser,
+    message: string,
+  ): AiAssistantChatResponse {
     const normalized = message.toLowerCase();
     const purchaseRequestPrefill = this.createPurchaseRequestPrefill(message);
 
@@ -599,13 +683,35 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     const module = this.findModule(normalized);
 
     if (module && this.isOpenIntent(normalized)) {
+      const route = 'route' in module ? module.route : undefined;
+
+      if (!route) {
+        const denialMessage = this.getTermManagementPermissionDenialMessage(
+          user,
+          'open',
+        );
+
+        if (denialMessage) {
+          return {
+            message: denialMessage,
+            action: null,
+          };
+        }
+
+        return {
+          message:
+            'Neo AI needs Gemini configured to perform that module action.',
+          action: null,
+        };
+      }
+
       return {
         message: `Okay, got it. Give me a moment, I will open ${this.getModuleShortName(
           module.label,
         )} for you.`,
         action: {
           type: 'navigate',
-          route: module.route,
+          route,
           label: this.getModuleShortName(module.label),
         },
       };
@@ -648,6 +754,105 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       [module.label.toLowerCase(), ...module.aliases].some((alias) =>
         message.includes(alias),
       ),
+    );
+  }
+
+  private isAllowedTermManagementCommand(
+    command: unknown,
+  ): command is Extract<
+    AiAssistantAction,
+    { type: 'term_management' }
+  >['command'] {
+    return (
+      command === 'open' ||
+      command === 'search' ||
+      command === 'filter_status' ||
+      command === 'prepare_add' ||
+      command === 'preview_edit'
+    );
+  }
+
+  private normalizeTermManagementPrefill(prefill: unknown) {
+    if (!prefill || typeof prefill !== 'object') {
+      return undefined;
+    }
+
+    const candidate = prefill as Record<string, unknown>;
+
+    return {
+      name: typeof candidate.name === 'string' ? candidate.name : undefined,
+      description:
+        typeof candidate.description === 'string'
+          ? candidate.description
+          : undefined,
+      datemode: this.normalizeTermDatemode(candidate.datemode),
+      period: typeof candidate.period === 'string' ? candidate.period : undefined,
+      status: this.normalizeTermStatus(candidate.status),
+    };
+  }
+
+  private normalizeTermDatemode(value: unknown): 'Day' | 'Month' | 'Year' | undefined {
+    return value === 'Day' || value === 'Month' || value === 'Year'
+      ? value
+      : undefined;
+  }
+
+  private normalizeTermStatus(value: unknown): 'Active' | 'Inactive' | undefined {
+    return value === 'Active' || value === 'Inactive' ? value : undefined;
+  }
+
+  private getTermManagementPermissionDenialMessage(
+    user: AuthUser,
+    command: Extract<
+      AiAssistantAction,
+      { type: 'term_management' }
+    >['command'],
+  ) {
+    if (!user.companyId) {
+      return 'Please select a company before I can help with Term Management.';
+    }
+
+    if (!this.canUseTermManagement(user, PermissionAction.VIEW)) {
+      return 'You do not have permission to view Term Management.';
+    }
+
+    if (
+      command === 'prepare_add' &&
+      !this.canUseTermManagement(user, PermissionAction.CREATE)
+    ) {
+      return 'You can view Term Management, but you do not have permission to add terms.';
+    }
+
+    if (
+      command === 'preview_edit' &&
+      !this.canUseTermManagement(user, PermissionAction.UPDATE)
+    ) {
+      return 'You can view Term Management, but you do not have permission to edit terms.';
+    }
+
+    return null;
+  }
+
+  private canUseTermManagement(user: AuthUser, action: PermissionAction) {
+    if (this.hasReservedCompanyRoleAccess(user)) {
+      return true;
+    }
+
+    return user.permissions.includes(
+      `${TERM_MANAGEMENT_PERMISSION_CODE}:${action}`,
+    );
+  }
+
+  private hasReservedCompanyRoleAccess(user: AuthUser) {
+    if (user.role === AppRole.SUPER_ADMIN) {
+      return true;
+    }
+
+    return (
+      user.companyId !== null &&
+      user.membershipStatus === MembershipStatus.ACTIVE &&
+      (user.role === AppRole.ADMIN ||
+        user.membershipRole === MembershipRole.ADMIN)
     );
   }
 
@@ -739,6 +944,11 @@ type VoiceTranscriptionJobData = {
     size: number;
   };
   userId: number;
+};
+
+type AiAssistantActionPermissionResult = {
+  action: AiAssistantAction | null;
+  denialMessage?: string;
 };
 
 function readTranscriptionJobReturnValue(value: unknown) {
