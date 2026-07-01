@@ -22,6 +22,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
 import { seedDefaultTermsForCompany } from '../maintenance/terms/default-terms';
+import { seedDefaultChartAccountsForCompany } from '../maintenance/chart-of-accounts/default-chart-accounts';
+import { seedDefaultBankAccountsForCompany } from '../maintenance/bank-masterfile/default-bank-accounts';
 import { materializeDefaultUserSidebar } from '../company/user-sidebar/user-sidebar.defaults';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
@@ -526,6 +528,11 @@ export class OnboardingService {
     });
 
     await seedDefaultTermsForCompany(this.prisma, provisionedCompany.id);
+    await seedDefaultChartAccountsForCompany(
+      this.prisma,
+      provisionedCompany.id,
+    );
+    await seedDefaultBankAccountsForCompany(this.prisma, provisionedCompany.id);
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({
       where: {

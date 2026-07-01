@@ -21,6 +21,8 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
 import { seedDefaultTermsForCompany } from '../../maintenance/terms/default-terms';
+import { seedDefaultChartAccountsForCompany } from '../../maintenance/chart-of-accounts/default-chart-accounts';
+import { seedDefaultBankAccountsForCompany } from '../../maintenance/bank-masterfile/default-bank-accounts';
 import { materializeDefaultUserSidebar } from '../../company/user-sidebar/user-sidebar.defaults';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
@@ -164,6 +166,8 @@ export class WorkspaceCompaniesService {
       });
 
       await seedDefaultTermsForCompany(tx, createdCompany.id);
+      await seedDefaultChartAccountsForCompany(tx, createdCompany.id);
+      await seedDefaultBankAccountsForCompany(tx, createdCompany.id);
       const activeModules = await tx.module.findMany({
         where: { isActive: true },
         select: { id: true },
