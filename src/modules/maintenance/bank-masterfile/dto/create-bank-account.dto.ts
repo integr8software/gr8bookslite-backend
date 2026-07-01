@@ -1,4 +1,5 @@
 import { Transform } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsEnum,
@@ -22,9 +23,11 @@ export class CreateBankAccountDto {
   @MaxLength(100)
   branch?: string;
 
+  @IsOptional()
+  @ApiPropertyOptional()
   @IsString()
   @MaxLength(100)
-  accountNumber!: string;
+  accountNumber?: string;
 
   @IsOptional()
   @IsString()

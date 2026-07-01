@@ -117,7 +117,6 @@ export class BankMasterfileService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     this.validateBankInput(dto);
-    await this.ensureBankAccountAvailable(companyId, dto);
 
     try {
       const bankAccount = await this.prisma.$transaction(async (tx) => {
@@ -133,6 +132,11 @@ export class BankMasterfileService {
               cashInBankAccount.accountCode,
               tx,
             );
+        const normalizedDto = {
+          ...dto,
+          accountNumber: dto.accountNumber?.trim() || accountCode,
+        };
+        await this.ensureBankAccountAvailable(companyId, normalizedDto);
         const accountName = this.resolveAccountName(dto);
         const chartAccount = await tx.chartAccount.create({
           data: {
@@ -162,7 +166,7 @@ export class BankMasterfileService {
           data: {
             companyId,
             coaId: chartAccount.id,
-            ...this.toCreateBankAccountData(dto, accountName),
+            ...this.toCreateBankAccountData(normalizedDto, accountName),
             status: dto.status ?? ChartAccountStatus.ACTIVE,
             createdByUserId: user.id,
           },
@@ -221,6 +225,10 @@ export class BankMasterfileService {
                 cashInBankAccount.accountCode,
                 tx,
               );
+          const normalizedBank = {
+            ...bank,
+            accountNumber: bank.accountNumber?.trim() || accountCode,
+          };
           const accountName = this.resolveAccountName(bank);
           const chartAccount = await tx.chartAccount.create({
             data: {
@@ -242,7 +250,7 @@ export class BankMasterfileService {
             data: {
               companyId,
               coaId: chartAccount.id,
-              ...this.toCreateBankAccountData(bank, accountName),
+              ...this.toCreateBankAccountData(normalizedBank, accountName),
               status: bank.status ?? ChartAccountStatus.ACTIVE,
               createdByUserId: user.id,
             },
@@ -366,6 +374,11 @@ export class BankMasterfileService {
         where: { id: bankAccountId },
         data: {
           status: dto.status,
+          accountNumber:
+            dto.status === ChartAccountStatus.ACTIVE &&
+            !currentBankAccount.accountNumber.trim()
+              ? currentBankAccount.coa.accountCode
+              : undefined,
           updatedByUserId: user.id,
         },
         include: BankAccountInclude,
@@ -542,14 +555,9 @@ export class BankMasterfileService {
 
   private validateBankInput(dto: CreateBankAccountDto | UpdateBankAccountDto) {
     const bankName = dto.bankName?.trim();
-    const accountNumber = dto.accountNumber?.trim();
 
     if (!bankName) {
       throw new BadRequestException('Bank is required.');
-    }
-
-    if (!accountNumber) {
-      throw new BadRequestException('Bank account number is required.');
     }
 
     if (
@@ -615,7 +623,7 @@ export class BankMasterfileService {
 
       if (seenKeys.has(key)) {
         throw new ConflictException(
-          `Duplicate bank account in import: ${bank.bankName.trim()} ${bank.accountNumber.trim()}.`,
+          `Duplicate bank account in import: ${bank.bankName.trim()} ${(bank.accountNumber ?? '').trim()}.`,
         );
       }
 
@@ -725,7 +733,7 @@ export class BankMasterfileService {
   }
 
   private toCreateBankAccountData(
-    dto: CreateBankAccountDto,
+    dto: CreateBankAccountDto & { accountNumber: string },
     accountName: string,
   ) {
     return {
@@ -965,7 +973,7 @@ function normalizeAccountLabel(value: string | null) {
 type BankAccountIdentity = {
   bankName: string;
   branch?: string | null;
-  accountNumber: string;
+  accountNumber?: string | null;
 };
 
 function getBankAccountIdentityKey(bank: BankAccountIdentity) {
@@ -974,8 +982,8 @@ function getBankAccountIdentityKey(bank: BankAccountIdentity) {
     .join('|');
 }
 
-function normalizeIdentityValue(value: string) {
-  return value.trim().toLowerCase();
+function normalizeIdentityValue(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? '';
 }
 function cleanOptional(value: string | null | undefined) {
   if (value === undefined || value === null) {
