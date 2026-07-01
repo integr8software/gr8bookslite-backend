@@ -72,6 +72,7 @@ pids
 *.pid
 *.seed
 *.pid.lock
+/storage/
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json

@@ -6,11 +6,12 @@ export class TransactionNumberBranchResponseDto {
 
 export class TransactionNumberSequenceResponseDto {
   id!: number;
-  permissionId!: number;
+  moduleId!: number;
   moduleCode!: string;
   moduleName!: string;
   inputMode!: 'Auto' | 'Manual';
   prefix!: string;
+  suffix!: string;
   padding!: number;
   startingNumber!: number;
   currentNumber!: number;

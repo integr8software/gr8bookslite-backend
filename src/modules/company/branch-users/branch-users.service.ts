@@ -13,6 +13,7 @@ import {
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { UserSidebarService } from '../user-sidebar/user-sidebar.service';
 import { UpdateBranchUserRoleDto } from './dto/update-branch-user-role.dto';
 import { mapBranchUser, mapBranchUserRole } from './mappers/branch-user.mapper';
 import {
@@ -22,7 +23,10 @@ import {
 
 @Injectable()
 export class BranchUsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userSidebarService: UserSidebarService,
+  ) {}
 
   async findAll(user: AuthUser, unitId: number) {
     const unit = await this.getUnitOrThrow(unitId);
@@ -65,6 +69,7 @@ export class BranchUsersService {
     const roles = await this.prisma.companyRole.findMany({
       where: {
         companyId: unit.companyId,
+        unitId: unit.id,
         isActive: true,
         roleType: {
           not: CompanyRoleType.ADMIN,
@@ -118,6 +123,7 @@ export class BranchUsersService {
         where: {
           id: companyRoleId,
           companyId: unit.companyId,
+          unitId: unit.id,
           isActive: true,
         },
         select: {
@@ -157,6 +163,11 @@ export class BranchUsersService {
         companyRoleId,
       },
     });
+    await this.userSidebarService.syncScopeAfterPermissionChange(
+      unit.companyId,
+      unitId,
+      targetUserId,
+    );
 
     const updatedMembership = await this.prisma.membership.findUniqueOrThrow({
       where: {

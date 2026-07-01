@@ -1,17 +1,46 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleDestroy,
+  OnModuleInit,
+  RequestTimeoutException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Job, Queue, Worker } from 'bullmq';
+import type { JobsOptions, RedisOptions } from 'bullmq';
+import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AiAssistantChatDto } from './dto/ai-assistant-chat.dto';
 import {
   AiAssistantAction,
   AiAssistantChatResponse,
   GeminiGenerateContentResponse,
 } from './ai-assistant.types';
+import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant-audio-file.type';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const PRODUCT_NAME = 'Gr8Books Neo';
 const SHORT_PRODUCT_NAME_PATTERN = /\bGr8Books\b(?!\s+Neo)/gi;
 const PURCHASE_REQUEST_ADD_ROUTE =
   '/purchasing/purchase-request/add?assistant=1';
+export const MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES = 4 * 1024 * 1024;
+const GEMINI_TRANSCRIPTION_TIMEOUT_MS = 90_000;
+const MAX_CONCURRENT_TRANSCRIPTIONS = 4;
+const VOICE_TRANSCRIPTION_QUEUE_NAME = 'neo-ai-voice-transcription';
+const SUPPORTED_TRANSCRIPTION_AUDIO_TYPES = new Set([
+  'audio/webm',
+  'audio/ogg',
+  'audio/wav',
+  'audio/wave',
+  'audio/x-wav',
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/mp4',
+  'audio/aac',
+]);
 
 const moduleGuide = [
   {
@@ -70,8 +99,74 @@ const moduleGuide = [
 ];
 
 @Injectable()
-export class AiAssistantService {
+export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(AiAssistantService.name);
+  private readonly transcriptionJobOptions: JobsOptions = {
+    attempts: 2,
+    backoff: {
+      type: 'exponential',
+      delay: 3000,
+    },
+    removeOnComplete: {
+      age: 60 * 30,
+      count: 1000,
+    },
+    removeOnFail: {
+      age: 60 * 60,
+      count: 1000,
+    },
+  };
+  private activeTranscriptions = 0;
+  private transcriptionQueue?: Queue<VoiceTranscriptionJobData>;
+  private transcriptionWorker?: Worker<VoiceTranscriptionJobData>;
+
   constructor(private readonly configService: ConfigService) {}
+
+  onModuleInit() {
+    if (
+      this.configService.get<string>('VOICE_TRANSCRIPTION_QUEUE_ENABLED') !==
+      'true'
+    ) {
+      this.logger.log(
+        'Voice transcription queue disabled; transcription will run inline.',
+      );
+      return;
+    }
+
+    const connection = this.getRedisConnectionOptions();
+    this.transcriptionQueue = new Queue<VoiceTranscriptionJobData>(
+      VOICE_TRANSCRIPTION_QUEUE_NAME,
+      {
+        connection,
+        defaultJobOptions: this.transcriptionJobOptions,
+      },
+    );
+    this.transcriptionWorker = new Worker<VoiceTranscriptionJobData>(
+      VOICE_TRANSCRIPTION_QUEUE_NAME,
+      (job) => this.processTranscriptionJob(job),
+      {
+        connection,
+        concurrency: this.getVoiceTranscriptionWorkerConcurrency(),
+      },
+    );
+
+    this.transcriptionWorker.on('completed', (job) => {
+      this.logger.debug(`Voice transcription job ${job.id} completed.`);
+    });
+    this.transcriptionWorker.on('failed', (job, error) => {
+      this.logger.error(
+        `Voice transcription job ${job?.id ?? 'unknown'} failed: ${error.message}`,
+        error.stack,
+      );
+    });
+
+    this.logger.log('Voice transcription queue enabled with BullMQ.');
+  }
+
+  async onModuleDestroy() {
+    await this.transcriptionWorker?.close();
+    await this.transcriptionQueue?.close();
+  }
 
   async chat(dto: AiAssistantChatDto): Promise<AiAssistantChatResponse> {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
@@ -130,6 +225,179 @@ export class AiAssistantService {
     }
   }
 
+  async transcribe(
+    user: AuthUser,
+    file: UploadedAiAssistantAudioFile | undefined,
+  ) {
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
+
+    if (!apiKey) {
+      throw new BadRequestException(
+        'Neo AI voice transcription is not configured.',
+      );
+    }
+
+    this.validateTranscriptionAudio(file);
+
+    if (this.transcriptionQueue) {
+      const job = await this.transcriptionQueue.add('transcribe', {
+        audio: {
+          data: file.buffer.toString('base64'),
+          mimetype: this.normalizeAudioMimeType(file.mimetype),
+          originalname: file.originalname,
+          size: file.size,
+        },
+        userId: user.id,
+      });
+
+      return {
+        jobId: job.id,
+        status: 'queued' as const,
+      };
+    }
+
+    const transcript = await this.transcribeWithGemini(file);
+
+    return {
+      status: 'completed' as const,
+      transcript,
+    };
+  }
+
+  async getTranscriptionJob(user: AuthUser, jobId: string) {
+    if (!this.transcriptionQueue) {
+      throw new BadRequestException(
+        'Voice transcription queue is not enabled.',
+      );
+    }
+
+    const job = await this.transcriptionQueue.getJob(jobId);
+
+    if (!job || job.data.userId !== user.id) {
+      throw new NotFoundException('Voice transcription job was not found.');
+    }
+
+    const state = await job.getState();
+
+    if (state === 'completed') {
+      return {
+        jobId,
+        status: 'completed' as const,
+        transcript: readTranscriptionJobReturnValue(job.returnvalue),
+      };
+    }
+
+    if (state === 'failed') {
+      return {
+        error:
+          job.failedReason ||
+          'Neo AI could not transcribe that recording. Please try again.',
+        jobId,
+        status: 'failed' as const,
+      };
+    }
+
+    return {
+      jobId,
+      status:
+        state === 'active' ? ('processing' as const) : ('queued' as const),
+    };
+  }
+
+  private async processTranscriptionJob(job: Job<VoiceTranscriptionJobData>) {
+    const file: UploadedAiAssistantAudioFile = {
+      buffer: Buffer.from(job.data.audio.data, 'base64'),
+      mimetype: job.data.audio.mimetype,
+      originalname: job.data.audio.originalname,
+      size: job.data.audio.size,
+    };
+
+    return {
+      transcript: await this.transcribeWithGemini(file),
+    };
+  }
+
+  private async transcribeWithGemini(file: UploadedAiAssistantAudioFile) {
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
+
+    if (!apiKey) {
+      throw new BadRequestException(
+        'Neo AI voice transcription is not configured.',
+      );
+    }
+
+    this.reserveTranscriptionSlot();
+
+    const abortController = new AbortController();
+    const timeout = setTimeout(
+      () => abortController.abort(),
+      GEMINI_TRANSCRIPTION_TIMEOUT_MS,
+    );
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: abortController.signal,
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  {
+                    text: 'Transcribe this audio into plain text. Return only the transcript. If there is no clear speech, return an empty string.',
+                  },
+                  {
+                    inlineData: {
+                      mimeType: this.normalizeAudioMimeType(file.mimetype),
+                      data: file.buffer.toString('base64'),
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0,
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new BadRequestException(
+          'Neo AI could not transcribe that audio. Please try again.',
+        );
+      }
+
+      const payload = (await response.json()) as GeminiGenerateContentResponse;
+      const transcript =
+        payload.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
+
+      return transcript;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new RequestTimeoutException(
+          'Neo AI transcription took too long. Please try a shorter recording.',
+        );
+      }
+
+      throw new BadRequestException(
+        'Neo AI could not transcribe that audio. Please try again.',
+      );
+    } finally {
+      this.releaseTranscriptionSlot();
+      clearTimeout(timeout);
+    }
+  }
+
   private createSystemPrompt() {
     return [
       `You are Neo AI, the ${PRODUCT_NAME} in-app assistant.`,
@@ -170,6 +438,93 @@ export class AiAssistantService {
         action: null,
       };
     }
+  }
+
+  private validateTranscriptionAudio(
+    file: UploadedAiAssistantAudioFile | undefined,
+  ): asserts file is UploadedAiAssistantAudioFile {
+    if (!file) {
+      throw new BadRequestException('Audio recording is required.');
+    }
+
+    if (!file.buffer?.length) {
+      throw new BadRequestException('Audio recording is empty.');
+    }
+
+    if (file.size > MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES) {
+      throw new BadRequestException('Audio recording is too large.');
+    }
+
+    if (
+      !SUPPORTED_TRANSCRIPTION_AUDIO_TYPES.has(
+        this.normalizeAudioMimeType(file.mimetype),
+      )
+    ) {
+      throw new BadRequestException('Audio format is not supported.');
+    }
+  }
+
+  private reserveTranscriptionSlot() {
+    if (this.activeTranscriptions >= MAX_CONCURRENT_TRANSCRIPTIONS) {
+      throw new HttpException(
+        'Neo AI voice transcription is busy. Please try again shortly.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    this.activeTranscriptions += 1;
+  }
+
+  private releaseTranscriptionSlot() {
+    this.activeTranscriptions = Math.max(0, this.activeTranscriptions - 1);
+  }
+
+  private getRedisConnectionOptions(): RedisOptions {
+    const redisUrl = this.configService.get<string>('REDIS_URL');
+
+    if (redisUrl) {
+      const parsedUrl = new URL(redisUrl);
+
+      return {
+        host: parsedUrl.hostname,
+        port: Number(parsedUrl.port || 6379),
+        username: parsedUrl.username
+          ? decodeURIComponent(parsedUrl.username)
+          : undefined,
+        password: parsedUrl.password
+          ? decodeURIComponent(parsedUrl.password)
+          : undefined,
+        db: parsedUrl.pathname
+          ? Number(parsedUrl.pathname.replace('/', '') || 0)
+          : undefined,
+        tls: parsedUrl.protocol === 'rediss:' ? {} : undefined,
+        maxRetriesPerRequest: null,
+      };
+    }
+
+    return {
+      host: this.configService.get<string>('REDIS_HOST', '127.0.0.1'),
+      port: Number(this.configService.get<string | number>('REDIS_PORT', 6379)),
+      username: this.configService.get<string>('REDIS_USERNAME') || undefined,
+      password: this.configService.get<string>('REDIS_PASSWORD') || undefined,
+      db: Number(this.configService.get<string | number>('REDIS_DB', 0)),
+      maxRetriesPerRequest: null,
+    };
+  }
+
+  private getVoiceTranscriptionWorkerConcurrency() {
+    const concurrency = Number(
+      this.configService.get<string | number>(
+        'VOICE_TRANSCRIPTION_QUEUE_CONCURRENCY',
+        4,
+      ),
+    );
+
+    return Number.isFinite(concurrency) && concurrency > 0 ? concurrency : 4;
+  }
+
+  private normalizeAudioMimeType(mimeType: string) {
+    return mimeType.split(';')[0] || mimeType;
   }
 
   private normalizeProductName(message: string) {
@@ -374,4 +729,27 @@ export class AiAssistantService {
 
     return Number.isFinite(cost) ? cost : 0;
   }
+}
+
+type VoiceTranscriptionJobData = {
+  audio: {
+    data: string;
+    mimetype: string;
+    originalname: string;
+    size: number;
+  };
+  userId: number;
+};
+
+function readTranscriptionJobReturnValue(value: unknown) {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'transcript' in value &&
+    typeof value.transcript === 'string'
+  ) {
+    return value.transcript;
+  }
+
+  return '';
 }

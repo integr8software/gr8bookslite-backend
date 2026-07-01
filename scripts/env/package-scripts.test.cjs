@@ -78,6 +78,18 @@ test('migration history verification is available for every environment', () => 
   }
 });
 
+test('sync scripts automate shared push and local pull workflows', () => {
+  assert.equal(
+    scripts['sync:push'],
+    'npm run db:verify-migrations:shared && npm run db:migrate:shared && npm run db:verify:shared',
+  );
+
+  assert.equal(
+    scripts['sync:pull'],
+    'git pull && npm ci && npm run db:migrate:local && npm run db:verify:local && npm run typecheck && npm test && npm run dev',
+  );
+});
+
 test('seed scripts separate reference data, fixtures, and admin bootstrap', () => {
   for (const environment of ['local', 'shared', 'staging', 'production']) {
     assert.match(
@@ -91,6 +103,55 @@ test('seed scripts separate reference data, fixtures, and admin bootstrap', () =
 
   assert.equal(scripts['db:seed:fixtures:shared'], undefined);
   assert.equal(scripts['db:bootstrap-admin:shared'], undefined);
+});
+
+test('safe provisioning scripts are available without full db seed aliases', () => {
+  const expectedRunners = {
+    current: 'run-with-env.cjs .env',
+    shared: 'run-with-env.cjs .env.shared-dev',
+    staging: 'run-with-process-env.cjs staging',
+    production: 'run-with-process-env.cjs production',
+  };
+
+  for (const [environment, runner] of Object.entries(expectedRunners)) {
+    assert.match(
+      scripts[`db:provision:${environment}`],
+      new RegExp(
+        `${runner.replaceAll('.', '\\.')} ts-node prisma/scripts/provision-platform\\.ts`,
+      ),
+    );
+    assert.match(
+      scripts[`db:materialize-sidebars:${environment}`],
+      /materialize-user-sidebars\.ts/,
+    );
+  }
+
+  assert.equal(scripts['db:provision'], 'npm run db:provision:current');
+
+  for (const scriptName of [
+    'db:seed:safe:current',
+    'db:seed:safe:shared',
+    'db:seed:safe:staging',
+    'db:seed:safe:production',
+    'db:seed:platform-catalog:current',
+    'db:seed:platform-catalog:shared',
+    'db:seed:platform-catalog:staging',
+    'db:seed:platform-catalog:production',
+    'db:seed:module-systems:current',
+    'db:seed:module-systems:shared',
+    'db:seed:module-systems:staging',
+    'db:seed:module-systems:production',
+  ]) {
+    assert.equal(scripts[scriptName], undefined);
+  }
+
+  for (const scriptName of [
+    'db:provision:shared',
+    'db:provision:staging',
+    'db:provision:production',
+  ]) {
+    assert.doesNotMatch(scripts[scriptName], /prisma db seed/);
+  }
 });
 
 test('hosted runner rejects a mismatched APP_ENV before executing a command', () => {

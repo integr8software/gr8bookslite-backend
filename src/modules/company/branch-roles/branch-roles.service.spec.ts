@@ -21,8 +21,11 @@ describe('BranchRolesService permission architecture', () => {
           isActive: true,
         }),
       },
-      platformModule: {
+      module: {
         findMany: jest.fn(),
+      },
+      platformModuleSidebar: {
+        findMany: jest.fn().mockResolvedValue([]),
       },
       permission: {
         findUnique: jest.fn(),
@@ -32,23 +35,23 @@ describe('BranchRolesService permission architecture', () => {
 
     return {
       prisma,
-      service: new BranchRolesService(prisma as never),
+      service: new BranchRolesService(
+        prisma as never,
+        {
+          syncScopeAfterPermissionChange: jest.fn(),
+        } as never,
+      ),
     };
   }
 
-  it('returns the backend-owned catalog in database order', async () => {
+  it('returns every active module under the current sidebar section structure', async () => {
     const { prisma, service } = createService();
-    prisma.platformModule.findMany.mockResolvedValue([
+    prisma.module.findMany.mockResolvedValue([
       {
-        code: 'cash-disbursement',
-        name: 'Cash Disbursement',
-        submodules: [
-          {
-            code: 'PCFR',
-            name: 'Petty Cash Fund Replenishment',
-            permissions: [{ code: 'PCFR' }],
-          },
-        ],
+        id: 1,
+        code: 'PCFR',
+        name: 'Petty Cash Fund Replenishment',
+        permissions: [{ code: 'PCFR' }],
       },
     ]);
 
@@ -56,8 +59,8 @@ describe('BranchRolesService permission architecture', () => {
       {
         modules: [
           {
-            code: 'cash-disbursement',
-            name: 'Cash Disbursement',
+            code: 'other-modules',
+            name: 'Other Modules',
             submodules: [
               {
                 code: 'PCFR',
@@ -78,10 +81,80 @@ describe('BranchRolesService permission architecture', () => {
       },
     );
 
-    expect(prisma.platformModule.findMany).toHaveBeenCalledWith(
+    expect(prisma.module.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        orderBy: [{ name: 'asc' }],
       }),
+    );
+  });
+
+  it('lists only roles scoped to the requested branch unit', async () => {
+    const { prisma, service } = createService({
+      companyRole: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    });
+    const companyRole = prisma as typeof prisma & {
+      companyRole: { findMany: jest.Mock };
+    };
+
+    await service.findAll(superAdmin, 10);
+
+    expect(companyRole.companyRole.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          companyId: 20,
+          unitId: 10,
+        }),
+      }),
+    );
+  });
+
+  it('keeps a root sidebar module in its own top-level group', async () => {
+    const { prisma, service } = createService();
+    prisma.module.findMany.mockResolvedValue([
+      {
+        id: 1,
+        code: 'DO',
+        name: 'Dashboard',
+        permissions: [{ code: 'DO' }],
+      },
+    ]);
+    prisma.platformModuleSidebar.findMany.mockResolvedValue([
+      {
+        id: 10,
+        parentId: null,
+        moduleId: 1,
+        key: 'dashboard',
+        label: 'Dashboard',
+        sortOrder: 0,
+      },
+    ]);
+
+    await expect(service.getPermissionCatalog(superAdmin, 10)).resolves.toEqual(
+      {
+        modules: [
+          {
+            code: 'dashboard',
+            name: 'Dashboard',
+            submodules: [
+              {
+                code: 'DO',
+                name: 'Dashboard',
+                permissionCode: 'DO',
+                actions: [
+                  'view',
+                  'create',
+                  'update',
+                  'cancel',
+                  'uncancel',
+                  'export',
+                ],
+              },
+            ],
+          },
+        ],
+      },
     );
   });
 
@@ -380,6 +453,7 @@ describe('BranchRolesService permission architecture', () => {
       isSystem: false,
       isActive: true,
       companyId: 20,
+      unitId: 10,
       createdAt: new Date(),
       updatedAt: new Date(),
       permissions: [
@@ -414,7 +488,6 @@ describe('BranchRolesService permission architecture', () => {
               moduleId: 40,
               code: 'PCFR',
               name: 'Petty Cash Fund Replenishment',
-              route: '/cash-disbursement/petty-cash-fund-replenishment',
               sortOrder: 60,
               isActive: true,
               createdAt: new Date(),

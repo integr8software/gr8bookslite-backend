@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AccessControlModule } from '../../../common/access/access-control.module';
 import { PrismaModule } from '../../../prisma/prisma.module';
+import { StorageModule } from '../../../storage/storage.module';
 import { AuthModule } from '../../auth/auth.module';
 import { BillingModule } from '../../billing/billing.module';
 import { WorkspaceAuditLogsModule } from '../audit-logs/workspace-audit-logs.module';
@@ -15,6 +16,7 @@ import { WorkspaceCompaniesService } from './workspace-companies.service';
     AccessControlModule,
     AuthModule,
     BillingModule,
+    StorageModule,
     WorkspaceAuditLogsModule,
     WorkspaceUsersModule,
   ],

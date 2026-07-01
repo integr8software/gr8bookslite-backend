@@ -14,7 +14,7 @@ type UserLike = {
   status: UserStatus;
   emailVerifiedAt: Date | null;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
 };
 
 export function sanitizeUser(user: UserLike): SanitizedUser {

@@ -10,6 +10,7 @@ import {
   BillingCycle,
   CompanyStatus,
   CompanyUnitType,
+  AccessScopeLevel,
   MembershipRole,
   MembershipStatus,
   TaxpayerType,
@@ -19,6 +20,8 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
+import { seedDefaultTermsForCompany } from '../../maintenance/terms/default-terms';
+import { materializeDefaultUserSidebar } from '../../company/user-sidebar/user-sidebar.defaults';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
@@ -143,7 +146,7 @@ export class WorkspaceCompaniesService {
         },
       });
 
-      await tx.companyUnit.create({
+      const headOffice = await tx.companyUnit.create({
         data: {
           companyId: createdCompany.id,
           type: CompanyUnitType.HEAD_OFFICE,
@@ -160,6 +163,20 @@ export class WorkspaceCompaniesService {
         },
       });
 
+      await seedDefaultTermsForCompany(tx, createdCompany.id);
+      const activeModules = await tx.module.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      await tx.companyModule.createMany({
+        data: activeModules.map((module) => ({
+          companyId: createdCompany.id,
+          moduleId: module.id,
+          isEnabled: true,
+          enabledAt: new Date(),
+        })),
+        skipDuplicates: true,
+      });
       if (user.role !== AppRole.SUPER_ADMIN) {
         await tx.membership.upsert({
           where: {
@@ -180,6 +197,12 @@ export class WorkspaceCompaniesService {
             joinedAt: new Date(),
           },
         });
+        await materializeDefaultUserSidebar(
+          tx,
+          createdCompany.id,
+          headOffice.id,
+          user.id,
+        );
       }
 
       return tx.company.findUniqueOrThrow({
@@ -368,10 +391,16 @@ export class WorkspaceCompaniesService {
   }
 
   async findUnits(user: AuthUser, companyId: number) {
-    await this.ensureCompanyAccess(user, companyId);
+    const accessibleUnitIds = await this.getAccessibleUnitIdsForUnitList(
+      user,
+      companyId,
+    );
 
     const units = await this.prisma.companyUnit.findMany({
-      where: { companyId },
+      where: {
+        companyId,
+        id: accessibleUnitIds ? { in: accessibleUnitIds } : undefined,
+      },
       orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
     });
     const headOfficeTin = units.find(
@@ -385,6 +414,47 @@ export class WorkspaceCompaniesService {
           : unit,
       )
       .map(mapCompanyUnit);
+  }
+
+  private async getAccessibleUnitIdsForUnitList(
+    user: AuthUser,
+    companyId: number,
+  ) {
+    if (user.role === AppRole.SUPER_ADMIN) {
+      return null;
+    }
+
+    const membership = await this.prisma.membership.findUnique({
+      where: {
+        userId_companyId: {
+          userId: user.id,
+          companyId,
+        },
+      },
+      select: {
+        role: true,
+        status: true,
+        accessScope: true,
+        unitAccess: {
+          select: {
+            unitId: true,
+          },
+        },
+      },
+    });
+
+    if (!membership || membership.status === MembershipStatus.REMOVED) {
+      throw new NotFoundException('Company not found.');
+    }
+
+    if (
+      membership.role === MembershipRole.ADMIN ||
+      membership.accessScope === AccessScopeLevel.COMPANY
+    ) {
+      return null;
+    }
+
+    return membership.unitAccess.map((access) => access.unitId);
   }
 
   async createUnit(
@@ -450,6 +520,22 @@ export class WorkspaceCompaniesService {
         canHoldInventory: true,
       },
     });
+
+    const memberships = await this.prisma.membership.findMany({
+      where: { companyId, status: MembershipStatus.ACTIVE },
+      select: { userId: true },
+    });
+
+    for (const membership of memberships) {
+      await this.prisma.$transaction((tx) =>
+        materializeDefaultUserSidebar(
+          tx,
+          companyId,
+          unit.id,
+          membership.userId,
+        ),
+      );
+    }
 
     await this.auditLogsService.record({
       actorUserId: user.id,

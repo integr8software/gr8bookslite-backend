@@ -16,7 +16,7 @@ import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateTransactionNumberSequenceDto } from './dto/update-transaction-number-sequence.dto';
-import { mapPermissionTransactionNumberSetup } from './mappers/transaction-number-sequence.mapper';
+import { mapModuleTransactionNumberSetup } from './mappers/transaction-number-sequence.mapper';
 
 @Injectable()
 export class TransactionNumberSequencesService {
@@ -25,12 +25,12 @@ export class TransactionNumberSequencesService {
   async findBootstrap(user: AuthUser) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const [branches, permissions, sequences] = await Promise.all([
+    const [branches, modules, sequences] = await Promise.all([
       this.findBranches(companyId),
-      this.findPermissions(),
+      this.findTransactionSubmodules(),
       this.findSequences(companyId),
     ]);
-    const sequencesByPermissionId = groupSequencesByPermissionId(sequences);
+    const sequencesByModuleId = groupSequencesByModuleId(sequences);
     const activeBranchIds = branches.map((branch) => branch.id);
 
     return {
@@ -39,11 +39,11 @@ export class TransactionNumberSequencesService {
         code: branch.code,
         name: branch.name,
       })),
-      sequences: permissions.map((permission) =>
-        mapPermissionTransactionNumberSetup({
+      sequences: modules.map((module) =>
+        mapModuleTransactionNumberSetup({
           activeBranchIds,
-          permission,
-          sequences: sequencesByPermissionId.get(permission.id) ?? [],
+          module,
+          sequences: sequencesByModuleId.get(module.id) ?? [],
         }),
       ),
     };
@@ -51,24 +51,18 @@ export class TransactionNumberSequencesService {
 
   async update(
     user: AuthUser,
-    permissionId: number,
+    moduleId: number,
     dto: UpdateTransactionNumberSequenceDto,
   ) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
-    const [branches, permission] = await Promise.all([
+    const [branches, module] = await Promise.all([
       this.findBranches(companyId),
-      this.prisma.permission.findFirst({
+      this.prisma.module.findFirst({
         where: {
-          id: permissionId,
+          OR: RegistryModuleTypeWhere,
+          id: moduleId,
           isActive: true,
-          requiresCompanyContext: true,
-          moduleId: {
-            not: null,
-          },
-          module: {
-            isActive: true,
-          },
         },
         select: {
           code: true,
@@ -78,8 +72,8 @@ export class TransactionNumberSequencesService {
       }),
     ]);
 
-    if (!permission) {
-      throw new NotFoundException('Transaction type not found.');
+    if (!module) {
+      throw new NotFoundException('Transaction module not found.');
     }
 
     const branchUnitIds =
@@ -99,19 +93,20 @@ export class TransactionNumberSequencesService {
       prefix: dto.prefix.trim(),
       startingNumber: dto.startingNumber,
       status: mapStatus(dto.status),
+      suffix: dto.suffix?.trim() ?? '',
     } satisfies Omit<
       Prisma.TransactionNumberSequenceUncheckedCreateInput,
-      'branchUnitId' | 'permissionId'
+      'branchUnitId' | 'moduleId'
     >;
 
-    if (!data.prefix) {
+    if (data.inputMode === TransactionNumberInputMode.AUTO && !data.prefix) {
       throw new BadRequestException('Complete the numbering setup.');
     }
 
     await this.prisma.$transaction([
       this.prisma.transactionNumberSequence.deleteMany({
         where: {
-          permissionId,
+          moduleId,
           branchUnit: {
             companyId,
           },
@@ -123,15 +118,15 @@ export class TransactionNumberSequencesService {
       ...branchUnitIds.map((branchUnitId) =>
         this.prisma.transactionNumberSequence.upsert({
           where: {
-            permissionId_branchUnitId: {
+            moduleId_branchUnitId: {
               branchUnitId,
-              permissionId,
+              moduleId,
             },
           },
           create: {
             ...data,
             branchUnitId,
-            permissionId,
+            moduleId,
           },
           update: data,
         }),
@@ -141,7 +136,7 @@ export class TransactionNumberSequencesService {
     const updatedSequences =
       await this.prisma.transactionNumberSequence.findMany({
         where: {
-          permissionId,
+          moduleId,
           branchUnit: {
             companyId,
           },
@@ -153,9 +148,9 @@ export class TransactionNumberSequencesService {
 
     return {
       message: 'Transaction number setup updated.',
-      sequence: mapPermissionTransactionNumberSetup({
+      sequence: mapModuleTransactionNumberSetup({
         activeBranchIds: branches.map((branch) => branch.id),
-        permission,
+        module,
         sequences: updatedSequences,
       }),
     };
@@ -178,17 +173,11 @@ export class TransactionNumberSequencesService {
     });
   }
 
-  private async findPermissions() {
-    return this.prisma.permission.findMany({
+  private async findTransactionSubmodules() {
+    const modules = await this.prisma.module.findMany({
       where: {
+        OR: RegistryModuleTypeWhere,
         isActive: true,
-        requiresCompanyContext: true,
-        moduleId: {
-          not: null,
-        },
-        module: {
-          isActive: true,
-        },
       },
       select: {
         code: true,
@@ -199,6 +188,8 @@ export class TransactionNumberSequencesService {
         name: 'asc',
       },
     });
+
+    return modules;
   }
 
   private async findSequences(companyId: number) {
@@ -208,7 +199,7 @@ export class TransactionNumberSequencesService {
           companyId,
         },
       },
-      orderBy: [{ permissionId: 'asc' }, { branchUnitId: 'asc' }],
+      orderBy: [{ moduleId: 'asc' }, { branchUnitId: 'asc' }],
     });
   }
 
@@ -229,6 +220,13 @@ export class TransactionNumberSequencesService {
         },
         companyId,
         isActive: true,
+        type: {
+          in: [
+            CompanyUnitType.HEAD_OFFICE,
+            CompanyUnitType.BRANCH,
+            CompanyUnitType.SATELLITE,
+          ],
+        },
       },
       select: {
         id: true,
@@ -296,11 +294,16 @@ export class TransactionNumberSequencesService {
       membership.role !== MembershipRole.ADMIN
     ) {
       throw new ForbiddenException(
-        'Admin access is required to manage transaction number setups.',
+        'Admin access is required to manage transaction module numbering.',
       );
     }
   }
 }
+
+const RegistryModuleTypeWhere = [
+  { type: { array_contains: ['registry'] } },
+  { type: { array_contains: ['Registry'] } },
+] satisfies Prisma.ModuleWhereInput[];
 
 function mapInputMode(inputMode: 'Auto' | 'Manual') {
   return inputMode === 'Auto'
@@ -314,14 +317,14 @@ function mapStatus(status: 'Active' | 'Inactive') {
     : TransactionNumberStatus.INACTIVE;
 }
 
-function groupSequencesByPermissionId<
-  TSequence extends { permissionId: number },
->(sequences: TSequence[]) {
+function groupSequencesByModuleId<TSequence extends { moduleId: number }>(
+  sequences: TSequence[],
+) {
   return sequences.reduce((groups, sequence) => {
-    const current = groups.get(sequence.permissionId) ?? [];
+    const current = groups.get(sequence.moduleId) ?? [];
 
     current.push(sequence);
-    groups.set(sequence.permissionId, current);
+    groups.set(sequence.moduleId, current);
 
     return groups;
   }, new Map<number, TSequence[]>());

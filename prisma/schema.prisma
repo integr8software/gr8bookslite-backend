@@ -25,7 +25,7 @@ model User {
   status                UserStatus              @default(PENDING_VERIFICATION)
   emailVerifiedAt       DateTime?               @map("email_verified_at")
   createdAt             DateTime                @default(now()) @map("created_at")
-  updatedAt             DateTime                @updatedAt @map("updated_at")
+  updatedAt             DateTime?               @updatedAt @map("updated_at")
   verificationCodes     EmailVerificationCode[]
   memberships           Membership[]
   invitedMemberships    Membership[]            @relation("MembershipInvitedBy")
@@ -35,6 +35,8 @@ model User {
   billingCustomers      BillingCustomer[]
   billingPaymentMethods BillingPaymentMethod[]
   createdCompanies      Company[]               @relation("CompanyCreatedBy")
+  tablePreferences      UserTablePreference[]
+  moduleSidebar         PlatformModuleSidebar[]
 
   @@map("users")
 }
@@ -72,46 +74,49 @@ model AuthSessionHandoff {
 // =========================================================
 
 model Company {
-  id                    Int                    @id @default(autoincrement())
+  id                    Int                     @id @default(autoincrement())
   name                  String
-  slug                  String                 @unique
-  legalName             String?                @map("legal_name")
-  companyCode           String?                @unique @map("company_code")
-  taxpayerType          TaxpayerType?          @map("taxpayer_type")
-  ownerLastName         String?                @map("owner_last_name")
-  ownerFirstName        String?                @map("owner_first_name")
-  ownerMiddleName       String?                @map("owner_middle_name")
-  organizationType      String?                @map("organization_type")
-  organizationTypeOther String?                @map("organization_type_other")
-  logoFileName          String?                @map("logo_file_name")
-  logoMimeType          String?                @map("logo_mime_type")
-  logoStoragePath       String?                @map("logo_storage_path")
-  logoPublicUrl         String?                @map("logo_public_url")
+  slug                  String                  @unique
+  legalName             String?                 @map("legal_name")
+  companyCode           String?                 @unique @map("company_code")
+  taxpayerType          TaxpayerType?           @map("taxpayer_type")
+  ownerLastName         String?                 @map("owner_last_name")
+  ownerFirstName        String?                 @map("owner_first_name")
+  ownerMiddleName       String?                 @map("owner_middle_name")
+  organizationType      String?                 @map("organization_type")
+  organizationTypeOther String?                 @map("organization_type_other")
+  logoFileName          String?                 @map("logo_file_name")
+  logoMimeType          String?                 @map("logo_mime_type")
+  logoStoragePath       String?                 @map("logo_storage_path")
+  logoPublicUrl         String?                 @map("logo_public_url")
   address               String?
   tin                   String?
   email                 String?
   website               String?
-  contactNumber         String?                @map("contact_number")
-  reportStartDate       DateTime?              @map("report_start_date")
-  reportEndDate         DateTime?              @map("report_end_date")
-  createdByUserId       Int?                   @map("created_by_user_id")
-  isActive              Boolean                @default(true) @map("is_active")
-  status                CompanyStatus          @default(PENDING)
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
+  contactNumber         String?                 @map("contact_number")
+  reportStartDate       DateTime?               @map("report_start_date")
+  reportEndDate         DateTime?               @map("report_end_date")
+  createdByUserId       Int?                    @map("created_by_user_id")
+  isActive              Boolean                 @default(true) @map("is_active")
+  status                CompanyStatus           @default(PENDING)
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
   subscriptions         CompanySubscription[]
   billingCustomers      BillingCustomer[]
   billingPaymentMethods BillingPaymentMethod[]
   memberships           Membership[]
   roles                 CompanyRole[]
   enabledModules        CompanyModule[]
+  moduleSidebar         PlatformModuleSidebar[]
   units                 CompanyUnit[]
   formSignatorySetups   FormSignatorySetup[]
   chartAccounts         ChartAccount[]
   bankAccounts          BankAccount[]
+  terms                 Term[]
+  userTablePreferences  UserTablePreference[]
   auditLogs             AuditLog[]
-  onboardingDrafts      UserOnboardingDraft[]  @relation("ProvisionedOnboardingCompany")
-  createdByUser         User?                  @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  onboardingDrafts      UserOnboardingDraft[]   @relation("ProvisionedOnboardingCompany")
+  createdByUser         User?                   @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@index([createdByUserId])
   @@map("companies")
@@ -140,6 +145,8 @@ model CompanyUnit {
   membershipAccess       MembershipUnitAccess[]
   formSignatorySetups    FormSignatorySetup[]
   transactionNumbers     TransactionNumberSequence[]
+  moduleSidebar          PlatformModuleSidebar[]
+  roles                  CompanyRole[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -176,6 +183,22 @@ model Membership {
   @@map("memberships")
 }
 
+model UserTablePreference {
+  id            BigInt   @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  companyId     Int      @map("company_id")
+  moduleKey     String   @map("module_key") @db.VarChar(120)
+  configuration Json
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId, moduleKey])
+  @@index([companyId])
+  @@map("user_table_preferences")
+}
+
 model MembershipUnitAccess {
   userId        Int          @map("user_id")
   companyId     Int          @map("company_id")
@@ -195,6 +218,7 @@ model MembershipUnitAccess {
 model CompanyRole {
   id          Int                     @id @default(autoincrement())
   companyId   Int                     @map("company_id")
+  unitId      Int?                    @map("unit_id")
   code        String
   name        String
   description String?
@@ -205,72 +229,128 @@ model CompanyRole {
   createdAt   DateTime                @default(now()) @map("created_at")
   updatedAt   DateTime                @updatedAt @map("updated_at")
   company     Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  unit        CompanyUnit?            @relation(fields: [unitId], references: [id], onDelete: Cascade)
   memberships Membership[]
   unitAccess  MembershipUnitAccess[]
   permissions CompanyRolePermission[]
 
-  @@unique([companyId, code])
+  @@unique([companyId, unitId, code])
   @@index([companyId, isActive])
+  @@index([unitId])
   @@map("company_roles")
 }
 
-model PlatformModule {
-  id                  Int                  @id @default(autoincrement())
-  code                String               @unique
-  name                String
-  description         String?
-  sortOrder           Int                  @default(0) @map("sort_order")
-  isActive            Boolean              @default(true) @map("is_active")
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @updatedAt @map("updated_at")
-  submodules          PlatformSubmodule[]
-  permissions         Permission[]
-  enabledCompanies    CompanyModule[]
-  formSignatorySetups FormSignatorySetup[]
+model Module {
+  id                    Int                         @id @default(autoincrement())
+  code                  String                      @unique
+  name                  String
+  description           String?
+  icon                  String?                     @map("default_icon_name")
+  category              ModuleCategory              @default(STANDARD)
+  type                  Json                        @default("[]") @map("module_types")
+  isActive              Boolean                     @default(true) @map("is_active")
+  createdAt             DateTime                    @default(now()) @map("created_at")
+  updatedAt             DateTime                    @updatedAt @map("updated_at")
+  permissions           Permission[]
+  enabledCompanies      CompanyModule[]
+  formSignatorySetups   FormSignatorySetup[]
+  transactionNumbers    TransactionNumberSequence[]
+  subscriptionPlanLinks SubscriptionPlanModule[]
+  systemLinks           ModuleSystemModule[]
+  systemSidebar         ModuleSystemSidebar[]
+  moduleSidebar         PlatformModuleSidebar[]
 
-  @@map("platform_modules")
+  @@map("modules")
 }
 
-model PlatformSubmodule {
-  id          Int            @id @default(autoincrement())
-  moduleId    Int            @map("module_id")
-  code        String         @unique
-  name        String
-  route       String?
-  sortOrder   Int            @default(0) @map("sort_order")
-  isActive    Boolean        @default(true) @map("is_active")
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
-  module      PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  permissions Permission[]
+model ModuleSystem {
+  id           Int                      @id @default(autoincrement())
+  code         String                   @unique
+  name         String
+  description  String?
+  sortOrder    Int                      @default(0) @map("sort_order")
+  isActive     Boolean                  @default(true) @map("is_active")
+  createdAt    DateTime                 @default(now()) @map("created_at")
+  updatedAt    DateTime                 @updatedAt @map("updated_at")
+  modules      ModuleSystemModule[]
+  planLinks    SubscriptionPlanSystem[]
+  sidebarItems ModuleSystemSidebar[]
 
-  @@unique([id, moduleId])
-  @@index([moduleId, isActive, sortOrder])
-  @@map("platform_submodules")
+  @@index([isActive, sortOrder])
+  @@map("module_systems")
+}
+
+model ModuleSystemModule {
+  id        Int          @id @default(autoincrement())
+  systemId  Int          @map("system_id")
+  moduleId  Int          @map("module_id")
+  sortOrder Int          @default(0) @map("sort_order")
+  isActive  Boolean      @default(true) @map("is_active")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  system    ModuleSystem @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  module    Module       @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([systemId, moduleId])
+  @@index([moduleId, isActive])
+  @@index([systemId, isActive, sortOrder])
+  @@map("module_system_modules")
+}
+
+model ModuleSystemSidebar {
+  id          Int                   @id @default(autoincrement())
+  systemId    Int                   @map("system_id")
+  parentId    Int?                  @map("parent_id")
+  moduleId    Int?                  @map("module_id")
+  itemType    SidebarItemType       @map("item_type")
+  key         String
+  label       String
+  description String?
+  iconName    String?               @map("icon_name")
+  sortOrder   Int                   @default(0) @map("sort_order")
+  isVisible   Boolean               @default(true) @map("is_visible")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+  system      ModuleSystem          @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  module      Module?               @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  parent      ModuleSystemSidebar?  @relation("ModuleSystemSidebarTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    ModuleSystemSidebar[] @relation("ModuleSystemSidebarTree")
+
+  @@unique([systemId, key])
+  @@index([systemId, parentId, sortOrder])
+  @@index([moduleId])
+  @@map("module_system_sidebar")
+}
+
+model PlatformVersion {
+  id             Int      @id @default(1)
+  currentVersion String   @map("current_version")
+  checksum       String
+  status         String   @default("APPLIED")
+  appliedBy      String?  @map("applied_by")
+  appliedAt      DateTime @default(now()) @map("applied_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_versions")
 }
 
 model Permission {
-  id                     Int                         @id @default(autoincrement())
-  targetType             PermissionTargetType        @default(MODULE) @map("target_type")
-  moduleId               Int?                        @map("module_id")
-  submoduleId            Int?                        @map("submodule_id")
-  code                   String                      @unique
+  id                     Int                     @id @default(autoincrement())
+  moduleId               Int                     @map("module_id")
+  code                   String                  @unique
   name                   String
   description            String?
-  scopeLevel             AccessScopeLevel            @default(COMPANY) @map("scope_level")
-  requiresCompanyContext Boolean                     @default(true) @map("requires_company_context")
-  isActive               Boolean                     @default(true) @map("is_active")
-  createdAt              DateTime                    @default(now()) @map("created_at")
-  updatedAt              DateTime                    @updatedAt @map("updated_at")
-  module                 PlatformModule?             @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  submodule              PlatformSubmodule?          @relation(fields: [submoduleId, moduleId], references: [id, moduleId], onDelete: Cascade)
+  scopeLevel             AccessScopeLevel        @default(COMPANY) @map("scope_level")
+  requiresCompanyContext Boolean                 @default(true) @map("requires_company_context")
+  isActive               Boolean                 @default(true) @map("is_active")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+  module                 Module                  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   rolePermissions        CompanyRolePermission[]
   membershipOverrides    MembershipPermission[]
-  transactionNumbers     TransactionNumberSequence[]
 
   @@index([moduleId, isActive])
-  @@index([submoduleId, isActive])
-  @@index([targetType, isActive])
   @@map("permissions")
 }
 
@@ -317,21 +397,51 @@ model MembershipPermission {
 }
 
 model CompanyModule {
-  id         Int            @id @default(autoincrement())
-  companyId  Int            @map("company_id")
-  moduleId   Int            @map("module_id")
-  isEnabled  Boolean        @default(true) @map("is_enabled")
-  enabledAt  DateTime?      @map("enabled_at")
-  disabledAt DateTime?      @map("disabled_at")
-  createdAt  DateTime       @default(now()) @map("created_at")
-  updatedAt  DateTime       @updatedAt @map("updated_at")
-  company    Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  module     PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  id         Int       @id @default(autoincrement())
+  companyId  Int       @map("company_id")
+  moduleId   Int       @map("module_id")
+  isEnabled  Boolean   @default(true) @map("is_enabled")
+  enabledAt  DateTime? @map("enabled_at")
+  disabledAt DateTime? @map("disabled_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  module     Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, moduleId])
   @@index([moduleId])
   @@index([companyId, isEnabled])
   @@map("company_modules")
+}
+
+model PlatformModuleSidebar {
+  id           Int                     @id @default(autoincrement())
+  companyId    Int                     @map("company_id")
+  branchUnitId Int                     @map("branch_unit_id")
+  userId       Int                     @map("user_id")
+  parentId     Int?                    @map("parent_id")
+  moduleId     Int?                    @map("module_id")
+  itemType     SidebarItemType         @map("item_type")
+  key          String
+  label        String
+  description  String?
+  iconName     String?                 @map("icon_name")
+  sortOrder    Int                     @default(0) @map("sort_order")
+  version      Int                     @default(1)
+  createdAt    DateTime                @default(now()) @map("created_at")
+  updatedAt    DateTime                @updatedAt @map("updated_at")
+  company      Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit   CompanyUnit             @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module       Module?                 @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  parent       PlatformModuleSidebar?  @relation("PlatformModuleSidebarTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     PlatformModuleSidebar[] @relation("PlatformModuleSidebarTree")
+
+  @@unique([companyId, branchUnitId, userId, key], map: "platform_module_sidebar_scope_key_uq")
+  @@unique([companyId, branchUnitId, userId, moduleId], map: "platform_module_sidebar_scope_module_uq")
+  @@index([companyId, branchUnitId, userId, parentId, sortOrder], map: "platform_module_sidebar_scope_tree_idx")
+  @@index([userId, companyId, branchUnitId])
+  @@map("platform_module_sidebar_items")
 }
 
 model AuditLog {
@@ -354,6 +464,100 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model Region {
+  id                 Int                @id @default(autoincrement())
+  psgcCode           String             @unique @map("psgc_code") @db.VarChar(20)
+  code               String             @unique @map("region_code") @db.VarChar(20)
+  name               String
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  provinces          Province[]
+  cityMunicipalities CityMunicipality[]
+  barangays          Barangay[]
+
+  @@index([name])
+  @@map("regions")
+}
+
+model Province {
+  id                 Int                @id @default(autoincrement())
+  psgcCode           String             @unique @map("psgc_code") @db.VarChar(20)
+  code               String             @unique @map("province_code") @db.VarChar(20)
+  name               String
+  regionCode         String             @map("region_code") @db.VarChar(20)
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  region             Region             @relation(fields: [regionCode], references: [code], onDelete: Restrict)
+  cityMunicipalities CityMunicipality[]
+  barangays          Barangay[]
+
+  @@index([regionCode])
+  @@index([name])
+  @@map("provinces")
+}
+
+model CityMunicipality {
+  id           Int        @id @default(autoincrement())
+  psgcCode     String     @unique @map("psgc_code") @db.VarChar(20)
+  code         String     @unique @map("city_municipality_code") @db.VarChar(20)
+  name         String
+  regionCode   String     @map("region_code") @db.VarChar(20)
+  provinceCode String     @map("province_code") @db.VarChar(20)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  region       Region     @relation(fields: [regionCode], references: [code], onDelete: Restrict)
+  province     Province   @relation(fields: [provinceCode], references: [code], onDelete: Restrict)
+  barangays    Barangay[]
+
+  @@index([regionCode])
+  @@index([provinceCode])
+  @@index([name])
+  @@map("city_municipalities")
+}
+
+model Barangay {
+  id                   Int              @id @default(autoincrement())
+  psgcCode             String           @unique @map("psgc_code") @db.VarChar(20)
+  code                 String           @unique @map("barangay_code") @db.VarChar(20)
+  name                 String
+  regionCode           String           @map("region_code") @db.VarChar(20)
+  provinceCode         String           @map("province_code") @db.VarChar(20)
+  cityMunicipalityCode String           @map("city_municipality_code") @db.VarChar(20)
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+  region               Region           @relation(fields: [regionCode], references: [code], onDelete: Restrict)
+  province             Province         @relation(fields: [provinceCode], references: [code], onDelete: Restrict)
+  cityMunicipality     CityMunicipality @relation(fields: [cityMunicipalityCode], references: [code], onDelete: Restrict)
+
+  @@index([regionCode])
+  @@index([provinceCode])
+  @@index([cityMunicipalityCode])
+  @@index([name])
+  @@map("barangays")
+}
+
+model AlphanumericTaxCode {
+  id              Int      @id @default(autoincrement())
+  sourceKey       String   @unique @map("source_key") @db.VarChar(40)
+  transactionType String   @map("transaction_type") @db.VarChar(40)
+  taxType         String   @map("tax_type") @db.VarChar(40)
+  taxCode         String   @map("tax_code") @db.VarChar(40)
+  taxDescription  String   @map("tax_description")
+  taxRate         Decimal  @map("tax_rate") @db.Decimal(8, 4)
+  taxAlias        String?  @map("tax_alias") @db.VarChar(40)
+  atc             String?  @db.VarChar(40)
+  officialAtcCode String?  @map("official_atc_code") @db.VarChar(40)
+  natureOfIncome  String?  @map("nature_of_income")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([transactionType])
+  @@index([taxType])
+  @@index([taxCode])
+  @@index([officialAtcCode])
+  @@map("alphanumeric_tax_codes")
+}
+
 model FormSignatorySetup {
   id        Int                @id @default(autoincrement())
   companyId Int                @map("company_id")
@@ -363,7 +567,7 @@ model FormSignatorySetup {
   updatedAt DateTime           @updatedAt @map("updated_at")
   company   Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   unit      CompanyUnit        @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  module    PlatformModule     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module    Module             @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   rows      FormSignatoryRow[]
 
   @@unique([companyId, unitId, moduleId])
@@ -394,9 +598,10 @@ model FormSignatoryRow {
 model TransactionNumberSequence {
   id             Int                        @id @default(autoincrement())
   branchUnitId   Int                        @map("branch_unit_id")
-  permissionId   Int                        @map("permission_id")
+  moduleId       Int                        @map("module_id")
   inputMode      TransactionNumberInputMode @default(AUTO) @map("input_mode")
   prefix         String
+  suffix         String                     @default("")
   padding        Int                        @default(6)
   startingNumber Int                        @default(1) @map("starting_number")
   currentNumber  Int                        @default(1) @map("current_number")
@@ -404,11 +609,11 @@ model TransactionNumberSequence {
   createdAt      DateTime                   @default(now()) @map("created_at")
   updatedAt      DateTime                   @updatedAt @map("updated_at")
   branchUnit     CompanyUnit                @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
-  permission     Permission                 @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  module         Module                     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
-  @@unique([permissionId, branchUnitId])
+  @@unique([moduleId, branchUnitId])
   @@index([branchUnitId])
-  @@index([permissionId])
+  @@index([moduleId])
   @@map("transaction_number_sequences")
 }
 
@@ -449,25 +654,53 @@ model ChartAccount {
 }
 
 model BankAccount {
-  id            BigInt             @id @default(autoincrement())
-  companyId     Int                @map("company_id")
-  coaId         BigInt             @map("coa_id")
-  bankName      String             @map("bank_name") @db.VarChar(100)
-  branch        String?            @db.VarChar(100)
-  accountNumber String             @map("account_number") @db.VarChar(100)
-  accountName   String             @map("account_name") @db.VarChar(250)
-  currencyCode  String?            @map("currency_code") @db.VarChar(10)
-  isDefault     Boolean            @default(false) @map("is_default")
-  status        ChartAccountStatus @default(ACTIVE)
-  createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
-  company       Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  coa           ChartAccount       @relation(fields: [coaId], references: [id], onDelete: Restrict)
+  id                   BigInt             @id @default(autoincrement())
+  companyId            Int                @map("company_id")
+  coaId                BigInt             @map("coa_id")
+  bankName             String             @map("bank_name") @db.VarChar(100)
+  branch               String?            @db.VarChar(100)
+  accountNumber        String             @map("account_number") @db.VarChar(100)
+  accountName          String             @map("account_name") @db.VarChar(250)
+  accountType          String?            @map("account_type") @db.VarChar(50)
+  seriesStart          String?            @map("series_start") @db.VarChar(50)
+  seriesEnd            String?            @map("series_end") @db.VarChar(50)
+  seriesDigits         Int?               @map("series_digits")
+  currencyCode         String?            @map("currency_code") @db.VarChar(10)
+  currencyExchangeRate Decimal?           @map("currency_exchange_rate") @db.Decimal(18, 2)
+  isDefault            Boolean            @default(false) @map("is_default")
+  status               ChartAccountStatus @default(ACTIVE)
+  createdByUserId      Int?               @map("created_by_user_id")
+  updatedByUserId      Int?               @map("updated_by_user_id")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  company              Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  coa                  ChartAccount       @relation(fields: [coaId], references: [id], onDelete: Restrict)
 
   @@index([coaId], map: "bank_accounts_coa_id_idx")
   @@index([status], map: "bank_accounts_status_idx")
   @@index([companyId, status], map: "bank_accounts_company_status_idx")
+  @@index([companyId, bankName, branch, accountNumber], map: "bank_accounts_company_bank_branch_number_idx")
   @@map("bank_accounts")
+}
+
+model Term {
+  id              BigInt       @id @default(autoincrement())
+  companyId       Int          @map("company_id")
+  name            String       @db.VarChar(150)
+  description     String?      @db.VarChar(500)
+  dateMode        TermDateMode @map("date_mode")
+  period          Int
+  status          TermStatus   @default(ACTIVE)
+  createdByUserId Int?         @map("created_by_user_id")
+  updatedByUserId Int?         @map("updated_by_user_id")
+  deletedAt       DateTime?    @map("deleted_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  company         Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId], map: "terms_company_id_idx")
+  @@index([companyId, status], map: "terms_company_status_idx")
+  @@map("terms")
 }
 
 // =========================================================
@@ -492,6 +725,7 @@ model SubscriptionPlan {
   usageRules       SubscriptionPlanUsageRule[]
   discountTiers    SubscriptionPlanDiscountTier[]
   modules          SubscriptionPlanModule[]
+  systems          SubscriptionPlanSystem[]
   subscriptions    CompanySubscription[]
   onboardingDrafts UserOnboardingDraft[]
 
@@ -556,14 +790,34 @@ model SubscriptionPlanModule {
   id                 Int              @id @default(autoincrement())
   subscriptionPlanId Int              @map("subscription_plan_id")
   moduleKey          String           @map("module_key")
+  moduleId           Int              @map("module_id")
   isEnabled          Boolean          @default(true) @map("is_enabled")
   createdAt          DateTime         @default(now()) @map("created_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")
   subscriptionPlan   SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+  module             Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
+  @@unique([subscriptionPlanId, moduleId])
   @@unique([subscriptionPlanId, moduleKey])
   @@index([moduleKey, isEnabled])
+  @@index([moduleId, isEnabled])
   @@map("subscription_plan_modules")
+}
+
+model SubscriptionPlanSystem {
+  id                 Int              @id @default(autoincrement())
+  subscriptionPlanId Int              @map("subscription_plan_id")
+  systemId           Int              @map("system_id")
+  isEnabled          Boolean          @default(true) @map("is_enabled")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  subscriptionPlan   SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+  system             ModuleSystem     @relation(fields: [systemId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionPlanId, systemId])
+  @@index([systemId, isEnabled])
+  @@index([subscriptionPlanId, isEnabled])
+  @@map("subscription_plan_systems")
 }
 
 // =========================================================
@@ -815,9 +1069,16 @@ enum AccessScopeLevel {
   BRANCH
 }
 
-enum PermissionTargetType {
-  MODULE
-  SUBMODULE
+enum SidebarItemType {
+  SECTION
+  CONTAINER
+  LINK
+}
+
+enum ModuleCategory {
+  MASTER
+  WORKSPACE
+  STANDARD
 }
 
 enum CompanyUnitType {
@@ -939,6 +1200,17 @@ enum AccountNature {
 }
 
 enum ChartAccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TermDateMode {
+  DAY
+  MONTH
+  YEAR
+}
+
+enum TermStatus {
   ACTIVE
   INACTIVE
 }

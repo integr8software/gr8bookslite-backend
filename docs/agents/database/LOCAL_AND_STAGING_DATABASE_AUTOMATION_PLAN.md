@@ -81,7 +81,6 @@ npm run db:migrate:create:local -- --name <migration_name>
 npm run db:status:local
 npm run db:seed:local
 npm run db:verify-permissions:local
-npm run db:reset-permission-catalog:local
 ```
 
 The following commands destroy local data and must never target Neon:
@@ -89,7 +88,6 @@ The following commands destroy local data and must never target Neon:
 ```bash
 npm run db:reset:local
 npm run db:rebuild:local
-npm run db:reset-permission-catalog:local -- --confirm=RESET_PERMISSION_CATALOG
 ```
 
 ## Staging Deployment Setup
@@ -194,26 +192,11 @@ consistent with the new architecture.
 
 ## Existing Permission Tools
 
-### Local Catalog Reset
+### Local Catalog Rollback
 
-The repository includes:
-
-```bash
-npm run db:reset-permission-catalog:local
-```
-
-Without confirmation, it previews affected row counts.
-
-With explicit confirmation:
-
-```bash
-npm run db:reset-permission-catalog:local -- --confirm=RESET_PERMISSION_CATALOG
-```
-
-it removes local roles, permission assignments, overrides, and the permission
-catalog, then rebuilds the canonical catalog.
-
-This script intentionally refuses Neon and must remain local-only.
+The retired two-level permission catalog reset script is no longer part of the
+database workflow. Use the user-sidebar reset API for presentation resets, or
+restore a local database snapshot when the catalog itself needs rollback.
 
 ### Permission Architecture Verifier
 

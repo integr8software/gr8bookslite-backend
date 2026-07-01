@@ -37,6 +37,12 @@ create another migration instead.
 Only apply migrations that have already been reviewed and committed:
 
 ```bash
+npm run sync:push
+```
+
+Expanded form:
+
+```bash
 npm run db:verify-migrations:shared
 npm run db:migrate:shared
 npm run db:verify:shared
@@ -52,12 +58,30 @@ shared migration while another developer is changing the same database.
 ## Teammate Pulls New Migrations
 
 ```bash
+npm run sync:pull
+```
+
+Expanded form:
+
+```bash
 git pull
-npm install
+npm ci
 npm run db:migrate:local
-npm run db:generate:local
 npm run db:verify:local
+npm run typecheck
+npm test
 npm run dev
+```
+
+Use `npm ci` after pulling when `package.json` or `package-lock.json` changed,
+so local dependencies match the committed lockfile exactly. `db:migrate:local`
+generates Prisma Client after applying migrations, so a separate
+`db:generate:local` is usually unnecessary.
+
+For a shorter everyday confidence check after pulling migrations, run:
+
+```bash
+npm run db:migrate:local && npm run db:verify:local && npm run typecheck
 ```
 
 If migration-history verification reports a modified applied migration, stop.

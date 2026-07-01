@@ -42,7 +42,7 @@ export class TransactionNumberSequencesController {
     return this.transactionNumberSequencesService.findBootstrap(user);
   }
 
-  @Patch(':sequenceId')
+  @Patch(':moduleId')
   @Throttle({
     default: {
       limit: 30,
@@ -52,13 +52,9 @@ export class TransactionNumberSequencesController {
   @ApiOkResponse({ type: SaveTransactionNumberSequenceResponseDto })
   update(
     @CurrentUser() user: AuthUser,
-    @Param('sequenceId', ParseIntPipe) permissionId: number,
+    @Param('moduleId', ParseIntPipe) moduleId: number,
     @Body() dto: UpdateTransactionNumberSequenceDto,
   ) {
-    return this.transactionNumberSequencesService.update(
-      user,
-      permissionId,
-      dto,
-    );
+    return this.transactionNumberSequencesService.update(user, moduleId, dto);
   }
 }

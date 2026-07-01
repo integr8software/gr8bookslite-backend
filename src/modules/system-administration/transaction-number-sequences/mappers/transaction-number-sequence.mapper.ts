@@ -1,6 +1,6 @@
-import type { Permission, TransactionNumberSequence } from '@prisma/client';
+import type { Module, TransactionNumberSequence } from '@prisma/client';
 
-type PermissionSummary = Pick<Permission, 'code' | 'id' | 'name'>;
+type ModuleSummary = Pick<Module, 'code' | 'id' | 'name'>;
 type SequenceSummary = Pick<
   TransactionNumberSequence,
   | 'branchUnitId'
@@ -11,31 +11,39 @@ type SequenceSummary = Pick<
   | 'prefix'
   | 'startingNumber'
   | 'status'
+  | 'suffix'
 >;
 
-export function mapPermissionTransactionNumberSetup({
+export function mapModuleTransactionNumberSetup({
   activeBranchIds,
-  permission,
+  module,
   sequences,
 }: {
   activeBranchIds: number[];
-  permission: PermissionSummary;
+  module: ModuleSummary;
   sequences: SequenceSummary[];
 }) {
-  const firstSequence = sequences[0];
-  const branchUnitIds = sequences.map((sequence) => sequence.branchUnitId);
+  const activeBranchIdSet = new Set(activeBranchIds);
+  const scopedSequences = sequences.filter((sequence) =>
+    activeBranchIdSet.has(sequence.branchUnitId),
+  );
+  const firstSequence = scopedSequences[0];
+  const branchUnitIds = scopedSequences.map(
+    (sequence) => sequence.branchUnitId,
+  );
   const coversEveryBranch =
     activeBranchIds.length > 0 &&
     activeBranchIds.every((branchId) => branchUnitIds.includes(branchId));
   const scope = sequences.length === 0 || coversEveryBranch ? 'all' : 'branch';
 
   return {
-    id: permission.id,
-    permissionId: permission.id,
-    moduleCode: permission.code,
-    moduleName: permission.name,
+    id: module.id,
+    moduleId: module.id,
+    moduleCode: module.code,
+    moduleName: module.name,
     inputMode: firstSequence?.inputMode === 'MANUAL' ? 'Manual' : 'Auto',
-    prefix: firstSequence?.prefix ?? permission.code,
+    prefix: firstSequence?.prefix ?? module.code,
+    suffix: firstSequence?.suffix ?? '',
     padding: firstSequence?.padding ?? 6,
     startingNumber: firstSequence?.startingNumber ?? 1,
     currentNumber: firstSequence?.currentNumber ?? 1,

@@ -11,6 +11,10 @@ export function mapWorkspaceUserMemberships(
     const assignment = {
       companyId: membership.companyId,
       unitIds: membership.unitAccess.map((access) => access.unitId),
+      units: membership.unitAccess.map((access) => ({
+        ...access.unit,
+        displayName: access.unit.name,
+      })),
     };
 
     if (current) {

@@ -12,13 +12,10 @@ import {
   Prisma,
 } from '@prisma/client';
 import { ActivePermissionActions } from '../../../common/constants/active-permission-actions.constant';
-import {
-  PermissionCodes,
-  PlatformModuleCodes,
-} from '../../../common/constants/permission-codes.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { UserSidebarService } from '../user-sidebar/user-sidebar.service';
 import { BranchRolePermissionDto } from './dto/branch-role-permission.dto';
 import { CreateBranchRoleDto } from './dto/create-branch-role.dto';
 import { UpdateBranchRoleStatusDto } from './dto/update-branch-role-status.dto';
@@ -43,14 +40,34 @@ type ResolvedBranchRolePermission = NormalizedBranchRolePermission & {
   permissionId: number;
 };
 
+type PermissionCatalogModule = {
+  id: number;
+  code: string;
+  name: string;
+  permissions: Array<{ code: string }>;
+};
+
+type PermissionCatalogLeaf = {
+  code: string;
+  name: string;
+  permissionCode: string;
+  actions: readonly string[];
+};
+
+type PermissionCatalogSection = {
+  code: string;
+  name: string;
+  submodules: PermissionCatalogLeaf[];
+};
+
 const LegacyPettyCashReplenishmentPermissionCode =
   'cash-disbursement-petty-cash-replenishment';
 const LegacyPettyCashFundReplenishmentPermissionCode =
   'cash-disbursement-petty-cash-fund-replenishment';
-const PettyCashFundReplenishmentPermissionCode =
-  PermissionCodes.PETTY_CASH_FUND_REPLENISHMENT;
-const PettyCashAdvanceReplenishmentPermissionCode =
-  PermissionCodes.PETTY_CASH_ADVANCE_REPLENISHMENT;
+const PettyCashFundReplenishmentPermissionCode = 'PCFR';
+const PettyCashAdvanceReplenishmentPermissionCode = 'PCAR';
+const PettyCashAdvancePermissionCode = 'PCA';
+const AccountsPayableVoucherPermissionCode = 'APV';
 const LegacyPettyCashAdvanceReplenishmentPermissionCode =
   'cash-disbursement-petty-cash-advance-replenishment';
 const LegacyPettyCashAdvancePermissionCode =
@@ -60,7 +77,10 @@ const LegacyAccountsPayableVoucherPermissionCode =
 
 @Injectable()
 export class BranchRolesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userSidebarService: UserSidebarService,
+  ) {}
 
   async findAll(user: AuthUser, unitId: number) {
     const unit = await this.getUnitOrThrow(unitId);
@@ -69,6 +89,7 @@ export class BranchRolesService {
     const roles = await this.prisma.companyRole.findMany({
       where: {
         companyId: unit.companyId,
+        unitId: unit.id,
         roleType: {
           not: CompanyRoleType.ADMIN,
         },
@@ -87,7 +108,7 @@ export class BranchRolesService {
     const unit = await this.getUnitOrThrow(unitId);
     await this.ensureCanManageBranchRoles(user, unit.companyId);
 
-    const role = await this.getRoleOrThrow(unit.companyId, roleId);
+    const role = await this.getRoleOrThrow(unit.companyId, unit.id, roleId);
 
     return {
       role: mapBranchRole(role),
@@ -98,63 +119,141 @@ export class BranchRolesService {
     const unit = await this.getUnitOrThrow(unitId);
     await this.ensureCanManageBranchRoles(user, unit.companyId);
 
-    const modules = await this.prisma.platformModule.findMany({
-      where: {
-        isActive: true,
-        submodules: {
-          some: {
-            isActive: true,
-            permissions: {
-              some: {
-                isActive: true,
-              },
-            },
+    const [modules, sidebarItems] = await Promise.all([
+      this.prisma.module.findMany({
+        where: {
+          isActive: true,
+          permissions: {
+            some: { isActive: true },
           },
         },
-      },
-      select: {
-        code: true,
-        name: true,
-        submodules: {
-          where: {
-            isActive: true,
-            permissions: {
-              some: {
-                isActive: true,
-              },
-            },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          permissions: {
+            where: { isActive: true },
+            select: { code: true },
+            orderBy: [{ name: 'asc' }],
+            take: 1,
           },
-          select: {
-            code: true,
-            name: true,
-            permissions: {
-              where: {
-                isActive: true,
-              },
-              select: {
-                code: true,
-              },
-              orderBy: [{ name: 'asc' }],
-              take: 1,
-            },
-          },
-          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
         },
-      },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        orderBy: [{ name: 'asc' }],
+      }),
+      this.prisma.platformModuleSidebar.findMany({
+        where: {
+          companyId: unit.companyId,
+          branchUnitId: unitId,
+          userId: user.id,
+        },
+        select: {
+          id: true,
+          parentId: true,
+          moduleId: true,
+          key: true,
+          label: true,
+          sortOrder: true,
+        },
+        orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      }),
+    ]);
+
+    const modulesById = new Map<number, PermissionCatalogModule>(
+      modules.map((module) => [module.id, module]),
+    );
+    const sidebarChildren = new Map<number | null, typeof sidebarItems>();
+    for (const item of sidebarItems) {
+      const siblings = sidebarChildren.get(item.parentId) ?? [];
+      siblings.push(item);
+      sidebarChildren.set(item.parentId, siblings);
+    }
+    const assignedModuleIds = new Set<number>();
+    const sections: PermissionCatalogSection[] = (
+      sidebarChildren.get(null) ?? []
+    ).flatMap((section) => {
+      const sectionModules: PermissionCatalogLeaf[] = [];
+      if (section.moduleId != null) {
+        const module = modulesById.get(section.moduleId);
+        if (module && !assignedModuleIds.has(module.id)) {
+          assignedModuleIds.add(module.id);
+          sectionModules.push(this.mapPermissionCatalogModule(module));
+        }
+      }
+      sectionModules.push(
+        ...this.collectSidebarModules(
+          section.id,
+          sidebarChildren,
+          modulesById,
+          assignedModuleIds,
+        ),
+      );
+      if (!sectionModules.length) return [];
+
+      return [
+        {
+          code: section.key,
+          name: section.label,
+          submodules: sectionModules,
+        },
+      ];
     });
+    const ungroupedModules = modules
+      .filter((module) => !assignedModuleIds.has(module.id))
+      .map((module) => this.mapPermissionCatalogModule(module));
+
+    if (ungroupedModules.length) {
+      sections.push({
+        code: 'other-modules',
+        name: 'Other Modules',
+        submodules: ungroupedModules,
+      });
+    }
 
     return {
-      modules: modules.map((module) => ({
-        code: module.code,
-        name: module.name,
-        submodules: module.submodules.map((submodule) => ({
-          code: submodule.code,
-          name: submodule.name,
-          permissionCode: submodule.permissions[0].code,
-          actions: ActivePermissionActions,
-        })),
-      })),
+      modules: sections,
+    };
+  }
+
+  private collectSidebarModules(
+    itemId: number,
+    sidebarChildren: Map<
+      number | null,
+      Array<{ id: number; moduleId: number | null }>
+    >,
+    modulesById: Map<number, PermissionCatalogModule>,
+    assignedModuleIds: Set<number>,
+  ) {
+    const modules: PermissionCatalogLeaf[] = [];
+    for (const item of sidebarChildren.get(itemId) ?? []) {
+      if (item.moduleId != null) {
+        const module = modulesById.get(item.moduleId);
+        if (module && !assignedModuleIds.has(module.id)) {
+          assignedModuleIds.add(module.id);
+          modules.push(this.mapPermissionCatalogModule(module));
+        }
+      }
+      modules.push(
+        ...this.collectSidebarModules(
+          item.id,
+          sidebarChildren,
+          modulesById,
+          assignedModuleIds,
+        ),
+      );
+    }
+    return modules;
+  }
+
+  private mapPermissionCatalogModule(module: {
+    code: string;
+    name: string;
+    permissions: Array<{ code: string }>;
+  }) {
+    return {
+      code: module.code,
+      name: module.name,
+      permissionCode: module.permissions[0].code,
+      actions: ActivePermissionActions,
     };
   }
 
@@ -164,13 +263,14 @@ export class BranchRolesService {
 
     const code = this.normalizeRoleCode(dto.name);
     this.ensureRoleCodeIsUsable(code);
-    await this.ensureRoleCodeAvailable(unit.companyId, code);
+    await this.ensureRoleCodeAvailable(unit.companyId, unit.id, code);
     const rolePermissions = await this.resolveRolePermissions(dto.permissions);
 
     const role = await this.prisma.$transaction(async (tx) => {
       const createdRole = await tx.companyRole.create({
         data: {
           companyId: unit.companyId,
+          unitId: unit.id,
           code,
           name: dto.name.trim(),
           description: dto.description?.trim() || null,
@@ -205,12 +305,16 @@ export class BranchRolesService {
   ) {
     const unit = await this.getUnitOrThrow(unitId);
     await this.ensureCanManageBranchRoles(user, unit.companyId);
-    const existingRole = await this.getRoleOrThrow(unit.companyId, roleId);
+    const existingRole = await this.getRoleOrThrow(
+      unit.companyId,
+      unit.id,
+      roleId,
+    );
     this.ensureRoleIsEditable(existingRole);
 
     const code = this.normalizeRoleCode(dto.name);
     this.ensureRoleCodeIsUsable(code);
-    await this.ensureRoleCodeAvailable(unit.companyId, code, roleId);
+    await this.ensureRoleCodeAvailable(unit.companyId, unit.id, code, roleId);
     const rolePermissions = await this.resolveRolePermissions(dto.permissions);
 
     const role = await this.prisma.$transaction(async (tx) => {
@@ -234,6 +338,7 @@ export class BranchRolesService {
         include: BranchRoleInclude,
       });
     });
+    await this.syncAssignedUserSidebars(unit.companyId, unitId, roleId);
 
     return {
       message: 'Branch role updated.',
@@ -249,7 +354,11 @@ export class BranchRolesService {
   ) {
     const unit = await this.getUnitOrThrow(unitId);
     await this.ensureCanManageBranchRoles(user, unit.companyId);
-    const existingRole = await this.getRoleOrThrow(unit.companyId, roleId);
+    const existingRole = await this.getRoleOrThrow(
+      unit.companyId,
+      unit.id,
+      roleId,
+    );
     this.ensureRoleIsEditable(existingRole);
 
     const role = await this.prisma.companyRole.update({
@@ -261,6 +370,7 @@ export class BranchRolesService {
       },
       include: BranchRoleInclude,
     });
+    await this.syncAssignedUserSidebars(unit.companyId, unitId, roleId);
 
     return {
       message: dto.isActive
@@ -299,6 +409,31 @@ export class BranchRolesService {
     });
   }
 
+  private async syncAssignedUserSidebars(
+    companyId: number,
+    unitId: number,
+    companyRoleId: number,
+  ) {
+    const assignedUsers = await this.prisma.membershipUnitAccess.findMany({
+      where: {
+        companyId,
+        unitId,
+        companyRoleId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    for (const assignedUser of assignedUsers) {
+      await this.userSidebarService.syncScopeAfterPermissionChange(
+        companyId,
+        unitId,
+        assignedUser.userId,
+      );
+    }
+  }
+
   private async resolveRolePermissions(permissions: BranchRolePermissionDto[]) {
     const normalizedPermissions = this.normalizePermissions(permissions);
     const resolvedPermissions: ResolvedBranchRolePermission[] = [];
@@ -310,20 +445,14 @@ export class BranchRolesService {
         },
         include: {
           module: true,
-          submodule: {
-            include: {
-              module: true,
-            },
-          },
         },
       });
 
+      const resolvedModule = permissionRecord
+        ? getPermissionModule(permissionRecord)
+        : null;
       const isCatalogEntryActive =
-        permissionRecord?.isActive &&
-        (permissionRecord.submodule
-          ? permissionRecord.submodule.isActive &&
-            permissionRecord.submodule.module.isActive
-          : permissionRecord.module?.isActive);
+        permissionRecord?.isActive && resolvedModule?.isActive;
 
       if (!isCatalogEntryActive) {
         throw new BadRequestException(
@@ -333,14 +462,8 @@ export class BranchRolesService {
 
       resolvedPermissions.push({
         ...permission,
-        moduleCode:
-          permissionRecord.module?.code ??
-          permissionRecord.submodule?.module.code ??
-          '',
-        moduleName:
-          permissionRecord.module?.name ??
-          permissionRecord.submodule?.module.name ??
-          '',
+        moduleCode: resolvedModule!.code,
+        moduleName: resolvedModule!.name,
         permissionName: permissionRecord.name,
         permissionId: permissionRecord.id,
       });
@@ -428,7 +551,7 @@ export class BranchRolesService {
       canonicalPermission = {
         code: PettyCashFundReplenishmentPermissionCode,
         name: 'Petty Cash Fund Replenishment',
-        moduleCode: PlatformModuleCodes.CASH_DISBURSEMENT,
+        moduleCode: PettyCashAdvancePermissionCode,
         moduleName: 'Cash Disbursement',
       };
     } else if (
@@ -438,27 +561,27 @@ export class BranchRolesService {
       canonicalPermission = {
         code: PettyCashAdvanceReplenishmentPermissionCode,
         name: 'Petty Cash Advance Replenishment',
-        moduleCode: PlatformModuleCodes.CASH_DISBURSEMENT,
+        moduleCode: PettyCashAdvanceReplenishmentPermissionCode,
         moduleName: 'Cash Disbursement',
       };
     } else if (
       permissionCode === LegacyPettyCashAdvancePermissionCode ||
-      permissionCode === PermissionCodes.PETTY_CASH_ADVANCE
+      permissionCode === PettyCashAdvancePermissionCode
     ) {
       canonicalPermission = {
-        code: PermissionCodes.PETTY_CASH_ADVANCE,
+        code: PettyCashAdvancePermissionCode,
         name: 'Petty Cash Advance',
-        moduleCode: PlatformModuleCodes.CASH_DISBURSEMENT,
+        moduleCode: PettyCashFundReplenishmentPermissionCode,
         moduleName: 'Cash Disbursement',
       };
     } else if (
       permissionCode === LegacyAccountsPayableVoucherPermissionCode ||
-      permissionCode === PermissionCodes.ACCOUNTS_PAYABLE_VOUCHER
+      permissionCode === AccountsPayableVoucherPermissionCode
     ) {
       canonicalPermission = {
-        code: PermissionCodes.ACCOUNTS_PAYABLE_VOUCHER,
+        code: AccountsPayableVoucherPermissionCode,
         name: 'Accounts Payable Voucher',
-        moduleCode: PlatformModuleCodes.ACCOUNTS_PAYABLE,
+        moduleCode: AccountsPayableVoucherPermissionCode,
         moduleName: 'Accounts Payable',
       };
     }
@@ -485,12 +608,14 @@ export class BranchRolesService {
 
   private async ensureRoleCodeAvailable(
     companyId: number,
+    unitId: number,
     code: string,
     roleId?: number,
   ) {
     const existingRole = await this.prisma.companyRole.findFirst({
       where: {
         companyId,
+        unitId,
         code,
         id: roleId ? { not: roleId } : undefined,
       },
@@ -523,11 +648,16 @@ export class BranchRolesService {
     }
   }
 
-  private async getRoleOrThrow(companyId: number, roleId: number) {
+  private async getRoleOrThrow(
+    companyId: number,
+    unitId: number,
+    roleId: number,
+  ) {
     const role = await this.prisma.companyRole.findFirst({
       where: {
         id: roleId,
         companyId,
+        unitId,
         roleType: {
           not: CompanyRoleType.ADMIN,
         },
@@ -598,4 +728,17 @@ export class BranchRolesService {
       );
     }
   }
+}
+
+function getPermissionModule(permission: {
+  module?: { code: string; name: string; isActive: boolean } | null;
+}) {
+  const legacy = permission as typeof permission & {
+    submodule?: {
+      isActive: boolean;
+      module: { code: string; name: string; isActive: boolean };
+    } | null;
+  };
+  if (permission.module) return permission.module;
+  return legacy.submodule?.isActive ? legacy.submodule.module : null;
 }

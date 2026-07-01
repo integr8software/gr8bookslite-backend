@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, SystemRole, UserStatus } from '@prisma/client';
@@ -20,6 +21,8 @@ import { validateUserAvatarFile } from './utils/UserAvatarUpload.util';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly userAvatarStorageService: UserAvatarStorageService,
@@ -251,9 +254,7 @@ export class UsersService {
       },
     });
 
-    await this.userAvatarStorageService.removeAvatar(
-      existingUser.avatarStoragePath,
-    );
+    await this.removeAvatarBestEffort(existingUser.avatarStoragePath);
 
     return sanitizeUser(user);
   }
@@ -304,6 +305,22 @@ export class UsersService {
 
     if (!user) {
       throw new NotFoundException('User not found.');
+    }
+  }
+
+  private async removeAvatarBestEffort(storagePath: string | null | undefined) {
+    if (!storagePath) {
+      return;
+    }
+
+    try {
+      await this.userAvatarStorageService.removeAvatar(storagePath);
+    } catch (error) {
+      this.logger.warn(
+        `Unable to delete previous avatar "${storagePath}": ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
     }
   }
 

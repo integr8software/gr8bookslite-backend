@@ -12,6 +12,7 @@ import {
   Prisma,
   SubscriptionPlanScope,
   SubscriptionPlanStatus,
+  SubscriptionStatus,
 } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -20,6 +21,8 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
+import { seedDefaultTermsForCompany } from '../maintenance/terms/default-terms';
+import { materializeDefaultUserSidebar } from '../company/user-sidebar/user-sidebar.defaults';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
@@ -55,6 +58,18 @@ const subscriptionPlanInclude =
     modules: {
       orderBy: [{ moduleKey: 'asc' }],
     },
+    systems: {
+      include: {
+        system: {
+          include: {
+            modules: {
+              include: { module: true },
+              where: { isActive: true, module: { isActive: true } },
+            },
+          },
+        },
+      },
+    },
   });
 
 @Injectable()
@@ -89,8 +104,17 @@ export class OnboardingService {
           where: { isActive: true },
           orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
         },
-        modules: {
-          orderBy: [{ moduleKey: 'asc' }],
+        systems: {
+          include: {
+            system: {
+              include: {
+                modules: {
+                  include: { module: true },
+                  where: { isActive: true, module: { isActive: true } },
+                },
+              },
+            },
+          },
         },
       },
       orderBy: {
@@ -182,6 +206,31 @@ export class OnboardingService {
       plan.status !== SubscriptionPlanStatus.ACTIVE
     ) {
       throw new BadRequestException('Selected subscription plan is invalid.');
+    }
+
+    const existingDraft = await this.prisma.userOnboardingDraft.findUnique({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        subscriptionPlanId: true,
+        billingCycle: true,
+        provisionedCompanyId: true,
+      },
+    });
+
+    const selectionChanged =
+      existingDraft?.subscriptionPlanId !== undefined &&
+      existingDraft.subscriptionPlanId !== null &&
+      (existingDraft.subscriptionPlanId !== plan.id ||
+        existingDraft.billingCycle !== dto.billingCycle);
+
+    if (selectionChanged && existingDraft.provisionedCompanyId) {
+      await this.billingService.supersedeOnboardingSubscriptionsForPlanChange({
+        companyId: existingDraft.provisionedCompanyId,
+        nextPlanId: plan.id,
+        nextBillingCycle: dto.billingCycle,
+      });
     }
 
     const draft = await this.prisma.userOnboardingDraft.upsert({
@@ -402,6 +451,7 @@ export class OnboardingService {
             contactNumber: dto.contactNumber.trim(),
             reportStartDate,
             reportEndDate,
+            isActive: false,
             status: 'PROVISIONING',
             createdByUserId: user.id,
           },
@@ -436,6 +486,7 @@ export class OnboardingService {
             contactNumber: dto.contactNumber.trim(),
             reportStartDate,
             reportEndDate,
+            isActive: false,
             status: 'PROVISIONING',
             createdByUserId: user.id,
           },
@@ -473,6 +524,8 @@ export class OnboardingService {
         canHoldInventory: true,
       },
     });
+
+    await seedDefaultTermsForCompany(this.prisma, provisionedCompany.id);
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({
       where: {
@@ -549,12 +602,15 @@ export class OnboardingService {
         'Complete the onboarding draft before finalizing setup.',
       );
     }
+    const selectedPlan = draft.subscriptionPlan;
 
     this.validateCompletionDraft(draft);
     const completedAt = new Date();
     const provisionedCompanyId = draft.provisionedCompanyId!;
     const shouldPromoteLogo = Boolean(
-      draft.logoStoragePath && draft.logoStoragePath.startsWith('onboarding/'),
+      draft.logoStoragePath &&
+      (draft.logoStoragePath.startsWith('onboarding/') ||
+        draft.logoStoragePath.startsWith('company-logos/onboarding-user-')),
     );
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -563,6 +619,7 @@ export class OnboardingService {
           id: provisionedCompanyId,
         },
         data: {
+          isActive: true,
           status: 'ACTIVE',
           createdByUserId: user.id,
         },
@@ -591,6 +648,17 @@ export class OnboardingService {
       const subscription = await tx.companySubscription.findFirst({
         where: {
           companyId: company.id,
+          subscriptionPlanId: draft.subscriptionPlanId!,
+          billingCycle: draft.billingCycle!,
+          status: {
+            in: [
+              SubscriptionStatus.INCOMPLETE,
+              SubscriptionStatus.TRIALING,
+              SubscriptionStatus.ACTIVE,
+              SubscriptionStatus.PAST_DUE,
+              SubscriptionStatus.UNPAID,
+            ],
+          },
         },
         include: {
           plan: true,
@@ -601,6 +669,50 @@ export class OnboardingService {
       if (!subscription) {
         throw new BadRequestException(
           'Complete billing setup before finalizing onboarding.',
+        );
+      }
+
+      const selectedModuleIds = new Set(
+        selectedPlan.systems.flatMap((planSystem) =>
+          planSystem.isEnabled && planSystem.system.isActive
+            ? planSystem.system.modules.map((item) => item.moduleId)
+            : [],
+        ),
+      );
+
+      for (const moduleId of selectedModuleIds) {
+        await tx.companyModule.upsert({
+          where: {
+            companyId_moduleId: {
+              companyId: company.id,
+              moduleId,
+            },
+          },
+          update: {
+            isEnabled: true,
+            enabledAt: completedAt,
+            disabledAt: null,
+          },
+          create: {
+            companyId: company.id,
+            moduleId,
+            isEnabled: true,
+            enabledAt: completedAt,
+          },
+        });
+      }
+
+      const headOffice = await tx.companyUnit.findFirst({
+        where: { companyId: company.id, code: 'HEAD-OFFICE', isActive: true },
+        select: { id: true },
+      });
+
+      if (headOffice) {
+        await materializeDefaultUserSidebar(
+          tx,
+          company.id,
+          headOffice.id,
+          user.id,
         );
       }
 

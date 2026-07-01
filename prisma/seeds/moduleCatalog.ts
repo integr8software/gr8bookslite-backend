@@ -1,0 +1,449 @@
+import { ModuleCategory } from '@prisma/client';
+
+export type ModuleCatalogEntry = {
+  code: string;
+  name: string;
+  icon?: string;
+  type?: string[];
+  category?: ModuleCategory;
+};
+
+const Dashboard = ['dashboard'];
+const Maintenance = ['maintenance'];
+const MaintenanceRegistry = ['maintenance', 'registry'];
+const TransactionRegistry = ['transaction', 'registry'];
+
+export const ModuleCatalog: ModuleCatalogEntry[] = [
+  {
+    code: 'DO',
+    name: 'Dashboard',
+    icon: 'dashboard',
+    type: Dashboard,
+  },
+  {
+    code: 'COA',
+    name: 'Chart of Accounts',
+    icon: 'scale',
+    type: Maintenance,
+  },
+  {
+    code: 'BM',
+    name: 'Bank Masterfile',
+    icon: 'bank',
+    type: Maintenance,
+  },
+  {
+    code: 'PM',
+    name: 'Party Management',
+    icon: 'users',
+    type: MaintenanceRegistry,
+  },
+  {
+    code: 'I',
+    name: 'Items',
+    icon: 'package',
+    type: MaintenanceRegistry,
+  },
+  {
+    code: 'IB',
+    name: 'Item Bundles',
+    icon: 'packageCheck',
+    type: Maintenance,
+  },
+  {
+    code: 'IC',
+    name: 'Item Category',
+    icon: 'tags',
+    type: Maintenance,
+  },
+  {
+    code: 'IA2',
+    name: 'Item Attributes',
+    icon: 'clipboard',
+    type: Maintenance,
+  },
+  {
+    code: 'UOM',
+    name: 'Unit of Measurement',
+    icon: 'ruler',
+    type: Maintenance,
+  },
+  {
+    code: 'IPR',
+    name: 'Item Promotions',
+    icon: 'promotion',
+    type: Maintenance,
+  },
+  {
+    code: 'PLS',
+    name: 'Price Lists',
+    icon: 'tags',
+    type: Maintenance,
+  },
+  {
+    code: 'WM',
+    name: 'Warehouse',
+    icon: 'warehouse',
+    type: Maintenance,
+  },
+  {
+    code: 'WA',
+    name: 'Warehouse Access',
+    icon: 'shieldCheck',
+    type: Maintenance,
+  },
+  {
+    code: 'WSL',
+    name: 'Storage Locations',
+    icon: 'mapPin',
+    type: Maintenance,
+  },
+  {
+    code: 'WT',
+    name: 'Warehouse Transfer',
+    icon: 'arrowRightLeft',
+    type: Maintenance,
+  },
+  {
+    code: 'WSI',
+    name: 'Warehouse Stock Inquiry',
+    icon: 'search',
+    type: Maintenance,
+  },
+  {
+    code: 'DSM',
+    name: 'Discount Management',
+    icon: 'promotion',
+    type: Maintenance,
+  },
+  {
+    code: 'TM',
+    name: 'Term Management',
+    icon: 'calendar',
+    type: Maintenance,
+  },
+  {
+    code: 'TT',
+    name: 'Transaction Type',
+    icon: 'receipt',
+    type: Maintenance,
+  },
+  {
+    code: 'PT',
+    name: 'Payment Type',
+    icon: 'creditCard',
+    type: Maintenance,
+  },
+  {
+    code: 'RC',
+    name: 'Responsibility Center',
+    icon: 'target',
+    type: Maintenance,
+  },
+  {
+    code: 'OR',
+    name: 'Official Receipt',
+    icon: 'cashIn',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'CR',
+    name: 'Collection Receipt',
+    icon: 'cashIn',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'AR',
+    name: 'Acknowledgement Receipt',
+    icon: 'cashIn',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PVR',
+    name: 'Provisional Receipt',
+    icon: 'cashIn',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'BR',
+    name: 'Bank Reconciliation',
+    icon: 'cashIn',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PDCW',
+    name: 'Product Distribution Center Warehouse',
+    icon: 'cashIn',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'DV',
+    name: 'Disbursement Voucher',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'CA',
+    name: 'Cash Advance',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'CAME',
+    name: 'Cash Advance Multiple Entry',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PCV',
+    name: 'Petty Cash Voucher',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PCF',
+    name: 'Petty Cash Fund',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PCFR',
+    name: 'Petty Cash Fund Replenishment',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PCA',
+    name: 'Petty Cash Advance',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PCAR',
+    name: 'Petty Cash Advance Replenishment',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'RF',
+    name: 'Revolving Fund',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'RFP',
+    name: 'Request For Payment',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'ATS',
+    name: 'Advances To Supplier',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'APV',
+    name: 'Accounts Payable Voucher',
+    icon: 'payable',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'JV',
+    name: 'Journal Voucher',
+    icon: 'journal',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'DM',
+    name: 'Debit Memo',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'CM',
+    name: 'Credit Memo',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'SQ',
+    name: 'Sales Quotation',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'SO',
+    name: 'Sales Order',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'SI',
+    name: 'Sales Invoice',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'B',
+    name: 'Billing',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'BS',
+    name: 'Billing Statement',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'BI',
+    name: 'Billing Invoice',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'SVI',
+    name: 'Service Invoice',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'CSI',
+    name: 'Cash Sales Invoice',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'SJ',
+    name: 'Sales Journal',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'SOA',
+    name: 'Statement of Account',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'RR',
+    name: 'Receiving Report',
+    icon: 'inventory',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'GR',
+    name: 'Goods Receipt',
+    icon: 'inventory',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'IA',
+    name: 'Inventory Account',
+    icon: 'inventory',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'MR',
+    name: 'Material Request',
+    icon: 'inventory',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PL',
+    name: 'Pick List',
+    icon: 'inventory',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'GI',
+    name: 'Goods Issue',
+    icon: 'inventory',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'DR',
+    name: 'Delivery Receipt',
+    icon: 'inventory',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PR',
+    name: 'Purchase Request',
+    icon: 'purchasing',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'CF',
+    name: 'Canvass Form',
+    icon: 'purchasing',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PO',
+    name: 'Purchase Order',
+    icon: 'purchasing',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'PJ',
+    name: 'Purchase Journal',
+    icon: 'purchasing',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'FA',
+    name: 'Fixed Asset',
+    icon: 'asset',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'U',
+    name: 'Users',
+    icon: 'users',
+    type: Maintenance,
+  },
+  {
+    code: 'UR',
+    name: 'User Roles',
+    icon: 'users',
+    type: Maintenance,
+  },
+  {
+    code: 'AM',
+    name: 'Approval Management',
+    icon: 'shieldCheck',
+    type: Maintenance,
+  },
+  {
+    code: 'AT',
+    name: 'Audit Trail',
+    icon: 'activity',
+    type: Maintenance,
+  },
+  {
+    code: 'TNS',
+    name: 'Transaction Number Setup',
+    icon: 'receipt',
+    type: Maintenance,
+  },
+  {
+    code: 'MCS',
+    name: 'Multi Currency Setup',
+    icon: 'coins',
+    type: Maintenance,
+  },
+  {
+    code: 'FS',
+    name: 'Form Signatory',
+    icon: 'fileSignature',
+    type: Maintenance,
+  },
+  {
+    code: 'MM',
+    name: 'Mail Maintenance',
+    icon: 'mail',
+    type: Maintenance,
+  },
+];

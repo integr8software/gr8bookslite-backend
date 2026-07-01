@@ -7,6 +7,7 @@ export function mapCompanySubscription(
   const priceSummary = getSubscriptionPlanPriceSummary(
     subscription.plan.prices,
   );
+  const modules = deriveSubscriptionPlanModules(subscription);
 
   return {
     id: subscription.id,
@@ -68,13 +69,12 @@ export function mapCompanySubscription(
         thresholdCount: tier.thresholdCount,
         discountPercent: tier.discountPercent.toNumber(),
       })),
-      moduleKeys: subscription.plan.modules
-        .filter((module) => module.isEnabled)
-        .map((module) => module.moduleKey),
-      modules: subscription.plan.modules.map((module) => ({
+      moduleKeys: modules.map((module) => module.code),
+      modules: modules.map((module) => ({
         id: module.id,
-        moduleKey: module.moduleKey,
-        isEnabled: module.isEnabled,
+        moduleKey: module.code,
+        name: module.name,
+        isEnabled: true,
       })),
     },
     billingCustomer: subscription.billingCustomer
@@ -112,4 +112,22 @@ export function mapCompanySubscription(
       periodEndAt: invoice.periodEndAt,
     })),
   };
+}
+
+function deriveSubscriptionPlanModules(subscription: CompanySubscriptionDetails) {
+  const modulesById = new Map<
+    number,
+    CompanySubscriptionDetails['plan']['systems'][number]['system']['modules'][number]['module']
+  >();
+  for (const planSystem of subscription.plan.systems) {
+    if (!planSystem.isEnabled || !planSystem.system.isActive) continue;
+    for (const systemModule of planSystem.system.modules) {
+      modulesById.set(systemModule.module.id, systemModule.module);
+    }
+  }
+
+  return [...modulesById.values()].sort(
+    (left, right) =>
+      left.name.localeCompare(right.name) || left.code.localeCompare(right.code),
+  );
 }

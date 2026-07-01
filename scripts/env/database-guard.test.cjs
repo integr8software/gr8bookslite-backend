@@ -131,7 +131,7 @@ test('requires an explicit staging database fingerprint', () => {
   );
 });
 
-test('requires confirmation for production migration deploy', () => {
+test('allows production migration deploy for the configured production database', () => {
   const productionEnvironment = environment(
     'production',
     'ep-production.neon.tech',
@@ -142,21 +142,12 @@ test('requires confirmation for production migration deploy', () => {
     },
   );
 
-  assert.throws(
-    () =>
-      assertDatabaseEnvironment(productionEnvironment, [
-        'prisma',
-        'migrate',
-        'deploy',
-      ]),
-    /CONFIRM_PRODUCTION_MIGRATION=true is required/,
-  );
-
   assert.equal(
-    assertDatabaseEnvironment(
-      { ...productionEnvironment, CONFIRM_PRODUCTION_MIGRATION: 'true' },
-      ['prisma', 'migrate', 'deploy'],
-    ).operation,
+    assertDatabaseEnvironment(productionEnvironment, [
+      'prisma',
+      'migrate',
+      'deploy',
+    ]).operation,
     'prisma:migrate:deploy',
   );
 });
@@ -184,6 +175,60 @@ test('requires confirmation for production reference seed', () => {
       command,
     ).operation,
     'seed:reference',
+  );
+});
+
+test('allows safe infrastructure seeds remotely but keeps full seed blocked', () => {
+  const sharedEnvironment = environment(
+    'shared-dev',
+    'server1.integr8.com.ph',
+    'gr8booksneo_shared_dev',
+  );
+
+  for (const [script, operation] of [
+    ['prisma/scripts/provision-platform.ts', 'provision:platform'],
+    [
+      'prisma/scripts/materialize-user-sidebars.ts',
+      'materialize:user-sidebars',
+    ],
+  ]) {
+    assert.equal(
+      assertDatabaseEnvironment(sharedEnvironment, ['ts-node', script])
+        .operation,
+      operation,
+    );
+  }
+
+  assert.throws(
+    () =>
+      assertDatabaseEnvironment(sharedEnvironment, ['prisma', 'db', 'seed']),
+    /forbidden when APP_ENV=shared-dev/,
+  );
+});
+
+test('requires explicit production opt-in for safe infrastructure seeds', () => {
+  const productionEnvironment = environment(
+    'production',
+    'ep-production.neon.tech',
+    'gr8booksneo_production',
+    {
+      DATABASE_GUARD_HOSTS: 'ep-production.neon.tech',
+      DATABASE_GUARD_NAME: 'gr8booksneo_production',
+    },
+  );
+  const command = ['ts-node', 'prisma/scripts/provision-platform.ts'];
+
+  assert.throws(
+    () => assertDatabaseEnvironment(productionEnvironment, command),
+    /ALLOW_PRODUCTION_SAFE_SEED=true is required/,
+  );
+
+  assert.equal(
+    assertDatabaseEnvironment(
+      { ...productionEnvironment, ALLOW_PRODUCTION_SAFE_SEED: 'true' },
+      command,
+    ).operation,
+    'provision:platform',
   );
 });
 
