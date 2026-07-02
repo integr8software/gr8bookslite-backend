@@ -25,8 +25,49 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
     company: {
       include: {
         subscriptions: {
+          include: {
+            plan: {
+              include: {
+                systems: {
+                  where: { isEnabled: true; system: { isActive: true } };
+                  include: {
+                    system: {
+                      include: {
+                        sidebarItems: {
+                          where: { isVisible: true };
+                          include: {
+                            module: {
+                              include: {
+                                permissions: {
+                                  where: { isActive: true };
+                                  orderBy: { id: 'asc' };
+                                };
+                              };
+                            };
+                          };
+                          orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }];
+                        };
+                      };
+                    };
+                  };
+                  orderBy: [{ system: { sortOrder: 'asc' } }];
+                };
+              };
+            };
+          };
           orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }];
           take: 1;
+        };
+        units: {
+          where: {
+            isActive: true;
+          };
+          select: {
+            id: true;
+          };
+          orderBy: {
+            id: 'asc';
+          };
         };
         enabledModules: {
           where: {
@@ -262,8 +303,49 @@ export class AccessControlService {
         company: {
           include: {
             subscriptions: {
+              include: {
+                plan: {
+                  include: {
+                    systems: {
+                      where: { isEnabled: true, system: { isActive: true } },
+                      include: {
+                        system: {
+                          include: {
+                            sidebarItems: {
+                              where: { isVisible: true },
+                              include: {
+                                module: {
+                                  include: {
+                                    permissions: {
+                                      where: { isActive: true },
+                                      orderBy: { id: 'asc' },
+                                    },
+                                  },
+                                },
+                              },
+                              orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+                            },
+                          },
+                        },
+                      },
+                      orderBy: [{ system: { sortOrder: 'asc' } }],
+                    },
+                  },
+                },
+              },
               orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
               take: 1,
+            },
+            units: {
+              where: {
+                isActive: true,
+              },
+              select: {
+                id: true,
+              },
+              orderBy: {
+                id: 'asc',
+              },
             },
             enabledModules: {
               where: {
@@ -529,23 +611,28 @@ export class AccessControlService {
         item.itemType === 'LINK' && item.moduleId ? [item.moduleId] : [],
       ),
     );
-    const fallbackItems = membership.company.enabledModules
-      .filter((item) => !permittedSidebarModuleIds.has(item.moduleId))
-      .filter(
-        (item) =>
-          hasAdminModuleAccess ||
-          item.module.permissions.some((permission) =>
-            Object.values(PermissionAction).some((action) =>
-              permissionSet.has(
-                this.buildPermissionKey(permission.code, action),
-              ),
-            ),
+    const permittedEnabledModules = membership.company.enabledModules.filter(
+      (item) =>
+        hasAdminModuleAccess ||
+        item.module.permissions.some((permission) =>
+          Object.values(PermissionAction).some((action) =>
+            permissionSet.has(this.buildPermissionKey(permission.code, action)),
           ),
-      )
+        ),
+    );
+    const fallbackItems = permittedEnabledModules
+      .filter((item) => !permittedSidebarModuleIds.has(item.moduleId))
       .map((item) => buildFallbackUserModuleItem(item.module));
+    const defaultBranchIds =
+      membership.role === MembershipRole.ADMIN ||
+      membership.accessScope === 'COMPANY' ||
+      membership.unitAccess.length === 0
+        ? membership.company.units.map((item) => item.id)
+        : membership.unitAccess.map((item) => item.unitId);
 
     const branchIds = Array.from(
       new Set([
+        ...defaultBranchIds,
         ...membership.unitAccess.map((item) => item.unitId),
         ...permittedItems.map((item) => item.branchUnitId),
       ]),
@@ -560,12 +647,13 @@ export class AccessControlService {
         companyRoleId: branchAccess?.companyRole?.id ?? null,
         companyRoleCode: branchAccess?.companyRole?.code ?? null,
         companyRoleName: branchAccess?.companyRole?.name ?? null,
-        items: [
-          ...buildUserModuleTree(
-            permittedItems.filter((item) => item.branchUnitId === branchUnitId),
+        items: buildBranchUserModules({
+          customItems: permittedItems.filter(
+            (item) => item.branchUnitId === branchUnitId,
           ),
-          ...fallbackItems,
-        ],
+          enabledModules: permittedEnabledModules,
+          systemSidebarItems: getActiveSystemSidebarItems(membership),
+        }),
       };
     });
 
@@ -597,6 +685,75 @@ type UserModuleRecord =
   MembershipAccessRecord['company']['moduleSidebar'][number];
 type EnabledUserModuleRecord =
   MembershipAccessRecord['company']['enabledModules'][number]['module'];
+type EnabledCompanyModuleRecord =
+  MembershipAccessRecord['company']['enabledModules'][number];
+type SystemSidebarRecord =
+  MembershipAccessRecord['company']['subscriptions'][number]['plan']['systems'][number]['system']['sidebarItems'][number] & {
+    systemCode: string;
+  };
+
+function getActiveSystemSidebarItems(membership: MembershipAccessRecord) {
+  const subscription = membership.company.subscriptions[0];
+
+  if (!subscription) {
+    return [];
+  }
+
+  return subscription.plan.systems.flatMap((planSystem) =>
+    planSystem.system.sidebarItems.map((item) => ({
+      ...item,
+      systemCode: planSystem.system.code,
+    })),
+  );
+}
+
+function buildBranchUserModules({
+  customItems,
+  enabledModules,
+  systemSidebarItems,
+}: {
+  customItems: UserModuleRecord[];
+  enabledModules: EnabledCompanyModuleRecord[];
+  systemSidebarItems: SystemSidebarRecord[];
+}) {
+  if (customItems.length) {
+    const customTree = buildUserModuleTree(customItems);
+    const customModuleIds = collectModuleIds(customTree);
+    return [
+      ...customTree,
+      ...buildMissingFallbackItems(enabledModules, customModuleIds),
+    ];
+  }
+
+  const systemTree = buildSystemSidebarTree(systemSidebarItems, enabledModules);
+  const systemModuleIds = collectModuleIds(systemTree);
+
+  return [
+    ...systemTree,
+    ...buildMissingFallbackItems(enabledModules, systemModuleIds),
+  ];
+}
+
+function buildMissingFallbackItems(
+  enabledModules: EnabledCompanyModuleRecord[],
+  existingModuleIds: Set<number>,
+) {
+  return enabledModules
+    .filter((item) => !existingModuleIds.has(item.moduleId))
+    .map((item) => buildFallbackUserModuleItem(item.module));
+}
+
+function collectModuleIds(items: AuthUserModuleItem[]) {
+  const moduleIds = new Set<number>();
+  const visit = (item: AuthUserModuleItem) => {
+    if (item.moduleId != null) {
+      moduleIds.add(item.moduleId);
+    }
+    item.children.forEach(visit);
+  };
+  items.forEach(visit);
+  return moduleIds;
+}
 
 function buildFallbackUserModuleItem(
   module: EnabledUserModuleRecord,
@@ -619,6 +776,85 @@ function buildFallbackUserModuleItem(
     category: module.category,
     children: [],
   };
+}
+
+function buildSystemSidebarTree(
+  items: SystemSidebarRecord[],
+  enabledModules: EnabledCompanyModuleRecord[],
+) {
+  const enabledModulesById = new Map(
+    enabledModules.map((item) => [item.moduleId, item.module]),
+  );
+  const byParent = new Map<number | null, SystemSidebarRecord[]>();
+  const renderedModuleIds = new Set<number>();
+
+  for (const item of items) {
+    const siblings = byParent.get(item.parentId) ?? [];
+    siblings.push(item);
+    byParent.set(item.parentId, siblings);
+  }
+
+  const visit = (parentId: number | null): AuthUserModuleItem[] =>
+    (byParent.get(parentId) ?? []).flatMap((item): AuthUserModuleItem[] => {
+      if (item.itemType === 'LINK') {
+        if (
+          item.moduleId == null ||
+          renderedModuleIds.has(item.moduleId) ||
+          !enabledModulesById.has(item.moduleId)
+        ) {
+          return [];
+        }
+
+        const module = enabledModulesById.get(item.moduleId)!;
+        const permission = module.permissions[0];
+
+        renderedModuleIds.add(item.moduleId);
+
+        return [
+          {
+            id: -item.id,
+            key: `${item.systemCode.toLowerCase()}-${item.key}`,
+            label: item.label,
+            description: item.description,
+            itemType: 'LINK',
+            iconName: item.iconName,
+            sortOrder: item.sortOrder,
+            moduleId: item.moduleId,
+            moduleCode: module.code,
+            permissionCode: permission?.code ?? null,
+            requiredActions: permission ? ['view'] : [],
+            category: module.category,
+            children: [],
+          },
+        ];
+      }
+
+      const children = visit(item.id);
+
+      if (!children.length) {
+        return [];
+      }
+
+      return [
+        {
+          id: -item.id,
+          key: `${item.systemCode.toLowerCase()}-${item.key}`,
+          label: item.label,
+          description: item.description,
+          itemType: item.itemType,
+          iconName: item.iconName,
+          sortOrder: item.sortOrder,
+          moduleId: null,
+          moduleCode: null,
+          permissionCode: null,
+          requiredActions: [],
+          category: null,
+          children,
+        },
+      ];
+    });
+
+  return visit(null);
 }
 
 function buildUserModuleTree(items: UserModuleRecord[]) {
