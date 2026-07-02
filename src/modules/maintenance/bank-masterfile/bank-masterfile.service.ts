@@ -132,12 +132,13 @@ export class BankMasterfileService {
               cashInBankAccount.accountCode,
               tx,
             );
-        const normalizedDto = {
-          ...dto,
-          accountNumber: dto.accountNumber?.trim() || accountCode,
-        };
-        await this.ensureBankAccountAvailable(companyId, normalizedDto);
         const accountName = this.resolveAccountName(dto);
+        this.ensureActiveBankDetails({
+          ...dto,
+          accountName,
+          status: dto.status ?? ChartAccountStatus.ACTIVE,
+        });
+        await this.ensureBankAccountAvailable(companyId, dto);
         const chartAccount = await tx.chartAccount.create({
           data: {
             companyId,
@@ -151,6 +152,8 @@ export class BankMasterfileService {
             isPostingAccount: true,
             currencyCode: cleanCurrencyCode(dto.currencyCode),
             status: dto.status ?? ChartAccountStatus.ACTIVE,
+            deletedAt:
+              dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
             whoCreated: String(user.id),
           },
         });
@@ -166,7 +169,7 @@ export class BankMasterfileService {
           data: {
             companyId,
             coaId: chartAccount.id,
-            ...this.toCreateBankAccountData(normalizedDto, accountName),
+            ...this.toCreateBankAccountData(dto, accountName),
             status: dto.status ?? ChartAccountStatus.ACTIVE,
             createdByUserId: user.id,
           },
@@ -225,11 +228,12 @@ export class BankMasterfileService {
                 cashInBankAccount.accountCode,
                 tx,
               );
-          const normalizedBank = {
-            ...bank,
-            accountNumber: bank.accountNumber?.trim() || accountCode,
-          };
           const accountName = this.resolveAccountName(bank);
+          this.ensureActiveBankDetails({
+            ...bank,
+            accountName,
+            status: bank.status ?? ChartAccountStatus.ACTIVE,
+          });
           const chartAccount = await tx.chartAccount.create({
             data: {
               companyId,
@@ -243,6 +247,8 @@ export class BankMasterfileService {
               isPostingAccount: true,
               currencyCode: cleanCurrencyCode(bank.currencyCode),
               status: bank.status ?? ChartAccountStatus.ACTIVE,
+              deletedAt:
+                bank.status === ChartAccountStatus.INACTIVE ? new Date() : null,
               whoCreated: String(user.id),
             },
           });
@@ -250,7 +256,7 @@ export class BankMasterfileService {
             data: {
               companyId,
               coaId: chartAccount.id,
-              ...this.toCreateBankAccountData(normalizedBank, accountName),
+              ...this.toCreateBankAccountData(bank, accountName),
               status: bank.status ?? ChartAccountStatus.ACTIVE,
               createdByUserId: user.id,
             },
@@ -290,16 +296,14 @@ export class BankMasterfileService {
       throw new BadRequestException('Account code cannot be changed here.');
     }
 
-    this.validateBankInput({ ...this.toDtoLike(currentBankAccount), ...dto });
+    const nextDto = { ...this.toDtoLike(currentBankAccount), ...dto };
+    const nextAccountName = this.resolveAccountName(nextDto);
+    this.validateBankInput(nextDto);
+    this.ensureActiveBankDetails({ ...nextDto, accountName: nextAccountName });
     await this.ensureBankAccountAvailable(companyId, dto, bankAccountId);
 
     try {
       const bankAccount = await this.prisma.$transaction(async (tx) => {
-        const nextAccountName = this.resolveAccountName({
-          ...this.toDtoLike(currentBankAccount),
-          ...dto,
-        });
-
         if (dto.isDefault === true) {
           await tx.bankAccount.updateMany({
             where: { companyId, id: { not: bankAccountId }, isDefault: true },
@@ -325,6 +329,12 @@ export class BankMasterfileService {
                 ? cleanCurrencyCode(dto.currencyCode)
                 : undefined,
             status: dto.status,
+            deletedAt:
+              dto.status === undefined
+                ? undefined
+                : dto.status === ChartAccountStatus.INACTIVE
+                  ? new Date()
+                  : null,
             whoModified: String(user.id),
           },
         });
@@ -359,6 +369,14 @@ export class BankMasterfileService {
       bankAccountId,
     );
 
+    if (dto.status === ChartAccountStatus.ACTIVE) {
+      this.ensureActiveBankDetails({
+        ...this.toDtoLike(currentBankAccount),
+        accountName: currentBankAccount.accountName,
+        status: dto.status,
+      });
+    }
+
     const bankAccount = await this.prisma.$transaction(async (tx) => {
       await tx.chartAccount.update({
         where: { id: currentBankAccount.coaId },
@@ -374,11 +392,6 @@ export class BankMasterfileService {
         where: { id: bankAccountId },
         data: {
           status: dto.status,
-          accountNumber:
-            dto.status === ChartAccountStatus.ACTIVE &&
-            !currentBankAccount.accountNumber.trim()
-              ? currentBankAccount.coa.accountCode
-              : undefined,
           updatedByUserId: user.id,
         },
         include: BankAccountInclude,
@@ -584,6 +597,28 @@ export class BankMasterfileService {
     }
   }
 
+  private ensureActiveBankDetails(
+    dto: (CreateBankAccountDto | UpdateBankAccountDto) & {
+      accountName?: string;
+    },
+  ) {
+    if (dto.status !== ChartAccountStatus.ACTIVE) {
+      return;
+    }
+
+    if (!dto.accountNumber?.trim()) {
+      throw new BadRequestException(
+        'Bank account number is required before activating the bank.',
+      );
+    }
+
+    if (!dto.accountName?.trim()) {
+      throw new BadRequestException(
+        'Bank account name is required before activating the bank.',
+      );
+    }
+  }
+
   private async ensureBankAccountAvailable(
     companyId: number,
     dto: CreateBankAccountDto | UpdateBankAccountDto,
@@ -733,13 +768,13 @@ export class BankMasterfileService {
   }
 
   private toCreateBankAccountData(
-    dto: CreateBankAccountDto & { accountNumber: string },
+    dto: CreateBankAccountDto,
     accountName: string,
   ) {
     return {
       bankName: dto.bankName.trim(),
       branch: cleanOptional(dto.branch),
-      accountNumber: dto.accountNumber.trim(),
+      accountNumber: dto.accountNumber?.trim() ?? '',
       accountName,
       accountType: cleanOptional(dto.accountType),
       seriesStart: cleanOptional(dto.seriesStart),

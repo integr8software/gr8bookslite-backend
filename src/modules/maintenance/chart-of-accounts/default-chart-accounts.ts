@@ -1,4 +1,9 @@
-import { ChartAccountLevel, ChartAccountStatus, Prisma } from '@prisma/client';
+import {
+  ChartAccountLevel,
+  ChartAccountStatus,
+  Prisma,
+  type DefaultChartAccount,
+} from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 const RequiredCompanyAccountRoles = [
@@ -7,6 +12,8 @@ const RequiredCompanyAccountRoles = [
     accountRole: 'CASH_IN_BANK_PARENT',
   },
 ] as const;
+
+const CashInBankSpecificPrefix = 'Cash in Bank - ';
 
 export async function seedDefaultChartAccountsForCompany(
   tx: Prisma.TransactionClient | PrismaService,
@@ -34,6 +41,10 @@ export async function seedDefaultChartAccountsForCompany(
       );
     }
 
+    const seededStatus = getSeededChartAccountStatus(defaultAccount);
+    const seededDeletedAt =
+      seededStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
+
     const savedAccount = await tx.chartAccount.upsert({
       where: {
         companyId_accountCode: {
@@ -55,8 +66,9 @@ export async function seedDefaultChartAccountsForCompany(
         contraAccount: defaultAccount.contraAccount,
         showTotal: defaultAccount.showTotal,
         orderNo: defaultAccount.orderNo,
-        status: defaultAccount.status,
+        status: seededStatus,
         currencyCode: defaultAccount.currencyCode,
+        deletedAt: seededDeletedAt,
       },
       create: {
         companyId,
@@ -77,8 +89,9 @@ export async function seedDefaultChartAccountsForCompany(
         contraAccount: defaultAccount.contraAccount,
         showTotal: defaultAccount.showTotal,
         orderNo: defaultAccount.orderNo,
-        status: defaultAccount.status,
+        status: seededStatus,
         currencyCode: defaultAccount.currencyCode,
+        deletedAt: seededDeletedAt,
       },
       select: { id: true },
     });
@@ -153,4 +166,15 @@ export async function seedDefaultChartAccountsForCompany(
       );
     }
   }
+}
+
+function getSeededChartAccountStatus(defaultAccount: DefaultChartAccount) {
+  if (
+    defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC &&
+    defaultAccount.accountTitle.startsWith(CashInBankSpecificPrefix)
+  ) {
+    return ChartAccountStatus.INACTIVE;
+  }
+
+  return defaultAccount.status;
 }

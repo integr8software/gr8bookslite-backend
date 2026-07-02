@@ -54,7 +54,6 @@ export class ChartOfAccountsService {
     const accounts = await this.prisma.chartAccount.findMany({
       where: {
         companyId,
-        deletedAt: null,
         ...(query.accountLevel ? { accountLevel: query.accountLevel } : {}),
         ...(query.status ? { status: query.status } : {}),
         ...(parentAccountId !== undefined ? { parentAccountId } : {}),
@@ -96,8 +95,6 @@ export class ChartOfAccountsService {
     const accounts = await this.prisma.chartAccount.findMany({
       where: {
         companyId,
-        status: ChartAccountStatus.ACTIVE,
-        deletedAt: null,
       },
       include: ChartAccountInclude,
       orderBy: [
@@ -411,7 +408,6 @@ export class ChartOfAccountsService {
       where: {
         id: accountId,
         companyId,
-        deletedAt: null,
       },
       include: ChartAccountInclude,
     });
