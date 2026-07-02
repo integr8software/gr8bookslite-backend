@@ -4,6 +4,7 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -39,21 +40,21 @@ export class CreateBankAccountDto {
   @MaxLength(50)
   accountType?: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(50)
-  seriesStart?: string;
+  seriesStart!: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(50)
-  seriesEnd?: string;
+  seriesEnd!: string;
 
-  @IsOptional()
   @Transform(({ value }) => toOptionalNumber(value))
+  @IsNotEmpty()
   @IsInt()
   @Min(1)
-  seriesDigits?: number;
+  seriesDigits!: number;
 
   @IsOptional()
   @IsString()

@@ -573,6 +573,24 @@ export class BankMasterfileService {
       throw new BadRequestException('Bank is required.');
     }
 
+    if (!dto.seriesStart?.trim()) {
+      throw new BadRequestException('Series start is required.');
+    }
+
+    if (!dto.seriesEnd?.trim()) {
+      throw new BadRequestException('Series end is required.');
+    }
+
+    if (dto.seriesDigits === undefined || dto.seriesDigits === null) {
+      throw new BadRequestException('Series digits are required.');
+    }
+
+    if (!Number.isInteger(dto.seriesDigits) || dto.seriesDigits < 1) {
+      throw new BadRequestException(
+        'Series digits must be a positive whole number.',
+      );
+    }
+
     if (
       dto.seriesStart !== undefined &&
       dto.seriesEnd !== undefined &&
@@ -764,7 +782,14 @@ export class BankMasterfileService {
   }
 
   private resolveAccountName(dto: CreateBankAccountDto | UpdateBankAccountDto) {
-    return ['Cash in Bank', dto.bankName?.trim()].filter(Boolean).join(' - ');
+    return [
+      'Cash in Bank',
+      dto.bankName?.trim(),
+      dto.branch?.trim(),
+      dto.accountNumber?.trim(),
+    ]
+      .filter(Boolean)
+      .join(' - ');
   }
 
   private toCreateBankAccountData(
@@ -1020,6 +1045,7 @@ function getBankAccountIdentityKey(bank: BankAccountIdentity) {
 function normalizeIdentityValue(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? '';
 }
+
 function cleanOptional(value: string | null | undefined) {
   if (value === undefined || value === null) {
     return null;
