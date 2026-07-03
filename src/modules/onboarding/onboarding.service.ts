@@ -74,6 +74,10 @@ const subscriptionPlanInclude =
     },
   });
 
+type OnboardingSubscriptionPlan = Prisma.SubscriptionPlanGetPayload<{
+  include: typeof subscriptionPlanInclude;
+}>;
+
 @Injectable()
 export class OnboardingService {
   private readonly logger = new Logger(OnboardingService.name);
@@ -679,35 +683,14 @@ export class OnboardingService {
         );
       }
 
-      const selectedModuleIds = new Set(
-        selectedPlan.systems.flatMap((planSystem) =>
-          planSystem.isEnabled && planSystem.system.isActive
-            ? planSystem.system.modules.map((item) => item.moduleId)
-            : [],
-        ),
-      );
+      const selectedModuleIds = this.getSelectedPlanModuleIds(selectedPlan);
 
-      for (const moduleId of selectedModuleIds) {
-        await tx.companyModule.upsert({
-          where: {
-            companyId_moduleId: {
-              companyId: company.id,
-              moduleId,
-            },
-          },
-          update: {
-            isEnabled: true,
-            enabledAt: completedAt,
-            disabledAt: null,
-          },
-          create: {
-            companyId: company.id,
-            moduleId,
-            isEnabled: true,
-            enabledAt: completedAt,
-          },
-        });
-      }
+      await this.enableCompanyModulesFromSelectedPlan(
+        tx,
+        company.id,
+        selectedModuleIds,
+        completedAt,
+      );
 
       const headOffice = await tx.companyUnit.findFirst({
         where: { companyId: company.id, code: 'HEAD-OFFICE', isActive: true },
@@ -919,6 +902,53 @@ export class OnboardingService {
       throw new BadRequestException(
         'Complete company details before finalizing onboarding.',
       );
+    }
+  }
+
+  private getSelectedPlanModuleIds(plan: OnboardingSubscriptionPlan): number[] {
+    return [
+      ...new Set(
+        plan.systems.flatMap((planSystem) =>
+          planSystem.isEnabled && planSystem.system.isActive
+            ? planSystem.system.modules.map((item) => item.moduleId)
+            : [],
+        ),
+      ),
+    ];
+  }
+
+  private async enableCompanyModulesFromSelectedPlan(
+    tx: Prisma.TransactionClient,
+    companyId: number,
+    moduleIds: number[],
+    enabledAt: Date,
+  ) {
+    if (moduleIds.length === 0) {
+      throw new BadRequestException(
+        'Selected subscription plan has no enabled modules configured.',
+      );
+    }
+
+    for (const moduleId of moduleIds) {
+      await tx.companyModule.upsert({
+        where: {
+          companyId_moduleId: {
+            companyId,
+            moduleId,
+          },
+        },
+        update: {
+          isEnabled: true,
+          enabledAt,
+          disabledAt: null,
+        },
+        create: {
+          companyId,
+          moduleId,
+          isEnabled: true,
+          enabledAt,
+        },
+      });
     }
   }
 
