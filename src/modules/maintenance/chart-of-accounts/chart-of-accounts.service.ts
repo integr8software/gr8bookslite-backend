@@ -36,7 +36,6 @@ const ChartAccountTransactionOptions = {
   maxWait: 10_000,
   timeout: 30_000,
 };
-const CompanyEditableAccountLevel = ChartAccountLevel.SPECIFIC;
 
 @Injectable()
 export class ChartOfAccountsService {
@@ -130,7 +129,6 @@ export class ChartOfAccountsService {
       ? await this.findActiveParentAccount(companyId, parentAccountId)
       : null;
 
-    this.assertCompanyEditableAccountLevel(query.accountLevel);
     assertCanCreateAccountLevel(
       parentAccount?.accountLevel ?? null,
       query.accountLevel,
@@ -150,7 +148,6 @@ export class ChartOfAccountsService {
   async create(user: AuthUser, dto: CreateChartAccountDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
-    this.assertCompanyEditableAccountLevel(dto.accountLevel);
     const parentAccountId = parseOptionalBigIntId(
       dto.parentAccountId,
       'parentAccountId',
@@ -167,6 +164,12 @@ export class ChartOfAccountsService {
             parentAccount?.accountLevel ?? null,
             dto.accountLevel,
           );
+          await this.assertUniqueAccountTitleUnderParent({
+            companyId,
+            parentAccountId: parentAccount?.id ?? null,
+            accountTitle: dto.accountTitle,
+            tx,
+          });
           const accountCode = await this.generateNextAccountCode({
             companyId,
             parentAccountId: parentAccount?.id ?? null,
@@ -212,10 +215,10 @@ export class ChartOfAccountsService {
 
     if (
       dto.accountLevel !== undefined &&
-      dto.accountLevel !== CompanyEditableAccountLevel
+      dto.accountLevel !== existingAccount.accountLevel
     ) {
       throw new BadRequestException(
-        'Only Specific accounts can be managed from the company Chart of Accounts.',
+        'Account level cannot be changed after the account is created.',
       );
     }
 
@@ -225,7 +228,7 @@ export class ChartOfAccountsService {
         (existingAccount.parentAccountId?.toString() ?? undefined)
     ) {
       throw new BadRequestException(
-        'Specific accounts cannot be reparented from the company Chart of Accounts.',
+        'Accounts cannot be reparented from the company Chart of Accounts.',
       );
     }
 
@@ -280,6 +283,14 @@ export class ChartOfAccountsService {
             tx,
           });
         }
+
+        await this.assertUniqueAccountTitleUnderParent({
+          companyId,
+          parentAccountId: nextParentAccountId,
+          accountTitle: dto.accountTitle ?? currentAccount.accountTitle,
+          excludeAccountId: accountId,
+          tx,
+        });
 
         return tx.chartAccount.update({
           where: {
@@ -437,18 +448,61 @@ export class ChartOfAccountsService {
     return parentAccount;
   }
 
-  private assertCompanyEditableAccountLevel(accountLevel: ChartAccountLevel) {
-    if (accountLevel !== CompanyEditableAccountLevel) {
-      throw new BadRequestException(
-        'Only Specific accounts can be managed from the company Chart of Accounts.',
+  private async assertUniqueAccountTitleUnderParent({
+    companyId,
+    parentAccountId,
+    accountTitle,
+    excludeAccountId,
+    tx = this.prisma,
+  }: {
+    companyId: number;
+    parentAccountId: bigint | null;
+    accountTitle: string;
+    excludeAccountId?: bigint;
+    tx?: Prisma.TransactionClient | PrismaService;
+  }) {
+    const normalizedTitle = accountTitle.trim();
+
+    if (!normalizedTitle) {
+      throw new BadRequestException('Account title is required.');
+    }
+
+    const duplicateAccount = await tx.chartAccount.findFirst({
+      where: {
+        companyId,
+        parentAccountId,
+        accountTitle: {
+          equals: normalizedTitle,
+          mode: 'insensitive',
+        },
+        ...(excludeAccountId
+          ? {
+              id: {
+                not: excludeAccountId,
+              },
+            }
+          : {}),
+      },
+      select: { id: true },
+    });
+
+    if (duplicateAccount) {
+      throw new ConflictException(
+        'An account with this title already exists under the selected parent.',
       );
     }
   }
 
   private assertCompanyEditableAccount(
-    account: Pick<ChartAccountPayload, 'accountLevel'>,
+    account: Pick<ChartAccountPayload, 'whoCreated' | 'bankAccounts'>,
   ) {
-    this.assertCompanyEditableAccountLevel(account.accountLevel);
+    if (account.whoCreated || account.bankAccounts.length > 0) {
+      return;
+    }
+
+    throw new BadRequestException(
+      'Default chart accounts cannot be edited or deactivated.',
+    );
   }
 
   private toChartAccountData(

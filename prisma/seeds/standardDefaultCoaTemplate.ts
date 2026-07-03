@@ -1253,7 +1253,7 @@ export const StandardDefaultChartAccounts = [
   },
   {
     accountCode: '3000000000',
-    accountTitle: 'EQUITY',
+    accountTitle: 'Equity',
     accountLevel: ChartAccountLevel.MAJOR,
     accountType: ChartAccountType.EQUITY,
     accountNature: AccountNature.CREDIT,
