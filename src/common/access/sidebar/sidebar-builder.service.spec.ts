@@ -48,7 +48,7 @@ describe('SidebarBuilder', () => {
     const builder = createSidebarBuilder();
     const modules = builder.buildUserModules(
       buildMembership({
-        enabledModules: [buildEnabledModule(5, 'TM', 'Term Management')],
+        enabledModules: [],
         subscriptions: [
           {
             plan: {
@@ -56,6 +56,7 @@ describe('SidebarBuilder', () => {
                 {
                   system: {
                     code: 'ACCOUNTING',
+                    modules: [buildEnabledModule(5, 'TM', 'Term Management')],
                     sidebarItems: [
                       {
                         id: 100,

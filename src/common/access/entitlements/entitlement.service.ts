@@ -9,11 +9,26 @@ import type {
 @Injectable()
 export class EntitlementService {
   getEnabledModuleCodes(source: CompanyEnabledModulesSource): string[] {
-    return source.company.enabledModules.map((item) => item.module.code);
+    return this.getEnabledModules(source).map((item) => item.module.code);
   }
 
   getEnabledModuleIds(source: CompanyEnabledModulesSource): Set<number> {
-    return new Set(source.company.enabledModules.map((item) => item.moduleId));
+    return new Set(this.getEnabledModules(source).map((item) => item.moduleId));
+  }
+
+  getEnabledModules<TEnabledModule extends EnabledCompanyModuleRecord>(
+    source: CompanyEnabledModulesSource<TEnabledModule>,
+  ): TEnabledModule[] {
+    const planModules = this.getLatestSubscriptionPlanModules(source);
+    const compatibilityModules = source.company.enabledModules.filter((item) =>
+      this.isEnabledModuleUsable(item),
+    );
+
+    if (planModules.length === 0) {
+      return this.dedupeModules(compatibilityModules);
+    }
+
+    return this.dedupeModules([...planModules, ...compatibilityModules]);
   }
 
   getPermittedEnabledModules<TEnabledModule extends EnabledCompanyModuleRecord>(
@@ -50,5 +65,39 @@ export class EntitlementService {
     action: PermissionAction,
   ): string {
     return `${permissionCode}:${action}`;
+  }
+
+  private getLatestSubscriptionPlanModules<
+    TEnabledModule extends EnabledCompanyModuleRecord,
+  >(source: CompanyEnabledModulesSource<TEnabledModule>): TEnabledModule[] {
+    const subscription = source.company.subscriptions?.[0];
+
+    if (!subscription) {
+      return [];
+    }
+
+    return subscription.plan.systems.flatMap((planSystem) =>
+      (planSystem.system.modules ?? []).filter((item) =>
+        this.isEnabledModuleUsable(item),
+      ),
+    );
+  }
+
+  private dedupeModules<TEnabledModule extends EnabledCompanyModuleRecord>(
+    modules: TEnabledModule[],
+  ): TEnabledModule[] {
+    const byModuleId = new Map<number, TEnabledModule>();
+
+    for (const module of modules) {
+      if (!byModuleId.has(module.moduleId)) {
+        byModuleId.set(module.moduleId, module);
+      }
+    }
+
+    return [...byModuleId.values()];
+  }
+
+  private isEnabledModuleUsable(module: EnabledCompanyModuleRecord): boolean {
+    return module.module.isActive !== false;
   }
 }

@@ -112,6 +112,21 @@ describe('CompanyAccessResolver', () => {
     );
   });
 
+  it('rejects inactive companies', async () => {
+    const { resolver } = createResolver({
+      membership: buildMembership({
+        company: {
+          ...buildCompany(),
+          isActive: false,
+        },
+      }),
+    });
+
+    await expect(resolver.resolve(buildPayload())).rejects.toThrow(
+      new UnauthorizedException('This company is inactive.'),
+    );
+  });
+
   it('preserves subscription access denial behavior', async () => {
     const { resolver } = createResolver({
       membership: buildMembership({

@@ -59,6 +59,7 @@ export type SidebarMembershipSource = {
         systems: Array<{
           system: {
             code: string;
+            modules?: SidebarEnabledCompanyModule[];
             sidebarItems: Array<Omit<SidebarSystemTemplateRow, 'systemCode'>>;
           };
         }>;

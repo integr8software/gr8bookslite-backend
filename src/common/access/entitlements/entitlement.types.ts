@@ -3,7 +3,9 @@ export type EnabledModulePermission = {
 };
 
 export type EnabledModuleRecord = {
+  id?: number;
   code: string;
+  isActive?: boolean;
   permissions: EnabledModulePermission[];
 };
 
@@ -18,5 +20,14 @@ export type CompanyEnabledModulesSource<
 > = {
   company: {
     enabledModules: TEnabledModule[];
+    subscriptions?: Array<{
+      plan: {
+        systems: Array<{
+          system: {
+            modules?: TEnabledModule[];
+          };
+        }>;
+      };
+    }>;
   };
 };

@@ -21,6 +21,8 @@ export class SidebarBuilder {
   ): SidebarUserModules {
     const permissionSet = new Set(permissions);
     const hasAdminModuleAccess = membership.role === MembershipRole.ADMIN;
+    const enabledModules =
+      this.entitlementService.getEnabledModules(membership);
     const enabledModuleIds =
       this.entitlementService.getEnabledModuleIds(membership);
     const permittedItems = this.getPermittedSidebarItems(
@@ -36,7 +38,7 @@ export class SidebarBuilder {
     );
     const permittedEnabledModules =
       this.entitlementService.getPermittedEnabledModules(
-        membership.company.enabledModules,
+        enabledModules,
         permissionSet,
         hasAdminModuleAccess,
       );

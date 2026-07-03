@@ -7,6 +7,77 @@ describe('EntitlementService', () => {
     expect(service.getEnabledModuleCodes(buildSource())).toEqual(['TM', 'COA']);
   });
 
+  it('uses latest subscription plan system modules as base entitlements', () => {
+    const service = new EntitlementService();
+
+    expect(
+      service.getEnabledModuleCodes(
+        buildSource({
+          enabledModules: [],
+          planModules: [
+            buildCompanyModule(5, 'TM'),
+            buildCompanyModule(8, 'COA'),
+          ],
+        }),
+      ),
+    ).toEqual(['TM', 'COA']);
+  });
+
+  it('includes company modules outside the plan as compatibility additions', () => {
+    const service = new EntitlementService();
+
+    expect(
+      service.getEnabledModuleCodes(
+        buildSource({
+          enabledModules: [buildCompanyModule(9, 'BANK')],
+          planModules: [buildCompanyModule(5, 'TM')],
+        }),
+      ),
+    ).toEqual(['TM', 'BANK']);
+  });
+
+  it('falls back to company modules when no usable plan modules exist', () => {
+    const service = new EntitlementService();
+
+    expect(
+      service.getEnabledModuleCodes(
+        buildSource({
+          enabledModules: [buildCompanyModule(9, 'BANK')],
+          planModules: [],
+        }),
+      ),
+    ).toEqual(['BANK']);
+  });
+
+  it('de-duplicates plan modules and compatibility company modules', () => {
+    const service = new EntitlementService();
+
+    expect(
+      service.getEnabledModuleCodes(
+        buildSource({
+          enabledModules: [buildCompanyModule(5, 'TM')],
+          planModules: [buildCompanyModule(5, 'TM')],
+        }),
+      ),
+    ).toEqual(['TM']);
+  });
+
+  it('excludes inactive modules from effective entitlements', () => {
+    const service = new EntitlementService();
+
+    expect(
+      service.getEnabledModuleCodes(
+        buildSource({
+          enabledModules: [buildCompanyModule(9, 'BANK', false)],
+          planModules: [
+            buildCompanyModule(5, 'TM'),
+            buildCompanyModule(8, 'COA', false),
+          ],
+        }),
+      ),
+    ).toEqual(['TM']);
+  });
+
   it('returns enabled module ids from company enabled modules', () => {
     const service = new EntitlementService();
 
@@ -45,25 +116,44 @@ describe('EntitlementService', () => {
   });
 });
 
-function buildSource() {
+function buildSource({
+  enabledModules = [buildCompanyModule(5, 'TM'), buildCompanyModule(8, 'COA')],
+  planModules,
+}: {
+  enabledModules?: Array<ReturnType<typeof buildCompanyModule>>;
+  planModules?: Array<ReturnType<typeof buildCompanyModule>>;
+} = {}) {
   return {
     company: {
-      enabledModules: [
-        {
-          moduleId: 5,
-          module: {
-            code: 'TM',
-            permissions: [{ code: 'TM' }],
-          },
-        },
-        {
-          moduleId: 8,
-          module: {
-            code: 'COA',
-            permissions: [{ code: 'COA' }],
-          },
-        },
-      ],
+      enabledModules,
+      subscriptions:
+        planModules === undefined
+          ? []
+          : [
+              {
+                plan: {
+                  systems: [
+                    {
+                      system: {
+                        modules: planModules,
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+    },
+  };
+}
+
+function buildCompanyModule(moduleId: number, code: string, isActive = true) {
+  return {
+    moduleId,
+    module: {
+      id: moduleId,
+      code,
+      isActive,
+      permissions: [{ code }],
     },
   };
 }

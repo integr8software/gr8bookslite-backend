@@ -91,6 +91,23 @@ export class CompanyAccessResolver {
                       include: {
                         system: {
                           include: {
+                            modules: {
+                              where: {
+                                isActive: true,
+                                module: { isActive: true },
+                              },
+                              include: {
+                                module: {
+                                  include: {
+                                    permissions: {
+                                      where: { isActive: true },
+                                      orderBy: { id: 'asc' },
+                                    },
+                                  },
+                                },
+                              },
+                              orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+                            },
                             sidebarItems: {
                               where: { isVisible: true },
                               include: {
