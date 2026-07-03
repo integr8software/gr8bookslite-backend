@@ -6,6 +6,7 @@ import {
 import { prisma } from '../seeds/prismaClient';
 import { seedModules } from '../seeds/seedModules';
 import { seedModuleSystems } from '../seeds/seedModuleSystems';
+import { seedSubscriptionPlans } from '../seeds/seedSubscriptionPlans';
 import { seedDefaultCoaTemplate } from '../seeds/seedDefaultCoaTemplate';
 import { seedUserSidebars } from '../seeds/seedUserSidebars';
 
@@ -15,11 +16,12 @@ export type ProvisionResult = {
   version: string;
 };
 
-export const PlatformProvisionVersion = '2026.07.01.2';
+export const PlatformProvisionVersion = '2026.07.03.0';
 
 const ProvisionSteps = [
   'platform-catalog',
   'module-systems',
+  'subscription-plans',
   'default-coa-template',
   'user-sidebars',
 ] as const;
@@ -50,6 +52,9 @@ export async function runPlatformProvision(): Promise<ProvisionResult> {
 
   console.log('Provisioning module systems and sidebar templates.');
   await seedModuleSystems();
+
+  console.log('Provisioning subscription plan system links.');
+  await seedSubscriptionPlans();
 
   console.log('Provisioning default chart of accounts template.');
   await seedDefaultCoaTemplate();
