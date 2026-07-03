@@ -19,6 +19,7 @@ import type { AuthUserModuleItem } from '../interfaces/auth-user.interface';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { getSubscriptionAccessDenialReason } from '../utils/subscription-access.util';
+import { EntitlementService } from './entitlements/entitlement.service';
 
 type MembershipAccessRecord = Prisma.MembershipGetPayload<{
   include: {
@@ -186,6 +187,7 @@ export class AccessControlService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly entitlementService: EntitlementService,
   ) {}
 
   async resolveAuthUser(payload: JwtPayload): Promise<AuthUser> {
@@ -302,7 +304,8 @@ export class AccessControlService {
     user: ActiveUserRecord,
     membership: MembershipAccessRecord,
   ): AuthUser {
-    const enabledModules = this.getEnabledModuleCodes(membership);
+    const enabledModules =
+      this.entitlementService.getEnabledModuleCodes(membership);
     const permissions = this.buildEffectivePermissions(
       membership,
       enabledModules,
@@ -545,10 +548,6 @@ export class AccessControlService {
 
   // Module and permission resolution
 
-  private getEnabledModuleCodes(membership: MembershipAccessRecord): string[] {
-    return membership.company.enabledModules.map((item) => item.module.code);
-  }
-
   private getEffectiveCompanyRole(membership: MembershipAccessRecord) {
     return (
       membership.companyRole ??
@@ -656,7 +655,8 @@ export class AccessControlService {
   ) {
     const permissionSet = new Set(permissions);
     const hasAdminModuleAccess = membership.role === MembershipRole.ADMIN;
-    const enabledModuleIds = this.getEnabledModuleIds(membership);
+    const enabledModuleIds =
+      this.entitlementService.getEnabledModuleIds(membership);
     const permittedItems = this.getPermittedSidebarItems(
       membership,
       enabledModuleIds,
@@ -668,11 +668,12 @@ export class AccessControlService {
         item.itemType === 'LINK' && item.moduleId ? [item.moduleId] : [],
       ),
     );
-    const permittedEnabledModules = this.getPermittedEnabledModules(
-      membership,
-      permissionSet,
-      hasAdminModuleAccess,
-    );
+    const permittedEnabledModules =
+      this.entitlementService.getPermittedEnabledModules(
+        membership.company.enabledModules,
+        permissionSet,
+        hasAdminModuleAccess,
+      );
     const fallbackItems = permittedEnabledModules
       .filter((item) => !permittedSidebarModuleIds.has(item.moduleId))
       .map((item) => buildFallbackUserModuleItem(item.module));
@@ -689,12 +690,6 @@ export class AccessControlService {
     );
 
     return { items: byBranch[0]?.items ?? fallbackItems, byBranch };
-  }
-
-  private getEnabledModuleIds(membership: MembershipAccessRecord): Set<number> {
-    return new Set(
-      membership.company.enabledModules.map((item) => item.moduleId),
-    );
   }
 
   private getPermittedSidebarItems(
@@ -731,39 +726,10 @@ export class AccessControlService {
       return false;
     }
 
-    return this.hasModulePermission(
+    return this.entitlementService.hasModulePermission(
       item.module,
       permissionSet,
       hasAdminModuleAccess,
-    );
-  }
-
-  private getPermittedEnabledModules(
-    membership: MembershipAccessRecord,
-    permissionSet: Set<string>,
-    hasAdminModuleAccess: boolean,
-  ): EnabledCompanyModuleRecord[] {
-    return membership.company.enabledModules.filter((item) =>
-      this.hasModulePermission(
-        item.module,
-        permissionSet,
-        hasAdminModuleAccess,
-      ),
-    );
-  }
-
-  private hasModulePermission(
-    module: EnabledUserModuleRecord,
-    permissionSet: Set<string>,
-    hasAdminModuleAccess: boolean,
-  ): boolean {
-    return (
-      hasAdminModuleAccess ||
-      module.permissions.some((permission) =>
-        Object.values(PermissionAction).some((action) =>
-          permissionSet.has(this.buildPermissionKey(permission.code, action)),
-        ),
-      )
     );
   }
 

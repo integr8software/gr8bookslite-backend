@@ -1,9 +1,10 @@
 import { PermissionAction } from '../enums/permission-action.enum';
 import { AccessControlService } from './access-control.service';
+import { EntitlementService } from './entitlements/entitlement.service';
 
 describe('AccessControlService permission architecture', () => {
   it('exposes the active cancel and uncancel actions', () => {
-    const service = new AccessControlService({} as never, {} as never);
+    const service = createAccessControlService();
     const membership = {
       companyRole: {
         permissions: [
@@ -49,7 +50,7 @@ describe('AccessControlService permission architecture', () => {
   });
 
   it('filters permissions using the related module instead of code prefixes', () => {
-    const service = new AccessControlService({} as never, {} as never);
+    const service = createAccessControlService();
     const membership = {
       companyRole: {
         permissions: [
@@ -93,7 +94,7 @@ describe('AccessControlService permission architecture', () => {
   });
 
   it('falls back to permitted enabled modules when sidebar rows are missing', () => {
-    const service = new AccessControlService({} as never, {} as never);
+    const service = createAccessControlService();
     const modules = (
       service as unknown as {
         buildUserModules: (
@@ -152,7 +153,7 @@ describe('AccessControlService permission architecture', () => {
   });
 
   it('builds enabled fallback modules from module code only', () => {
-    const service = new AccessControlService({} as never, {} as never);
+    const service = createAccessControlService();
     const modules = (
       service as unknown as {
         buildUserModules: (
@@ -204,7 +205,7 @@ describe('AccessControlService permission architecture', () => {
   });
 
   it('uses system sidebar templates as the default navigation when user sidebar rows are missing', () => {
-    const service = new AccessControlService({} as never, {} as never);
+    const service = createAccessControlService();
     const modules = (
       service as unknown as {
         buildUserModules: (
@@ -304,3 +305,11 @@ describe('AccessControlService permission architecture', () => {
     );
   });
 });
+
+function createAccessControlService() {
+  return new AccessControlService(
+    {} as never,
+    {} as never,
+    new EntitlementService(),
+  );
+}
