@@ -55,7 +55,6 @@ function createAccessControlService() {
 
   return new AccessControlService(
     {} as never,
-    {} as never,
     entitlementService,
     new PermissionService(),
     new SidebarBuilder(entitlementService),
