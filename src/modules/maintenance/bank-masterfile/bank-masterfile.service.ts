@@ -240,11 +240,11 @@ export class BankMasterfileService {
               parentAccountId: cashInBankAccount.id,
               accountCode,
               accountTitle: accountName,
-              accountLevel: ChartAccountLevel.SPECIFIC,
-              accountType: ChartAccountType.ASSET,
-              accountNature: AccountNature.DEBIT,
-              accountGroup: CashInBankGroup,
-              isPostingAccount: true,
+          accountLevel: ChartAccountLevel.SPECIFIC,
+          accountType: ChartAccountType.ASSET,
+          accountNature: AccountNature.DEBIT,
+          accountGroup: CashInBankGroup,
+          isPostingAccount: true,
               currencyCode: cleanCurrencyCode(bank.currencyCode),
               status: bank.status ?? ChartAccountStatus.ACTIVE,
               deletedAt:
@@ -500,10 +500,12 @@ export class BankMasterfileService {
           { accountTitle: { contains: 'bank', mode: 'insensitive' } },
           { accountGroup: { contains: 'cash', mode: 'insensitive' } },
           { accountGroup: { contains: 'bank', mode: 'insensitive' } },
+          { statementSection: { contains: 'cash', mode: 'insensitive' } },
+          { statementSection: { contains: 'bank', mode: 'insensitive' } },
           { reportAlias: { contains: 'cash', mode: 'insensitive' } },
           { reportAlias: { contains: 'bank', mode: 'insensitive' } },
-          { class: { contains: 'cash', mode: 'insensitive' } },
-          { class: { contains: 'bank', mode: 'insensitive' } },
+          { description: { contains: 'cash', mode: 'insensitive' } },
+          { description: { contains: 'bank', mode: 'insensitive' } },
         ],
       },
       orderBy: [{ accountCode: 'asc' }],
@@ -970,7 +972,11 @@ export class BankMasterfileService {
 
 type CashInBankCandidate = Pick<
   Prisma.ChartAccountGetPayload<object>,
-  'accountTitle' | 'accountGroup' | 'reportAlias' | 'class'
+  | 'accountTitle'
+  | 'accountGroup'
+  | 'statementSection'
+  | 'reportAlias'
+  | 'description'
 >;
 
 function pickCashInBankParent<T extends CashInBankCandidate>(accounts: T[]) {
@@ -993,8 +999,9 @@ function scoreCashInBankCandidate(account: CashInBankCandidate) {
   const labels = [
     account.accountTitle,
     account.accountGroup,
+    account.statementSection,
     account.reportAlias,
-    account.class,
+    account.description,
   ].map(normalizeAccountLabel);
 
   if (labels.some((label) => label === 'cash in bank')) {

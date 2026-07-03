@@ -30,8 +30,9 @@ export async function seedDefaultCoaTemplate() {
         accountType: account.accountType,
         accountNature: account.accountNature,
         accountGroup: account.accountGroup,
+        statementSection: account.statementSection,
         reportAlias: account.reportAlias,
-        class: getAccountDescription(account),
+        description: null,
         isPostingAccount,
         orderNo: account.orderNo,
         status: ActiveDefaultCoaStatus,
@@ -43,8 +44,9 @@ export async function seedDefaultCoaTemplate() {
         accountType: account.accountType,
         accountNature: account.accountNature,
         accountGroup: account.accountGroup,
+        statementSection: account.statementSection,
         reportAlias: account.reportAlias,
-        class: getAccountDescription(account),
+        description: null,
         isPostingAccount,
         orderNo: account.orderNo,
         status: ActiveDefaultCoaStatus,
@@ -114,14 +116,4 @@ function getIsPostingAccount(
   account: (typeof StandardDefaultChartAccounts)[number],
 ) {
   return 'isPostingAccount' in account ? account.isPostingAccount : false;
-}
-
-function getAccountDescription(
-  account: (typeof StandardDefaultChartAccounts)[number],
-) {
-  if (account.accountLevel !== 'SPECIFIC') {
-    return `Parent account group for ${account.accountTitle}.`.slice(0, 50);
-  }
-
-  return account.accountTitle.slice(0, 50);
 }

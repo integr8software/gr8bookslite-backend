@@ -59,8 +59,9 @@ export async function seedDefaultChartAccountsForCompany(
         accountType: defaultAccount.accountType,
         accountNature: defaultAccount.accountNature,
         accountGroup: defaultAccount.accountGroup,
+        statementSection: defaultAccount.statementSection,
         reportAlias: defaultAccount.reportAlias,
-        class: defaultAccount.class,
+        description: defaultAccount.description,
         isPostingAccount: defaultAccount.isPostingAccount,
         withSubsidiary: defaultAccount.withSubsidiary,
         contraAccount: defaultAccount.contraAccount,
@@ -79,8 +80,9 @@ export async function seedDefaultChartAccountsForCompany(
         accountType: defaultAccount.accountType,
         accountNature: defaultAccount.accountNature,
         accountGroup: defaultAccount.accountGroup,
+        statementSection: defaultAccount.statementSection,
         reportAlias: defaultAccount.reportAlias,
-        class: defaultAccount.class,
+        description: defaultAccount.description,
         isPostingAccount:
           defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC
             ? defaultAccount.isPostingAccount

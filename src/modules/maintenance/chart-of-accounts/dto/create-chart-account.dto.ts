@@ -43,12 +43,17 @@ export class CreateChartAccountDto {
   @IsOptional()
   @IsString()
   @MaxLength(250)
+  statementSection?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(250)
   reportAlias?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(50)
-  class?: string;
+  @MaxLength(500)
+  description?: string;
 
   @IsOptional()
   @IsBoolean()

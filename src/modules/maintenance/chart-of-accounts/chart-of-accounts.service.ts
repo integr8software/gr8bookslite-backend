@@ -521,10 +521,15 @@ export class ChartOfAccountsService {
       ...(dto.accountGroup !== undefined
         ? { accountGroup: cleanOptional(dto.accountGroup) }
         : {}),
+      ...(dto.statementSection !== undefined
+        ? { statementSection: cleanOptional(dto.statementSection) }
+        : {}),
       ...(dto.reportAlias !== undefined
         ? { reportAlias: cleanOptional(dto.reportAlias) }
         : {}),
-      ...(dto.class !== undefined ? { class: cleanOptional(dto.class) } : {}),
+      ...(dto.description !== undefined
+        ? { description: cleanOptional(dto.description) }
+        : {}),
       ...(dto.isPostingAccount !== undefined
         ? { isPostingAccount: dto.isPostingAccount }
         : {}),

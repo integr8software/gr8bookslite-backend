@@ -1746,6 +1746,230 @@
         ]
       }
     },
+    "/api/v1/master/module-systems": {
+      "get": {
+        "operationId": "ModuleSystemsController_listSystems_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ModuleSystems"
+        ]
+      },
+      "post": {
+        "operationId": "ModuleSystemsController_createSystem_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertModuleSystemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ModuleSystems"
+        ]
+      }
+    },
+    "/api/v1/master/module-systems/modules": {
+      "get": {
+        "operationId": "ModuleSystemsController_listAvailableModules_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ModuleSystems"
+        ]
+      }
+    },
+    "/api/v1/master/module-systems/{systemId}": {
+      "get": {
+        "operationId": "ModuleSystemsController_getSystem_v1",
+        "parameters": [
+          {
+            "name": "systemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ModuleSystems"
+        ]
+      },
+      "patch": {
+        "operationId": "ModuleSystemsController_updateSystem_v1",
+        "parameters": [
+          {
+            "name": "systemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertModuleSystemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ModuleSystems"
+        ]
+      }
+    },
+    "/api/v1/master/module-systems/{systemId}/status": {
+      "patch": {
+        "operationId": "ModuleSystemsController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "systemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateModuleSystemStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ModuleSystems"
+        ]
+      }
+    },
+    "/api/v1/master/module-systems/{systemId}/modules": {
+      "put": {
+        "operationId": "ModuleSystemsController_saveModules_v1",
+        "parameters": [
+          {
+            "name": "systemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveModuleSystemModulesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ModuleSystems"
+        ]
+      }
+    },
+    "/api/v1/master/module-systems/{systemId}/sidebar": {
+      "get": {
+        "operationId": "ModuleSystemsController_getSidebar_v1",
+        "parameters": [
+          {
+            "name": "systemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ModuleSystems"
+        ]
+      },
+      "put": {
+        "operationId": "ModuleSystemsController_saveSidebar_v1",
+        "parameters": [
+          {
+            "name": "systemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveModuleSystemSidebarDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ModuleSystems"
+        ]
+      }
+    },
     "/api/v1/master/plan-and-packages": {
       "get": {
         "operationId": "MasterPlanAndPackagesController_listPlans_v1",
@@ -2570,6 +2794,137 @@
         },
         "tags": [
           "BranchRoles"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/user-sidebar/customization": {
+      "get": {
+        "operationId": "UserSidebarController_getCustomization_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      },
+      "put": {
+        "operationId": "UserSidebarController_save_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveUserSidebarDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/user-sidebar/reset": {
+      "post": {
+        "operationId": "UserSidebarController_reset_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applyScope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
         ]
       }
     },
@@ -3643,137 +3998,6 @@
         ]
       }
     },
-    "/api/v1/companies/{companyId}/user-sidebar/customization": {
-      "get": {
-        "operationId": "UserSidebarController_getCustomization_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
-        ]
-      },
-      "put": {
-        "operationId": "UserSidebarController_save_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {}
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveUserSidebarDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
-        ]
-      }
-    },
-    "/api/v1/companies/{companyId}/user-sidebar/reset": {
-      "post": {
-        "operationId": "UserSidebarController_reset_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "applyScope",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
-        ]
-      }
-    },
     "/api/v1/ai-assistant/chat": {
       "post": {
         "operationId": "AiAssistantController_chat_v1",
@@ -4131,8 +4355,8 @@
           "systemRole": {
             "type": "string",
             "enum": [
-              "STANDARD",
-              "SUPER_ADMIN"
+              "SUPER_ADMIN",
+              "STANDARD"
             ]
           }
         },
@@ -4175,8 +4399,8 @@
           "systemRole": {
             "type": "string",
             "enum": [
-              "STANDARD",
-              "SUPER_ADMIN"
+              "SUPER_ADMIN",
+              "STANDARD"
             ]
           }
         }
@@ -5276,6 +5500,139 @@
           "subscription"
         ]
       },
+      "UpsertModuleSystemDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      },
+      "UpdateModuleSystemStatusDto": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isActive"
+        ]
+      },
+      "SaveModuleSystemModulesDto": {
+        "type": "object",
+        "properties": {
+          "moduleCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "moduleCodes"
+        ]
+      },
+      "ModuleSystemSidebarItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1
+          },
+          "key": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "itemType": {
+            "type": "string",
+            "enum": [
+              "SECTION",
+              "CONTAINER",
+              "LINK"
+            ]
+          },
+          "moduleId": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1
+          },
+          "moduleCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "iconName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "isVisible": {
+            "type": "boolean"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModuleSystemSidebarItemDto"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "itemType",
+          "children"
+        ]
+      },
+      "SaveModuleSystemSidebarDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModuleSystemSidebarItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
       "MasterPlanPriceDto": {
         "type": "object",
         "properties": {
@@ -5428,7 +5785,7 @@
               "$ref": "#/components/schemas/MasterPlanDiscountTierDto"
             }
           },
-          "moduleKeys": {
+          "systemCodes": {
             "type": "array",
             "items": {
               "type": "string"
@@ -5444,7 +5801,7 @@
           "prices",
           "usageRules",
           "discountTiers",
-          "moduleKeys"
+          "systemCodes"
         ]
       },
       "WorkspaceCompanyCreatedByResponseDto": {
@@ -6536,6 +6893,76 @@
           "isActive"
         ]
       },
+      "UserSidebarTreeItemDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "itemType": {
+            "type": "string",
+            "enum": [
+              "SECTION",
+              "CONTAINER",
+              "LINK"
+            ]
+          },
+          "moduleId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "iconName": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "itemType",
+          "children"
+        ]
+      },
+      "SaveUserSidebarDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "minimum": 0
+          },
+          "applyScope": {
+            "type": "string",
+            "enum": [
+              "CURRENT_BRANCH",
+              "ALL_BRANCHES"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "items"
+        ]
+      },
       "UpdateBranchUserRoleDto": {
         "type": "object",
         "properties": {
@@ -6997,11 +7424,15 @@
             "type": "string",
             "nullable": true
           },
+          "statementSection": {
+            "type": "string",
+            "nullable": true
+          },
           "reportAlias": {
             "type": "string",
             "nullable": true
           },
-          "class": {
+          "description": {
             "type": "string",
             "nullable": true
           },
@@ -7059,8 +7490,9 @@
           "accountType",
           "accountNature",
           "accountGroup",
+          "statementSection",
           "reportAlias",
-          "class",
+          "description",
           "isPostingAccount",
           "withSubsidiary",
           "contraAccount",
@@ -7140,11 +7572,15 @@
             "type": "string",
             "nullable": true
           },
+          "statementSection": {
+            "type": "string",
+            "nullable": true
+          },
           "reportAlias": {
             "type": "string",
             "nullable": true
           },
-          "class": {
+          "description": {
             "type": "string",
             "nullable": true
           },
@@ -7208,8 +7644,9 @@
           "accountType",
           "accountNature",
           "accountGroup",
+          "statementSection",
           "reportAlias",
-          "class",
+          "description",
           "isPostingAccount",
           "withSubsidiary",
           "contraAccount",
@@ -7301,13 +7738,17 @@
             "type": "string",
             "maxLength": 50
           },
+          "statementSection": {
+            "type": "string",
+            "maxLength": 250
+          },
           "reportAlias": {
             "type": "string",
             "maxLength": 250
           },
-          "class": {
+          "description": {
             "type": "string",
-            "maxLength": 50
+            "maxLength": 500
           },
           "isPostingAccount": {
             "type": "boolean"
@@ -7391,13 +7832,17 @@
             "type": "string",
             "maxLength": 50
           },
+          "statementSection": {
+            "type": "string",
+            "maxLength": 250
+          },
           "reportAlias": {
             "type": "string",
             "maxLength": 250
           },
-          "class": {
+          "description": {
             "type": "string",
-            "maxLength": 50
+            "maxLength": 500
           },
           "isPostingAccount": {
             "type": "boolean"
@@ -7524,15 +7969,15 @@
       "CreateBankAccountDto": {
         "type": "object",
         "properties": {
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 100
+          },
           "bankName": {
             "type": "string",
             "maxLength": 100
           },
           "branch": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "accountNumber": {
             "type": "string",
             "maxLength": 100
           },
@@ -7580,7 +8025,10 @@
           }
         },
         "required": [
-          "bankName"
+          "bankName",
+          "seriesStart",
+          "seriesEnd",
+          "seriesDigits"
         ]
       },
       "ImportBankAccountsDto": {
@@ -7602,15 +8050,15 @@
       "UpdateBankAccountDto": {
         "type": "object",
         "properties": {
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 100
+          },
           "bankName": {
             "type": "string",
             "maxLength": 100
           },
           "branch": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "accountNumber": {
             "type": "string",
             "maxLength": 100
           },
@@ -7917,76 +8365,6 @@
         "required": [
           "message",
           "sequence"
-        ]
-      },
-      "UserSidebarTreeItemDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "label": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 500
-          },
-          "itemType": {
-            "type": "string",
-            "enum": [
-              "SECTION",
-              "CONTAINER",
-              "LINK"
-            ]
-          },
-          "moduleId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "iconName": {
-            "type": "string"
-          },
-          "children": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
-            }
-          }
-        },
-        "required": [
-          "key",
-          "label",
-          "itemType",
-          "children"
-        ]
-      },
-      "SaveUserSidebarDto": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "number",
-            "minimum": 0
-          },
-          "applyScope": {
-            "type": "string",
-            "enum": [
-              "CURRENT_BRANCH",
-              "ALL_BRANCHES"
-            ]
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
-            }
-          }
-        },
-        "required": [
-          "version",
-          "items"
         ]
       },
       "AiAssistantChatMessageDto": {
