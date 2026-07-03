@@ -165,6 +165,22 @@ type MembershipAccessRecord = Prisma.MembershipGetPayload<{
   };
 }>;
 
+type ActiveUserRecord = {
+  id: number;
+  systemRole: SystemRole;
+};
+
+/*
+ * AccessControlService currently assembles the complete runtime AuthUser
+ * context: active user, company membership, subscription availability, enabled
+ * modules, permissions, and sidebar data.
+ *
+ * TODO authorization roadmap:
+ * - Phase 2: extract effective module entitlement resolution.
+ * - Phase 3: extract permission aggregation and override application.
+ * - Phase 4: extract sidebar/template/user-preference building.
+ * - Phase 5: keep this service as the thin AuthUser orchestration layer.
+ */
 @Injectable()
 export class AccessControlService {
   constructor(
@@ -173,53 +189,14 @@ export class AccessControlService {
   ) {}
 
   async resolveAuthUser(payload: JwtPayload): Promise<AuthUser> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: {
-        id: true,
-        systemRole: true,
-        status: true,
-      },
-    });
-
-    if (!user || user.status !== UserStatus.ACTIVE) {
-      throw new UnauthorizedException('User account is not active.');
-    }
+    const user = await this.getActiveUser(payload.sub);
 
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
-      return {
-        id: user.id,
-        companyId: payload.companyId ?? null,
-        role: AppRole.SUPER_ADMIN,
-        systemRole: user.systemRole,
-        membershipRole: null,
-        membershipStatus: null,
-        companyRoleId: null,
-        companyRoleCode: null,
-        companyRoleName: null,
-        accessScope: null,
-        enabledModules: [],
-        permissions: [],
-        userModules: { items: [], byBranch: [] },
-      };
+      return this.buildSuperAdminAuthUser(user, payload.companyId ?? null);
     }
 
     if (payload.companyId == null) {
-      return {
-        id: user.id,
-        companyId: null,
-        role: AppRole.USER,
-        systemRole: user.systemRole,
-        membershipRole: null,
-        membershipStatus: null,
-        companyRoleId: null,
-        companyRoleCode: null,
-        companyRoleName: null,
-        accessScope: null,
-        enabledModules: [],
-        permissions: [],
-        userModules: { items: [], byBranch: [] },
-      };
+      return this.buildUserWithoutCompanyContext(user);
     }
 
     const membership = await this.getMembershipAccess(
@@ -229,35 +206,7 @@ export class AccessControlService {
 
     this.assertMembershipIsUsable(membership);
 
-    const enabledModules = membership.company.enabledModules.map(
-      (item) => item.module.code,
-    );
-    const permissions = this.buildEffectivePermissions(
-      membership,
-      enabledModules,
-    );
-    const userModules = this.buildUserModules(membership, permissions);
-    const effectiveCompanyRole =
-      membership.companyRole ??
-      membership.unitAccess.find((unitAccess) => unitAccess.companyRole)
-        ?.companyRole ??
-      null;
-
-    return {
-      id: user.id,
-      companyId: membership.companyId,
-      role: this.mapMembershipRole(membership.role),
-      systemRole: user.systemRole,
-      membershipRole: membership.role,
-      membershipStatus: membership.status,
-      companyRoleId: effectiveCompanyRole?.id ?? null,
-      companyRoleCode: effectiveCompanyRole?.code ?? null,
-      companyRoleName: effectiveCompanyRole?.name ?? null,
-      accessScope: membership.accessScope,
-      enabledModules,
-      permissions,
-      userModules,
-    };
+    return this.buildCompanyAuthUser(user, membership);
   }
 
   hasPermission(
@@ -287,6 +236,102 @@ export class AccessControlService {
       throw new ForbiddenException('An active company context is required.');
     }
   }
+
+  // Authentication context
+
+  private async getActiveUser(userId: number): Promise<ActiveUserRecord> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        systemRole: true,
+        status: true,
+      },
+    });
+
+    if (!user || user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException('User account is not active.');
+    }
+
+    return {
+      id: user.id,
+      systemRole: user.systemRole,
+    };
+  }
+
+  private buildSuperAdminAuthUser(
+    user: ActiveUserRecord,
+    companyId: number | null,
+  ): AuthUser {
+    return {
+      id: user.id,
+      companyId,
+      role: AppRole.SUPER_ADMIN,
+      systemRole: user.systemRole,
+      membershipRole: null,
+      membershipStatus: null,
+      companyRoleId: null,
+      companyRoleCode: null,
+      companyRoleName: null,
+      accessScope: null,
+      enabledModules: [],
+      permissions: [],
+      userModules: this.buildEmptyUserModules(),
+    };
+  }
+
+  private buildUserWithoutCompanyContext(user: ActiveUserRecord): AuthUser {
+    return {
+      id: user.id,
+      companyId: null,
+      role: AppRole.USER,
+      systemRole: user.systemRole,
+      membershipRole: null,
+      membershipStatus: null,
+      companyRoleId: null,
+      companyRoleCode: null,
+      companyRoleName: null,
+      accessScope: null,
+      enabledModules: [],
+      permissions: [],
+      userModules: this.buildEmptyUserModules(),
+    };
+  }
+
+  private buildCompanyAuthUser(
+    user: ActiveUserRecord,
+    membership: MembershipAccessRecord,
+  ): AuthUser {
+    const enabledModules = this.getEnabledModuleCodes(membership);
+    const permissions = this.buildEffectivePermissions(
+      membership,
+      enabledModules,
+    );
+    const userModules = this.buildUserModules(membership, permissions);
+    const effectiveCompanyRole = this.getEffectiveCompanyRole(membership);
+
+    return {
+      id: user.id,
+      companyId: membership.companyId,
+      role: this.mapMembershipRole(membership.role),
+      systemRole: user.systemRole,
+      membershipRole: membership.role,
+      membershipStatus: membership.status,
+      companyRoleId: effectiveCompanyRole?.id ?? null,
+      companyRoleCode: effectiveCompanyRole?.code ?? null,
+      companyRoleName: effectiveCompanyRole?.name ?? null,
+      accessScope: membership.accessScope,
+      enabledModules,
+      permissions,
+      userModules,
+    };
+  }
+
+  private buildEmptyUserModules() {
+    return { items: [], byBranch: [] };
+  }
+
+  // Company and membership resolution
 
   private async getMembershipAccess(
     userId: number,
@@ -453,6 +498,8 @@ export class AccessControlService {
     return membership;
   }
 
+  // Company and subscription availability
+
   private assertMembershipIsUsable(membership: MembershipAccessRecord): void {
     if (membership.status !== MembershipStatus.ACTIVE) {
       throw new UnauthorizedException('Your company membership is not active.');
@@ -496,6 +543,21 @@ export class AccessControlService {
     );
   }
 
+  // Module and permission resolution
+
+  private getEnabledModuleCodes(membership: MembershipAccessRecord): string[] {
+    return membership.company.enabledModules.map((item) => item.module.code);
+  }
+
+  private getEffectiveCompanyRole(membership: MembershipAccessRecord) {
+    return (
+      membership.companyRole ??
+      membership.unitAccess.find((unitAccess) => unitAccess.companyRole)
+        ?.companyRole ??
+      null
+    );
+  }
+
   private buildEffectivePermissions(
     membership: MembershipAccessRecord,
     enabledModules: string[],
@@ -510,12 +572,11 @@ export class AccessControlService {
     ];
 
     for (const rolePermission of rolePermissions) {
-      const moduleCode = getPermissionModuleCode(rolePermission.permission);
-
       if (
-        moduleCode &&
-        enabledModules.length > 0 &&
-        !enabledModules.includes(moduleCode)
+        !this.isPermissionWithinEnabledModules(
+          rolePermission.permission,
+          enabledModules,
+        )
       ) {
         continue;
       }
@@ -538,12 +599,11 @@ export class AccessControlService {
     }
 
     for (const override of membership.permissionOverrides) {
-      const moduleCode = getPermissionModuleCode(override.permission);
-
       if (
-        moduleCode &&
-        enabledModules.length > 0 &&
-        !enabledModules.includes(moduleCode)
+        !this.isPermissionWithinEnabledModules(
+          override.permission,
+          enabledModules,
+        )
       ) {
         continue;
       }
@@ -575,54 +635,142 @@ export class AccessControlService {
     );
   }
 
+  private isPermissionWithinEnabledModules(
+    permission: { module?: { code: string } | null },
+    enabledModules: string[],
+  ): boolean {
+    const moduleCode = getPermissionModuleCode(permission);
+
+    return (
+      !moduleCode ||
+      enabledModules.length === 0 ||
+      enabledModules.includes(moduleCode)
+    );
+  }
+
+  // Sidebar resolution and customization fallback
+
   private buildUserModules(
     membership: MembershipAccessRecord,
     permissions: string[],
   ) {
     const permissionSet = new Set(permissions);
     const hasAdminModuleAccess = membership.role === MembershipRole.ADMIN;
-    const enabledModuleIds = new Set(
-      membership.company.enabledModules.map((item) => item.moduleId),
+    const enabledModuleIds = this.getEnabledModuleIds(membership);
+    const permittedItems = this.getPermittedSidebarItems(
+      membership,
+      enabledModuleIds,
+      permissionSet,
+      hasAdminModuleAccess,
     );
-    const permittedItems = membership.company.moduleSidebar.filter((item) => {
-      if (item.itemType !== 'LINK') {
-        return true;
-      }
-
-      if (!item.module || !item.moduleId || !item.module.isActive) {
-        return false;
-      }
-
-      if (!enabledModuleIds.has(item.moduleId)) {
-        return false;
-      }
-
-      return (
-        hasAdminModuleAccess ||
-        item.module.permissions.some((permission) =>
-          Object.values(PermissionAction).some((action) =>
-            permissionSet.has(this.buildPermissionKey(permission.code, action)),
-          ),
-        )
-      );
-    });
     const permittedSidebarModuleIds = new Set(
       permittedItems.flatMap((item) =>
         item.itemType === 'LINK' && item.moduleId ? [item.moduleId] : [],
       ),
     );
-    const permittedEnabledModules = membership.company.enabledModules.filter(
-      (item) =>
-        hasAdminModuleAccess ||
-        item.module.permissions.some((permission) =>
-          Object.values(PermissionAction).some((action) =>
-            permissionSet.has(this.buildPermissionKey(permission.code, action)),
-          ),
-        ),
+    const permittedEnabledModules = this.getPermittedEnabledModules(
+      membership,
+      permissionSet,
+      hasAdminModuleAccess,
     );
     const fallbackItems = permittedEnabledModules
       .filter((item) => !permittedSidebarModuleIds.has(item.moduleId))
       .map((item) => buildFallbackUserModuleItem(item.module));
+    const branchIds = this.getAccessibleBranchIds(membership, permittedItems);
+    const systemSidebarItems = getActiveSystemSidebarItems(membership);
+    const byBranch = branchIds.map((branchUnitId) =>
+      this.buildBranchModuleAccess(
+        membership,
+        branchUnitId,
+        permittedItems,
+        permittedEnabledModules,
+        systemSidebarItems,
+      ),
+    );
+
+    return { items: byBranch[0]?.items ?? fallbackItems, byBranch };
+  }
+
+  private getEnabledModuleIds(membership: MembershipAccessRecord): Set<number> {
+    return new Set(
+      membership.company.enabledModules.map((item) => item.moduleId),
+    );
+  }
+
+  private getPermittedSidebarItems(
+    membership: MembershipAccessRecord,
+    enabledModuleIds: Set<number>,
+    permissionSet: Set<string>,
+    hasAdminModuleAccess: boolean,
+  ): UserModuleRecord[] {
+    return membership.company.moduleSidebar.filter((item) =>
+      this.isSidebarItemPermitted(
+        item,
+        enabledModuleIds,
+        permissionSet,
+        hasAdminModuleAccess,
+      ),
+    );
+  }
+
+  private isSidebarItemPermitted(
+    item: UserModuleRecord,
+    enabledModuleIds: Set<number>,
+    permissionSet: Set<string>,
+    hasAdminModuleAccess: boolean,
+  ): boolean {
+    if (item.itemType !== 'LINK') {
+      return true;
+    }
+
+    if (!item.module || !item.moduleId || !item.module.isActive) {
+      return false;
+    }
+
+    if (!enabledModuleIds.has(item.moduleId)) {
+      return false;
+    }
+
+    return this.hasModulePermission(
+      item.module,
+      permissionSet,
+      hasAdminModuleAccess,
+    );
+  }
+
+  private getPermittedEnabledModules(
+    membership: MembershipAccessRecord,
+    permissionSet: Set<string>,
+    hasAdminModuleAccess: boolean,
+  ): EnabledCompanyModuleRecord[] {
+    return membership.company.enabledModules.filter((item) =>
+      this.hasModulePermission(
+        item.module,
+        permissionSet,
+        hasAdminModuleAccess,
+      ),
+    );
+  }
+
+  private hasModulePermission(
+    module: EnabledUserModuleRecord,
+    permissionSet: Set<string>,
+    hasAdminModuleAccess: boolean,
+  ): boolean {
+    return (
+      hasAdminModuleAccess ||
+      module.permissions.some((permission) =>
+        Object.values(PermissionAction).some((action) =>
+          permissionSet.has(this.buildPermissionKey(permission.code, action)),
+        ),
+      )
+    );
+  }
+
+  private getAccessibleBranchIds(
+    membership: MembershipAccessRecord,
+    permittedItems: UserModuleRecord[],
+  ): number[] {
     const defaultBranchIds =
       membership.role === MembershipRole.ADMIN ||
       membership.accessScope === 'COMPANY' ||
@@ -630,35 +778,42 @@ export class AccessControlService {
         ? membership.company.units.map((item) => item.id)
         : membership.unitAccess.map((item) => item.unitId);
 
-    const branchIds = Array.from(
+    return Array.from(
       new Set([
         ...defaultBranchIds,
         ...membership.unitAccess.map((item) => item.unitId),
         ...permittedItems.map((item) => item.branchUnitId),
       ]),
     );
-    const byBranch = branchIds.map((branchUnitId) => {
-      const branchAccess = membership.unitAccess.find(
-        (item) => item.unitId === branchUnitId,
-      );
-
-      return {
-        branchUnitId,
-        companyRoleId: branchAccess?.companyRole?.id ?? null,
-        companyRoleCode: branchAccess?.companyRole?.code ?? null,
-        companyRoleName: branchAccess?.companyRole?.name ?? null,
-        items: buildBranchUserModules({
-          customItems: permittedItems.filter(
-            (item) => item.branchUnitId === branchUnitId,
-          ),
-          enabledModules: permittedEnabledModules,
-          systemSidebarItems: getActiveSystemSidebarItems(membership),
-        }),
-      };
-    });
-
-    return { items: byBranch[0]?.items ?? fallbackItems, byBranch };
   }
+
+  private buildBranchModuleAccess(
+    membership: MembershipAccessRecord,
+    branchUnitId: number,
+    permittedItems: UserModuleRecord[],
+    permittedEnabledModules: EnabledCompanyModuleRecord[],
+    systemSidebarItems: SystemSidebarRecord[],
+  ) {
+    const branchAccess = membership.unitAccess.find(
+      (item) => item.unitId === branchUnitId,
+    );
+
+    return {
+      branchUnitId,
+      companyRoleId: branchAccess?.companyRole?.id ?? null,
+      companyRoleCode: branchAccess?.companyRole?.code ?? null,
+      companyRoleName: branchAccess?.companyRole?.name ?? null,
+      items: buildBranchUserModules({
+        customItems: permittedItems.filter(
+          (item) => item.branchUnitId === branchUnitId,
+        ),
+        enabledModules: permittedEnabledModules,
+        systemSidebarItems,
+      }),
+    };
+  }
+
+  // Shared utilities
 
   private buildPermissionKey(
     permissionCode: string,
