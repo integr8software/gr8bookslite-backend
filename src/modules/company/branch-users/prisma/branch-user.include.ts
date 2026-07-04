@@ -5,35 +5,15 @@ export const BranchUserRoleInclude = {
     where: {
       permission: {
         isActive: true,
-        OR: [
-          {
-            targetType: 'MODULE',
-            module: { isActive: true },
-          },
-          {
-            targetType: 'SUBMODULE',
-            module: { isActive: true },
-            submodule: {
-              isActive: true,
-              module: { isActive: true },
-            },
-          },
-        ],
+        module: { isActive: true },
       },
     },
     include: {
       permission: {
-        include: {
-          module: true,
-          submodule: {
-            include: {
-              module: true,
-            },
-          },
-        },
+        include: { module: true },
       },
     },
-    orderBy: [{ permission: { module: { sortOrder: 'asc' } } }],
+    orderBy: [{ permission: { name: 'asc' } }],
   },
 } satisfies Prisma.CompanyRoleInclude;
 

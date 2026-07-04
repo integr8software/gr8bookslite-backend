@@ -1,0 +1,1 @@
+ALTER TABLE IF EXISTS "barangays" ALTER COLUMN "updated_at" DROP DEFAULT;

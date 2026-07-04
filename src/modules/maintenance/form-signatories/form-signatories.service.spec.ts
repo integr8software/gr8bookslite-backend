@@ -4,7 +4,7 @@ import { FormSignatoriesService } from './form-signatories.service';
 describe('FormSignatoriesService permission catalog ownership', () => {
   function createService() {
     const prisma = {
-      platformModule: {
+      module: {
         findUnique: jest.fn(),
       },
     };
@@ -21,13 +21,14 @@ describe('FormSignatoriesService permission catalog ownership', () => {
         prisma as never,
         cacheManager as never,
         auditLogsService as never,
+        {} as never,
       ),
     };
   }
 
   it('resolves an existing active module without trusting its submitted name', async () => {
     const { prisma, service } = createService();
-    prisma.platformModule.findUnique.mockResolvedValue({
+    prisma.module.findUnique.mockResolvedValue({
       id: 40,
       code: 'cash-disbursement',
       name: 'Cash Disbursement',
@@ -46,7 +47,7 @@ describe('FormSignatoriesService permission catalog ownership', () => {
       moduleName: 'Client-controlled name',
     });
 
-    expect(prisma.platformModule.findUnique).toHaveBeenCalledWith({
+    expect(prisma.module.findUnique).toHaveBeenCalledWith({
       where: {
         code: 'cash-disbursement',
       },
@@ -75,7 +76,7 @@ describe('FormSignatoriesService permission catalog ownership', () => {
     },
   ])('rejects a module outside the active backend catalog', async (module) => {
     const { prisma, service } = createService();
-    prisma.platformModule.findUnique.mockResolvedValue(module);
+    prisma.module.findUnique.mockResolvedValue(module);
 
     await expect(
       (

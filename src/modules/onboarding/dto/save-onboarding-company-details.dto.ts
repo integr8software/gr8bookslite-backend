@@ -8,7 +8,8 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-const NamePattern = /^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$/;
+const NamePattern = /^[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*$/u;
+const OptionalNamePattern = /^(?:$|[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*)$/u;
 const TinPattern =
   /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
 const ContactNumberPattern = /^\+63 \d{3} \d{3} \d{4}$/;
@@ -43,7 +44,7 @@ export class SaveOnboardingCompanyDetailsDto {
   )
   @IsOptional()
   @IsString()
-  @Matches(/^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$/, {
+  @Matches(OptionalNamePattern, {
     message: 'Middle name must contain letters only.',
   })
   middleName?: string;

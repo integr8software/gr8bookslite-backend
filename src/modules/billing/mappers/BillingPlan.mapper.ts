@@ -6,7 +6,20 @@ type BillingPlanRecord = Prisma.SubscriptionPlanGetPayload<{
     prices: true;
     usageRules: true;
     discountTiers: true;
-    modules: true;
+    modules: {
+      include: { module: true };
+    };
+    systems: {
+      include: {
+        system: {
+          include: {
+            modules: {
+              include: { module: true };
+            };
+          };
+        };
+      };
+    };
   };
 }>;
 
@@ -15,7 +28,7 @@ export function mapBillingPlan(plan: SubscriptionPlan | BillingPlanRecord) {
   const priceSummary = getSubscriptionPlanPriceSummary(prices);
   const usageRules = 'usageRules' in plan ? plan.usageRules : [];
   const discountTiers = 'discountTiers' in plan ? plan.discountTiers : [];
-  const modules = 'modules' in plan ? plan.modules : [];
+  const modules = deriveModules(plan);
 
   return {
     code: plan.code,
@@ -60,13 +73,40 @@ export function mapBillingPlan(plan: SubscriptionPlan | BillingPlanRecord) {
       discountPercent: tier.discountPercent.toNumber(),
       isActive: tier.isActive,
     })),
-    moduleKeys: modules
-      .filter((module) => module.isEnabled)
-      .map((module) => module.moduleKey),
+    moduleKeys: modules.map((module) => module.code),
     modules: modules.map((module) => ({
       id: module.id,
-      moduleKey: module.moduleKey,
-      isEnabled: module.isEnabled,
+      moduleKey: module.code,
+      name: module.name,
+      isEnabled: true,
     })),
   };
+}
+
+function deriveModules(plan: SubscriptionPlan | BillingPlanRecord) {
+  if ('systems' in plan && plan.systems.length > 0) {
+    const modulesById = new Map<
+      number,
+      BillingPlanRecord['systems'][number]['system']['modules'][number]['module']
+    >();
+    for (const planSystem of plan.systems) {
+      if (!planSystem.isEnabled || !planSystem.system.isActive) continue;
+      for (const systemModule of planSystem.system.modules) {
+        modulesById.set(systemModule.module.id, systemModule.module);
+      }
+    }
+    return [...modulesById.values()].sort(
+      (left, right) =>
+        left.name.localeCompare(right.name) ||
+        left.code.localeCompare(right.code),
+    );
+  }
+
+  return 'modules' in plan
+    ? plan.modules.map((module) => ({
+        id: module.module.id,
+        code: module.module.code,
+        name: module.module.name,
+      }))
+    : [];
 }

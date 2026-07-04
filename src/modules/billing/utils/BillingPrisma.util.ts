@@ -16,8 +16,17 @@ export const companySubscriptionDetailsInclude =
           where: { isActive: true },
           orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
         },
-        modules: {
-          orderBy: [{ moduleKey: 'asc' }],
+        systems: {
+          include: {
+            system: {
+              include: {
+                modules: {
+                  include: { module: true },
+                  where: { isActive: true, module: { isActive: true } },
+                },
+              },
+            },
+          },
         },
       },
     },

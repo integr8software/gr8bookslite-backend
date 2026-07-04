@@ -96,6 +96,12 @@ export class WorkspaceUsersService {
         assignments,
       });
 
+      await tx.$executeRaw`
+        UPDATE "users"
+        SET "updated_at" = NULL
+        WHERE "id" = ${workspaceUser.id}
+      `;
+
       return workspaceUser;
     });
 
@@ -623,14 +629,42 @@ export class WorkspaceUsersService {
   }
 
   private buildActivationUrl(email: string, token: string) {
-    const frontendUrl = this.configService
-      .get<string>('FRONTEND_URL', 'http://localhost:3001')
-      .replace(/\/+$/, '');
+    const frontendUrl = this.resolveFrontendUrl();
     const url = new URL('/activate-account', frontendUrl);
     url.searchParams.set('email', email);
     url.searchParams.set('token', token);
 
     return url.toString();
+  }
+
+  private resolveFrontendUrl() {
+    const appEnvironment = this.configService.get<string>('APP_ENV', 'local');
+    const configuredUrl = this.configService.get<string>('FRONTEND_URL')?.trim();
+    const corsOrigin = this.getFirstCorsAllowedOrigin();
+
+    if (configuredUrl) {
+      return configuredUrl.replace(/\/+$/, '');
+    }
+
+    if (corsOrigin) {
+      return corsOrigin.replace(/\/+$/, '');
+    }
+
+    if (appEnvironment === 'local') {
+      return 'http://localhost:3001';
+    }
+
+    throw new Error(
+      'A frontend origin is required before sending workspace user invitations. Set FRONTEND_URL or CORS_ALLOWED_ORIGINS.',
+    );
+  }
+
+  private getFirstCorsAllowedOrigin() {
+    return this.configService
+      .get<string>('CORS_ALLOWED_ORIGINS', '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .find((origin) => origin && origin !== '*');
   }
 }
 

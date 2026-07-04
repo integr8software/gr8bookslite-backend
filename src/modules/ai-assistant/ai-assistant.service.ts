@@ -1,17 +1,50 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleDestroy,
+  OnModuleInit,
+  RequestTimeoutException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Job, Queue, Worker } from 'bullmq';
+import type { JobsOptions, RedisOptions } from 'bullmq';
+import { MembershipRole, MembershipStatus } from '@prisma/client';
+import { AppRole } from '../../common/enums/app-role.enum';
+import { PermissionAction } from '../../common/enums/permission-action.enum';
+import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AiAssistantChatDto } from './dto/ai-assistant-chat.dto';
 import {
   AiAssistantAction,
   AiAssistantChatResponse,
   GeminiGenerateContentResponse,
 } from './ai-assistant.types';
+import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant-audio-file.type';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const PRODUCT_NAME = 'Gr8Books Neo';
 const SHORT_PRODUCT_NAME_PATTERN = /\bGr8Books\b(?!\s+Neo)/gi;
 const PURCHASE_REQUEST_ADD_ROUTE =
   '/purchasing/purchase-request/add?assistant=1';
+const TERM_MANAGEMENT_PERMISSION_CODE = 'TM';
+export const MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES = 4 * 1024 * 1024;
+const GEMINI_TRANSCRIPTION_TIMEOUT_MS = 90_000;
+const MAX_CONCURRENT_TRANSCRIPTIONS = 4;
+const VOICE_TRANSCRIPTION_QUEUE_NAME = 'neo-ai-voice-transcription';
+const SUPPORTED_TRANSCRIPTION_AUDIO_TYPES = new Set([
+  'audio/webm',
+  'audio/ogg',
+  'audio/wav',
+  'audio/wave',
+  'audio/x-wav',
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/mp4',
+  'audio/aac',
+]);
 
 const moduleGuide = [
   {
@@ -67,17 +100,109 @@ const moduleGuide = [
     notes:
       'Use Charts of Accounts to maintain the account codes and names used for posting accounting entries.',
   },
+  {
+    label: 'Maintenance > Term Management',
+    moduleCode: 'TM',
+    aliases: [
+      'term management',
+      'term',
+      'terms',
+      'payment term',
+      'payment terms',
+      'due term',
+      'datemode',
+    ],
+    actions: [
+      'open',
+      'explain',
+      'search',
+      'filter_status',
+      'prepare_add',
+      'preview_edit',
+    ],
+    notes:
+      'Use Term Management to maintain payment term definitions, including term name, datemode, period, and active status.',
+  },
 ];
 
 @Injectable()
-export class AiAssistantService {
+export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(AiAssistantService.name);
+  private readonly transcriptionJobOptions: JobsOptions = {
+    attempts: 2,
+    backoff: {
+      type: 'exponential',
+      delay: 3000,
+    },
+    removeOnComplete: {
+      age: 60 * 30,
+      count: 1000,
+    },
+    removeOnFail: {
+      age: 60 * 60,
+      count: 1000,
+    },
+  };
+  private activeTranscriptions = 0;
+  private transcriptionQueue?: Queue<VoiceTranscriptionJobData>;
+  private transcriptionWorker?: Worker<VoiceTranscriptionJobData>;
+
   constructor(private readonly configService: ConfigService) {}
 
-  async chat(dto: AiAssistantChatDto): Promise<AiAssistantChatResponse> {
+  onModuleInit() {
+    if (
+      this.configService.get<string>('VOICE_TRANSCRIPTION_QUEUE_ENABLED') !==
+      'true'
+    ) {
+      this.logger.log(
+        'Voice transcription queue disabled; transcription will run inline.',
+      );
+      return;
+    }
+
+    const connection = this.getRedisConnectionOptions();
+    this.transcriptionQueue = new Queue<VoiceTranscriptionJobData>(
+      VOICE_TRANSCRIPTION_QUEUE_NAME,
+      {
+        connection,
+        defaultJobOptions: this.transcriptionJobOptions,
+      },
+    );
+    this.transcriptionWorker = new Worker<VoiceTranscriptionJobData>(
+      VOICE_TRANSCRIPTION_QUEUE_NAME,
+      (job) => this.processTranscriptionJob(job),
+      {
+        connection,
+        concurrency: this.getVoiceTranscriptionWorkerConcurrency(),
+      },
+    );
+
+    this.transcriptionWorker.on('completed', (job) => {
+      this.logger.debug(`Voice transcription job ${job.id} completed.`);
+    });
+    this.transcriptionWorker.on('failed', (job, error) => {
+      this.logger.error(
+        `Voice transcription job ${job?.id ?? 'unknown'} failed: ${error.message}`,
+        error.stack,
+      );
+    });
+
+    this.logger.log('Voice transcription queue enabled with BullMQ.');
+  }
+
+  async onModuleDestroy() {
+    await this.transcriptionWorker?.close();
+    await this.transcriptionQueue?.close();
+  }
+
+  async chat(
+    user: AuthUser,
+    dto: AiAssistantChatDto,
+  ): Promise<AiAssistantChatResponse> {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
 
     if (!apiKey) {
-      return this.createLocalDemoResponse(dto.message);
+      return this.createLocalDemoResponse(user, dto.message);
     }
 
     try {
@@ -118,15 +243,188 @@ export class AiAssistantService {
       );
 
       if (!response.ok) {
-        return this.createLocalDemoResponse(dto.message);
+        return this.createLocalDemoResponse(user, dto.message);
       }
 
       const payload = (await response.json()) as GeminiGenerateContentResponse;
       const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
 
-      return this.normalizeResponse(text);
+      return this.normalizeResponse(user, text);
     } catch {
-      return this.createLocalDemoResponse(dto.message);
+      return this.createLocalDemoResponse(user, dto.message);
+    }
+  }
+
+  async transcribe(
+    user: AuthUser,
+    file: UploadedAiAssistantAudioFile | undefined,
+  ) {
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
+
+    if (!apiKey) {
+      throw new BadRequestException(
+        'Neo AI voice transcription is not configured.',
+      );
+    }
+
+    this.validateTranscriptionAudio(file);
+
+    if (this.transcriptionQueue) {
+      const job = await this.transcriptionQueue.add('transcribe', {
+        audio: {
+          data: file.buffer.toString('base64'),
+          mimetype: this.normalizeAudioMimeType(file.mimetype),
+          originalname: file.originalname,
+          size: file.size,
+        },
+        userId: user.id,
+      });
+
+      return {
+        jobId: job.id,
+        status: 'queued' as const,
+      };
+    }
+
+    const transcript = await this.transcribeWithGemini(file);
+
+    return {
+      status: 'completed' as const,
+      transcript,
+    };
+  }
+
+  async getTranscriptionJob(user: AuthUser, jobId: string) {
+    if (!this.transcriptionQueue) {
+      throw new BadRequestException(
+        'Voice transcription queue is not enabled.',
+      );
+    }
+
+    const job = await this.transcriptionQueue.getJob(jobId);
+
+    if (!job || job.data.userId !== user.id) {
+      throw new NotFoundException('Voice transcription job was not found.');
+    }
+
+    const state = await job.getState();
+
+    if (state === 'completed') {
+      return {
+        jobId,
+        status: 'completed' as const,
+        transcript: readTranscriptionJobReturnValue(job.returnvalue),
+      };
+    }
+
+    if (state === 'failed') {
+      return {
+        error:
+          job.failedReason ||
+          'Neo AI could not transcribe that recording. Please try again.',
+        jobId,
+        status: 'failed' as const,
+      };
+    }
+
+    return {
+      jobId,
+      status:
+        state === 'active' ? ('processing' as const) : ('queued' as const),
+    };
+  }
+
+  private async processTranscriptionJob(job: Job<VoiceTranscriptionJobData>) {
+    const file: UploadedAiAssistantAudioFile = {
+      buffer: Buffer.from(job.data.audio.data, 'base64'),
+      mimetype: job.data.audio.mimetype,
+      originalname: job.data.audio.originalname,
+      size: job.data.audio.size,
+    };
+
+    return {
+      transcript: await this.transcribeWithGemini(file),
+    };
+  }
+
+  private async transcribeWithGemini(file: UploadedAiAssistantAudioFile) {
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
+
+    if (!apiKey) {
+      throw new BadRequestException(
+        'Neo AI voice transcription is not configured.',
+      );
+    }
+
+    this.reserveTranscriptionSlot();
+
+    const abortController = new AbortController();
+    const timeout = setTimeout(
+      () => abortController.abort(),
+      GEMINI_TRANSCRIPTION_TIMEOUT_MS,
+    );
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: abortController.signal,
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  {
+                    text: 'Transcribe this audio into plain text. Return only the transcript. If there is no clear speech, return an empty string.',
+                  },
+                  {
+                    inlineData: {
+                      mimeType: this.normalizeAudioMimeType(file.mimetype),
+                      data: file.buffer.toString('base64'),
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0,
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new BadRequestException(
+          'Neo AI could not transcribe that audio. Please try again.',
+        );
+      }
+
+      const payload = (await response.json()) as GeminiGenerateContentResponse;
+      const transcript =
+        payload.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
+
+      return transcript;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new RequestTimeoutException(
+          'Neo AI transcription took too long. Please try a shorter recording.',
+        );
+      }
+
+      throw new BadRequestException(
+        'Neo AI could not transcribe that audio. Please try again.',
+      );
+    } finally {
+      this.releaseTranscriptionSlot();
+      clearTimeout(timeout);
     }
   }
 
@@ -135,19 +433,25 @@ export class AiAssistantService {
       `You are Neo AI, the ${PRODUCT_NAME} in-app assistant.`,
       'Speak naturally and conversationally, not like a scripted command response.',
       `Always refer to the product as "${PRODUCT_NAME}". Do not shorten it to "Gr8Books".`,
-      'For now, focus on explaining modules, opening approved module pages, and preparing Purchase Request drafts for user review. Never submit, approve, delete, or save records.',
+      'For now, focus on explaining modules, opening approved module pages, preparing Purchase Request drafts, and preparing Term Management previews for user review. Never submit, approve, delete, or save records.',
       `If the user asks you to introduce yourself, say: "Hi there! I'm Neo AI, your in-app assistant for ${PRODUCT_NAME}. I can help you understand different modules and open specific pages for you to review."`,
       'Return only JSON matching this TypeScript shape:',
-      '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } }',
-      'Only use routes from this module guide:',
+      '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } | { "type": "term_management", "moduleCode": "TM", "command": "open" | "search" | "filter_status" | "prepare_add" | "preview_edit", "label"?: string, "query"?: string, "status"?: "Active" | "Inactive", "prefill"?: { "name"?: string, "description"?: string, "datemode"?: "Day" | "Month" | "Year", "period"?: string, "status"?: "Active" | "Inactive" }, "targetTermName"?: string } }',
+      'Use route only for navigate and open_form actions. Use moduleCode for module-specific actions such as Term Management.',
+      'Use only these approved modules and module identities:',
       JSON.stringify(moduleGuide),
       'If the user asks to open a module, respond like: "Okay, got it. Give me a moment, I will open Purchase Request for you." and include a navigate action.',
+      'If the user asks to open Term Management, return a term_management action with command "open"; do not return a frontend route for Term Management.',
       'If the user asks to create or prepare a Purchase Request draft, extract item description, quantity, unit of measure, and unit price if present. Use an open_form action, do not save. Tell the user to review before saving.',
+      'If the user asks about Term Management filtering, searching, adding, or editing, return a term_management action. For add or edit, prepare a preview only and explicitly tell the user to review before saving. Required add preview fields are name, datemode, period, and status. Negative or decimal periods are invalid. Period 0 means the term does not add time.',
       'If the user asks what a module is for or how it works, explain it clearly and return action null.',
     ].join('\n');
   }
 
-  private normalizeResponse(text?: string): AiAssistantChatResponse {
+  private normalizeResponse(
+    user: AuthUser,
+    text?: string,
+  ): AiAssistantChatResponse {
     if (!text) {
       return {
         message: `I am Neo AI, your ${PRODUCT_NAME} assistant. I can guide you through modules, open approved pages, and prepare forms for your review. What would you like to do?`,
@@ -157,12 +461,15 @@ export class AiAssistantService {
 
     try {
       const parsed = JSON.parse(text) as AiAssistantChatResponse;
+      const actionResult = this.normalizeAction(user, parsed.action);
+
       return {
         message:
-          typeof parsed.message === 'string'
+          actionResult.denialMessage ??
+          (typeof parsed.message === 'string'
             ? this.normalizeProductName(parsed.message)
-            : 'I prepared the next step for you.',
-        action: this.normalizeAction(parsed.action),
+            : 'I prepared the next step for you.'),
+        action: actionResult.action,
       };
     } catch {
       return {
@@ -172,13 +479,103 @@ export class AiAssistantService {
     }
   }
 
+  private validateTranscriptionAudio(
+    file: UploadedAiAssistantAudioFile | undefined,
+  ): asserts file is UploadedAiAssistantAudioFile {
+    if (!file) {
+      throw new BadRequestException('Audio recording is required.');
+    }
+
+    if (!file.buffer?.length) {
+      throw new BadRequestException('Audio recording is empty.');
+    }
+
+    if (file.size > MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES) {
+      throw new BadRequestException('Audio recording is too large.');
+    }
+
+    if (
+      !SUPPORTED_TRANSCRIPTION_AUDIO_TYPES.has(
+        this.normalizeAudioMimeType(file.mimetype),
+      )
+    ) {
+      throw new BadRequestException('Audio format is not supported.');
+    }
+  }
+
+  private reserveTranscriptionSlot() {
+    if (this.activeTranscriptions >= MAX_CONCURRENT_TRANSCRIPTIONS) {
+      throw new HttpException(
+        'Neo AI voice transcription is busy. Please try again shortly.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    this.activeTranscriptions += 1;
+  }
+
+  private releaseTranscriptionSlot() {
+    this.activeTranscriptions = Math.max(0, this.activeTranscriptions - 1);
+  }
+
+  private getRedisConnectionOptions(): RedisOptions {
+    const redisUrl = this.configService.get<string>('REDIS_URL');
+
+    if (redisUrl) {
+      const parsedUrl = new URL(redisUrl);
+
+      return {
+        host: parsedUrl.hostname,
+        port: Number(parsedUrl.port || 6379),
+        username: parsedUrl.username
+          ? decodeURIComponent(parsedUrl.username)
+          : undefined,
+        password: parsedUrl.password
+          ? decodeURIComponent(parsedUrl.password)
+          : undefined,
+        db: parsedUrl.pathname
+          ? Number(parsedUrl.pathname.replace('/', '') || 0)
+          : undefined,
+        tls: parsedUrl.protocol === 'rediss:' ? {} : undefined,
+        maxRetriesPerRequest: null,
+      };
+    }
+
+    return {
+      host: this.configService.get<string>('REDIS_HOST', '127.0.0.1'),
+      port: Number(this.configService.get<string | number>('REDIS_PORT', 6379)),
+      username: this.configService.get<string>('REDIS_USERNAME') || undefined,
+      password: this.configService.get<string>('REDIS_PASSWORD') || undefined,
+      db: Number(this.configService.get<string | number>('REDIS_DB', 0)),
+      maxRetriesPerRequest: null,
+    };
+  }
+
+  private getVoiceTranscriptionWorkerConcurrency() {
+    const concurrency = Number(
+      this.configService.get<string | number>(
+        'VOICE_TRANSCRIPTION_QUEUE_CONCURRENCY',
+        4,
+      ),
+    );
+
+    return Number.isFinite(concurrency) && concurrency > 0 ? concurrency : 4;
+  }
+
+  private normalizeAudioMimeType(mimeType: string) {
+    return mimeType.split(';')[0] || mimeType;
+  }
+
   private normalizeProductName(message: string) {
     return message.replace(SHORT_PRODUCT_NAME_PATTERN, PRODUCT_NAME);
   }
 
-  private normalizeAction(action: unknown): AiAssistantAction | null {
+  private normalizeAction(
+    user: AuthUser,
+    action: unknown,
+  ): AiAssistantActionPermissionResult {
     if (!action || typeof action !== 'object') {
-      return null;
+      return { action: null };
     }
 
     const candidate = action as Partial<AiAssistantAction>;
@@ -189,9 +586,11 @@ export class AiAssistantService {
       this.isAllowedRoute(candidate.route)
     ) {
       return {
-        type: 'navigate',
-        route: candidate.route,
-        label: candidate.label,
+        action: {
+          type: 'navigate',
+          route: candidate.route,
+          label: candidate.label,
+        },
       };
     }
 
@@ -201,22 +600,62 @@ export class AiAssistantService {
       candidate.route === PURCHASE_REQUEST_ADD_ROUTE
     ) {
       return {
-        type: 'open_form',
-        target: 'purchase_request',
-        route: PURCHASE_REQUEST_ADD_ROUTE,
-        label: candidate.label,
-        prefill: candidate.prefill,
+        action: {
+          type: 'open_form',
+          target: 'purchase_request',
+          route: PURCHASE_REQUEST_ADD_ROUTE,
+          label: candidate.label,
+          prefill: candidate.prefill,
+        },
       };
     }
 
-    return null;
+    if (
+      candidate.type === 'term_management' &&
+      candidate.moduleCode === 'TM' &&
+      this.isAllowedTermManagementCommand(candidate.command)
+    ) {
+      const permissionDenialMessage =
+        this.getTermManagementPermissionDenialMessage(user, candidate.command);
+
+      if (permissionDenialMessage) {
+        return {
+          action: null,
+          denialMessage: permissionDenialMessage,
+        };
+      }
+
+      return {
+        action: {
+          type: 'term_management',
+          moduleCode: 'TM',
+          command: candidate.command,
+          label: candidate.label,
+          query:
+            typeof candidate.query === 'string' ? candidate.query : undefined,
+          status: this.normalizeTermStatus(candidate.status),
+          prefill: this.normalizeTermManagementPrefill(candidate.prefill),
+          targetTermName:
+            typeof candidate.targetTermName === 'string'
+              ? candidate.targetTermName
+              : undefined,
+        },
+      };
+    }
+
+    return { action: null };
   }
 
   private isAllowedRoute(route?: string) {
-    return moduleGuide.some((module) => module.route === route);
+    return moduleGuide.some(
+      (module) => 'route' in module && module.route === route,
+    );
   }
 
-  private createLocalDemoResponse(message: string): AiAssistantChatResponse {
+  private createLocalDemoResponse(
+    user: AuthUser,
+    message: string,
+  ): AiAssistantChatResponse {
     const normalized = message.toLowerCase();
     const purchaseRequestPrefill = this.createPurchaseRequestPrefill(message);
 
@@ -244,13 +683,35 @@ export class AiAssistantService {
     const module = this.findModule(normalized);
 
     if (module && this.isOpenIntent(normalized)) {
+      const route = 'route' in module ? module.route : undefined;
+
+      if (!route) {
+        const denialMessage = this.getTermManagementPermissionDenialMessage(
+          user,
+          'open',
+        );
+
+        if (denialMessage) {
+          return {
+            message: denialMessage,
+            action: null,
+          };
+        }
+
+        return {
+          message:
+            'Neo AI needs Gemini configured to perform that module action.',
+          action: null,
+        };
+      }
+
       return {
         message: `Okay, got it. Give me a moment, I will open ${this.getModuleShortName(
           module.label,
         )} for you.`,
         action: {
           type: 'navigate',
-          route: module.route,
+          route,
           label: this.getModuleShortName(module.label),
         },
       };
@@ -293,6 +754,105 @@ export class AiAssistantService {
       [module.label.toLowerCase(), ...module.aliases].some((alias) =>
         message.includes(alias),
       ),
+    );
+  }
+
+  private isAllowedTermManagementCommand(
+    command: unknown,
+  ): command is Extract<
+    AiAssistantAction,
+    { type: 'term_management' }
+  >['command'] {
+    return (
+      command === 'open' ||
+      command === 'search' ||
+      command === 'filter_status' ||
+      command === 'prepare_add' ||
+      command === 'preview_edit'
+    );
+  }
+
+  private normalizeTermManagementPrefill(prefill: unknown) {
+    if (!prefill || typeof prefill !== 'object') {
+      return undefined;
+    }
+
+    const candidate = prefill as Record<string, unknown>;
+
+    return {
+      name: typeof candidate.name === 'string' ? candidate.name : undefined,
+      description:
+        typeof candidate.description === 'string'
+          ? candidate.description
+          : undefined,
+      datemode: this.normalizeTermDatemode(candidate.datemode),
+      period: typeof candidate.period === 'string' ? candidate.period : undefined,
+      status: this.normalizeTermStatus(candidate.status),
+    };
+  }
+
+  private normalizeTermDatemode(value: unknown): 'Day' | 'Month' | 'Year' | undefined {
+    return value === 'Day' || value === 'Month' || value === 'Year'
+      ? value
+      : undefined;
+  }
+
+  private normalizeTermStatus(value: unknown): 'Active' | 'Inactive' | undefined {
+    return value === 'Active' || value === 'Inactive' ? value : undefined;
+  }
+
+  private getTermManagementPermissionDenialMessage(
+    user: AuthUser,
+    command: Extract<
+      AiAssistantAction,
+      { type: 'term_management' }
+    >['command'],
+  ) {
+    if (!user.companyId) {
+      return 'Please select a company before I can help with Term Management.';
+    }
+
+    if (!this.canUseTermManagement(user, PermissionAction.VIEW)) {
+      return 'You do not have permission to view Term Management.';
+    }
+
+    if (
+      command === 'prepare_add' &&
+      !this.canUseTermManagement(user, PermissionAction.CREATE)
+    ) {
+      return 'You can view Term Management, but you do not have permission to add terms.';
+    }
+
+    if (
+      command === 'preview_edit' &&
+      !this.canUseTermManagement(user, PermissionAction.UPDATE)
+    ) {
+      return 'You can view Term Management, but you do not have permission to edit terms.';
+    }
+
+    return null;
+  }
+
+  private canUseTermManagement(user: AuthUser, action: PermissionAction) {
+    if (this.hasReservedCompanyRoleAccess(user)) {
+      return true;
+    }
+
+    return user.permissions.includes(
+      `${TERM_MANAGEMENT_PERMISSION_CODE}:${action}`,
+    );
+  }
+
+  private hasReservedCompanyRoleAccess(user: AuthUser) {
+    if (user.role === AppRole.SUPER_ADMIN) {
+      return true;
+    }
+
+    return (
+      user.companyId !== null &&
+      user.membershipStatus === MembershipStatus.ACTIVE &&
+      (user.role === AppRole.ADMIN ||
+        user.membershipRole === MembershipRole.ADMIN)
     );
   }
 
@@ -374,4 +934,32 @@ export class AiAssistantService {
 
     return Number.isFinite(cost) ? cost : 0;
   }
+}
+
+type VoiceTranscriptionJobData = {
+  audio: {
+    data: string;
+    mimetype: string;
+    originalname: string;
+    size: number;
+  };
+  userId: number;
+};
+
+type AiAssistantActionPermissionResult = {
+  action: AiAssistantAction | null;
+  denialMessage?: string;
+};
+
+function readTranscriptionJobReturnValue(value: unknown) {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'transcript' in value &&
+    typeof value.transcript === 'string'
+  ) {
+    return value.transcript;
+  }
+
+  return '';
 }

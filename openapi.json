@@ -1,6 +1,34 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/storage/internal/upload": {
+      "post": {
+        "operationId": "VpsStorageInternalController_upload_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "VpsStorageInternal"
+        ]
+      }
+    },
+    "/api/v1/storage/internal/file": {
+      "delete": {
+        "operationId": "VpsStorageInternalController_delete_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "VpsStorageInternal"
+        ]
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "operationId": "AuthController_register_v1",
@@ -1036,6 +1064,688 @@
         ]
       }
     },
+    "/api/v1/regions": {
+      "get": {
+        "operationId": "AddressController_listRegions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}": {
+      "get": {
+        "operationId": "AddressController_getRegion_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/provinces": {
+      "get": {
+        "operationId": "AddressController_listRegionProvinces_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/districts": {
+      "get": {
+        "operationId": "AddressController_listRegionDistricts_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/cities": {
+      "get": {
+        "operationId": "AddressController_listRegionCities_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/municipalities": {
+      "get": {
+        "operationId": "AddressController_listRegionMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/cities-municipalities": {
+      "get": {
+        "operationId": "AddressController_listRegionCitiesMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/sub-municipalities": {
+      "get": {
+        "operationId": "AddressController_listRegionSubMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/regions/{regionCode}/barangays": {
+      "get": {
+        "operationId": "AddressController_listRegionBarangays_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces": {
+      "get": {
+        "operationId": "AddressController_listProvinces_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}": {
+      "get": {
+        "operationId": "AddressController_getProvince_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/cities": {
+      "get": {
+        "operationId": "AddressController_listProvinceCities_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/municipalities": {
+      "get": {
+        "operationId": "AddressController_listProvinceMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/cities-municipalities": {
+      "get": {
+        "operationId": "AddressController_listProvinceCitiesMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/sub-municipalities": {
+      "get": {
+        "operationId": "AddressController_listProvinceSubMunicipalities_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/provinces/{provinceCode}/barangays": {
+      "get": {
+        "operationId": "AddressController_listProvinceBarangays_v1",
+        "parameters": [
+          {
+            "name": "provinceCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/cities-municipalities": {
+      "get": {
+        "operationId": "AddressController_listCitiesMunicipalities_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/cities-municipalities/{cityMunicipalityCode}": {
+      "get": {
+        "operationId": "AddressController_getCityMunicipality_v1",
+        "parameters": [
+          {
+            "name": "cityMunicipalityCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/cities-municipalities/{cityMunicipalityCode}/barangays": {
+      "get": {
+        "operationId": "AddressController_listCityMunicipalityBarangays_v1",
+        "parameters": [
+          {
+            "name": "cityMunicipalityCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/barangays": {
+      "get": {
+        "operationId": "AddressController_listBarangays_v1",
+        "parameters": [
+          {
+            "name": "regionCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provinceCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cityMunicipalityCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/address/autocomplete": {
+      "get": {
+        "operationId": "AddressController_listAutocomplete_v1",
+        "parameters": [
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "regionCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provinceCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cityMunicipalityCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Address"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_listTaxCodes_v1",
+        "parameters": [
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "officialAtcCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes/autocomplete": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_listAutocomplete_v1",
+        "parameters": [
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "officialAtcCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes/transaction-types": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_listTransactionTypes_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes/tax-types": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_listTaxTypes_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
+    "/api/v1/alphanumeric-tax-codes/{sourceKey}": {
+      "get": {
+        "operationId": "AlphanumericTaxCodesController_getTaxCode_v1",
+        "parameters": [
+          {
+            "name": "sourceKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AlphanumericTaxCodes"
+        ]
+      }
+    },
     "/api/v1/master/plan-and-packages": {
       "get": {
         "operationId": "MasterPlanAndPackagesController_listPlans_v1",
@@ -1621,6 +2331,60 @@
         ]
       }
     },
+    "/api/v1/workspace/table-preferences/{moduleKey}": {
+      "get": {
+        "operationId": "TablePreferencesController_findOne_v1",
+        "parameters": [
+          {
+            "name": "moduleKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Table preference retrieved."
+          }
+        },
+        "tags": [
+          "Table Preferences"
+        ]
+      },
+      "put": {
+        "operationId": "TablePreferencesController_save_v1",
+        "parameters": [
+          {
+            "name": "moduleKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTablePreferenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Table preference saved."
+          }
+        },
+        "tags": [
+          "Table Preferences"
+        ]
+      }
+    },
     "/api/v1/company/units/{unitId}/roles": {
       "get": {
         "operationId": "BranchRolesController_findAll_v1",
@@ -2101,6 +2865,915 @@
         ]
       }
     },
+    "/api/v1/maintenance/chart-of-accounts": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MAJOR",
+                "SUB1",
+                "SUB2",
+                "SUB3",
+                "SPECIFIC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      },
+      "post": {
+        "operationId": "ChartOfAccountsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChartAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountSaveResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/tree": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findTree_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountTreeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/next-code": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findNextCode_v1",
+        "parameters": [
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MAJOR",
+                "SUB1",
+                "SUB2",
+                "SUB3",
+                "SPECIFIC"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountNextCodeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/{id}": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      },
+      "patch": {
+        "operationId": "ChartOfAccountsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChartAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountSaveResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/{id}/status": {
+      "patch": {
+        "operationId": "ChartOfAccountsController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChartAccountStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountSaveResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/terms": {
+      "get": {
+        "operationId": "TermsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DAY",
+                "MONTH",
+                "YEAR"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "dateMode",
+                "period",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Term list retrieved."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      },
+      "post": {
+        "operationId": "TermsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Term created."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/terms/{id}": {
+      "get": {
+        "operationId": "TermsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Term retrieved."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      },
+      "patch": {
+        "operationId": "TermsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Term updated."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/terms/import": {
+      "post": {
+        "operationId": "TermsController_importTerms_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportTermsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Terms imported."
+          }
+        },
+        "tags": [
+          "Terms"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile": {
+      "get": {
+        "operationId": "BankMasterfileController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bankName",
+                "branch",
+                "accountName",
+                "accountNumber",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank accounts retrieved."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      },
+      "post": {
+        "operationId": "BankMasterfileController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bank account created."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile/next-account-code": {
+      "get": {
+        "operationId": "BankMasterfileController_getNextAccountCode_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Next bank account code generated."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile/{id}": {
+      "get": {
+        "operationId": "BankMasterfileController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank account retrieved."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      },
+      "patch": {
+        "operationId": "BankMasterfileController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBankAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bank account updated."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile/import": {
+      "post": {
+        "operationId": "BankMasterfileController_importBankAccounts_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportBankAccountsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bank accounts imported."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile/{id}/status": {
+      "patch": {
+        "operationId": "BankMasterfileController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBankAccountStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bank account status updated."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/system-administration/approval-management/modules": {
+      "get": {
+        "operationId": "ApprovalManagementController_findModules_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalManagementModulesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Approval Management"
+        ]
+      }
+    },
+    "/api/v1/system-administration/transaction-number-sequences/bootstrap": {
+      "get": {
+        "operationId": "TransactionNumberSequencesController_findBootstrap_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSequenceBootstrapResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transaction Number Sequences"
+        ]
+      }
+    },
+    "/api/v1/system-administration/transaction-number-sequences/{moduleId}": {
+      "patch": {
+        "operationId": "TransactionNumberSequencesController_update_v1",
+        "parameters": [
+          {
+            "name": "moduleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionNumberSequenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveTransactionNumberSequenceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Transaction Number Sequences"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/user-sidebar/customization": {
+      "get": {
+        "operationId": "UserSidebarController_getCustomization_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      },
+      "put": {
+        "operationId": "UserSidebarController_save_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveUserSidebarDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/user-sidebar/reset": {
+      "post": {
+        "operationId": "UserSidebarController_reset_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applyScope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      }
+    },
     "/api/v1/ai-assistant/chat": {
       "post": {
         "operationId": "AiAssistantController_chat_v1",
@@ -2117,6 +3790,57 @@
         },
         "responses": {
           "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AiAssistant"
+        ]
+      }
+    },
+    "/api/v1/ai-assistant/transcribe": {
+      "post": {
+        "operationId": "AiAssistantController_transcribe_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AiAssistant"
+        ]
+      }
+    },
+    "/api/v1/ai-assistant/transcribe/{jobId}": {
+      "get": {
+        "operationId": "AiAssistantController_getTranscriptionJob_v1",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -2407,8 +4131,8 @@
           "systemRole": {
             "type": "string",
             "enum": [
-              "SUPER_ADMIN",
-              "STANDARD"
+              "STANDARD",
+              "SUPER_ADMIN"
             ]
           }
         },
@@ -2451,8 +4175,8 @@
           "systemRole": {
             "type": "string",
             "enum": [
-              "SUPER_ADMIN",
-              "STANDARD"
+              "STANDARD",
+              "SUPER_ADMIN"
             ]
           }
         }
@@ -2483,8 +4207,7 @@
         "properties": {
           "cardholderName": {
             "type": "string",
-            "minLength": 2,
-            "pattern": "^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+            "minLength": 2
           },
           "billingEmail": {
             "type": "string",
@@ -2547,8 +4270,7 @@
             "minLength": 2
           },
           "middleName": {
-            "type": "string",
-            "pattern": "^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+            "type": "string"
           },
           "companyName": {
             "type": "string",
@@ -4051,6 +5773,43 @@
           "updatedAt"
         ]
       },
+      "WorkspaceUserAssignedUnitResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "type": {
+            "enum": [
+              "HEAD_OFFICE",
+              "BRANCH",
+              "SATELLITE"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "type",
+          "name",
+          "displayName",
+          "isActive"
+        ]
+      },
       "WorkspaceUserCompanyAssignmentResponseDto": {
         "type": "object",
         "properties": {
@@ -4062,11 +5821,18 @@
             "items": {
               "type": "number"
             }
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceUserAssignedUnitResponseDto"
+            }
           }
         },
         "required": [
           "companyId",
-          "unitIds"
+          "unitIds",
+          "units"
         ]
       },
       "WorkspaceUserResponseDto": {
@@ -4108,7 +5874,8 @@
           },
           "updatedAt": {
             "format": "date-time",
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -4204,8 +5971,7 @@
             "minLength": 2
           },
           "middleName": {
-            "type": "string",
-            "pattern": "^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+            "type": "string"
           },
           "companyName": {
             "type": "string",
@@ -4287,8 +6053,7 @@
             "minLength": 2
           },
           "middleName": {
-            "type": "string",
-            "pattern": "^$|^[A-Za-z]+(?:[ .'-]+[A-Za-z]+)*$"
+            "type": "string"
           },
           "companyName": {
             "type": "string",
@@ -4506,12 +6271,10 @@
         "type": "object",
         "properties": {
           "path": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "module": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "branchId": {
             "type": "string"
@@ -4531,11 +6294,7 @@
           "entityId": {
             "type": "string"
           }
-        },
-        "required": [
-          "path",
-          "module"
-        ]
+        }
       },
       "WorkspaceUserAssignmentDto": {
         "type": "object",
@@ -4638,6 +6397,17 @@
           "name",
           "email",
           "companyAssignments"
+        ]
+      },
+      "SaveTablePreferenceDto": {
+        "type": "object",
+        "properties": {
+          "configuration": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "configuration"
         ]
       },
       "BranchRolePermissionDto": {
@@ -5120,6 +6890,1104 @@
         "required": [
           "message",
           "setup"
+        ]
+      },
+      "ChartAccountBankAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "coaId": {
+            "type": "number"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "coaId",
+          "bankName",
+          "branch",
+          "accountNumber",
+          "accountName",
+          "currencyCode",
+          "isDefault",
+          "status"
+        ]
+      },
+      "ChartAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "parentAccountId": {
+            "type": "number",
+            "nullable": true
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountLevel": {
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ],
+            "type": "string"
+          },
+          "accountType": {
+            "nullable": true,
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "nullable": true,
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "accountGroup": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "class": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          },
+          "withSubsidiary": {
+            "type": "boolean"
+          },
+          "contraAccount": {
+            "type": "boolean"
+          },
+          "showTotal": {
+            "type": "boolean"
+          },
+          "orderNo": {
+            "type": "number",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "deletedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountBankAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "parentAccountId",
+          "accountCode",
+          "accountTitle",
+          "accountLevel",
+          "accountType",
+          "accountNature",
+          "accountGroup",
+          "reportAlias",
+          "class",
+          "isPostingAccount",
+          "withSubsidiary",
+          "contraAccount",
+          "showTotal",
+          "orderNo",
+          "status",
+          "currencyCode",
+          "deletedAt",
+          "createdAt",
+          "updatedAt",
+          "bankAccounts"
+        ]
+      },
+      "ChartAccountListResponseDto": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "accounts"
+        ]
+      },
+      "ChartAccountTreeNodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "parentAccountId": {
+            "type": "number",
+            "nullable": true
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountLevel": {
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ],
+            "type": "string"
+          },
+          "accountType": {
+            "nullable": true,
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "nullable": true,
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "accountGroup": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "class": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          },
+          "withSubsidiary": {
+            "type": "boolean"
+          },
+          "contraAccount": {
+            "type": "boolean"
+          },
+          "showTotal": {
+            "type": "boolean"
+          },
+          "orderNo": {
+            "type": "number",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "deletedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountBankAccountResponseDto"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountTreeNodeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "parentAccountId",
+          "accountCode",
+          "accountTitle",
+          "accountLevel",
+          "accountType",
+          "accountNature",
+          "accountGroup",
+          "reportAlias",
+          "class",
+          "isPostingAccount",
+          "withSubsidiary",
+          "contraAccount",
+          "showTotal",
+          "orderNo",
+          "status",
+          "currencyCode",
+          "deletedAt",
+          "createdAt",
+          "updatedAt",
+          "bankAccounts",
+          "children"
+        ]
+      },
+      "ChartAccountTreeResponseDto": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountTreeNodeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "accounts"
+        ]
+      },
+      "ChartAccountNextCodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountCode"
+        ]
+      },
+      "ChartAccountContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/ChartAccountResponseDto"
+          }
+        },
+        "required": [
+          "account"
+        ]
+      },
+      "CreateChartAccountDto": {
+        "type": "object",
+        "properties": {
+          "parentAccountId": {
+            "type": "string"
+          },
+          "accountLevel": {
+            "type": "string",
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ]
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ]
+          },
+          "accountNature": {
+            "type": "string",
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ]
+          },
+          "accountGroup": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "reportAlias": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "class": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          },
+          "withSubsidiary": {
+            "type": "boolean"
+          },
+          "contraAccount": {
+            "type": "boolean"
+          },
+          "showTotal": {
+            "type": "boolean"
+          },
+          "orderNo": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          }
+        },
+        "required": [
+          "accountLevel",
+          "accountTitle"
+        ]
+      },
+      "ChartAccountSaveResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "account": {
+            "$ref": "#/components/schemas/ChartAccountResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "account"
+        ]
+      },
+      "UpdateChartAccountDto": {
+        "type": "object",
+        "properties": {
+          "parentAccountId": {
+            "type": "string"
+          },
+          "accountLevel": {
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ],
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "accountType": {
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "accountGroup": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "reportAlias": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "class": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          },
+          "withSubsidiary": {
+            "type": "boolean"
+          },
+          "contraAccount": {
+            "type": "boolean"
+          },
+          "showTotal": {
+            "type": "boolean"
+          },
+          "orderNo": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          }
+        }
+      },
+      "UpdateChartAccountStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreateTermDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "dateMode": {
+            "type": "string",
+            "enum": [
+              "DAY",
+              "MONTH",
+              "YEAR"
+            ]
+          },
+          "period": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "dateMode",
+          "period"
+        ]
+      },
+      "ImportTermsDto": {
+        "type": "object",
+        "properties": {
+          "terms": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateTermDto"
+            }
+          }
+        },
+        "required": [
+          "terms"
+        ]
+      },
+      "UpdateTermDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "dateMode": {
+            "enum": [
+              "DAY",
+              "MONTH",
+              "YEAR"
+            ],
+            "type": "string"
+          },
+          "period": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "CreateBankAccountDto": {
+        "type": "object",
+        "properties": {
+          "bankName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "branch": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountName": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "accountType": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesStart": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesEnd": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesDigits": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "currencyExchangeRate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "accountCode": {
+            "type": "string",
+            "pattern": "^\\d{10}$"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "bankName",
+          "accountNumber"
+        ]
+      },
+      "ImportBankAccountsDto": {
+        "type": "object",
+        "properties": {
+          "banks": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateBankAccountDto"
+            }
+          }
+        },
+        "required": [
+          "banks"
+        ]
+      },
+      "UpdateBankAccountDto": {
+        "type": "object",
+        "properties": {
+          "bankName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "branch": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountName": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "accountType": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesStart": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesEnd": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesDigits": {
+            "type": "number",
+            "minimum": 1
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "currencyExchangeRate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "accountCode": {
+            "type": "string",
+            "pattern": "^\\d{10}$"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "UpdateBankAccountStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ApprovalManagementModuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "ApprovalManagementModulesResponseDto": {
+        "type": "object",
+        "properties": {
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalManagementModuleResponseDto"
+            }
+          }
+        },
+        "required": [
+          "modules"
+        ]
+      },
+      "TransactionNumberBranchResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "TransactionNumberSequenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "moduleId": {
+            "type": "number"
+          },
+          "moduleCode": {
+            "type": "string"
+          },
+          "moduleName": {
+            "type": "string"
+          },
+          "inputMode": {
+            "type": "string",
+            "enum": [
+              "Auto",
+              "Manual"
+            ]
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "suffix": {
+            "type": "string"
+          },
+          "padding": {
+            "type": "number"
+          },
+          "startingNumber": {
+            "type": "number"
+          },
+          "currentNumber": {
+            "type": "number"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "branch",
+              "all"
+            ]
+          },
+          "branchUnitId": {
+            "type": "number",
+            "nullable": true
+          },
+          "branchUnitIds": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "moduleId",
+          "moduleCode",
+          "moduleName",
+          "inputMode",
+          "prefix",
+          "suffix",
+          "padding",
+          "startingNumber",
+          "currentNumber",
+          "scope",
+          "branchUnitId",
+          "branchUnitIds",
+          "status"
+        ]
+      },
+      "TransactionNumberSequenceBootstrapResponseDto": {
+        "type": "object",
+        "properties": {
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionNumberBranchResponseDto"
+            }
+          },
+          "sequences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionNumberSequenceResponseDto"
+            }
+          }
+        },
+        "required": [
+          "branches",
+          "sequences"
+        ]
+      },
+      "UpdateTransactionNumberSequenceDto": {
+        "type": "object",
+        "properties": {
+          "moduleCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "moduleName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "inputMode": {
+            "type": "string",
+            "enum": [
+              "Auto",
+              "Manual"
+            ]
+          },
+          "prefix": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "suffix": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "padding": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "startingNumber": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currentNumber": {
+            "type": "number",
+            "minimum": 0
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "branch"
+            ]
+          },
+          "branchUnitIds": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
+          }
+        },
+        "required": [
+          "moduleCode",
+          "moduleName",
+          "inputMode",
+          "prefix",
+          "padding",
+          "startingNumber",
+          "currentNumber",
+          "scope",
+          "branchUnitIds",
+          "status"
+        ]
+      },
+      "SaveTransactionNumberSequenceResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "sequence": {
+            "$ref": "#/components/schemas/TransactionNumberSequenceResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "sequence"
+        ]
+      },
+      "UserSidebarTreeItemDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "itemType": {
+            "type": "string",
+            "enum": [
+              "SECTION",
+              "CONTAINER",
+              "LINK"
+            ]
+          },
+          "moduleId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "iconName": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "itemType",
+          "children"
+        ]
+      },
+      "SaveUserSidebarDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "minimum": 0
+          },
+          "applyScope": {
+            "type": "string",
+            "enum": [
+              "CURRENT_BRANCH",
+              "ALL_BRANCHES"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "items"
         ]
       },
       "AiAssistantChatMessageDto": {

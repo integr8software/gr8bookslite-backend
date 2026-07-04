@@ -33,8 +33,8 @@ export class WorkspaceAuditLogsController {
     @Req() request: Request,
   ) {
     return this.workspaceAuditLogsService.recordActivity(user, {
-      path: dto.path,
-      module: dto.module,
+      path: dto.path ?? '',
+      module: dto.module ?? '',
       branchId: dto.branchId,
       branchName: dto.branchName,
       action: dto.action,

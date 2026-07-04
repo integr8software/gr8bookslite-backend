@@ -21,6 +21,27 @@ export type AiAssistantAction =
           cost?: number;
         }>;
       };
+    }
+  | {
+      type: 'term_management';
+      moduleCode: 'TM';
+      command:
+        | 'open'
+        | 'search'
+        | 'filter_status'
+        | 'prepare_add'
+        | 'preview_edit';
+      label?: string;
+      query?: string;
+      status?: 'Active' | 'Inactive';
+      prefill?: {
+        name?: string;
+        description?: string;
+        datemode?: 'Day' | 'Month' | 'Year';
+        period?: string;
+        status?: 'Active' | 'Inactive';
+      };
+      targetTermName?: string;
     };
 
 export type AiAssistantChatResponse = {

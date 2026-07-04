@@ -12,6 +12,7 @@ import {
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
+import { EntitlementService } from '../../../common/access/entitlements/entitlement.service';
 import type { Cache } from 'cache-manager';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -32,6 +33,7 @@ export class FormSignatoriesService {
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly auditLogsService: WorkspaceAuditLogsService,
+    private readonly entitlementService: EntitlementService,
   ) {}
 
   async findAll(user: AuthUser) {
@@ -96,7 +98,7 @@ export class FormSignatoriesService {
     return this.cacheManager.wrap(
       `form-signatories:options:${companyId}`,
       async () => {
-        const [units, companyModules, platformModules] = await Promise.all([
+        const [units, modules] = await Promise.all([
           this.prisma.companyUnit.findMany({
             where: {
               companyId,
@@ -104,36 +106,13 @@ export class FormSignatoriesService {
             },
             orderBy: [{ type: 'asc' }, { name: 'asc' }],
           }),
-          this.prisma.companyModule.findMany({
-            where: {
-              companyId,
-              isEnabled: true,
-              module: {
-                isActive: true,
-              },
-            },
-            include: {
-              module: true,
-            },
-            orderBy: {
-              module: {
-                name: 'asc',
-              },
-            },
-          }),
-          this.prisma.platformModule.findMany({
-            where: {
-              isActive: true,
-            },
-            orderBy: {
-              name: 'asc',
-            },
-          }),
+          this.entitlementService.getCompanyAllowedModules(companyId),
         ]);
-        const modules =
-          companyModules.length > 0
-            ? companyModules.map((companyModule) => companyModule.module)
-            : platformModules;
+        const sortedModules = [...modules].sort(
+          (left, right) =>
+            left.name.localeCompare(right.name) ||
+            left.code.localeCompare(right.code),
+        );
 
         return {
           branches: units.map((unit) => ({
@@ -144,7 +123,7 @@ export class FormSignatoriesService {
             displayName: unit.name,
             type: unit.type,
           })),
-          modules: modules.map((module) => ({
+          modules: sortedModules.map((module) => ({
             id: module.id,
             code: module.code,
             name: module.name,
@@ -189,7 +168,7 @@ export class FormSignatoriesService {
       throw new BadRequestException('Select a module.');
     }
 
-    const modules = await this.prisma.platformModule.findMany({
+    const modules = await this.prisma.module.findMany({
       where: {
         code: {
           in: codes,
@@ -509,7 +488,7 @@ export class FormSignatoriesService {
       throw new BadRequestException('Select a module.');
     }
 
-    const module = await this.prisma.platformModule.findUnique({
+    const module = await this.prisma.module.findUnique({
       where: {
         code,
       },

@@ -27,6 +27,14 @@ function classifyOperation(commandParts) {
       return 'seed:reference';
     }
 
+    if (firstArgument?.endsWith('provision-platform.ts')) {
+      return 'provision:platform';
+    }
+
+    if (firstArgument?.endsWith('materialize-user-sidebars.ts')) {
+      return 'materialize:user-sidebars';
+    }
+
     if (firstArgument?.endsWith('seed-local-fixtures.ts')) {
       return 'seed:fixtures';
     }

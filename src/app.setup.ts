@@ -3,11 +3,14 @@ import type { INestApplication, NestMiddleware } from '@nestjs/common';
 import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { ConfigService } from '@nestjs/config';
 import type { NextFunction, Request, Response } from 'express';
+import express from 'express';
+import path from 'node:path';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 export function configureApp(app: INestApplication) {
   const configService = app.get(ConfigService);
 
+  configureVpsStorageStaticServing(app, configService);
   app.enableCors(createCorsOptions(configService));
   app.use(applySecurityHeaders as NestMiddleware['use']);
   app.use(applyFaviconResponse as NestMiddleware['use']);
@@ -24,6 +27,66 @@ export function configureApp(app: INestApplication) {
     }),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
+}
+
+export function shouldServeLocalStorage(publicUrl: string | undefined) {
+  return shouldServeStoragePublicUrl(publicUrl);
+}
+
+export function shouldServeVpsStaticStorage(config: {
+  provider: string | undefined;
+  publicUrl: string | undefined;
+  storageRoot: string | undefined;
+}) {
+  return (
+    config.provider?.trim().toLowerCase() === 'vps' &&
+    Boolean(config.storageRoot?.trim()) &&
+    shouldServeStoragePublicUrl(config.publicUrl)
+  );
+}
+
+function shouldServeStoragePublicUrl(publicUrl: string | undefined) {
+  if (!publicUrl?.trim()) {
+    return false;
+  }
+
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(publicUrl);
+  } catch {
+    return false;
+  }
+
+  return parsedUrl.pathname.replace(/\/+$/, '') === '/storage';
+}
+
+function configureVpsStorageStaticServing(
+  app: INestApplication,
+  configService: ConfigService,
+) {
+  const provider = configService.get<string>('STORAGE_PROVIDER');
+  const publicUrl = configService.get<string>('VPS_STORAGE_PUBLIC_URL');
+  const storageRoot = configService.get<string>('VPS_STORAGE_ROOT', '').trim();
+
+  if (
+    !shouldServeVpsStaticStorage({
+      provider,
+      publicUrl,
+      storageRoot,
+    })
+  ) {
+    return;
+  }
+
+  app.use(
+    '/storage',
+    express.static(path.resolve(storageRoot), {
+      dotfiles: 'deny',
+      fallthrough: true,
+      index: false,
+    }) as NestMiddleware['use'],
+  );
 }
 
 function createCorsOptions(configService: ConfigService): CorsOptions {

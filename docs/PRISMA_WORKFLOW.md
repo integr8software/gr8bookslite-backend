@@ -80,6 +80,12 @@ npm run dev
 6. Apply reviewed, committed migrations to shared development:
 
 ```bash
+npm run sync:push
+```
+
+Or run the expanded workflow:
+
+```bash
 npm run db:verify-migrations:shared
 npm run db:migrate:shared
 npm run db:verify:shared

@@ -1,0 +1,18 @@
+id,psgcCode,regDesc,regCode
+1,10000000,Region I (Ilocos Region),01
+2,20000000,Region II (Cagayan Valley),02
+3,30000000,Region III (Central Luzon),03
+4,40000000,Region IV-A (Calabarzon),04
+5,170000000,Region IV-B (Mimaropa),17
+6,50000000,Region V (Bicol Region),05
+7,60000000,Region VI (Western Visayas),06
+8,70000000,Region VII (Central Visayas),07
+9,80000000,Region VIII (Eastern Visayas),08
+10,90000000,Region IX (Zamboanga Peninsula),09
+11,100000000,Region X (Northern Mindanao),10
+12,110000000,Region XI (Davao Region),11
+13,120000000,Region XII (Soccsksargen),12
+14,130000000,National Capital Region (NCR),13
+15,140000000,Cordillera Administrative Region (CAR),14
+16,150000000,Autonomous Region In Muslim Mindanao (ARMM),15
+17,160000000,Region XIII (Caraga),16

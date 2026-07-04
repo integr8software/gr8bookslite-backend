@@ -1,0 +1,4 @@
+ALTER INDEX
+"transaction_number_sequences_platform_submodule_id_branch_unit_"
+RENAME TO
+"transaction_number_sequences_platform_submodule_id_branch_u_key";
