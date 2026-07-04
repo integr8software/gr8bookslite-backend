@@ -1,92 +1,110 @@
 import { EntitlementService } from './entitlement.service';
 
 describe('EntitlementService', () => {
-  it('returns enabled module codes from company enabled modules', () => {
-    const service = new EntitlementService();
-
-    expect(service.getEnabledModuleCodes(buildSource())).toEqual(['TM', 'COA']);
-  });
-
-  it('uses latest subscription plan system modules as base entitlements', () => {
+  it('returns modules from latest usable subscription plan systems', () => {
     const service = new EntitlementService();
 
     expect(
       service.getEnabledModuleCodes(
         buildSource({
-          enabledModules: [],
-          planModules: [
-            buildCompanyModule(5, 'TM'),
-            buildCompanyModule(8, 'COA'),
+          planSystems: [
+            {
+              modules: [buildPlanModule(5, 'TM'), buildPlanModule(8, 'COA')],
+            },
           ],
         }),
       ),
     ).toEqual(['TM', 'COA']);
   });
 
-  it('includes company modules outside the plan as compatibility additions', () => {
+  it('de-duplicates modules across multiple systems', () => {
     const service = new EntitlementService();
 
     expect(
       service.getEnabledModuleCodes(
         buildSource({
-          enabledModules: [buildCompanyModule(9, 'BANK')],
-          planModules: [buildCompanyModule(5, 'TM')],
+          planSystems: [
+            {
+              modules: [buildPlanModule(5, 'TM'), buildPlanModule(8, 'COA')],
+            },
+            {
+              modules: [buildPlanModule(5, 'TM'), buildPlanModule(9, 'BANK')],
+            },
+          ],
         }),
       ),
-    ).toEqual(['TM', 'BANK']);
+    ).toEqual(['TM', 'COA', 'BANK']);
   });
 
-  it('falls back to company modules when no usable plan modules exist', () => {
+  it('excludes inactive modules', () => {
     const service = new EntitlementService();
 
     expect(
       service.getEnabledModuleCodes(
         buildSource({
-          enabledModules: [buildCompanyModule(9, 'BANK')],
-          planModules: [],
-        }),
-      ),
-    ).toEqual(['BANK']);
-  });
-
-  it('de-duplicates plan modules and compatibility company modules', () => {
-    const service = new EntitlementService();
-
-    expect(
-      service.getEnabledModuleCodes(
-        buildSource({
-          enabledModules: [buildCompanyModule(5, 'TM')],
-          planModules: [buildCompanyModule(5, 'TM')],
-        }),
-      ),
-    ).toEqual(['TM']);
-  });
-
-  it('excludes inactive modules from effective entitlements', () => {
-    const service = new EntitlementService();
-
-    expect(
-      service.getEnabledModuleCodes(
-        buildSource({
-          enabledModules: [buildCompanyModule(9, 'BANK', false)],
-          planModules: [
-            buildCompanyModule(5, 'TM'),
-            buildCompanyModule(8, 'COA', false),
+          planSystems: [
+            {
+              modules: [
+                buildPlanModule(5, 'TM'),
+                buildPlanModule(8, 'COA', false),
+              ],
+            },
           ],
         }),
       ),
     ).toEqual(['TM']);
   });
 
-  it('returns enabled module ids from company enabled modules', () => {
+  it('returns empty modules when no usable plan exists', () => {
     const service = new EntitlementService();
 
-    expect([...service.getEnabledModuleIds(buildSource())]).toEqual([5, 8]);
+    expect(
+      service.getEnabledModuleCodes(buildSource({ noPlan: true })),
+    ).toEqual([]);
+    expect([
+      ...service.getEnabledModuleIds(buildSource({ noPlan: true })),
+    ]).toEqual([]);
+  });
+
+  it('uses subscription plan modules even when legacy-shaped fields are present', () => {
+    const service = new EntitlementService();
+    const company = {
+      subscriptions: [
+        {
+          plan: {
+            systems: [
+              {
+                system: {
+                  modules: [buildPlanModule(5, 'TM')],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    } as Record<string, unknown>;
+
+    company.legacyEnabledRows = [buildPlanModule(9, 'BANK')];
+    company.legacyExceptionRows = [
+      {
+        ...buildPlanModule(8, 'COA'),
+        effect: 'ENABLE',
+      },
+    ];
+
+    expect(
+      service.getEnabledModuleCodes({
+        company,
+      } as never),
+    ).toEqual(['TM']);
   });
 
   it('filters enabled modules by permission while preserving admin access behavior', () => {
     const service = new EntitlementService();
-    const enabledModules = buildSource().company.enabledModules;
+    const enabledModules = [
+      buildPlanModule(5, 'TM'),
+      buildPlanModule(8, 'COA'),
+    ];
 
     expect(
       service.getPermittedEnabledModules(
@@ -99,54 +117,35 @@ describe('EntitlementService', () => {
       service.getPermittedEnabledModules(enabledModules, new Set(), true),
     ).toEqual(enabledModules);
   });
-
-  it('preserves empty company enabled modules behavior', () => {
-    const service = new EntitlementService();
-    const source = {
-      company: {
-        enabledModules: [],
-      },
-    };
-
-    expect(service.getEnabledModuleCodes(source)).toEqual([]);
-    expect([...service.getEnabledModuleIds(source)]).toEqual([]);
-    expect(
-      service.getPermittedEnabledModules([], new Set(['TM:view']), false),
-    ).toEqual([]);
-  });
 });
 
 function buildSource({
-  enabledModules = [buildCompanyModule(5, 'TM'), buildCompanyModule(8, 'COA')],
-  planModules,
+  planSystems = [{ modules: [buildPlanModule(5, 'TM')] }],
+  noPlan = false,
 }: {
-  enabledModules?: Array<ReturnType<typeof buildCompanyModule>>;
-  planModules?: Array<ReturnType<typeof buildCompanyModule>>;
+  planSystems?: Array<{ modules: Array<ReturnType<typeof buildPlanModule>> }>;
+  noPlan?: boolean;
 } = {}) {
   return {
     company: {
-      enabledModules,
-      subscriptions:
-        planModules === undefined
-          ? []
-          : [
-              {
-                plan: {
-                  systems: [
-                    {
-                      system: {
-                        modules: planModules,
-                      },
-                    },
-                  ],
-                },
+      subscriptions: noPlan
+        ? []
+        : [
+            {
+              plan: {
+                systems: planSystems.map((planSystem) => ({
+                  system: {
+                    modules: planSystem.modules,
+                  },
+                })),
               },
-            ],
+            },
+          ],
     },
   };
 }
 
-function buildCompanyModule(moduleId: number, code: string, isActive = true) {
+function buildPlanModule(moduleId: number, code: string, isActive = true) {
   return {
     moduleId,
     module: {

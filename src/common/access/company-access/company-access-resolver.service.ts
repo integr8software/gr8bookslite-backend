@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   CompanyStatus,
   MembershipStatus,
+  SubscriptionStatus,
   SystemRole,
   UserStatus,
 } from '@prisma/client';
@@ -17,6 +18,14 @@ import type {
 
 @Injectable()
 export class CompanyAccessResolver {
+  private readonly usableSubscriptionStatuses = [
+    SubscriptionStatus.INCOMPLETE,
+    SubscriptionStatus.TRIALING,
+    SubscriptionStatus.ACTIVE,
+    SubscriptionStatus.PAST_DUE,
+    SubscriptionStatus.UNPAID,
+  ];
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
@@ -83,6 +92,11 @@ export class CompanyAccessResolver {
         company: {
           include: {
             subscriptions: {
+              where: {
+                status: {
+                  in: this.usableSubscriptionStatuses,
+                },
+              },
               include: {
                 plan: {
                   include: {
@@ -142,29 +156,6 @@ export class CompanyAccessResolver {
               },
               orderBy: {
                 id: 'asc',
-              },
-            },
-            enabledModules: {
-              where: {
-                isEnabled: true,
-                module: {
-                  isActive: true,
-                },
-              },
-              select: {
-                moduleId: true,
-                module: {
-                  include: {
-                    permissions: {
-                      where: {
-                        isActive: true,
-                      },
-                      orderBy: {
-                        id: 'asc',
-                      },
-                    },
-                  },
-                },
               },
             },
             moduleSidebar: {

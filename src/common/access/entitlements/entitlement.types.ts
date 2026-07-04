@@ -9,17 +9,15 @@ export type EnabledModuleRecord = {
   permissions: EnabledModulePermission[];
 };
 
-export type EnabledCompanyModuleRecord = {
+export type EntitledModuleRecord = {
   moduleId: number;
   module: EnabledModuleRecord;
 };
 
-export type CompanyEnabledModulesSource<
-  TEnabledModule extends EnabledCompanyModuleRecord =
-    EnabledCompanyModuleRecord,
+export type PlanModuleEntitlementSource<
+  TEnabledModule extends EntitledModuleRecord = EntitledModuleRecord,
 > = {
   company: {
-    enabledModules: TEnabledModule[];
     subscriptions?: Array<{
       plan: {
         systems: Array<{

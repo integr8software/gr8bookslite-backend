@@ -57,7 +57,7 @@ describe('AccessControlService', () => {
 
   it('resolves active company access with enabled modules and user modules', async () => {
     const membership = buildMembership({
-      enabledModules: [buildEnabledModule(5, 'TM', 'Term Management')],
+      planModules: [buildEnabledModule(5, 'TM', 'Term Management')],
       moduleSidebar: [
         {
           id: 200,
@@ -118,7 +118,6 @@ describe('AccessControlService', () => {
     const service = createAccessControlService({
       user: buildResolvedUser(),
       membership: buildMembership({
-        enabledModules: [],
         moduleSidebar: [],
         subscriptions: [
           {
@@ -218,14 +217,34 @@ function buildResolvedUser() {
 }
 
 function buildMembership({
-  enabledModules = [],
+  planModules = [],
   moduleSidebar = [],
-  subscriptions = [],
+  subscriptions,
 }: {
-  enabledModules?: Array<ReturnType<typeof buildEnabledModule>>;
+  planModules?: Array<ReturnType<typeof buildEnabledModule>>;
   moduleSidebar?: unknown[];
   subscriptions?: unknown[];
 }) {
+  const planSubscriptions =
+    subscriptions ??
+    (planModules.length
+      ? [
+          {
+            plan: {
+              systems: [
+                {
+                  system: {
+                    code: 'ACCOUNTING',
+                    modules: planModules,
+                    sidebarItems: [],
+                  },
+                },
+              ],
+            },
+          },
+        ]
+      : []);
+
   return {
     userId: 7,
     companyId: 57,
@@ -237,9 +256,8 @@ function buildMembership({
     permissionOverrides: [],
     company: {
       units: [{ id: 10 }],
-      enabledModules,
       moduleSidebar,
-      subscriptions,
+      subscriptions: planSubscriptions,
     },
   };
 }

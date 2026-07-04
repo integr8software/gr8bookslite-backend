@@ -5,6 +5,11 @@ export type MembershipAccessRecord = Prisma.MembershipGetPayload<{
     company: {
       include: {
         subscriptions: {
+          where: {
+            status: {
+              in: ['INCOMPLETE', 'TRIALING', 'ACTIVE', 'PAST_DUE', 'UNPAID'];
+            };
+          };
           include: {
             plan: {
               include: {
@@ -64,29 +69,6 @@ export type MembershipAccessRecord = Prisma.MembershipGetPayload<{
           };
           orderBy: {
             id: 'asc';
-          };
-        };
-        enabledModules: {
-          where: {
-            isEnabled: true;
-            module: {
-              isActive: true;
-            };
-          };
-          select: {
-            moduleId: true;
-            module: {
-              include: {
-                permissions: {
-                  where: {
-                    isActive: true;
-                  };
-                  orderBy: {
-                    id: 'asc';
-                  };
-                };
-              };
-            };
           };
         };
         moduleSidebar: {

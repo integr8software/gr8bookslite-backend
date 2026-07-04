@@ -17,7 +17,6 @@ async function main() {
     emptySidebarItems: hasActiveMemberships && metrics.sidebarItems === 0,
     emptySidebarLinks: hasActiveMemberships && metrics.sidebarLinks === 0,
     orphanPermissions: metrics.orphanPermissions > 0,
-    orphanCompanyModules: metrics.orphanCompanyModules > 0,
     membershipsWithoutSidebar:
       hasActiveMemberships && metrics.membershipsWithoutSidebar > 0,
     legacyCatalogTablesPresent: metrics.legacyCatalogTablesPresent,

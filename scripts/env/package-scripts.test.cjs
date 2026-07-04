@@ -154,6 +154,15 @@ test('safe provisioning scripts are available without full db seed aliases', () 
   }
 });
 
+test('legacy company module compatibility commands are retired', () => {
+  assert.deepEqual(
+    Object.keys(scripts).filter((scriptName) =>
+      /company-module|company-modules/.test(scriptName),
+    ),
+    [],
+  );
+});
+
 test('hosted runner rejects a mismatched APP_ENV before executing a command', () => {
   const result = spawnSync(
     process.execPath,

@@ -3,8 +3,8 @@ import { MembershipRole } from '@prisma/client';
 import { EntitlementService } from '../entitlements/entitlement.service';
 import type { AuthUserModuleItem } from '../../interfaces/auth-user.interface';
 import type {
-  SidebarEnabledCompanyModule,
   SidebarEnabledModule,
+  SidebarEntitledModule,
   SidebarMembershipSource,
   SidebarSystemTemplateRow,
   SidebarUserModuleRow,
@@ -125,7 +125,7 @@ export class SidebarBuilder {
     membership: SidebarMembershipSource,
     branchUnitId: number,
     permittedItems: SidebarUserModuleRow[],
-    permittedEnabledModules: SidebarEnabledCompanyModule[],
+    permittedEnabledModules: SidebarEntitledModule[],
     systemSidebarItems: SidebarSystemTemplateRow[],
   ) {
     const branchAccess = membership.unitAccess.find(
@@ -170,7 +170,7 @@ export class SidebarBuilder {
     systemSidebarItems,
   }: {
     customItems: SidebarUserModuleRow[];
-    enabledModules: SidebarEnabledCompanyModule[];
+    enabledModules: SidebarEntitledModule[];
     systemSidebarItems: SidebarSystemTemplateRow[];
   }) {
     if (customItems.length) {
@@ -195,7 +195,7 @@ export class SidebarBuilder {
   }
 
   private buildMissingFallbackItems(
-    enabledModules: SidebarEnabledCompanyModule[],
+    enabledModules: SidebarEntitledModule[],
     existingModuleIds: Set<number>,
   ) {
     return enabledModules
@@ -240,7 +240,7 @@ export class SidebarBuilder {
 
   private buildSystemSidebarTree(
     items: SidebarSystemTemplateRow[],
-    enabledModules: SidebarEnabledCompanyModule[],
+    enabledModules: SidebarEntitledModule[],
   ) {
     const enabledModulesById = new Map(
       enabledModules.map((item) => [item.moduleId, item.module]),

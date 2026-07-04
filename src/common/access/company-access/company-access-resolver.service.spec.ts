@@ -22,7 +22,6 @@ type TestCompany = {
     failureCode?: string | null;
   }>;
   units: unknown[];
-  enabledModules: unknown[];
   moduleSidebar: unknown[];
 };
 
@@ -224,7 +223,6 @@ function buildCompany(): TestCompany {
     status: CompanyStatus.ACTIVE,
     subscriptions: [],
     units: [],
-    enabledModules: [],
     moduleSidebar: [],
   };
 }

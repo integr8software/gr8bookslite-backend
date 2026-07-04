@@ -91,7 +91,6 @@ sidebarItems > 0
 sidebarLinks > 0
 membershipsWithoutSidebar = 0
 orphanPermissions = 0
-orphanCompanyModules = 0
 legacyCatalogTablesPresent = false
 ```
 

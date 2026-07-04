@@ -7,7 +7,9 @@ type OnboardingSubscriptionPlanRecord = Prisma.SubscriptionPlanGetPayload<{
     prices: true;
     usageRules: true;
     discountTiers: true;
-    modules: true;
+    modules: {
+      include: { module: true };
+    };
     systems: {
       include: {
         system: {
@@ -87,8 +89,7 @@ export function mapSubscriptionPlan(
       discountPercent: tier.discountPercent.toNumber(),
       isActive: tier.isActive,
     })),
-    moduleKeys: modules
-      .map((module) => module.code),
+    moduleKeys: modules.map((module) => module.code),
     modules: modules.map((module) => ({
       id: module.id,
       moduleKey: module.code,
@@ -98,7 +99,9 @@ export function mapSubscriptionPlan(
   };
 }
 
-function deriveModules(plan: SubscriptionPlan | OnboardingSubscriptionPlanRecord) {
+function deriveModules(
+  plan: SubscriptionPlan | OnboardingSubscriptionPlanRecord,
+) {
   if ('systems' in plan && plan.systems.length > 0) {
     const modulesById = new Map<
       number,
@@ -119,9 +122,9 @@ function deriveModules(plan: SubscriptionPlan | OnboardingSubscriptionPlanRecord
 
   return 'modules' in plan
     ? plan.modules.map((module) => ({
-        id: module.id,
-        code: module.moduleKey,
-        name: module.moduleKey,
+        id: module.module.id,
+        code: module.module.code,
+        name: module.module.name,
       }))
     : [];
 }

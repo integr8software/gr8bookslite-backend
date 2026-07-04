@@ -15,7 +15,7 @@ export type SidebarEnabledModule = {
   permissions: SidebarModulePermission[];
 };
 
-export type SidebarEnabledCompanyModule = {
+export type SidebarEntitledModule = {
   moduleId: number;
   module: SidebarEnabledModule;
 };
@@ -52,14 +52,13 @@ export type SidebarMembershipSource = {
   accessScope: AccessScopeLevel;
   company: {
     units: Array<{ id: number }>;
-    enabledModules: SidebarEnabledCompanyModule[];
     moduleSidebar: SidebarUserModuleRow[];
     subscriptions: Array<{
       plan: {
         systems: Array<{
           system: {
             code: string;
-            modules?: SidebarEnabledCompanyModule[];
+            modules?: SidebarEntitledModule[];
             sidebarItems: Array<Omit<SidebarSystemTemplateRow, 'systemCode'>>;
           };
         }>;

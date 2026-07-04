@@ -8,7 +8,7 @@ describe('SidebarBuilder', () => {
     const builder = createSidebarBuilder();
     const modules = builder.buildUserModules(
       buildMembership({
-        enabledModules: [buildEnabledModule(5, 'TM', 'Term Management')],
+        planModules: [buildEnabledModule(5, 'TM', 'Term Management')],
       }),
       ['TM:view'],
     );
@@ -31,7 +31,7 @@ describe('SidebarBuilder', () => {
     const builder = createSidebarBuilder();
     const modules = builder.buildUserModules(
       buildMembership({
-        enabledModules: [buildEnabledModule(5, 'TM', 'Term Management')],
+        planModules: [buildEnabledModule(5, 'TM', 'Term Management')],
       }),
       ['TM:view'],
     );
@@ -48,7 +48,6 @@ describe('SidebarBuilder', () => {
     const builder = createSidebarBuilder();
     const modules = builder.buildUserModules(
       buildMembership({
-        enabledModules: [],
         subscriptions: [
           {
             plan: {
@@ -110,7 +109,7 @@ describe('SidebarBuilder', () => {
     const builder = createSidebarBuilder();
     const modules = builder.buildUserModules(
       buildMembership({
-        enabledModules: [
+        planModules: [
           buildEnabledModule(5, 'TM', 'Term Management'),
           buildEnabledModule(6, 'COA', 'Chart of Accounts'),
         ],
@@ -154,20 +153,46 @@ function createSidebarBuilder() {
   return new SidebarBuilder(new EntitlementService());
 }
 
+type BuildMembershipOptions = Partial<
+  Omit<SidebarMembershipSource['company'], 'subscriptions'>
+> & {
+  planModules?: Array<ReturnType<typeof buildEnabledModule>>;
+  subscriptions?: SidebarMembershipSource['company']['subscriptions'];
+};
+
 function buildMembership({
-  enabledModules = [],
+  planModules = [],
   moduleSidebar = [],
-  subscriptions = [],
-}: Partial<SidebarMembershipSource['company']> = {}): SidebarMembershipSource {
+  subscriptions,
+}: BuildMembershipOptions = {}): SidebarMembershipSource {
+  const planSubscriptions =
+    subscriptions ??
+    (planModules.length
+      ? [
+          {
+            plan: {
+              systems: [
+                {
+                  system: {
+                    code: 'ACCOUNTING',
+                    modules: planModules,
+                    sidebarItems: [],
+                  },
+                },
+              ],
+            },
+          },
+        ]
+      : []);
+
   return {
     role: MembershipRole.USER,
     accessScope: AccessScopeLevel.BRANCH,
     unitAccess: [{ unitId: 10 }],
     company: {
       units: [{ id: 10 }],
-      enabledModules,
       moduleSidebar,
-      subscriptions,
+      subscriptions: planSubscriptions,
     },
   };
 }
