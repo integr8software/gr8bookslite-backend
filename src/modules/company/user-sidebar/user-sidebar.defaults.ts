@@ -1,4 +1,8 @@
 import type { Prisma } from '@prisma/client';
+import {
+  EntitlementService,
+  type CompanyPlanSidebarItem,
+} from '../../../common/access/entitlements/entitlement.service';
 
 export const UserSidebarIconNames = [
   'dashboard',
@@ -51,16 +55,8 @@ export const UserSidebarIconNames = [
 
 type UserSidebarTransaction = Pick<
   Prisma.TransactionClient,
-  | 'platformModuleSidebar'
-  | 'module'
-  | 'companyModule'
-  | 'companySubscription'
-  | 'moduleSystemSidebar'
+  'platformModuleSidebar' | 'module' | 'companySubscription'
 >;
-
-type SystemSidebarItem = Awaited<
-  ReturnType<UserSidebarTransaction['moduleSystemSidebar']['findMany']>
->[number];
 
 type UserSidebarScope = {
   companyId: number;
@@ -345,14 +341,7 @@ export async function materializeDefaultUserSidebar(
     await tx.platformModuleSidebar.deleteMany({ where: scope });
   const permittedModuleIds = options.moduleIds
     ? new Set(options.moduleIds)
-    : new Set(
-        (
-          await tx.companyModule.findMany({
-            where: { companyId, isEnabled: true, module: { isActive: true } },
-            select: { moduleId: true },
-          })
-        ).map((item) => item.moduleId),
-      );
+    : await EntitlementService.getCompanyAllowedModuleIds(tx, companyId);
 
   const modules = await tx.module.findMany({
     where: {
@@ -424,53 +413,11 @@ async function getSystemSidebarItems(
   companyId: number,
   permittedModuleIds: Set<number>,
 ) {
-  const subscriptions = await tx.companySubscription.findMany({
-    where: {
-      companyId,
-      status: {
-        in: ['INCOMPLETE', 'TRIALING', 'ACTIVE', 'PAST_DUE', 'UNPAID'],
-      },
-    },
-    include: {
-      plan: {
-        include: {
-          systems: {
-            where: { isEnabled: true, system: { isActive: true } },
-            include: {
-              system: {
-                include: {
-                  sidebarItems: {
-                    where: { isVisible: true },
-                    include: { module: true },
-                    orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
-                  },
-                },
-              },
-            },
-            orderBy: [{ system: { sortOrder: 'asc' } }],
-          },
-        },
-      },
-    },
-    orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
-  });
-
-  const items: (SystemSidebarItem & { systemCode: string })[] = [];
-  for (const subscription of subscriptions) {
-    for (const planSystem of subscription.plan.systems) {
-      for (const item of planSystem.system.sidebarItems) {
-        if (
-          item.itemType === 'LINK' &&
-          (!item.moduleId || !permittedModuleIds.has(item.moduleId))
-        ) {
-          continue;
-        }
-        items.push({ ...item, systemCode: planSystem.system.code });
-      }
-    }
-  }
-
-  return items;
+  return EntitlementService.getCompanyPlanSidebarItems(
+    tx,
+    companyId,
+    permittedModuleIds,
+  );
 }
 
 async function materializeSystemSidebarItems(
@@ -485,7 +432,7 @@ async function materializeSystemSidebarItems(
   }: {
     existingKeys: Set<string>;
     existingModuleIds: Set<number>;
-    items: (SystemSidebarItem & { systemCode: string })[];
+    items: CompanyPlanSidebarItem[];
     parentId: number | null;
     scope: UserSidebarScope;
     unassigned: Set<number>;
@@ -528,7 +475,13 @@ async function materializeSystemSidebarItems(
       return link.id;
     }
 
-    if (!hasAvailableSystemSidebarChild(item.id, childrenByParentId, existingModuleIds)) {
+    if (
+      !hasAvailableSystemSidebarChild(
+        item.id,
+        childrenByParentId,
+        existingModuleIds,
+      )
+    ) {
       return null;
     }
 
@@ -556,17 +509,16 @@ async function materializeSystemSidebarItems(
     return container.id;
   };
 
-  for (const [index, item] of (childrenByParentId.get(parentId) ?? []).entries()) {
+  for (const [index, item] of (
+    childrenByParentId.get(parentId) ?? []
+  ).entries()) {
     await createItem(item, parentId, index);
   }
 }
 
 function hasAvailableSystemSidebarChild(
   itemId: number,
-  childrenByParentId: Map<
-    number | null,
-    (SystemSidebarItem & { systemCode: string })[]
-  >,
+  childrenByParentId: Map<number | null, CompanyPlanSidebarItem[]>,
   existingModuleIds: Set<number>,
 ): boolean {
   for (const child of childrenByParentId.get(itemId) ?? []) {
@@ -574,7 +526,13 @@ function hasAvailableSystemSidebarChild(
       if (child.moduleId && !existingModuleIds.has(child.moduleId)) return true;
       continue;
     }
-    if (hasAvailableSystemSidebarChild(child.id, childrenByParentId, existingModuleIds)) {
+    if (
+      hasAvailableSystemSidebarChild(
+        child.id,
+        childrenByParentId,
+        existingModuleIds,
+      )
+    ) {
       return true;
     }
   }

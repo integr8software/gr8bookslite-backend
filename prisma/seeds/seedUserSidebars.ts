@@ -62,20 +62,6 @@ export async function seedUserSidebars() {
   });
 
   for (const membership of memberships) {
-    const planModuleIds = getLatestSubscriptionPlanModuleIds(membership);
-
-    if (planModuleIds.length > 0) {
-      await prisma.companyModule.createMany({
-        data: planModuleIds.map((moduleId) => ({
-          companyId: membership.companyId,
-          moduleId,
-          isEnabled: true,
-          enabledAt: new Date(),
-        })),
-        skipDuplicates: true,
-      });
-    }
-
     const branchUnitIds =
       membership.role === MembershipRole.ADMIN ||
       membership.accessScope === AccessScopeLevel.COMPANY ||
@@ -94,22 +80,4 @@ export async function seedUserSidebars() {
       );
     }
   }
-}
-
-function getLatestSubscriptionPlanModuleIds(
-  membership: SeedUserSidebarMembership,
-): number[] {
-  const latestSubscription = membership.company.subscriptions[0];
-
-  if (!latestSubscription) {
-    return [];
-  }
-
-  return [
-    ...new Set(
-      latestSubscription.plan.systems.flatMap((planSystem) =>
-        planSystem.system.modules.map((item) => item.moduleId),
-      ),
-    ),
-  ];
 }

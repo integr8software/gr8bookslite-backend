@@ -20,7 +20,7 @@ jest.mock('../company/user-sidebar/user-sidebar.defaults', () => ({
 
 const completedAt = new Date('2026-07-03T00:00:00.000Z');
 
-describe('OnboardingService phase 0 module entitlements', () => {
+describe('OnboardingService plan-derived module entitlements', () => {
   const user = {
     id: 7,
     companyId: null,
@@ -47,71 +47,12 @@ describe('OnboardingService phase 0 module entitlements', () => {
     jest.clearAllMocks();
   });
 
-  it('enables only modules from the selected subscription plan systems when onboarding completes', async () => {
+  it('completes onboarding using subscription plan entitlements', async () => {
     const { service, tx } = createService();
 
     await service.complete(user);
 
-    expect(tx.companyModule.upsert).toHaveBeenCalledTimes(2);
-    expect(tx.companyModule.upsert).toHaveBeenNthCalledWith(1, {
-      where: {
-        companyId_moduleId: {
-          companyId: 57,
-          moduleId: 10,
-        },
-      },
-      update: {
-        isEnabled: true,
-        enabledAt: completedAt,
-        disabledAt: null,
-      },
-      create: {
-        companyId: 57,
-        moduleId: 10,
-        isEnabled: true,
-        enabledAt: completedAt,
-      },
-    });
-    expect(tx.companyModule.upsert).toHaveBeenNthCalledWith(2, {
-      where: {
-        companyId_moduleId: {
-          companyId: 57,
-          moduleId: 11,
-        },
-      },
-      update: {
-        isEnabled: true,
-        enabledAt: completedAt,
-        disabledAt: null,
-      },
-      create: {
-        companyId: 57,
-        moduleId: 11,
-        isEnabled: true,
-        enabledAt: completedAt,
-      },
-    });
-    expect(tx.companyModule.upsert).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          companyId_moduleId: {
-            companyId: 57,
-            moduleId: 99,
-          },
-        },
-      }),
-    );
-  });
-
-  it('keeps module assignment idempotent by upserting company module rows', async () => {
-    const { service, tx } = createService();
-
-    await service.complete(user);
-
-    for (const call of tx.companyModule.upsert.mock.calls) {
-      expect(call[0].where).toHaveProperty('companyId_moduleId');
-    }
-    expect('createMany' in tx.companyModule).toBe(false);
+    expect(materializeDefaultUserSidebar).toHaveBeenCalledWith(tx, 57, 70, 7);
   });
 
   it('fails clearly when the selected plan has no enabled modules configured', async () => {
@@ -124,7 +65,6 @@ describe('OnboardingService phase 0 module entitlements', () => {
     });
 
     await expect(service.complete(user)).rejects.toThrow(BadRequestException);
-    expect(tx.companyModule.upsert).not.toHaveBeenCalled();
     expect(materializeDefaultUserSidebar).not.toHaveBeenCalled();
   });
 });
@@ -143,9 +83,6 @@ function createService({
     },
     companySubscription: {
       findFirst: jest.fn().mockResolvedValue(buildSubscription(draft)),
-    },
-    companyModule: {
-      upsert: jest.fn().mockResolvedValue({}),
     },
     companyUnit: {
       findFirst: jest.fn().mockResolvedValue({ id: 70 }),

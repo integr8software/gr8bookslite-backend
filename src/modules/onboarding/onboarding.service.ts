@@ -58,7 +58,8 @@ const subscriptionPlanInclude =
       orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
     },
     modules: {
-      orderBy: [{ moduleKey: 'asc' }],
+      include: { module: true },
+      orderBy: [{ module: { code: 'asc' } }],
     },
     systems: {
       include: {
@@ -685,12 +686,7 @@ export class OnboardingService {
 
       const selectedModuleIds = this.getSelectedPlanModuleIds(selectedPlan);
 
-      await this.enableCompanyModulesFromSelectedPlan(
-        tx,
-        company.id,
-        selectedModuleIds,
-        completedAt,
-      );
+      this.assertSelectedPlanHasModules(selectedModuleIds);
 
       const headOffice = await tx.companyUnit.findFirst({
         where: { companyId: company.id, code: 'HEAD-OFFICE', isActive: true },
@@ -917,38 +913,11 @@ export class OnboardingService {
     ];
   }
 
-  private async enableCompanyModulesFromSelectedPlan(
-    tx: Prisma.TransactionClient,
-    companyId: number,
-    moduleIds: number[],
-    enabledAt: Date,
-  ) {
+  private assertSelectedPlanHasModules(moduleIds: number[]) {
     if (moduleIds.length === 0) {
       throw new BadRequestException(
         'Selected subscription plan has no enabled modules configured.',
       );
-    }
-
-    for (const moduleId of moduleIds) {
-      await tx.companyModule.upsert({
-        where: {
-          companyId_moduleId: {
-            companyId,
-            moduleId,
-          },
-        },
-        update: {
-          isEnabled: true,
-          enabledAt,
-          disabledAt: null,
-        },
-        create: {
-          companyId,
-          moduleId,
-          isEnabled: true,
-          enabledAt,
-        },
-      });
     }
   }
 

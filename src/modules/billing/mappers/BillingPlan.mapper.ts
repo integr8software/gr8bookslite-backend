@@ -6,7 +6,9 @@ type BillingPlanRecord = Prisma.SubscriptionPlanGetPayload<{
     prices: true;
     usageRules: true;
     discountTiers: true;
-    modules: true;
+    modules: {
+      include: { module: true };
+    };
     systems: {
       include: {
         system: {
@@ -71,8 +73,7 @@ export function mapBillingPlan(plan: SubscriptionPlan | BillingPlanRecord) {
       discountPercent: tier.discountPercent.toNumber(),
       isActive: tier.isActive,
     })),
-    moduleKeys: modules
-      .map((module) => module.code),
+    moduleKeys: modules.map((module) => module.code),
     modules: modules.map((module) => ({
       id: module.id,
       moduleKey: module.code,
@@ -103,9 +104,9 @@ function deriveModules(plan: SubscriptionPlan | BillingPlanRecord) {
 
   return 'modules' in plan
     ? plan.modules.map((module) => ({
-        id: module.id,
-        code: module.moduleKey,
-        name: module.moduleKey,
+        id: module.module.id,
+        code: module.module.code,
+        name: module.module.name,
       }))
     : [];
 }

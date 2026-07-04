@@ -21,6 +21,7 @@ describe('FormSignatoriesService permission catalog ownership', () => {
         prisma as never,
         cacheManager as never,
         auditLogsService as never,
+        {} as never,
       ),
     };
   }

@@ -168,19 +168,6 @@ export class WorkspaceCompaniesService {
       await seedDefaultTermsForCompany(tx, createdCompany.id);
       await seedDefaultChartAccountsForCompany(tx, createdCompany.id);
       await seedDefaultBankAccountsForCompany(tx, createdCompany.id);
-      const activeModules = await tx.module.findMany({
-        where: { isActive: true },
-        select: { id: true },
-      });
-      await tx.companyModule.createMany({
-        data: activeModules.map((module) => ({
-          companyId: createdCompany.id,
-          moduleId: module.id,
-          isEnabled: true,
-          enabledAt: new Date(),
-        })),
-        skipDuplicates: true,
-      });
       if (user.role !== AppRole.SUPER_ADMIN) {
         await tx.membership.upsert({
           where: {

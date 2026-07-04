@@ -106,7 +106,6 @@ model Company {
   billingPaymentMethods  BillingPaymentMethod[]
   memberships            Membership[]
   roles                  CompanyRole[]
-  enabledModules         CompanyModule[]
   moduleSidebar          PlatformModuleSidebar[]
   units                  CompanyUnit[]
   formSignatorySetups    FormSignatorySetup[]
@@ -253,7 +252,6 @@ model Module {
   createdAt             DateTime                    @default(now()) @map("created_at")
   updatedAt             DateTime                    @updatedAt @map("updated_at")
   permissions           Permission[]
-  enabledCompanies      CompanyModule[]
   formSignatorySetups   FormSignatorySetup[]
   transactionNumbers    TransactionNumberSequence[]
   subscriptionPlanLinks SubscriptionPlanModule[]
@@ -395,24 +393,6 @@ model MembershipPermission {
   @@index([permissionId])
   @@index([membershipCompanyId])
   @@map("membership_permissions")
-}
-
-model CompanyModule {
-  id         Int       @id @default(autoincrement())
-  companyId  Int       @map("company_id")
-  moduleId   Int       @map("module_id")
-  isEnabled  Boolean   @default(true) @map("is_enabled")
-  enabledAt  DateTime? @map("enabled_at")
-  disabledAt DateTime? @map("disabled_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
-  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  module     Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-
-  @@unique([companyId, moduleId])
-  @@index([moduleId])
-  @@index([companyId, isEnabled])
-  @@map("company_modules")
 }
 
 model PlatformModuleSidebar {
@@ -858,7 +838,6 @@ model SubscriptionPlanDiscountTier {
 model SubscriptionPlanModule {
   id                 Int              @id @default(autoincrement())
   subscriptionPlanId Int              @map("subscription_plan_id")
-  moduleKey          String           @map("module_key")
   moduleId           Int              @map("module_id")
   isEnabled          Boolean          @default(true) @map("is_enabled")
   createdAt          DateTime         @default(now()) @map("created_at")
@@ -867,8 +846,6 @@ model SubscriptionPlanModule {
   module             Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([subscriptionPlanId, moduleId])
-  @@unique([subscriptionPlanId, moduleKey])
-  @@index([moduleKey, isEnabled])
   @@index([moduleId, isEnabled])
   @@map("subscription_plan_modules")
 }

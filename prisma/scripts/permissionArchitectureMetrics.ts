@@ -12,7 +12,6 @@ export type PermissionArchitectureMetrics = {
   activeMemberships: number;
   membershipsWithoutSidebar: number;
   orphanPermissions: number;
-  orphanCompanyModules: number;
   legacyCatalogTablesPresent: boolean;
 };
 
@@ -41,7 +40,6 @@ export async function collectPermissionArchitectureMetrics(
     activeMemberships,
     membershipsWithoutSidebar,
     orphanPermissions,
-    orphanCompanyModules,
     legacyTables,
     platformVersion,
   ] = await Promise.all([
@@ -62,12 +60,6 @@ export async function collectPermissionArchitectureMetrics(
       SELECT count(*)::bigint AS count
       FROM permissions p
       LEFT JOIN modules m ON m.id = p.module_id
-      WHERE m.id IS NULL
-    `,
-    prisma.$queryRaw<Array<{ count: bigint }>>`
-      SELECT count(*)::bigint AS count
-      FROM company_modules cm
-      LEFT JOIN modules m ON m.id = cm.module_id
       WHERE m.id IS NULL
     `,
     prisma.$queryRaw<
@@ -98,7 +90,6 @@ export async function collectPermissionArchitectureMetrics(
     activeMemberships,
     membershipsWithoutSidebar,
     orphanPermissions: Number(orphanPermissions[0]?.count ?? 0),
-    orphanCompanyModules: Number(orphanCompanyModules[0]?.count ?? 0),
     legacyCatalogTablesPresent: Boolean(
       legacyTables[0]?.platform_modules || legacyTables[0]?.platform_submodules,
     ),
