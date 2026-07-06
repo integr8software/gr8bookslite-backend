@@ -6,8 +6,8 @@ import type {
   SidebarEnabledModule,
   SidebarEntitledModule,
   SidebarMembershipSource,
+  SidebarPreferenceRow,
   SidebarSystemTemplateRow,
-  SidebarUserModuleRow,
   SidebarUserModules,
 } from './sidebar-builder.types';
 
@@ -23,35 +23,21 @@ export class SidebarBuilder {
     const hasAdminModuleAccess = membership.role === MembershipRole.ADMIN;
     const enabledModules =
       this.entitlementService.getEnabledModules(membership);
-    const enabledModuleIds =
-      this.entitlementService.getEnabledModuleIds(membership);
-    const permittedItems = this.getPermittedSidebarItems(
-      membership,
-      enabledModuleIds,
-      permissionSet,
-      hasAdminModuleAccess,
-    );
-    const permittedSidebarModuleIds = new Set(
-      permittedItems.flatMap((item) =>
-        item.itemType === 'LINK' && item.moduleId ? [item.moduleId] : [],
-      ),
-    );
     const permittedEnabledModules =
       this.entitlementService.getPermittedEnabledModules(
         enabledModules,
         permissionSet,
         hasAdminModuleAccess,
       );
-    const fallbackItems = permittedEnabledModules
-      .filter((item) => !permittedSidebarModuleIds.has(item.moduleId))
-      .map((item) => this.buildFallbackUserModuleItem(item.module));
-    const branchIds = this.getAccessibleBranchIds(membership, permittedItems);
+    const fallbackItems = permittedEnabledModules.map((item) =>
+      this.buildFallbackUserModuleItem(item.module),
+    );
+    const branchIds = this.getAccessibleBranchIds(membership);
     const systemSidebarItems = this.getActiveSystemSidebarItems(membership);
     const byBranch = branchIds.map((branchUnitId) =>
       this.buildBranchModuleAccess(
         membership,
         branchUnitId,
-        permittedItems,
         permittedEnabledModules,
         systemSidebarItems,
       ),
@@ -60,50 +46,8 @@ export class SidebarBuilder {
     return { items: byBranch[0]?.items ?? fallbackItems, byBranch };
   }
 
-  private getPermittedSidebarItems(
-    membership: SidebarMembershipSource,
-    enabledModuleIds: Set<number>,
-    permissionSet: Set<string>,
-    hasAdminModuleAccess: boolean,
-  ): SidebarUserModuleRow[] {
-    return membership.company.moduleSidebar.filter((item) =>
-      this.isSidebarItemPermitted(
-        item,
-        enabledModuleIds,
-        permissionSet,
-        hasAdminModuleAccess,
-      ),
-    );
-  }
-
-  private isSidebarItemPermitted(
-    item: SidebarUserModuleRow,
-    enabledModuleIds: Set<number>,
-    permissionSet: Set<string>,
-    hasAdminModuleAccess: boolean,
-  ): boolean {
-    if (item.itemType !== 'LINK') {
-      return true;
-    }
-
-    if (!item.module || !item.moduleId || !item.module.isActive) {
-      return false;
-    }
-
-    if (!enabledModuleIds.has(item.moduleId)) {
-      return false;
-    }
-
-    return this.entitlementService.hasModulePermission(
-      item.module,
-      permissionSet,
-      hasAdminModuleAccess,
-    );
-  }
-
   private getAccessibleBranchIds(
     membership: SidebarMembershipSource,
-    permittedItems: SidebarUserModuleRow[],
   ): number[] {
     const defaultBranchIds =
       membership.role === MembershipRole.ADMIN ||
@@ -116,7 +60,9 @@ export class SidebarBuilder {
       new Set([
         ...defaultBranchIds,
         ...membership.unitAccess.map((item) => item.unitId),
-        ...permittedItems.map((item) => item.branchUnitId),
+        ...membership.company.sidebarPreferences.map(
+          (item) => item.branchUnitId,
+        ),
       ]),
     );
   }
@@ -124,7 +70,6 @@ export class SidebarBuilder {
   private buildBranchModuleAccess(
     membership: SidebarMembershipSource,
     branchUnitId: number,
-    permittedItems: SidebarUserModuleRow[],
     permittedEnabledModules: SidebarEntitledModule[],
     systemSidebarItems: SidebarSystemTemplateRow[],
   ) {
@@ -138,7 +83,7 @@ export class SidebarBuilder {
       companyRoleCode: branchAccess?.companyRole?.code ?? null,
       companyRoleName: branchAccess?.companyRole?.name ?? null,
       items: this.buildBranchUserModules({
-        customItems: permittedItems.filter(
+        preferences: membership.company.sidebarPreferences.filter(
           (item) => item.branchUnitId === branchUnitId,
         ),
         enabledModules: permittedEnabledModules,
@@ -165,33 +110,26 @@ export class SidebarBuilder {
   }
 
   private buildBranchUserModules({
-    customItems,
+    preferences,
     enabledModules,
     systemSidebarItems,
   }: {
-    customItems: SidebarUserModuleRow[];
+    preferences: SidebarPreferenceRow[];
     enabledModules: SidebarEntitledModule[];
     systemSidebarItems: SidebarSystemTemplateRow[];
   }) {
-    if (customItems.length) {
-      const customTree = this.buildUserModuleTree(customItems);
-      const customModuleIds = this.collectModuleIds(customTree);
-      return [
-        ...customTree,
-        ...this.buildMissingFallbackItems(enabledModules, customModuleIds),
-      ];
-    }
-
     const systemTree = this.buildSystemSidebarTree(
       systemSidebarItems,
       enabledModules,
     );
     const systemModuleIds = this.collectModuleIds(systemTree);
 
-    return [
+    const defaultTree = [
       ...systemTree,
       ...this.buildMissingFallbackItems(enabledModules, systemModuleIds),
     ];
+
+    return this.applyPreferences(defaultTree, preferences);
   }
 
   private buildMissingFallbackItems(
@@ -234,6 +172,8 @@ export class SidebarBuilder {
       permissionCode: permission?.code ?? null,
       requiredActions: permission ? ['view'] : [],
       category: module.category,
+      isPinned: false,
+      isCollapsed: false,
       children: [],
     };
   }
@@ -284,6 +224,8 @@ export class SidebarBuilder {
               permissionCode: permission?.code ?? null,
               requiredActions: permission ? ['view'] : [],
               category: module.category,
+              isPinned: false,
+              isCollapsed: false,
               children: [],
             },
           ];
@@ -309,6 +251,8 @@ export class SidebarBuilder {
             permissionCode: null,
             requiredActions: [],
             category: null,
+            isPinned: false,
+            isCollapsed: false,
             children,
           },
         ];
@@ -317,44 +261,53 @@ export class SidebarBuilder {
     return visit(null);
   }
 
-  private buildUserModuleTree(items: SidebarUserModuleRow[]) {
-    const byParent = new Map<number | null, SidebarUserModuleRow[]>();
-
-    for (const item of items) {
-      const siblings = byParent.get(item.parentId) ?? [];
-      siblings.push(item);
-      byParent.set(item.parentId, siblings);
+  private applyPreferences(
+    items: AuthUserModuleItem[],
+    preferences: SidebarPreferenceRow[],
+  ): AuthUserModuleItem[] {
+    if (preferences.length === 0) {
+      return items;
     }
 
-    const visit = (parentId: number | null): AuthUserModuleItem[] =>
-      (byParent.get(parentId) ?? []).flatMap((item) => {
-        const children = visit(item.id);
+    const preferencesByKey = new Map(
+      preferences.map((preference) => [preference.itemKey, preference]),
+    );
+    const visit = (siblings: AuthUserModuleItem[]): AuthUserModuleItem[] =>
+      siblings
+        .flatMap((item): AuthUserModuleItem[] => {
+          const preference = preferencesByKey.get(item.key);
 
-        if (item.itemType !== 'LINK' && !children.length) {
-          return [];
-        }
+          if (preference?.isHidden) {
+            return [];
+          }
 
-        const permission = item.module?.permissions[0];
+          const children = visit(item.children);
 
-        return [
-          {
-            id: item.id,
-            key: item.key,
-            label: item.label,
-            description: item.description,
-            itemType: item.itemType,
-            iconName: item.iconName,
-            sortOrder: item.sortOrder,
-            moduleId: item.moduleId,
-            moduleCode: item.module?.code ?? null,
-            permissionCode: permission?.code ?? null,
-            requiredActions: permission ? ['view'] : [],
-            category: item.module?.category ?? null,
-            children,
-          },
-        ];
-      });
+          if (item.itemType !== 'LINK' && children.length === 0) {
+            return [];
+          }
 
-    return visit(null);
+          return [
+            {
+              ...item,
+              sortOrder: preference?.sortOrder ?? item.sortOrder,
+              isPinned: preference?.isPinned ?? false,
+              isCollapsed: preference?.isCollapsed ?? false,
+              children,
+            },
+          ];
+        })
+        .sort((left, right) => {
+          const leftPreference = preferencesByKey.get(left.key);
+          const rightPreference = preferencesByKey.get(right.key);
+          const leftOrder = leftPreference?.sortOrder ?? left.sortOrder;
+          const rightOrder = rightPreference?.sortOrder ?? right.sortOrder;
+
+          return (
+            leftOrder - rightOrder || left.label.localeCompare(right.label)
+          );
+        });
+
+    return visit(items);
   }
 }

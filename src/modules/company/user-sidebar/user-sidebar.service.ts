@@ -5,44 +5,35 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-  SystemRole,
-} from '@prisma/client';
+import { MembershipRole, MembershipStatus, SystemRole } from '@prisma/client';
 import { EntitlementService } from '../../../common/access/entitlements/entitlement.service';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import { PrismaService } from '../../../prisma/prisma.service';
-import {
-  UserSidebarIconNames,
-  materializeDefaultUserSidebar,
-} from './user-sidebar.defaults';
+import { UserSidebarIconNames } from './user-sidebar.defaults';
 import type {
   UserSidebarTreeItemDto,
   SaveUserSidebarDto,
 } from './dto/save-user-sidebar.dto';
 
-const userSidebarInclude = {
-  module: {
-    include: {
-      permissions: {
-        where: { isActive: true },
-        orderBy: { id: 'asc' as const },
-      },
-    },
-  },
-} satisfies Prisma.PlatformModuleSidebarInclude;
-
-type UserSidebarRecord = Prisma.PlatformModuleSidebarGetPayload<{
-  include: typeof userSidebarInclude;
-}>;
-
 type UserSidebarScope = {
   companyId: number;
   branchUnitId: number;
   userId: number;
+};
+
+type CustomizationTreeItem = UserSidebarTreeItemDto & {
+  id: number;
+  moduleCode?: string | null;
+  permissionCode?: string | null;
+  requiredActions?: string[];
+  category?: unknown;
+  type?: unknown;
+  sortOrder: number;
+  isHidden?: boolean;
+  isPinned?: boolean;
+  isCollapsed?: boolean;
+  children: CustomizationTreeItem[];
 };
 
 @Injectable()
@@ -65,50 +56,26 @@ export class UserSidebarService {
       branchUnitId,
       targetUserId,
     );
-    await this.materializeScopeIfMissing(
-      { companyId, branchUnitId, userId: targetUserId },
-      permittedModuleIds,
-    );
-
     const scope = { companyId, branchUnitId, userId: targetUserId };
-    const [items, available] = await Promise.all([
-      this.prisma.platformModuleSidebar.findMany({
+    const [defaultItems, preferences] = await Promise.all([
+      this.buildDefaultSidebarTree(companyId, permittedModuleIds),
+      this.prisma.userSidebarPreference.findMany({
         where: scope,
-        include: userSidebarInclude,
         orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
       }),
-      this.prisma.module.findMany({
-        where: {
-          id: { in: Array.from(permittedModuleIds) },
-          isActive: true,
-          moduleSidebar: { none: scope },
-        },
-        include: {
-          permissions: { where: { isActive: true }, orderBy: { id: 'asc' } },
-        },
-        orderBy: { name: 'asc' },
-      }),
     ]);
+    const items = this.applyPreferencesToCustomizationTree(
+      defaultItems,
+      preferences,
+    );
 
     return {
       companyId,
       branchUnitId,
       userId: targetUserId,
-      version: items.reduce(
-        (version, item) => Math.max(version, item.version),
-        0,
-      ),
-      items: this.buildTree(items, false),
-      availableModules: available.map((module) => ({
-        id: module.id,
-        code: module.code,
-        name: module.name,
-        description: module.description,
-        category: module.category,
-        type: module.type,
-        iconName: module.icon,
-        permissionCode: module.permissions[0]?.code,
-      })),
+      version: this.getPreferenceVersion(preferences),
+      items,
+      availableModules: [],
       supportedIconNames: UserSidebarIconNames,
     };
   }
@@ -154,47 +121,57 @@ export class UserSidebarService {
           'Every link must reference a module the target user can view in the selected branch scope.',
         );
       }
-      if (
-        permittedModuleIds.size !== moduleIds.length ||
-        Array.from(permittedModuleIds).some(
-          (moduleId) => !moduleIds.includes(moduleId),
-        )
-      ) {
-        throw new BadRequestException(
-          'Every permitted module must be included in the user sidebar.',
-        );
-      }
     }
     const primaryScope = { companyId, branchUnitId, userId: targetUserId };
 
     await this.prisma.$transaction(async (tx) => {
-      const current = await tx.platformModuleSidebar.aggregate({
+      const currentPreferences = await tx.userSidebarPreference.findMany({
         where: primaryScope,
-        _max: { version: true },
+        orderBy: { id: 'asc' },
       });
-      const currentVersion = current._max.version ?? 0;
+      const currentVersion = this.getPreferenceVersion(currentPreferences);
       if (currentVersion !== dto.version)
         throw new ConflictException(
           'The user module sidebar changed since it was loaded. Refresh and try again.',
         );
-      const nextVersion = currentVersion + 1;
 
       for (const scope of scopes) {
-        await tx.platformModuleSidebar.deleteMany({ where: scope });
-        await this.createItems(tx, scope, dto.items, null, nextVersion);
+        const permittedModuleIds = await this.getPermittedModuleIds(
+          scope.companyId,
+          scope.branchUnitId,
+          scope.userId,
+        );
+        const defaultItems = await this.buildDefaultSidebarTree(
+          scope.companyId,
+          permittedModuleIds,
+        );
+        const preferences = this.derivePreferenceDeltas(
+          defaultItems,
+          dto.items,
+        );
+
+        await tx.userSidebarPreference.deleteMany({ where: scope });
+        if (preferences.length) {
+          await tx.userSidebarPreference.createMany({
+            data: preferences.map((preference) => ({
+              ...scope,
+              ...preference,
+            })),
+          });
+        }
       }
       await tx.auditLog.create({
         data: {
           companyId,
           actorUserId: user.id,
           action: 'UPDATE',
-          entityType: 'PlatformModuleSidebar',
+          entityType: 'UserSidebarPreference',
           entityId: String(targetUserId),
           metadata: {
             branchUnitId,
             targetUserId,
             applyScope: dto.applyScope ?? 'CURRENT_BRANCH',
-            version: nextVersion,
+            preferenceCount: this.flatten(dto.items).length,
           },
         },
       });
@@ -224,50 +201,16 @@ export class UserSidebarService {
       applyScope === 'ALL_BRANCHES'
         ? await this.getAdminBranchScopes(companyId, targetUserId)
         : [{ companyId, branchUnitId, userId: targetUserId }];
-    const permittedByBranch = new Map<number, Set<number>>();
-    for (const scope of scopes) {
-      permittedByBranch.set(
-        scope.branchUnitId,
-        await this.getPermittedModuleIds(
-          scope.companyId,
-          scope.branchUnitId,
-          scope.userId,
-        ),
-      );
-    }
-
     await this.prisma.$transaction(async (tx) => {
       for (const scope of scopes) {
-        const current = await tx.platformModuleSidebar.aggregate({
-          where: scope,
-          _max: { version: true },
-        });
-        const permittedModuleIds =
-          permittedByBranch.get(scope.branchUnitId) ?? new Set<number>();
-        await tx.platformModuleSidebar.deleteMany({ where: scope });
-        await this.materializeFromAdminSidebarTemplate(
-          tx,
-          scope,
-          permittedModuleIds,
-        );
-        await materializeDefaultUserSidebar(
-          tx,
-          scope.companyId,
-          scope.branchUnitId,
-          scope.userId,
-          { moduleIds: permittedModuleIds },
-        );
-        await tx.platformModuleSidebar.updateMany({
-          where: scope,
-          data: { version: (current._max.version ?? 0) + 1 },
-        });
+        await tx.userSidebarPreference.deleteMany({ where: scope });
       }
       await tx.auditLog.create({
         data: {
           companyId,
           actorUserId: user.id,
           action: 'RESET',
-          entityType: 'PlatformModuleSidebar',
+          entityType: 'UserSidebarPreference',
           entityId: String(targetUserId),
           metadata: { branchUnitId, targetUserId, applyScope },
         },
@@ -276,57 +219,238 @@ export class UserSidebarService {
     return this.getCustomization(user, companyId, branchUnitId, targetUserId);
   }
 
-  async syncScopeAfterPermissionChange(
+  private async buildDefaultSidebarTree(
     companyId: number,
-    branchUnitId: number,
-    targetUserId: number,
-  ) {
-    await this.ensureScope(companyId, branchUnitId, targetUserId);
-    const permittedModuleIds = await this.getPermittedModuleIds(
-      companyId,
-      branchUnitId,
-      targetUserId,
+    permittedModuleIds: Set<number>,
+  ): Promise<CustomizationTreeItem[]> {
+    const [modules, sidebarItems] = await Promise.all([
+      this.entitlementService.getCompanyAllowedModules(companyId),
+      this.entitlementService.getCompanyPlanSidebarItems(
+        companyId,
+        permittedModuleIds,
+      ),
+    ]);
+    const permittedModules = modules.filter((module) =>
+      permittedModuleIds.has(module.id),
     );
-
-    await this.materializeScopeIfMissing(
-      { companyId, branchUnitId, userId: targetUserId },
-      permittedModuleIds,
+    const modulesById = new Map(
+      permittedModules.map((module) => [module.id, module]),
     );
-  }
+    const byParent = new Map<number | null, typeof sidebarItems>();
+    const renderedModuleIds = new Set<number>();
 
-  private buildTree(items: UserSidebarRecord[], pruneEmpty: boolean) {
-    const byParent = new Map<number | null, UserSidebarRecord[]>();
-    for (const item of items) {
+    for (const item of sidebarItems) {
       const siblings = byParent.get(item.parentId) ?? [];
       siblings.push(item);
       byParent.set(item.parentId, siblings);
     }
-    const visit = (parentId: number | null): Record<string, unknown>[] =>
-      (byParent.get(parentId) ?? []).flatMap((item) => {
-        const children = visit(item.id);
-        if (pruneEmpty && item.itemType !== 'LINK' && !children.length)
-          return [];
-        const permission = item.module?.permissions[0];
-        return [
-          {
-            id: item.id,
-            key: item.key,
-            label: item.label,
-            description: item.description,
-            itemType: item.itemType,
-            iconName: item.iconName,
-            sortOrder: item.sortOrder,
-            moduleId: item.moduleId,
-            moduleCode: item.module?.code,
-            permissionCode: permission?.code,
-            requiredActions: permission ? ['view'] : [],
-            category: item.module?.category,
-            type: item.module?.type,
-            children,
-          },
-        ];
+
+    const visit = (parentId: number | null): CustomizationTreeItem[] =>
+      (byParent.get(parentId) ?? []).flatMap(
+        (item): CustomizationTreeItem[] => {
+          if (item.itemType === 'LINK') {
+            if (
+              item.moduleId == null ||
+              renderedModuleIds.has(item.moduleId) ||
+              !modulesById.has(item.moduleId)
+            ) {
+              return [];
+            }
+
+            const module = modulesById.get(item.moduleId)!;
+            const permission = module.permissions[0];
+
+            renderedModuleIds.add(item.moduleId);
+
+            return [
+              {
+                id: -item.id,
+                key: `${item.systemCode.toLowerCase()}-${item.key}`,
+                label: item.label,
+                description: item.description ?? undefined,
+                itemType: 'LINK',
+                iconName: item.iconName ?? undefined,
+                sortOrder: item.sortOrder,
+                moduleId: item.moduleId,
+                moduleCode: module.code,
+                permissionCode: permission?.code,
+                requiredActions: permission ? ['view'] : [],
+                category: module.category,
+                type: module.type,
+                isPinned: false,
+                isCollapsed: false,
+                children: [],
+              },
+            ];
+          }
+
+          const children = visit(item.id);
+
+          if (!children.length) {
+            return [];
+          }
+
+          return [
+            {
+              id: -item.id,
+              key: `${item.systemCode.toLowerCase()}-${item.key}`,
+              label: item.label,
+              description: item.description ?? undefined,
+              itemType: item.itemType,
+              iconName: item.iconName ?? undefined,
+              sortOrder: item.sortOrder,
+              isPinned: false,
+              isCollapsed: false,
+              children,
+            },
+          ];
+        },
+      );
+
+    const systemTree = visit(null);
+    const systemModuleIds = new Set(
+      this.flattenCustomizationItems(systemTree).flatMap((item) =>
+        item.item.moduleId ? [item.item.moduleId] : [],
+      ),
+    );
+    const fallbackItems = permittedModules
+      .filter((module) => !systemModuleIds.has(module.id))
+      .map((module): CustomizationTreeItem => {
+        const permission = module.permissions[0];
+
+        return {
+          id: -module.id,
+          key: `module-${module.code.toLowerCase()}`,
+          label: module.name,
+          description: module.description ?? undefined,
+          itemType: 'LINK',
+          iconName: module.icon ?? undefined,
+          sortOrder: Number.MAX_SAFE_INTEGER,
+          moduleId: module.id,
+          moduleCode: module.code,
+          permissionCode: permission?.code,
+          requiredActions: permission ? ['view'] : [],
+          category: module.category,
+          type: module.type,
+          isPinned: false,
+          isCollapsed: false,
+          children: [],
+        };
       });
-    return visit(null);
+
+    return [...systemTree, ...fallbackItems];
+  }
+
+  private applyPreferencesToCustomizationTree(
+    items: CustomizationTreeItem[],
+    preferences: Array<{
+      itemKey: string;
+      isHidden: boolean;
+      sortOrder: number | null;
+      isPinned: boolean;
+      isCollapsed: boolean;
+    }>,
+  ): CustomizationTreeItem[] {
+    const preferencesByKey = new Map(
+      preferences.map((preference) => [preference.itemKey, preference]),
+    );
+    const visit = (
+      siblings: CustomizationTreeItem[],
+    ): CustomizationTreeItem[] =>
+      siblings
+        .flatMap((item): CustomizationTreeItem[] => {
+          const preference = preferencesByKey.get(item.key);
+
+          if (preference?.isHidden) {
+            return [];
+          }
+
+          const children = visit(item.children ?? []);
+
+          if (item.itemType !== 'LINK' && children.length === 0) {
+            return [];
+          }
+
+          return [
+            {
+              ...item,
+              sortOrder: preference?.sortOrder ?? item.sortOrder,
+              isPinned: preference?.isPinned ?? false,
+              isCollapsed: preference?.isCollapsed ?? false,
+              children,
+            },
+          ];
+        })
+        .sort(
+          (left, right) =>
+            left.sortOrder - right.sortOrder ||
+            left.label.localeCompare(right.label),
+        );
+
+    return visit(items);
+  }
+
+  private derivePreferenceDeltas(
+    defaultItems: CustomizationTreeItem[],
+    submittedItems: UserSidebarTreeItemDto[],
+  ) {
+    const defaultEntries = this.flattenCustomizationItems(defaultItems);
+    const submittedEntries = this.flattenSubmittedItems(submittedItems);
+    const defaultByKey = new Map(
+      defaultEntries.map((item) => [item.key, item]),
+    );
+    const submittedByKey = new Map(
+      submittedEntries.map((item) => [item.key, item]),
+    );
+    const preferences: Array<{
+      itemKey: string;
+      isHidden: boolean;
+      sortOrder: number | null;
+      isPinned: boolean;
+      isCollapsed: boolean;
+    }> = [];
+
+    for (const submitted of submittedEntries) {
+      const defaultItem = defaultByKey.get(submitted.key);
+
+      if (!defaultItem) {
+        throw new BadRequestException(
+          `Sidebar item is not part of the plan default: ${submitted.key}`,
+        );
+      }
+
+      const isHidden = submitted.item.isHidden === true;
+      const sortOrder =
+        submitted.siblingIndex !== defaultItem.siblingIndex
+          ? submitted.siblingIndex
+          : null;
+      const isPinned = submitted.item.isPinned === true;
+      const isCollapsed = submitted.item.isCollapsed === true;
+
+      if (isHidden || sortOrder != null || isPinned || isCollapsed) {
+        preferences.push({
+          itemKey: submitted.key,
+          isHidden,
+          sortOrder,
+          isPinned,
+          isCollapsed,
+        });
+      }
+    }
+
+    for (const defaultItem of defaultEntries) {
+      if (!submittedByKey.has(defaultItem.key)) {
+        preferences.push({
+          itemKey: defaultItem.key,
+          isHidden: true,
+          sortOrder: null,
+          isPinned: false,
+          isCollapsed: false,
+        });
+      }
+    }
+
+    return preferences;
   }
 
   private validateTree(items: UserSidebarTreeItemDto[]) {
@@ -381,161 +505,45 @@ export class UserSidebarService {
     ]);
   }
 
-  private async createItems(
-    tx: Prisma.TransactionClient,
-    scope: UserSidebarScope,
-    items: UserSidebarTreeItemDto[],
-    parentId: number | null,
-    version: number,
-  ) {
-    for (const [sortOrder, item] of items.entries()) {
-      const created = await tx.platformModuleSidebar.create({
-        data: {
-          ...scope,
-          parentId,
-          moduleId: item.itemType === 'LINK' ? item.moduleId : null,
-          itemType: item.itemType,
-          key: item.key,
-          label: item.label.trim(),
-          description: item.description?.trim() || null,
-          iconName: item.iconName || null,
-          sortOrder,
-          version,
-        },
+  private flattenCustomizationItems(items: CustomizationTreeItem[]) {
+    const entries: Array<{
+      key: string;
+      siblingIndex: number;
+      item: CustomizationTreeItem;
+    }> = [];
+    const visit = (siblings: CustomizationTreeItem[]) => {
+      siblings.forEach((item, siblingIndex) => {
+        entries.push({ key: item.key, siblingIndex, item });
+        visit(item.children ?? []);
       });
-      await this.createItems(
-        tx,
-        scope,
-        item.children ?? [],
-        created.id,
-        version,
-      );
-    }
-  }
-
-  private async materializeScopeIfMissing(
-    scope: UserSidebarScope,
-    permittedModuleIds: Set<number>,
-  ) {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.platformModuleSidebar.deleteMany({
-        where: {
-          ...scope,
-          itemType: 'LINK',
-          OR: [
-            { moduleId: null },
-            { moduleId: { notIn: Array.from(permittedModuleIds) } },
-          ],
-        },
-      });
-      await this.pruneEmptyContainers(tx, scope);
-      const existingItems = await tx.platformModuleSidebar.count({
-        where: scope,
-      });
-      if (!existingItems) {
-        await this.materializeFromAdminSidebarTemplate(
-          tx,
-          scope,
-          permittedModuleIds,
-        );
-      }
-      await materializeDefaultUserSidebar(
-        tx,
-        scope.companyId,
-        scope.branchUnitId,
-        scope.userId,
-        { moduleIds: permittedModuleIds },
-      );
-      await this.pruneEmptyContainers(tx, scope);
-    });
-  }
-
-  private async materializeFromAdminSidebarTemplate(
-    tx: Prisma.TransactionClient,
-    scope: UserSidebarScope,
-    permittedModuleIds: Set<number>,
-  ) {
-    const adminMembership = await tx.membership.findFirst({
-      where: {
-        companyId: scope.companyId,
-        role: MembershipRole.ADMIN,
-        status: MembershipStatus.ACTIVE,
-        userId: { not: scope.userId },
-        user: {
-          moduleSidebar: {
-            some: {
-              companyId: scope.companyId,
-              branchUnitId: scope.branchUnitId,
-            },
-          },
-        },
-      },
-      select: { userId: true },
-      orderBy: { userId: 'asc' },
-    });
-
-    if (!adminMembership) return;
-
-    const templateItems = await tx.platformModuleSidebar.findMany({
-      where: {
-        companyId: scope.companyId,
-        branchUnitId: scope.branchUnitId,
-        userId: adminMembership.userId,
-      },
-      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
-    });
-    const childrenByParent = new Map<number | null, typeof templateItems>();
-    for (const item of templateItems) {
-      const siblings = childrenByParent.get(item.parentId) ?? [];
-      siblings.push(item);
-      childrenByParent.set(item.parentId, siblings);
-    }
-
-    const hasPermittedLink = (itemId: number): boolean =>
-      (childrenByParent.get(itemId) ?? []).some((item) =>
-        item.itemType === 'LINK'
-          ? Boolean(item.moduleId && permittedModuleIds.has(item.moduleId))
-          : hasPermittedLink(item.id),
-      );
-
-    const copyChildren = async (
-      templateParentId: number | null,
-      targetParentId: number | null,
-    ) => {
-      for (const [sortOrder, item] of (
-        childrenByParent.get(templateParentId) ?? []
-      ).entries()) {
-        if (item.itemType === 'LINK') {
-          if (!item.moduleId || !permittedModuleIds.has(item.moduleId)) {
-            continue;
-          }
-        } else if (!hasPermittedLink(item.id)) {
-          continue;
-        }
-
-        const created = await tx.platformModuleSidebar.create({
-          data: {
-            ...scope,
-            parentId: targetParentId,
-            moduleId: item.itemType === 'LINK' ? item.moduleId : null,
-            itemType: item.itemType,
-            key: item.key,
-            label: item.label,
-            description: item.description,
-            iconName: item.iconName,
-            sortOrder,
-            version: 1,
-          },
-          select: { id: true },
-        });
-
-        if (item.itemType !== 'LINK') {
-          await copyChildren(item.id, created.id);
-        }
-      }
     };
 
-    await copyChildren(null, null);
+    visit(items);
+    return entries;
+  }
+
+  private flattenSubmittedItems(items: UserSidebarTreeItemDto[]) {
+    const entries: Array<{
+      key: string;
+      siblingIndex: number;
+      item: UserSidebarTreeItemDto;
+    }> = [];
+    const visit = (siblings: UserSidebarTreeItemDto[]) => {
+      siblings.forEach((item, siblingIndex) => {
+        entries.push({ key: item.key, siblingIndex, item });
+        visit(item.children ?? []);
+      });
+    };
+
+    visit(items);
+    return entries;
+  }
+
+  private getPreferenceVersion(preferences: Array<{ id: number }>) {
+    return preferences.reduce(
+      (version, preference) => Math.max(version, preference.id),
+      0,
+    );
   }
 
   private async getAdminBranchScopes(
@@ -685,35 +693,6 @@ export class UserSidebarService {
         .filter(([, hasPermission]) => hasPermission)
         .map(([moduleId]) => moduleId),
     );
-  }
-
-  private async pruneEmptyContainers(
-    tx: Prisma.TransactionClient,
-    scope: UserSidebarScope,
-  ) {
-    let removed = 0;
-
-    do {
-      const containers = await tx.platformModuleSidebar.findMany({
-        where: { ...scope, itemType: { in: ['SECTION', 'CONTAINER'] } },
-        select: { id: true },
-      });
-      const emptyIds: number[] = [];
-
-      for (const container of containers) {
-        const children = await tx.platformModuleSidebar.count({
-          where: { ...scope, parentId: container.id },
-        });
-        if (!children) emptyIds.push(container.id);
-      }
-
-      removed = emptyIds.length;
-      if (removed) {
-        await tx.platformModuleSidebar.deleteMany({
-          where: { ...scope, id: { in: emptyIds } },
-        });
-      }
-    } while (removed);
   }
 }
 

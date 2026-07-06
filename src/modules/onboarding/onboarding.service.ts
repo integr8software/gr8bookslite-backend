@@ -24,7 +24,6 @@ import { AuthMailService } from '../auth/services/auth-mail.service';
 import { seedDefaultTermsForCompany } from '../maintenance/terms/default-terms';
 import { seedDefaultChartAccountsForCompany } from '../maintenance/chart-of-accounts/default-chart-accounts';
 import { seedDefaultBankAccountsForCompany } from '../maintenance/bank-masterfile/default-bank-accounts';
-import { materializeDefaultUserSidebar } from '../company/user-sidebar/user-sidebar.defaults';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
@@ -687,20 +686,6 @@ export class OnboardingService {
       const selectedModuleIds = this.getSelectedPlanModuleIds(selectedPlan);
 
       this.assertSelectedPlanHasModules(selectedModuleIds);
-
-      const headOffice = await tx.companyUnit.findFirst({
-        where: { companyId: company.id, code: 'HEAD-OFFICE', isActive: true },
-        select: { id: true },
-      });
-
-      if (headOffice) {
-        await materializeDefaultUserSidebar(
-          tx,
-          company.id,
-          headOffice.id,
-          user.id,
-        );
-      }
 
       await tx.userOnboardingDraft.delete({
         where: {

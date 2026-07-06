@@ -116,25 +116,6 @@ Runs platform provisioning using process environment variables with
 Runs platform provisioning using process environment variables with
 `APP_ENV=production`. Requires `ALLOW_PRODUCTION_SAFE_SEED=true`.
 
-`db:materialize-sidebars:current`
-
-Targeted recovery command that creates missing user sidebar rows only. Use this
-when verification reports missing sidebars and the full platform catalog is
-already healthy.
-
-`db:materialize-sidebars:shared`
-
-Same targeted recovery command for `.env.shared-dev`.
-
-`db:materialize-sidebars:staging`
-
-Same targeted recovery command for staging process env.
-
-`db:materialize-sidebars:production`
-
-Same targeted recovery command for production process env. Requires
-`ALLOW_PRODUCTION_SAFE_SEED=true`.
-
 `db:verify-permissions:current`
 
 Verifies permission and sidebar deployment health using `.env`.

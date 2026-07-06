@@ -8,7 +8,6 @@ import { seedModules } from '../seeds/seedModules';
 import { seedModuleSystems } from '../seeds/seedModuleSystems';
 import { seedSubscriptionPlans } from '../seeds/seedSubscriptionPlans';
 import { seedDefaultCoaTemplate } from '../seeds/seedDefaultCoaTemplate';
-import { seedUserSidebars } from '../seeds/seedUserSidebars';
 
 export type ProvisionResult = {
   checksum: string;
@@ -16,14 +15,13 @@ export type ProvisionResult = {
   version: string;
 };
 
-export const PlatformProvisionVersion = '2026.07.03.0';
+export const PlatformProvisionVersion = '2026.07.04.0';
 
 const ProvisionSteps = [
   'platform-catalog',
   'module-systems',
   'subscription-plans',
   'default-coa-template',
-  'user-sidebars',
 ] as const;
 
 export function buildProvisionChecksum() {
@@ -58,9 +56,6 @@ export async function runPlatformProvision(): Promise<ProvisionResult> {
 
   console.log('Provisioning default chart of accounts template.');
   await seedDefaultCoaTemplate();
-
-  console.log('Materializing missing user sidebars.');
-  await seedUserSidebars();
 
   await prisma.platformVersion.upsert({
     where: { id: 1 },

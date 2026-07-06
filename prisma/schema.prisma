@@ -36,7 +36,7 @@ model User {
   billingPaymentMethods BillingPaymentMethod[]
   createdCompanies      Company[]               @relation("CompanyCreatedBy")
   tablePreferences      UserTablePreference[]
-  moduleSidebar         PlatformModuleSidebar[]
+  sidebarPreferences    UserSidebarPreference[]
 
   @@map("users")
 }
@@ -106,7 +106,7 @@ model Company {
   billingPaymentMethods  BillingPaymentMethod[]
   memberships            Membership[]
   roles                  CompanyRole[]
-  moduleSidebar          PlatformModuleSidebar[]
+  sidebarPreferences     UserSidebarPreference[]
   units                  CompanyUnit[]
   formSignatorySetups    FormSignatorySetup[]
   chartAccounts          ChartAccount[]
@@ -145,7 +145,7 @@ model CompanyUnit {
   membershipAccess       MembershipUnitAccess[]
   formSignatorySetups    FormSignatorySetup[]
   transactionNumbers     TransactionNumberSequence[]
-  moduleSidebar          PlatformModuleSidebar[]
+  sidebarPreferences     UserSidebarPreference[]
   roles                  CompanyRole[]
 
   @@unique([companyId, code])
@@ -257,7 +257,6 @@ model Module {
   subscriptionPlanLinks SubscriptionPlanModule[]
   systemLinks           ModuleSystemModule[]
   systemSidebar         ModuleSystemSidebar[]
-  moduleSidebar         PlatformModuleSidebar[]
 
   @@map("modules")
 }
@@ -395,34 +394,25 @@ model MembershipPermission {
   @@map("membership_permissions")
 }
 
-model PlatformModuleSidebar {
-  id           Int                     @id @default(autoincrement())
-  companyId    Int                     @map("company_id")
-  branchUnitId Int                     @map("branch_unit_id")
-  userId       Int                     @map("user_id")
-  parentId     Int?                    @map("parent_id")
-  moduleId     Int?                    @map("module_id")
-  itemType     SidebarItemType         @map("item_type")
-  key          String
-  label        String
-  description  String?
-  iconName     String?                 @map("icon_name")
-  sortOrder    Int                     @default(0) @map("sort_order")
-  version      Int                     @default(1)
-  createdAt    DateTime                @default(now()) @map("created_at")
-  updatedAt    DateTime                @updatedAt @map("updated_at")
-  company      Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit   CompanyUnit             @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
-  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  module       Module?                 @relation(fields: [moduleId], references: [id], onDelete: Restrict)
-  parent       PlatformModuleSidebar?  @relation("PlatformModuleSidebarTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children     PlatformModuleSidebar[] @relation("PlatformModuleSidebarTree")
+model UserSidebarPreference {
+  id           Int         @id @default(autoincrement())
+  companyId    Int         @map("company_id")
+  branchUnitId Int         @map("branch_unit_id")
+  userId       Int         @map("user_id")
+  itemKey      String      @map("item_key") @db.VarChar(160)
+  isHidden     Boolean     @default(false) @map("is_hidden")
+  sortOrder    Int?        @map("sort_order")
+  isPinned     Boolean     @default(false) @map("is_pinned")
+  isCollapsed  Boolean     @default(false) @map("is_collapsed")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit   CompanyUnit @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([companyId, branchUnitId, userId, key], map: "platform_module_sidebar_scope_key_uq")
-  @@unique([companyId, branchUnitId, userId, moduleId], map: "platform_module_sidebar_scope_module_uq")
-  @@index([companyId, branchUnitId, userId, parentId, sortOrder], map: "platform_module_sidebar_scope_tree_idx")
-  @@index([userId, companyId, branchUnitId])
-  @@map("platform_module_sidebar_items")
+  @@unique([companyId, branchUnitId, userId, itemKey], map: "user_sidebar_preferences_scope_item_uq")
+  @@index([userId, companyId, branchUnitId], map: "user_sidebar_preferences_scope_idx")
+  @@map("user_sidebar_preferences")
 }
 
 model AuditLog {

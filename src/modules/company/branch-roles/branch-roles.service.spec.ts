@@ -24,29 +24,26 @@ describe('BranchRolesService permission architecture', () => {
       module: {
         findMany: jest.fn(),
       },
-      platformModuleSidebar: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
       permission: {
         findUnique: jest.fn(),
       },
       ...prismaOverrides,
     };
+    const entitlementService = {
+      getCompanyAllowedModules: jest.fn().mockResolvedValue([]),
+      getCompanyPlanSidebarItems: jest.fn().mockResolvedValue([]),
+    };
 
     return {
+      entitlementService,
       prisma,
-      service: new BranchRolesService(
-        prisma as never,
-        {
-          syncScopeAfterPermissionChange: jest.fn(),
-        } as never,
-      ),
+      service: new BranchRolesService(prisma as never, entitlementService as never),
     };
   }
 
   it('returns every active module under the current sidebar section structure', async () => {
-    const { prisma, service } = createService();
-    prisma.module.findMany.mockResolvedValue([
+    const { entitlementService, service } = createService();
+    entitlementService.getCompanyAllowedModules.mockResolvedValue([
       {
         id: 1,
         code: 'PCFR',
@@ -54,6 +51,7 @@ describe('BranchRolesService permission architecture', () => {
         permissions: [{ code: 'PCFR' }],
       },
     ]);
+    entitlementService.getCompanyPlanSidebarItems.mockResolvedValue([]);
 
     await expect(service.getPermissionCatalog(superAdmin, 10)).resolves.toEqual(
       {
@@ -81,10 +79,8 @@ describe('BranchRolesService permission architecture', () => {
       },
     );
 
-    expect(prisma.module.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        orderBy: [{ name: 'asc' }],
-      }),
+    expect(entitlementService.getCompanyAllowedModules).toHaveBeenCalledWith(
+      20,
     );
   });
 
@@ -111,8 +107,8 @@ describe('BranchRolesService permission architecture', () => {
   });
 
   it('keeps a root sidebar module in its own top-level group', async () => {
-    const { prisma, service } = createService();
-    prisma.module.findMany.mockResolvedValue([
+    const { entitlementService, service } = createService();
+    entitlementService.getCompanyAllowedModules.mockResolvedValue([
       {
         id: 1,
         code: 'DO',
@@ -120,14 +116,18 @@ describe('BranchRolesService permission architecture', () => {
         permissions: [{ code: 'DO' }],
       },
     ]);
-    prisma.platformModuleSidebar.findMany.mockResolvedValue([
+    entitlementService.getCompanyPlanSidebarItems.mockResolvedValue([
       {
         id: 10,
         parentId: null,
         moduleId: 1,
+        systemCode: 'SYSTEM',
         key: 'dashboard',
         label: 'Dashboard',
+        description: null,
+        iconName: null,
         sortOrder: 0,
+        itemType: 'LINK',
       },
     ]);
 
@@ -135,7 +135,7 @@ describe('BranchRolesService permission architecture', () => {
       {
         modules: [
           {
-            code: 'dashboard',
+            code: 'system-dashboard',
             name: 'Dashboard',
             submodules: [
               {

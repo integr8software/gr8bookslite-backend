@@ -105,47 +105,97 @@ describe('SidebarBuilder', () => {
     );
   });
 
-  it('preserves customized sidebar rows before adding missing fallback modules', () => {
+  it('merges user preference deltas into the plan-derived default sidebar', () => {
     const builder = createSidebarBuilder();
     const modules = builder.buildUserModules(
       buildMembership({
-        planModules: [
-          buildEnabledModule(5, 'TM', 'Term Management'),
-          buildEnabledModule(6, 'COA', 'Chart of Accounts'),
-        ],
-        moduleSidebar: [
+        subscriptions: [
           {
-            id: 200,
-            branchUnitId: 10,
-            parentId: null,
-            moduleId: 5,
-            itemType: 'LINK',
-            key: 'custom-term-management',
-            label: 'Custom Term Management',
-            description: null,
-            iconName: 'calendar',
-            sortOrder: 1,
-            module: {
-              ...buildEnabledModule(5, 'TM', 'Term Management').module,
-              isActive: true,
+            plan: {
+              systems: [
+                {
+                  system: {
+                    code: 'ACCOUNTING',
+                    modules: [
+                      buildEnabledModule(5, 'TM', 'Term Management'),
+                      buildEnabledModule(6, 'COA', 'Chart of Accounts'),
+                    ],
+                    sidebarItems: [
+                      {
+                        id: 100,
+                        parentId: null,
+                        moduleId: null,
+                        itemType: 'SECTION',
+                        key: 'financial-maintenance',
+                        label: 'Financial Maintenance',
+                        description: null,
+                        iconName: 'accounting',
+                        sortOrder: 0,
+                      },
+                      {
+                        id: 101,
+                        parentId: 100,
+                        moduleId: 6,
+                        itemType: 'LINK',
+                        key: 'financial-maintenance-charts-of-accounts',
+                        label: 'Chart of Accounts',
+                        description: null,
+                        iconName: 'scale',
+                        sortOrder: 0,
+                      },
+                      {
+                        id: 102,
+                        parentId: 100,
+                        moduleId: 5,
+                        itemType: 'LINK',
+                        key: 'financial-maintenance-term-management',
+                        label: 'Term Management',
+                        description: null,
+                        iconName: 'calendar',
+                        sortOrder: 1,
+                      },
+                    ],
+                  },
+                },
+              ],
             },
+          },
+        ],
+        sidebarPreferences: [
+          {
+            branchUnitId: 10,
+            itemKey: 'accounting-financial-maintenance',
+            isHidden: false,
+            sortOrder: null,
+            isPinned: true,
+            isCollapsed: true,
+          },
+          {
+            branchUnitId: 10,
+            itemKey: 'accounting-financial-maintenance-charts-of-accounts',
+            isHidden: true,
+            sortOrder: null,
+            isPinned: false,
+            isCollapsed: false,
           },
         ],
       }),
       ['TM:view', 'COA:view'],
     );
 
-    expect(modules.byBranch[0].items).toEqual([
+    expect(modules.byBranch[0].items[0]).toEqual(
       expect.objectContaining({
-        id: 200,
-        key: 'custom-term-management',
-        moduleCode: 'TM',
+        key: 'accounting-financial-maintenance',
+        isPinned: true,
+        isCollapsed: true,
+        children: [
+          expect.objectContaining({
+            key: 'accounting-financial-maintenance-term-management',
+            moduleCode: 'TM',
+          }),
+        ],
       }),
-      expect.objectContaining({
-        key: 'module-coa',
-        moduleCode: 'COA',
-      }),
-    ]);
+    );
   });
 });
 
@@ -162,7 +212,7 @@ type BuildMembershipOptions = Partial<
 
 function buildMembership({
   planModules = [],
-  moduleSidebar = [],
+  sidebarPreferences = [],
   subscriptions,
 }: BuildMembershipOptions = {}): SidebarMembershipSource {
   const planSubscriptions =
@@ -191,7 +241,7 @@ function buildMembership({
     unitAccess: [{ unitId: 10 }],
     company: {
       units: [{ id: 10 }],
-      moduleSidebar,
+      sidebarPreferences,
       subscriptions: planSubscriptions,
     },
   };

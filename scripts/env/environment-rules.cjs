@@ -9,8 +9,9 @@ const COMMON_READ_OPERATIONS = [
   'verify',
 ];
 const SAFE_INFRASTRUCTURE_SEED_OPERATIONS = [
-  'materialize:user-sidebars',
+  'backfill:legacy-saas-access',
   'provision:platform',
+  'repair:legacy-company-subscriptions',
 ];
 
 const ENVIRONMENT_RULES = {
@@ -74,11 +75,15 @@ const ENVIRONMENT_RULES = {
         variable: 'CONFIRM_PRODUCTION_REFERENCE_SEED',
         value: 'true',
       },
-      'materialize:user-sidebars': {
+      'backfill:legacy-saas-access': {
         variable: 'ALLOW_PRODUCTION_SAFE_SEED',
         value: 'true',
       },
       'provision:platform': {
+        variable: 'ALLOW_PRODUCTION_SAFE_SEED',
+        value: 'true',
+      },
+      'repair:legacy-company-subscriptions': {
         variable: 'ALLOW_PRODUCTION_SAFE_SEED',
         value: 'true',
       },

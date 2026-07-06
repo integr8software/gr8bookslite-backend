@@ -188,8 +188,8 @@ test('allows safe infrastructure seeds remotely but keeps full seed blocked', ()
   for (const [script, operation] of [
     ['prisma/scripts/provision-platform.ts', 'provision:platform'],
     [
-      'prisma/scripts/materialize-user-sidebars.ts',
-      'materialize:user-sidebars',
+      'prisma/scripts/backfill-legacy-saas-access.ts',
+      'backfill:legacy-saas-access',
     ],
   ]) {
     assert.equal(
@@ -288,6 +288,7 @@ test('allows read-only production verification without migration confirmation', 
   for (const script of [
     'prisma/scripts/verifyMigrationHistory.ts',
     'prisma/scripts/verifyPermissionArchitecture.ts',
+    'prisma/scripts/audit-legacy-saas-access.ts',
   ]) {
     assert.equal(
       assertDatabaseEnvironment(productionEnvironment, ['ts-node', script])

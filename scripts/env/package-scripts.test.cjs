@@ -121,8 +121,12 @@ test('safe provisioning scripts are available without full db seed aliases', () 
       ),
     );
     assert.match(
-      scripts[`db:materialize-sidebars:${environment}`],
-      /materialize-user-sidebars\.ts/,
+      scripts[`db:audit-legacy-saas-access:${environment}`],
+      /audit-legacy-saas-access\.ts/,
+    );
+    assert.match(
+      scripts[`db:backfill-legacy-saas-access:${environment}`],
+      /backfill-legacy-saas-access\.ts/,
     );
   }
 

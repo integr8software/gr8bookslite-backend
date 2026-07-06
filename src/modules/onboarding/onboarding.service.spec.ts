@@ -3,8 +3,6 @@ import {
   BillingCycle,
   BillingProvider,
   CompanyStatus,
-  MembershipRole,
-  MembershipStatus,
   SubscriptionPlanScope,
   SubscriptionPlanStatus,
   SubscriptionStatus,
@@ -12,11 +10,6 @@ import {
 } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { OnboardingService } from './onboarding.service';
-import { materializeDefaultUserSidebar } from '../company/user-sidebar/user-sidebar.defaults';
-
-jest.mock('../company/user-sidebar/user-sidebar.defaults', () => ({
-  materializeDefaultUserSidebar: jest.fn(),
-}));
 
 const completedAt = new Date('2026-07-03T00:00:00.000Z');
 
@@ -39,7 +32,6 @@ describe('OnboardingService plan-derived module entitlements', () => {
 
   beforeEach(() => {
     jest.useFakeTimers().setSystemTime(completedAt);
-    jest.mocked(materializeDefaultUserSidebar).mockResolvedValue(false);
   });
 
   afterEach(() => {
@@ -52,11 +44,24 @@ describe('OnboardingService plan-derived module entitlements', () => {
 
     await service.complete(user);
 
-    expect(materializeDefaultUserSidebar).toHaveBeenCalledWith(tx, 57, 70, 7);
+    expect(tx.company.update).toHaveBeenCalled();
+    const updateCompany = tx.company.update as jest.MockedFunction<
+      (input: {
+        where: { id: number };
+        data: { status: CompanyStatus };
+      }) => Promise<unknown>
+    >;
+    const updateArgs = updateCompany.mock.calls[0]?.[0];
+
+    expect(updateArgs).toBeDefined();
+    if (!updateArgs) return;
+    expect(updateArgs.where).toEqual({ id: 57 });
+    expect(updateArgs.data.status).toBe(CompanyStatus.ACTIVE);
+    expect(tx.companyUnit.findFirst).not.toHaveBeenCalled();
   });
 
   it('fails clearly when the selected plan has no enabled modules configured', async () => {
-    const { service, tx } = createService({
+    const { service } = createService({
       draft: buildDraft({
         subscriptionPlan: buildPlan({
           systems: [],
@@ -65,7 +70,6 @@ describe('OnboardingService plan-derived module entitlements', () => {
     });
 
     await expect(service.complete(user)).rejects.toThrow(BadRequestException);
-    expect(materializeDefaultUserSidebar).not.toHaveBeenCalled();
   });
 });
 

@@ -12,10 +12,10 @@ import {
   Prisma,
 } from '@prisma/client';
 import { ActivePermissionActions } from '../../../common/constants/active-permission-actions.constant';
+import { EntitlementService } from '../../../common/access/entitlements/entitlement.service';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { UserSidebarService } from '../user-sidebar/user-sidebar.service';
 import { BranchRolePermissionDto } from './dto/branch-role-permission.dto';
 import { CreateBranchRoleDto } from './dto/create-branch-role.dto';
 import { UpdateBranchRoleStatusDto } from './dto/update-branch-role-status.dto';
@@ -79,7 +79,7 @@ const LegacyAccountsPayableVoucherPermissionCode =
 export class BranchRolesService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly userSidebarService: UserSidebarService,
+    private readonly entitlementService: EntitlementService,
   ) {}
 
   async findAll(user: AuthUser, unitId: number) {
@@ -119,44 +119,14 @@ export class BranchRolesService {
     const unit = await this.getUnitOrThrow(unitId);
     await this.ensureCanManageBranchRoles(user, unit.companyId);
 
-    const [modules, sidebarItems] = await Promise.all([
-      this.prisma.module.findMany({
-        where: {
-          isActive: true,
-          permissions: {
-            some: { isActive: true },
-          },
-        },
-        select: {
-          id: true,
-          code: true,
-          name: true,
-          permissions: {
-            where: { isActive: true },
-            select: { code: true },
-            orderBy: [{ name: 'asc' }],
-            take: 1,
-          },
-        },
-        orderBy: [{ name: 'asc' }],
-      }),
-      this.prisma.platformModuleSidebar.findMany({
-        where: {
-          companyId: unit.companyId,
-          branchUnitId: unitId,
-          userId: user.id,
-        },
-        select: {
-          id: true,
-          parentId: true,
-          moduleId: true,
-          key: true,
-          label: true,
-          sortOrder: true,
-        },
-        orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
-      }),
-    ]);
+    const modules = await this.entitlementService.getCompanyAllowedModules(
+      unit.companyId,
+    );
+    const moduleIds = new Set(modules.map((module) => module.id));
+    const sidebarItems = await this.entitlementService.getCompanyPlanSidebarItems(
+      unit.companyId,
+      moduleIds,
+    );
 
     const modulesById = new Map<number, PermissionCatalogModule>(
       modules.map((module) => [module.id, module]),
@@ -191,7 +161,7 @@ export class BranchRolesService {
 
       return [
         {
-          code: section.key,
+          code: `${section.systemCode.toLowerCase()}-${section.key}`,
           name: section.label,
           submodules: sectionModules,
         },
@@ -338,7 +308,6 @@ export class BranchRolesService {
         include: BranchRoleInclude,
       });
     });
-    await this.syncAssignedUserSidebars(unit.companyId, unitId, roleId);
 
     return {
       message: 'Branch role updated.',
@@ -370,7 +339,6 @@ export class BranchRolesService {
       },
       include: BranchRoleInclude,
     });
-    await this.syncAssignedUserSidebars(unit.companyId, unitId, roleId);
 
     return {
       message: dto.isActive
@@ -407,31 +375,6 @@ export class BranchRolesService {
         canExport: permission.canExport,
       })),
     });
-  }
-
-  private async syncAssignedUserSidebars(
-    companyId: number,
-    unitId: number,
-    companyRoleId: number,
-  ) {
-    const assignedUsers = await this.prisma.membershipUnitAccess.findMany({
-      where: {
-        companyId,
-        unitId,
-        companyRoleId,
-      },
-      select: {
-        userId: true,
-      },
-    });
-
-    for (const assignedUser of assignedUsers) {
-      await this.userSidebarService.syncScopeAfterPermissionChange(
-        companyId,
-        unitId,
-        assignedUser.userId,
-      );
-    }
   }
 
   private async resolveRolePermissions(permissions: BranchRolePermissionDto[]) {

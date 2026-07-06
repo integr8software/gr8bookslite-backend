@@ -71,94 +71,75 @@ describe('UserSidebarService tree validation', () => {
     ).not.toThrow();
   });
 
-  it('copies the admin sidebar template and filters links by permissions', async () => {
-    const creates: unknown[] = [];
-    const tx = {
-      membership: {
-        findFirst: jest.fn().mockResolvedValue({ userId: 100 }),
-      },
-      platformModuleSidebar: {
-        findMany: jest.fn().mockResolvedValue([
-          {
-            id: 1,
-            companyId: 20,
-            branchUnitId: 10,
-            userId: 100,
-            parentId: null,
-            moduleId: null,
-            itemType: 'SECTION',
-            key: 'admin-section',
-            label: 'Admin Section',
-            description: null,
-            iconName: 'folder',
-            sortOrder: 0,
-            version: 1,
-          },
-          {
-            id: 2,
-            companyId: 20,
-            branchUnitId: 10,
-            userId: 100,
-            parentId: 1,
-            moduleId: 7,
-            itemType: 'LINK',
-            key: 'allowed-module',
-            label: 'Allowed Module',
-            description: null,
-            iconName: null,
-            sortOrder: 0,
-            version: 1,
-          },
-          {
-            id: 3,
-            companyId: 20,
-            branchUnitId: 10,
-            userId: 100,
-            parentId: 1,
-            moduleId: 8,
-            itemType: 'LINK',
-            key: 'blocked-module',
-            label: 'Blocked Module',
-            description: null,
-            iconName: null,
-            sortOrder: 1,
-            version: 1,
-          },
-        ]),
-        create: jest.fn().mockImplementation(({ data }) => {
-          creates.push(data);
-          return Promise.resolve({ id: creates.length + 1000 });
-        }),
-      },
-    };
-
-    await (
+  it('derives user sidebar preference deltas from the plan default tree', () => {
+    const preferences = (
       service as unknown as {
-        materializeFromAdminSidebarTemplate: (
-          tx: unknown,
-          scope: { companyId: number; branchUnitId: number; userId: number },
-          permittedModuleIds: Set<number>,
-        ) => Promise<void>;
+        derivePreferenceDeltas: (
+          defaultItems: unknown[],
+          submittedItems: unknown[],
+        ) => unknown[];
       }
-    ).materializeFromAdminSidebarTemplate(
-      tx,
-      { companyId: 20, branchUnitId: 10, userId: 200 },
-      new Set([7]),
+    ).derivePreferenceDeltas(
+      [
+        {
+          key: 'accounting-financial-maintenance',
+          label: 'Financial Maintenance',
+          itemType: 'SECTION',
+          sortOrder: 0,
+          children: [
+            {
+              key: 'accounting-term-management',
+              label: 'Term Management',
+              itemType: 'LINK',
+              moduleId: 7,
+              sortOrder: 0,
+              children: [],
+            },
+            {
+              key: 'accounting-chart-of-accounts',
+              label: 'Chart of Accounts',
+              itemType: 'LINK',
+              moduleId: 8,
+              sortOrder: 1,
+              children: [],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          key: 'accounting-financial-maintenance',
+          label: 'Financial Maintenance',
+          itemType: 'SECTION',
+          isCollapsed: true,
+          children: [
+            {
+              key: 'accounting-chart-of-accounts',
+              label: 'Chart of Accounts',
+              itemType: 'LINK',
+              moduleId: 8,
+              children: [],
+            },
+          ],
+        },
+      ],
     );
 
-    expect(creates).toEqual([
-      expect.objectContaining({
-        userId: 200,
-        itemType: 'SECTION',
-        key: 'admin-section',
-      }),
-      expect.objectContaining({
-        userId: 200,
-        parentId: 1001,
-        itemType: 'LINK',
-        key: 'allowed-module',
-        moduleId: 7,
-      }),
-    ]);
+    expect(preferences).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          itemKey: 'accounting-financial-maintenance',
+          isCollapsed: true,
+        }),
+        expect.objectContaining({
+          itemKey: 'accounting-chart-of-accounts',
+          sortOrder: 0,
+        }),
+        expect.objectContaining({
+          itemKey: 'accounting-term-management',
+          isHidden: true,
+        }),
+      ]),
+    );
   });
 });
