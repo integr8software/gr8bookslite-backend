@@ -6,8 +6,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  AccountNature,
   ChartAccountLevel,
   ChartAccountStatus,
+  ChartAccountType,
   MembershipRole,
   MembershipStatus,
   Prisma,
@@ -15,6 +17,7 @@ import {
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { CoaBankSyncService } from '../coa-bank-sync/coa-bank-sync.service';
 import { CreateChartAccountDto } from './dto/create-chart-account.dto';
 import { GetChartAccountListQueryDto } from './dto/get-chart-account-list-query.dto';
 import { GetNextChartAccountCodeQueryDto } from './dto/get-next-chart-account-code-query.dto';
@@ -39,7 +42,10 @@ const ChartAccountTransactionOptions = {
 
 @Injectable()
 export class ChartOfAccountsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly coaBankSyncService: CoaBankSyncService,
+  ) {}
 
   async findAll(user: AuthUser, query: GetChartAccountListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
@@ -159,6 +165,10 @@ export class ChartOfAccountsService {
           const parentAccount = parentAccountId
             ? await this.findActiveParentAccount(companyId, parentAccountId, tx)
             : null;
+          const isBankSyncedAccount =
+            parentAccount &&
+            dto.accountLevel === ChartAccountLevel.SPECIFIC &&
+            (await this.isCashInBankParent(companyId, parentAccount.id, tx));
 
           assertCanCreateAccountLevel(
             parentAccount?.accountLevel ?? null,
@@ -178,6 +188,18 @@ export class ChartOfAccountsService {
             tx,
           });
 
+          if (isBankSyncedAccount) {
+            this.assertBankSyncedChartAccountInput(dto);
+          }
+
+          const requestedStatus = dto.status ?? ChartAccountStatus.ACTIVE;
+
+          if (
+            isBankSyncedAccount &&
+            requestedStatus === ChartAccountStatus.ACTIVE
+          ) {
+            this.assertBankLinkedDetailsInput(dto);
+          }
           const savedAccount = await tx.chartAccount.create({
             data: {
               ...this.toChartAccountData(dto),
@@ -186,12 +208,63 @@ export class ChartOfAccountsService {
               accountLevel: dto.accountLevel,
               companyId,
               parentAccountId: parentAccount?.id ?? null,
+              currencyCode: isBankSyncedAccount
+                ? (cleanOptional(dto.currencyCode)?.toUpperCase() ??
+                  cleanOptional(
+                    dto.linkedDetails?.currencyCode,
+                  )?.toUpperCase() ??
+                  null)
+                : undefined,
+              status: isBankSyncedAccount
+                ? ChartAccountStatus.INACTIVE
+                : requestedStatus,
+              deletedAt: isBankSyncedAccount
+                ? new Date()
+                : requestedStatus === ChartAccountStatus.INACTIVE
+                  ? new Date()
+                  : null,
               whoCreated: String(user.id),
             },
             include: ChartAccountInclude,
           });
 
-          return savedAccount;
+          if (!isBankSyncedAccount) {
+            return savedAccount;
+          }
+
+          const bankAccount = await tx.bankAccount.create({
+            data: {
+              companyId,
+              coaId: savedAccount.id,
+              ...this.toBankAccountData(dto),
+              status: ChartAccountStatus.INACTIVE,
+              createdByUserId: user.id,
+            },
+          });
+
+          if (requestedStatus === ChartAccountStatus.ACTIVE) {
+            await this.coaBankSyncService.validateLinkedPairOrThrow({
+              companyId,
+              bankAccount,
+              chartAccount: savedAccount,
+              tx,
+            });
+
+            await tx.chartAccount.update({
+              where: { id: savedAccount.id },
+              data: { status: ChartAccountStatus.ACTIVE, deletedAt: null },
+            });
+
+            await tx.bankAccount.update({
+              where: { id: bankAccount.id },
+              data: { status: ChartAccountStatus.ACTIVE },
+            });
+          }
+
+          return tx.chartAccount.findUniqueOrThrow({
+            where: { id: savedAccount.id },
+            include: ChartAccountInclude,
+          });
         },
         ChartAccountTransactionOptions,
       );
@@ -345,18 +418,57 @@ export class ChartOfAccountsService {
       }
     }
 
-    const account = await this.prisma.chartAccount.update({
-      where: {
-        id: accountId,
-      },
-      data: {
-        status: dto.status,
-        deletedAt:
-          dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
-        whoModified: String(user.id),
-      },
-      include: ChartAccountInclude,
-    });
+    const account = await this.prisma.$transaction(async (tx) => {
+      const currentAccount = await this.findAccountOrThrow(
+        companyId,
+        accountId,
+        tx,
+      );
+      const isBankSyncedAccount =
+        await this.coaBankSyncService.isCashInBankPostingAccount(
+          companyId,
+          currentAccount,
+          tx,
+        );
+
+      if (isBankSyncedAccount && dto.status === ChartAccountStatus.ACTIVE) {
+        const linkedBankAccount = currentAccount.bankAccounts[0];
+
+        await this.coaBankSyncService.validateLinkedPairOrThrow({
+          companyId,
+          bankAccount: linkedBankAccount,
+          chartAccount: currentAccount,
+          tx,
+        });
+
+        if (linkedBankAccount) {
+          await tx.bankAccount.update({
+            where: { id: linkedBankAccount.id },
+            data: { status: ChartAccountStatus.ACTIVE },
+          });
+        }
+      }
+
+      if (isBankSyncedAccount && dto.status === ChartAccountStatus.INACTIVE) {
+        await tx.bankAccount.updateMany({
+          where: { companyId, coaId: accountId },
+          data: { status: ChartAccountStatus.INACTIVE },
+        });
+      }
+
+      return tx.chartAccount.update({
+        where: {
+          id: accountId,
+        },
+        data: {
+          status: dto.status,
+          deletedAt:
+            dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
+          whoModified: String(user.id),
+        },
+        include: ChartAccountInclude,
+      });
+    }, ChartAccountTransactionOptions);
 
     return {
       message:
@@ -547,6 +659,74 @@ export class ChartOfAccountsService {
               cleanOptional(dto.currencyCode)?.toUpperCase() ?? null,
           }
         : {}),
+    };
+  }
+
+  private async isCashInBankParent(
+    companyId: number,
+    parentAccountId: bigint,
+    tx: Prisma.TransactionClient | PrismaService,
+  ) {
+    const cashInBankParent = await this.coaBankSyncService.findCashInBankParent(
+      companyId,
+      tx,
+    );
+
+    return cashInBankParent?.id === parentAccountId;
+  }
+
+  private assertBankSyncedChartAccountInput(dto: CreateChartAccountDto) {
+    if (
+      dto.accountLevel !== ChartAccountLevel.SPECIFIC ||
+      dto.accountType !== ChartAccountType.ASSET ||
+      dto.accountNature !== AccountNature.DEBIT ||
+      dto.isPostingAccount !== true
+    ) {
+      throw new BadRequestException(
+        'Cannot activate bank account. The linked Chart of Accounts posting account is incomplete.',
+      );
+    }
+  }
+
+  private assertBankLinkedDetailsInput(dto: CreateChartAccountDto) {
+    const linkedDetails = dto.linkedDetails;
+
+    if (
+      !linkedDetails ||
+      !linkedDetails.bankName?.trim() ||
+      !linkedDetails.accountNumber?.trim() ||
+      !(
+        cleanOptional(linkedDetails.currencyCode) ??
+        cleanOptional(dto.currencyCode)
+      )
+    ) {
+      throw new BadRequestException(
+        'Cannot activate bank account. Bank Masterfile information is incomplete.',
+      );
+    }
+  }
+
+  private toBankAccountData(dto: CreateChartAccountDto) {
+    const linkedDetails = dto.linkedDetails;
+
+    return {
+      bankName: linkedDetails?.bankName?.trim() ?? '',
+      branch: cleanOptional(linkedDetails?.branch) ?? null,
+      accountNumber: linkedDetails?.accountNumber?.trim() ?? '',
+      accountName: dto.accountTitle.trim(),
+      accountType: cleanOptional(linkedDetails?.accountType) ?? null,
+      seriesStart: cleanOptional(linkedDetails?.seriesStart) ?? null,
+      seriesEnd: cleanOptional(linkedDetails?.seriesEnd) ?? null,
+      seriesDigits: linkedDetails?.seriesDigits,
+      currencyCode:
+        cleanOptional(linkedDetails?.currencyCode)?.toUpperCase() ??
+        cleanOptional(dto.currencyCode)?.toUpperCase() ??
+        null,
+      currencyExchangeRate:
+        linkedDetails?.currencyExchangeRate === undefined
+          ? undefined
+          : new Prisma.Decimal(linkedDetails.currencyExchangeRate),
+      isDefault: false,
     };
   }
 

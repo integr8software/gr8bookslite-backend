@@ -18,6 +18,7 @@ import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { CoaBankSyncService } from '../coa-bank-sync/coa-bank-sync.service';
 import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dto';
@@ -32,7 +33,6 @@ const DefaultLimit = 500;
 const BaseCurrencyCode = 'PHP';
 const CashInBankGroup = 'Cash in Bank';
 const BankMasterfilePermissionCode = 'BM';
-const CashInBankParentRole = 'CASH_IN_BANK_PARENT';
 const BankMasterfileTransactionOptions = {
   maxWait: 10_000,
   timeout: 30_000,
@@ -40,7 +40,10 @@ const BankMasterfileTransactionOptions = {
 
 @Injectable()
 export class BankMasterfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly coaBankSyncService: CoaBankSyncService,
+  ) {}
 
   async findAll(user: AuthUser, query: GetBankAccountListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
@@ -133,11 +136,7 @@ export class BankMasterfileService {
               tx,
             );
         const accountName = this.resolveAccountName(dto);
-        this.ensureActiveBankDetails({
-          ...dto,
-          accountName,
-          status: dto.status ?? ChartAccountStatus.ACTIVE,
-        });
+        const requestedStatus = dto.status ?? ChartAccountStatus.ACTIVE;
         await this.ensureBankAccountAvailable(companyId, dto);
         const chartAccount = await tx.chartAccount.create({
           data: {
@@ -151,9 +150,8 @@ export class BankMasterfileService {
             accountGroup: CashInBankGroup,
             isPostingAccount: true,
             currencyCode: cleanCurrencyCode(dto.currencyCode),
-            status: dto.status ?? ChartAccountStatus.ACTIVE,
-            deletedAt:
-              dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
+            status: ChartAccountStatus.INACTIVE,
+            deletedAt: new Date(),
             whoCreated: String(user.id),
           },
         });
@@ -165,14 +163,36 @@ export class BankMasterfileService {
           });
         }
 
-        return tx.bankAccount.create({
+        const bankAccount = await tx.bankAccount.create({
           data: {
             companyId,
             coaId: chartAccount.id,
             ...this.toCreateBankAccountData(dto, accountName),
-            status: dto.status ?? ChartAccountStatus.ACTIVE,
+            status: ChartAccountStatus.INACTIVE,
             createdByUserId: user.id,
           },
+          include: BankAccountInclude,
+        });
+
+        if (requestedStatus !== ChartAccountStatus.ACTIVE) {
+          return bankAccount;
+        }
+
+        await this.coaBankSyncService.validateLinkedPairOrThrow({
+          companyId,
+          bankAccount,
+          chartAccount,
+          tx,
+        });
+
+        await tx.chartAccount.update({
+          where: { id: chartAccount.id },
+          data: { status: ChartAccountStatus.ACTIVE, deletedAt: null },
+        });
+
+        return tx.bankAccount.update({
+          where: { id: bankAccount.id },
+          data: { status: ChartAccountStatus.ACTIVE },
           include: BankAccountInclude,
         });
       }, BankMasterfileTransactionOptions);
@@ -229,26 +249,21 @@ export class BankMasterfileService {
                 tx,
               );
           const accountName = this.resolveAccountName(bank);
-          this.ensureActiveBankDetails({
-            ...bank,
-            accountName,
-            status: bank.status ?? ChartAccountStatus.ACTIVE,
-          });
+          const requestedStatus = bank.status ?? ChartAccountStatus.ACTIVE;
           const chartAccount = await tx.chartAccount.create({
             data: {
               companyId,
               parentAccountId: cashInBankAccount.id,
               accountCode,
               accountTitle: accountName,
-          accountLevel: ChartAccountLevel.SPECIFIC,
-          accountType: ChartAccountType.ASSET,
-          accountNature: AccountNature.DEBIT,
-          accountGroup: CashInBankGroup,
-          isPostingAccount: true,
+              accountLevel: ChartAccountLevel.SPECIFIC,
+              accountType: ChartAccountType.ASSET,
+              accountNature: AccountNature.DEBIT,
+              accountGroup: CashInBankGroup,
+              isPostingAccount: true,
               currencyCode: cleanCurrencyCode(bank.currencyCode),
-              status: bank.status ?? ChartAccountStatus.ACTIVE,
-              deletedAt:
-                bank.status === ChartAccountStatus.INACTIVE ? new Date() : null,
+              status: ChartAccountStatus.INACTIVE,
+              deletedAt: new Date(),
               whoCreated: String(user.id),
             },
           });
@@ -257,11 +272,30 @@ export class BankMasterfileService {
               companyId,
               coaId: chartAccount.id,
               ...this.toCreateBankAccountData(bank, accountName),
-              status: bank.status ?? ChartAccountStatus.ACTIVE,
+              status: ChartAccountStatus.INACTIVE,
               createdByUserId: user.id,
             },
-            select: { id: true },
+            include: BankAccountInclude,
           });
+
+          if (requestedStatus === ChartAccountStatus.ACTIVE) {
+            await this.coaBankSyncService.validateLinkedPairOrThrow({
+              companyId,
+              bankAccount,
+              chartAccount,
+              tx,
+            });
+
+            await tx.chartAccount.update({
+              where: { id: chartAccount.id },
+              data: { status: ChartAccountStatus.ACTIVE, deletedAt: null },
+            });
+
+            await tx.bankAccount.update({
+              where: { id: bankAccount.id },
+              data: { status: ChartAccountStatus.ACTIVE },
+            });
+          }
 
           createdBankAccountIds.push(bankAccount.id);
         }
@@ -299,7 +333,6 @@ export class BankMasterfileService {
     const nextDto = { ...this.toDtoLike(currentBankAccount), ...dto };
     const nextAccountName = this.resolveAccountName(nextDto);
     this.validateBankInput(nextDto);
-    this.ensureActiveBankDetails({ ...nextDto, accountName: nextAccountName });
     await this.ensureBankAccountAvailable(companyId, dto, bankAccountId);
 
     try {
@@ -339,10 +372,21 @@ export class BankMasterfileService {
           },
         });
 
-        return tx.bankAccount.findUniqueOrThrow({
+        const refreshedBankAccount = await tx.bankAccount.findUniqueOrThrow({
           where: { id: bankAccountId },
           include: BankAccountInclude,
         });
+
+        if (refreshedBankAccount.status === ChartAccountStatus.ACTIVE) {
+          await this.coaBankSyncService.validateLinkedPairOrThrow({
+            companyId,
+            bankAccount: refreshedBankAccount,
+            chartAccount: refreshedBankAccount.coa,
+            tx,
+          });
+        }
+
+        return refreshedBankAccount;
       }, BankMasterfileTransactionOptions);
 
       return {
@@ -369,15 +413,16 @@ export class BankMasterfileService {
       bankAccountId,
     );
 
-    if (dto.status === ChartAccountStatus.ACTIVE) {
-      this.ensureActiveBankDetails({
-        ...this.toDtoLike(currentBankAccount),
-        accountName: currentBankAccount.accountName,
-        status: dto.status,
-      });
-    }
-
     const bankAccount = await this.prisma.$transaction(async (tx) => {
+      if (dto.status === ChartAccountStatus.ACTIVE) {
+        await this.coaBankSyncService.validateLinkedPairOrThrow({
+          companyId,
+          bankAccount: currentBankAccount,
+          chartAccount: currentBankAccount.coa,
+          tx,
+        });
+      }
+
       await tx.chartAccount.update({
         where: { id: currentBankAccount.coaId },
         data: {
@@ -469,56 +514,7 @@ export class BankMasterfileService {
     companyId: number,
     tx: Prisma.TransactionClient | PrismaService = this.prisma,
   ) {
-    const mappedAccount = await tx.companyDefaultAccount.findFirst({
-      where: {
-        companyId,
-        moduleCode: BankMasterfilePermissionCode,
-        accountRole: CashInBankParentRole,
-        status: ChartAccountStatus.ACTIVE,
-        chartAccount: {
-          companyId,
-          status: ChartAccountStatus.ACTIVE,
-          deletedAt: null,
-          accountLevel: ChartAccountLevel.SUB3,
-        },
-      },
-      include: { chartAccount: true },
-    });
-
-    if (mappedAccount?.chartAccount) {
-      return mappedAccount.chartAccount;
-    }
-
-    const accounts = await tx.chartAccount.findMany({
-      where: {
-        companyId,
-        status: ChartAccountStatus.ACTIVE,
-        deletedAt: null,
-        accountLevel: { not: ChartAccountLevel.SPECIFIC },
-        OR: [
-          { accountTitle: { contains: 'cash', mode: 'insensitive' } },
-          { accountTitle: { contains: 'bank', mode: 'insensitive' } },
-          { accountGroup: { contains: 'cash', mode: 'insensitive' } },
-          { accountGroup: { contains: 'bank', mode: 'insensitive' } },
-          { statementSection: { contains: 'cash', mode: 'insensitive' } },
-          { statementSection: { contains: 'bank', mode: 'insensitive' } },
-          { reportAlias: { contains: 'cash', mode: 'insensitive' } },
-          { reportAlias: { contains: 'bank', mode: 'insensitive' } },
-          { description: { contains: 'cash', mode: 'insensitive' } },
-          { description: { contains: 'bank', mode: 'insensitive' } },
-        ],
-      },
-      orderBy: [{ accountCode: 'asc' }],
-    });
-    const account = pickCashInBankParent(accounts);
-
-    if (!account) {
-      throw new BadRequestException(
-        'Cannot create bank account. Cash in Bank group was not found in Chart of Accounts. Please set up the Cash in Bank group first.',
-      );
-    }
-
-    return account;
+    return this.coaBankSyncService.findCashInBankParentOrThrow(companyId, tx);
   }
 
   private async generateNextCashInBankAccountCode(
@@ -575,6 +571,10 @@ export class BankMasterfileService {
       throw new BadRequestException('Bank is required.');
     }
 
+    if (!dto.accountType?.trim()) {
+      throw new BadRequestException('Account type is required.');
+    }
+
     if (!dto.seriesStart?.trim()) {
       throw new BadRequestException('Series start is required.');
     }
@@ -613,28 +613,6 @@ export class BankMasterfileService {
     ) {
       throw new BadRequestException(
         'Currency exchange rate must be greater than 0 for non-PHP bank accounts.',
-      );
-    }
-  }
-
-  private ensureActiveBankDetails(
-    dto: (CreateBankAccountDto | UpdateBankAccountDto) & {
-      accountName?: string;
-    },
-  ) {
-    if (dto.status !== ChartAccountStatus.ACTIVE) {
-      return;
-    }
-
-    if (!dto.accountNumber?.trim()) {
-      throw new BadRequestException(
-        'Bank account number is required before activating the bank.',
-      );
-    }
-
-    if (!dto.accountName?.trim()) {
-      throw new BadRequestException(
-        'Bank account name is required before activating the bank.',
       );
     }
   }
@@ -970,73 +948,6 @@ export class BankMasterfileService {
   }
 }
 
-type CashInBankCandidate = Pick<
-  Prisma.ChartAccountGetPayload<object>,
-  | 'accountTitle'
-  | 'accountGroup'
-  | 'statementSection'
-  | 'reportAlias'
-  | 'description'
->;
-
-function pickCashInBankParent<T extends CashInBankCandidate>(accounts: T[]) {
-  let bestAccount: T | null = null;
-  let bestScore = 0;
-
-  for (const account of accounts) {
-    const score = scoreCashInBankCandidate(account);
-
-    if (score > bestScore) {
-      bestAccount = account;
-      bestScore = score;
-    }
-  }
-
-  return bestAccount;
-}
-
-function scoreCashInBankCandidate(account: CashInBankCandidate) {
-  const labels = [
-    account.accountTitle,
-    account.accountGroup,
-    account.statementSection,
-    account.reportAlias,
-    account.description,
-  ].map(normalizeAccountLabel);
-
-  if (labels.some((label) => label === 'cash in bank')) {
-    return 100;
-  }
-
-  if (labels.some((label) => label.includes('cash in bank'))) {
-    return 90;
-  }
-
-  if (
-    labels.some((label) => label.includes('cash') && label.includes('bank'))
-  ) {
-    return 80;
-  }
-
-  if (labels.some((label) => label.includes('cash and cash equivalent'))) {
-    return 40;
-  }
-
-  if (labels.some((label) => label.includes('bank'))) {
-    return 20;
-  }
-
-  return 0;
-}
-
-function normalizeAccountLabel(value: string | null) {
-  return (
-    value
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim() ?? ''
-  );
-}
 type BankAccountIdentity = {
   bankName: string;
   branch?: string | null;

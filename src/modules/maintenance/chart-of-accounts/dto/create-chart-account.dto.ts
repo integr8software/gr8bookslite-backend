@@ -3,17 +3,79 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import {
   AccountNature,
   ChartAccountLevel,
+  ChartAccountStatus,
   ChartAccountType,
 } from '@prisma/client';
+import { Type } from 'class-transformer';
 import { normalizeOptionalQueryString } from '../utils/chart-account-query.util';
+
+enum LinkedChartAccountDetailsKind {
+  BANK = 'BANK',
+}
+
+class ChartAccountBankDetailsDto {
+  @IsOptional()
+  @IsEnum(LinkedChartAccountDetailsKind)
+  kind?: LinkedChartAccountDetailsKind;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  bankName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  branch?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  accountNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  accountType?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  currencyCode?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => toOptionalNumber(value))
+  @IsNumber()
+  @Min(0)
+  currencyExchangeRate?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  seriesStart?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  seriesEnd?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => toOptionalNumber(value))
+  @IsInt()
+  @Min(1)
+  seriesDigits?: number;
+}
 
 export class CreateChartAccountDto {
   @IsOptional()
@@ -80,4 +142,22 @@ export class CreateChartAccountDto {
   @IsString()
   @MaxLength(10)
   currencyCode?: string;
+
+  @IsOptional()
+  @IsEnum(ChartAccountStatus)
+  status?: ChartAccountStatus;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ChartAccountBankDetailsDto)
+  linkedDetails?: ChartAccountBankDetailsDto;
+}
+
+function toOptionalNumber(value: unknown) {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  return Number(value);
 }
