@@ -232,6 +232,60 @@ test('requires explicit production opt-in for safe infrastructure seeds', () => 
   );
 });
 
+test('allows shared-dev and staging migration resolve without extra opt-in', () => {
+  const sharedEnvironment = environment(
+    'shared-dev',
+    'server1.integr8.com.ph',
+    'gr8booksneo_shared_dev',
+  );
+  const stagingEnvironment = environment(
+    'staging',
+    'server1.integr8.com.ph',
+    'gr8booksneo_shared_dev',
+    {
+      DATABASE_GUARD_HOSTS: 'server1.integr8.com.ph',
+      DATABASE_GUARD_NAME: 'gr8booksneo_shared_dev',
+    },
+  );
+  const command = ['prisma', 'migrate', 'resolve'];
+
+  assert.equal(
+    assertDatabaseEnvironment(sharedEnvironment, command).operation,
+    'prisma:migrate:resolve',
+  );
+
+  assert.equal(
+    assertDatabaseEnvironment(stagingEnvironment, command).operation,
+    'prisma:migrate:resolve',
+  );
+});
+
+test('requires explicit production opt-in for migration resolve', () => {
+  const productionEnvironment = environment(
+    'production',
+    'ep-production.neon.tech',
+    'gr8booksneo_production',
+    {
+      DATABASE_GUARD_HOSTS: 'ep-production.neon.tech',
+      DATABASE_GUARD_NAME: 'gr8booksneo_production',
+    },
+  );
+  const command = ['prisma', 'migrate', 'resolve'];
+
+  assert.throws(
+    () => assertDatabaseEnvironment(productionEnvironment, command),
+    /ALLOW_MIGRATION_RESOLVE=true is required/,
+  );
+
+  assert.equal(
+    assertDatabaseEnvironment({
+      ...productionEnvironment,
+      ALLOW_MIGRATION_RESOLVE: 'true',
+    }, command).operation,
+    'prisma:migrate:resolve',
+  );
+});
+
 test('allows fixtures and admin bootstrap locally but rejects them remotely', () => {
   const localEnvironment = environment('local', 'localhost', 'gr8booksneo_dev');
   const sharedEnvironment = environment(
