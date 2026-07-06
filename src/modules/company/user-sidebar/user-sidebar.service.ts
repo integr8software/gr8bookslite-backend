@@ -419,6 +419,12 @@ export class UserSidebarService {
         );
       }
 
+      if (submitted.parentKey !== defaultItem.parentKey) {
+        throw new BadRequestException(
+          'Sidebar items can only be reordered within their default group.',
+        );
+      }
+
       const isHidden = submitted.item.isHidden === true;
       const sortOrder =
         submitted.siblingIndex !== defaultItem.siblingIndex
@@ -508,13 +514,17 @@ export class UserSidebarService {
   private flattenCustomizationItems(items: CustomizationTreeItem[]) {
     const entries: Array<{
       key: string;
+      parentKey: string | null;
       siblingIndex: number;
       item: CustomizationTreeItem;
     }> = [];
-    const visit = (siblings: CustomizationTreeItem[]) => {
+    const visit = (
+      siblings: CustomizationTreeItem[],
+      parentKey: string | null = null,
+    ) => {
       siblings.forEach((item, siblingIndex) => {
-        entries.push({ key: item.key, siblingIndex, item });
-        visit(item.children ?? []);
+        entries.push({ key: item.key, parentKey, siblingIndex, item });
+        visit(item.children ?? [], item.key);
       });
     };
 
@@ -525,13 +535,17 @@ export class UserSidebarService {
   private flattenSubmittedItems(items: UserSidebarTreeItemDto[]) {
     const entries: Array<{
       key: string;
+      parentKey: string | null;
       siblingIndex: number;
       item: UserSidebarTreeItemDto;
     }> = [];
-    const visit = (siblings: UserSidebarTreeItemDto[]) => {
+    const visit = (
+      siblings: UserSidebarTreeItemDto[],
+      parentKey: string | null = null,
+    ) => {
       siblings.forEach((item, siblingIndex) => {
-        entries.push({ key: item.key, siblingIndex, item });
-        visit(item.children ?? []);
+        entries.push({ key: item.key, parentKey, siblingIndex, item });
+        visit(item.children ?? [], item.key);
       });
     };
 
