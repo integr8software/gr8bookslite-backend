@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDefined,
   IsIn,
   IsInt,
@@ -21,6 +22,9 @@ export class UserSidebarTreeItemDto {
     | 'LINK';
   @IsOptional() @IsInt() @Min(1) moduleId?: number;
   @IsOptional() @IsString() iconName?: string;
+  @IsOptional() @IsBoolean() isHidden?: boolean;
+  @IsOptional() @IsBoolean() isPinned?: boolean;
+  @IsOptional() @IsBoolean() isCollapsed?: boolean;
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UserSidebarTreeItemDto)

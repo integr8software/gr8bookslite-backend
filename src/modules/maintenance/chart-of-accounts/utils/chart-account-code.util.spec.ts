@@ -80,7 +80,7 @@ describe('chart-account-code.util', () => {
     ).toBe('1010302000');
   });
 
-  it('generates specific accounts under any non-specific parent', () => {
+  it('generates specific account codes under sub accounts', () => {
     expect(
       generateNextAccountCodeFromSiblings({
         parentCode: '1010300000',
@@ -95,6 +95,45 @@ describe('chart-account-code.util', () => {
       assertCanCreateAccountLevel(
         ChartAccountLevel.SUB1,
         ChartAccountLevel.SUB3,
+      ),
+    ).toThrow(BadRequestException);
+  });
+
+  it('rejects specific accounts directly under major accounts', () => {
+    expect(() =>
+      assertCanCreateAccountLevel(
+        ChartAccountLevel.MAJOR,
+        ChartAccountLevel.SPECIFIC,
+      ),
+    ).toThrow(BadRequestException);
+  });
+
+  it('allows specific accounts under sub account 1, 2, or 3', () => {
+    expect(() =>
+      assertCanCreateAccountLevel(
+        ChartAccountLevel.SUB1,
+        ChartAccountLevel.SPECIFIC,
+      ),
+    ).not.toThrow();
+    expect(() =>
+      assertCanCreateAccountLevel(
+        ChartAccountLevel.SUB2,
+        ChartAccountLevel.SPECIFIC,
+      ),
+    ).not.toThrow();
+    expect(() =>
+      assertCanCreateAccountLevel(
+        ChartAccountLevel.SUB3,
+        ChartAccountLevel.SPECIFIC,
+      ),
+    ).not.toThrow();
+  });
+
+  it('rejects child accounts under specific accounts', () => {
+    expect(() =>
+      assertCanCreateAccountLevel(
+        ChartAccountLevel.SPECIFIC,
+        ChartAccountLevel.SUB1,
       ),
     ).toThrow(BadRequestException);
   });

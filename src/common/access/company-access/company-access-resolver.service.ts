@@ -158,25 +158,10 @@ export class CompanyAccessResolver {
                 id: 'asc',
               },
             },
-            moduleSidebar: {
+            sidebarPreferences: {
               where: {
                 userId,
               },
-              include: {
-                module: {
-                  include: {
-                    permissions: {
-                      where: {
-                        isActive: true,
-                      },
-                      orderBy: {
-                        id: 'asc',
-                      },
-                    },
-                  },
-                },
-              },
-              orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
             },
           },
         },

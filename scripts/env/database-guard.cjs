@@ -18,7 +18,8 @@ function classifyOperation(commandParts) {
   if (command === 'ts-node') {
     if (
       firstArgument?.endsWith('verifyMigrationHistory.ts') ||
-      firstArgument?.endsWith('verifyPermissionArchitecture.ts')
+      firstArgument?.endsWith('verifyPermissionArchitecture.ts') ||
+      firstArgument?.endsWith('audit-legacy-saas-access.ts')
     ) {
       return 'verify';
     }
@@ -31,8 +32,12 @@ function classifyOperation(commandParts) {
       return 'provision:platform';
     }
 
-    if (firstArgument?.endsWith('materialize-user-sidebars.ts')) {
-      return 'materialize:user-sidebars';
+    if (firstArgument?.endsWith('backfill-legacy-saas-access.ts')) {
+      return 'backfill:legacy-saas-access';
+    }
+
+    if (firstArgument?.endsWith('repair-legacy-company-subscriptions.ts')) {
+      return 'repair:legacy-company-subscriptions';
     }
 
     if (firstArgument?.endsWith('seed-local-fixtures.ts')) {

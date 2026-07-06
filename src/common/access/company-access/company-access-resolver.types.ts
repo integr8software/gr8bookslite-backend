@@ -71,22 +71,10 @@ export type MembershipAccessRecord = Prisma.MembershipGetPayload<{
             id: 'asc';
           };
         };
-        moduleSidebar: {
-          include: {
-            module: {
-              include: {
-                permissions: {
-                  where: {
-                    isActive: true;
-                  };
-                  orderBy: {
-                    id: 'asc';
-                  };
-                };
-              };
-            };
+        sidebarPreferences: {
+          where: {
+            userId: number;
           };
-          orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }];
         };
       };
     };

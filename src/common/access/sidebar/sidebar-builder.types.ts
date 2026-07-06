@@ -20,18 +20,15 @@ export type SidebarEntitledModule = {
   module: SidebarEnabledModule;
 };
 
-export type SidebarUserModuleRow = {
-  id: number;
+export type SidebarPreferenceRow = {
   branchUnitId: number;
-  parentId: number | null;
-  moduleId: number | null;
-  itemType: 'SECTION' | 'CONTAINER' | 'LINK';
-  key: string;
-  label: string;
-  description: string | null;
-  iconName: string | null;
-  sortOrder: number;
-  module: (SidebarEnabledModule & { isActive: boolean }) | null;
+  itemKey: string;
+  parentItemKey: string | null;
+  hasParentOverride: boolean;
+  isHidden: boolean;
+  sortOrder: number | null;
+  isPinned: boolean;
+  isCollapsed: boolean;
 };
 
 export type SidebarSystemTemplateRow = {
@@ -52,7 +49,7 @@ export type SidebarMembershipSource = {
   accessScope: AccessScopeLevel;
   company: {
     units: Array<{ id: number }>;
-    moduleSidebar: SidebarUserModuleRow[];
+    sidebarPreferences: SidebarPreferenceRow[];
     subscriptions: Array<{
       plan: {
         systems: Array<{

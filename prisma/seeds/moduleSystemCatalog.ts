@@ -140,7 +140,7 @@ export const AccountingSidebarTemplate = [
   },
 ] as const satisfies readonly ModuleSystemSidebarSeedItem[];
 
-export const AccountingTradingSidebarTemplate = [
+export const AccountingAndInventorySidebarTemplate = [
   AccountingSidebarTemplate[0],
   AccountingSidebarTemplate[1],
   link('party-management', 'PM', 'users'),
@@ -237,12 +237,12 @@ export const ModuleSystemCatalog = [
     sidebar: AccountingSidebarTemplate,
   },
   {
-    code: 'ACCOUNTING_TRADING',
-    name: 'Accounting Trading',
+    code: 'ACCOUNTING_AND_INVENTORY',
+    name: 'Accounting and Inventory',
     description: 'Accounting with trading, inventory, sales, and purchasing workflows.',
     sortOrder: 20,
     moduleCodes: ModuleCatalog.map((module) => module.code),
-    sidebar: AccountingTradingSidebarTemplate,
+    sidebar: AccountingAndInventorySidebarTemplate,
   },
 ] as const;
 

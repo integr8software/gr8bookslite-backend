@@ -6,10 +6,7 @@ const AccountCodePattern = /^\d{10}$/;
 
 const ChildLevelsByParentLevel: Record<ChartAccountLevel, ChartAccountLevel[]> =
   {
-    [ChartAccountLevel.MAJOR]: [
-      ChartAccountLevel.SUB1,
-      ChartAccountLevel.SPECIFIC,
-    ],
+    [ChartAccountLevel.MAJOR]: [ChartAccountLevel.SUB1],
     [ChartAccountLevel.SUB1]: [
       ChartAccountLevel.SUB2,
       ChartAccountLevel.SPECIFIC,
@@ -21,6 +18,14 @@ const ChildLevelsByParentLevel: Record<ChartAccountLevel, ChartAccountLevel[]> =
     [ChartAccountLevel.SUB3]: [ChartAccountLevel.SPECIFIC],
     [ChartAccountLevel.SPECIFIC]: [],
   };
+
+const AccountLevelLabels: Record<ChartAccountLevel, string> = {
+  [ChartAccountLevel.MAJOR]: 'Major Account',
+  [ChartAccountLevel.SUB1]: 'Sub Account 1',
+  [ChartAccountLevel.SUB2]: 'Sub Account 2',
+  [ChartAccountLevel.SUB3]: 'Sub Account 3',
+  [ChartAccountLevel.SPECIFIC]: 'Specific Account',
+};
 
 export function parseChartAccountCode(code: string): ParsedChartAccountCode {
   if (!AccountCodePattern.test(code)) {
@@ -52,7 +57,9 @@ export function assertCanCreateAccountLevel(
 ) {
   if (!parentLevel) {
     if (accountLevel !== ChartAccountLevel.MAJOR) {
-      throw new BadRequestException('Only major accounts can omit a parent.');
+      throw new BadRequestException(
+        'Only Major Account can omit a parent.',
+      );
     }
 
     return;
@@ -60,7 +67,7 @@ export function assertCanCreateAccountLevel(
 
   if (!ChildLevelsByParentLevel[parentLevel].includes(accountLevel)) {
     throw new BadRequestException(
-      `${accountLevel} accounts cannot be created under ${parentLevel} accounts.`,
+      `${AccountLevelLabels[accountLevel]} cannot be created under ${AccountLevelLabels[parentLevel]}.`,
     );
   }
 }

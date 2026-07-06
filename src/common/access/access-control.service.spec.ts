@@ -55,25 +55,17 @@ describe('AccessControlService', () => {
     ).toBe(false);
   });
 
-  it('resolves active company access with enabled modules and user modules', async () => {
+  it('resolves active company access from plan defaults and user preference deltas', async () => {
     const membership = buildMembership({
       planModules: [buildEnabledModule(5, 'TM', 'Term Management')],
-      moduleSidebar: [
+      sidebarPreferences: [
         {
-          id: 200,
           branchUnitId: 10,
-          parentId: null,
-          moduleId: 5,
-          itemType: 'LINK',
-          key: 'custom-term-management',
-          label: 'Term Management',
-          description: null,
-          iconName: 'calendar',
-          sortOrder: 1,
-          module: {
-            ...buildEnabledModule(5, 'TM', 'Term Management').module,
-            isActive: true,
-          },
+          itemKey: 'module-tm',
+          isHidden: false,
+          sortOrder: 0,
+          isPinned: true,
+          isCollapsed: false,
         },
       ],
     });
@@ -82,7 +74,9 @@ describe('AccessControlService', () => {
       membership,
     });
 
-    await expect(service.resolveAuthUser(buildPayload())).resolves.toEqual(
+    const authUser = await service.resolveAuthUser(buildPayload());
+
+    expect(authUser).toEqual(
       expect.objectContaining({
         id: 7,
         companyId: 57,
@@ -91,25 +85,25 @@ describe('AccessControlService', () => {
         membershipRole: MembershipRole.ADMIN,
         membershipStatus: MembershipStatus.ACTIVE,
         enabledModules: ['TM'],
-        userModules: expect.objectContaining({
-          items: [
-            expect.objectContaining({
-              key: 'custom-term-management',
-              moduleCode: 'TM',
-            }),
-          ],
-          byBranch: [
-            expect.objectContaining({
-              branchUnitId: 10,
-              items: [
-                expect.objectContaining({
-                  key: 'custom-term-management',
-                  moduleCode: 'TM',
-                }),
-              ],
-            }),
-          ],
-        }),
+      }),
+    );
+    expect(authUser.userModules.items[0]).toEqual(
+      expect.objectContaining({
+        key: 'module-tm',
+        moduleCode: 'TM',
+        isPinned: true,
+      }),
+    );
+    expect(authUser.userModules.byBranch[0]).toEqual(
+      expect.objectContaining({
+        branchUnitId: 10,
+      }),
+    );
+    expect(authUser.userModules.byBranch[0].items[0]).toEqual(
+      expect.objectContaining({
+        key: 'module-tm',
+        moduleCode: 'TM',
+        isPinned: true,
       }),
     );
   });
@@ -118,7 +112,6 @@ describe('AccessControlService', () => {
     const service = createAccessControlService({
       user: buildResolvedUser(),
       membership: buildMembership({
-        moduleSidebar: [],
         subscriptions: [
           {
             plan: {
@@ -176,6 +169,83 @@ describe('AccessControlService', () => {
       }),
     ]);
   });
+
+  it('resolves a legacy company admin sidebar from SaaS plan entitlements when custom rows are empty', async () => {
+    const service = createAccessControlService({
+      user: buildResolvedUser(),
+      membership: buildMembership({
+        subscriptions: [
+          {
+            plan: {
+              systems: [
+                {
+                  system: {
+                    code: 'ACCOUNTING_TRADING',
+                    modules: [
+                      buildEnabledModule(5, 'TM', 'Term Management'),
+                      buildEnabledModule(6, 'COA', 'Chart of Accounts'),
+                    ],
+                    sidebarItems: [
+                      {
+                        id: 100,
+                        parentId: null,
+                        moduleId: null,
+                        itemType: 'SECTION',
+                        key: 'financial-maintenance',
+                        label: 'Financial Maintenance',
+                        description: null,
+                        iconName: 'accounting',
+                        sortOrder: 0,
+                      },
+                      {
+                        id: 101,
+                        parentId: 100,
+                        moduleId: 6,
+                        itemType: 'LINK',
+                        key: 'financial-maintenance-charts-of-accounts',
+                        label: 'Chart of Accounts',
+                        description: null,
+                        iconName: 'scale',
+                        sortOrder: 0,
+                      },
+                      {
+                        id: 102,
+                        parentId: 100,
+                        moduleId: 5,
+                        itemType: 'LINK',
+                        key: 'financial-maintenance-term-management',
+                        label: 'Term Management',
+                        description: null,
+                        iconName: 'calendar',
+                        sortOrder: 1,
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+
+    const authUser = await service.resolveAuthUser(buildPayload());
+
+    expect(authUser.enabledModules).toEqual(['TM', 'COA']);
+    expect(authUser.userModules.items).toHaveLength(1);
+    expect(authUser.userModules.items[0]).toEqual(
+      expect.objectContaining({
+        key: 'accounting_trading-financial-maintenance',
+      }),
+    );
+    expect(authUser.userModules.items[0].children).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ moduleCode: 'TM' }),
+        expect.objectContaining({ moduleCode: 'COA' }),
+      ]),
+    );
+    expect(authUser.userModules.byBranch[0].items).not.toEqual([]);
+  });
 });
 
 function createAccessControlService({
@@ -218,11 +288,11 @@ function buildResolvedUser() {
 
 function buildMembership({
   planModules = [],
-  moduleSidebar = [],
+  sidebarPreferences = [],
   subscriptions,
 }: {
   planModules?: Array<ReturnType<typeof buildEnabledModule>>;
-  moduleSidebar?: unknown[];
+  sidebarPreferences?: unknown[];
   subscriptions?: unknown[];
 }) {
   const planSubscriptions =
@@ -256,7 +326,7 @@ function buildMembership({
     permissionOverrides: [],
     company: {
       units: [{ id: 10 }],
-      moduleSidebar,
+      sidebarPreferences,
       subscriptions: planSubscriptions,
     },
   };

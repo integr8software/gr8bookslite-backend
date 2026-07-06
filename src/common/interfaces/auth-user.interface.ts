@@ -19,6 +19,8 @@ export interface AuthUserModuleItem {
   permissionCode: string | null;
   requiredActions: string[];
   category: unknown;
+  isPinned?: boolean;
+  isCollapsed?: boolean;
   children: AuthUserModuleItem[];
 }
 

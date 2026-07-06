@@ -6,11 +6,8 @@ export type PermissionArchitectureMetrics = {
   modules: number;
   permissions: number;
   moduleSystemSidebarTemplates: number;
-  sidebarItems: number;
-  sidebarLinks: number;
   companies: number;
   activeMemberships: number;
-  membershipsWithoutSidebar: number;
   orphanPermissions: number;
   legacyCatalogTablesPresent: boolean;
 };
@@ -24,7 +21,6 @@ type PrismaLike = Pick<
   | 'moduleSystemSidebar'
   | 'permission'
   | 'platformVersion'
-  | 'platformModuleSidebar'
 >;
 
 export async function collectPermissionArchitectureMetrics(
@@ -34,11 +30,8 @@ export async function collectPermissionArchitectureMetrics(
     modules,
     permissions,
     moduleSystemSidebarTemplates,
-    sidebarItems,
-    sidebarLinks,
     companies,
     activeMemberships,
-    membershipsWithoutSidebar,
     orphanPermissions,
     legacyTables,
     platformVersion,
@@ -46,16 +39,8 @@ export async function collectPermissionArchitectureMetrics(
     prisma.module.count(),
     prisma.permission.count(),
     prisma.moduleSystemSidebar.count(),
-    prisma.platformModuleSidebar.count(),
-    prisma.platformModuleSidebar.count({ where: { itemType: 'LINK' } }),
     prisma.company.count(),
     prisma.membership.count({ where: { status: 'ACTIVE' } }),
-    prisma.membership.count({
-      where: {
-        status: 'ACTIVE',
-        user: { moduleSidebar: { none: {} } },
-      },
-    }),
     prisma.$queryRaw<Array<{ count: bigint }>>`
       SELECT count(*)::bigint AS count
       FROM permissions p
@@ -84,11 +69,8 @@ export async function collectPermissionArchitectureMetrics(
     modules,
     permissions,
     moduleSystemSidebarTemplates,
-    sidebarItems,
-    sidebarLinks,
     companies,
     activeMemberships,
-    membershipsWithoutSidebar,
     orphanPermissions: Number(orphanPermissions[0]?.count ?? 0),
     legacyCatalogTablesPresent: Boolean(
       legacyTables[0]?.platform_modules || legacyTables[0]?.platform_submodules,

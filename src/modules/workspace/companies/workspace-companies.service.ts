@@ -23,7 +23,6 @@ import { BillingService } from '../../billing/billing.service';
 import { seedDefaultTermsForCompany } from '../../maintenance/terms/default-terms';
 import { seedDefaultChartAccountsForCompany } from '../../maintenance/chart-of-accounts/default-chart-accounts';
 import { seedDefaultBankAccountsForCompany } from '../../maintenance/bank-masterfile/default-bank-accounts';
-import { materializeDefaultUserSidebar } from '../../company/user-sidebar/user-sidebar.defaults';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
@@ -148,7 +147,7 @@ export class WorkspaceCompaniesService {
         },
       });
 
-      const headOffice = await tx.companyUnit.create({
+      await tx.companyUnit.create({
         data: {
           companyId: createdCompany.id,
           type: CompanyUnitType.HEAD_OFFICE,
@@ -188,12 +187,6 @@ export class WorkspaceCompaniesService {
             joinedAt: new Date(),
           },
         });
-        await materializeDefaultUserSidebar(
-          tx,
-          createdCompany.id,
-          headOffice.id,
-          user.id,
-        );
       }
 
       return tx.company.findUniqueOrThrow({
@@ -511,22 +504,6 @@ export class WorkspaceCompaniesService {
         canHoldInventory: true,
       },
     });
-
-    const memberships = await this.prisma.membership.findMany({
-      where: { companyId, status: MembershipStatus.ACTIVE },
-      select: { userId: true },
-    });
-
-    for (const membership of memberships) {
-      await this.prisma.$transaction((tx) =>
-        materializeDefaultUserSidebar(
-          tx,
-          companyId,
-          unit.id,
-          membership.userId,
-        ),
-      );
-    }
 
     await this.auditLogsService.record({
       actorUserId: user.id,

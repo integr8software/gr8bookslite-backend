@@ -16,9 +16,9 @@ const plans = [
     systemCodes: ['ACCOUNTING'],
   },
   {
-    code: 'ACCOUNTING_TRADING',
-    name: 'Accounting Trading',
-    description: 'Accounting trading plan with a 15-day free trial.',
+    code: 'ACCOUNTING_AND_INVENTORY',
+    name: 'Accounting and Inventory',
+    description: 'Accounting and inventory plan with a 15-day free trial.',
     currency: 'PHP',
     monthlyPriceInCents: 49900,
     yearlyPriceInCents: 499000,
@@ -27,7 +27,7 @@ const plans = [
     scope: 'ONBOARDING',
     status: 'ACTIVE',
     trialDays: 15,
-    systemCodes: ['ACCOUNTING_TRADING'],
+    systemCodes: ['ACCOUNTING_AND_INVENTORY'],
   },
   {
     code: 'ADDITIONAL_COMPANY_ACCOUNTING',
@@ -44,10 +44,10 @@ const plans = [
     systemCodes: ['ACCOUNTING'],
   },
   {
-    code: 'ADDITIONAL_COMPANY_ACCOUNTING_TRADING',
-    name: 'Accounting Trading',
+    code: 'ADDITIONAL_COMPANY_ACCOUNTING_AND_INVENTORY',
+    name: 'Accounting and Inventory',
     description:
-      'Additional company accounting trading plan without a free trial.',
+      'Additional company accounting and inventory plan without a free trial.',
     currency: 'PHP',
     monthlyPriceInCents: 49900,
     yearlyPriceInCents: 499000,
@@ -56,7 +56,7 @@ const plans = [
     scope: 'ADDITIONAL_COMPANY',
     status: 'ACTIVE',
     trialDays: 0,
-    systemCodes: ['ACCOUNTING_TRADING'],
+    systemCodes: ['ACCOUNTING_AND_INVENTORY'],
   },
 ] as const;
 
@@ -92,8 +92,8 @@ export async function seedSubscriptionPlans() {
       code: {
         in: [
           'ADDITIONAL_COMPANY',
-          'ACCOUNTING_INVENTORY',
-          'ADDITIONAL_COMPANY_ACCOUNTING_INVENTORY',
+          'ACCOUNTING_AND_INVENTORY',
+          'ADDITIONAL_COMPANY_ACCOUNTING_AND_INVENTORY',
         ],
       },
     },

@@ -4,7 +4,6 @@ import { PrismaService } from '../../../prisma/prisma.service';
 const BankMasterfileModuleCode = 'BM';
 const CashInBankParentRole = 'CASH_IN_BANK_PARENT';
 const CashInBankSpecificPrefix = 'Cash in Bank - ';
-const DefaultCurrencyCode = 'PHP';
 
 export async function seedDefaultBankAccountsForCompany(
   tx: Prisma.TransactionClient | PrismaService,
@@ -34,8 +33,6 @@ export async function seedDefaultBankAccountsForCompany(
       companyId,
       parentAccountId: cashInBankParent.chartAccountId,
       accountLevel: ChartAccountLevel.SPECIFIC,
-      status: ChartAccountStatus.ACTIVE,
-      deletedAt: null,
       accountTitle: {
         startsWith: CashInBankSpecificPrefix,
         mode: 'insensitive',
@@ -52,10 +49,36 @@ export async function seedDefaultBankAccountsForCompany(
         companyId,
         coaId: account.id,
       },
-      select: { id: true },
+      select: {
+        id: true,
+        accountName: true,
+        accountNumber: true,
+        status: true,
+      },
     });
 
     if (existingBank) {
+      if (
+        existingBank.status === ChartAccountStatus.INACTIVE ||
+        !existingBank.accountNumber ||
+        !existingBank.accountName ||
+        (existingBank.accountNumber === account.accountCode &&
+          existingBank.accountName === account.accountTitle)
+      ) {
+        await tx.chartAccount.update({
+          where: { id: account.id },
+          data: { status: ChartAccountStatus.INACTIVE, deletedAt: new Date() },
+        });
+        await tx.bankAccount.update({
+          where: { id: existingBank.id },
+          data: {
+            accountName: '',
+            accountNumber: '',
+            status: ChartAccountStatus.INACTIVE,
+          },
+        });
+      }
+
       continue;
     }
 
@@ -67,17 +90,22 @@ export async function seedDefaultBankAccountsForCompany(
       continue;
     }
 
+    await tx.chartAccount.update({
+      where: { id: account.id },
+      data: { status: ChartAccountStatus.INACTIVE, deletedAt: new Date() },
+    });
+
     await tx.bankAccount.create({
       data: {
         companyId,
         coaId: account.id,
         bankName,
-        accountNumber: account.accountCode,
-        accountName: account.accountTitle,
+        accountNumber: '',
+        accountName: '',
         accountType: 'Checking',
-        currencyCode: account.currencyCode ?? DefaultCurrencyCode,
+        currencyCode: account.currencyCode,
         isDefault: false,
-        status: account.status,
+        status: ChartAccountStatus.INACTIVE,
       },
     });
     createdCount += 1;

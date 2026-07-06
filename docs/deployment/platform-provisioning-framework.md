@@ -120,12 +120,9 @@ npm run db:provision:current
 npm run db:verify-permissions:current
 ```
 
-If only sidebars are missing:
-
-```cmd
-npm run db:materialize-sidebars:current
-npm run db:verify-permissions:current
-```
+If sidebars are missing, repair the active company subscription plan, module
+system module links, or module-system sidebar templates. Runtime sidebars are no
+longer materialized into per-user rows.
 
 Do not run full `prisma db seed` outside local development.
 

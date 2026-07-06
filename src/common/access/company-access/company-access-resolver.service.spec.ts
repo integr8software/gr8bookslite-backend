@@ -22,7 +22,6 @@ type TestCompany = {
     failureCode?: string | null;
   }>;
   units: unknown[];
-  moduleSidebar: unknown[];
 };
 
 describe('CompanyAccessResolver', () => {
@@ -223,6 +222,5 @@ function buildCompany(): TestCompany {
     status: CompanyStatus.ACTIVE,
     subscriptions: [],
     units: [],
-    moduleSidebar: [],
   };
 }
