@@ -67,10 +67,13 @@ export class ChartAccountResponseDto {
   accountGroup!: string | null;
 
   @ApiProperty({ nullable: true })
+  statementSection!: string | null;
+
+  @ApiProperty({ nullable: true })
   reportAlias!: string | null;
 
   @ApiProperty({ nullable: true })
-  class!: string | null;
+  description!: string | null;
 
   @ApiProperty()
   isPostingAccount!: boolean;

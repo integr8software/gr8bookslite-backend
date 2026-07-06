@@ -639,7 +639,9 @@ export class WorkspaceUsersService {
 
   private resolveFrontendUrl() {
     const appEnvironment = this.configService.get<string>('APP_ENV', 'local');
-    const configuredUrl = this.configService.get<string>('FRONTEND_URL')?.trim();
+    const configuredUrl = this.configService
+      .get<string>('FRONTEND_URL')
+      ?.trim();
     const corsOrigin = this.getFirstCorsAllowedOrigin();
 
     if (configuredUrl) {
