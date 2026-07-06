@@ -23,6 +23,8 @@ export type SidebarEntitledModule = {
 export type SidebarPreferenceRow = {
   branchUnitId: number;
   itemKey: string;
+  parentItemKey: string | null;
+  hasParentOverride: boolean;
   isHidden: boolean;
   sortOrder: number | null;
   isPinned: boolean;

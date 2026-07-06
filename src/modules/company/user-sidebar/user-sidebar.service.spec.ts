@@ -133,6 +133,7 @@ describe('UserSidebarService tree validation', () => {
         }),
         expect.objectContaining({
           itemKey: 'accounting-chart-of-accounts',
+          hasParentOverride: false,
           sortOrder: 0,
         }),
         expect.objectContaining({
@@ -143,8 +144,8 @@ describe('UserSidebarService tree validation', () => {
     );
   });
 
-  it('rejects moving plan sidebar items into a different group', () => {
-    expect(() =>
+  it('stores parent override deltas when moving plan sidebar items into a different group', () => {
+    const preferences =
       (
         service as unknown as {
           derivePreferenceDeltas: (
@@ -181,7 +182,30 @@ describe('UserSidebarService tree validation', () => {
             children: [link('module-a', 1)],
           },
         ],
-      ),
+      );
+
+    expect(preferences).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          itemKey: 'module-a',
+          parentItemKey: 'section-b',
+          hasParentOverride: true,
+          sortOrder: 0,
+        }),
+      ]),
+    );
+  });
+
+  it('rejects changing the module behind a default sidebar item', () => {
+    expect(() =>
+      (
+        service as unknown as {
+          derivePreferenceDeltas: (
+            defaultItems: unknown[],
+            submittedItems: unknown[],
+          ) => unknown[];
+        }
+      ).derivePreferenceDeltas([link('module-a', 1)], [link('module-a', 2)]),
     ).toThrow(BadRequestException);
   });
 });

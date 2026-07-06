@@ -22,7 +22,7 @@ type UserSidebarScope = {
   userId: number;
 };
 
-type CustomizationTreeItem = UserSidebarTreeItemDto & {
+type CustomizationTreeItem = Omit<UserSidebarTreeItemDto, 'children'> & {
   id: number;
   moduleCode?: string | null;
   permissionCode?: string | null;
@@ -345,49 +345,72 @@ export class UserSidebarService {
     items: CustomizationTreeItem[],
     preferences: Array<{
       itemKey: string;
+      parentItemKey: string | null;
+      hasParentOverride: boolean;
       isHidden: boolean;
       sortOrder: number | null;
       isPinned: boolean;
       isCollapsed: boolean;
     }>,
   ): CustomizationTreeItem[] {
+    if (preferences.length === 0) {
+      return items;
+    }
+
     const preferencesByKey = new Map(
       preferences.map((preference) => [preference.itemKey, preference]),
     );
-    const visit = (
-      siblings: CustomizationTreeItem[],
-    ): CustomizationTreeItem[] =>
-      siblings
-        .flatMap((item): CustomizationTreeItem[] => {
-          const preference = preferencesByKey.get(item.key);
+    const defaultEntries = this.flattenCustomizationItems(items);
+    const entriesByKey = new Map(
+      defaultEntries.map((entry) => [entry.key, entry]),
+    );
+    const visibleItemsByKey = new Map<string, CustomizationTreeItem>();
 
-          if (preference?.isHidden) {
-            return [];
-          }
+    for (const entry of defaultEntries) {
+      const preference = preferencesByKey.get(entry.key);
 
-          const children = visit(item.children ?? []);
+      if (preference?.isHidden) {
+        continue;
+      }
 
-          if (item.itemType !== 'LINK' && children.length === 0) {
-            return [];
-          }
+      visibleItemsByKey.set(entry.key, {
+        ...entry.item,
+        sortOrder: preference?.sortOrder ?? entry.item.sortOrder,
+        isPinned: preference?.isPinned ?? false,
+        isCollapsed: preference?.isCollapsed ?? false,
+        children: [],
+      });
+    }
 
-          return [
-            {
-              ...item,
-              sortOrder: preference?.sortOrder ?? item.sortOrder,
-              isPinned: preference?.isPinned ?? false,
-              isCollapsed: preference?.isCollapsed ?? false,
-              children,
-            },
-          ];
-        })
-        .sort(
-          (left, right) =>
-            left.sortOrder - right.sortOrder ||
-            left.label.localeCompare(right.label),
-        );
+    const roots: CustomizationTreeItem[] = [];
 
-    return visit(items);
+    for (const entry of defaultEntries) {
+      const item = visibleItemsByKey.get(entry.key);
+
+      if (!item) {
+        continue;
+      }
+
+      const parentKey = this.resolvePreferenceParentKey({
+        entry,
+        preference: preferencesByKey.get(entry.key),
+        entriesByKey,
+        visibleItemsByKey,
+      });
+
+      if (!parentKey) {
+        roots.push(item);
+        continue;
+      }
+
+      const parent = visibleItemsByKey.get(parentKey);
+
+      if (parent && parent.itemType !== 'LINK') {
+        parent.children.push(item);
+      }
+    }
+
+    return this.pruneAndSortCustomizationItems(roots);
   }
 
   private derivePreferenceDeltas(
@@ -404,6 +427,8 @@ export class UserSidebarService {
     );
     const preferences: Array<{
       itemKey: string;
+      parentItemKey: string | null;
+      hasParentOverride: boolean;
       isHidden: boolean;
       sortOrder: number | null;
       isPinned: boolean;
@@ -419,23 +444,51 @@ export class UserSidebarService {
         );
       }
 
-      if (submitted.parentKey !== defaultItem.parentKey) {
+      this.validateSubmittedItemMatchesDefault(submitted, defaultItem);
+
+      if (submitted.parentKey != null) {
+        const submittedParent = defaultByKey.get(submitted.parentKey);
+
+        if (!submittedParent || submittedParent.item.itemType === 'LINK') {
+          throw new BadRequestException(
+            `Invalid sidebar parent for item: ${submitted.key}`,
+          );
+        }
+      }
+
+      if (
+        submitted.parentKey != null &&
+        this.isDescendantKey(
+          submitted.parentKey,
+          submitted.key,
+          defaultByKey,
+        )
+      ) {
         throw new BadRequestException(
-          'Sidebar items can only be reordered within their default group.',
+          `Sidebar item cannot be moved under its own descendant: ${submitted.key}`,
         );
       }
 
       const isHidden = submitted.item.isHidden === true;
+      const hasParentOverride = submitted.parentKey !== defaultItem.parentKey;
       const sortOrder =
-        submitted.siblingIndex !== defaultItem.siblingIndex
+        hasParentOverride || submitted.siblingIndex !== defaultItem.siblingIndex
           ? submitted.siblingIndex
           : null;
       const isPinned = submitted.item.isPinned === true;
       const isCollapsed = submitted.item.isCollapsed === true;
 
-      if (isHidden || sortOrder != null || isPinned || isCollapsed) {
+      if (
+        isHidden ||
+        hasParentOverride ||
+        sortOrder != null ||
+        isPinned ||
+        isCollapsed
+      ) {
         preferences.push({
           itemKey: submitted.key,
+          parentItemKey: hasParentOverride ? submitted.parentKey : null,
+          hasParentOverride,
           isHidden,
           sortOrder,
           isPinned,
@@ -448,6 +501,8 @@ export class UserSidebarService {
       if (!submittedByKey.has(defaultItem.key)) {
         preferences.push({
           itemKey: defaultItem.key,
+          parentItemKey: null,
+          hasParentOverride: false,
           isHidden: true,
           sortOrder: null,
           isPinned: false,
@@ -504,6 +559,105 @@ export class UserSidebarService {
     walk(items, 1);
   }
 
+  private validateSubmittedItemMatchesDefault(
+    submitted: {
+      key: string;
+      item: UserSidebarTreeItemDto;
+    },
+    defaultItem: {
+      key: string;
+      item: CustomizationTreeItem;
+    },
+  ) {
+    if (submitted.item.itemType !== defaultItem.item.itemType) {
+      throw new BadRequestException(
+        `Sidebar item type cannot be changed: ${submitted.key}`,
+      );
+    }
+
+    if (submitted.item.moduleId !== defaultItem.item.moduleId) {
+      throw new BadRequestException(
+        `Sidebar item module cannot be changed: ${submitted.key}`,
+      );
+    }
+  }
+
+  private resolvePreferenceParentKey({
+    entry,
+    preference,
+    entriesByKey,
+    visibleItemsByKey,
+  }: {
+    entry: {
+      key: string;
+      parentKey: string | null;
+      depth: number;
+      subtreeDepth: number;
+      item: CustomizationTreeItem;
+    };
+    preference:
+      | {
+          parentItemKey: string | null;
+          hasParentOverride: boolean;
+        }
+      | undefined;
+    entriesByKey: Map<
+      string,
+      {
+        key: string;
+        parentKey: string | null;
+        depth: number;
+        subtreeDepth: number;
+        item: CustomizationTreeItem;
+      }
+    >;
+    visibleItemsByKey: Map<string, CustomizationTreeItem>;
+  }) {
+    if (!preference?.hasParentOverride) {
+      return entry.parentKey;
+    }
+
+    const requestedParentKey = preference.parentItemKey;
+
+    if (requestedParentKey == null) {
+      return null;
+    }
+
+    const requestedParent = entriesByKey.get(requestedParentKey);
+
+    if (
+      !requestedParent ||
+      requestedParent.item.itemType === 'LINK' ||
+      !visibleItemsByKey.has(requestedParentKey) ||
+      this.isDescendantKey(requestedParentKey, entry.key, entriesByKey) ||
+      requestedParent.depth + entry.subtreeDepth > 3
+    ) {
+      return entry.parentKey;
+    }
+
+    return requestedParentKey;
+  }
+
+  private pruneAndSortCustomizationItems(
+    items: CustomizationTreeItem[],
+  ): CustomizationTreeItem[] {
+    return items
+      .flatMap((item): CustomizationTreeItem[] => {
+        const children = this.pruneAndSortCustomizationItems(item.children);
+
+        if (item.itemType !== 'LINK' && children.length === 0) {
+          return [];
+        }
+
+        return [{ ...item, children }];
+      })
+      .sort(
+        (left, right) =>
+          left.sortOrder - right.sortOrder ||
+          left.label.localeCompare(right.label),
+      );
+  }
+
   private flatten(items: UserSidebarTreeItemDto[]): UserSidebarTreeItemDto[] {
     return items.flatMap((item) => [
       item,
@@ -516,15 +670,25 @@ export class UserSidebarService {
       key: string;
       parentKey: string | null;
       siblingIndex: number;
+      depth: number;
+      subtreeDepth: number;
       item: CustomizationTreeItem;
     }> = [];
     const visit = (
       siblings: CustomizationTreeItem[],
       parentKey: string | null = null,
+      depth = 1,
     ) => {
       siblings.forEach((item, siblingIndex) => {
-        entries.push({ key: item.key, parentKey, siblingIndex, item });
-        visit(item.children ?? [], item.key);
+        entries.push({
+          key: item.key,
+          parentKey,
+          siblingIndex,
+          depth,
+          subtreeDepth: this.getCustomizationSubtreeDepth(item),
+          item,
+        });
+        visit(item.children ?? [], item.key, depth + 1);
       });
     };
 
@@ -537,20 +701,51 @@ export class UserSidebarService {
       key: string;
       parentKey: string | null;
       siblingIndex: number;
+      depth: number;
       item: UserSidebarTreeItemDto;
     }> = [];
     const visit = (
       siblings: UserSidebarTreeItemDto[],
       parentKey: string | null = null,
+      depth = 1,
     ) => {
       siblings.forEach((item, siblingIndex) => {
-        entries.push({ key: item.key, parentKey, siblingIndex, item });
-        visit(item.children ?? [], item.key);
+        entries.push({ key: item.key, parentKey, siblingIndex, depth, item });
+        visit(item.children ?? [], item.key, depth + 1);
       });
     };
 
     visit(items);
     return entries;
+  }
+
+  private getCustomizationSubtreeDepth(item: CustomizationTreeItem): number {
+    return item.children.length
+      ? 1 +
+          Math.max(
+            ...item.children.map((child) =>
+              this.getCustomizationSubtreeDepth(child),
+            ),
+          )
+      : 1;
+  }
+
+  private isDescendantKey(
+    candidateKey: string,
+    ancestorKey: string,
+    entriesByKey: Map<string, { parentKey: string | null }>,
+  ) {
+    let current = entriesByKey.get(candidateKey)?.parentKey ?? null;
+
+    while (current) {
+      if (current === ancestorKey) {
+        return true;
+      }
+
+      current = entriesByKey.get(current)?.parentKey ?? null;
+    }
+
+    return false;
   }
 
   private getPreferenceVersion(preferences: Array<{ id: number }>) {

@@ -400,6 +400,8 @@ model UserSidebarPreference {
   branchUnitId Int         @map("branch_unit_id")
   userId       Int         @map("user_id")
   itemKey      String      @map("item_key") @db.VarChar(160)
+  parentItemKey String?    @map("parent_item_key") @db.VarChar(160)
+  hasParentOverride Boolean @default(false) @map("has_parent_override")
   isHidden     Boolean     @default(false) @map("is_hidden")
   sortOrder    Int?        @map("sort_order")
   isPinned     Boolean     @default(false) @map("is_pinned")

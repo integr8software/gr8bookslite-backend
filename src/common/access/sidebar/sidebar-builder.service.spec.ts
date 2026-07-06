@@ -165,6 +165,8 @@ describe('SidebarBuilder', () => {
           {
             branchUnitId: 10,
             itemKey: 'accounting-financial-maintenance',
+            parentItemKey: null,
+            hasParentOverride: false,
             isHidden: false,
             sortOrder: null,
             isPinned: true,
@@ -173,6 +175,8 @@ describe('SidebarBuilder', () => {
           {
             branchUnitId: 10,
             itemKey: 'accounting-financial-maintenance-charts-of-accounts',
+            parentItemKey: null,
+            hasParentOverride: false,
             isHidden: true,
             sortOrder: null,
             isPinned: false,
@@ -196,6 +200,104 @@ describe('SidebarBuilder', () => {
         ],
       }),
     );
+  });
+
+  it('moves sidebar items across sections using parent preference deltas', () => {
+    const builder = createSidebarBuilder();
+    const modules = builder.buildUserModules(
+      buildMembership({
+        subscriptions: [
+          {
+            plan: {
+              systems: [
+                {
+                  system: {
+                    code: 'ACCOUNTING',
+                    modules: [
+                      buildEnabledModule(5, 'TM', 'Term Management'),
+                      buildEnabledModule(6, 'COA', 'Chart of Accounts'),
+                    ],
+                    sidebarItems: [
+                      {
+                        id: 100,
+                        parentId: null,
+                        moduleId: null,
+                        itemType: 'SECTION',
+                        key: 'maintenance',
+                        label: 'Maintenance',
+                        description: null,
+                        iconName: null,
+                        sortOrder: 0,
+                      },
+                      {
+                        id: 101,
+                        parentId: 100,
+                        moduleId: 6,
+                        itemType: 'LINK',
+                        key: 'chart-of-accounts',
+                        label: 'Chart of Accounts',
+                        description: null,
+                        iconName: null,
+                        sortOrder: 0,
+                      },
+                      {
+                        id: 200,
+                        parentId: null,
+                        moduleId: null,
+                        itemType: 'SECTION',
+                        key: 'general-journal',
+                        label: 'General Journal',
+                        description: null,
+                        iconName: null,
+                        sortOrder: 1,
+                      },
+                      {
+                        id: 201,
+                        parentId: 200,
+                        moduleId: 5,
+                        itemType: 'LINK',
+                        key: 'term-management',
+                        label: 'Term Management',
+                        description: null,
+                        iconName: null,
+                        sortOrder: 0,
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+        sidebarPreferences: [
+          {
+            branchUnitId: 10,
+            itemKey: 'accounting-chart-of-accounts',
+            parentItemKey: 'accounting-general-journal',
+            hasParentOverride: true,
+            isHidden: false,
+            sortOrder: 1,
+            isPinned: false,
+            isCollapsed: false,
+          },
+        ],
+      }),
+      ['TM:view', 'COA:view'],
+    );
+
+    expect(modules.byBranch[0].items).toEqual([
+      expect.objectContaining({
+        key: 'accounting-general-journal',
+        children: [
+          expect.objectContaining({
+            key: 'accounting-term-management',
+          }),
+          expect.objectContaining({
+            key: 'accounting-chart-of-accounts',
+          }),
+        ],
+      }),
+    ]);
   });
 });
 
