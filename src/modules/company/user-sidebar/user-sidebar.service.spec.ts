@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { UserSidebarService } from './user-sidebar.service';
 
 describe('UserSidebarService tree validation', () => {
-  const service = new UserSidebarService({} as never);
+  const service = new UserSidebarService({} as never, {} as never);
   const link = (key: string, moduleId: number) => ({
     key,
     label: key,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccessControlModule } from '../../../common/access/access-control.module';
+import { EntitlementModule } from '../../../common/access/entitlements/entitlement.module';
 import { PrismaModule } from '../../../prisma/prisma.module';
 import { AuthModule } from '../../auth/auth.module';
 import { WorkspaceAuditLogsModule } from '../../workspace/audit-logs/workspace-audit-logs.module';
@@ -10,6 +11,7 @@ import { FormSignatoriesService } from './form-signatories.service';
   imports: [
     PrismaModule,
     AccessControlModule,
+    EntitlementModule,
     AuthModule,
     WorkspaceAuditLogsModule,
   ],

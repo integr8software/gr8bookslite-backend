@@ -12,7 +12,8 @@ export const masterPlanAndPackageInclude =
       orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
     },
     modules: {
-      orderBy: [{ moduleKey: 'asc' }],
+      include: { module: true },
+      orderBy: [{ module: { code: 'asc' } }],
     },
     systems: {
       include: {
@@ -101,7 +102,7 @@ export function mapMasterPlanAndPackage(plan: MasterPlanAndPackageRecord) {
     })),
     legacyModuleKeys: plan.modules
       .filter((module) => module.isEnabled)
-      .map((module) => module.moduleKey),
+      .map((module) => module.module.code),
     createdAt: plan.createdAt,
     updatedAt: plan.updatedAt,
   };
@@ -122,6 +123,7 @@ function derivePlanModules(plan: MasterPlanAndPackageRecord) {
 
   return [...modulesById.values()].sort(
     (left, right) =>
-      left.name.localeCompare(right.name) || left.code.localeCompare(right.code),
+      left.name.localeCompare(right.name) ||
+      left.code.localeCompare(right.code),
   );
 }

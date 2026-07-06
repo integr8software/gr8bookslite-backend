@@ -11,6 +11,7 @@ import {
   Prisma,
   SystemRole,
 } from '@prisma/client';
+import { EntitlementService } from '../../../common/access/entitlements/entitlement.service';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -46,7 +47,10 @@ type UserSidebarScope = {
 
 @Injectable()
 export class UserSidebarService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly entitlementService: EntitlementService,
+  ) {}
 
   async getCustomization(
     user: AuthUser,
@@ -77,7 +81,6 @@ export class UserSidebarService {
         where: {
           id: { in: Array.from(permittedModuleIds) },
           isActive: true,
-          enabledCompanies: { some: { companyId, isEnabled: true } },
           moduleSidebar: { none: scope },
         },
         include: {
@@ -604,14 +607,6 @@ export class UserSidebarService {
     const membership = await this.prisma.membership.findUnique({
       where: { userId_companyId: { userId, companyId } },
       include: {
-        company: {
-          include: {
-            enabledModules: {
-              where: { isEnabled: true, module: { isActive: true } },
-              select: { moduleId: true },
-            },
-          },
-        },
         companyRole: {
           include: {
             permissions: {
@@ -648,9 +643,8 @@ export class UserSidebarService {
       throw new NotFoundException('Target user membership not found.');
     }
 
-    const enabledModuleIds = new Set(
-      membership.company.enabledModules.map((item) => item.moduleId),
-    );
+    const enabledModuleIds =
+      await this.entitlementService.getCompanyAllowedModuleIds(companyId);
 
     if (membership.role === MembershipRole.ADMIN) {
       return enabledModuleIds;
