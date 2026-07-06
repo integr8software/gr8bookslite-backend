@@ -150,23 +150,6 @@ async function getTargetPlan(planCode: string): Promise<PlanSummary> {
         where: { isActive: true },
         orderBy: [{ billingCycle: 'asc' }, { id: 'asc' }],
       },
-      systems: {
-        where: { isEnabled: true, system: { isActive: true } },
-        include: {
-          system: {
-            include: {
-              modules: {
-                where: { isActive: true, module: { isActive: true } },
-                select: { moduleId: true },
-              },
-              sidebarItems: {
-                where: { isVisible: true },
-                select: { id: true },
-              },
-            },
-          },
-        },
-      },
     },
   });
 
@@ -183,6 +166,7 @@ async function getTargetPlan(planCode: string): Promise<PlanSummary> {
     );
   }
 
+  const counts = await getPlanRuntimeCounts(plan.id);
   const summary = summarizePlan({
     id: plan.id,
     code: plan.code,
@@ -190,7 +174,7 @@ async function getTargetPlan(planCode: string): Promise<PlanSummary> {
     billingProvider: plan.billingProvider,
     trialDays: plan.trialDays,
     prices: plan.prices,
-    systems: plan.systems,
+    counts,
   });
 
   if (summary.moduleCount === 0) {
@@ -238,26 +222,6 @@ async function collectRepairCandidates(
                 where: { isActive: true },
                 orderBy: [{ billingCycle: 'asc' }, { id: 'asc' }],
               },
-              systems: {
-                where: { isEnabled: true, system: { isActive: true } },
-                include: {
-                  system: {
-                    include: {
-                      modules: {
-                        where: {
-                          isActive: true,
-                          module: { isActive: true },
-                        },
-                        select: { moduleId: true },
-                      },
-                      sidebarItems: {
-                        where: { isVisible: true },
-                        select: { id: true },
-                      },
-                    },
-                  },
-                },
-              },
             },
           },
         },
@@ -267,6 +231,21 @@ async function collectRepairCandidates(
     },
     orderBy: { id: 'asc' },
   });
+
+  const planCountsById = new Map<number, PlanRuntimeCounts>();
+
+  for (const company of companies) {
+    const subscription = company.subscriptions[0];
+
+    if (!subscription || planCountsById.has(subscription.plan.id)) {
+      continue;
+    }
+
+    planCountsById.set(
+      subscription.plan.id,
+      await getPlanRuntimeCounts(subscription.plan.id),
+    );
+  }
 
   return companies.flatMap((company): RepairCandidate[] => {
     const subscription = company.subscriptions[0];
@@ -282,7 +261,9 @@ async function collectRepairCandidates(
       billingProvider: subscription.plan.billingProvider,
       trialDays: subscription.plan.trialDays,
       prices: subscription.plan.prices,
-      systems: subscription.plan.systems,
+      counts:
+        planCountsById.get(subscription.plan.id) ??
+        emptyPlanRuntimeCounts(),
     });
     const repairNeeded =
       currentPlan.moduleCount === 0 ||
@@ -307,6 +288,11 @@ async function collectRepairCandidates(
   });
 }
 
+type PlanRuntimeCounts = {
+  moduleCount: number;
+  sidebarTemplateCount: number;
+};
+
 function summarizePlan(plan: {
   id: number;
   code: string;
@@ -314,34 +300,65 @@ function summarizePlan(plan: {
   billingProvider: BillingProvider;
   trialDays: number;
   prices: Array<{ id: number; billingCycle: BillingCycle }>;
-  systems: Array<{
-    system: {
-      modules: Array<{ moduleId: number }>;
-      sidebarItems: Array<{ id: number }>;
-    };
-  }>;
+  counts: PlanRuntimeCounts;
 }): PlanSummary {
-  const moduleIds = new Set(
-    plan.systems.flatMap((system) =>
-      system.system.modules.map((module) => module.moduleId),
-    ),
-  );
-  const sidebarTemplateCount = plan.systems.reduce(
-    (sum, system) => sum + system.system.sidebarItems.length,
-    0,
-  );
   const preferredPrice = getPreferredPlanPrice(plan.prices);
 
   return {
     id: plan.id,
     code: plan.code,
     name: plan.name,
-    moduleCount: moduleIds.size,
-    sidebarTemplateCount,
+    moduleCount: plan.counts.moduleCount,
+    sidebarTemplateCount: plan.counts.sidebarTemplateCount,
     billingProvider: plan.billingProvider,
     trialDays: plan.trialDays,
     priceId: preferredPrice?.id ?? null,
     billingCycle: preferredPrice?.billingCycle ?? BillingCycle.MONTHLY,
+  };
+}
+
+async function getPlanRuntimeCounts(
+  subscriptionPlanId: number,
+): Promise<PlanRuntimeCounts> {
+  const [row] = await prisma.$queryRaw<
+    Array<{
+      module_count: bigint;
+      sidebar_template_count: bigint;
+    }>
+  >`
+    SELECT
+      COUNT(DISTINCT msm.module_id) AS module_count,
+      COUNT(DISTINCT msi.id) AS sidebar_template_count
+    FROM subscription_plans sp
+    LEFT JOIN subscription_plan_systems sps
+      ON sps.subscription_plan_id = sp.id
+     AND sps.is_enabled = true
+    LEFT JOIN module_systems ms
+      ON ms.id = sps.system_id
+     AND ms.is_active = true
+    LEFT JOIN module_system_modules msm
+      ON msm.system_id = ms.id
+     AND msm.is_active = true
+    LEFT JOIN modules m
+      ON m.id = msm.module_id
+     AND m.is_active = true
+    LEFT JOIN module_system_sidebar msi
+      ON msi.system_id = ms.id
+     AND msi.is_visible = true
+    WHERE sp.id = ${subscriptionPlanId}
+      AND sp.is_active = true
+  `;
+
+  return {
+    moduleCount: Number(row?.module_count ?? 0),
+    sidebarTemplateCount: Number(row?.sidebar_template_count ?? 0),
+  };
+}
+
+function emptyPlanRuntimeCounts(): PlanRuntimeCounts {
+  return {
+    moduleCount: 0,
+    sidebarTemplateCount: 0,
   };
 }
 
