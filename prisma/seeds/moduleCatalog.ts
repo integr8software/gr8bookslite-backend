@@ -27,6 +27,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
+    code: 'DA',
+    name: 'Default Accounts',
+    icon: 'scale',
+    type: Maintenance,
+  },
+  {
     code: 'BM',
     name: 'Bank Masterfile',
     icon: 'bank',

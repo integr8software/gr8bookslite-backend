@@ -25,6 +25,7 @@ import { FormSignatoriesModule } from './modules/maintenance/form-signatories/fo
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { TermsModule } from './modules/maintenance/terms/terms.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
+import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
 import { validateEnvironment } from './config/environment';
 import { ApprovalManagementModule } from './modules/system-administration/approval-management/approval-management.module';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
@@ -70,6 +71,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     ChartOfAccountsModule,
     TermsModule,
     BankMasterfileModule,
+    DefaultAccountModule,
     ApprovalManagementModule,
     TransactionNumberSequencesModule,
     UserSidebarModule,
