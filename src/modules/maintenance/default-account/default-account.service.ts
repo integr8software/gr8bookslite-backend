@@ -496,7 +496,7 @@ export class DefaultAccountService {
         title: `Accumulated Depreciation - ${description}`,
         accountLevel: ChartAccountLevel.SPECIFIC,
         accountType: ChartAccountType.ASSET,
-        accountNature: AccountNature.CREDIT,
+        accountNature: AccountNature.DEBIT,
         accountGroup: 'Accumulated Depreciation',
         isPostingAccount: true,
       },

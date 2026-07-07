@@ -21,6 +21,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
 import { seedDefaultTermsForCompany } from '../../maintenance/terms/default-terms';
+import { seedDefaultPaymentTypesForCompany } from '../../maintenance/payment-types/default-payment-types';
 import { seedDefaultChartAccountsForCompany } from '../../maintenance/chart-of-accounts/default-chart-accounts';
 import { seedDefaultDiscountsForCompany } from '../../maintenance/discounts/default-discounts';
 import { seedDefaultBankAccountsForCompany } from '../../maintenance/bank-masterfile/default-bank-accounts';
@@ -166,6 +167,7 @@ export class WorkspaceCompaniesService {
       });
 
       await seedDefaultTermsForCompany(tx, createdCompany.id);
+      await seedDefaultPaymentTypesForCompany(tx, createdCompany.id);
       await seedDefaultChartAccountsForCompany(tx, createdCompany.id);
       await seedDefaultDiscountsForCompany(tx, createdCompany.id);
       await seedDefaultBankAccountsForCompany(tx, createdCompany.id);
