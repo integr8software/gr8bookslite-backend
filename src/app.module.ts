@@ -24,7 +24,10 @@ import { BranchUsersModule } from './modules/company/branch-users/branch-users.m
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { TermsModule } from './modules/maintenance/terms/terms.module';
+import { PaymentTypesModule } from './modules/maintenance/payment-types/payment-types.module';
+import { DiscountsModule } from './modules/maintenance/discounts/discounts.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
+import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
 import { validateEnvironment } from './config/environment';
 import { ApprovalManagementModule } from './modules/system-administration/approval-management/approval-management.module';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
@@ -69,7 +72,10 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     FormSignatoriesModule,
     ChartOfAccountsModule,
     TermsModule,
+    PaymentTypesModule,
+    DiscountsModule,
     BankMasterfileModule,
+    DefaultAccountModule,
     ApprovalManagementModule,
     TransactionNumberSequencesModule,
     UserSidebarModule,

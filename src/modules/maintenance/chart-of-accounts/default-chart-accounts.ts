@@ -4,12 +4,21 @@ import {
   Prisma,
   type DefaultChartAccount,
 } from '@prisma/client';
+import { StandardDefaultAccountTemplates } from '../../../../prisma/seeds/standardDefaultCoaTemplate';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 const RequiredCompanyAccountRoles = [
   {
     moduleCode: 'BM',
     accountRole: 'CASH_IN_BANK_PARENT',
+  },
+  {
+    moduleCode: 'DSM',
+    accountRole: 'SALES_DISCOUNT_PARENT',
+  },
+  {
+    moduleCode: 'DSM',
+    accountRole: 'PURCHASE_DISCOUNT_PARENT',
   },
 ] as const;
 
@@ -20,7 +29,6 @@ export async function seedDefaultChartAccountsForCompany(
   companyId: number,
 ) {
   const defaultAccounts = await tx.defaultChartAccount.findMany({
-    where: { status: ChartAccountStatus.ACTIVE },
     orderBy: [{ accountCode: 'asc' }, { orderNo: 'asc' }],
   });
 
@@ -29,6 +37,10 @@ export async function seedDefaultChartAccountsForCompany(
   }
 
   const chartAccountIdByDefaultId = new Map<bigint, bigint>();
+  const copiedChartAccountByCode = new Map<
+    string,
+    { id: bigint; status: ChartAccountStatus }
+  >();
 
   for (const defaultAccount of defaultAccounts) {
     const parentAccountId = defaultAccount.parentDefaultAccountId
@@ -99,17 +111,21 @@ export async function seedDefaultChartAccountsForCompany(
     });
 
     chartAccountIdByDefaultId.set(defaultAccount.id, savedAccount.id);
+    copiedChartAccountByCode.set(defaultAccount.accountCode, {
+      id: savedAccount.id,
+      status: seededStatus,
+    });
   }
 
   const mappings = await tx.defaultAccount.findMany({
-    where: { status: ChartAccountStatus.ACTIVE },
     include: { defaultChartAccount: true },
   });
 
   for (const mapping of mappings) {
     if (
-      mapping.defaultChartAccount.status !== ChartAccountStatus.ACTIVE ||
-      mapping.defaultChartAccount.accountLevel !== mapping.requiredLevel
+      mapping.status === ChartAccountStatus.ACTIVE &&
+      (mapping.defaultChartAccount.status !== ChartAccountStatus.ACTIVE ||
+        mapping.defaultChartAccount.accountLevel !== mapping.requiredLevel)
     ) {
       throw new Error(
         `Default account mapping ${mapping.moduleCode}:${mapping.accountRole} points to an invalid COA row.`,
@@ -150,6 +166,89 @@ export async function seedDefaultChartAccountsForCompany(
     });
   }
 
+  for (const template of StandardDefaultAccountTemplates) {
+    const expenseAccount =
+      'expenseAccountCode' in template
+        ? getCopiedTemplateAccount(
+            copiedChartAccountByCode,
+            template.expenseAccountCode,
+            template.name,
+          )
+        : null;
+    const revenueAccount =
+      'revenueAccountCode' in template
+        ? getCopiedTemplateAccount(
+            copiedChartAccountByCode,
+            template.revenueAccountCode,
+            template.name,
+          )
+        : null;
+    const assetAccount =
+      'assetAccountCode' in template
+        ? getCopiedTemplateAccount(
+            copiedChartAccountByCode,
+            template.assetAccountCode,
+            template.name,
+          )
+        : null;
+    const accumulatedDepreciationAccount =
+      'accumulatedDepreciationAccountCode' in template
+        ? getCopiedTemplateAccount(
+            copiedChartAccountByCode,
+            template.accumulatedDepreciationAccountCode,
+            template.name,
+          )
+        : null;
+    const linkedAccounts = [
+      expenseAccount,
+      revenueAccount,
+      assetAccount,
+      accumulatedDepreciationAccount,
+    ].filter((account): account is { id: bigint; status: ChartAccountStatus } =>
+      Boolean(account),
+    );
+    const templateStatus = linkedAccounts.every(
+      (account) => account.status === ChartAccountStatus.ACTIVE,
+    )
+      ? ChartAccountStatus.ACTIVE
+      : ChartAccountStatus.INACTIVE;
+    const templateDeletedAt =
+      templateStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
+
+    await tx.defaultAccountTemplate.upsert({
+      where: {
+        companyId_type_name: {
+          companyId,
+          type: template.type,
+          name: template.name,
+        },
+      },
+      update: {
+        description: template.name,
+        status: templateStatus,
+        expenseCoaId: expenseAccount?.id ?? null,
+        revenueCoaId: revenueAccount?.id ?? null,
+        assetCoaId: assetAccount?.id ?? null,
+        accumulatedDepreciationCoaId:
+          accumulatedDepreciationAccount?.id ?? null,
+        deletedAt: templateDeletedAt,
+      },
+      create: {
+        companyId,
+        type: template.type,
+        name: template.name,
+        description: template.name,
+        status: templateStatus,
+        expenseCoaId: expenseAccount?.id ?? null,
+        revenueCoaId: revenueAccount?.id ?? null,
+        assetCoaId: assetAccount?.id ?? null,
+        accumulatedDepreciationCoaId:
+          accumulatedDepreciationAccount?.id ?? null,
+        deletedAt: templateDeletedAt,
+      },
+    });
+  }
+
   for (const role of RequiredCompanyAccountRoles) {
     const copiedRole = await tx.companyDefaultAccount.findUnique({
       where: {
@@ -168,6 +267,25 @@ export async function seedDefaultChartAccountsForCompany(
       );
     }
   }
+}
+
+function getCopiedTemplateAccount(
+  copiedChartAccountByCode: Map<
+    string,
+    { id: bigint; status: ChartAccountStatus }
+  >,
+  accountCode: string,
+  templateName: string,
+) {
+  const account = copiedChartAccountByCode.get(accountCode);
+
+  if (!account) {
+    throw new Error(
+      `Default account template ${templateName} references an account that was not copied: ${accountCode}.`,
+    );
+  }
+
+  return account;
 }
 
 function getSeededChartAccountStatus(defaultAccount: DefaultChartAccount) {
