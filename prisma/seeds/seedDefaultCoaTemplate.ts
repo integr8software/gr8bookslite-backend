@@ -11,10 +11,21 @@ export async function seedDefaultCoaTemplate() {
   const activeAccountCodes = StandardDefaultChartAccounts.map(
     (account) => account.accountCode,
   );
+  const activeMappingFilters = StandardDefaultAccountMappings.map(
+    ({ moduleCode, accountRole }) => ({ moduleCode, accountRole }),
+  );
 
   await prisma.defaultChartAccount.updateMany({
     where: {
       accountCode: { notIn: activeAccountCodes },
+      status: ChartAccountStatus.ACTIVE,
+    },
+    data: { status: ChartAccountStatus.INACTIVE },
+  });
+
+  await prisma.defaultAccount.updateMany({
+    where: {
+      NOT: activeMappingFilters,
       status: ChartAccountStatus.ACTIVE,
     },
     data: { status: ChartAccountStatus.INACTIVE },
