@@ -10,7 +10,12 @@ export class CreateDefaultAccountTemplateDto {
 
   @IsString()
   @MaxLength(250)
-  description!: string;
+  defaultAccountName!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
 
   @IsOptional()
   @IsEnum(ChartAccountStatus)

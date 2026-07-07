@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
@@ -72,9 +71,4 @@ export class DefaultAccountController {
     return this.defaultAccountService.updateStatus(user, id, dto);
   }
 
-  @Delete(':id')
-  @ApiOkResponse({ description: 'Default account deleted.' })
-  remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.defaultAccountService.remove(user, id);
-  }
 }

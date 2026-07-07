@@ -22,6 +22,7 @@ import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
 import { seedDefaultTermsForCompany } from '../../maintenance/terms/default-terms';
 import { seedDefaultChartAccountsForCompany } from '../../maintenance/chart-of-accounts/default-chart-accounts';
+import { seedDefaultDiscountsForCompany } from '../../maintenance/discounts/default-discounts';
 import { seedDefaultBankAccountsForCompany } from '../../maintenance/bank-masterfile/default-bank-accounts';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
@@ -166,6 +167,7 @@ export class WorkspaceCompaniesService {
 
       await seedDefaultTermsForCompany(tx, createdCompany.id);
       await seedDefaultChartAccountsForCompany(tx, createdCompany.id);
+      await seedDefaultDiscountsForCompany(tx, createdCompany.id);
       await seedDefaultBankAccountsForCompany(tx, createdCompany.id);
       if (user.role !== AppRole.SUPER_ADMIN) {
         await tx.membership.upsert({

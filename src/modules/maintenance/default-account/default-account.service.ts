@@ -128,15 +128,22 @@ export class DefaultAccountService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
-    const description = this.validateDescription(dto.description);
-    await this.ensureDescriptionAvailable(companyId, dto.type, description);
+    const defaultAccountName = this.validateDefaultAccountName(
+      dto.defaultAccountName,
+    );
+    const description = this.normalizeTemplateDescription(dto.description);
+    await this.ensureDefaultAccountNameAvailable(
+      companyId,
+      dto.type,
+      defaultAccountName,
+    );
 
     try {
       const template = await this.prisma.$transaction(async (tx) => {
         const requestedStatus = dto.status ?? ChartAccountStatus.ACTIVE;
         const generatedAccounts = await this.createGeneratedAccounts({
           companyId,
-          description,
+          description: defaultAccountName,
           type: dto.type,
           status: requestedStatus,
           tx,
@@ -147,6 +154,7 @@ export class DefaultAccountService {
           data: {
             companyId,
             type: dto.type,
+            name: defaultAccountName,
             description,
             status: requestedStatus,
             expenseCoaId: generatedAccounts.expenseCoaId,
@@ -188,25 +196,29 @@ export class DefaultAccountService {
       throw new BadRequestException('Default account type cannot be changed.');
     }
 
+    const defaultAccountName =
+      dto.defaultAccountName === undefined
+        ? currentTemplate.name
+        : this.validateDefaultAccountName(dto.defaultAccountName);
     const description =
       dto.description === undefined
         ? currentTemplate.description
-        : this.validateDescription(dto.description);
+        : this.normalizeTemplateDescription(dto.description);
 
-    if (description !== currentTemplate.description) {
-      await this.ensureDescriptionAvailable(
+    if (defaultAccountName !== currentTemplate.name) {
+      await this.ensureDefaultAccountNameAvailable(
         companyId,
         currentTemplate.type,
-        description,
+        defaultAccountName,
         templateId,
       );
     }
 
     try {
       const template = await this.prisma.$transaction(async (tx) => {
-        if (description !== currentTemplate.description) {
+        if (defaultAccountName !== currentTemplate.name) {
           await this.updateGeneratedAccountTitles({
-            description,
+            description: defaultAccountName,
             template: currentTemplate,
             tx,
             userId: user.id,
@@ -225,6 +237,7 @@ export class DefaultAccountService {
         return tx.defaultAccountTemplate.update({
           where: { id: templateId },
           data: {
+            name: defaultAccountName,
             description,
             status: dto.status,
             updatedByUserId: user.id,
@@ -284,41 +297,6 @@ export class DefaultAccountService {
     };
   }
 
-  async remove(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const templateId = parseBigIntId(id);
-    const currentTemplate = await this.findTemplateOrThrow(
-      companyId,
-      templateId,
-    );
-
-    const template = await this.prisma.$transaction(async (tx) => {
-      await this.updateLinkedChartAccountStatus(
-        currentTemplate,
-        ChartAccountStatus.INACTIVE,
-        tx,
-        user.id,
-      );
-
-      return tx.defaultAccountTemplate.update({
-        where: { id: templateId },
-        data: {
-          status: ChartAccountStatus.INACTIVE,
-          deletedAt: new Date(),
-          updatedByUserId: user.id,
-        },
-        include: DefaultAccountTemplateInclude,
-      });
-    }, DefaultAccountTransactionOptions);
-
-    return {
-      message: 'Default account deleted successfully.',
-      defaultAccount: mapDefaultAccountTemplate(template),
-    };
-  }
-
   private buildListWhere(
     companyId: number,
     query: GetDefaultAccountTemplateListQueryDto,
@@ -333,6 +311,7 @@ export class DefaultAccountService {
       ...(search
         ? {
             OR: [
+              { name: { contains: search, mode: 'insensitive' } },
               { description: { contains: search, mode: 'insensitive' } },
               {
                 expenseCoa: {
@@ -358,7 +337,7 @@ export class DefaultAccountService {
   private buildOrderBy(
     query: GetDefaultAccountTemplateListQueryDto,
   ): Prisma.DefaultAccountTemplateOrderByWithRelationInput[] {
-    const sortBy = query.sortBy ?? 'description';
+    const sortBy = query.sortBy ?? 'name';
     const sortDirection = query.sortDirection ?? 'asc';
 
     return [{ [sortBy]: sortDirection }, { id: 'asc' }];
@@ -813,17 +792,22 @@ export class DefaultAccountService {
     });
   }
 
-  private validateDescription(value: string | undefined) {
+  private validateDefaultAccountName(value: string | undefined) {
     const description = value?.trim();
 
     if (!description) {
-      throw new BadRequestException('Description is required.');
+      throw new BadRequestException('Default Account Name is required.');
     }
 
     return description;
   }
 
-  private async ensureDescriptionAvailable(
+  private normalizeTemplateDescription(value: string | undefined) {
+    const description = value?.trim();
+    return description ? description : null;
+  }
+
+  private async ensureDefaultAccountNameAvailable(
     companyId: number,
     type: DefaultAccountTemplateType,
     description: string,
@@ -835,14 +819,14 @@ export class DefaultAccountService {
         type,
         deletedAt: null,
         id: excludedTemplateId ? { not: excludedTemplateId } : undefined,
-        description: { equals: description, mode: 'insensitive' },
+        name: { equals: description, mode: 'insensitive' },
       },
       select: { id: true },
     });
 
     if (existingTemplate) {
       throw new ConflictException(
-        'Default Account description already exists for this type.',
+        'Default Account Name already exists for this type.',
       );
     }
   }
@@ -909,7 +893,7 @@ export class DefaultAccountService {
       canView: this.can(user, companyId, PermissionAction.VIEW),
       canCreate: this.can(user, companyId, PermissionAction.CREATE),
       canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canDelete: this.can(user, companyId, PermissionAction.UPDATE),
+      canDelete: false,
       canExport: this.can(user, companyId, PermissionAction.EXPORT),
     };
   }
@@ -944,7 +928,7 @@ export class DefaultAccountService {
       error.code === 'P2002'
     ) {
       throw new ConflictException(
-        'Default Account description already exists for this type.',
+        'Default Account Name already exists for this type.',
       );
     }
   }

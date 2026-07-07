@@ -11,6 +11,14 @@ const RequiredCompanyAccountRoles = [
     moduleCode: 'BM',
     accountRole: 'CASH_IN_BANK_PARENT',
   },
+  {
+    moduleCode: 'DSM',
+    accountRole: 'SALES_DISCOUNT_PARENT',
+  },
+  {
+    moduleCode: 'DSM',
+    accountRole: 'PURCHASE_DISCOUNT_PARENT',
+  },
 ] as const;
 
 const CashInBankSpecificPrefix = 'Cash in Bank - ';

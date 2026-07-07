@@ -24,6 +24,7 @@ import { BranchUsersModule } from './modules/company/branch-users/branch-users.m
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { TermsModule } from './modules/maintenance/terms/terms.module';
+import { DiscountsModule } from './modules/maintenance/discounts/discounts.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
 import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
 import { validateEnvironment } from './config/environment';
@@ -70,6 +71,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     FormSignatoriesModule,
     ChartOfAccountsModule,
     TermsModule,
+    DiscountsModule,
     BankMasterfileModule,
     DefaultAccountModule,
     ApprovalManagementModule,

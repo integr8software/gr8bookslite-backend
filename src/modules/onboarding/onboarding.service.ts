@@ -23,6 +23,7 @@ import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
 import { seedDefaultTermsForCompany } from '../maintenance/terms/default-terms';
 import { seedDefaultChartAccountsForCompany } from '../maintenance/chart-of-accounts/default-chart-accounts';
+import { seedDefaultDiscountsForCompany } from '../maintenance/discounts/default-discounts';
 import { seedDefaultBankAccountsForCompany } from '../maintenance/bank-masterfile/default-bank-accounts';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
@@ -536,6 +537,7 @@ export class OnboardingService {
       this.prisma,
       provisionedCompany.id,
     );
+    await seedDefaultDiscountsForCompany(this.prisma, provisionedCompany.id);
     await seedDefaultBankAccountsForCompany(this.prisma, provisionedCompany.id);
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({

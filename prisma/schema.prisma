@@ -114,6 +114,7 @@ model Company {
   bankAccounts            BankAccount[]
   defaultAccountTemplates DefaultAccountTemplate[]
   terms                   Term[]
+  discounts               Discount[]
   userTablePreferences    UserTablePreference[]
   auditLogs               AuditLog[]
   onboardingDrafts        UserOnboardingDraft[]    @relation("ProvisionedOnboardingCompany")
@@ -621,6 +622,7 @@ model ChartAccount {
   childAccounts                           ChartAccount[]           @relation("ChartAccountHierarchy")
   companyDefaultAccounts                  CompanyDefaultAccount[]
   bankAccounts                            BankAccount[]
+  discounts                               Discount[]
   defaultExpenseTemplates                 DefaultAccountTemplate[] @relation("DefaultAccountTemplateExpenseCoa")
   defaultRevenueTemplates                 DefaultAccountTemplate[] @relation("DefaultAccountTemplateRevenueCoa")
   defaultAssetTemplates                   DefaultAccountTemplate[] @relation("DefaultAccountTemplateAssetCoa")
@@ -705,7 +707,8 @@ model DefaultAccountTemplate {
   id                           BigInt                     @id @default(autoincrement())
   companyId                    Int                        @map("company_id")
   type                         DefaultAccountTemplateType
-  description                  String                     @db.VarChar(250)
+  name                         String                     @db.VarChar(250)
+  description                  String?                    @db.VarChar(500)
   status                       ChartAccountStatus         @default(ACTIVE)
   expenseCoaId                 BigInt?                    @map("expense_coa_id")
   revenueCoaId                 BigInt?                    @map("revenue_coa_id")
@@ -722,7 +725,7 @@ model DefaultAccountTemplate {
   assetCoa                     ChartAccount?              @relation("DefaultAccountTemplateAssetCoa", fields: [assetCoaId], references: [id], onDelete: Restrict)
   accumulatedDepreciationCoa   ChartAccount?              @relation("DefaultAccountTemplateAccumulatedDepreciationCoa", fields: [accumulatedDepreciationCoaId], references: [id], onDelete: Restrict)
 
-  @@unique([companyId, type, description], map: "default_account_templates_company_type_description_key")
+  @@unique([companyId, type, name], map: "default_account_templates_company_type_name_key")
   @@index([companyId, status], map: "default_account_templates_company_status_idx")
   @@index([expenseCoaId], map: "default_account_templates_expense_coa_id_idx")
   @@index([revenueCoaId], map: "default_account_templates_revenue_coa_id_idx")
@@ -779,6 +782,32 @@ model Term {
   @@index([companyId], map: "terms_company_id_idx")
   @@index([companyId, status], map: "terms_company_status_idx")
   @@map("terms")
+}
+
+model Discount {
+  id              BigInt            @id @default(autoincrement())
+  companyId       Int               @map("company_id")
+  chartAccountId  BigInt            @map("chart_account_id")
+  name            String            @db.VarChar(150)
+  description     String?           @db.VarChar(500)
+  type            DiscountType
+  valueType       DiscountValueType @map("value_type")
+  value           Decimal           @db.Decimal(18, 4)
+  status          DiscountStatus    @default(ACTIVE)
+  createdByUserId Int?              @map("created_by_user_id")
+  updatedByUserId Int?              @map("updated_by_user_id")
+  deletedAt       DateTime?         @map("deleted_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  chartAccount    ChartAccount      @relation(fields: [chartAccountId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, name], map: "discounts_company_name_key")
+  @@unique([companyId, chartAccountId], map: "discounts_company_chart_account_key")
+  @@index([chartAccountId], map: "discounts_chart_account_id_idx")
+  @@index([companyId, status], map: "discounts_company_status_idx")
+  @@index([companyId, type], map: "discounts_company_type_idx")
+  @@map("discounts")
 }
 
 // =========================================================
@@ -1298,6 +1327,21 @@ enum TermDateMode {
 }
 
 enum TermStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum DiscountType {
+  SALES
+  PURCHASE
+}
+
+enum DiscountValueType {
+  PERCENTAGE
+  FIXED
+}
+
+enum DiscountStatus {
   ACTIVE
   INACTIVE
 }

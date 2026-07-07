@@ -10,23 +10,28 @@ import {
   Min,
 } from 'class-validator';
 import {
-  ChartAccountStatus,
-  DefaultAccountTemplateType,
+  DiscountStatus,
+  DiscountType,
+  DiscountValueType,
 } from '@prisma/client';
 
-export class GetDefaultAccountTemplateListQueryDto {
+export class GetDiscountListQueryDto {
   @IsOptional()
   @IsString()
   @MaxLength(120)
   search?: string;
 
   @IsOptional()
-  @IsEnum(DefaultAccountTemplateType)
-  type?: DefaultAccountTemplateType;
+  @IsEnum(DiscountType)
+  type?: DiscountType;
 
   @IsOptional()
-  @IsEnum(ChartAccountStatus)
-  status?: ChartAccountStatus;
+  @IsEnum(DiscountValueType)
+  valueType?: DiscountValueType;
+
+  @IsOptional()
+  @IsEnum(DiscountStatus)
+  status?: DiscountStatus;
 
   @IsOptional()
   @Transform(({ value }) => toOptionalInt(value))
@@ -42,8 +47,23 @@ export class GetDefaultAccountTemplateListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn(['name', 'description', 'type', 'status', 'createdAt', 'updatedAt'])
-  sortBy?: 'name' | 'description' | 'type' | 'status' | 'createdAt' | 'updatedAt';
+  @IsIn([
+    'name',
+    'type',
+    'valueType',
+    'value',
+    'status',
+    'createdAt',
+    'updatedAt',
+  ])
+  sortBy?:
+    | 'name'
+    | 'type'
+    | 'valueType'
+    | 'value'
+    | 'status'
+    | 'createdAt'
+    | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

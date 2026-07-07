@@ -13,7 +13,8 @@ export function mapDefaultAccountTemplate(
     id: template.id.toString(),
     companyId: template.companyId,
     type: template.type,
-    description: template.description,
+    defaultAccountName: template.name,
+    description: template.description ?? '',
     status: template.status,
     generatedAccounts: [
       mapGeneratedAccount(
