@@ -13,20 +13,13 @@ jobs:
       - X64
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install
-        run: npm ci
-
-      - name: Deploy
-        shell: powershell
+      - name: Deploy backend from VPS folder
+        shell: cmd
         run: |
+          cd /d I:\Gr8BooksNeo\apps\backend-shared-dev
+          git fetch origin staging
+          git reset --hard origin/staging
+          npm ci
           node scripts/run-with-env.cjs .env prisma migrate deploy
           node scripts/run-with-env.cjs .env prisma generate
           node scripts/run-with-env.cjs .env ts-node prisma/scripts/provision-platform.ts
