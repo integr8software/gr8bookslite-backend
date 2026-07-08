@@ -5,6 +5,10 @@ on:
     branches:
       - staging
 
+concurrency:
+  group: backend-staging
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on:
@@ -12,18 +16,40 @@ jobs:
       - Windows
       - X64
 
+    defaults:
+      run:
+        shell: powershell
+
     steps:
       - name: Deploy backend from VPS folder
-        shell: cmd
         run: |
-          cd /d I:\Gr8BooksNeo\apps\backend-shared-dev
-          git fetch origin staging
+          Set-Location "I:\Gr8BooksNeo\apps\backend-shared-dev"
+
+          Write-Host "=== Updating Repository ==="
+          git fetch origin
           git reset --hard origin/staging
+          git clean -fd
+
+          Write-Host "=== Installing Dependencies ==="
           npm ci
+
+          Write-Host "=== Running Database Migration ==="
           node scripts/run-with-env.cjs .env prisma migrate deploy
+
+          Write-Host "=== Generating Prisma Client ==="
           node scripts/run-with-env.cjs .env prisma generate
+
+          Write-Host "=== Running Platform Bootstrap ==="
           node scripts/run-with-env.cjs .env ts-node prisma/scripts/provision-platform.ts
+
+          Write-Host "=== Repairing Company Bootstrap ==="
           node scripts/run-with-env.cjs .env ts-node prisma/scripts/repair-company-bootstrap.ts --apply
+
+          Write-Host "=== Building Backend ==="
           npm run build
+
+          Write-Host "=== Restarting PM2 ==="
           pm2 restart gr8booksneo-backend-shared-dev --update-env
           pm2 save
+
+          Write-Host "=== Deployment Complete ==="
