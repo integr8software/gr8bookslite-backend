@@ -6,17 +6,17 @@ import {
   type Prisma,
 } from '@prisma/client';
 import { EntitlementService } from '../../src/common/access/entitlements/entitlement.service';
-import { seedDefaultBankAccountsForCompany } from '../../src/modules/maintenance/bank-masterfile/default-bank-accounts';
-import { seedDefaultChartAccountsForCompany } from '../../src/modules/maintenance/chart-of-accounts/default-chart-accounts';
-import { seedDefaultDiscountsForCompany } from '../../src/modules/maintenance/discounts/default-discounts';
+import { seedCompanyBankAccountDefaults } from '../../src/modules/maintenance/bank-masterfile/seed/bank-masterfile.seed';
+import { seedCompanyChartAccountDefaults } from '../../src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
 import {
-  DefaultCompanyPaymentTypes,
-  seedDefaultPaymentTypesForCompany,
-} from '../../src/modules/maintenance/payment-types/default-payment-types';
+  PaymentTypeMaintenanceSeedRecords,
+  seedCompanyPaymentTypeMaintenanceDefaults,
+} from '../../src/modules/maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
+import { seedCompanyDiscountMaintenanceDefaults } from '../../src/modules/maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import {
-  DefaultCompanyTerms,
-  seedDefaultTermsForCompany,
-} from '../../src/modules/maintenance/terms/default-terms';
+  TermMaintenanceSeedRecords,
+  seedCompanyTermMaintenanceDefaults,
+} from '../../src/modules/maintenance/term-maintenance/seed/term-maintenance.seed';
 import type {
   CompanyBootstrapBackup,
   CompanyBootstrapHandler,
@@ -350,7 +350,7 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
         where: { companyId },
       });
       if (chartAccountCount === 0) {
-        await seedDefaultChartAccountsForCompany(tx, companyId);
+        await seedCompanyChartAccountDefaults(tx, companyId);
       }
     },
   },
@@ -441,12 +441,13 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
         ? ok('Terms exist.', { count })
         : missing(
             'No active terms found.',
-            [`Seed ${DefaultCompanyTerms.length} default term records.`],
-            { count, expectedCount: DefaultCompanyTerms.length },
+            [`Seed ${TermMaintenanceSeedRecords.length} default term records.`],
+            { count, expectedCount: TermMaintenanceSeedRecords.length },
           );
     },
     backup: (companyId, tx) => backupCounts('terms', companyId, tx),
-    apply: (companyId, tx) => seedDefaultTermsForCompany(tx, companyId),
+    apply: (companyId, tx) =>
+      seedCompanyTermMaintenanceDefaults(tx, companyId),
   },
   {
     key: 'payment-types',
@@ -460,13 +461,14 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
         : missing(
             'No active payment types found.',
             [
-              `Seed ${DefaultCompanyPaymentTypes.length} default payment type records.`,
+              `Seed ${PaymentTypeMaintenanceSeedRecords.length} default payment type records.`,
             ],
-            { count, expectedCount: DefaultCompanyPaymentTypes.length },
+            { count, expectedCount: PaymentTypeMaintenanceSeedRecords.length },
           );
     },
     backup: (companyId, tx) => backupCounts('payment-types', companyId, tx),
-    apply: (companyId, tx) => seedDefaultPaymentTypesForCompany(tx, companyId),
+    apply: (companyId, tx) =>
+      seedCompanyPaymentTypeMaintenanceDefaults(tx, companyId),
   },
   {
     key: 'discounts',
@@ -489,7 +491,7 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
         where: { companyId, deletedAt: null },
       });
       if (count === 0) {
-        await seedDefaultDiscountsForCompany(tx, companyId);
+        await seedCompanyDiscountMaintenanceDefaults(tx, companyId);
       }
     },
   },
@@ -526,7 +528,7 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     async apply(companyId, tx) {
       const bankCount = await tx.bankAccount.count({ where: { companyId } });
       if (bankCount === 0) {
-        await seedDefaultBankAccountsForCompany(tx, companyId);
+        await seedCompanyBankAccountDefaults(tx, companyId);
       }
     },
   },

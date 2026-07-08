@@ -20,11 +20,11 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
-import { seedDefaultTermsForCompany } from '../../maintenance/terms/default-terms';
-import { seedDefaultPaymentTypesForCompany } from '../../maintenance/payment-types/default-payment-types';
-import { seedDefaultChartAccountsForCompany } from '../../maintenance/chart-of-accounts/default-chart-accounts';
-import { seedDefaultDiscountsForCompany } from '../../maintenance/discounts/default-discounts';
-import { seedDefaultBankAccountsForCompany } from '../../maintenance/bank-masterfile/default-bank-accounts';
+import { seedCompanyTermMaintenanceDefaults } from '../../maintenance/term-maintenance/seed/term-maintenance.seed';
+import { seedCompanyPaymentTypeMaintenanceDefaults } from '../../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
+import { seedCompanyChartAccountDefaults } from '../../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
+import { seedCompanyDiscountMaintenanceDefaults } from '../../maintenance/discount-maintenance/seed/discount-maintenance.seed';
+import { seedCompanyBankAccountDefaults } from '../../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
@@ -166,11 +166,11 @@ export class WorkspaceCompaniesService {
         },
       });
 
-      await seedDefaultTermsForCompany(tx, createdCompany.id);
-      await seedDefaultPaymentTypesForCompany(tx, createdCompany.id);
-      await seedDefaultChartAccountsForCompany(tx, createdCompany.id);
-      await seedDefaultDiscountsForCompany(tx, createdCompany.id);
-      await seedDefaultBankAccountsForCompany(tx, createdCompany.id);
+      await seedCompanyTermMaintenanceDefaults(tx, createdCompany.id);
+      await seedCompanyPaymentTypeMaintenanceDefaults(tx, createdCompany.id);
+      await seedCompanyChartAccountDefaults(tx, createdCompany.id);
+      await seedCompanyDiscountMaintenanceDefaults(tx, createdCompany.id);
+      await seedCompanyBankAccountDefaults(tx, createdCompany.id);
       if (user.role !== AppRole.SUPER_ADMIN) {
         await tx.membership.upsert({
           where: {

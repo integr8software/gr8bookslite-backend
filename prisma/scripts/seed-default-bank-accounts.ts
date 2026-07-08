@@ -1,4 +1,4 @@
-import { seedDefaultBankAccountsForCompany } from '../../src/modules/maintenance/bank-masterfile/default-bank-accounts';
+import { seedCompanyBankAccountDefaults } from '../../src/modules/maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { prisma } from '../seeds/prismaClient';
 import { runSeedTask } from './runSeedTask';
 
@@ -10,7 +10,7 @@ void runSeedTask('Default bank account seed', async () => {
 
   for (const company of companies) {
     const createdCount = await prisma.$transaction((tx) =>
-      seedDefaultBankAccountsForCompany(tx, company.id),
+      seedCompanyBankAccountDefaults(tx, company.id),
     );
 
     console.log(

@@ -1,5 +1,5 @@
-import { seedDefaultChartAccountsForCompany } from '../../src/modules/maintenance/chart-of-accounts/default-chart-accounts';
-import { seedDefaultDiscountsForCompany } from '../../src/modules/maintenance/discounts/default-discounts';
+import { seedCompanyChartAccountDefaults } from '../../src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
+import { seedCompanyDiscountMaintenanceDefaults } from '../../src/modules/maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import { prisma } from '../seeds/prismaClient';
 import { runSeedTask } from './runSeedTask';
 
@@ -11,9 +11,9 @@ void runSeedTask('Default discount seed', async () => {
 
   for (const company of companies) {
     const createdCount = await prisma.$transaction(async (tx) => {
-      await seedDefaultChartAccountsForCompany(tx, company.id);
+      await seedCompanyChartAccountDefaults(tx, company.id);
 
-      return seedDefaultDiscountsForCompany(tx, company.id);
+      return seedCompanyDiscountMaintenanceDefaults(tx, company.id);
     });
 
     console.log(

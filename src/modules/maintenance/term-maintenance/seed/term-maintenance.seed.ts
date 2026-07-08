@@ -1,9 +1,9 @@
 import { Prisma, TermDateMode, TermStatus } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '../../../../prisma/prisma.service';
 
 type TermWriteClient = Pick<PrismaService, 'term'> | Prisma.TransactionClient;
 
-export const DefaultCompanyTerms = [
+export const TermMaintenanceSeedRecords = [
   { name: 'Due on Receipt', dateMode: TermDateMode.DAY, period: 0 },
   { name: 'Cash on Delivery', dateMode: TermDateMode.DAY, period: 0 },
   { name: 'Cash in Advance', dateMode: TermDateMode.DAY, period: 0 },
@@ -27,7 +27,7 @@ export const DefaultCompanyTerms = [
   { name: 'Long-Term Agreement', dateMode: TermDateMode.YEAR, period: 5 },
 ] as const;
 
-export async function seedDefaultTermsForCompany(
+export async function seedCompanyTermMaintenanceDefaults(
   tx: TermWriteClient,
   companyId: number,
 ) {
@@ -43,7 +43,7 @@ export async function seedDefaultTermsForCompany(
   }
 
   await tx.term.createMany({
-    data: DefaultCompanyTerms.map((term) => ({
+    data: TermMaintenanceSeedRecords.map((term) => ({
       companyId,
       name: term.name,
       description: '',

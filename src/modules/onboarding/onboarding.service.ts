@@ -21,11 +21,11 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
-import { seedDefaultTermsForCompany } from '../maintenance/terms/default-terms';
-import { seedDefaultPaymentTypesForCompany } from '../maintenance/payment-types/default-payment-types';
-import { seedDefaultChartAccountsForCompany } from '../maintenance/chart-of-accounts/default-chart-accounts';
-import { seedDefaultDiscountsForCompany } from '../maintenance/discounts/default-discounts';
-import { seedDefaultBankAccountsForCompany } from '../maintenance/bank-masterfile/default-bank-accounts';
+import { seedCompanyTermMaintenanceDefaults } from '../maintenance/term-maintenance/seed/term-maintenance.seed';
+import { seedCompanyPaymentTypeMaintenanceDefaults } from '../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
+import { seedCompanyChartAccountDefaults } from '../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
+import { seedCompanyDiscountMaintenanceDefaults } from '../maintenance/discount-maintenance/seed/discount-maintenance.seed';
+import { seedCompanyBankAccountDefaults } from '../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
@@ -533,14 +533,20 @@ export class OnboardingService {
       },
     });
 
-    await seedDefaultTermsForCompany(this.prisma, provisionedCompany.id);
-    await seedDefaultPaymentTypesForCompany(this.prisma, provisionedCompany.id);
-    await seedDefaultChartAccountsForCompany(
+    await seedCompanyTermMaintenanceDefaults(this.prisma, provisionedCompany.id);
+    await seedCompanyPaymentTypeMaintenanceDefaults(
       this.prisma,
       provisionedCompany.id,
     );
-    await seedDefaultDiscountsForCompany(this.prisma, provisionedCompany.id);
-    await seedDefaultBankAccountsForCompany(this.prisma, provisionedCompany.id);
+    await seedCompanyChartAccountDefaults(
+      this.prisma,
+      provisionedCompany.id,
+    );
+    await seedCompanyDiscountMaintenanceDefaults(
+      this.prisma,
+      provisionedCompany.id,
+    );
+    await seedCompanyBankAccountDefaults(this.prisma, provisionedCompany.id);
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({
       where: {

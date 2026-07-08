@@ -29,7 +29,7 @@ const DefaultLimit = 500;
 const SystemGeneratedLabel = 'System Generated';
 
 @Injectable()
-export class PaymentTypesService {
+export class PaymentTypeMaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetPaymentTypeListQueryDto) {

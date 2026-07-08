@@ -3,13 +3,13 @@ import {
   PaymentTypeStatus,
   Prisma,
 } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '../../../../prisma/prisma.service';
 
 type PaymentTypeWriteClient =
   | Pick<PrismaService, 'paymentType'>
   | Prisma.TransactionClient;
 
-export const DefaultCompanyPaymentTypes = [
+export const PaymentTypeMaintenanceSeedRecords = [
   {
     name: 'Cash',
     description: 'Cash payment without additional bank details.',
@@ -52,7 +52,7 @@ export const DefaultCompanyPaymentTypes = [
   },
 ] as const;
 
-export async function seedDefaultPaymentTypesForCompany(
+export async function seedCompanyPaymentTypeMaintenanceDefaults(
   tx: PaymentTypeWriteClient,
   companyId: number,
 ) {
@@ -68,7 +68,7 @@ export async function seedDefaultPaymentTypesForCompany(
   }
 
   await tx.paymentType.createMany({
-    data: DefaultCompanyPaymentTypes.map((paymentType) => ({
+    data: PaymentTypeMaintenanceSeedRecords.map((paymentType) => ({
       companyId,
       name: paymentType.name,
       description: paymentType.description,
