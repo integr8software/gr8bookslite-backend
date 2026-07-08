@@ -153,20 +153,25 @@ export async function seedCompanyDiscountMaintenanceDefaults(
   tx: DiscountWriteClient,
   companyId: number,
 ) {
-  const existingCount = await tx.discount.count({
+  const existingDiscounts = await tx.discount.findMany({
     where: {
       companyId,
-      deletedAt: null,
+      name: {
+        in: DiscountMaintenanceSeedRecords.map((discount) => discount.name),
+      },
     },
+    select: { name: true },
   });
-
-  if (existingCount > 0) {
-    return 0;
-  }
+  const existingNames = new Set(
+    existingDiscounts.map((discount) => discount.name),
+  );
+  const missingDiscounts = DiscountMaintenanceSeedRecords.filter(
+    (discount) => !existingNames.has(discount.name),
+  );
 
   let createdCount = 0;
 
-  for (const discount of DiscountMaintenanceSeedRecords) {
+  for (const discount of missingDiscounts) {
     const chartAccount = await resolveDiscountChartAccount(tx, {
       companyId,
       type: discount.type,
@@ -174,35 +179,23 @@ export async function seedCompanyDiscountMaintenanceDefaults(
       createdByUserId: null,
     });
 
-    await tx.discount.upsert({
-      where: {
-        companyId_name: {
+    const created = await tx.discount.createMany({
+      data: [
+        {
           companyId,
+          chartAccountId: chartAccount.id,
           name: discount.name,
+          description: discount.description,
+          type: discount.type,
+          valueType: discount.valueType,
+          value: discount.value,
+          status: DiscountStatus.ACTIVE,
+          createdByUserId: null,
         },
-      },
-      update: {
-        chartAccountId: chartAccount.id,
-        description: discount.description,
-        type: discount.type,
-        valueType: discount.valueType,
-        value: discount.value,
-        status: DiscountStatus.ACTIVE,
-        deletedAt: null,
-      },
-      create: {
-        companyId,
-        chartAccountId: chartAccount.id,
-        name: discount.name,
-        description: discount.description,
-        type: discount.type,
-        valueType: discount.valueType,
-        value: discount.value,
-        status: DiscountStatus.ACTIVE,
-        createdByUserId: null,
-      },
+      ],
+      skipDuplicates: true,
     });
-    createdCount += 1;
+    createdCount += created.count;
   }
 
   return createdCount;

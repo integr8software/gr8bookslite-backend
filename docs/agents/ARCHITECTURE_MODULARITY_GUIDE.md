@@ -278,6 +278,87 @@ Use Prisma migrations carefully:
 - If a migration was discarded locally but recorded in the database, either restore it or remove the database migration record intentionally in development.
 - Read `docs/PRISMA_WORKFLOW.md` before changing schema.
 
+### Backend Seeder and Provisioning Rules
+
+If a new module needs seed data, first classify the data.
+
+Platform metadata belongs in provisioning:
+
+- platform modules
+- permissions
+- module systems
+- module-system sidebar templates
+- subscription plans
+- subscription plan system links
+- default templates shared by all companies
+- reference/catalog data required before runtime access can work
+
+Company-owned defaults belong in company bootstrap:
+
+- company COA rows
+- company default account mappings
+- terms
+- payment types
+- discounts
+- bank defaults
+- transaction number setup rows
+- form signatory setup rows
+- future tenant/module setup rows
+
+Do not add a standalone seeder and leave it manual if the application needs that data to work after deploy.
+
+Required rule for agents:
+
+> When this guide is referenced and your module adds or changes platform seed/catalog data, you must also wire that seed into the platform provision flow.
+
+For platform metadata, update the relevant seed/catalog file and ensure it is called from:
+
+```text
+prisma/provisioning/provisioning.runner.ts
+```
+
+Common seed/catalog locations:
+
+```text
+prisma/seeds/seedModules.ts
+prisma/seeds/seedModuleSystems.ts
+prisma/seeds/seedSubscriptionPlans.ts
+prisma/seeds/seedDefaultCoaTemplate.ts
+prisma/seeds/moduleSystemCatalog.ts
+```
+
+For company-owned defaults, add or reuse a handler in:
+
+```text
+prisma/company-bootstrap/company-bootstrap.registry.ts
+```
+
+Do not rely on developers remembering to run a one-off script for normal deployments. A clean deployment should be able to run:
+
+```bash
+npm run db:migrate:<env>
+npm run db:provision:<env>
+npm run db:repair:company-bootstrap:<env> -- --apply
+```
+
+and produce working metadata and tenant defaults.
+
+When adding or changing seed/provision behavior, update docs if operator commands changed:
+
+```text
+docs/backend-script-guide.md
+docs/architecture/company-bootstrap-repair.md
+```
+
+Validation checklist for seed/provision changes:
+
+```bash
+npm run typecheck
+npm test -- --runInBand
+node --test scripts/env/database-guard.test.cjs
+node --test scripts/env/package-scripts.test.cjs
+```
+
 ## Frontend Structure
 
 Frontend source follows this shape:
@@ -593,6 +674,9 @@ Before committing or handing off:
 - Did React Query keys include company and branch scope where needed?
 - Did you avoid global hooks fetching unrelated module data?
 - Did you avoid external API calls inside Prisma transactions?
+- If you added or changed platform seed data, did you wire it into `prisma/provisioning/provisioning.runner.ts`?
+- If you added company-owned default data, did you add or reuse a company bootstrap handler?
+- Did you avoid creating a manual-only seeder for data required by normal deployments?
 - Did you add or update tests for changed backend behavior?
 - Did you remove mock data after wiring real backend data?
 
@@ -630,6 +714,15 @@ src/modules/workspace/<feature>/
 ```
 
 Register the module in the appropriate parent module. If the controller uses `JwtAuthGuard`, ensure the module imports the module that exports the guard dependencies, such as access-control services.
+
+If the module adds required seed data:
+
+```text
+Platform metadata -> add to prisma/seeds and wire through prisma/provisioning/provisioning.runner.ts
+Company defaults  -> add/reuse prisma/company-bootstrap handler
+```
+
+Do not leave required module data in a standalone script that is not part of provision/bootstrap.
 
 ### Wiring a Frontend Workspace Module
 

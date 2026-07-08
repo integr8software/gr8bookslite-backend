@@ -31,19 +31,26 @@ export async function seedCompanyTermMaintenanceDefaults(
   tx: TermWriteClient,
   companyId: number,
 ) {
-  const existingCount = await tx.term.count({
+  const existingTerms = await tx.term.findMany({
     where: {
       companyId,
-      deletedAt: null,
+      name: {
+        in: TermMaintenanceSeedRecords.map((term) => term.name),
+      },
     },
+    select: { name: true },
   });
+  const existingNames = new Set(existingTerms.map((term) => term.name));
+  const missingTerms = TermMaintenanceSeedRecords.filter(
+    (term) => !existingNames.has(term.name),
+  );
 
-  if (existingCount > 0) {
-    return;
+  if (missingTerms.length === 0) {
+    return 0;
   }
 
-  await tx.term.createMany({
-    data: TermMaintenanceSeedRecords.map((term) => ({
+  const result = await tx.term.createMany({
+    data: missingTerms.map((term) => ({
       companyId,
       name: term.name,
       description: '',
@@ -54,4 +61,6 @@ export async function seedCompanyTermMaintenanceDefaults(
     })),
     skipDuplicates: true,
   });
+
+  return result.count;
 }

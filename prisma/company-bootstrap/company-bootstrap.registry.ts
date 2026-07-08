@@ -12,7 +12,10 @@ import {
   PaymentTypeMaintenanceSeedRecords,
   seedCompanyPaymentTypeMaintenanceDefaults,
 } from '../../src/modules/maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
-import { seedCompanyDiscountMaintenanceDefaults } from '../../src/modules/maintenance/discount-maintenance/seed/discount-maintenance.seed';
+import {
+  DiscountMaintenanceSeedRecords,
+  seedCompanyDiscountMaintenanceDefaults,
+} from '../../src/modules/maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import {
   TermMaintenanceSeedRecords,
   seedCompanyTermMaintenanceDefaults,
@@ -434,65 +437,117 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     key: 'terms',
     label: 'Terms bootstrap',
     async inspect(companyId, tx) {
-      const count = await tx.term.count({
-        where: { companyId, deletedAt: null },
+      const existingTerms = await tx.term.findMany({
+        where: {
+          companyId,
+          name: { in: TermMaintenanceSeedRecords.map((term) => term.name) },
+        },
+        select: { name: true },
       });
-      return count > 0
-        ? ok('Terms exist.', { count })
+      const existingNames = new Set(existingTerms.map((term) => term.name));
+      const missingTerms = TermMaintenanceSeedRecords.filter(
+        (term) => !existingNames.has(term.name),
+      );
+
+      return missingTerms.length === 0
+        ? ok('Terms exist.', { count: existingTerms.length })
         : missing(
-            'No active terms found.',
-            [`Seed ${TermMaintenanceSeedRecords.length} default term records.`],
-            { count, expectedCount: TermMaintenanceSeedRecords.length },
+            'Default terms are incomplete.',
+            [`Seed ${missingTerms.length} missing default term records.`],
+            {
+              count: existingTerms.length,
+              expectedCount: TermMaintenanceSeedRecords.length,
+              missingNames: missingTerms.map((term) => term.name),
+            },
           );
     },
     backup: (companyId, tx) => backupCounts('terms', companyId, tx),
-    apply: (companyId, tx) =>
-      seedCompanyTermMaintenanceDefaults(tx, companyId),
+    async apply(companyId, tx) {
+      await seedCompanyTermMaintenanceDefaults(tx, companyId);
+    },
   },
   {
     key: 'payment-types',
     label: 'Payment types bootstrap',
     async inspect(companyId, tx) {
-      const count = await tx.paymentType.count({
-        where: { companyId, deletedAt: null },
+      const existingPaymentTypes = await tx.paymentType.findMany({
+        where: {
+          companyId,
+          name: {
+            in: PaymentTypeMaintenanceSeedRecords.map(
+              (paymentType) => paymentType.name,
+            ),
+          },
+        },
+        select: { name: true },
       });
-      return count > 0
-        ? ok('Payment types exist.', { count })
+      const existingNames = new Set(
+        existingPaymentTypes.map((paymentType) => paymentType.name),
+      );
+      const missingPaymentTypes = PaymentTypeMaintenanceSeedRecords.filter(
+        (paymentType) => !existingNames.has(paymentType.name),
+      );
+
+      return missingPaymentTypes.length === 0
+        ? ok('Payment types exist.', { count: existingPaymentTypes.length })
         : missing(
-            'No active payment types found.',
+            'Default payment types are incomplete.',
             [
-              `Seed ${PaymentTypeMaintenanceSeedRecords.length} default payment type records.`,
+              `Seed ${missingPaymentTypes.length} missing default payment type records.`,
             ],
-            { count, expectedCount: PaymentTypeMaintenanceSeedRecords.length },
+            {
+              count: existingPaymentTypes.length,
+              expectedCount: PaymentTypeMaintenanceSeedRecords.length,
+              missingNames: missingPaymentTypes.map(
+                (paymentType) => paymentType.name,
+              ),
+            },
           );
     },
     backup: (companyId, tx) => backupCounts('payment-types', companyId, tx),
-    apply: (companyId, tx) =>
-      seedCompanyPaymentTypeMaintenanceDefaults(tx, companyId),
+    async apply(companyId, tx) {
+      await seedCompanyPaymentTypeMaintenanceDefaults(tx, companyId);
+    },
   },
   {
     key: 'discounts',
     label: 'Discount defaults bootstrap',
     async inspect(companyId, tx) {
-      const count = await tx.discount.count({
-        where: { companyId, deletedAt: null },
+      const existingDiscounts = await tx.discount.findMany({
+        where: {
+          companyId,
+          name: {
+            in: DiscountMaintenanceSeedRecords.map(
+              (discount) => discount.name,
+            ),
+          },
+        },
+        select: { name: true },
       });
-      return count > 0
-        ? ok('Discount defaults exist.', { count })
+      const existingNames = new Set(
+        existingDiscounts.map((discount) => discount.name),
+      );
+      const missingDiscounts = DiscountMaintenanceSeedRecords.filter(
+        (discount) => !existingNames.has(discount.name),
+      );
+
+      return missingDiscounts.length === 0
+        ? ok('Discount defaults exist.', { count: existingDiscounts.length })
         : missing(
-            'No active discount defaults found.',
-            ['Seed default discounts using company default COA mappings.'],
-            { count },
+            'Default discounts are incomplete.',
+            [
+              `Seed ${missingDiscounts.length} missing default discount records using company default COA mappings.`,
+            ],
+            {
+              count: existingDiscounts.length,
+              expectedCount: DiscountMaintenanceSeedRecords.length,
+              missingNames: missingDiscounts.map((discount) => discount.name),
+            },
           );
     },
     backup: (companyId, tx) => backupCounts('discounts', companyId, tx),
     async apply(companyId, tx) {
-      const count = await tx.discount.count({
-        where: { companyId, deletedAt: null },
-      });
-      if (count === 0) {
-        await seedCompanyDiscountMaintenanceDefaults(tx, companyId);
-      }
+      await seedCompanyDiscountMaintenanceDefaults(tx, companyId);
     },
   },
   {

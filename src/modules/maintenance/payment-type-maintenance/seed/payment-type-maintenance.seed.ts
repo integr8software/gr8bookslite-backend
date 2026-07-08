@@ -56,19 +56,30 @@ export async function seedCompanyPaymentTypeMaintenanceDefaults(
   tx: PaymentTypeWriteClient,
   companyId: number,
 ) {
-  const existingCount = await tx.paymentType.count({
+  const existingPaymentTypes = await tx.paymentType.findMany({
     where: {
       companyId,
-      deletedAt: null,
+      name: {
+        in: PaymentTypeMaintenanceSeedRecords.map(
+          (paymentType) => paymentType.name,
+        ),
+      },
     },
+    select: { name: true },
   });
+  const existingNames = new Set(
+    existingPaymentTypes.map((paymentType) => paymentType.name),
+  );
+  const missingPaymentTypes = PaymentTypeMaintenanceSeedRecords.filter(
+    (paymentType) => !existingNames.has(paymentType.name),
+  );
 
-  if (existingCount > 0) {
-    return;
+  if (missingPaymentTypes.length === 0) {
+    return 0;
   }
 
-  await tx.paymentType.createMany({
-    data: PaymentTypeMaintenanceSeedRecords.map((paymentType) => ({
+  const result = await tx.paymentType.createMany({
+    data: missingPaymentTypes.map((paymentType) => ({
       companyId,
       name: paymentType.name,
       description: paymentType.description,
@@ -78,4 +89,6 @@ export async function seedCompanyPaymentTypeMaintenanceDefaults(
     })),
     skipDuplicates: true,
   });
+
+  return result.count;
 }
