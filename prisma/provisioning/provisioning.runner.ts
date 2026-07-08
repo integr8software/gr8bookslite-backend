@@ -15,7 +15,7 @@ export type ProvisionResult = {
   version: string;
 };
 
-export const PlatformProvisionVersion = '2026.07.04.0';
+export const PlatformProvisionVersion = '2026.07.08.0';
 
 const ProvisionSteps = [
   'platform-catalog',

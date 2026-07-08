@@ -99,7 +99,9 @@ export const AccountingSidebarTemplate = [
     key: 'accounts-payable',
     label: 'Accounts Payable',
     iconName: 'payable',
-    children: [link('accounts-payable-accounts-payable-voucher', 'APV', 'payable')],
+    children: [
+      link('accounts-payable-accounts-payable-voucher', 'APV', 'payable'),
+    ],
   },
   {
     itemType: 'SECTION',
@@ -128,7 +130,13 @@ export const AccountingSidebarTemplate = [
         iconName: 'users',
         children: [
           link('system-administration-users', 'U', 'users'),
-          link('system-administration-user-role', 'UR', 'security', 'User Role'),
+          link(
+            'system-administration-user-role',
+            'UR',
+            'security',
+            'User Role',
+          ),
+          link('system-administration-approver-setup', 'AS', 'shieldCheck'),
         ],
       },
       link('system-administration-approval-management', 'AM', 'shieldCheck'),
@@ -240,7 +248,8 @@ export const ModuleSystemCatalog = [
   {
     code: 'ACCOUNTING_AND_INVENTORY',
     name: 'Accounting and Inventory',
-    description: 'Accounting with trading, inventory, sales, and purchasing workflows.',
+    description:
+      'Accounting with trading, inventory, sales, and purchasing workflows.',
     sortOrder: 20,
     moduleCodes: ModuleCatalog.map((module) => module.code),
     sidebar: AccountingAndInventorySidebarTemplate,

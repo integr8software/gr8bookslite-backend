@@ -417,6 +417,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
+    code: 'AS',
+    name: 'Approver Setup',
+    icon: 'shieldCheck',
+    type: Maintenance,
+  },
+  {
     code: 'AM',
     name: 'Approval Management',
     icon: 'shieldCheck',
