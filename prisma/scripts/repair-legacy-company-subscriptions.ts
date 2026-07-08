@@ -61,7 +61,7 @@ async function main() {
 
   if (!targetPlanCode) {
     throw new Error(
-      'Missing required --target-plan-code <CODE>. Example: --target-plan-code ACCOUNTING_TRADING',
+      'Missing required --target-plan-code <CODE>. Example: --target-plan-code ACCOUNTING',
     );
   }
 

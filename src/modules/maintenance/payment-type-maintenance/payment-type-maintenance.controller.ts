@@ -16,16 +16,18 @@ import { CreatePaymentTypeDto } from './dto/create-payment-type.dto';
 import { GetPaymentTypeListQueryDto } from './dto/get-payment-type-list-query.dto';
 import { ImportPaymentTypesDto } from './dto/import-payment-types.dto';
 import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
-import { PaymentTypesService } from './payment-types.service';
+import { PaymentTypeMaintenanceService } from './payment-type-maintenance.service';
 
 @UseGuards(JwtAuthGuard)
-@ApiTags('Payment Types')
+@ApiTags('Payment Type Maintenance')
 @Controller({
-  path: 'maintenance/financial-management/payment-types',
+  path: 'maintenance/payment-type-maintenance',
   version: '1',
 })
-export class PaymentTypesController {
-  constructor(private readonly paymentTypesService: PaymentTypesService) {}
+export class PaymentTypeMaintenanceController {
+  constructor(
+    private readonly paymentTypeMaintenanceService: PaymentTypeMaintenanceService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Payment type list retrieved.' })
@@ -33,19 +35,19 @@ export class PaymentTypesController {
     @CurrentUser() user: AuthUser,
     @Query() query: GetPaymentTypeListQueryDto,
   ) {
-    return this.paymentTypesService.findAll(user, query);
+    return this.paymentTypeMaintenanceService.findAll(user, query);
   }
 
   @Get(':id')
   @ApiOkResponse({ description: 'Payment type retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.paymentTypesService.findOne(user, id);
+    return this.paymentTypeMaintenanceService.findOne(user, id);
   }
 
   @Post()
   @ApiCreatedResponse({ description: 'Payment type created.' })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreatePaymentTypeDto) {
-    return this.paymentTypesService.create(user, dto);
+    return this.paymentTypeMaintenanceService.create(user, dto);
   }
 
   @Post('import')
@@ -54,7 +56,7 @@ export class PaymentTypesController {
     @CurrentUser() user: AuthUser,
     @Body() dto: ImportPaymentTypesDto,
   ) {
-    return this.paymentTypesService.importPaymentTypes(user, dto);
+    return this.paymentTypeMaintenanceService.importPaymentTypes(user, dto);
   }
 
   @Patch(':id')
@@ -64,6 +66,6 @@ export class PaymentTypesController {
     @Param('id') id: string,
     @Body() dto: UpdatePaymentTypeDto,
   ) {
-    return this.paymentTypesService.update(user, id, dto);
+    return this.paymentTypeMaintenanceService.update(user, id, dto);
   }
 }

@@ -40,6 +40,10 @@ function classifyOperation(commandParts) {
       return 'repair:legacy-company-subscriptions';
     }
 
+    if (firstArgument?.endsWith('repair-company-bootstrap.ts')) {
+      return 'repair:company-bootstrap';
+    }
+
     if (firstArgument?.endsWith('seed-local-fixtures.ts')) {
       return 'seed:fixtures';
     }

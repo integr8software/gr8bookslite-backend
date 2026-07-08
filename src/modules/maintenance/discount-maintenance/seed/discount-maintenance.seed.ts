@@ -1,25 +1,17 @@
 import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
   DiscountStatus,
   DiscountType,
   DiscountValueType,
   Prisma,
 } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
+import { PrismaService } from '../../../../prisma/prisma.service';
+import { resolveDiscountChartAccount } from '../utils/discount-chart-account.util';
 
 type DiscountWriteClient =
   | Pick<PrismaService, 'chartAccount' | 'companyDefaultAccount' | 'discount'>
   | Prisma.TransactionClient;
 
-const DiscountManagementModuleCode = 'DSM';
-const SalesDiscountParentRole = 'SALES_DISCOUNT_PARENT';
-const PurchaseDiscountParentRole = 'PURCHASE_DISCOUNT_PARENT';
-
-export const DefaultCompanyDiscounts = [
+export const DiscountMaintenanceSeedRecords = [
   {
     name: 'Prompt Payment',
     description:
@@ -157,24 +149,29 @@ export const DefaultCompanyDiscounts = [
   },
 ] as const;
 
-export async function seedDefaultDiscountsForCompany(
+export async function seedCompanyDiscountMaintenanceDefaults(
   tx: DiscountWriteClient,
   companyId: number,
 ) {
-  const existingCount = await tx.discount.count({
+  const existingDiscounts = await tx.discount.findMany({
     where: {
       companyId,
-      deletedAt: null,
+      name: {
+        in: DiscountMaintenanceSeedRecords.map((discount) => discount.name),
+      },
     },
+    select: { name: true },
   });
-
-  if (existingCount > 0) {
-    return 0;
-  }
+  const existingNames = new Set(
+    existingDiscounts.map((discount) => discount.name),
+  );
+  const missingDiscounts = DiscountMaintenanceSeedRecords.filter(
+    (discount) => !existingNames.has(discount.name),
+  );
 
   let createdCount = 0;
 
-  for (const discount of DefaultCompanyDiscounts) {
+  for (const discount of missingDiscounts) {
     const chartAccount = await resolveDiscountChartAccount(tx, {
       companyId,
       type: discount.type,
@@ -182,138 +179,24 @@ export async function seedDefaultDiscountsForCompany(
       createdByUserId: null,
     });
 
-    await tx.discount.upsert({
-      where: {
-        companyId_name: {
+    const created = await tx.discount.createMany({
+      data: [
+        {
           companyId,
+          chartAccountId: chartAccount.id,
           name: discount.name,
+          description: discount.description,
+          type: discount.type,
+          valueType: discount.valueType,
+          value: discount.value,
+          status: DiscountStatus.ACTIVE,
+          createdByUserId: null,
         },
-      },
-      update: {
-        chartAccountId: chartAccount.id,
-        description: discount.description,
-        type: discount.type,
-        valueType: discount.valueType,
-        value: discount.value,
-        status: DiscountStatus.ACTIVE,
-        deletedAt: null,
-      },
-      create: {
-        companyId,
-        chartAccountId: chartAccount.id,
-        name: discount.name,
-        description: discount.description,
-        type: discount.type,
-        valueType: discount.valueType,
-        value: discount.value,
-        status: DiscountStatus.ACTIVE,
-        createdByUserId: null,
-      },
+      ],
+      skipDuplicates: true,
     });
-    createdCount += 1;
+    createdCount += created.count;
   }
 
   return createdCount;
-}
-
-export async function resolveDiscountChartAccount(
-  tx: DiscountWriteClient,
-  input: {
-    companyId: number;
-    type: DiscountType;
-    accountTitle: string;
-    createdByUserId: number | null;
-  },
-) {
-  const parentMapping = await tx.companyDefaultAccount.findUnique({
-    where: {
-      companyId_moduleCode_accountRole: {
-        companyId: input.companyId,
-        moduleCode: DiscountManagementModuleCode,
-        accountRole:
-          input.type === DiscountType.PURCHASE
-            ? PurchaseDiscountParentRole
-            : SalesDiscountParentRole,
-      },
-    },
-    include: {
-      chartAccount: true,
-    },
-  });
-
-  if (!parentMapping?.chartAccount) {
-    throw new Error(
-      `Default discount account parent is not configured for ${input.type}.`,
-    );
-  }
-
-  const parent = parentMapping.chartAccount;
-  const existing = await tx.chartAccount.findFirst({
-    where: {
-      companyId: input.companyId,
-      parentAccountId: parent.id,
-      accountTitle: {
-        equals: input.accountTitle,
-        mode: 'insensitive',
-      },
-      deletedAt: null,
-    },
-  });
-
-  if (existing) {
-    return existing;
-  }
-
-  const siblingCodes = await tx.chartAccount.findMany({
-    where: {
-      companyId: input.companyId,
-      parentAccountId: parent.id,
-      accountLevel: ChartAccountLevel.SPECIFIC,
-    },
-    select: {
-      accountCode: true,
-    },
-  });
-  const accountCode = generateNextAccountCodeFromSiblings({
-    parentCode: parent.accountCode,
-    accountLevel: ChartAccountLevel.SPECIFIC,
-    siblingCodes: siblingCodes.map((account) => account.accountCode),
-  });
-
-  return tx.chartAccount.create({
-    data: {
-      companyId: input.companyId,
-      parentAccountId: parent.id,
-      accountCode,
-      accountTitle: input.accountTitle,
-      accountLevel: ChartAccountLevel.SPECIFIC,
-      accountType:
-        input.type === DiscountType.PURCHASE
-          ? ChartAccountType.EXPENSE
-          : ChartAccountType.REVENUE,
-      accountNature:
-        input.type === DiscountType.PURCHASE
-          ? AccountNature.CREDIT
-          : AccountNature.DEBIT,
-      accountGroup: parent.accountGroup,
-      statementSection: parent.statementSection,
-      reportAlias: input.accountTitle,
-      description: `Generated from Discount Management for ${input.accountTitle}.`,
-      isPostingAccount: true,
-      withSubsidiary: false,
-      contraAccount: true,
-      showTotal: false,
-      status: ChartAccountStatus.ACTIVE,
-      currencyCode: parent.currencyCode,
-      whoCreated:
-        input.createdByUserId === null ? null : String(input.createdByUserId),
-    },
-  });
-}
-
-export function getGeneratedDiscountAccountTitle(
-  type: DiscountType,
-  name: string,
-) {
-  return `${type === DiscountType.PURCHASE ? 'Purchase' : 'Sales'} Discount - ${name.trim()}`;
 }

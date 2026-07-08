@@ -158,6 +158,32 @@ test('safe provisioning scripts are available without full db seed aliases', () 
   }
 });
 
+test('company bootstrap repair is global and replaces one-off company data repair scripts', () => {
+  const expectedRunners = {
+    local: 'run-with-env.cjs .env',
+    shared: 'run-with-env.cjs .env.shared-dev',
+    staging: 'run-with-process-env.cjs staging',
+  };
+
+  for (const [environment, runner] of Object.entries(expectedRunners)) {
+    for (const action of ['audit', 'repair']) {
+      assert.match(
+        scripts[`db:${action}:company-bootstrap:${environment}`],
+        new RegExp(
+          `${runner.replaceAll('.', '\\.')} ts-node prisma/scripts/repair-company-bootstrap\\.ts`,
+        ),
+      );
+    }
+  }
+
+  assert.deepEqual(
+    Object.keys(scripts).filter((scriptName) =>
+      /missing-company-coa/.test(scriptName),
+    ),
+    [],
+  );
+});
+
 test('legacy company module compatibility commands are retired', () => {
   assert.deepEqual(
     Object.keys(scripts).filter((scriptName) =>

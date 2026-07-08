@@ -21,15 +21,15 @@ import { CreateTermDto } from './dto/create-term.dto';
 import { GetTermListQueryDto } from './dto/get-term-list-query.dto';
 import { ImportTermsDto } from './dto/import-terms.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
+import { mapTerm } from './mappers/term-maintenance.mapper';
 
 const TermManagementPermissionCode = 'TM';
 
 const DefaultPage = 1;
 const DefaultLimit = 500;
-const SystemGeneratedLabel = 'System Generated';
 
 @Injectable()
-export class TermsService {
+export class TermMaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetTermListQueryDto) {
@@ -468,25 +468,6 @@ export class TermsService {
       throw new ConflictException('A term with this name already exists.');
     }
   }
-}
-
-function mapTerm(term: Term, userNames: Map<number, string>) {
-  return {
-    id: term.id.toString(),
-    name: term.name,
-    description: term.description ?? '',
-    dateMode: term.dateMode,
-    period: term.period,
-    status: term.status,
-    createdBy:
-      term.createdByUserId === null
-        ? SystemGeneratedLabel
-        : (userNames.get(term.createdByUserId) ?? null),
-    createdAt: term.createdAt,
-    updatedBy:
-      (term.updatedByUserId && userNames.get(term.updatedByUserId)) ?? null,
-    updatedAt: term.updatedAt,
-  };
 }
 
 function parseBigIntId(value: string, label = 'id') {

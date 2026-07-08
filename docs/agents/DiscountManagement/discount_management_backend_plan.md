@@ -282,7 +282,7 @@ These anchors let `seedDefaultDiscountsForCompany` find the parent accounts with
 Current onboarding company detail save flow calls:
 
 ```ts
-await seedDefaultTermsForCompany(this.prisma, provisionedCompany.id);
+await seedCompanyTermManagementDefaults(this.prisma, provisionedCompany.id);
 await seedDefaultChartAccountsForCompany(this.prisma, provisionedCompany.id);
 await seedDefaultBankAccountsForCompany(this.prisma, provisionedCompany.id);
 ```
@@ -290,7 +290,7 @@ await seedDefaultBankAccountsForCompany(this.prisma, provisionedCompany.id);
 Target flow:
 
 ```ts
-await seedDefaultTermsForCompany(this.prisma, provisionedCompany.id);
+await seedCompanyTermManagementDefaults(this.prisma, provisionedCompany.id);
 await seedDefaultChartAccountsForCompany(this.prisma, provisionedCompany.id);
 await seedDefaultDiscountsForCompany(this.prisma, provisionedCompany.id);
 await seedDefaultBankAccountsForCompany(this.prisma, provisionedCompany.id);

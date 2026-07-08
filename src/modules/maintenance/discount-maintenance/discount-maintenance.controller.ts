@@ -12,20 +12,22 @@ import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { DiscountsService } from './discounts.service';
+import { DiscountMaintenanceService } from './discount-maintenance.service';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { GetDiscountListQueryDto } from './dto/get-discount-list-query.dto';
 import { ImportDiscountsDto } from './dto/import-discounts.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 
 @UseGuards(JwtAuthGuard)
-@ApiTags('Discounts')
+@ApiTags('Discount Maintenance')
 @Controller({
-  path: 'maintenance/financial-management/discounts',
+  path: 'maintenance/discount-maintenance',
   version: '1',
 })
-export class DiscountsController {
-  constructor(private readonly discountsService: DiscountsService) {}
+export class DiscountMaintenanceController {
+  constructor(
+    private readonly discountMaintenanceService: DiscountMaintenanceService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Discount list retrieved.' })
@@ -33,19 +35,19 @@ export class DiscountsController {
     @CurrentUser() user: AuthUser,
     @Query() query: GetDiscountListQueryDto,
   ) {
-    return this.discountsService.findAll(user, query);
+    return this.discountMaintenanceService.findAll(user, query);
   }
 
   @Get(':id')
   @ApiOkResponse({ description: 'Discount retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.discountsService.findOne(user, id);
+    return this.discountMaintenanceService.findOne(user, id);
   }
 
   @Post()
   @ApiCreatedResponse({ description: 'Discount created.' })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateDiscountDto) {
-    return this.discountsService.create(user, dto);
+    return this.discountMaintenanceService.create(user, dto);
   }
 
   @Post('import')
@@ -54,7 +56,7 @@ export class DiscountsController {
     @CurrentUser() user: AuthUser,
     @Body() dto: ImportDiscountsDto,
   ) {
-    return this.discountsService.importDiscounts(user, dto);
+    return this.discountMaintenanceService.importDiscounts(user, dto);
   }
 
   @Patch(':id')
@@ -64,6 +66,6 @@ export class DiscountsController {
     @Param('id') id: string,
     @Body() dto: UpdateDiscountDto,
   ) {
-    return this.discountsService.update(user, id, dto);
+    return this.discountMaintenanceService.update(user, id, dto);
   }
 }

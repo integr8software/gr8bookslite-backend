@@ -468,6 +468,162 @@
         ]
       }
     },
+    "/api/v1/dashboard/workspace-overview": {
+      "get": {
+        "operationId": "DashboardController_getWorkspaceOverview_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "HealthController_getHealth_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/onboarding/company-logo": {
+      "post": {
+        "operationId": "OnboardingController_uploadCompanyLogo_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/plans": {
+      "get": {
+        "operationId": "OnboardingController_getPlans_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/draft": {
+      "get": {
+        "operationId": "OnboardingController_getDraft_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/plan": {
+      "post": {
+        "operationId": "OnboardingController_selectPlan_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectOnboardingPlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/billing": {
+      "post": {
+        "operationId": "OnboardingController_saveBilling_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveOnboardingBillingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/company-details": {
+      "post": {
+        "operationId": "OnboardingController_saveCompanyDetails_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveOnboardingCompanyDetailsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/complete": {
+      "post": {
+        "operationId": "OnboardingController_complete_v1",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
     "/api/v1/users": {
       "get": {
         "operationId": "UsersController_findAll_v1",
@@ -678,162 +834,6 @@
         },
         "tags": [
           "Users"
-        ]
-      }
-    },
-    "/api/v1/dashboard/workspace-overview": {
-      "get": {
-        "operationId": "DashboardController_getWorkspaceOverview_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Dashboard"
-        ]
-      }
-    },
-    "/api/v1/health": {
-      "get": {
-        "operationId": "HealthController_getHealth_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Health"
-        ]
-      }
-    },
-    "/api/v1/onboarding/company-logo": {
-      "post": {
-        "operationId": "OnboardingController_uploadCompanyLogo_v1",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
-    "/api/v1/onboarding/plans": {
-      "get": {
-        "operationId": "OnboardingController_getPlans_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
-    "/api/v1/onboarding/draft": {
-      "get": {
-        "operationId": "OnboardingController_getDraft_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
-    "/api/v1/onboarding/plan": {
-      "post": {
-        "operationId": "OnboardingController_selectPlan_v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SelectOnboardingPlanDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
-    "/api/v1/onboarding/billing": {
-      "post": {
-        "operationId": "OnboardingController_saveBilling_v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveOnboardingBillingDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
-    "/api/v1/onboarding/company-details": {
-      "post": {
-        "operationId": "OnboardingController_saveCompanyDetails_v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveOnboardingCompanyDetailsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
-    "/api/v1/onboarding/complete": {
-      "post": {
-        "operationId": "OnboardingController_complete_v1",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Onboarding"
         ]
       }
     },
@@ -2354,54 +2354,6 @@
         ]
       }
     },
-    "/api/v1/workspace/audit-logs": {
-      "get": {
-        "operationId": "WorkspaceAuditLogsController_findAll_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WorkspaceAuditLogResponseDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Workspace Audit Logs"
-        ]
-      }
-    },
-    "/api/v1/workspace/audit-logs/activity": {
-      "post": {
-        "operationId": "WorkspaceAuditLogsController_recordActivity_v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RecordWorkspaceActivityDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Workspace Audit Logs"
-        ]
-      }
-    },
     "/api/v1/workspace/users": {
       "get": {
         "operationId": "WorkspaceUsersController_findAll_v1",
@@ -2552,6 +2504,54 @@
         },
         "tags": [
           "Workspace Users"
+        ]
+      }
+    },
+    "/api/v1/workspace/audit-logs": {
+      "get": {
+        "operationId": "WorkspaceAuditLogsController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceAuditLogResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Workspace Audit Logs"
+        ]
+      }
+    },
+    "/api/v1/workspace/audit-logs/activity": {
+      "post": {
+        "operationId": "WorkspaceAuditLogsController_recordActivity_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordWorkspaceActivityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Workspace Audit Logs"
         ]
       }
     },
@@ -2794,137 +2794,6 @@
         },
         "tags": [
           "BranchRoles"
-        ]
-      }
-    },
-    "/api/v1/companies/{companyId}/user-sidebar/customization": {
-      "get": {
-        "operationId": "UserSidebarController_getCustomization_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
-        ]
-      },
-      "put": {
-        "operationId": "UserSidebarController_save_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {}
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveUserSidebarDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
-        ]
-      }
-    },
-    "/api/v1/companies/{companyId}/user-sidebar/reset": {
-      "post": {
-        "operationId": "UserSidebarController_reset_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "applyScope",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
         ]
       }
     },
@@ -3489,9 +3358,9 @@
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/terms": {
+    "/api/v1/maintenance/term-maintenance": {
       "get": {
-        "operationId": "TermsController_findAll_v1",
+        "operationId": "TermMaintenanceController_findAll_v1",
         "parameters": [
           {
             "name": "search",
@@ -3581,11 +3450,11 @@
           }
         },
         "tags": [
-          "Terms"
+          "Term Maintenance"
         ]
       },
       "post": {
-        "operationId": "TermsController_create_v1",
+        "operationId": "TermMaintenanceController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3603,13 +3472,13 @@
           }
         },
         "tags": [
-          "Terms"
+          "Term Maintenance"
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/terms/{id}": {
+    "/api/v1/maintenance/term-maintenance/{id}": {
       "get": {
-        "operationId": "TermsController_findOne_v1",
+        "operationId": "TermMaintenanceController_findOne_v1",
         "parameters": [
           {
             "name": "id",
@@ -3626,11 +3495,11 @@
           }
         },
         "tags": [
-          "Terms"
+          "Term Maintenance"
         ]
       },
       "patch": {
-        "operationId": "TermsController_update_v1",
+        "operationId": "TermMaintenanceController_update_v1",
         "parameters": [
           {
             "name": "id",
@@ -3657,13 +3526,13 @@
           }
         },
         "tags": [
-          "Terms"
+          "Term Maintenance"
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/terms/import": {
+    "/api/v1/maintenance/term-maintenance/import": {
       "post": {
-        "operationId": "TermsController_importTerms_v1",
+        "operationId": "TermMaintenanceController_importTerms_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3681,7 +3550,413 @@
           }
         },
         "tags": [
-          "Terms"
+          "Term Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/payment-type-maintenance": {
+      "get": {
+        "operationId": "PaymentTypeMaintenanceController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "classification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBIT",
+                "CASH",
+                "WITH_BANK",
+                "BANK_TRANSFER",
+                "MULTIPLE_CHECK",
+                "ONLINE_PAYMENT"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "classification",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment type list retrieved."
+          }
+        },
+        "tags": [
+          "Payment Type Maintenance"
+        ]
+      },
+      "post": {
+        "operationId": "PaymentTypeMaintenanceController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentTypeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment type created."
+          }
+        },
+        "tags": [
+          "Payment Type Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/payment-type-maintenance/{id}": {
+      "get": {
+        "operationId": "PaymentTypeMaintenanceController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment type retrieved."
+          }
+        },
+        "tags": [
+          "Payment Type Maintenance"
+        ]
+      },
+      "patch": {
+        "operationId": "PaymentTypeMaintenanceController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePaymentTypeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment type updated."
+          }
+        },
+        "tags": [
+          "Payment Type Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/payment-type-maintenance/import": {
+      "post": {
+        "operationId": "PaymentTypeMaintenanceController_importPaymentTypes_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPaymentTypesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment types imported."
+          }
+        },
+        "tags": [
+          "Payment Type Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/discount-maintenance": {
+      "get": {
+        "operationId": "DiscountMaintenanceController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SALES",
+                "PURCHASE"
+              ]
+            }
+          },
+          {
+            "name": "valueType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PERCENTAGE",
+                "FIXED"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "type",
+                "valueType",
+                "value",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discount list retrieved."
+          }
+        },
+        "tags": [
+          "Discount Maintenance"
+        ]
+      },
+      "post": {
+        "operationId": "DiscountMaintenanceController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDiscountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Discount created."
+          }
+        },
+        "tags": [
+          "Discount Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/discount-maintenance/{id}": {
+      "get": {
+        "operationId": "DiscountMaintenanceController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discount retrieved."
+          }
+        },
+        "tags": [
+          "Discount Maintenance"
+        ]
+      },
+      "patch": {
+        "operationId": "DiscountMaintenanceController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDiscountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Discount updated."
+          }
+        },
+        "tags": [
+          "Discount Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/discount-maintenance/import": {
+      "post": {
+        "operationId": "DiscountMaintenanceController_importDiscounts_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportDiscountsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Discounts imported."
+          }
+        },
+        "tags": [
+          "Discount Maintenance"
         ]
       }
     },
@@ -3916,6 +4191,211 @@
         ]
       }
     },
+    "/api/v1/maintenance/financial-management/default-accounts": {
+      "get": {
+        "operationId": "DefaultAccountController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "EXPENSE",
+                "COLLECTION",
+                "FIXED_ASSET"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "description",
+                "type",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default accounts retrieved."
+          }
+        },
+        "tags": [
+          "Default Account"
+        ]
+      },
+      "post": {
+        "operationId": "DefaultAccountController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDefaultAccountTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default account created."
+          }
+        },
+        "tags": [
+          "Default Account"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/default-accounts/{id}": {
+      "get": {
+        "operationId": "DefaultAccountController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default account retrieved."
+          }
+        },
+        "tags": [
+          "Default Account"
+        ]
+      },
+      "patch": {
+        "operationId": "DefaultAccountController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDefaultAccountTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default account updated."
+          }
+        },
+        "tags": [
+          "Default Account"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/default-accounts/{id}/status": {
+      "patch": {
+        "operationId": "DefaultAccountController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDefaultAccountTemplateStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default account status updated."
+          }
+        },
+        "tags": [
+          "Default Account"
+        ]
+      }
+    },
     "/api/v1/system-administration/approval-management/modules": {
       "get": {
         "operationId": "ApprovalManagementController_findModules_v1",
@@ -3995,6 +4475,137 @@
         },
         "tags": [
           "Transaction Number Sequences"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/user-sidebar/customization": {
+      "get": {
+        "operationId": "UserSidebarController_getCustomization_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      },
+      "put": {
+        "operationId": "UserSidebarController_save_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveUserSidebarDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/user-sidebar/reset": {
+      "post": {
+        "operationId": "UserSidebarController_reset_v1",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applyScope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "UserSidebar"
         ]
       }
     },
@@ -4335,76 +4946,6 @@
           "confirmNewPassword"
         ]
       },
-      "CreateUserDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "contactNumber": {
-            "type": "string"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 8
-          },
-          "systemRole": {
-            "type": "string",
-            "enum": [
-              "SUPER_ADMIN",
-              "STANDARD"
-            ]
-          }
-        },
-        "required": [
-          "name",
-          "email",
-          "password"
-        ]
-      },
-      "UpdateOwnProfileDto": {
-        "type": "object",
-        "properties": {
-          "fullName": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "contactNumber": {
-            "type": "string",
-            "maxLength": 40
-          }
-        }
-      },
-      "UpdateUserDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "contactNumber": {
-            "type": "string"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 8
-          },
-          "systemRole": {
-            "type": "string",
-            "enum": [
-              "SUPER_ADMIN",
-              "STANDARD"
-            ]
-          }
-        }
-      },
       "SelectOnboardingPlanDto": {
         "type": "object",
         "properties": {
@@ -4413,12 +4954,12 @@
             "minLength": 1
           },
           "billingCycle": {
-            "type": "string",
             "enum": [
               "MONTHLY",
               "QUARTERLY",
               "YEARLY"
-            ]
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -4479,11 +5020,11 @@
         "type": "object",
         "properties": {
           "taxpayerType": {
-            "type": "string",
             "enum": [
               "individual",
               "non-individual"
-            ]
+            ],
+            "type": "string"
           },
           "lastName": {
             "type": "string",
@@ -4559,6 +5100,76 @@
           "reportStartDate",
           "reportEndDate"
         ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "systemRole": {
+            "enum": [
+              "SUPER_ADMIN",
+              "STANDARD"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "UpdateOwnProfileDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "contactNumber": {
+            "type": "string",
+            "maxLength": 40
+          }
+        }
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "systemRole": {
+            "enum": [
+              "SUPER_ADMIN",
+              "STANDARD"
+            ],
+            "type": "string"
+          }
+        }
       },
       "BillingPlanPriceResponseDto": {
         "type": "object",
@@ -5394,12 +6005,12 @@
             "type": "string"
           },
           "billingCycle": {
-            "type": "string",
             "enum": [
               "MONTHLY",
               "QUARTERLY",
               "YEARLY"
-            ]
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -5747,19 +6358,19 @@
             "maxLength": 1000
           },
           "scope": {
-            "type": "string",
             "enum": [
               "ONBOARDING",
               "ADDITIONAL_COMPANY"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
-            "type": "string",
             "enum": [
               "ACTIVE",
               "DRAFT",
               "INACTIVE"
-            ]
+            ],
+            "type": "string"
           },
           "trialDays": {
             "type": "number",
@@ -6313,11 +6924,11 @@
         "type": "object",
         "properties": {
           "taxpayerType": {
-            "type": "string",
             "enum": [
               "individual",
               "non-individual"
-            ]
+            ],
+            "type": "string"
           },
           "lastName": {
             "type": "string",
@@ -6395,11 +7006,11 @@
         "type": "object",
         "properties": {
           "taxpayerType": {
-            "type": "string",
             "enum": [
               "individual",
               "non-individual"
-            ]
+            ],
+            "type": "string"
           },
           "lastName": {
             "type": "string",
@@ -6484,11 +7095,11 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "string",
             "enum": [
               "BRANCH",
               "SATELLITE"
-            ]
+            ],
+            "type": "string"
           },
           "name": {
             "type": "string",
@@ -6549,107 +7160,6 @@
           },
           "parentUnitId": {
             "type": "number"
-          }
-        }
-      },
-      "WorkspaceAuditLogResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "companyId": {
-            "type": "number",
-            "nullable": true
-          },
-          "companyName": {
-            "type": "string",
-            "nullable": true
-          },
-          "actorUserId": {
-            "type": "number",
-            "nullable": true
-          },
-          "actorName": {
-            "type": "string"
-          },
-          "actorRole": {
-            "type": "string"
-          },
-          "action": {
-            "type": "string"
-          },
-          "entityType": {
-            "type": "string"
-          },
-          "entityId": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string"
-          },
-          "ipAddress": {
-            "type": "string",
-            "nullable": true
-          },
-          "module": {
-            "type": "string"
-          },
-          "branchId": {
-            "type": "string"
-          },
-          "branchName": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "companyId",
-          "companyName",
-          "actorUserId",
-          "actorName",
-          "actorRole",
-          "action",
-          "entityType",
-          "entityId",
-          "description",
-          "ipAddress",
-          "module",
-          "branchId",
-          "branchName",
-          "createdAt"
-        ]
-      },
-      "RecordWorkspaceActivityDto": {
-        "type": "object",
-        "properties": {
-          "path": {
-            "type": "string"
-          },
-          "module": {
-            "type": "string"
-          },
-          "branchId": {
-            "type": "string"
-          },
-          "branchName": {
-            "type": "string"
-          },
-          "action": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "entityType": {
-            "type": "string"
-          },
-          "entityId": {
-            "type": "string"
           }
         }
       },
@@ -6755,6 +7265,107 @@
           "email",
           "companyAssignments"
         ]
+      },
+      "WorkspaceAuditLogResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "number",
+            "nullable": true
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorUserId": {
+            "type": "number",
+            "nullable": true
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "actorRole": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "ipAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "module": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "companyName",
+          "actorUserId",
+          "actorName",
+          "actorRole",
+          "action",
+          "entityType",
+          "entityId",
+          "description",
+          "ipAddress",
+          "module",
+          "branchId",
+          "branchName",
+          "createdAt"
+        ]
+      },
+      "RecordWorkspaceActivityDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          }
+        }
       },
       "SaveTablePreferenceDto": {
         "type": "object",
@@ -6891,76 +7502,6 @@
         },
         "required": [
           "isActive"
-        ]
-      },
-      "UserSidebarTreeItemDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "label": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 500
-          },
-          "itemType": {
-            "type": "string",
-            "enum": [
-              "SECTION",
-              "CONTAINER",
-              "LINK"
-            ]
-          },
-          "moduleId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "iconName": {
-            "type": "string"
-          },
-          "children": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
-            }
-          }
-        },
-        "required": [
-          "key",
-          "label",
-          "itemType",
-          "children"
-        ]
-      },
-      "SaveUserSidebarDto": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "number",
-            "minimum": 0
-          },
-          "applyScope": {
-            "type": "string",
-            "enum": [
-              "CURRENT_BRANCH",
-              "ALL_BRANCHES"
-            ]
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
-            }
-          }
-        },
-        "required": [
-          "version",
-          "items"
         ]
       },
       "UpdateBranchUserRoleDto": {
@@ -7697,6 +8238,53 @@
           "account"
         ]
       },
+      "ChartAccountBankDetailsDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "BANK"
+            ]
+          },
+          "bankName": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "branch": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountType": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "currencyExchangeRate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "seriesStart": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesEnd": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "seriesDigits": {
+            "type": "number",
+            "minimum": 1
+          }
+        }
+      },
       "CreateChartAccountDto": {
         "type": "object",
         "properties": {
@@ -7704,35 +8292,35 @@
             "type": "string"
           },
           "accountLevel": {
-            "type": "string",
             "enum": [
               "MAJOR",
               "SUB1",
               "SUB2",
               "SUB3",
               "SPECIFIC"
-            ]
+            ],
+            "type": "string"
           },
           "accountTitle": {
             "type": "string",
             "maxLength": 250
           },
           "accountType": {
-            "type": "string",
             "enum": [
               "ASSET",
               "LIABILITY",
               "EQUITY",
               "REVENUE",
               "EXPENSE"
-            ]
+            ],
+            "type": "string"
           },
           "accountNature": {
-            "type": "string",
             "enum": [
               "DEBIT",
               "CREDIT"
-            ]
+            ],
+            "type": "string"
           },
           "accountGroup": {
             "type": "string",
@@ -7769,6 +8357,16 @@
           "currencyCode": {
             "type": "string",
             "maxLength": 10
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "linkedDetails": {
+            "$ref": "#/components/schemas/ChartAccountBankDetailsDto"
           }
         },
         "required": [
@@ -7863,6 +8461,16 @@
           "currencyCode": {
             "type": "string",
             "maxLength": 10
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "linkedDetails": {
+            "$ref": "#/components/schemas/ChartAccountBankDetailsDto"
           }
         }
       },
@@ -7870,11 +8478,11 @@
         "type": "object",
         "properties": {
           "status": {
-            "type": "string",
             "enum": [
               "ACTIVE",
               "INACTIVE"
-            ]
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -7893,23 +8501,23 @@
             "maxLength": 500
           },
           "dateMode": {
-            "type": "string",
             "enum": [
               "DAY",
               "MONTH",
               "YEAR"
-            ]
+            ],
+            "type": "string"
           },
           "period": {
             "type": "number",
             "minimum": 0
           },
           "status": {
-            "type": "string",
             "enum": [
               "ACTIVE",
               "INACTIVE"
-            ]
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -7954,6 +8562,186 @@
             "type": "string"
           },
           "period": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "CreatePaymentTypeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "classification": {
+            "enum": [
+              "DEBIT",
+              "CASH",
+              "WITH_BANK",
+              "BANK_TRANSFER",
+              "MULTIPLE_CHECK",
+              "ONLINE_PAYMENT"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "classification"
+        ]
+      },
+      "ImportPaymentTypesDto": {
+        "type": "object",
+        "properties": {
+          "paymentTypes": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePaymentTypeDto"
+            }
+          }
+        },
+        "required": [
+          "paymentTypes"
+        ]
+      },
+      "UpdatePaymentTypeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "classification": {
+            "enum": [
+              "DEBIT",
+              "CASH",
+              "WITH_BANK",
+              "BANK_TRANSFER",
+              "MULTIPLE_CHECK",
+              "ONLINE_PAYMENT"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "CreateDiscountDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "type": {
+            "enum": [
+              "SALES",
+              "PURCHASE"
+            ],
+            "type": "string"
+          },
+          "valueType": {
+            "enum": [
+              "PERCENTAGE",
+              "FIXED"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "valueType",
+          "value"
+        ]
+      },
+      "ImportDiscountsDto": {
+        "type": "object",
+        "properties": {
+          "discounts": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateDiscountDto"
+            }
+          }
+        },
+        "required": [
+          "discounts"
+        ]
+      },
+      "UpdateDiscountDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "type": {
+            "enum": [
+              "SALES",
+              "PURCHASE"
+            ],
+            "type": "string"
+          },
+          "valueType": {
+            "enum": [
+              "PERCENTAGE",
+              "FIXED"
+            ],
+            "type": "string"
+          },
+          "value": {
             "type": "number",
             "minimum": 0
           },
@@ -8017,11 +8805,11 @@
             "type": "boolean"
           },
           "status": {
-            "type": "string",
             "enum": [
               "ACTIVE",
               "INACTIVE"
-            ]
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -8110,11 +8898,86 @@
         "type": "object",
         "properties": {
           "status": {
-            "type": "string",
             "enum": [
               "ACTIVE",
               "INACTIVE"
-            ]
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreateDefaultAccountTemplateDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "EXPENSE",
+              "COLLECTION",
+              "FIXED_ASSET"
+            ],
+            "type": "string"
+          },
+          "defaultAccountName": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "defaultAccountName"
+        ]
+      },
+      "UpdateDefaultAccountTemplateDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "EXPENSE",
+              "COLLECTION",
+              "FIXED_ASSET"
+            ],
+            "type": "string"
+          },
+          "defaultAccountName": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "UpdateDefaultAccountTemplateStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -8286,11 +9149,11 @@
             "maxLength": 120
           },
           "inputMode": {
-            "type": "string",
             "enum": [
               "Auto",
               "Manual"
-            ]
+            ],
+            "type": "string"
           },
           "prefix": {
             "type": "string",
@@ -8314,11 +9177,11 @@
             "minimum": 0
           },
           "scope": {
-            "type": "string",
             "enum": [
               "all",
               "branch"
-            ]
+            ],
+            "type": "string"
           },
           "branchUnitIds": {
             "type": "array",
@@ -8332,11 +9195,11 @@
             "minimum": 1
           },
           "status": {
-            "type": "string",
             "enum": [
               "Active",
               "Inactive"
-            ]
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -8365,6 +9228,85 @@
         "required": [
           "message",
           "sequence"
+        ]
+      },
+      "UserSidebarTreeItemDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "itemType": {
+            "type": "string",
+            "enum": [
+              "SECTION",
+              "CONTAINER",
+              "LINK"
+            ]
+          },
+          "moduleId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "iconName": {
+            "type": "string"
+          },
+          "isHidden": {
+            "type": "boolean"
+          },
+          "isPinned": {
+            "type": "boolean"
+          },
+          "isCollapsed": {
+            "type": "boolean"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "itemType",
+          "children"
+        ]
+      },
+      "SaveUserSidebarDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "minimum": 0
+          },
+          "applyScope": {
+            "enum": [
+              "CURRENT_BRANCH",
+              "ALL_BRANCHES"
+            ],
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "items"
         ]
       },
       "AiAssistantChatMessageDto": {

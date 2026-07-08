@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 export const OpenApiDocumentPath = 'api/docs';
-export const OpenApiJsonPath = 'api/docs-json';
+export const OpenApiJsonPath = '/api/docs-json';
 
 export function createOpenApiDocument(app: INestApplication) {
   const config = new DocumentBuilder()
@@ -14,6 +14,7 @@ export function createOpenApiDocument(app: INestApplication) {
     .build();
 
   return SwaggerModule.createDocument(app, config, {
+    deepScanRoutes: true,
     ignoreGlobalPrefix: false,
   });
 }

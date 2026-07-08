@@ -4,8 +4,8 @@ import {
   Prisma,
   type DefaultChartAccount,
 } from '@prisma/client';
-import { StandardDefaultAccountTemplates } from '../../../../prisma/seeds/standardDefaultCoaTemplate';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { StandardDefaultAccountTemplates } from '../../../../../prisma/seeds/standardDefaultCoaTemplate';
+import { PrismaService } from '../../../../prisma/prisma.service';
 
 const RequiredCompanyAccountRoles = [
   {
@@ -24,7 +24,7 @@ const RequiredCompanyAccountRoles = [
 
 const CashInBankSpecificPrefix = 'Cash in Bank - ';
 
-export async function seedDefaultChartAccountsForCompany(
+export async function seedCompanyChartAccountDefaults(
   tx: Prisma.TransactionClient | PrismaService,
   companyId: number,
 ) {

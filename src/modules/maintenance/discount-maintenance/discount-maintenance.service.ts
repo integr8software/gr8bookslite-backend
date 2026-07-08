@@ -22,7 +22,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import {
   getGeneratedDiscountAccountTitle,
   resolveDiscountChartAccount,
-} from './default-discounts';
+} from './utils/discount-chart-account.util';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { GetDiscountListQueryDto } from './dto/get-discount-list-query.dto';
 import { ImportDiscountsDto } from './dto/import-discounts.dto';
@@ -38,7 +38,7 @@ type DiscountWithAccount = Discount & {
 };
 
 @Injectable()
-export class DiscountsService {
+export class DiscountMaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetDiscountListQueryDto) {

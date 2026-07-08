@@ -3,13 +3,13 @@ import {
   PaymentTypeStatus,
   Prisma,
 } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '../../../../prisma/prisma.service';
 
 type PaymentTypeWriteClient =
   | Pick<PrismaService, 'paymentType'>
   | Prisma.TransactionClient;
 
-export const DefaultCompanyPaymentTypes = [
+export const PaymentTypeMaintenanceSeedRecords = [
   {
     name: 'Cash',
     description: 'Cash payment without additional bank details.',
@@ -52,23 +52,34 @@ export const DefaultCompanyPaymentTypes = [
   },
 ] as const;
 
-export async function seedDefaultPaymentTypesForCompany(
+export async function seedCompanyPaymentTypeMaintenanceDefaults(
   tx: PaymentTypeWriteClient,
   companyId: number,
 ) {
-  const existingCount = await tx.paymentType.count({
+  const existingPaymentTypes = await tx.paymentType.findMany({
     where: {
       companyId,
-      deletedAt: null,
+      name: {
+        in: PaymentTypeMaintenanceSeedRecords.map(
+          (paymentType) => paymentType.name,
+        ),
+      },
     },
+    select: { name: true },
   });
+  const existingNames = new Set(
+    existingPaymentTypes.map((paymentType) => paymentType.name),
+  );
+  const missingPaymentTypes = PaymentTypeMaintenanceSeedRecords.filter(
+    (paymentType) => !existingNames.has(paymentType.name),
+  );
 
-  if (existingCount > 0) {
-    return;
+  if (missingPaymentTypes.length === 0) {
+    return 0;
   }
 
-  await tx.paymentType.createMany({
-    data: DefaultCompanyPaymentTypes.map((paymentType) => ({
+  const result = await tx.paymentType.createMany({
+    data: missingPaymentTypes.map((paymentType) => ({
       companyId,
       name: paymentType.name,
       description: paymentType.description,
@@ -78,4 +89,6 @@ export async function seedDefaultPaymentTypesForCompany(
     })),
     skipDuplicates: true,
   });
+
+  return result.count;
 }

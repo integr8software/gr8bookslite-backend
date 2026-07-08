@@ -1,11 +1,11 @@
 import { ChartAccountLevel, ChartAccountStatus, Prisma } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '../../../../prisma/prisma.service';
 
 const BankMasterfileModuleCode = 'BM';
 const CashInBankParentRole = 'CASH_IN_BANK_PARENT';
 const CashInBankSpecificPrefix = 'Cash in Bank - ';
 
-export async function seedDefaultBankAccountsForCompany(
+export async function seedCompanyBankAccountDefaults(
   tx: Prisma.TransactionClient | PrismaService,
   companyId: number,
 ) {

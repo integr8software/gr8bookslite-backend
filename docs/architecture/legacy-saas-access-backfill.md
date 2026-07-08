@@ -53,8 +53,9 @@ npm run db:backfill-legacy-saas-access:staging -- --apply
 
 ## Default Plan
 
-The default backfill plan is `ACCOUNTING_TRADING`, matching the existing active
-onboarding SaaS seed.
+The default backfill plan is `ACCOUNTING`, matching the conservative onboarding
+SaaS seed. Use `ACCOUNTING_AND_INVENTORY` explicitly when the company should
+receive the inventory module system as well.
 
 To use a different plan:
 

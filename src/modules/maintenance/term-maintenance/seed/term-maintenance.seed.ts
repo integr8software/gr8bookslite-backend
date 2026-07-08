@@ -1,9 +1,9 @@
 import { Prisma, TermDateMode, TermStatus } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '../../../../prisma/prisma.service';
 
 type TermWriteClient = Pick<PrismaService, 'term'> | Prisma.TransactionClient;
 
-export const DefaultCompanyTerms = [
+export const TermMaintenanceSeedRecords = [
   { name: 'Due on Receipt', dateMode: TermDateMode.DAY, period: 0 },
   { name: 'Cash on Delivery', dateMode: TermDateMode.DAY, period: 0 },
   { name: 'Cash in Advance', dateMode: TermDateMode.DAY, period: 0 },
@@ -27,23 +27,30 @@ export const DefaultCompanyTerms = [
   { name: 'Long-Term Agreement', dateMode: TermDateMode.YEAR, period: 5 },
 ] as const;
 
-export async function seedDefaultTermsForCompany(
+export async function seedCompanyTermMaintenanceDefaults(
   tx: TermWriteClient,
   companyId: number,
 ) {
-  const existingCount = await tx.term.count({
+  const existingTerms = await tx.term.findMany({
     where: {
       companyId,
-      deletedAt: null,
+      name: {
+        in: TermMaintenanceSeedRecords.map((term) => term.name),
+      },
     },
+    select: { name: true },
   });
+  const existingNames = new Set(existingTerms.map((term) => term.name));
+  const missingTerms = TermMaintenanceSeedRecords.filter(
+    (term) => !existingNames.has(term.name),
+  );
 
-  if (existingCount > 0) {
-    return;
+  if (missingTerms.length === 0) {
+    return 0;
   }
 
-  await tx.term.createMany({
-    data: DefaultCompanyTerms.map((term) => ({
+  const result = await tx.term.createMany({
+    data: missingTerms.map((term) => ({
       companyId,
       name: term.name,
       description: '',
@@ -54,4 +61,6 @@ export async function seedDefaultTermsForCompany(
     })),
     skipDuplicates: true,
   });
+
+  return result.count;
 }

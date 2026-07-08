@@ -12,6 +12,7 @@ const SAFE_INFRASTRUCTURE_SEED_OPERATIONS = [
   'backfill:legacy-saas-access',
   'provision:platform',
   'repair:legacy-company-subscriptions',
+  'repair:company-bootstrap',
 ];
 
 const ENVIRONMENT_RULES = {
@@ -87,6 +88,10 @@ const ENVIRONMENT_RULES = {
         value: 'true',
       },
       'repair:legacy-company-subscriptions': {
+        variable: 'ALLOW_PRODUCTION_SAFE_SEED',
+        value: 'true',
+      },
+      'repair:company-bootstrap': {
         variable: 'ALLOW_PRODUCTION_SAFE_SEED',
         value: 'true',
       },
