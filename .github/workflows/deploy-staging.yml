@@ -1,0 +1,36 @@
+name: Deploy Backend Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    runs-on:
+      - self-hosted
+      - Windows
+      - X64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Deploy
+        shell: powershell
+        run: |
+          node scripts/run-with-env.cjs .env prisma migrate deploy
+          node scripts/run-with-env.cjs .env prisma generate
+          node scripts/run-with-env.cjs .env ts-node prisma/scripts/provision-platform.ts
+          node scripts/run-with-env.cjs .env ts-node prisma/scripts/repair-company-bootstrap.ts --apply
+          npm run build
+          pm2 restart gr8booksneo-backend-shared-dev --update-env
+          pm2 save
