@@ -50,19 +50,19 @@ Dry-run is the default. The target plan code is required and never guessed.
 Local:
 
 ```bash
-npm run db:repair:legacy-company-subscriptions:local -- --target-plan-code ACCOUNTING_TRADING
+npm run db:repair:legacy-company-subscriptions:local -- --target-plan-code ACCOUNTING
 ```
 
 Shared dev:
 
 ```bash
-npm run db:repair:legacy-company-subscriptions:shared -- --target-plan-code ACCOUNTING_TRADING
+npm run db:repair:legacy-company-subscriptions:shared -- --target-plan-code ACCOUNTING
 ```
 
 Staging:
 
 ```bash
-npm run db:repair:legacy-company-subscriptions:staging -- --target-plan-code ACCOUNTING_TRADING
+npm run db:repair:legacy-company-subscriptions:staging -- --target-plan-code ACCOUNTING
 ```
 
 The dry run prints:
@@ -81,19 +81,19 @@ The dry run prints:
 Local:
 
 ```bash
-npm run db:repair:legacy-company-subscriptions:local -- --target-plan-code ACCOUNTING_TRADING --apply
+npm run db:repair:legacy-company-subscriptions:local -- --target-plan-code ACCOUNTING --apply
 ```
 
 Shared dev:
 
 ```bash
-npm run db:repair:legacy-company-subscriptions:shared -- --target-plan-code ACCOUNTING_TRADING --apply
+npm run db:repair:legacy-company-subscriptions:shared -- --target-plan-code ACCOUNTING --apply
 ```
 
 Staging:
 
 ```bash
-npm run db:repair:legacy-company-subscriptions:staging -- --target-plan-code ACCOUNTING_TRADING --apply
+npm run db:repair:legacy-company-subscriptions:staging -- --target-plan-code ACCOUNTING --apply
 ```
 
 ## Repair Criteria
@@ -145,14 +145,14 @@ Repeat for each row in the backup file if rollback is required.
 3. Run dry-run:
 
 ```bash
-npm run db:repair:legacy-company-subscriptions:staging -- --target-plan-code ACCOUNTING_TRADING
+npm run db:repair:legacy-company-subscriptions:staging -- --target-plan-code ACCOUNTING
 ```
 
 4. Review the companies marked `repairNeeded: true`.
 5. Apply:
 
 ```bash
-npm run db:repair:legacy-company-subscriptions:staging -- --target-plan-code ACCOUNTING_TRADING --apply
+npm run db:repair:legacy-company-subscriptions:staging -- --target-plan-code ACCOUNTING --apply
 ```
 
 6. Run verification:

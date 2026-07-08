@@ -60,6 +60,8 @@ const plans = [
   },
 ] as const;
 
+const activePlanCodes = plans.map((plan) => plan.code);
+
 const defaultUsageRules = [
   {
     metric: 'USER',
@@ -89,13 +91,7 @@ const defaultDiscountTiers = [
 export async function seedSubscriptionPlans() {
   await prisma.subscriptionPlan.updateMany({
     where: {
-      code: {
-        in: [
-          'ADDITIONAL_COMPANY',
-          'ACCOUNTING_AND_INVENTORY',
-          'ADDITIONAL_COMPANY_ACCOUNTING_AND_INVENTORY',
-        ],
-      },
+      code: { notIn: [...activePlanCodes] },
     },
     data: {
       isActive: false,

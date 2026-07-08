@@ -191,6 +191,10 @@ test('allows safe infrastructure seeds remotely but keeps full seed blocked', ()
       'prisma/scripts/backfill-legacy-saas-access.ts',
       'backfill:legacy-saas-access',
     ],
+    [
+      'prisma/scripts/repair-company-bootstrap.ts',
+      'repair:company-bootstrap',
+    ],
   ]) {
     assert.equal(
       assertDatabaseEnvironment(sharedEnvironment, ['ts-node', script])

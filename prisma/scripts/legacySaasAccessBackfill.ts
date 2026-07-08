@@ -8,7 +8,7 @@ import {
 } from '@prisma/client';
 import { EntitlementService } from '../../src/common/access/entitlements/entitlement.service';
 
-export const DefaultLegacySaasPlanCode = 'ACCOUNTING_TRADING';
+export const DefaultLegacySaasPlanCode = 'ACCOUNTING';
 
 export type LegacySaasAccessIssue =
   | 'NO_USABLE_SUBSCRIPTION'
