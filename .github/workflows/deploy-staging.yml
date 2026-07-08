@@ -18,22 +18,19 @@ jobs:
 
     steps:
       - name: Deploy backend from VPS folder
-        shell: powershell
+        shell: cmd
         run: |
-          Set-Location "I:\Gr8BooksNeo\apps\backend-shared-dev"
-
-          git fetch origin
-          git reset --hard origin/staging
-          git clean -fd
-
-          npm ci
-
-          node scripts/run-with-env.cjs .env prisma migrate deploy
-          node scripts/run-with-env.cjs .env prisma generate
-          node scripts/run-with-env.cjs .env ts-node prisma/scripts/provision-platform.ts
-          node scripts/run-with-env.cjs .env ts-node prisma/scripts/repair-company-bootstrap.ts --apply
-
-          npm run build
-
-          pm2 restart gr8booksneo-backend-shared-dev --update-env
+          cd /d I:\Gr8BooksNeo\apps\backend-shared-dev && ^
+          git fetch origin && ^
+          git reset --hard origin/staging && ^
+          git clean -fd && ^
+          pm2 stop gr8booksneo-backend-shared-dev && ^
+          npm ci && ^
+          node scripts/run-with-env.cjs .env prisma migrate deploy && ^
+          node scripts/run-with-env.cjs .env prisma generate && ^
+          node scripts/run-with-env.cjs .env ts-node prisma/scripts/provision-platform.ts && ^
+          node scripts/run-with-env.cjs .env ts-node prisma/scripts/repair-company-bootstrap.ts --apply && ^
+          node scripts/run-with-env.cjs .env prisma migrate status && ^
+          npm run build && ^
+          pm2 restart gr8booksneo-backend-shared-dev --update-env && ^
           pm2 save
