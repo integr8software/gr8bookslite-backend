@@ -425,164 +425,160 @@ export class OnboardingService {
       existingDraft.provisionedCompanyId ?? undefined,
     );
 
-    const slug = existingDraft.provisionedCompanyId
-      ? null
-      : await this.generateUniqueCompanySlug(this.prisma, companyName);
+    const { updatedDraft } = await this.prisma.$transaction(async (tx) => {
+      const slug = existingDraft.provisionedCompanyId
+        ? null
+        : await this.generateUniqueCompanySlug(tx, companyName);
 
-    const provisionedCompany = existingDraft.provisionedCompanyId
-      ? await this.prisma.company.update({
-          where: { id: existingDraft.provisionedCompanyId },
-          data: {
-            name: companyName,
-            legalName,
-            taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
-            ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
-            ownerFirstName: isIndividual
-              ? (dto.firstName?.trim() ?? null)
-              : null,
-            ownerMiddleName: isIndividual
-              ? dto.middleName?.trim() || null
-              : null,
-            organizationType: isIndividual
-              ? null
-              : (dto.nonIndividualType?.trim() ?? null),
-            organizationTypeOther: isIndividual
-              ? null
-              : dto.nonIndividualTypeOther?.trim() || null,
-            logoFileName: dto.logoName.trim(),
-            logoMimeType: dto.logoMimeType?.trim() || null,
-            logoStoragePath: dto.logoStoragePath?.trim() || null,
-            logoPublicUrl: dto.logoPublicUrl?.trim() || null,
-            address: dto.address.trim(),
-            tin: dto.tin.trim(),
-            email: normalizeEmail(dto.companyEmail) as string,
-            website: dto.website?.trim() || null,
-            contactNumber: dto.contactNumber.trim(),
-            reportStartDate,
-            reportEndDate,
-            isActive: false,
-            status: 'PROVISIONING',
-            createdByUserId: user.id,
-          },
-        })
-      : await this.prisma.company.create({
-          data: {
-            name: companyName,
-            slug: slug!,
-            legalName,
-            taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
-            ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
-            ownerFirstName: isIndividual
-              ? (dto.firstName?.trim() ?? null)
-              : null,
-            ownerMiddleName: isIndividual
-              ? dto.middleName?.trim() || null
-              : null,
-            organizationType: isIndividual
-              ? null
-              : (dto.nonIndividualType?.trim() ?? null),
-            organizationTypeOther: isIndividual
-              ? null
-              : dto.nonIndividualTypeOther?.trim() || null,
-            logoFileName: dto.logoName.trim(),
-            logoMimeType: dto.logoMimeType?.trim() || null,
-            logoStoragePath: dto.logoStoragePath?.trim() || null,
-            logoPublicUrl: dto.logoPublicUrl?.trim() || null,
-            address: dto.address.trim(),
-            tin: dto.tin.trim(),
-            email: normalizeEmail(dto.companyEmail) as string,
-            website: dto.website?.trim() || null,
-            contactNumber: dto.contactNumber.trim(),
-            reportStartDate,
-            reportEndDate,
-            isActive: false,
-            status: 'PROVISIONING',
-            createdByUserId: user.id,
-          },
-        });
+      const provisionedCompany = existingDraft.provisionedCompanyId
+        ? await tx.company.update({
+            where: { id: existingDraft.provisionedCompanyId },
+            data: {
+              name: companyName,
+              legalName,
+              taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
+              ownerLastName: isIndividual
+                ? (dto.lastName?.trim() ?? null)
+                : null,
+              ownerFirstName: isIndividual
+                ? (dto.firstName?.trim() ?? null)
+                : null,
+              ownerMiddleName: isIndividual
+                ? dto.middleName?.trim() || null
+                : null,
+              organizationType: isIndividual
+                ? null
+                : (dto.nonIndividualType?.trim() ?? null),
+              organizationTypeOther: isIndividual
+                ? null
+                : dto.nonIndividualTypeOther?.trim() || null,
+              logoFileName: dto.logoName.trim(),
+              logoMimeType: dto.logoMimeType?.trim() || null,
+              logoStoragePath: dto.logoStoragePath?.trim() || null,
+              logoPublicUrl: dto.logoPublicUrl?.trim() || null,
+              address: dto.address.trim(),
+              tin: dto.tin.trim(),
+              email: normalizeEmail(dto.companyEmail) as string,
+              website: dto.website?.trim() || null,
+              contactNumber: dto.contactNumber.trim(),
+              reportStartDate,
+              reportEndDate,
+              isActive: false,
+              status: 'PROVISIONING',
+              createdByUserId: user.id,
+            },
+          })
+        : await tx.company.create({
+            data: {
+              name: companyName,
+              slug: slug!,
+              legalName,
+              taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
+              ownerLastName: isIndividual
+                ? (dto.lastName?.trim() ?? null)
+                : null,
+              ownerFirstName: isIndividual
+                ? (dto.firstName?.trim() ?? null)
+                : null,
+              ownerMiddleName: isIndividual
+                ? dto.middleName?.trim() || null
+                : null,
+              organizationType: isIndividual
+                ? null
+                : (dto.nonIndividualType?.trim() ?? null),
+              organizationTypeOther: isIndividual
+                ? null
+                : dto.nonIndividualTypeOther?.trim() || null,
+              logoFileName: dto.logoName.trim(),
+              logoMimeType: dto.logoMimeType?.trim() || null,
+              logoStoragePath: dto.logoStoragePath?.trim() || null,
+              logoPublicUrl: dto.logoPublicUrl?.trim() || null,
+              address: dto.address.trim(),
+              tin: dto.tin.trim(),
+              email: normalizeEmail(dto.companyEmail) as string,
+              website: dto.website?.trim() || null,
+              contactNumber: dto.contactNumber.trim(),
+              reportStartDate,
+              reportEndDate,
+              isActive: false,
+              status: 'PROVISIONING',
+              createdByUserId: user.id,
+            },
+          });
 
-    await this.prisma.companyUnit.upsert({
-      where: {
-        companyId_code: {
-          companyId: provisionedCompany.id,
-          code: 'HEAD-OFFICE',
+      await tx.companyUnit.upsert({
+        where: {
+          companyId_code: {
+            companyId: provisionedCompany.id,
+            code: 'HEAD-OFFICE',
+          },
         },
-      },
-      update: {
-        tin: provisionedCompany.tin,
-        address: provisionedCompany.address,
-        contactNumber: provisionedCompany.contactNumber,
-        email: provisionedCompany.email,
-        isActive: true,
-        inheritsCompanyProfile: true,
-        canTransactSales: true,
-        canHoldInventory: true,
-      },
-      create: {
-        companyId: provisionedCompany.id,
-        type: CompanyUnitType.HEAD_OFFICE,
-        code: 'HEAD-OFFICE',
-        name: 'Head Office',
-        tin: provisionedCompany.tin,
-        address: provisionedCompany.address,
-        contactNumber: provisionedCompany.contactNumber,
-        email: provisionedCompany.email,
-        isActive: true,
-        inheritsCompanyProfile: true,
-        canTransactSales: true,
-        canHoldInventory: true,
-      },
-    });
+        update: {
+          tin: provisionedCompany.tin,
+          address: provisionedCompany.address,
+          contactNumber: provisionedCompany.contactNumber,
+          email: provisionedCompany.email,
+          isActive: true,
+          inheritsCompanyProfile: true,
+          canTransactSales: true,
+          canHoldInventory: true,
+        },
+        create: {
+          companyId: provisionedCompany.id,
+          type: CompanyUnitType.HEAD_OFFICE,
+          code: 'HEAD-OFFICE',
+          name: 'Head Office',
+          tin: provisionedCompany.tin,
+          address: provisionedCompany.address,
+          contactNumber: provisionedCompany.contactNumber,
+          email: provisionedCompany.email,
+          isActive: true,
+          inheritsCompanyProfile: true,
+          canTransactSales: true,
+          canHoldInventory: true,
+        },
+      });
 
-    await seedCompanyTermMaintenanceDefaults(this.prisma, provisionedCompany.id);
-    await seedCompanyPaymentTypeMaintenanceDefaults(
-      this.prisma,
-      provisionedCompany.id,
-    );
-    await seedCompanyChartAccountDefaults(
-      this.prisma,
-      provisionedCompany.id,
-    );
-    await seedCompanyDefaultAccountDefaults(
-      this.prisma,
-      provisionedCompany.id,
-    );
-    await seedCompanyDiscountMaintenanceDefaults(
-      this.prisma,
-      provisionedCompany.id,
-    );
-    await seedCompanyBankAccountDefaults(this.prisma, provisionedCompany.id);
+      await seedCompanyTermMaintenanceDefaults(tx, provisionedCompany.id);
+      await seedCompanyPaymentTypeMaintenanceDefaults(tx, provisionedCompany.id);
+      await seedCompanyChartAccountDefaults(tx, provisionedCompany.id);
+      await seedCompanyDefaultAccountDefaults(tx, provisionedCompany.id);
+      await seedCompanyDiscountMaintenanceDefaults(tx, provisionedCompany.id);
+      await seedCompanyBankAccountDefaults(tx, provisionedCompany.id);
 
-    const updatedDraft = await this.prisma.userOnboardingDraft.update({
-      where: {
-        userId: user.id,
-      },
-      data: {
-        taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
-        ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
-        ownerFirstName: isIndividual ? (dto.firstName?.trim() ?? null) : null,
-        ownerMiddleName: isIndividual ? dto.middleName?.trim() || null : null,
-        companyName: isIndividual ? null : (dto.companyName?.trim() ?? null),
-        organizationType: isIndividual
-          ? null
-          : (dto.nonIndividualType?.trim() ?? null),
-        organizationTypeOther: isIndividual
-          ? null
-          : dto.nonIndividualTypeOther?.trim() || null,
-        logoFileName: dto.logoName.trim(),
-        logoMimeType: dto.logoMimeType?.trim() || null,
-        logoStoragePath: dto.logoStoragePath?.trim() || null,
-        logoPublicUrl: dto.logoPublicUrl?.trim() || null,
-        address: dto.address.trim(),
-        tin: dto.tin.trim(),
-        companyEmail: normalizeEmail(dto.companyEmail) as string,
-        website: dto.website?.trim() || null,
-        contactNumber: dto.contactNumber.trim(),
-        reportStartDate,
-        reportEndDate,
-        provisionedCompanyId: provisionedCompany.id,
-        companyDetailsCompletedAt: new Date(),
-      },
+      const updatedDraft = await tx.userOnboardingDraft.update({
+        where: {
+          userId: user.id,
+        },
+        data: {
+          taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
+          ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
+          ownerFirstName: isIndividual ? (dto.firstName?.trim() ?? null) : null,
+          ownerMiddleName: isIndividual ? dto.middleName?.trim() || null : null,
+          companyName: isIndividual ? null : (dto.companyName?.trim() ?? null),
+          organizationType: isIndividual
+            ? null
+            : (dto.nonIndividualType?.trim() ?? null),
+          organizationTypeOther: isIndividual
+            ? null
+            : dto.nonIndividualTypeOther?.trim() || null,
+          logoFileName: dto.logoName.trim(),
+          logoMimeType: dto.logoMimeType?.trim() || null,
+          logoStoragePath: dto.logoStoragePath?.trim() || null,
+          logoPublicUrl: dto.logoPublicUrl?.trim() || null,
+          address: dto.address.trim(),
+          tin: dto.tin.trim(),
+          companyEmail: normalizeEmail(dto.companyEmail) as string,
+          website: dto.website?.trim() || null,
+          contactNumber: dto.contactNumber.trim(),
+          reportStartDate,
+          reportEndDate,
+          provisionedCompanyId: provisionedCompany.id,
+          companyDetailsCompletedAt: new Date(),
+        },
+      });
+
+      return { updatedDraft };
     });
 
     return {

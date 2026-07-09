@@ -353,7 +353,7 @@ Use this after a local rebuild or when your local superadmin password needs to b
 
 ## Delete Local User-Owned Data
 
-Delete one local user and the companies owned only by that user:
+Delete one local user and the local tenant data tied to that account:
 
 ```bash
 npm run db:delete-user-owned-data:local -- --email user@example.com
@@ -371,10 +371,11 @@ RESET_USER_EMAIL
 Behavior:
 
 - finds the user by email
-- checks all company memberships for that user
-- aborts if any company has other members
-- deletes the user's exclusively-owned companies
-- deletes the user
+- deletes companies connected to that user through memberships, onboarding draft provisioning, or `createdByUserId`
+- deletes company-owned records through company cascade cleanup, including COA, default accounts, terms, payment types, discounts, bank accounts, roles, memberships, subscriptions, and sidebar preferences
+- deletes the target user
+- deletes related user accounts only when their memberships are fully inside the deleted companies
+- skips related user accounts that still belong to other companies
 - optionally deletes configured Supabase storage files
 
 Delete storage objects only when the configured storage environment is safe:
