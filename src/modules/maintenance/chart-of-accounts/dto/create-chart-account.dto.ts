@@ -98,9 +98,8 @@ export class CreateChartAccountDto {
   accountNature?: AccountNature;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  accountGroup?: string;
+  @Transform(({ value }) => normalizeAccountGroupInput(value))
+  accountGroup?: string | string[];
 
   @IsOptional()
   @IsString()
@@ -160,4 +159,23 @@ function toOptionalNumber(value: unknown) {
   }
 
   return Number(value);
+}
+
+function normalizeAccountGroupInput(value: unknown) {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item) => (typeof item === 'string' ? [item.trim()] : []))
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  }
+
+  return undefined;
 }

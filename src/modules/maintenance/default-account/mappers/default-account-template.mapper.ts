@@ -1,13 +1,13 @@
 import type { Prisma } from '@prisma/client';
-import { DefaultAccountTemplateInclude } from '../prisma/default-account-template.include';
+import { DefaultAccountInclude } from '../prisma/default-account-template.include';
 
-export type DefaultAccountTemplatePayload =
-  Prisma.DefaultAccountTemplateGetPayload<{
-    include: typeof DefaultAccountTemplateInclude;
+export type DefaultAccountPayload =
+  Prisma.DefaultAccountGetPayload<{
+    include: typeof DefaultAccountInclude;
   }>;
 
-export function mapDefaultAccountTemplate(
-  template: DefaultAccountTemplatePayload,
+export function mapDefaultAccount(
+  template: DefaultAccountPayload,
 ) {
   return {
     id: template.id.toString(),
@@ -53,5 +53,5 @@ function mapGeneratedAccount(role: string, account: GeneratedAccount | null) {
 }
 
 type GeneratedAccount = NonNullable<
-  DefaultAccountTemplatePayload['expenseCoa']
+  DefaultAccountPayload['expenseCoa']
 >;

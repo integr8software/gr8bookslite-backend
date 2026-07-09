@@ -7,7 +7,6 @@ import { prisma } from '../seeds/prismaClient';
 import { seedModules } from '../seeds/seedModules';
 import { seedModuleSystems } from '../seeds/seedModuleSystems';
 import { seedSubscriptionPlans } from '../seeds/seedSubscriptionPlans';
-import { seedDefaultCoaTemplate } from '../seeds/seedDefaultCoaTemplate';
 
 export type ProvisionResult = {
   checksum: string;
@@ -21,7 +20,6 @@ const ProvisionSteps = [
   'platform-catalog',
   'module-systems',
   'subscription-plans',
-  'default-coa-template',
 ] as const;
 
 export function buildProvisionChecksum() {
@@ -53,9 +51,6 @@ export async function runPlatformProvision(): Promise<ProvisionResult> {
 
   console.log('Provisioning subscription plan system links.');
   await seedSubscriptionPlans();
-
-  console.log('Provisioning default chart of accounts template.');
-  await seedDefaultCoaTemplate();
 
   await prisma.platformVersion.upsert({
     where: { id: 1 },

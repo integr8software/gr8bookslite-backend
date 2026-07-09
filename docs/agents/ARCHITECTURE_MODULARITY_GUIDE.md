@@ -323,7 +323,6 @@ Common seed/catalog locations:
 prisma/seeds/seedModules.ts
 prisma/seeds/seedModuleSystems.ts
 prisma/seeds/seedSubscriptionPlans.ts
-prisma/seeds/seedDefaultCoaTemplate.ts
 prisma/seeds/moduleSystemCatalog.ts
 ```
 

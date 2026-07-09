@@ -20,6 +20,8 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CoaBankSyncService } from '../coa-bank-sync/coa-bank-sync.service';
 import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
+import { mergeAccountGroupTags } from '../chart-of-accounts/utils/system-account-groups.util';
+import { parsePositiveBigIntId } from '../utils/maintenance-id.util';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dto';
 import { ImportBankAccountsDto } from './dto/import-bank-accounts.dto';
@@ -106,7 +108,7 @@ export class BankMasterfileService {
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const bankAccount = await this.findBankAccountOrThrow(
       companyId,
-      parseBigIntId(id),
+      parsePositiveBigIntId(id),
     );
 
     return {
@@ -147,7 +149,7 @@ export class BankMasterfileService {
             accountLevel: ChartAccountLevel.SPECIFIC,
             accountType: ChartAccountType.ASSET,
             accountNature: AccountNature.DEBIT,
-            accountGroup: CashInBankGroup,
+            accountGroup: mergeAccountGroupTags(CashInBankGroup),
             isPostingAccount: true,
             currencyCode: cleanCurrencyCode(dto.currencyCode),
             status: ChartAccountStatus.INACTIVE,
@@ -259,7 +261,7 @@ export class BankMasterfileService {
               accountLevel: ChartAccountLevel.SPECIFIC,
               accountType: ChartAccountType.ASSET,
               accountNature: AccountNature.DEBIT,
-              accountGroup: CashInBankGroup,
+              accountGroup: mergeAccountGroupTags(CashInBankGroup),
               isPostingAccount: true,
               currencyCode: cleanCurrencyCode(bank.currencyCode),
               status: ChartAccountStatus.INACTIVE,
@@ -320,7 +322,7 @@ export class BankMasterfileService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const bankAccountId = parseBigIntId(id);
+    const bankAccountId = parsePositiveBigIntId(id);
     const currentBankAccount = await this.findBankAccountOrThrow(
       companyId,
       bankAccountId,
@@ -407,7 +409,7 @@ export class BankMasterfileService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const bankAccountId = parseBigIntId(id);
+    const bankAccountId = parsePositiveBigIntId(id);
     const currentBankAccount = await this.findBankAccountOrThrow(
       companyId,
       bankAccountId,
@@ -976,16 +978,3 @@ function cleanCurrencyCode(value: string | null | undefined) {
   return cleanOptional(value)?.toUpperCase() ?? null;
 }
 
-function parseBigIntId(value: string, label = 'id') {
-  if (!/^\d+$/.test(value)) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  const id = BigInt(value);
-
-  if (id <= 0n) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  return id;
-}

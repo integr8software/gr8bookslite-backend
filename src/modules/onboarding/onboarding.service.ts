@@ -24,6 +24,7 @@ import { AuthMailService } from '../auth/services/auth-mail.service';
 import { seedCompanyTermMaintenanceDefaults } from '../maintenance/term-maintenance/seed/term-maintenance.seed';
 import { seedCompanyPaymentTypeMaintenanceDefaults } from '../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
 import { seedCompanyChartAccountDefaults } from '../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
+import { seedCompanyDefaultAccountDefaults } from '../maintenance/default-account/seed/default-accounts.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import { seedCompanyBankAccountDefaults } from '../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
@@ -539,6 +540,10 @@ export class OnboardingService {
       provisionedCompany.id,
     );
     await seedCompanyChartAccountDefaults(
+      this.prisma,
+      provisionedCompany.id,
+    );
+    await seedCompanyDefaultAccountDefaults(
       this.prisma,
       provisionedCompany.id,
     );

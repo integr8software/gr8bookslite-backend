@@ -1,8 +1,8 @@
 import type { Prisma } from '@prisma/client';
 
-export const DefaultAccountTemplateInclude = {
+export const DefaultAccountInclude = {
   expenseCoa: true,
   revenueCoa: true,
   assetCoa: true,
   accumulatedDepreciationCoa: true,
-} satisfies Prisma.DefaultAccountTemplateInclude;
+} satisfies Prisma.DefaultAccountInclude;

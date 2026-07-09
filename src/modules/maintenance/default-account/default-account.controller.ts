@@ -36,6 +36,12 @@ export class DefaultAccountController {
     return this.defaultAccountService.findAll(user, query);
   }
 
+  @Get('expense-parent-options')
+  @ApiOkResponse({ description: 'Expense parent account options retrieved.' })
+  findExpenseParentOptions(@CurrentUser() user: AuthUser) {
+    return this.defaultAccountService.findExpenseParentOptions(user);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Default account retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {

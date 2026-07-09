@@ -117,7 +117,7 @@ Update the standard default COA mapping seed to include the `DA:*` mappings.
 Current seed location:
 
 ```text
-gr8bookslite-backend/prisma/seeds/standardDefaultCoaTemplate.ts
+gr8bookslite-backend/src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts-system-groups.seed.ts
 ```
 
 The implementation must add entries to `StandardDefaultAccountMappings` only after confirming the referenced account titles exist in `StandardDefaultChartAccounts`.
