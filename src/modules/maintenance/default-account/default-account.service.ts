@@ -10,16 +10,23 @@ import {
   ChartAccountLevel,
   ChartAccountStatus,
   ChartAccountType,
+  DefaultAccount,
   DefaultAccountTemplateType,
   MembershipRole,
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
+import {
+  DefaultLimit,
+  DefaultPage,
+} from '../../../common/constants/pagination.constant';
+import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
+import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { parsePositiveBigIntId } from '../utils/maintenance-id.util';
 import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
 import {
   findSystemAccountGroupOrThrow,
@@ -32,48 +39,13 @@ import { UpdateDefaultAccountTemplateStatusDto } from './dto/update-default-acco
 import { UpdateDefaultAccountTemplateDto } from './dto/update-default-account-template.dto';
 import { mapDefaultAccount } from './mappers/default-account-template.mapper';
 import { DefaultAccountInclude } from './prisma/default-account-template.include';
-
-const DefaultPage = 1;
-const DefaultLimit = 500;
-const DefaultAccountPermissionCode = 'DA';
-const DefaultAccountTransactionOptions = {
-  maxWait: 10_000,
-  timeout: 30_000,
-};
-
-type DefaultAccountParentRole =
-  | 'EXPENSE_PARENT'
-  | 'REVENUE_PARENT'
-  | 'FIXED_ASSET_PARENT'
-  | 'ACCUMULATED_DEPRECIATION_PARENT'
-  | 'DEPRECIATION_EXPENSE_PARENT';
-
-type GeneratedAccountKey = 'fixedAssetGroup';
-
-type GeneratedAccountResultKey =
-  | 'expenseCoaId'
-  | 'revenueCoaId'
-  | 'assetCoaId'
-  | 'accumulatedDepreciationCoaId';
-
-type ParentChartAccountReference = {
-  id: bigint;
-  accountCode: string;
-};
-
-type GeneratedAccountRequest = {
-  role: DefaultAccountParentRole;
-  generatedKey?: GeneratedAccountKey;
-  parentGeneratedKey?: GeneratedAccountKey;
-  selectedParentAccount?: ParentChartAccountReference;
-  resultKey?: GeneratedAccountResultKey;
-  title: string;
-  accountLevel: ChartAccountLevel;
-  accountType: ChartAccountType;
-  accountNature: AccountNature;
-  accountGroup: string;
-  isPostingAccount: boolean;
-};
+import type {
+  DefaultAccountParentRole,
+  DefaultAccountPayload,
+  GeneratedAccountKey,
+  GeneratedAccountRequest,
+  ParentChartAccountReference,
+} from './types/default-account.type';
 
 @Injectable()
 export class DefaultAccountService {
@@ -103,7 +75,8 @@ export class DefaultAccountService {
     ]);
 
     return {
-      defaultAccounts: defaultAccounts.map(mapDefaultAccount),
+      defaultAccounts:
+        await this.mapDefaultAccountsWithAuditUsers(defaultAccounts),
       statistics,
       pagination: {
         page,
@@ -125,7 +98,9 @@ export class DefaultAccountService {
     );
 
     return {
-      defaultAccount: mapDefaultAccount(template),
+      defaultAccount: (
+        await this.mapDefaultAccountsWithAuditUsers([template])
+      )[0],
       permissions: this.getPermissions(user, companyId),
     };
   }
@@ -191,11 +166,13 @@ export class DefaultAccountService {
           },
           include: DefaultAccountInclude,
         });
-      }, DefaultAccountTransactionOptions);
+      }, MaintenanceTransactionOptions);
 
       return {
         message: 'Default account created successfully.',
-        defaultAccount: mapDefaultAccount(template),
+        defaultAccount: (
+          await this.mapDefaultAccountsWithAuditUsers([template])
+        )[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -269,11 +246,13 @@ export class DefaultAccountService {
           },
           include: DefaultAccountInclude,
         });
-      }, DefaultAccountTransactionOptions);
+      }, MaintenanceTransactionOptions);
 
       return {
         message: 'Default account updated successfully.',
-        defaultAccount: mapDefaultAccount(template),
+        defaultAccount: (
+          await this.mapDefaultAccountsWithAuditUsers([template])
+        )[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -311,15 +290,33 @@ export class DefaultAccountService {
         },
         include: DefaultAccountInclude,
       });
-    }, DefaultAccountTransactionOptions);
+    }, MaintenanceTransactionOptions);
 
     return {
       message:
         dto.status === ChartAccountStatus.ACTIVE
           ? 'Default account activated successfully.'
           : 'Default account inactivated successfully.',
-      defaultAccount: mapDefaultAccount(template),
+      defaultAccount: (
+        await this.mapDefaultAccountsWithAuditUsers([template])
+      )[0],
     };
+  }
+
+  private async mapDefaultAccountsWithAuditUsers(
+    defaultAccounts: Array<DefaultAccount | DefaultAccountPayload>,
+  ) {
+    const userNames = await resolveAuditUserNames(
+      this.prisma,
+      defaultAccounts.flatMap((defaultAccount) => [
+        defaultAccount.createdByUserId,
+        defaultAccount.updatedByUserId,
+      ]),
+    );
+
+    return defaultAccounts.map((defaultAccount) =>
+      mapDefaultAccount(defaultAccount as DefaultAccountPayload, userNames),
+    );
   }
 
   private buildListWhere(
@@ -387,8 +384,9 @@ export class DefaultAccountService {
         .filter((group) => group.status === ChartAccountStatus.INACTIVE)
         .reduce((total, group) => total + group._count._all, 0),
       expenseDefaultAccounts:
-        groups.find((group) => group.type === DefaultAccountTemplateType.EXPENSE)
-          ?._count._all ?? 0,
+        groups.find(
+          (group) => group.type === DefaultAccountTemplateType.EXPENSE,
+        )?._count._all ?? 0,
       collectionDefaultAccounts:
         groups.find(
           (group) => group.type === DefaultAccountTemplateType.COLLECTION,
@@ -643,7 +641,9 @@ export class DefaultAccountService {
       },
       orderBy: [{ accountCode: 'asc' }],
     });
-    const accountById = new Map(accounts.map((account) => [account.id, account]));
+    const accountById = new Map(
+      accounts.map((account) => [account.id, account]),
+    );
 
     return accounts.filter((account) =>
       isDescendantOrSelf(account.id, root.id, accountById),
@@ -940,7 +940,7 @@ export class DefaultAccountService {
 
     if (
       user.companyId === companyId &&
-      user.permissions.includes(`${DefaultAccountPermissionCode}:${action}`)
+      user.permissions.includes(`DA:${action}`)
     ) {
       return;
     }
@@ -966,8 +966,7 @@ export class DefaultAccountService {
     }
 
     return (
-      user.companyId === companyId &&
-      user.permissions.includes(`${DefaultAccountPermissionCode}:${action}`)
+      user.companyId === companyId && user.permissions.includes(`DA:${action}`)
     );
   }
 
@@ -995,7 +994,6 @@ export class DefaultAccountService {
     }
   }
 }
-
 
 function getDefaultAccountParentDefinition(role: DefaultAccountParentRole) {
   if (role === 'EXPENSE_PARENT') {

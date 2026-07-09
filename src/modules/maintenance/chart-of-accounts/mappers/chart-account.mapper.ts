@@ -1,16 +1,20 @@
-import type { Prisma } from '@prisma/client';
-import { ChartAccountInclude } from '../prisma/chart-account.include';
 import { normalizeAccountGroupTags } from '../utils/system-account-groups.util';
+import {
+  parseAuditUserId,
+  SystemGeneratedAuditLabel,
+} from '../../../../common/utils/audit-user.util';
+import type {
+  ChartAccountPayload,
+  ChartAccountTreePayload,
+} from '../types/chart-account.type';
 
-export type ChartAccountPayload = Prisma.ChartAccountGetPayload<{
-  include: typeof ChartAccountInclude;
-}>;
+export function mapChartAccount(
+  account: ChartAccountPayload,
+  userNames: Map<number, string> = new Map(),
+) {
+  const createdByUserId = parseAuditUserId(account.whoCreated);
+  const updatedByUserId = parseAuditUserId(account.whoModified);
 
-export type ChartAccountTreePayload = ChartAccountPayload & {
-  children?: ChartAccountTreePayload[];
-};
-
-export function mapChartAccount(account: ChartAccountPayload) {
   return {
     id: Number(account.id),
     companyId: account.companyId,
@@ -36,7 +40,12 @@ export function mapChartAccount(account: ChartAccountPayload) {
     isUserCreated: Boolean(account.whoCreated),
     isBankLinked: account.bankAccounts.length > 0,
     deletedAt: account.deletedAt?.toISOString() ?? null,
+    createdBy:
+      createdByUserId === null
+        ? SystemGeneratedAuditLabel
+        : (userNames.get(createdByUserId) ?? null),
     createdAt: account.createdAt.toISOString(),
+    updatedBy: (updatedByUserId && userNames.get(updatedByUserId)) ?? null,
     updatedAt: account.updatedAt.toISOString(),
     bankAccounts: account.bankAccounts.map((bankAccount) => ({
       id: Number(bankAccount.id),
@@ -53,9 +62,18 @@ export function mapChartAccount(account: ChartAccountPayload) {
   };
 }
 
-export function mapChartAccountTreeNode(account: ChartAccountTreePayload) {
+export function mapChartAccountTreeNode(
+  account: ChartAccountTreePayload,
+  userNames: Map<number, string> = new Map(),
+) {
   return {
-    ...mapChartAccount(account),
-    children: (account.children ?? []).map(mapChartAccountTreeNode),
+    ...mapChartAccount(account, userNames),
+    children: (account.children ?? []).map((child) =>
+      mapChartAccountTreeNode(child, userNames),
+    ),
   };
+}
+
+export function parseChartAccountAuditUserId(value: string | null) {
+  return parseAuditUserId(value);
 }

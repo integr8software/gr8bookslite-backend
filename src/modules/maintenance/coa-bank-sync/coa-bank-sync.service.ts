@@ -5,6 +5,7 @@ import {
   ChartAccountType,
   Prisma,
 } from '@prisma/client';
+import { cleanCurrencyCode } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   findSystemAccountGroupOrThrow,
@@ -185,8 +186,4 @@ export class CoaBankSyncService {
 
 function cleanText(value: string | null | undefined) {
   return value?.trim() ?? '';
-}
-
-function cleanCurrencyCode(value: string | null | undefined) {
-  return cleanText(value).toUpperCase() || null;
 }

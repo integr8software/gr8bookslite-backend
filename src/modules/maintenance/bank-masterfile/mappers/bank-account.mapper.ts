@@ -1,12 +1,15 @@
-import type { Prisma } from '@prisma/client';
 import { normalizeAccountGroupTags } from '../../chart-of-accounts/utils/system-account-groups.util';
-import { BankAccountInclude } from '../prisma/bank-account.include';
+import {
+  resolveAuditUserNames,
+  SystemGeneratedAuditLabel,
+} from '../../../../common/utils/audit-user.util';
+import type { AuditUserLookupClient } from '../../../../common/interfaces/audit-user-lookup-client.interface';
+import type { BankAccountPayload } from '../types/bank-account.type';
 
-export type BankAccountPayload = Prisma.BankAccountGetPayload<{
-  include: typeof BankAccountInclude;
-}>;
-
-export function mapBankAccount(bankAccount: BankAccountPayload) {
+export function mapBankAccount(
+  bankAccount: BankAccountPayload,
+  userNames: Map<number, string> = new Map(),
+) {
   return {
     id: bankAccount.id.toString(),
     companyId: bankAccount.companyId,
@@ -31,9 +34,34 @@ export function mapBankAccount(bankAccount: BankAccountPayload) {
       accountGroup: normalizeAccountGroupTags(bankAccount.coa.accountGroup),
       status: bankAccount.coa.status,
     },
+    createdBy:
+      bankAccount.createdByUserId === null
+        ? SystemGeneratedAuditLabel
+        : (userNames.get(bankAccount.createdByUserId) ?? null),
+    createdAt: bankAccount.createdAt.toISOString(),
+    updatedBy:
+      (bankAccount.updatedByUserId &&
+        userNames.get(bankAccount.updatedByUserId)) ??
+      null,
+    updatedAt: bankAccount.updatedAt.toISOString(),
     createdByUserId: bankAccount.createdByUserId,
     updatedByUserId: bankAccount.updatedByUserId,
-    createdAt: bankAccount.createdAt.toISOString(),
-    updatedAt: bankAccount.updatedAt.toISOString(),
   };
+}
+
+export async function mapBankAccountsWithAuditUsers(
+  prisma: AuditUserLookupClient,
+  bankAccounts: BankAccountPayload[],
+) {
+  const userNames = await resolveAuditUserNames(
+    prisma,
+    bankAccounts.flatMap((bankAccount) => [
+      bankAccount.createdByUserId,
+      bankAccount.updatedByUserId,
+    ]),
+  );
+
+  return bankAccounts.map((bankAccount) =>
+    mapBankAccount(bankAccount, userNames),
+  );
 }

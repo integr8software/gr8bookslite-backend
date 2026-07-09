@@ -13,11 +13,16 @@ import {
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
+import {
+  DefaultLimit,
+  DefaultPage,
+} from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
+import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { parsePositiveBigIntId } from '../utils/maintenance-id.util';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { GetDiscountListQueryDto } from './dto/get-discount-list-query.dto';
 import { ImportDiscountsDto } from './dto/import-discounts.dto';
@@ -29,10 +34,6 @@ import {
   getGeneratedDiscountAccountTitle,
   resolveDiscountChartAccount,
 } from './utils/discount-chart-account.util';
-
-const DiscountManagementPermissionCode = 'DSM';
-const DefaultPage = 1;
-const DefaultLimit = 500;
 
 @Injectable()
 export class DiscountMaintenanceService {
@@ -340,22 +341,13 @@ export class DiscountMaintenanceService {
   }
 
   private async mapDiscountsWithAuditUsers(discounts: DiscountWithAccount[]) {
-    const userIds = [
-      ...new Set(
-        discounts.flatMap((discount) =>
-          [discount.createdByUserId, discount.updatedByUserId].filter(
-            (userId): userId is number => userId !== null,
-          ),
-        ),
-      ),
-    ];
-    const users = userIds.length
-      ? await this.prisma.user.findMany({
-          where: { id: { in: userIds } },
-          select: { id: true, name: true },
-        })
-      : [];
-    const userNames = new Map(users.map((user) => [user.id, user.name]));
+    const userNames = await resolveAuditUserNames(
+      this.prisma,
+      discounts.flatMap((discount) => [
+        discount.createdByUserId,
+        discount.updatedByUserId,
+      ]),
+    );
 
     return discounts.map((discount) => mapDiscount(discount, userNames));
   }
@@ -499,7 +491,7 @@ export class DiscountMaintenanceService {
 
     if (
       user.companyId === companyId &&
-      user.permissions.includes(`${DiscountManagementPermissionCode}:${action}`)
+      user.permissions.includes(`DSM:${action}`)
     ) {
       return;
     }
@@ -525,8 +517,7 @@ export class DiscountMaintenanceService {
     }
 
     return (
-      user.companyId === companyId &&
-      user.permissions.includes(`${DiscountManagementPermissionCode}:${action}`)
+      user.companyId === companyId && user.permissions.includes(`DSM:${action}`)
     );
   }
 
@@ -552,4 +543,3 @@ export class DiscountMaintenanceService {
     }
   }
 }
-

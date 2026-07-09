@@ -1,3 +1,4 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ForbiddenException,
@@ -5,27 +6,24 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   CompanyUnitType,
   MembershipRole,
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
-import { EntitlementService } from '../../../common/access/entitlements/entitlement.service';
 import type { Cache } from 'cache-manager';
+import { EntitlementService } from '../../../common/access/entitlements/entitlement.service';
+import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { WorkspaceAuditLogsService } from '../../workspace/audit-logs/workspace-audit-logs.service';
 import { SaveFormSignatoryDto } from './dto/save-form-signatory.dto';
 import { mapFormSignatorySetup } from './mappers/form-signatory.mapper';
 import { FormSignatorySetupInclude } from './prisma/form-signatory.include';
-import { WorkspaceAuditLogsService } from '../../workspace/audit-logs/workspace-audit-logs.service';
-
-const FormSignatoryTransactionOptions = {
-  maxWait: 10_000,
-  timeout: 30_000,
-};
+import type { FormSignatorySetupPayload } from './types/form-signatory.type';
 
 @Injectable()
 export class FormSignatoriesService {
@@ -256,7 +254,7 @@ export class FormSignatoriesService {
         },
         include: FormSignatorySetupInclude,
       });
-    }, FormSignatoryTransactionOptions);
+    }, MaintenanceTransactionOptions);
 
     await this.recordFormSignatoryAudit(user, setup, 'CREATE');
 
@@ -344,7 +342,7 @@ export class FormSignatoriesService {
         },
         include: FormSignatorySetupInclude,
       });
-    }, FormSignatoryTransactionOptions);
+    }, MaintenanceTransactionOptions);
 
     const auditAction =
       rows.length < currentSetup._count.rows ? 'DELETE' : 'UPDATE';
@@ -509,9 +507,7 @@ export class FormSignatoriesService {
 
   private async recordFormSignatoryAudit(
     user: AuthUser,
-    setup: Prisma.FormSignatorySetupGetPayload<{
-      include: typeof FormSignatorySetupInclude;
-    }>,
+    setup: FormSignatorySetupPayload,
     action: 'CREATE' | 'UPDATE' | 'DELETE',
   ) {
     const verb =
@@ -619,14 +615,6 @@ export class FormSignatoriesService {
       );
     }
   }
-}
-
-function cleanOptional(value: string | undefined) {
-  if (value === undefined) {
-    return null;
-  }
-
-  return value.trim() || null;
 }
 
 function parseOptionalDate(value: string | undefined) {

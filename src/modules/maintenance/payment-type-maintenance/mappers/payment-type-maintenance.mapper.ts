@@ -1,6 +1,5 @@
 import type { PaymentType } from '@prisma/client';
-
-const SystemGeneratedLabel = 'System Generated';
+import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.util';
 
 export function mapPaymentType(
   paymentType: PaymentType,
@@ -14,7 +13,7 @@ export function mapPaymentType(
     status: paymentType.status,
     createdBy:
       paymentType.createdByUserId === null
-        ? SystemGeneratedLabel
+        ? SystemGeneratedAuditLabel
         : (userNames.get(paymentType.createdByUserId) ?? null),
     createdAt: paymentType.createdAt,
     updatedBy:

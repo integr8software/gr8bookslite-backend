@@ -13,21 +13,21 @@ import {
   TermDateMode,
   TermStatus,
 } from '@prisma/client';
+import {
+  DefaultLimit,
+  DefaultPage,
+} from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
+import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { parsePositiveBigIntId } from '../utils/maintenance-id.util';
 import { CreateTermDto } from './dto/create-term.dto';
 import { GetTermListQueryDto } from './dto/get-term-list-query.dto';
 import { ImportTermsDto } from './dto/import-terms.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
 import { mapTerm } from './mappers/term-maintenance.mapper';
-
-const TermManagementPermissionCode = 'TM';
-
-const DefaultPage = 1;
-const DefaultLimit = 500;
 
 @Injectable()
 export class TermMaintenanceService {
@@ -221,22 +221,10 @@ export class TermMaintenanceService {
   }
 
   private async mapTermsWithAuditUsers(terms: Term[]) {
-    const userIds = [
-      ...new Set(
-        terms.flatMap((term) =>
-          [term.createdByUserId, term.updatedByUserId].filter(
-            (userId): userId is number => userId !== null,
-          ),
-        ),
-      ),
-    ];
-    const users = userIds.length
-      ? await this.prisma.user.findMany({
-          where: { id: { in: userIds } },
-          select: { id: true, name: true },
-        })
-      : [];
-    const userNames = new Map(users.map((user) => [user.id, user.name]));
+    const userNames = await resolveAuditUserNames(
+      this.prisma,
+      terms.flatMap((term) => [term.createdByUserId, term.updatedByUserId]),
+    );
 
     return terms.map((term) => mapTerm(term, userNames));
   }
@@ -420,7 +408,7 @@ export class TermMaintenanceService {
 
     if (
       user.companyId === companyId &&
-      user.permissions.includes(`${TermManagementPermissionCode}:${action}`)
+      user.permissions.includes(`TM:${action}`)
     ) {
       return;
     }
@@ -446,8 +434,7 @@ export class TermMaintenanceService {
     }
 
     return (
-      user.companyId === companyId &&
-      user.permissions.includes(`${TermManagementPermissionCode}:${action}`)
+      user.companyId === companyId && user.permissions.includes(`TM:${action}`)
     );
   }
 

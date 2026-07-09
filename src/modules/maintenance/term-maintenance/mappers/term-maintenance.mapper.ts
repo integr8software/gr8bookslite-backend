@@ -1,6 +1,5 @@
 import type { Term } from '@prisma/client';
-
-const SystemGeneratedLabel = 'System Generated';
+import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.util';
 
 export function mapTerm(term: Term, userNames: Map<number, string>) {
   return {
@@ -12,7 +11,7 @@ export function mapTerm(term: Term, userNames: Map<number, string>) {
     status: term.status,
     createdBy:
       term.createdByUserId === null
-        ? SystemGeneratedLabel
+        ? SystemGeneratedAuditLabel
         : (userNames.get(term.createdByUserId) ?? null),
     createdAt: term.createdAt,
     updatedBy:

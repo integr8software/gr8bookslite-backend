@@ -19,6 +19,7 @@ import {
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { normalizeEmail } from '../../../common/utils/email.util';
+import { cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
@@ -668,11 +669,6 @@ export class WorkspaceUsersService {
       .map((origin) => origin.trim())
       .find((origin) => origin && origin !== '*');
   }
-}
-
-function cleanOptional(value: string | undefined) {
-  const cleaned = value?.trim();
-  return cleaned ? cleaned : null;
 }
 
 function getAccessScope(

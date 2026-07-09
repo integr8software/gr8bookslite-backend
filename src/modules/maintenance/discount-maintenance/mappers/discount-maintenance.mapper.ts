@@ -1,7 +1,6 @@
 import { DiscountType } from '@prisma/client';
 import type { DiscountWithAccount } from '../types/discount-with-account.type';
-
-const SystemGeneratedLabel = 'System Generated';
+import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.util';
 
 export function mapDiscount(
   discount: DiscountWithAccount,
@@ -24,7 +23,7 @@ export function mapDiscount(
         : 'Sales > Sales Discount',
     createdBy:
       discount.createdByUserId === null
-        ? SystemGeneratedLabel
+        ? SystemGeneratedAuditLabel
         : (userNames.get(discount.createdByUserId) ?? null),
     createdAt: discount.createdAt,
     updatedBy:
