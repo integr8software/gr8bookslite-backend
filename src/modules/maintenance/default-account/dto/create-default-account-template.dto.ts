@@ -20,4 +20,8 @@ export class CreateDefaultAccountTemplateDto {
   @IsOptional()
   @IsEnum(ChartAccountStatus)
   status?: ChartAccountStatus;
+
+  @IsOptional()
+  @IsString()
+  expenseParentCoaId?: string;
 }

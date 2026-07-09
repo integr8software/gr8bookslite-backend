@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { normalizeAccountGroupTags } from '../../chart-of-accounts/utils/system-account-groups.util';
 import { BankAccountInclude } from '../prisma/bank-account.include';
 
 export type BankAccountPayload = Prisma.BankAccountGetPayload<{
@@ -27,7 +28,7 @@ export function mapBankAccount(bankAccount: BankAccountPayload) {
       id: bankAccount.coa.id.toString(),
       accountCode: bankAccount.coa.accountCode,
       accountTitle: bankAccount.coa.accountTitle,
-      accountGroup: bankAccount.coa.accountGroup,
+      accountGroup: normalizeAccountGroupTags(bankAccount.coa.accountGroup),
       status: bankAccount.coa.status,
     },
     createdByUserId: bankAccount.createdByUserId,

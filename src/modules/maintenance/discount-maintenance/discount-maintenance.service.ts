@@ -6,8 +6,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
-  ChartAccount,
-  Discount,
   DiscountStatus,
   DiscountType,
   DiscountValueType,
@@ -19,23 +17,22 @@ import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
-import {
-  getGeneratedDiscountAccountTitle,
-  resolveDiscountChartAccount,
-} from './utils/discount-chart-account.util';
+import { parsePositiveBigIntId } from '../utils/maintenance-id.util';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { GetDiscountListQueryDto } from './dto/get-discount-list-query.dto';
 import { ImportDiscountsDto } from './dto/import-discounts.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
+import { mapDiscount } from './mappers/discount-maintenance.mapper';
+import { DiscountInclude } from './prisma/discount.include';
+import type { DiscountWithAccount } from './types/discount-with-account.type';
+import {
+  getGeneratedDiscountAccountTitle,
+  resolveDiscountChartAccount,
+} from './utils/discount-chart-account.util';
 
 const DiscountManagementPermissionCode = 'DSM';
 const DefaultPage = 1;
 const DefaultLimit = 500;
-const SystemGeneratedLabel = 'System Generated';
-
-type DiscountWithAccount = Discount & {
-  chartAccount: ChartAccount;
-};
 
 @Injectable()
 export class DiscountMaintenanceService {
@@ -55,7 +52,7 @@ export class DiscountMaintenanceService {
     const [discounts, total, statistics] = await Promise.all([
       this.prisma.discount.findMany({
         where,
-        include: { chartAccount: true },
+        include: DiscountInclude,
         orderBy,
         skip,
         take: limit,
@@ -83,7 +80,7 @@ export class DiscountMaintenanceService {
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const discount = await this.findDiscountOrThrow(
       companyId,
-      parseBigIntId(id),
+      parsePositiveBigIntId(id),
     );
 
     return {
@@ -116,7 +113,7 @@ export class DiscountMaintenanceService {
             status: dto.status ?? DiscountStatus.ACTIVE,
             createdByUserId: user.id,
           },
-          include: { chartAccount: true },
+          include: DiscountInclude,
         });
       });
 
@@ -134,7 +131,7 @@ export class DiscountMaintenanceService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const discountId = parseBigIntId(id);
+    const discountId = parsePositiveBigIntId(id);
     const current = await this.findDiscountOrThrow(companyId, discountId);
 
     const nextName = dto.name?.trim() ?? current.name;
@@ -172,7 +169,7 @@ export class DiscountMaintenanceService {
             chartAccountId: chartAccount.id,
             updatedByUserId: user.id,
           },
-          include: { chartAccount: true },
+          include: DiscountInclude,
         });
       });
 
@@ -246,7 +243,7 @@ export class DiscountMaintenanceService {
           },
           deletedAt: null,
         },
-        include: { chartAccount: true },
+        include: DiscountInclude,
         orderBy: [{ name: 'asc' }],
       });
     });
@@ -405,7 +402,7 @@ export class DiscountMaintenanceService {
         companyId,
         deletedAt: null,
       },
-      include: { chartAccount: true },
+      include: DiscountInclude,
     });
 
     if (!discount) {
@@ -556,47 +553,3 @@ export class DiscountMaintenanceService {
   }
 }
 
-function mapDiscount(
-  discount: DiscountWithAccount,
-  userNames: Map<number, string>,
-) {
-  return {
-    id: discount.id.toString(),
-    name: discount.name,
-    description: discount.description ?? '',
-    type: discount.type,
-    valueType: discount.valueType,
-    value: discount.value.toString(),
-    status: discount.status,
-    chartAccountId: discount.chartAccountId.toString(),
-    accountCode: discount.chartAccount.accountCode,
-    accountTitle: discount.chartAccount.accountTitle,
-    accountGroupPath:
-      discount.type === DiscountType.PURCHASE
-        ? 'Cost of Sales > Purchase Discount'
-        : 'Sales > Sales Discount',
-    createdBy:
-      discount.createdByUserId === null
-        ? SystemGeneratedLabel
-        : (userNames.get(discount.createdByUserId) ?? null),
-    createdAt: discount.createdAt,
-    updatedBy:
-      (discount.updatedByUserId && userNames.get(discount.updatedByUserId)) ??
-      null,
-    updatedAt: discount.updatedAt,
-  };
-}
-
-function parseBigIntId(value: string, label = 'id') {
-  if (!/^\d+$/.test(value)) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  const id = BigInt(value);
-
-  if (id <= 0n) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  return id;
-}

@@ -64,7 +64,7 @@ export class ChartAccountResponseDto {
   accountNature!: AccountNature | null;
 
   @ApiProperty({ nullable: true })
-  accountGroup!: string | null;
+  accountGroup!: string[] | null;
 
   @ApiProperty({ nullable: true })
   statementSection!: string | null;

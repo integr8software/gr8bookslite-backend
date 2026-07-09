@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { ChartAccountInclude } from '../prisma/chart-account.include';
+import { normalizeAccountGroupTags } from '../utils/system-account-groups.util';
 
 export type ChartAccountPayload = Prisma.ChartAccountGetPayload<{
   include: typeof ChartAccountInclude;
@@ -20,7 +21,7 @@ export function mapChartAccount(account: ChartAccountPayload) {
     accountLevel: account.accountLevel,
     accountType: account.accountType,
     accountNature: account.accountNature,
-    accountGroup: account.accountGroup,
+    accountGroup: normalizeAccountGroupTags(account.accountGroup),
     statementSection: account.statementSection,
     reportAlias: account.reportAlias,
     description: account.description,

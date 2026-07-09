@@ -18,6 +18,7 @@ import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CoaBankSyncService } from '../coa-bank-sync/coa-bank-sync.service';
+import { parsePositiveBigIntId } from '../utils/maintenance-id.util';
 import { CreateChartAccountDto } from './dto/create-chart-account.dto';
 import { GetChartAccountListQueryDto } from './dto/get-chart-account-list-query.dto';
 import { GetNextChartAccountCodeQueryDto } from './dto/get-next-chart-account-code-query.dto';
@@ -34,6 +35,7 @@ import {
   assertCanCreateAccountLevel,
   generateNextAccountCodeFromSiblings,
 } from './utils/chart-account-code.util';
+import { toAccountGroupJson } from './utils/system-account-groups.util';
 
 const ChartAccountTransactionOptions = {
   maxWait: 10_000,
@@ -117,7 +119,10 @@ export class ChartOfAccountsService {
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const account = await this.findAccountOrThrow(companyId, parseBigIntId(id));
+    const account = await this.findAccountOrThrow(
+      companyId,
+      parsePositiveBigIntId(id),
+    );
 
     return {
       account: mapChartAccount(account),
@@ -282,7 +287,7 @@ export class ChartOfAccountsService {
   async update(user: AuthUser, id: string, dto: UpdateChartAccountDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
-    const accountId = parseBigIntId(id);
+    const accountId = parsePositiveBigIntId(id);
     const existingAccount = await this.findAccountOrThrow(companyId, accountId);
     this.assertCompanyEditableAccount(existingAccount);
 
@@ -397,7 +402,7 @@ export class ChartOfAccountsService {
   ) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
-    const accountId = parseBigIntId(id);
+    const accountId = parsePositiveBigIntId(id);
     const existingAccount = await this.findAccountOrThrow(companyId, accountId);
     this.assertCompanyEditableAccount(existingAccount);
 
@@ -631,7 +636,7 @@ export class ChartOfAccountsService {
         ? { accountNature: dto.accountNature }
         : {}),
       ...(dto.accountGroup !== undefined
-        ? { accountGroup: cleanOptional(dto.accountGroup) }
+        ? { accountGroup: toAccountGroupJson(dto.accountGroup) }
         : {}),
       ...(dto.statementSection !== undefined
         ? { statementSection: cleanOptional(dto.statementSection) }
@@ -844,19 +849,5 @@ function parseOptionalBigIntId(value: string | undefined, label: string) {
     return undefined;
   }
 
-  return parseBigIntId(value, label);
-}
-
-function parseBigIntId(value: string, label = 'id') {
-  if (!/^\d+$/.test(value)) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  const id = BigInt(value);
-
-  if (id <= 0n) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  return id;
+  return parsePositiveBigIntId(value, label);
 }

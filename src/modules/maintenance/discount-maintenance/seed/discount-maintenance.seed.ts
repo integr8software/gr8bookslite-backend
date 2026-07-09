@@ -7,9 +7,7 @@ import {
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { resolveDiscountChartAccount } from '../utils/discount-chart-account.util';
 
-type DiscountWriteClient =
-  | Pick<PrismaService, 'chartAccount' | 'companyDefaultAccount' | 'discount'>
-  | Prisma.TransactionClient;
+type DiscountWriteClient = PrismaService | Prisma.TransactionClient;
 
 export const DiscountMaintenanceSeedRecords = [
   {

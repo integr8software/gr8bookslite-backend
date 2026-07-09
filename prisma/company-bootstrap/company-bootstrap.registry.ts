@@ -1,5 +1,4 @@
 import {
-  ChartAccountStatus,
   CompanyUnitType,
   MembershipRole,
   MembershipStatus,
@@ -8,6 +7,12 @@ import {
 import { EntitlementService } from '../../src/common/access/entitlements/entitlement.service';
 import { seedCompanyBankAccountDefaults } from '../../src/modules/maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyChartAccountDefaults } from '../../src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
+import { seedCompanyDefaultAccountDefaults } from '../../src/modules/maintenance/default-account/seed/default-accounts.seed';
+import {
+  findSystemAccountGroupOrThrow,
+  SystemAccountGroups,
+} from '../../src/modules/maintenance/chart-of-accounts/utils/system-account-groups.util';
+import { StandardDefaultAccountTemplates } from '../../src/modules/maintenance/default-account/seed/default-account-defaults.seed';
 import {
   PaymentTypeMaintenanceSeedRecords,
   seedCompanyPaymentTypeMaintenanceDefaults,
@@ -129,7 +134,7 @@ async function backupCounts(
 ): Promise<CompanyBootstrapBackup> {
   const [
     chartAccounts,
-    companyDefaultAccounts,
+    defaultAccounts,
     terms,
     paymentTypes,
     discounts,
@@ -139,8 +144,8 @@ async function backupCounts(
   ] = await Promise.all([
     countForBackup('chart_accounts', tx.chartAccount.count({ where: { companyId } })),
     countForBackup(
-      'company_default_accounts',
-      tx.companyDefaultAccount.count({ where: { companyId } }),
+      'default_accounts',
+      tx.defaultAccount.count({ where: { companyId } }),
     ),
     countForBackup('terms', tx.term.count({ where: { companyId } })),
     countForBackup(
@@ -168,7 +173,7 @@ async function backupCounts(
     key,
     data: {
       chartAccounts,
-      companyDefaultAccounts,
+      defaultAccounts,
       terms,
       paymentTypes,
       discounts,
@@ -328,23 +333,16 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     key: 'coa',
     label: 'Chart of Accounts bootstrap',
     async inspect(companyId, tx) {
-      const [chartAccountCount, templateCount] = await Promise.all([
-        tx.chartAccount.count({ where: { companyId } }),
-        tx.defaultChartAccount.count(),
-      ]);
-
-      if (templateCount === 0) {
-        return errorInspection(
-          'Default chart of accounts template has not been seeded.',
-        );
-      }
+      const chartAccountCount = await tx.chartAccount.count({
+        where: { companyId },
+      });
 
       return chartAccountCount > 0
         ? ok('Company COA exists.', { chartAccountCount })
         : missing(
             'Company has no chart accounts.',
-            ['Seed company COA from default_chart_accounts.'],
-            { chartAccountCount, templateCount },
+            ['Seed company COA from system-owned Chart of Accounts seed.'],
+            { chartAccountCount },
           );
     },
     backup: (companyId, tx) => backupCounts('coa', companyId, tx),
@@ -358,79 +356,47 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     },
   },
   {
-    key: 'company-default-accounts',
-    label: 'Company default account mappings bootstrap',
+    key: 'default-accounts',
+    label: 'Default account records bootstrap',
     async inspect(companyId, tx) {
-      const [mappingCount, defaultMappingCount] = await Promise.all([
-        tx.companyDefaultAccount.count({ where: { companyId } }),
-        tx.defaultAccount.count({
-          where: { status: ChartAccountStatus.ACTIVE },
-        }),
-      ]);
+      const existingDefaultAccounts = await tx.defaultAccount.findMany({
+        where: {
+          companyId,
+          name: {
+            in: StandardDefaultAccountTemplates.map((template) => template.name),
+          },
+        },
+        select: { name: true },
+      });
+      const existingNames = new Set(
+        existingDefaultAccounts.map((account) => account.name),
+      );
+      const missingDefaultAccounts = StandardDefaultAccountTemplates.filter(
+        (template) => !existingNames.has(template.name),
+      );
 
-      if (defaultMappingCount === 0) {
-        return errorInspection('Default account mappings have not been seeded.');
-      }
-
-      return mappingCount >= defaultMappingCount
-        ? ok('Company default account mappings exist.', {
-            mappingCount,
-            defaultMappingCount,
+      return missingDefaultAccounts.length === 0
+        ? ok('Default account records exist.', {
+            count: existingDefaultAccounts.length,
           })
         : missing(
-            'Company default account mappings are incomplete.',
-            ['Create missing mappings from existing COA rows.'],
-            { mappingCount, defaultMappingCount },
+            'Default account records are incomplete.',
+            [
+              `Seed ${missingDefaultAccounts.length} missing default account records.`,
+            ],
+            {
+              count: existingDefaultAccounts.length,
+              expectedCount: StandardDefaultAccountTemplates.length,
+              missingNames: missingDefaultAccounts.map(
+                (template) => template.name,
+              ),
+            },
           );
     },
     backup: (companyId, tx) =>
-      backupCounts('company-default-accounts', companyId, tx),
+      backupCounts('default-accounts', companyId, tx),
     async apply(companyId, tx) {
-      const mappings = await tx.defaultAccount.findMany({
-        where: { status: ChartAccountStatus.ACTIVE },
-        include: { defaultChartAccount: true },
-      });
-
-      for (const mapping of mappings) {
-        const existing = await tx.companyDefaultAccount.findUnique({
-          where: {
-            companyId_moduleCode_accountRole: {
-              companyId,
-              moduleCode: mapping.moduleCode,
-              accountRole: mapping.accountRole,
-            },
-          },
-        });
-
-        if (existing) {
-          continue;
-        }
-
-        const chartAccount = await tx.chartAccount.findUnique({
-          where: {
-            companyId_accountCode: {
-              companyId,
-              accountCode: mapping.defaultChartAccount.accountCode,
-            },
-          },
-          select: { id: true },
-        });
-
-        if (!chartAccount) {
-          continue;
-        }
-
-        await tx.companyDefaultAccount.create({
-          data: {
-            companyId,
-            moduleCode: mapping.moduleCode,
-            accountRole: mapping.accountRole,
-            chartAccountId: chartAccount.id,
-            usageType: mapping.usageType,
-            status: mapping.status,
-          },
-        });
-      }
+      await seedCompanyDefaultAccountDefaults(tx, companyId);
     },
   },
   {
@@ -536,7 +502,7 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
         : missing(
             'Default discounts are incomplete.',
             [
-              `Seed ${missingDiscounts.length} missing default discount records using company default COA mappings.`,
+              `Seed ${missingDiscounts.length} missing default discount records using system COA groups.`,
             ],
             {
               count: existingDiscounts.length,
@@ -554,21 +520,17 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     key: 'bank-defaults',
     label: 'Bank masterfile defaults bootstrap',
     async inspect(companyId, tx) {
-      const [bankCount, cashParent] = await Promise.all([
-        tx.bankAccount.count({ where: { companyId } }),
-        tx.companyDefaultAccount.findFirst({
-          where: {
-            companyId,
-            moduleCode: 'BM',
-            accountRole: 'CASH_IN_BANK_PARENT',
-            status: ChartAccountStatus.ACTIVE,
-          },
-          select: { id: true },
-        }),
-      ]);
-
-      if (!cashParent) {
-        return warning('Cash in Bank parent mapping is missing.');
+      const bankCount = await tx.bankAccount.count({ where: { companyId } });
+      try {
+        await findSystemAccountGroupOrThrow(
+          tx,
+          companyId,
+          SystemAccountGroups.bankMasterfile.cashInBankParent,
+        );
+      } catch (error: unknown) {
+        return warning('Cash in Bank parent group is missing.', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
 
       return bankCount > 0

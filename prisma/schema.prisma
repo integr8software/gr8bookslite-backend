@@ -74,52 +74,51 @@ model AuthSessionHandoff {
 // =========================================================
 
 model Company {
-  id                      Int                      @id @default(autoincrement())
-  name                    String
-  slug                    String                   @unique
-  legalName               String?                  @map("legal_name")
-  companyCode             String?                  @unique @map("company_code")
-  taxpayerType            TaxpayerType?            @map("taxpayer_type")
-  ownerLastName           String?                  @map("owner_last_name")
-  ownerFirstName          String?                  @map("owner_first_name")
-  ownerMiddleName         String?                  @map("owner_middle_name")
-  organizationType        String?                  @map("organization_type")
-  organizationTypeOther   String?                  @map("organization_type_other")
-  logoFileName            String?                  @map("logo_file_name")
-  logoMimeType            String?                  @map("logo_mime_type")
-  logoStoragePath         String?                  @map("logo_storage_path")
-  logoPublicUrl           String?                  @map("logo_public_url")
-  address                 String?
-  tin                     String?
-  email                   String?
-  website                 String?
-  contactNumber           String?                  @map("contact_number")
-  reportStartDate         DateTime?                @map("report_start_date")
-  reportEndDate           DateTime?                @map("report_end_date")
-  createdByUserId         Int?                     @map("created_by_user_id")
-  isActive                Boolean                  @default(true) @map("is_active")
-  status                  CompanyStatus            @default(PENDING)
-  createdAt               DateTime                 @default(now()) @map("created_at")
-  updatedAt               DateTime                 @updatedAt @map("updated_at")
-  subscriptions           CompanySubscription[]
-  billingCustomers        BillingCustomer[]
-  billingPaymentMethods   BillingPaymentMethod[]
-  memberships             Membership[]
-  roles                   CompanyRole[]
-  sidebarPreferences      UserSidebarPreference[]
-  units                   CompanyUnit[]
-  formSignatorySetups     FormSignatorySetup[]
-  chartAccounts           ChartAccount[]
-  companyDefaultAccounts  CompanyDefaultAccount[]
-  bankAccounts            BankAccount[]
-  defaultAccountTemplates DefaultAccountTemplate[]
-  terms                   Term[]
-  paymentTypes            PaymentType[]
-  discounts               Discount[]
-  userTablePreferences    UserTablePreference[]
-  auditLogs               AuditLog[]
-  onboardingDrafts        UserOnboardingDraft[]    @relation("ProvisionedOnboardingCompany")
-  createdByUser           User?                    @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  id                    Int                     @id @default(autoincrement())
+  name                  String
+  slug                  String                  @unique
+  legalName             String?                 @map("legal_name")
+  companyCode           String?                 @unique @map("company_code")
+  taxpayerType          TaxpayerType?           @map("taxpayer_type")
+  ownerLastName         String?                 @map("owner_last_name")
+  ownerFirstName        String?                 @map("owner_first_name")
+  ownerMiddleName       String?                 @map("owner_middle_name")
+  organizationType      String?                 @map("organization_type")
+  organizationTypeOther String?                 @map("organization_type_other")
+  logoFileName          String?                 @map("logo_file_name")
+  logoMimeType          String?                 @map("logo_mime_type")
+  logoStoragePath       String?                 @map("logo_storage_path")
+  logoPublicUrl         String?                 @map("logo_public_url")
+  address               String?
+  tin                   String?
+  email                 String?
+  website               String?
+  contactNumber         String?                 @map("contact_number")
+  reportStartDate       DateTime?               @map("report_start_date")
+  reportEndDate         DateTime?               @map("report_end_date")
+  createdByUserId       Int?                    @map("created_by_user_id")
+  isActive              Boolean                 @default(true) @map("is_active")
+  status                CompanyStatus           @default(PENDING)
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
+  subscriptions         CompanySubscription[]
+  billingCustomers      BillingCustomer[]
+  billingPaymentMethods BillingPaymentMethod[]
+  memberships           Membership[]
+  roles                 CompanyRole[]
+  sidebarPreferences    UserSidebarPreference[]
+  units                 CompanyUnit[]
+  formSignatorySetups   FormSignatorySetup[]
+  chartAccounts         ChartAccount[]
+  bankAccounts          BankAccount[]
+  defaultAccounts       DefaultAccount[]
+  terms                 Term[]
+  paymentTypes          PaymentType[]
+  discounts             Discount[]
+  userTablePreferences  UserTablePreference[]
+  auditLogs             AuditLog[]
+  onboardingDrafts      UserOnboardingDraft[]   @relation("ProvisionedOnboardingCompany")
+  createdByUser         User?                   @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@index([createdByUserId])
   @@map("companies")
@@ -594,40 +593,39 @@ model TransactionNumberSequence {
 }
 
 model ChartAccount {
-  id                                      BigInt                   @id @default(autoincrement())
-  companyId                               Int                      @map("company_id")
-  parentAccountId                         BigInt?                  @map("parent_account_id")
-  accountCode                             String                   @map("account_code") @db.VarChar(20)
-  accountTitle                            String                   @map("account_title") @db.VarChar(250)
-  accountLevel                            ChartAccountLevel        @map("account_level")
-  accountType                             ChartAccountType?        @map("account_type")
-  accountNature                           AccountNature?           @map("account_nature")
-  accountGroup                            String?                  @map("account_group") @db.VarChar(50)
-  statementSection                        String?                  @map("statement_section") @db.VarChar(250)
-  reportAlias                             String?                  @map("report_alias") @db.VarChar(250)
-  description                             String?                  @db.VarChar(500)
-  isPostingAccount                        Boolean                  @default(false) @map("is_posting_account")
-  withSubsidiary                          Boolean                  @default(false) @map("with_subsidiary")
-  contraAccount                           Boolean                  @default(false) @map("contra_account")
-  showTotal                               Boolean                  @default(false) @map("show_total")
-  orderNo                                 Int?                     @map("order_no")
-  status                                  ChartAccountStatus       @default(ACTIVE)
-  currencyCode                            String?                  @map("currency_code") @db.VarChar(10)
-  whoCreated                              String?                  @map("who_created") @db.VarChar(50)
-  whoModified                             String?                  @map("who_modified") @db.VarChar(50)
-  deletedAt                               DateTime?                @map("deleted_at")
-  createdAt                               DateTime                 @default(now()) @map("created_at")
-  updatedAt                               DateTime                 @updatedAt @map("updated_at")
-  company                                 Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  parentAccount                           ChartAccount?            @relation("ChartAccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Restrict)
-  childAccounts                           ChartAccount[]           @relation("ChartAccountHierarchy")
-  companyDefaultAccounts                  CompanyDefaultAccount[]
-  bankAccounts                            BankAccount[]
-  discounts                               Discount[]
-  defaultExpenseTemplates                 DefaultAccountTemplate[] @relation("DefaultAccountTemplateExpenseCoa")
-  defaultRevenueTemplates                 DefaultAccountTemplate[] @relation("DefaultAccountTemplateRevenueCoa")
-  defaultAssetTemplates                   DefaultAccountTemplate[] @relation("DefaultAccountTemplateAssetCoa")
-  defaultAccumulatedDepreciationTemplates DefaultAccountTemplate[] @relation("DefaultAccountTemplateAccumulatedDepreciationCoa")
+  id                                     BigInt             @id @default(autoincrement())
+  companyId                              Int                @map("company_id")
+  parentAccountId                        BigInt?            @map("parent_account_id")
+  accountCode                            String             @map("account_code") @db.VarChar(20)
+  accountTitle                           String             @map("account_title") @db.VarChar(250)
+  accountLevel                           ChartAccountLevel  @map("account_level")
+  accountType                            ChartAccountType?  @map("account_type")
+  accountNature                          AccountNature?     @map("account_nature")
+  accountGroup                           Json?              @map("account_group")
+  statementSection                       String?            @map("statement_section") @db.VarChar(250)
+  reportAlias                            String?            @map("report_alias") @db.VarChar(250)
+  description                            String?            @db.VarChar(500)
+  isPostingAccount                       Boolean            @default(false) @map("is_posting_account")
+  withSubsidiary                         Boolean            @default(false) @map("with_subsidiary")
+  contraAccount                          Boolean            @default(false) @map("contra_account")
+  showTotal                              Boolean            @default(false) @map("show_total")
+  orderNo                                Int?               @map("order_no")
+  status                                 ChartAccountStatus @default(ACTIVE)
+  currencyCode                           String?            @map("currency_code") @db.VarChar(10)
+  whoCreated                             String?            @map("who_created") @db.VarChar(50)
+  whoModified                            String?            @map("who_modified") @db.VarChar(50)
+  deletedAt                              DateTime?          @map("deleted_at")
+  createdAt                              DateTime           @default(now()) @map("created_at")
+  updatedAt                              DateTime           @updatedAt @map("updated_at")
+  company                                Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parentAccount                          ChartAccount?      @relation("ChartAccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Restrict)
+  childAccounts                          ChartAccount[]     @relation("ChartAccountHierarchy")
+  bankAccounts                           BankAccount[]
+  discounts                              Discount[]
+  defaultExpenseAccounts                 DefaultAccount[]   @relation("DefaultAccountExpenseCoa")
+  defaultRevenueAccounts                 DefaultAccount[]   @relation("DefaultAccountRevenueCoa")
+  defaultAssetAccounts                   DefaultAccount[]   @relation("DefaultAccountAssetCoa")
+  defaultAccumulatedDepreciationAccounts DefaultAccount[]   @relation("DefaultAccountAccumulatedDepreciationCoa")
 
   @@unique([companyId, accountCode], map: "chart_accounts_company_account_code_key")
   @@index([parentAccountId], map: "chart_accounts_parent_account_id_idx")
@@ -636,75 +634,7 @@ model ChartAccount {
   @@map("chart_accounts")
 }
 
-model DefaultChartAccount {
-  id                     BigInt                @id @default(autoincrement())
-  parentDefaultAccountId BigInt?               @map("parent_default_account_id")
-  accountCode            String                @unique @map("account_code") @db.VarChar(20)
-  accountTitle           String                @map("account_title") @db.VarChar(250)
-  accountLevel           ChartAccountLevel     @map("account_level")
-  accountType            ChartAccountType?     @map("account_type")
-  accountNature          AccountNature?        @map("account_nature")
-  accountGroup           String?               @map("account_group") @db.VarChar(50)
-  statementSection       String?               @map("statement_section") @db.VarChar(250)
-  reportAlias            String?               @map("report_alias") @db.VarChar(250)
-  description            String?               @db.VarChar(500)
-  isPostingAccount       Boolean               @default(false) @map("is_posting_account")
-  withSubsidiary         Boolean               @default(false) @map("with_subsidiary")
-  contraAccount          Boolean               @default(false) @map("contra_account")
-  showTotal              Boolean               @default(false) @map("show_total")
-  orderNo                Int?                  @map("order_no")
-  status                 ChartAccountStatus    @default(ACTIVE)
-  currencyCode           String?               @map("currency_code") @db.VarChar(10)
-  createdAt              DateTime              @default(now()) @map("created_at")
-  updatedAt              DateTime              @updatedAt @map("updated_at")
-  parentDefaultAccount   DefaultChartAccount?  @relation("DefaultChartAccountHierarchy", fields: [parentDefaultAccountId], references: [id], onDelete: Restrict)
-  childDefaultAccounts   DefaultChartAccount[] @relation("DefaultChartAccountHierarchy")
-  defaultAccounts        DefaultAccount[]
-
-  @@index([parentDefaultAccountId], map: "default_chart_accounts_parent_default_account_id_idx")
-  @@index([status], map: "default_chart_accounts_status_idx")
-  @@map("default_chart_accounts")
-}
-
 model DefaultAccount {
-  id                    BigInt                  @id @default(autoincrement())
-  moduleCode            String                  @map("module_code") @db.VarChar(20)
-  accountRole           String                  @map("account_role") @db.VarChar(80)
-  defaultChartAccountId BigInt                  @map("default_chart_account_id")
-  requiredLevel         ChartAccountLevel       @map("required_level")
-  usageType             DefaultAccountUsageType @map("usage_type")
-  description           String?                 @db.VarChar(250)
-  status                ChartAccountStatus      @default(ACTIVE)
-  createdAt             DateTime                @default(now()) @map("created_at")
-  updatedAt             DateTime                @updatedAt @map("updated_at")
-  defaultChartAccount   DefaultChartAccount     @relation(fields: [defaultChartAccountId], references: [id], onDelete: Restrict)
-
-  @@unique([moduleCode, accountRole], map: "default_accounts_module_code_account_role_key")
-  @@index([defaultChartAccountId], map: "default_accounts_default_chart_account_id_idx")
-  @@index([status], map: "default_accounts_status_idx")
-  @@map("default_accounts")
-}
-
-model CompanyDefaultAccount {
-  id             BigInt                  @id @default(autoincrement())
-  companyId      Int                     @map("company_id")
-  moduleCode     String                  @map("module_code") @db.VarChar(20)
-  accountRole    String                  @map("account_role") @db.VarChar(80)
-  chartAccountId BigInt                  @map("chart_account_id")
-  usageType      DefaultAccountUsageType @map("usage_type")
-  status         ChartAccountStatus      @default(ACTIVE)
-  createdAt      DateTime                @default(now()) @map("created_at")
-  updatedAt      DateTime                @updatedAt @map("updated_at")
-  company        Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  chartAccount   ChartAccount            @relation(fields: [chartAccountId], references: [id], onDelete: Restrict)
-
-  @@unique([companyId, moduleCode, accountRole], map: "company_default_accounts_company_module_role_key")
-  @@index([chartAccountId], map: "company_default_accounts_chart_account_id_idx")
-  @@index([companyId, status], map: "company_default_accounts_company_status_idx")
-  @@map("company_default_accounts")
-}
-
-model DefaultAccountTemplate {
   id                           BigInt                     @id @default(autoincrement())
   companyId                    Int                        @map("company_id")
   type                         DefaultAccountTemplateType
@@ -721,18 +651,18 @@ model DefaultAccountTemplate {
   updatedAt                    DateTime                   @updatedAt @map("updated_at")
   deletedAt                    DateTime?                  @map("deleted_at")
   company                      Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  expenseCoa                   ChartAccount?              @relation("DefaultAccountTemplateExpenseCoa", fields: [expenseCoaId], references: [id], onDelete: Restrict)
-  revenueCoa                   ChartAccount?              @relation("DefaultAccountTemplateRevenueCoa", fields: [revenueCoaId], references: [id], onDelete: Restrict)
-  assetCoa                     ChartAccount?              @relation("DefaultAccountTemplateAssetCoa", fields: [assetCoaId], references: [id], onDelete: Restrict)
-  accumulatedDepreciationCoa   ChartAccount?              @relation("DefaultAccountTemplateAccumulatedDepreciationCoa", fields: [accumulatedDepreciationCoaId], references: [id], onDelete: Restrict)
+  expenseCoa                   ChartAccount?              @relation("DefaultAccountExpenseCoa", fields: [expenseCoaId], references: [id], onDelete: Restrict)
+  revenueCoa                   ChartAccount?              @relation("DefaultAccountRevenueCoa", fields: [revenueCoaId], references: [id], onDelete: Restrict)
+  assetCoa                     ChartAccount?              @relation("DefaultAccountAssetCoa", fields: [assetCoaId], references: [id], onDelete: Restrict)
+  accumulatedDepreciationCoa   ChartAccount?              @relation("DefaultAccountAccumulatedDepreciationCoa", fields: [accumulatedDepreciationCoaId], references: [id], onDelete: Restrict)
 
-  @@unique([companyId, type, name], map: "default_account_templates_company_type_name_key")
-  @@index([companyId, status], map: "default_account_templates_company_status_idx")
-  @@index([expenseCoaId], map: "default_account_templates_expense_coa_id_idx")
-  @@index([revenueCoaId], map: "default_account_templates_revenue_coa_id_idx")
-  @@index([assetCoaId], map: "default_account_templates_asset_coa_id_idx")
-  @@index([accumulatedDepreciationCoaId], map: "default_account_templates_accumulated_depreciation_coa_id_idx")
-  @@map("default_account_templates")
+  @@unique([companyId, type, name], map: "default_accounts_company_type_name_key")
+  @@index([companyId, status], map: "default_accounts_company_status_idx")
+  @@index([expenseCoaId], map: "default_accounts_expense_coa_id_idx")
+  @@index([revenueCoaId], map: "default_accounts_revenue_coa_id_idx")
+  @@index([assetCoaId], map: "default_accounts_asset_coa_id_idx")
+  @@index([accumulatedDepreciationCoaId], map: "default_accounts_accumulated_depreciation_coa_id_idx")
+  @@map("default_accounts")
 }
 
 model BankAccount {

@@ -2,15 +2,16 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AccountNature,
   ChartAccountLevel,
-  ChartAccountStatus,
   ChartAccountType,
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+import {
+  findSystemAccountGroupOrThrow,
+  SystemAccountGroups,
+} from '../chart-of-accounts/utils/system-account-groups.util';
 
 const BaseCurrencyCode = 'PHP';
-const BankMasterfilePermissionCode = 'BM';
-const CashInBankParentRole = 'CASH_IN_BANK_PARENT';
 
 type PrismaClientLike = Prisma.TransactionClient | PrismaService;
 
@@ -23,7 +24,7 @@ type ChartAccountForSync = {
   accountLevel: ChartAccountLevel;
   accountType: ChartAccountType | null;
   accountNature: AccountNature | null;
-  accountGroup: string | null;
+  accountGroup: Prisma.JsonValue | null;
   isPostingAccount: boolean;
   currencyCode: string | null;
 };
@@ -49,49 +50,11 @@ export class CoaBankSyncService {
     companyId: number,
     tx: PrismaClientLike = this.prisma,
   ) {
-    const mappedAccount = await tx.companyDefaultAccount.findFirst({
-      where: {
-        companyId,
-        moduleCode: BankMasterfilePermissionCode,
-        accountRole: CashInBankParentRole,
-        status: ChartAccountStatus.ACTIVE,
-        chartAccount: {
-          companyId,
-          status: ChartAccountStatus.ACTIVE,
-          deletedAt: null,
-          accountLevel: ChartAccountLevel.SUB3,
-        },
-      },
-      include: { chartAccount: true },
-    });
-
-    if (mappedAccount?.chartAccount) {
-      return mappedAccount.chartAccount;
-    }
-
-    const accounts = await tx.chartAccount.findMany({
-      where: {
-        companyId,
-        status: ChartAccountStatus.ACTIVE,
-        deletedAt: null,
-        accountLevel: { not: ChartAccountLevel.SPECIFIC },
-        OR: [
-          { accountTitle: { contains: 'cash', mode: 'insensitive' } },
-          { accountTitle: { contains: 'bank', mode: 'insensitive' } },
-          { accountGroup: { contains: 'cash', mode: 'insensitive' } },
-          { accountGroup: { contains: 'bank', mode: 'insensitive' } },
-          { statementSection: { contains: 'cash', mode: 'insensitive' } },
-          { statementSection: { contains: 'bank', mode: 'insensitive' } },
-          { reportAlias: { contains: 'cash', mode: 'insensitive' } },
-          { reportAlias: { contains: 'bank', mode: 'insensitive' } },
-          { description: { contains: 'cash', mode: 'insensitive' } },
-          { description: { contains: 'bank', mode: 'insensitive' } },
-        ],
-      },
-      orderBy: [{ accountCode: 'asc' }],
-    });
-
-    return pickCashInBankParent(accounts);
+    return findSystemAccountGroupOrThrow(
+      tx,
+      companyId,
+      SystemAccountGroups.bankMasterfile.cashInBankParent,
+    );
   }
 
   async findCashInBankParentOrThrow(
@@ -218,71 +181,6 @@ export class CoaBankSyncService {
       );
     }
   }
-}
-
-type CashInBankCandidate = Pick<
-  Prisma.ChartAccountGetPayload<object>,
-  | 'accountTitle'
-  | 'accountGroup'
-  | 'statementSection'
-  | 'reportAlias'
-  | 'description'
->;
-
-function pickCashInBankParent<T extends CashInBankCandidate>(accounts: T[]) {
-  let bestAccount: T | null = null;
-  let bestScore = 0;
-
-  for (const account of accounts) {
-    const score = scoreCashInBankCandidate(account);
-
-    if (score > bestScore) {
-      bestAccount = account;
-      bestScore = score;
-    }
-  }
-
-  return bestAccount;
-}
-
-function scoreCashInBankCandidate(account: CashInBankCandidate) {
-  const labels = [
-    account.accountTitle,
-    account.accountGroup,
-    account.statementSection,
-    account.reportAlias,
-    account.description,
-  ].map(normalizeAccountLabel);
-
-  if (labels.some((label) => label === 'cash in bank')) {
-    return 100;
-  }
-
-  if (
-    labels.some(
-      (label) =>
-        label.includes('cash in bank') || label.includes('cash in banks'),
-    )
-  ) {
-    return 90;
-  }
-
-  if (
-    labels.some((label) => label.includes('cash') && label.includes('bank'))
-  ) {
-    return 80;
-  }
-
-  return 0;
-}
-
-function normalizeAccountLabel(value: string | null) {
-  return (
-    value
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim() ?? ''
-  );
 }
 
 function cleanText(value: string | null | undefined) {

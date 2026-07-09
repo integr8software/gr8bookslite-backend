@@ -11,10 +11,10 @@ Use these rules when adding or changing seeded Chart of Accounts defaults for an
 
 ## Status Sync
 
-- `StandardDefaultChartAccounts` is the active template list. Rows removed from the list are marked inactive by `seedDefaultCoaTemplate`.
+- `StandardDefaultChartAccounts` in `src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts-defaults.seed.ts` is the active company COA seed list.
 - Company COA seeding must copy both active and inactive template rows so default status changes are reflected in each company copy.
 - Inactive copied rows should have `deletedAt` set; active copied rows should clear `deletedAt`.
-- `StandardDefaultAccountMappings` is the active platform mapping list. Removed mappings should be marked inactive during template seeding.
+- `StandardDefaultAccountMappings` in `src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts-system-groups.seed.ts` is the active module account-group mapping list.
 
 ## Mapping Rules
 

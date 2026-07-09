@@ -17,16 +17,17 @@ import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { parsePositiveBigIntId } from '../utils/maintenance-id.util';
 import { CreatePaymentTypeDto } from './dto/create-payment-type.dto';
 import { GetPaymentTypeListQueryDto } from './dto/get-payment-type-list-query.dto';
 import { ImportPaymentTypesDto } from './dto/import-payment-types.dto';
 import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
+import { mapPaymentType } from './mappers/payment-type-maintenance.mapper';
 
 const PaymentTypePermissionCode = 'PT';
 
 const DefaultPage = 1;
 const DefaultLimit = 500;
-const SystemGeneratedLabel = 'System Generated';
 
 @Injectable()
 export class PaymentTypeMaintenanceService {
@@ -73,7 +74,7 @@ export class PaymentTypeMaintenanceService {
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const paymentType = await this.findPaymentTypeOrThrow(
       companyId,
-      parseBigIntId(id),
+      parsePositiveBigIntId(id),
     );
 
     return {
@@ -113,7 +114,7 @@ export class PaymentTypeMaintenanceService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const paymentTypeId = parseBigIntId(id);
+    const paymentTypeId = parsePositiveBigIntId(id);
 
     await this.findPaymentTypeOrThrow(companyId, paymentTypeId);
 
@@ -501,39 +502,3 @@ export class PaymentTypeMaintenanceService {
   }
 }
 
-function mapPaymentType(
-  paymentType: PaymentType,
-  userNames: Map<number, string>,
-) {
-  return {
-    id: paymentType.id.toString(),
-    name: paymentType.name,
-    description: paymentType.description ?? '',
-    classification: paymentType.classification,
-    status: paymentType.status,
-    createdBy:
-      paymentType.createdByUserId === null
-        ? SystemGeneratedLabel
-        : (userNames.get(paymentType.createdByUserId) ?? null),
-    createdAt: paymentType.createdAt,
-    updatedBy:
-      (paymentType.updatedByUserId &&
-        userNames.get(paymentType.updatedByUserId)) ??
-      null,
-    updatedAt: paymentType.updatedAt,
-  };
-}
-
-function parseBigIntId(value: string, label = 'id') {
-  if (!/^\d+$/.test(value)) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  const id = BigInt(value);
-
-  if (id <= 0n) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  return id;
-}

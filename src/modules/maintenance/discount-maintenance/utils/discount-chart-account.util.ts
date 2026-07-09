@@ -8,14 +8,13 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { generateNextAccountCodeFromSiblings } from '../../chart-of-accounts/utils/chart-account-code.util';
+import {
+  findSystemAccountGroupOrThrow,
+  mergeAccountGroupTags,
+  SystemAccountGroups,
+} from '../../chart-of-accounts/utils/system-account-groups.util';
 
-type DiscountChartAccountWriteClient =
-  | Pick<PrismaService, 'chartAccount' | 'companyDefaultAccount'>
-  | Prisma.TransactionClient;
-
-const DiscountManagementModuleCode = 'DSM';
-const SalesDiscountParentRole = 'SALES_DISCOUNT_PARENT';
-const PurchaseDiscountParentRole = 'PURCHASE_DISCOUNT_PARENT';
+type DiscountChartAccountWriteClient = PrismaService | Prisma.TransactionClient;
 
 export async function resolveDiscountChartAccount(
   tx: DiscountChartAccountWriteClient,
@@ -26,29 +25,13 @@ export async function resolveDiscountChartAccount(
     createdByUserId: number | null;
   },
 ) {
-  const parentMapping = await tx.companyDefaultAccount.findUnique({
-    where: {
-      companyId_moduleCode_accountRole: {
-        companyId: input.companyId,
-        moduleCode: DiscountManagementModuleCode,
-        accountRole:
-          input.type === DiscountType.PURCHASE
-            ? PurchaseDiscountParentRole
-            : SalesDiscountParentRole,
-      },
-    },
-    include: {
-      chartAccount: true,
-    },
-  });
-
-  if (!parentMapping?.chartAccount) {
-    throw new Error(
-      `Default discount account parent is not configured for ${input.type}.`,
-    );
-  }
-
-  const parent = parentMapping.chartAccount;
+  const parent = await findSystemAccountGroupOrThrow(
+    tx,
+    input.companyId,
+    input.type === DiscountType.PURCHASE
+      ? SystemAccountGroups.discountManagement.purchaseDiscountParent
+      : SystemAccountGroups.discountManagement.salesDiscountParent,
+  );
   const existing = await tx.chartAccount.findFirst({
     where: {
       companyId: input.companyId,
@@ -96,7 +79,7 @@ export async function resolveDiscountChartAccount(
         input.type === DiscountType.PURCHASE
           ? AccountNature.CREDIT
           : AccountNature.DEBIT,
-      accountGroup: parent.accountGroup,
+      accountGroup: mergeAccountGroupTags(parent.accountGroup),
       statementSection: parent.statementSection,
       reportAlias: input.accountTitle,
       description: `Generated from Discount Management for ${input.accountTitle}.`,
