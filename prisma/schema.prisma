@@ -115,6 +115,7 @@ model Company {
   terms                 Term[]
   paymentTypes          PaymentType[]
   discounts             Discount[]
+  parties               Party[]
   userTablePreferences  UserTablePreference[]
   auditLogs             AuditLog[]
   onboardingDrafts      UserOnboardingDraft[]   @relation("ProvisionedOnboardingCompany")
@@ -622,6 +623,12 @@ model ChartAccount {
   childAccounts                          ChartAccount[]     @relation("ChartAccountHierarchy")
   bankAccounts                           BankAccount[]
   discounts                              Discount[]
+  partyDefaultReceivableAccounts         Party[]            @relation("PartyDefaultReceivableAccount")
+  partyCustomerAdvanceAccounts           Party[]            @relation("PartyCustomerAdvanceAccount")
+  partyDefaultPayableAccounts            Party[]            @relation("PartyDefaultPayableAccount")
+  partyVendorAdvanceAccounts             Party[]            @relation("PartyVendorAdvanceAccount")
+  partyEmployeeAdvanceAccounts           Party[]            @relation("PartyEmployeeAdvanceAccount")
+  partyEmployeePayableAccounts           Party[]            @relation("PartyEmployeePayableAccount")
   defaultExpenseAccounts                 DefaultAccount[]   @relation("DefaultAccountExpenseCoa")
   defaultRevenueAccounts                 DefaultAccount[]   @relation("DefaultAccountRevenueCoa")
   defaultAssetAccounts                   DefaultAccount[]   @relation("DefaultAccountAssetCoa")
@@ -709,6 +716,7 @@ model Term {
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
   company         Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parties         Party[]
 
   @@index([companyId], map: "terms_company_id_idx")
   @@index([companyId, status], map: "terms_company_status_idx")
@@ -760,6 +768,86 @@ model Discount {
   @@index([companyId, status], map: "discounts_company_status_idx")
   @@index([companyId, type], map: "discounts_company_type_idx")
   @@map("discounts")
+}
+
+model Party {
+  id                       BigInt                    @id @default(autoincrement())
+  companyId                Int                       @map("company_id")
+  termId                   BigInt?                   @map("term_id")
+  partyCodeNo              String                    @map("party_code_no") @db.VarChar(80)
+  classification           PartyClassification
+  partyTypes               PartyType[]               @map("party_types")
+  status                   PartyStatus               @default(ACTIVE)
+  partyName                String?                   @map("party_name") @db.VarChar(255)
+  tradeName                String?                   @map("trade_name") @db.VarChar(255)
+  firstName                String?                   @map("first_name") @db.VarChar(120)
+  middleName               String?                   @map("middle_name") @db.VarChar(120)
+  lastName                 String?                   @map("last_name") @db.VarChar(120)
+  suffixName               String?                   @map("suffix_name") @db.VarChar(40)
+  defaultReceivableAccountId BigInt?                 @map("default_receivable_account_id")
+  customerAdvanceAccountId   BigInt?                 @map("customer_advance_account_id")
+  defaultPayableAccountId    BigInt?                 @map("default_payable_account_id")
+  vendorAdvanceAccountId     BigInt?                 @map("vendor_advance_account_id")
+  employeeAdvanceAccountId   BigInt?                 @map("employee_advance_account_id")
+  employeePayableAccountId   BigInt?                 @map("employee_payable_account_id")
+  tin                      String?                   @db.VarChar(20)
+  vatRegistrationType      PartyVatRegistrationType? @map("vat_registration_type")
+  atcCode                  String?                   @map("atc_code") @db.VarChar(40)
+  email                    String?                   @db.VarChar(255)
+  contactNo                String?                   @map("contact_no") @db.VarChar(40)
+  createdByUserId          Int?                      @map("created_by_user_id")
+  updatedByUserId          Int?                      @map("updated_by_user_id")
+  deletedAt                DateTime?                 @map("deleted_at")
+  createdAt                DateTime                  @default(now()) @map("created_at")
+  updatedAt                DateTime                  @updatedAt @map("updated_at")
+  company                  Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  term                     Term?                     @relation(fields: [termId], references: [id], onDelete: SetNull)
+  defaultReceivableAccount ChartAccount?             @relation("PartyDefaultReceivableAccount", fields: [defaultReceivableAccountId], references: [id], onDelete: Restrict)
+  customerAdvanceAccount   ChartAccount?             @relation("PartyCustomerAdvanceAccount", fields: [customerAdvanceAccountId], references: [id], onDelete: Restrict)
+  defaultPayableAccount    ChartAccount?             @relation("PartyDefaultPayableAccount", fields: [defaultPayableAccountId], references: [id], onDelete: Restrict)
+  vendorAdvanceAccount     ChartAccount?             @relation("PartyVendorAdvanceAccount", fields: [vendorAdvanceAccountId], references: [id], onDelete: Restrict)
+  employeeAdvanceAccount   ChartAccount?             @relation("PartyEmployeeAdvanceAccount", fields: [employeeAdvanceAccountId], references: [id], onDelete: Restrict)
+  employeePayableAccount   ChartAccount?             @relation("PartyEmployeePayableAccount", fields: [employeePayableAccountId], references: [id], onDelete: Restrict)
+  addresses                PartyAddress[]
+
+  @@unique([companyId, partyCodeNo], map: "parties_company_code_key")
+  @@index([companyId], map: "parties_company_id_idx")
+  @@index([companyId, status], map: "parties_company_status_idx")
+  @@index([companyId, classification], map: "parties_company_classification_idx")
+  @@index([termId], map: "parties_term_id_idx")
+  @@index([defaultReceivableAccountId], map: "parties_default_receivable_account_id_idx")
+  @@index([customerAdvanceAccountId], map: "parties_customer_advance_account_id_idx")
+  @@index([defaultPayableAccountId], map: "parties_default_payable_account_id_idx")
+  @@index([vendorAdvanceAccountId], map: "parties_vendor_advance_account_id_idx")
+  @@index([employeeAdvanceAccountId], map: "parties_employee_advance_account_id_idx")
+  @@index([employeePayableAccountId], map: "parties_employee_payable_account_id_idx")
+  @@map("parties")
+}
+
+model PartyAddress {
+  id                   BigInt  @id @default(autoincrement())
+  partyId              BigInt  @map("party_id")
+  addressName          String  @map("address_name") @db.VarChar(120)
+  addressLine1         String  @map("address_line_1") @db.VarChar(255)
+  addressLine2         String  @map("address_line_2") @db.VarChar(255)
+  barangay             String? @db.VarChar(120)
+  barangayCode         String? @map("barangay_code") @db.VarChar(30)
+  cityMunicipality     String? @map("city_municipality") @db.VarChar(120)
+  cityMunicipalityCode String? @map("city_municipality_code") @db.VarChar(30)
+  province             String? @db.VarChar(120)
+  provinceCode         String? @map("province_code") @db.VarChar(30)
+  region               String? @db.VarChar(120)
+  regionCode           String? @map("region_code") @db.VarChar(30)
+  isBilling            Boolean @default(false) @map("is_billing")
+  isBuilding           Boolean @default(false) @map("is_building")
+  isDefault            Boolean @default(false) @map("is_default")
+  isDelivery           Boolean @default(false) @map("is_delivery")
+  isForeign            Boolean @default(false) @map("is_foreign")
+  isHome               Boolean @default(false) @map("is_home")
+  party                Party   @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  @@index([partyId], map: "party_addresses_party_id_idx")
+  @@map("party_addresses")
 }
 
 // =========================================================
@@ -1310,4 +1398,30 @@ enum DiscountValueType {
 enum DiscountStatus {
   ACTIVE
   INACTIVE
+}
+
+enum PartyClassification {
+  INDIVIDUAL
+  NON_INDIVIDUAL
+}
+
+enum PartyType {
+  VENDOR
+  CUSTOMER
+  EMPLOYEE
+}
+
+enum PartyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PartyVatRegistrationType {
+  VAT_REGISTERED
+  ZERO_RATED
+  NON_VAT
+  EXEMPT
+  CAPITAL_GOODS
+  OTHER_THAN_CAPITAL_GOODS
+  SERVICES
 }
