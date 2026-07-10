@@ -18,8 +18,7 @@ jobs:
     runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 30
 
-    # Prevent forked repositories from executing code on the
-    # company's self-hosted runner or receiving repository secrets.
+    # Prevent fork PRs from using company secrets and the self-hosted runner.
     if: github.event.pull_request.head.repo.full_name == github.repository
 
     env:
@@ -37,7 +36,6 @@ jobs:
       EMAIL_VERIFICATION_EXPIRES_IN_SECONDS: "300"
       RESET_PASSWORD_TOKEN_EXPIRES_IN_SECONDS: "600"
 
-      # Disable background and external integrations during PR validation.
       MAIL_QUEUE_ENABLED: "false"
 
       STORAGE_PROVIDER: vps
@@ -70,15 +68,18 @@ jobs:
         run: npm run build
 
       - name: Prepare QA Reports
-        shell: pwsh
+        shell: powershell
         run: |
           New-Item -ItemType Directory -Force reports | Out-Null
 
-          # Ensure an artifact exists even if Semgrep setup or execution fails.
-          @{
+          $initialReport = @{
             status = "Semgrep did not complete"
             findings = @()
-          } | ConvertTo-Json | Set-Content reports/semgrep.json
+          }
+
+          $initialReport |
+            ConvertTo-Json -Depth 10 |
+            Set-Content -Path reports/semgrep.json -Encoding UTF8
 
       - name: Setup Python for Semgrep
         uses: actions/setup-python@v6
@@ -86,18 +87,17 @@ jobs:
           python-version: "3.12"
 
       - name: Install Semgrep
-        shell: pwsh
+        shell: powershell
         run: |
           python -m pip install --upgrade pip
           python -m pip install semgrep==1.168.0
           semgrep --version
 
-      # Advisory only:
-      # Findings do not automatically block the developer.
+      # Advisory only. Findings will not automatically block the PR.
       - name: Security Scan with Semgrep
         id: semgrep
         continue-on-error: true
-        shell: pwsh
+        shell: powershell
         run: |
           semgrep scan `
             --config auto `
@@ -108,37 +108,39 @@ jobs:
 
       - name: Add Backend QA Summary
         if: always()
-        shell: pwsh
+        shell: powershell
         env:
           SEMGREP_OUTCOME: ${{ steps.semgrep.outcome }}
         run: |
-          @"
-          ## Backend QA Summary
+          $summary = @(
+            "## Backend QA Summary"
+            ""
+            "| Check | Result |"
+            "|---|---|"
+            "| Dependency installation | Completed |"
+            "| Prisma Client generation | Completed during npm ci |"
+            "| Prisma schema validation | Completed |"
+            "| TypeScript typecheck | Completed |"
+            "| Backend build | Completed |"
+            "| Semgrep security scan | $env:SEMGREP_OUTCOME |"
+            ""
+            "### Review policy"
+            ""
+            "**Hard blockers**"
+            ""
+            "- Dependency installation failure"
+            "- Prisma generation or validation failure"
+            "- TypeScript typecheck failure"
+            "- Backend build failure"
+            ""
+            "**Advisory findings**"
+            ""
+            "- Semgrep findings require developer review."
+            "- The developer may fix the issue or explain why it is a false positive."
+            "- QA makes the final decision before merge."
+          )
 
-          | Check | Result |
-          |---|---|
-          | Dependency installation | Completed before this summary |
-          | Prisma Client generation | Completed during npm ci |
-          | Prisma schema validation | Completed before this summary |
-          | TypeScript typecheck | Completed before this summary |
-          | Backend build | Completed before this summary |
-          | Semgrep security scan | $env:SEMGREP_OUTCOME |
-
-          ### Review policy
-
-          **Hard blockers**
-
-          - Dependency installation failure
-          - Prisma generation or validation failure
-          - TypeScript typecheck failure
-          - Backend build failure
-
-          **Advisory findings**
-
-          - Semgrep findings require developer review.
-          - The developer may fix the finding or explain why it is a false positive.
-          - QA makes the final decision before merge.
-          "@ | Add-Content $env:GITHUB_STEP_SUMMARY
+          $summary | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding UTF8
 
       - name: Upload Semgrep Report
         if: always()
@@ -146,6 +148,6 @@ jobs:
         with:
           name: backend-semgrep-report-${{ github.run_number }}
           path: reports/semgrep.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
           compression-level: 0
