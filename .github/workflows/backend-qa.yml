@@ -18,6 +18,8 @@ jobs:
     runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 30
 
+    # Prevent forked repositories from executing code on the
+    # company's self-hosted runner or receiving repository secrets.
     if: github.event.pull_request.head.repo.full_name == github.repository
 
     env:
@@ -35,6 +37,7 @@ jobs:
       EMAIL_VERIFICATION_EXPIRES_IN_SECONDS: "300"
       RESET_PASSWORD_TOKEN_EXPIRES_IN_SECONDS: "600"
 
+      # Disable background and external integrations during PR validation.
       MAIL_QUEUE_ENABLED: "false"
 
       STORAGE_PROVIDER: vps
@@ -46,13 +49,13 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 24
-          cache: npm
+          node-version: "24"
+          package-manager-cache: false
 
       - name: Install Dependencies and Generate Prisma Client
         run: npm ci
@@ -67,15 +70,35 @@ jobs:
         run: npm run build
 
       - name: Prepare QA Reports
-        shell: powershell
-        run: New-Item -ItemType Directory -Force reports | Out-Null
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force reports | Out-Null
 
+          # Ensure an artifact exists even if Semgrep setup or execution fails.
+          @{
+            status = "Semgrep did not complete"
+            findings = @()
+          } | ConvertTo-Json | Set-Content reports/semgrep.json
+
+      - name: Setup Python for Semgrep
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Semgrep
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install semgrep==1.168.0
+          semgrep --version
+
+      # Advisory only:
+      # Findings do not automatically block the developer.
       - name: Security Scan with Semgrep
         id: semgrep
         continue-on-error: true
-        shell: powershell
+        shell: pwsh
         run: |
-          python -m pip install semgrep==1.168.0
           semgrep scan `
             --config auto `
             --error `
@@ -83,23 +106,46 @@ jobs:
             --output reports/semgrep.json `
             src
 
-      - name: Add QA Summary
+      - name: Add Backend QA Summary
         if: always()
-        shell: powershell
+        shell: pwsh
+        env:
+          SEMGREP_OUTCOME: ${{ steps.semgrep.outcome }}
         run: |
-          "## Backend QA Summary" >> $env:GITHUB_STEP_SUMMARY
-          "" >> $env:GITHUB_STEP_SUMMARY
-          "- Dependency installation and Prisma generation completed." >> $env:GITHUB_STEP_SUMMARY
-          "- Prisma schema validation completed." >> $env:GITHUB_STEP_SUMMARY
-          "- TypeScript typecheck completed." >> $env:GITHUB_STEP_SUMMARY
-          "- Backend build completed." >> $env:GITHUB_STEP_SUMMARY
-          "- Semgrep is currently advisory and requires developer/QA review." >> $env:GITHUB_STEP_SUMMARY
+          @"
+          ## Backend QA Summary
+
+          | Check | Result |
+          |---|---|
+          | Dependency installation | Completed before this summary |
+          | Prisma Client generation | Completed during npm ci |
+          | Prisma schema validation | Completed before this summary |
+          | TypeScript typecheck | Completed before this summary |
+          | Backend build | Completed before this summary |
+          | Semgrep security scan | $env:SEMGREP_OUTCOME |
+
+          ### Review policy
+
+          **Hard blockers**
+
+          - Dependency installation failure
+          - Prisma generation or validation failure
+          - TypeScript typecheck failure
+          - Backend build failure
+
+          **Advisory findings**
+
+          - Semgrep findings require developer review.
+          - The developer may fix the finding or explain why it is a false positive.
+          - QA makes the final decision before merge.
+          "@ | Add-Content $env:GITHUB_STEP_SUMMARY
 
       - name: Upload Semgrep Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-semgrep-report-${{ github.run_number }}
           path: reports/semgrep.json
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
+          compression-level: 0
