@@ -115,7 +115,10 @@ export const AccountingSidebarTemplate = [
     key: 'others',
     label: 'Others',
     iconName: 'asset',
-    children: [link('others-fixed-asset', 'FA', 'asset')],
+    children: [
+      link('others-fixed-asset', 'FA', 'asset'),
+      link('others-beginning-balance-uploader', 'BBU', 'journal'),
+    ],
   },
   {
     itemType: 'SECTION',

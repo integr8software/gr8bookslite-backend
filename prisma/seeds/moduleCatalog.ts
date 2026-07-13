@@ -405,6 +405,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: TransactionRegistry,
   },
   {
+    code: 'BBU',
+    name: 'Beginning Balance Uploader',
+    icon: 'journal',
+    type: TransactionRegistry,
+  },
+  {
     code: 'U',
     name: 'Users',
     icon: 'users',
