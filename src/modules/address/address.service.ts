@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AddressAutocompleteQueryDto } from './dto/address-autocomplete-query.dto';
@@ -11,6 +15,10 @@ import {
   mapRegion,
 } from './mappers/address.mapper';
 import type { AddressAutocompleteRow } from './types/address-autocomplete-row.type';
+import type {
+  AddressNameResolutionInput,
+  AddressNameResolutionResult,
+} from './types/address-name-resolution.type';
 
 @Injectable()
 export class AddressService {
@@ -167,6 +175,45 @@ export class AddressService {
     };
   }
 
+  async resolveNames(
+    input: AddressNameResolutionInput,
+  ): Promise<AddressNameResolutionResult | null> {
+    const barangay = this.normalizeLookupText(input.barangay);
+    const cityMunicipality = this.normalizeLookupText(input.cityMunicipality);
+    const province = this.normalizeLookupText(input.province);
+
+    const rows = await this.prisma.$queryRaw<AddressAutocompleteRow[]>`
+      SELECT
+        "barangay_code",
+        "barangay_name",
+        "city_municipality_code",
+        "city_municipality_name",
+        "province_code",
+        "province_name",
+        "region_code",
+        "region_name",
+        "label"
+      FROM "address_autocomplete_view"
+      WHERE LOWER(TRIM("barangay_name")) = ${barangay}
+        AND LOWER(TRIM("city_municipality_name")) = ${cityMunicipality}
+        AND LOWER(TRIM("province_name")) = ${province}
+      ORDER BY "region_name" ASC, "province_name" ASC, "city_municipality_name" ASC, "barangay_name" ASC
+      LIMIT 2
+    `;
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    if (rows.length > 1) {
+      throw new BadRequestException(
+        'Address is ambiguous. Select the address from the address reference list.',
+      );
+    }
+
+    return mapAddressAutocomplete(rows[0]);
+  }
+
   emptyDistricts() {
     return {
       districts: [],
@@ -177,5 +224,9 @@ export class AddressService {
     return {
       subMunicipalities: [],
     };
+  }
+
+  private normalizeLookupText(value: string) {
+    return value.trim().replace(/\s+/g, ' ').toLowerCase();
   }
 }

@@ -25,6 +25,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AddressService } from '../../address/address.service';
 import {
   findTransactionNumberForCompanyBranch,
   generateTransactionNumberForCompanyBranch,
@@ -41,7 +42,10 @@ import { buildPartyAccountingAccountOptions } from './utils/party-accounting-acc
 
 @Injectable()
 export class PartyMaintenanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly addressService: AddressService,
+  ) {}
 
   async findAll(user: AuthUser, query: GetPartyListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
@@ -238,7 +242,9 @@ export class PartyMaintenanceService {
     const parties = await Promise.all(
       dto.parties.map((party) =>
         this.normalizeCreateDto(companyId, party, {
+          forceActiveStatus: true,
           requirePartyCode: isManual,
+          resolveAddressNames: true,
         }),
       ),
     );
@@ -448,7 +454,11 @@ export class PartyMaintenanceService {
   private async normalizeCreateDto(
     companyId: number,
     dto: CreatePartyDto,
-    options: { requirePartyCode?: boolean } = {},
+    options: {
+      forceActiveStatus?: boolean;
+      requirePartyCode?: boolean;
+      resolveAddressNames?: boolean;
+    } = {},
   ): Promise<CreatePartyDto> {
     const partyTypes = this.normalizePartyTypes(dto.partyTypes);
     const termId = this.normalizeOptionalString(dto.termId);
@@ -464,7 +474,9 @@ export class PartyMaintenanceService {
       ...dto,
       partyCodeNo: dto.partyCodeNo.trim(),
       partyTypes,
-      status: dto.status ?? PartyStatus.ACTIVE,
+      status: options.forceActiveStatus
+        ? PartyStatus.ACTIVE
+        : (dto.status ?? PartyStatus.ACTIVE),
       partyName: this.normalizeOptionalString(dto.partyName),
       tradeName: this.normalizeOptionalString(dto.tradeName),
       firstName: this.normalizeOptionalString(dto.firstName),
@@ -497,6 +509,14 @@ export class PartyMaintenanceService {
       contactNo: this.normalizeOptionalString(dto.contactNo),
       addresses: dto.addresses.map((address) => this.normalizeAddress(address)),
     };
+
+    if (options.resolveAddressNames) {
+      normalized.addresses = await Promise.all(
+        normalized.addresses.map((address) =>
+          this.resolveImportAddressNames(address),
+        ),
+      );
+    }
 
     this.validateParty(normalized);
     await this.ensurePartyChartAccounts(companyId, normalized);
@@ -794,6 +814,40 @@ export class PartyMaintenanceService {
     if (hasMatchingName) {
       throw new ConflictException('A party with this name already exists.');
     }
+  }
+
+  private async resolveImportAddressNames(address: CreatePartyAddressDto) {
+    if (address.isForeign) {
+      return address;
+    }
+
+    if (!address.province || !address.cityMunicipality || !address.barangay) {
+      return address;
+    }
+
+    const resolved = await this.addressService.resolveNames({
+      barangay: address.barangay,
+      cityMunicipality: address.cityMunicipality,
+      province: address.province,
+    });
+
+    if (!resolved) {
+      throw new BadRequestException(
+        `Address not found: ${address.barangay}, ${address.cityMunicipality}, ${address.province}. Check the province, city/municipality, and barangay names.`,
+      );
+    }
+
+    return {
+      ...address,
+      barangay: resolved.barangay.name,
+      barangayCode: resolved.barangay.code,
+      cityMunicipality: resolved.cityMunicipality.name,
+      cityMunicipalityCode: resolved.cityMunicipality.code,
+      province: resolved.province.name,
+      provinceCode: resolved.province.code,
+      region: resolved.region.name,
+      regionCode: resolved.region.code,
+    };
   }
 
   private ensureNoDuplicateImportIdentities(parties: CreatePartyDto[]) {
