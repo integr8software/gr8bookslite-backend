@@ -26,6 +26,20 @@ export const SystemAccountGroupTags = {
   discountManagementSalesParent: 'Discount Management Sales Parent',
   purchaseDiscount: 'Purchase Discount',
   discountManagementPurchaseParent: 'Discount Management Purchase Parent',
+  partyAccountsReceivableGroup: 'Party Management Accounts Receivable Group',
+  partyAccountsPayableGroup: 'Party Management Accounts Payable Group',
+  partyOtherCurrentLiabilitiesGroup:
+    'Party Management Other Current Liabilities Group',
+  partyDefaultReceivableAccount:
+    'Party Management Default Receivable Account',
+  partyCustomerAdvanceAccount:
+    'Party Management Default Customer Advance Account',
+  partyDefaultPayableAccount: 'Party Management Default Payable Account',
+  partyVendorAdvanceAccount: 'Party Management Default Vendor Advance Account',
+  partyEmployeeAdvanceAccount:
+    'Party Management Default Employee Advance Account',
+  partyEmployeePayableAccount:
+    'Party Management Default Employee Payable Account',
 } as const;
 
 export const SystemAccountGroups = {

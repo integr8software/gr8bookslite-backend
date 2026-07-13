@@ -6,6 +6,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ChartAccount,
+  ChartAccountLevel,
   ChartAccountStatus,
   MembershipRole,
   MembershipStatus,
@@ -29,6 +31,11 @@ import {
   findTransactionNumberForCompanyBranch,
   generateTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
+import { StandardDefaultAccountMappings } from '../chart-of-accounts/seed/chart-of-accounts-system-groups.seed';
+import {
+  accountGroupHasTag,
+  SystemAccountGroupTags,
+} from '../chart-of-accounts/utils/system-account-groups.util';
 import { CreatePartyAddressDto } from './dto/create-party-address.dto';
 import { CreatePartyDto } from './dto/create-party.dto';
 import { GetPartyListQueryDto } from './dto/get-party-list-query.dto';
@@ -91,6 +98,54 @@ export class PartyMaintenanceService {
     return {
       party: (await this.mapPartiesWithAuditUsers([party]))[0],
       permissions: this.getPermissions(user, companyId),
+    };
+  }
+
+  async findAccountingOptions(user: AuthUser) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    this.ensureCan(user, companyId, PermissionAction.VIEW);
+
+    const accounts = await this.prisma.chartAccount.findMany({
+      where: {
+        companyId,
+        status: ChartAccountStatus.ACTIVE,
+        deletedAt: null,
+      },
+      orderBy: [
+        { accountCode: 'asc' },
+        { orderNo: 'asc' },
+        { accountTitle: 'asc' },
+      ],
+    });
+
+    const defaultAccounts = Object.fromEntries(
+      PartyAccountingAccountFields.map((field) => {
+        const account = this.findPartyMappedAccount(
+          accounts,
+          PartyAccountingAccountConfig[field].defaultRole,
+        );
+
+        return [field, account?.id.toString() ?? ''];
+      }),
+    ) as PartyAccountingAccountIds;
+    const accountOptions = Object.fromEntries(
+      PartyAccountingAccountFields.map((field) => {
+        const parentAccount = this.findPartyMappedAccount(
+          accounts,
+          PartyAccountingAccountConfig[field].selectionGroupRole,
+        );
+        const options = parentAccount
+          ? this.findPostingDescendants(accounts, parentAccount.id)
+          : [];
+
+        return [field, options.map(mapPartyAccountingAccountOption)];
+      }),
+    ) as PartyAccountingAccountOptions;
+
+    return {
+      defaultAccounts,
+      accountOptions,
     };
   }
 
@@ -687,14 +742,6 @@ export class PartyMaintenanceService {
         continue;
       }
 
-      if (!address.addressLine1.trim()) {
-        throw new BadRequestException('Enter the unit, block, lot, or building.');
-      }
-      if (!address.addressLine2.trim()) {
-        throw new BadRequestException(
-          'Enter the street, subdivision, or village.',
-        );
-      }
       if (!address.regionCode) {
         throw new BadRequestException('Select a region.');
       }
@@ -932,6 +979,56 @@ export class PartyMaintenanceService {
         'Select active posting accounts from this company.',
       );
     }
+  }
+
+  private findPartyMappedAccount(
+    accounts: ChartAccount[],
+    role: PartyAccountingAccountRole,
+  ) {
+    const roleTag = PartyAccountingAccountRoleTags[role];
+    const mappedCode = StandardDefaultAccountMappings.find(
+      (mapping) => mapping.moduleCode === 'PM' && mapping.accountRole === role,
+    )?.accountCode;
+
+    return (
+      accounts.find((account) =>
+        accountGroupHasTag(account.accountGroup, roleTag),
+      ) ??
+      accounts.find((account) => account.accountCode === mappedCode) ??
+      null
+    );
+  }
+
+  private findPostingDescendants(accounts: ChartAccount[], parentId: bigint) {
+    const childrenByParentId = new Map<string, ChartAccount[]>();
+
+    for (const account of accounts) {
+      if (!account.parentAccountId) {
+        continue;
+      }
+
+      const parentKey = account.parentAccountId.toString();
+      const siblings = childrenByParentId.get(parentKey) ?? [];
+
+      siblings.push(account);
+      childrenByParentId.set(parentKey, siblings);
+    }
+
+    const descendants: ChartAccount[] = [];
+    const visit = (currentParentId: bigint) => {
+      for (const child of childrenByParentId.get(currentParentId.toString()) ??
+        []) {
+        if (child.isPostingAccount) {
+          descendants.push(child);
+        }
+
+        visit(child.id);
+      }
+    };
+
+    visit(parentId);
+
+    return descendants;
   }
 
   private parseOptionalBigIntId(value: string | null | undefined) {
@@ -1182,3 +1279,118 @@ export class PartyMaintenanceService {
 }
 
 const PartyTransactionModuleCode = 'PM';
+
+type PartyAccountingAccountField =
+  | 'customerAdvanceAccount'
+  | 'defaultPayableAccount'
+  | 'defaultReceivableAccount'
+  | 'employeeAdvanceAccount'
+  | 'employeePayableAccount'
+  | 'vendorAdvanceAccount';
+
+type PartyAccountingAccountRole =
+  | 'ACCOUNTS_PAYABLE_GROUP'
+  | 'ACCOUNTS_RECEIVABLE_GROUP'
+  | 'CUSTOMER_ADVANCE_ACCOUNT'
+  | 'DEFAULT_PAYABLE_ACCOUNT'
+  | 'DEFAULT_RECEIVABLE_ACCOUNT'
+  | 'EMPLOYEE_ADVANCE_ACCOUNT'
+  | 'EMPLOYEE_PAYABLE_ACCOUNT'
+  | 'OTHER_CURRENT_LIABILITIES_GROUP'
+  | 'VENDOR_ADVANCE_ACCOUNT';
+
+type PartyAccountingAccountIds = Record<PartyAccountingAccountField, string>;
+
+type PartyAccountingAccountOptions = Record<
+  PartyAccountingAccountField,
+  ReturnType<typeof mapPartyAccountingAccountOption>[]
+>;
+
+const PartyAccountingAccountFields = [
+  'defaultReceivableAccount',
+  'customerAdvanceAccount',
+  'defaultPayableAccount',
+  'vendorAdvanceAccount',
+  'employeeAdvanceAccount',
+  'employeePayableAccount',
+] as const satisfies readonly PartyAccountingAccountField[];
+
+const PartyAccountingAccountRoleTags = {
+  ACCOUNTS_PAYABLE_GROUP: SystemAccountGroupTags.partyAccountsPayableGroup,
+  ACCOUNTS_RECEIVABLE_GROUP:
+    SystemAccountGroupTags.partyAccountsReceivableGroup,
+  CUSTOMER_ADVANCE_ACCOUNT: SystemAccountGroupTags.partyCustomerAdvanceAccount,
+  DEFAULT_PAYABLE_ACCOUNT: SystemAccountGroupTags.partyDefaultPayableAccount,
+  DEFAULT_RECEIVABLE_ACCOUNT:
+    SystemAccountGroupTags.partyDefaultReceivableAccount,
+  EMPLOYEE_ADVANCE_ACCOUNT: SystemAccountGroupTags.partyEmployeeAdvanceAccount,
+  EMPLOYEE_PAYABLE_ACCOUNT: SystemAccountGroupTags.partyEmployeePayableAccount,
+  OTHER_CURRENT_LIABILITIES_GROUP:
+    SystemAccountGroupTags.partyOtherCurrentLiabilitiesGroup,
+  VENDOR_ADVANCE_ACCOUNT: SystemAccountGroupTags.partyVendorAdvanceAccount,
+} as const satisfies Record<PartyAccountingAccountRole, string>;
+
+const PartyAccountingAccountConfig = {
+  defaultReceivableAccount: {
+    defaultRole: 'DEFAULT_RECEIVABLE_ACCOUNT',
+    selectionGroupRole: 'ACCOUNTS_RECEIVABLE_GROUP',
+  },
+  customerAdvanceAccount: {
+    defaultRole: 'CUSTOMER_ADVANCE_ACCOUNT',
+    selectionGroupRole: 'OTHER_CURRENT_LIABILITIES_GROUP',
+  },
+  defaultPayableAccount: {
+    defaultRole: 'DEFAULT_PAYABLE_ACCOUNT',
+    selectionGroupRole: 'ACCOUNTS_PAYABLE_GROUP',
+  },
+  vendorAdvanceAccount: {
+    defaultRole: 'VENDOR_ADVANCE_ACCOUNT',
+    selectionGroupRole: 'ACCOUNTS_RECEIVABLE_GROUP',
+  },
+  employeeAdvanceAccount: {
+    defaultRole: 'EMPLOYEE_ADVANCE_ACCOUNT',
+    selectionGroupRole: 'ACCOUNTS_RECEIVABLE_GROUP',
+  },
+  employeePayableAccount: {
+    defaultRole: 'EMPLOYEE_PAYABLE_ACCOUNT',
+    selectionGroupRole: 'OTHER_CURRENT_LIABILITIES_GROUP',
+  },
+} as const satisfies Record<
+  PartyAccountingAccountField,
+  {
+    defaultRole: PartyAccountingAccountRole;
+    selectionGroupRole: PartyAccountingAccountRole;
+  }
+>;
+
+function mapPartyAccountingAccountOption(account: ChartAccount) {
+  return {
+    id: account.id.toString(),
+    accountNumber: account.accountCode,
+    accountName: account.accountTitle,
+    accountType: mapPartyAccountingAccountType(account),
+    statementGroup: account.statementSection ?? '',
+    statementSection: account.statementSection ?? '',
+    normalBalance: account.accountNature === 'CREDIT' ? 'Credit' : 'Debit',
+    accountCategory: account.statementSection ?? '',
+    description: account.description ?? account.accountTitle,
+    status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
+  };
+}
+
+function mapPartyAccountingAccountType(account: ChartAccount) {
+  switch (account.accountType) {
+    case 'ASSET':
+      return 'Assets';
+    case 'LIABILITY':
+      return 'Liabilities';
+    case 'EQUITY':
+      return 'Equity';
+    case 'REVENUE':
+      return 'Revenues';
+    case 'EXPENSE':
+      return 'Expenses';
+    default:
+      return '';
+  }
+}
