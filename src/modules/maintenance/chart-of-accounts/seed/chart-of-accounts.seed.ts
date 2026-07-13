@@ -231,6 +231,42 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
     ];
   }
 
+  if (moduleCode === 'PM' && accountRole === 'ACCOUNTS_RECEIVABLE_GROUP') {
+    return [SystemAccountGroupTags.partyAccountsReceivableGroup];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'ACCOUNTS_PAYABLE_GROUP') {
+    return [SystemAccountGroupTags.partyAccountsPayableGroup];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'OTHER_CURRENT_LIABILITIES_GROUP') {
+    return [SystemAccountGroupTags.partyOtherCurrentLiabilitiesGroup];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'DEFAULT_RECEIVABLE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyDefaultReceivableAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'CUSTOMER_ADVANCE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyCustomerAdvanceAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'DEFAULT_PAYABLE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyDefaultPayableAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'VENDOR_ADVANCE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyVendorAdvanceAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'EMPLOYEE_ADVANCE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyEmployeeAdvanceAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'EMPLOYEE_PAYABLE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyEmployeePayableAccount];
+  }
+
   return [];
 }
 

@@ -26,6 +26,7 @@ import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/c
 import { TermMaintenanceModule } from './modules/maintenance/term-maintenance/term-maintenance.module';
 import { PaymentTypeMaintenanceModule } from './modules/maintenance/payment-type-maintenance/payment-type-maintenance.module';
 import { DiscountMaintenanceModule } from './modules/maintenance/discount-maintenance/discount-maintenance.module';
+import { PartyMaintenanceModule } from './modules/maintenance/party-maintenance/party-maintenance.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
 import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
 import { validateEnvironment } from './config/environment';
@@ -74,6 +75,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     TermMaintenanceModule,
     PaymentTypeMaintenanceModule,
     DiscountMaintenanceModule,
+    PartyMaintenanceModule,
     BankMasterfileModule,
     DefaultAccountModule,
     ApprovalManagementModule,
