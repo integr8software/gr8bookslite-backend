@@ -1,13 +1,12 @@
-import type { Prisma } from '@prisma/client';
-import { DefaultAccountTemplateInclude } from '../prisma/default-account-template.include';
+import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.util';
+import type {
+  DefaultAccountPayload,
+  GeneratedDefaultAccount,
+} from '../types/default-account.type';
 
-export type DefaultAccountTemplatePayload =
-  Prisma.DefaultAccountTemplateGetPayload<{
-    include: typeof DefaultAccountTemplateInclude;
-  }>;
-
-export function mapDefaultAccountTemplate(
-  template: DefaultAccountTemplatePayload,
+export function mapDefaultAccount(
+  template: DefaultAccountPayload,
+  userNames: Map<number, string> = new Map(),
 ) {
   return {
     id: template.id.toString(),
@@ -28,14 +27,24 @@ export function mapDefaultAccountTemplate(
         template.accumulatedDepreciationCoa,
       ),
     ].filter(Boolean),
+    createdBy:
+      template.createdByUserId === null
+        ? SystemGeneratedAuditLabel
+        : (userNames.get(template.createdByUserId) ?? null),
+    createdAt: template.createdAt.toISOString(),
+    updatedBy:
+      (template.updatedByUserId && userNames.get(template.updatedByUserId)) ??
+      null,
+    updatedAt: template.updatedAt.toISOString(),
     createdByUserId: template.createdByUserId,
     updatedByUserId: template.updatedByUserId,
-    createdAt: template.createdAt.toISOString(),
-    updatedAt: template.updatedAt.toISOString(),
   };
 }
 
-function mapGeneratedAccount(role: string, account: GeneratedAccount | null) {
+function mapGeneratedAccount(
+  role: string,
+  account: GeneratedDefaultAccount | null,
+) {
   if (!account) {
     return null;
   }
@@ -51,7 +60,3 @@ function mapGeneratedAccount(role: string, account: GeneratedAccount | null) {
     status: account.status,
   };
 }
-
-type GeneratedAccount = NonNullable<
-  DefaultAccountTemplatePayload['expenseCoa']
->;

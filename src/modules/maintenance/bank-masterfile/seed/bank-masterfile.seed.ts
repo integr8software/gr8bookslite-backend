@@ -1,37 +1,26 @@
 import { ChartAccountLevel, ChartAccountStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
+import {
+  findSystemAccountGroupOrThrow,
+  SystemAccountGroups,
+} from '../../chart-of-accounts/utils/system-account-groups.util';
 
-const BankMasterfileModuleCode = 'BM';
-const CashInBankParentRole = 'CASH_IN_BANK_PARENT';
 const CashInBankSpecificPrefix = 'Cash in Bank - ';
 
 export async function seedCompanyBankAccountDefaults(
   tx: Prisma.TransactionClient | PrismaService,
   companyId: number,
 ) {
-  const cashInBankParent = await tx.companyDefaultAccount.findFirst({
-    where: {
-      companyId,
-      moduleCode: BankMasterfileModuleCode,
-      accountRole: CashInBankParentRole,
-      status: ChartAccountStatus.ACTIVE,
-      chartAccount: {
-        companyId,
-        status: ChartAccountStatus.ACTIVE,
-        deletedAt: null,
-      },
-    },
-    include: { chartAccount: true },
-  });
-
-  if (!cashInBankParent) {
-    return 0;
-  }
+  const cashInBankParent = await findSystemAccountGroupOrThrow(
+    tx,
+    companyId,
+    SystemAccountGroups.bankMasterfile.cashInBankParent,
+  );
 
   const cashInBankAccounts = await tx.chartAccount.findMany({
     where: {
       companyId,
-      parentAccountId: cashInBankParent.chartAccountId,
+      parentAccountId: cashInBankParent.id,
       accountLevel: ChartAccountLevel.SPECIFIC,
       accountTitle: {
         startsWith: CashInBankSpecificPrefix,

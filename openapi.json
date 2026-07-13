@@ -3109,10 +3109,10 @@
             "schema": {
               "type": "string",
               "enum": [
-                "MAJOR",
+                "SUB3",
                 "SUB1",
                 "SUB2",
-                "SUB3",
+                "MAJOR",
                 "SPECIFIC"
               ]
             }
@@ -3224,10 +3224,10 @@
             "schema": {
               "type": "string",
               "enum": [
-                "MAJOR",
+                "SUB3",
                 "SUB1",
                 "SUB2",
-                "SUB3",
+                "MAJOR",
                 "SPECIFIC"
               ]
             }
@@ -4302,6 +4302,20 @@
         "responses": {
           "201": {
             "description": "Default account created."
+          }
+        },
+        "tags": [
+          "Default Account"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/default-accounts/expense-parent-options": {
+      "get": {
+        "operationId": "DefaultAccountController_findExpenseParentOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Expense parent account options retrieved."
           }
         },
         "tags": [
@@ -7082,7 +7096,8 @@
             "$ref": "#/components/schemas/WorkspaceCompanyResponseDto"
           },
           "logo": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "required": [
@@ -7371,7 +7386,8 @@
         "type": "object",
         "properties": {
           "configuration": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "required": [
@@ -7962,8 +7978,11 @@
             "type": "string"
           },
           "accountGroup": {
-            "type": "string",
-            "nullable": true
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "statementSection": {
             "type": "string",
@@ -8008,8 +8027,16 @@
             "type": "string",
             "nullable": true
           },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
           "createdAt": {
             "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
           },
           "updatedAt": {
             "type": "string"
@@ -8042,7 +8069,9 @@
           "status",
           "currencyCode",
           "deletedAt",
+          "createdBy",
           "createdAt",
+          "updatedBy",
           "updatedAt",
           "bankAccounts"
         ]
@@ -8110,8 +8139,11 @@
             "type": "string"
           },
           "accountGroup": {
-            "type": "string",
-            "nullable": true
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "statementSection": {
             "type": "string",
@@ -8156,8 +8188,16 @@
             "type": "string",
             "nullable": true
           },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
           "createdAt": {
             "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
           },
           "updatedAt": {
             "type": "string"
@@ -8196,7 +8236,9 @@
           "status",
           "currencyCode",
           "deletedAt",
+          "createdBy",
           "createdAt",
+          "updatedBy",
           "updatedAt",
           "bankAccounts",
           "children"
@@ -8293,10 +8335,10 @@
           },
           "accountLevel": {
             "enum": [
-              "MAJOR",
+              "SUB3",
               "SUB1",
               "SUB2",
-              "SUB3",
+              "MAJOR",
               "SPECIFIC"
             ],
             "type": "string"
@@ -8308,10 +8350,10 @@
           "accountType": {
             "enum": [
               "ASSET",
-              "LIABILITY",
-              "EQUITY",
+              "EXPENSE",
               "REVENUE",
-              "EXPENSE"
+              "LIABILITY",
+              "EQUITY"
             ],
             "type": "string"
           },
@@ -8323,8 +8365,7 @@
             "type": "string"
           },
           "accountGroup": {
-            "type": "string",
-            "maxLength": 50
+            "type": "object"
           },
           "statementSection": {
             "type": "string",
@@ -8397,10 +8438,10 @@
           },
           "accountLevel": {
             "enum": [
-              "MAJOR",
+              "SUB3",
               "SUB1",
               "SUB2",
-              "SUB3",
+              "MAJOR",
               "SPECIFIC"
             ],
             "type": "string"
@@ -8412,10 +8453,10 @@
           "accountType": {
             "enum": [
               "ASSET",
-              "LIABILITY",
-              "EQUITY",
+              "EXPENSE",
               "REVENUE",
-              "EXPENSE"
+              "LIABILITY",
+              "EQUITY"
             ],
             "type": "string"
           },
@@ -8427,8 +8468,7 @@
             "type": "string"
           },
           "accountGroup": {
-            "type": "string",
-            "maxLength": 50
+            "type": "object"
           },
           "statementSection": {
             "type": "string",
@@ -8934,6 +8974,9 @@
               "INACTIVE"
             ],
             "type": "string"
+          },
+          "expenseParentCoaId": {
+            "type": "string"
           }
         },
         "required": [
@@ -8965,6 +9008,9 @@
               "ACTIVE",
               "INACTIVE"
             ],
+            "type": "string"
+          },
+          "expenseParentCoaId": {
             "type": "string"
           }
         }

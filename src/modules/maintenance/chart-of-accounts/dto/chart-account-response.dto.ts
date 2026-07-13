@@ -64,7 +64,7 @@ export class ChartAccountResponseDto {
   accountNature!: AccountNature | null;
 
   @ApiProperty({ nullable: true })
-  accountGroup!: string | null;
+  accountGroup!: string[] | null;
 
   @ApiProperty({ nullable: true })
   statementSection!: string | null;
@@ -99,8 +99,14 @@ export class ChartAccountResponseDto {
   @ApiProperty({ nullable: true })
   deletedAt!: string | null;
 
+  @ApiProperty({ nullable: true })
+  createdBy!: string | null;
+
   @ApiProperty()
   createdAt!: string;
+
+  @ApiProperty({ nullable: true })
+  updatedBy!: string | null;
 
   @ApiProperty()
   updatedAt!: string;

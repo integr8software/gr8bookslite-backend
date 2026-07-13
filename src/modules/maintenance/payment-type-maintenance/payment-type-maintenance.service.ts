@@ -13,20 +13,21 @@ import {
   PaymentTypeStatus,
   Prisma,
 } from '@prisma/client';
+import {
+  DefaultLimit,
+  DefaultPage,
+} from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
+import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreatePaymentTypeDto } from './dto/create-payment-type.dto';
 import { GetPaymentTypeListQueryDto } from './dto/get-payment-type-list-query.dto';
 import { ImportPaymentTypesDto } from './dto/import-payment-types.dto';
 import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
-
-const PaymentTypePermissionCode = 'PT';
-
-const DefaultPage = 1;
-const DefaultLimit = 500;
-const SystemGeneratedLabel = 'System Generated';
+import { mapPaymentType } from './mappers/payment-type-maintenance.mapper';
 
 @Injectable()
 export class PaymentTypeMaintenanceService {
@@ -73,7 +74,7 @@ export class PaymentTypeMaintenanceService {
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const paymentType = await this.findPaymentTypeOrThrow(
       companyId,
-      parseBigIntId(id),
+      parsePositiveBigIntId(id),
     );
 
     return {
@@ -101,7 +102,9 @@ export class PaymentTypeMaintenanceService {
 
       return {
         message: 'Payment type created successfully.',
-        paymentType: (await this.mapPaymentTypesWithAuditUsers([paymentType]))[0],
+        paymentType: (
+          await this.mapPaymentTypesWithAuditUsers([paymentType])
+        )[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -113,7 +116,7 @@ export class PaymentTypeMaintenanceService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const paymentTypeId = parseBigIntId(id);
+    const paymentTypeId = parsePositiveBigIntId(id);
 
     await this.findPaymentTypeOrThrow(companyId, paymentTypeId);
 
@@ -134,7 +137,9 @@ export class PaymentTypeMaintenanceService {
 
       return {
         message: 'Payment type updated successfully.',
-        paymentType: (await this.mapPaymentTypesWithAuditUsers([paymentType]))[0],
+        paymentType: (
+          await this.mapPaymentTypesWithAuditUsers([paymentType])
+        )[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -206,9 +211,7 @@ export class PaymentTypeMaintenanceService {
     return {
       companyId,
       deletedAt: null,
-      ...(query.classification
-        ? { classification: query.classification }
-        : {}),
+      ...(query.classification ? { classification: query.classification } : {}),
       ...(query.status ? { status: query.status } : {}),
       ...(search
         ? {
@@ -271,13 +274,19 @@ export class PaymentTypeMaintenanceService {
           if (group.classification === PaymentTypeClassification.WITH_BANK) {
             statistics.withBankPaymentTypes += count;
           }
-          if (group.classification === PaymentTypeClassification.BANK_TRANSFER) {
+          if (
+            group.classification === PaymentTypeClassification.BANK_TRANSFER
+          ) {
             statistics.bankTransferPaymentTypes += count;
           }
-          if (group.classification === PaymentTypeClassification.ONLINE_PAYMENT) {
+          if (
+            group.classification === PaymentTypeClassification.ONLINE_PAYMENT
+          ) {
             statistics.onlinePaymentTypes += count;
           }
-          if (group.classification === PaymentTypeClassification.MULTIPLE_CHECK) {
+          if (
+            group.classification === PaymentTypeClassification.MULTIPLE_CHECK
+          ) {
             statistics.multipleCheckPaymentTypes += count;
           }
           if (group.classification === PaymentTypeClassification.DEBIT) {
@@ -290,22 +299,13 @@ export class PaymentTypeMaintenanceService {
   }
 
   private async mapPaymentTypesWithAuditUsers(paymentTypes: PaymentType[]) {
-    const userIds = [
-      ...new Set(
-        paymentTypes.flatMap((paymentType) =>
-          [paymentType.createdByUserId, paymentType.updatedByUserId].filter(
-            (userId): userId is number => userId !== null,
-          ),
-        ),
-      ),
-    ];
-    const users = userIds.length
-      ? await this.prisma.user.findMany({
-          where: { id: { in: userIds } },
-          select: { id: true, name: true },
-        })
-      : [];
-    const userNames = new Map(users.map((user) => [user.id, user.name]));
+    const userNames = await resolveAuditUserNames(
+      this.prisma,
+      paymentTypes.flatMap((paymentType) => [
+        paymentType.createdByUserId,
+        paymentType.updatedByUserId,
+      ]),
+    );
 
     return paymentTypes.map((paymentType) =>
       mapPaymentType(paymentType, userNames),
@@ -445,7 +445,7 @@ export class PaymentTypeMaintenanceService {
 
     if (
       user.companyId === companyId &&
-      user.permissions.includes(`${PaymentTypePermissionCode}:${action}`)
+      user.permissions.includes(`PT:${action}`)
     ) {
       return;
     }
@@ -471,8 +471,7 @@ export class PaymentTypeMaintenanceService {
     }
 
     return (
-      user.companyId === companyId &&
-      user.permissions.includes(`${PaymentTypePermissionCode}:${action}`)
+      user.companyId === companyId && user.permissions.includes(`PT:${action}`)
     );
   }
 
@@ -499,41 +498,4 @@ export class PaymentTypeMaintenanceService {
       );
     }
   }
-}
-
-function mapPaymentType(
-  paymentType: PaymentType,
-  userNames: Map<number, string>,
-) {
-  return {
-    id: paymentType.id.toString(),
-    name: paymentType.name,
-    description: paymentType.description ?? '',
-    classification: paymentType.classification,
-    status: paymentType.status,
-    createdBy:
-      paymentType.createdByUserId === null
-        ? SystemGeneratedLabel
-        : (userNames.get(paymentType.createdByUserId) ?? null),
-    createdAt: paymentType.createdAt,
-    updatedBy:
-      (paymentType.updatedByUserId &&
-        userNames.get(paymentType.updatedByUserId)) ??
-      null,
-    updatedAt: paymentType.updatedAt,
-  };
-}
-
-function parseBigIntId(value: string, label = 'id') {
-  if (!/^\d+$/.test(value)) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  const id = BigInt(value);
-
-  if (id <= 0n) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  return id;
 }

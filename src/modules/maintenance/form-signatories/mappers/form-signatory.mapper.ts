@@ -1,9 +1,4 @@
-import type { Prisma } from '@prisma/client';
-import { FormSignatorySetupInclude } from '../prisma/form-signatory.include';
-
-type FormSignatorySetupPayload = Prisma.FormSignatorySetupGetPayload<{
-  include: typeof FormSignatorySetupInclude;
-}>;
+import type { FormSignatorySetupPayload } from '../types/form-signatory.type';
 
 export function mapFormSignatorySetup(setup: FormSignatorySetupPayload) {
   return {

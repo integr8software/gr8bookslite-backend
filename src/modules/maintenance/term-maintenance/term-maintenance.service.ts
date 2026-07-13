@@ -13,20 +13,21 @@ import {
   TermDateMode,
   TermStatus,
 } from '@prisma/client';
+import {
+  DefaultLimit,
+  DefaultPage,
+} from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
+import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateTermDto } from './dto/create-term.dto';
 import { GetTermListQueryDto } from './dto/get-term-list-query.dto';
 import { ImportTermsDto } from './dto/import-terms.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
 import { mapTerm } from './mappers/term-maintenance.mapper';
-
-const TermManagementPermissionCode = 'TM';
-
-const DefaultPage = 1;
-const DefaultLimit = 500;
 
 @Injectable()
 export class TermMaintenanceService {
@@ -71,7 +72,10 @@ export class TermMaintenanceService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
-    const term = await this.findTermOrThrow(companyId, parseBigIntId(id));
+    const term = await this.findTermOrThrow(
+      companyId,
+      parsePositiveBigIntId(id),
+    );
 
     return {
       term: (await this.mapTermsWithAuditUsers([term]))[0],
@@ -110,7 +114,7 @@ export class TermMaintenanceService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const termId = parseBigIntId(id);
+    const termId = parsePositiveBigIntId(id);
 
     await this.findTermOrThrow(companyId, termId);
 
@@ -217,22 +221,10 @@ export class TermMaintenanceService {
   }
 
   private async mapTermsWithAuditUsers(terms: Term[]) {
-    const userIds = [
-      ...new Set(
-        terms.flatMap((term) =>
-          [term.createdByUserId, term.updatedByUserId].filter(
-            (userId): userId is number => userId !== null,
-          ),
-        ),
-      ),
-    ];
-    const users = userIds.length
-      ? await this.prisma.user.findMany({
-          where: { id: { in: userIds } },
-          select: { id: true, name: true },
-        })
-      : [];
-    const userNames = new Map(users.map((user) => [user.id, user.name]));
+    const userNames = await resolveAuditUserNames(
+      this.prisma,
+      terms.flatMap((term) => [term.createdByUserId, term.updatedByUserId]),
+    );
 
     return terms.map((term) => mapTerm(term, userNames));
   }
@@ -416,7 +408,7 @@ export class TermMaintenanceService {
 
     if (
       user.companyId === companyId &&
-      user.permissions.includes(`${TermManagementPermissionCode}:${action}`)
+      user.permissions.includes(`TM:${action}`)
     ) {
       return;
     }
@@ -442,8 +434,7 @@ export class TermMaintenanceService {
     }
 
     return (
-      user.companyId === companyId &&
-      user.permissions.includes(`${TermManagementPermissionCode}:${action}`)
+      user.companyId === companyId && user.permissions.includes(`TM:${action}`)
     );
   }
 
@@ -468,18 +459,4 @@ export class TermMaintenanceService {
       throw new ConflictException('A term with this name already exists.');
     }
   }
-}
-
-function parseBigIntId(value: string, label = 'id') {
-  if (!/^\d+$/.test(value)) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  const id = BigInt(value);
-
-  if (id <= 0n) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  return id;
 }

@@ -6,7 +6,7 @@ type DeleteUserOwnedDataOptions = {
   email: string;
 };
 
-const TransactionTimeoutMs = 30_000;
+const TransactionTimeoutMs = 120_000;
 
 function getOptionValue(flag: string) {
   const index = process.argv.findIndex((value) => value === flag);
@@ -100,25 +100,52 @@ function isSupabaseObjectNotFound(failureText: string) {
   }
 }
 
-async function deleteCompanyOwnedData(
-  companyIdsToDelete: number[],
-  userId: number,
-) {
+type DeletePlan = {
+  companyIdsToDelete: number[];
+  relatedUserIdsToDelete: number[];
+  skippedRelatedUsers: Array<{
+    email: string;
+    id: number;
+    reason: string;
+  }>;
+  targetUserId: number;
+};
+
+async function deleteCompanyOwnedData(plan: DeletePlan) {
+  const allUserIdsToDelete = [
+    plan.targetUserId,
+    ...plan.relatedUserIdsToDelete,
+  ];
+
   await prisma.$transaction(
     async (tx) => {
-      if (companyIdsToDelete.length > 0) {
+      if (plan.companyIdsToDelete.length > 0) {
+        await tx.defaultAccount.deleteMany({
+          where: { companyId: { in: plan.companyIdsToDelete } },
+        });
+        await tx.bankAccount.deleteMany({
+          where: { companyId: { in: plan.companyIdsToDelete } },
+        });
+        await tx.discount.deleteMany({
+          where: { companyId: { in: plan.companyIdsToDelete } },
+        });
+        await tx.chartAccount.deleteMany({
+          where: { companyId: { in: plan.companyIdsToDelete } },
+        });
         await tx.company.deleteMany({
           where: {
             id: {
-              in: companyIdsToDelete,
+              in: plan.companyIdsToDelete,
             },
           },
         });
       }
 
-      await tx.user.delete({
+      await tx.user.deleteMany({
         where: {
-          id: userId,
+          id: {
+            in: allUserIdsToDelete,
+          },
         },
       });
     },
@@ -142,6 +169,10 @@ async function deleteStorageFiles(storagePathsToDelete: string[]) {
   }
 }
 
+function uniqueNumbers(values: Array<number | null | undefined>) {
+  return [...new Set(values.filter((value): value is number => value != null))];
+}
+
 async function main() {
   assertLocalDatabase();
 
@@ -153,6 +184,13 @@ async function main() {
     },
     include: {
       onboardingDraft: true,
+      createdCompanies: {
+        select: {
+          id: true,
+          logoStoragePath: true,
+          name: true,
+        },
+      },
       memberships: {
         include: {
           company: {
@@ -174,29 +212,102 @@ async function main() {
     return;
   }
 
-  const companiesWithOtherMembers = user.memberships
-    .map((membership) => membership.company)
-    .filter((company) =>
-      company.memberships.some((membership) => membership.userId !== user.id),
+  const companyIdsToDelete = uniqueNumbers(
+    [
+      user.onboardingDraft?.provisionedCompanyId,
+      ...user.createdCompanies.map((company) => company.id),
+      ...user.memberships.map((membership) => membership.companyId),
+    ],
+  );
+
+  const companyMemberUserIds =
+    companyIdsToDelete.length === 0
+      ? []
+      : await prisma.membership.findMany({
+          where: {
+            companyId: {
+              in: companyIdsToDelete,
+            },
+            userId: {
+              not: user.id,
+            },
+          },
+          distinct: ['userId'],
+          select: {
+            userId: true,
+          },
+        });
+
+  const relatedUsers =
+    companyMemberUserIds.length === 0
+      ? []
+      : await prisma.user.findMany({
+          where: {
+            id: {
+              in: companyMemberUserIds.map((membership) => membership.userId),
+            },
+          },
+          include: {
+            onboardingDraft: true,
+            memberships: {
+              select: {
+                companyId: true,
+              },
+            },
+          },
+        });
+
+  const relatedUserIdsToDelete: number[] = [];
+  const skippedRelatedUsers: DeletePlan['skippedRelatedUsers'] = [];
+
+  for (const relatedUser of relatedUsers) {
+    const belongsOnlyToDeletedCompanies = relatedUser.memberships.every(
+      (membership) => companyIdsToDelete.includes(membership.companyId),
     );
 
-  if (companiesWithOtherMembers.length > 0) {
-    throw new Error(
-      `Aborted. User belongs to companies with other members: ${companiesWithOtherMembers
-        .map((company) => `${company.name} (#${company.id})`)
-        .join(', ')}.`,
-    );
+    if (!belongsOnlyToDeletedCompanies) {
+      skippedRelatedUsers.push({
+        email: relatedUser.email,
+        id: relatedUser.id,
+        reason: 'has memberships outside the deleted companies',
+      });
+      continue;
+    }
+
+    relatedUserIdsToDelete.push(relatedUser.id);
   }
 
-  const companyIdsToDelete = user.memberships.map(
-    (membership) => membership.companyId,
-  );
   const storagePathsToDelete = [
+    user.avatarStoragePath ?? null,
     user.onboardingDraft?.logoStoragePath ?? null,
+    ...user.createdCompanies.map((company) => company.logoStoragePath),
     ...user.memberships.map((membership) => membership.company.logoStoragePath),
+    ...relatedUsers
+      .filter((relatedUser) => relatedUserIdsToDelete.includes(relatedUser.id))
+      .flatMap((relatedUser) => [
+        relatedUser.avatarStoragePath,
+        relatedUser.onboardingDraft?.logoStoragePath,
+      ]),
   ].filter((value): value is string => Boolean(value));
 
-  await deleteCompanyOwnedData(companyIdsToDelete, user.id);
+  console.log(
+    `Deleting local data for ${options.email}: ${companyIdsToDelete.length} company record(s), ${relatedUserIdsToDelete.length + 1} user account(s).`,
+  );
+
+  if (skippedRelatedUsers.length > 0) {
+    console.log(
+      `Skipping ${skippedRelatedUsers.length} related user account(s) that still belong to other companies:`,
+    );
+    console.table(skippedRelatedUsers);
+  }
+
+  await deleteCompanyOwnedData({
+    companyIdsToDelete,
+    relatedUserIdsToDelete,
+    skippedRelatedUsers,
+    targetUserId: user.id,
+  });
+
   if (options.deleteStorageFiles) {
     await deleteStorageFiles(storagePathsToDelete);
   } else if (storagePathsToDelete.length > 0) {
@@ -206,7 +317,7 @@ async function main() {
   }
 
   console.log(
-    `Deleted user-owned data for ${options.email}. Removed ${companyIdsToDelete.length} company record(s).`,
+    `Deleted user-owned data for ${options.email}. Removed ${companyIdsToDelete.length} company record(s) and ${relatedUserIdsToDelete.length + 1} user account(s).`,
   );
 }
 

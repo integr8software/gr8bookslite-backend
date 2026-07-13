@@ -412,7 +412,7 @@ Recommended order:
 
 1. Add Prisma models/enums for discounts.
 2. Add migration.
-3. Update `standardDefaultCoaTemplate` or default COA seed source to include the discount parent/group and the 15 discount posting accounts.
+3. Update `chart-of-accounts-defaults.seed.ts` or the module-owned COA seed source to include the discount parent/group and the 15 discount posting accounts.
 4. Add `default_accounts` mappings for `DM:SALES_DISCOUNT_PARENT` and `DM:PURCHASE_DISCOUNT_PARENT`.
 5. Add `seedDefaultDiscountsForCompany`.
 6. Call it in onboarding/company creation after COA copy.

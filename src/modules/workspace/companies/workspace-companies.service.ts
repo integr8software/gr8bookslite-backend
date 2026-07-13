@@ -23,6 +23,7 @@ import { BillingService } from '../../billing/billing.service';
 import { seedCompanyTermMaintenanceDefaults } from '../../maintenance/term-maintenance/seed/term-maintenance.seed';
 import { seedCompanyPaymentTypeMaintenanceDefaults } from '../../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
 import { seedCompanyChartAccountDefaults } from '../../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
+import { seedCompanyDefaultAccountDefaults } from '../../maintenance/default-account/seed/default-accounts.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../../maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import { seedCompanyBankAccountDefaults } from '../../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
@@ -169,6 +170,7 @@ export class WorkspaceCompaniesService {
       await seedCompanyTermMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyChartAccountDefaults(tx, createdCompany.id);
+      await seedCompanyDefaultAccountDefaults(tx, createdCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyBankAccountDefaults(tx, createdCompany.id);
       if (user.role !== AppRole.SUPER_ADMIN) {

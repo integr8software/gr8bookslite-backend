@@ -16,8 +16,15 @@ import {
 } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
+import { parsePositiveBigIntId } from '../../../common/utils/id.util';
+import {
+  cleanCurrencyCode,
+  cleanOptional,
+} from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CoaBankSyncService } from '../coa-bank-sync/coa-bank-sync.service';
+import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { CreateChartAccountDto } from './dto/create-chart-account.dto';
 import { GetChartAccountListQueryDto } from './dto/get-chart-account-list-query.dto';
 import { GetNextChartAccountCodeQueryDto } from './dto/get-next-chart-account-code-query.dto';
@@ -26,19 +33,18 @@ import { UpdateChartAccountDto } from './dto/update-chart-account.dto';
 import {
   mapChartAccount,
   mapChartAccountTreeNode,
-  type ChartAccountPayload,
-  type ChartAccountTreePayload,
+  parseChartAccountAuditUserId,
 } from './mappers/chart-account.mapper';
 import { ChartAccountInclude } from './prisma/chart-account.include';
+import type {
+  ChartAccountPayload,
+  ChartAccountTreePayload,
+} from './types/chart-account.type';
 import {
   assertCanCreateAccountLevel,
   generateNextAccountCodeFromSiblings,
 } from './utils/chart-account-code.util';
-
-const ChartAccountTransactionOptions = {
-  maxWait: 10_000,
-  timeout: 30_000,
-};
+import { toAccountGroupJson } from './utils/system-account-groups.util';
 
 @Injectable()
 export class ChartOfAccountsService {
@@ -90,7 +96,7 @@ export class ChartOfAccountsService {
     });
 
     return {
-      accounts: accounts.map(mapChartAccount),
+      accounts: await this.mapChartAccountsWithAuditUsers(accounts),
     };
   }
 
@@ -110,17 +116,20 @@ export class ChartOfAccountsService {
     });
 
     return {
-      accounts: buildChartAccountTree(accounts).map(mapChartAccountTreeNode),
+      accounts: await this.mapChartAccountTreeWithAuditUsers(accounts),
     };
   }
 
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const account = await this.findAccountOrThrow(companyId, parseBigIntId(id));
+    const account = await this.findAccountOrThrow(
+      companyId,
+      parsePositiveBigIntId(id),
+    );
 
     return {
-      account: mapChartAccount(account),
+      account: (await this.mapChartAccountsWithAuditUsers([account]))[0],
     };
   }
 
@@ -209,11 +218,8 @@ export class ChartOfAccountsService {
               companyId,
               parentAccountId: parentAccount?.id ?? null,
               currencyCode: isBankSyncedAccount
-                ? (cleanOptional(dto.currencyCode)?.toUpperCase() ??
-                  cleanOptional(
-                    dto.linkedDetails?.currencyCode,
-                  )?.toUpperCase() ??
-                  null)
+                ? (cleanCurrencyCode(dto.currencyCode) ??
+                  cleanCurrencyCode(dto.linkedDetails?.currencyCode))
                 : undefined,
               status: isBankSyncedAccount
                 ? ChartAccountStatus.INACTIVE
@@ -266,12 +272,12 @@ export class ChartOfAccountsService {
             include: ChartAccountInclude,
           });
         },
-        ChartAccountTransactionOptions,
+        MaintenanceTransactionOptions,
       );
 
       return {
         message: 'Chart account created.',
-        account: mapChartAccount(account),
+        account: (await this.mapChartAccountsWithAuditUsers([account]))[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -282,7 +288,7 @@ export class ChartOfAccountsService {
   async update(user: AuthUser, id: string, dto: UpdateChartAccountDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
-    const accountId = parseBigIntId(id);
+    const accountId = parsePositiveBigIntId(id);
     const existingAccount = await this.findAccountOrThrow(companyId, accountId);
     this.assertCompanyEditableAccount(existingAccount);
 
@@ -378,11 +384,11 @@ export class ChartOfAccountsService {
           },
           include: ChartAccountInclude,
         });
-      }, ChartAccountTransactionOptions);
+      }, MaintenanceTransactionOptions);
 
       return {
         message: 'Chart account updated.',
-        account: mapChartAccount(account),
+        account: (await this.mapChartAccountsWithAuditUsers([account]))[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -397,7 +403,7 @@ export class ChartOfAccountsService {
   ) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
-    const accountId = parseBigIntId(id);
+    const accountId = parsePositiveBigIntId(id);
     const existingAccount = await this.findAccountOrThrow(companyId, accountId);
     this.assertCompanyEditableAccount(existingAccount);
 
@@ -468,15 +474,43 @@ export class ChartOfAccountsService {
         },
         include: ChartAccountInclude,
       });
-    }, ChartAccountTransactionOptions);
+    }, MaintenanceTransactionOptions);
 
     return {
       message:
         dto.status === ChartAccountStatus.ACTIVE
           ? 'Chart account activated.'
           : 'Chart account deactivated.',
-      account: mapChartAccount(account),
+      account: (await this.mapChartAccountsWithAuditUsers([account]))[0],
     };
+  }
+
+  private async mapChartAccountsWithAuditUsers(
+    accounts: ChartAccountPayload[],
+  ) {
+    const userNames = await this.getChartAccountAuditUserNames(accounts);
+
+    return accounts.map((account) => mapChartAccount(account, userNames));
+  }
+
+  private async mapChartAccountTreeWithAuditUsers(
+    accounts: ChartAccountPayload[],
+  ) {
+    const userNames = await this.getChartAccountAuditUserNames(accounts);
+
+    return buildChartAccountTree(accounts).map((account) =>
+      mapChartAccountTreeNode(account, userNames),
+    );
+  }
+
+  private async getChartAccountAuditUserNames(accounts: ChartAccountPayload[]) {
+    return resolveAuditUserNames(
+      this.prisma,
+      accounts.flatMap((account) => [
+        parseChartAccountAuditUserId(account.whoCreated),
+        parseChartAccountAuditUserId(account.whoModified),
+      ]),
+    );
   }
 
   private async generateNextAccountCode({
@@ -631,7 +665,7 @@ export class ChartOfAccountsService {
         ? { accountNature: dto.accountNature }
         : {}),
       ...(dto.accountGroup !== undefined
-        ? { accountGroup: cleanOptional(dto.accountGroup) }
+        ? { accountGroup: toAccountGroupJson(dto.accountGroup) }
         : {}),
       ...(dto.statementSection !== undefined
         ? { statementSection: cleanOptional(dto.statementSection) }
@@ -655,8 +689,7 @@ export class ChartOfAccountsService {
       ...(dto.orderNo !== undefined ? { orderNo: dto.orderNo } : {}),
       ...(dto.currencyCode !== undefined
         ? {
-            currencyCode:
-              cleanOptional(dto.currencyCode)?.toUpperCase() ?? null,
+            currencyCode: cleanCurrencyCode(dto.currencyCode),
           }
         : {}),
     };
@@ -696,8 +729,8 @@ export class ChartOfAccountsService {
       !linkedDetails.bankName?.trim() ||
       !linkedDetails.accountNumber?.trim() ||
       !(
-        cleanOptional(linkedDetails.currencyCode) ??
-        cleanOptional(dto.currencyCode)
+        cleanCurrencyCode(linkedDetails.currencyCode) ??
+        cleanCurrencyCode(dto.currencyCode)
       )
     ) {
       throw new BadRequestException(
@@ -719,9 +752,8 @@ export class ChartOfAccountsService {
       seriesEnd: cleanOptional(linkedDetails?.seriesEnd) ?? null,
       seriesDigits: linkedDetails?.seriesDigits,
       currencyCode:
-        cleanOptional(linkedDetails?.currencyCode)?.toUpperCase() ??
-        cleanOptional(dto.currencyCode)?.toUpperCase() ??
-        null,
+        cleanCurrencyCode(linkedDetails?.currencyCode) ??
+        cleanCurrencyCode(dto.currencyCode),
       currencyExchangeRate:
         linkedDetails?.currencyExchangeRate === undefined
           ? undefined
@@ -831,32 +863,10 @@ function buildChartAccountTree(accounts: ChartAccountTreePayload[]) {
   return rootNodes;
 }
 
-function cleanOptional(value: string | undefined) {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  return value.trim() || null;
-}
-
 function parseOptionalBigIntId(value: string | undefined, label: string) {
   if (value === undefined) {
     return undefined;
   }
 
-  return parseBigIntId(value, label);
-}
-
-function parseBigIntId(value: string, label = 'id') {
-  if (!/^\d+$/.test(value)) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  const id = BigInt(value);
-
-  if (id <= 0n) {
-    throw new BadRequestException(`${label} must be a positive integer.`);
-  }
-
-  return id;
+  return parsePositiveBigIntId(value, label);
 }

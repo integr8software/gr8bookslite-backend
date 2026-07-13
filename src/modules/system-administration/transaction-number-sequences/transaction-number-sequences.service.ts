@@ -17,6 +17,11 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateTransactionNumberSequenceDto } from './dto/update-transaction-number-sequence.dto';
 import { mapModuleTransactionNumberSetup } from './mappers/transaction-number-sequence.mapper';
+export {
+  findTransactionNumberForCompanyBranch,
+  formatTransactionNumber,
+  generateTransactionNumberForCompanyBranch,
+} from './transaction-number-sequence.helper';
 
 @Injectable()
 export class TransactionNumberSequencesService {

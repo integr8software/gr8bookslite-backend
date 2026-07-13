@@ -1,53 +1,59 @@
 import {
+  AccountNature,
   ChartAccountLevel,
   ChartAccountStatus,
+  ChartAccountType,
   Prisma,
-  type DefaultChartAccount,
 } from '@prisma/client';
-import { StandardDefaultAccountTemplates } from '../../../../../prisma/seeds/standardDefaultCoaTemplate';
 import { PrismaService } from '../../../../prisma/prisma.service';
-
-const RequiredCompanyAccountRoles = [
-  {
-    moduleCode: 'BM',
-    accountRole: 'CASH_IN_BANK_PARENT',
-  },
-  {
-    moduleCode: 'DSM',
-    accountRole: 'SALES_DISCOUNT_PARENT',
-  },
-  {
-    moduleCode: 'DSM',
-    accountRole: 'PURCHASE_DISCOUNT_PARENT',
-  },
-] as const;
+import { StandardDefaultChartAccounts } from './chart-of-accounts-defaults.seed';
+import { StandardDefaultAccountMappings } from './chart-of-accounts-system-groups.seed';
+import {
+  mergeAccountGroupTags,
+  SystemAccountGroupTags,
+} from '../utils/system-account-groups.util';
 
 const CashInBankSpecificPrefix = 'Cash in Bank - ';
+
+type StandardDefaultChartAccountSeed = {
+  parentAccountCode?: string | null;
+  accountCode: string;
+  accountTitle: string;
+  accountLevel: ChartAccountLevel;
+  accountType: ChartAccountType;
+  accountNature: AccountNature;
+  accountGroup?: string | null;
+  statementSection?: string | null;
+  reportAlias?: string | null;
+  description?: string | null;
+  isPostingAccount?: boolean;
+  withSubsidiary?: boolean;
+  contraAccount?: boolean;
+  showTotal?: boolean;
+  orderNo?: number | null;
+  status?: ChartAccountStatus;
+  currencyCode?: string | null;
+};
+
+const AccountGroupTagsByAccountCode = new Map<string, string[]>(
+  StandardDefaultAccountMappings.map((mapping) => [
+    mapping.accountCode,
+    getSystemTagsForMapping(mapping.moduleCode, mapping.accountRole),
+  ]),
+);
 
 export async function seedCompanyChartAccountDefaults(
   tx: Prisma.TransactionClient | PrismaService,
   companyId: number,
 ) {
-  const defaultAccounts = await tx.defaultChartAccount.findMany({
-    orderBy: [{ accountCode: 'asc' }, { orderNo: 'asc' }],
-  });
+  const chartAccountIdByCode = new Map<string, bigint>();
 
-  if (defaultAccounts.length === 0) {
-    throw new Error('Default chart of accounts template has not been seeded.');
-  }
-
-  const chartAccountIdByDefaultId = new Map<bigint, bigint>();
-  const copiedChartAccountByCode = new Map<
-    string,
-    { id: bigint; status: ChartAccountStatus }
-  >();
-
-  for (const defaultAccount of defaultAccounts) {
-    const parentAccountId = defaultAccount.parentDefaultAccountId
-      ? chartAccountIdByDefaultId.get(defaultAccount.parentDefaultAccountId)
+  for (const defaultAccount of StandardDefaultChartAccounts as readonly StandardDefaultChartAccountSeed[]) {
+    const parentAccountId = defaultAccount.parentAccountCode
+      ? chartAccountIdByCode.get(defaultAccount.parentAccountCode)
       : null;
 
-    if (defaultAccount.parentDefaultAccountId && !parentAccountId) {
+    if (defaultAccount.parentAccountCode && !parentAccountId) {
       throw new Error(
         `Default COA parent was not copied before child ${defaultAccount.accountCode}.`,
       );
@@ -56,7 +62,6 @@ export async function seedCompanyChartAccountDefaults(
     const seededStatus = getSeededChartAccountStatus(defaultAccount);
     const seededDeletedAt =
       seededStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
-
     const savedAccount = await tx.chartAccount.upsert({
       where: {
         companyId_accountCode: {
@@ -70,17 +75,17 @@ export async function seedCompanyChartAccountDefaults(
         accountLevel: defaultAccount.accountLevel,
         accountType: defaultAccount.accountType,
         accountNature: defaultAccount.accountNature,
-        accountGroup: defaultAccount.accountGroup,
+        accountGroup: getSeededAccountGroupTags(defaultAccount),
         statementSection: defaultAccount.statementSection,
         reportAlias: defaultAccount.reportAlias,
-        description: defaultAccount.description,
-        isPostingAccount: defaultAccount.isPostingAccount,
-        withSubsidiary: defaultAccount.withSubsidiary,
-        contraAccount: defaultAccount.contraAccount,
-        showTotal: defaultAccount.showTotal,
+        description: defaultAccount.description ?? null,
+        isPostingAccount: getSeededIsPostingAccount(defaultAccount),
+        withSubsidiary: defaultAccount.withSubsidiary ?? false,
+        contraAccount: defaultAccount.contraAccount ?? false,
+        showTotal: defaultAccount.showTotal ?? false,
         orderNo: defaultAccount.orderNo,
         status: seededStatus,
-        currencyCode: defaultAccount.currencyCode,
+        currencyCode: defaultAccount.currencyCode ?? null,
         deletedAt: seededDeletedAt,
       },
       create: {
@@ -91,204 +96,183 @@ export async function seedCompanyChartAccountDefaults(
         accountLevel: defaultAccount.accountLevel,
         accountType: defaultAccount.accountType,
         accountNature: defaultAccount.accountNature,
-        accountGroup: defaultAccount.accountGroup,
+        accountGroup: getSeededAccountGroupTags(defaultAccount),
         statementSection: defaultAccount.statementSection,
         reportAlias: defaultAccount.reportAlias,
-        description: defaultAccount.description,
-        isPostingAccount:
-          defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC
-            ? defaultAccount.isPostingAccount
-            : false,
-        withSubsidiary: defaultAccount.withSubsidiary,
-        contraAccount: defaultAccount.contraAccount,
-        showTotal: defaultAccount.showTotal,
+        description: defaultAccount.description ?? null,
+        isPostingAccount: getSeededIsPostingAccount(defaultAccount),
+        withSubsidiary: defaultAccount.withSubsidiary ?? false,
+        contraAccount: defaultAccount.contraAccount ?? false,
+        showTotal: defaultAccount.showTotal ?? false,
         orderNo: defaultAccount.orderNo,
         status: seededStatus,
-        currencyCode: defaultAccount.currencyCode,
+        currencyCode: defaultAccount.currencyCode ?? null,
         deletedAt: seededDeletedAt,
       },
       select: { id: true },
     });
 
-    chartAccountIdByDefaultId.set(defaultAccount.id, savedAccount.id);
-    copiedChartAccountByCode.set(defaultAccount.accountCode, {
-      id: savedAccount.id,
-      status: seededStatus,
-    });
+    chartAccountIdByCode.set(defaultAccount.accountCode, savedAccount.id);
   }
 
-  const mappings = await tx.defaultAccount.findMany({
-    include: { defaultChartAccount: true },
-  });
+  for (const mapping of StandardDefaultAccountMappings) {
+    const copiedAccountId = chartAccountIdByCode.get(mapping.accountCode);
 
-  for (const mapping of mappings) {
-    if (
-      mapping.status === ChartAccountStatus.ACTIVE &&
-      (mapping.defaultChartAccount.status !== ChartAccountStatus.ACTIVE ||
-        mapping.defaultChartAccount.accountLevel !== mapping.requiredLevel)
-    ) {
+    if (!copiedAccountId) {
       throw new Error(
-        `Default account mapping ${mapping.moduleCode}:${mapping.accountRole} points to an invalid COA row.`,
-      );
-    }
-
-    const chartAccountId = chartAccountIdByDefaultId.get(
-      mapping.defaultChartAccountId,
-    );
-
-    if (!chartAccountId) {
-      throw new Error(
-        `Default account mapping ${mapping.moduleCode}:${mapping.accountRole} was not copied.`,
-      );
-    }
-
-    await tx.companyDefaultAccount.upsert({
-      where: {
-        companyId_moduleCode_accountRole: {
-          companyId,
-          moduleCode: mapping.moduleCode,
-          accountRole: mapping.accountRole,
-        },
-      },
-      update: {
-        chartAccountId,
-        usageType: mapping.usageType,
-        status: mapping.status,
-      },
-      create: {
-        companyId,
-        moduleCode: mapping.moduleCode,
-        accountRole: mapping.accountRole,
-        chartAccountId,
-        usageType: mapping.usageType,
-        status: mapping.status,
-      },
-    });
-  }
-
-  for (const template of StandardDefaultAccountTemplates) {
-    const expenseAccount =
-      'expenseAccountCode' in template
-        ? getCopiedTemplateAccount(
-            copiedChartAccountByCode,
-            template.expenseAccountCode,
-            template.name,
-          )
-        : null;
-    const revenueAccount =
-      'revenueAccountCode' in template
-        ? getCopiedTemplateAccount(
-            copiedChartAccountByCode,
-            template.revenueAccountCode,
-            template.name,
-          )
-        : null;
-    const assetAccount =
-      'assetAccountCode' in template
-        ? getCopiedTemplateAccount(
-            copiedChartAccountByCode,
-            template.assetAccountCode,
-            template.name,
-          )
-        : null;
-    const accumulatedDepreciationAccount =
-      'accumulatedDepreciationAccountCode' in template
-        ? getCopiedTemplateAccount(
-            copiedChartAccountByCode,
-            template.accumulatedDepreciationAccountCode,
-            template.name,
-          )
-        : null;
-    const linkedAccounts = [
-      expenseAccount,
-      revenueAccount,
-      assetAccount,
-      accumulatedDepreciationAccount,
-    ].filter((account): account is { id: bigint; status: ChartAccountStatus } =>
-      Boolean(account),
-    );
-    const templateStatus = linkedAccounts.every(
-      (account) => account.status === ChartAccountStatus.ACTIVE,
-    )
-      ? ChartAccountStatus.ACTIVE
-      : ChartAccountStatus.INACTIVE;
-    const templateDeletedAt =
-      templateStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
-
-    await tx.defaultAccountTemplate.upsert({
-      where: {
-        companyId_type_name: {
-          companyId,
-          type: template.type,
-          name: template.name,
-        },
-      },
-      update: {
-        description: template.name,
-        status: templateStatus,
-        expenseCoaId: expenseAccount?.id ?? null,
-        revenueCoaId: revenueAccount?.id ?? null,
-        assetCoaId: assetAccount?.id ?? null,
-        accumulatedDepreciationCoaId:
-          accumulatedDepreciationAccount?.id ?? null,
-        deletedAt: templateDeletedAt,
-      },
-      create: {
-        companyId,
-        type: template.type,
-        name: template.name,
-        description: template.name,
-        status: templateStatus,
-        expenseCoaId: expenseAccount?.id ?? null,
-        revenueCoaId: revenueAccount?.id ?? null,
-        assetCoaId: assetAccount?.id ?? null,
-        accumulatedDepreciationCoaId:
-          accumulatedDepreciationAccount?.id ?? null,
-        deletedAt: templateDeletedAt,
-      },
-    });
-  }
-
-  for (const role of RequiredCompanyAccountRoles) {
-    const copiedRole = await tx.companyDefaultAccount.findUnique({
-      where: {
-        companyId_moduleCode_accountRole: {
-          companyId,
-          moduleCode: role.moduleCode,
-          accountRole: role.accountRole,
-        },
-      },
-      select: { id: true },
-    });
-
-    if (!copiedRole) {
-      throw new Error(
-        `Required company account mapping was not copied: ${role.moduleCode}:${role.accountRole}.`,
+        `Required system account was not seeded: ${mapping.moduleCode}:${mapping.accountRole}.`,
       );
     }
   }
 }
 
-function getCopiedTemplateAccount(
-  copiedChartAccountByCode: Map<
-    string,
-    { id: bigint; status: ChartAccountStatus }
-  >,
-  accountCode: string,
-  templateName: string,
+function getSeededAccountGroupTags(
+  account: StandardDefaultChartAccountSeed,
 ) {
-  const account = copiedChartAccountByCode.get(accountCode);
+  const mappingTags = AccountGroupTagsByAccountCode.get(account.accountCode);
 
-  if (!account) {
-    throw new Error(
-      `Default account template ${templateName} references an account that was not copied: ${accountCode}.`,
-    );
-  }
-
-  return account;
+  return mergeAccountGroupTags(
+    account.accountGroup,
+    getStructuralAccountGroupTag(account.accountTitle),
+    mappingTags,
+  );
 }
 
-function getSeededChartAccountStatus(defaultAccount: DefaultChartAccount) {
+function getStructuralAccountGroupTag(accountTitle: string) {
+  if (/cash in banks?/i.test(accountTitle)) {
+    return SystemAccountGroupTags.cashInBank;
+  }
+
+  if (/sales discount/i.test(accountTitle)) {
+    return SystemAccountGroupTags.salesDiscount;
+  }
+
+  if (/purchase discount/i.test(accountTitle)) {
+    return SystemAccountGroupTags.purchaseDiscount;
+  }
+
+  if (/depreciation expense/i.test(accountTitle)) {
+    return SystemAccountGroupTags.depreciationExpense;
+  }
+
+  if (/accumulated depreciation/i.test(accountTitle)) {
+    return SystemAccountGroupTags.accumulatedDepreciation;
+  }
+
+  if (/fixed assets?|property and equipment/i.test(accountTitle)) {
+    return SystemAccountGroupTags.fixedAssets;
+  }
+
+  if (/expenses?/i.test(accountTitle)) {
+    return SystemAccountGroupTags.expenses;
+  }
+
+  if (/revenue|sales/i.test(accountTitle)) {
+    return SystemAccountGroupTags.revenue;
+  }
+
+  return null;
+}
+
+function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
+  if (moduleCode === 'BM' && accountRole === 'CASH_IN_BANK_PARENT') {
+    return [SystemAccountGroupTags.cashInBank];
+  }
+
+  if (moduleCode === 'DA' && accountRole === 'EXPENSE_PARENT') {
+    return [
+      SystemAccountGroupTags.expenses,
+      SystemAccountGroupTags.defaultAccountExpenseParent,
+    ];
+  }
+
+  if (moduleCode === 'DA' && accountRole === 'REVENUE_PARENT') {
+    return [
+      SystemAccountGroupTags.revenue,
+      SystemAccountGroupTags.defaultAccountRevenueParent,
+    ];
+  }
+
+  if (moduleCode === 'DA' && accountRole === 'FIXED_ASSET_PARENT') {
+    return [
+      SystemAccountGroupTags.fixedAssets,
+      SystemAccountGroupTags.defaultAccountFixedAssetParent,
+    ];
+  }
+
+  if (
+    moduleCode === 'DA' &&
+    accountRole === 'ACCUMULATED_DEPRECIATION_PARENT'
+  ) {
+    return [
+      SystemAccountGroupTags.accumulatedDepreciation,
+      SystemAccountGroupTags.defaultAccountAccumulatedDepreciationParent,
+    ];
+  }
+
+  if (moduleCode === 'DA' && accountRole === 'DEPRECIATION_EXPENSE_PARENT') {
+    return [
+      SystemAccountGroupTags.depreciationExpense,
+      SystemAccountGroupTags.defaultAccountDepreciationExpenseParent,
+    ];
+  }
+
+  if (moduleCode === 'DSM' && accountRole === 'SALES_DISCOUNT_PARENT') {
+    return [
+      SystemAccountGroupTags.salesDiscount,
+      SystemAccountGroupTags.discountManagementSalesParent,
+    ];
+  }
+
+  if (moduleCode === 'DSM' && accountRole === 'PURCHASE_DISCOUNT_PARENT') {
+    return [
+      SystemAccountGroupTags.purchaseDiscount,
+      SystemAccountGroupTags.discountManagementPurchaseParent,
+    ];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'ACCOUNTS_RECEIVABLE_GROUP') {
+    return [SystemAccountGroupTags.partyAccountsReceivableGroup];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'ACCOUNTS_PAYABLE_GROUP') {
+    return [SystemAccountGroupTags.partyAccountsPayableGroup];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'OTHER_CURRENT_LIABILITIES_GROUP') {
+    return [SystemAccountGroupTags.partyOtherCurrentLiabilitiesGroup];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'DEFAULT_RECEIVABLE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyDefaultReceivableAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'CUSTOMER_ADVANCE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyCustomerAdvanceAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'DEFAULT_PAYABLE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyDefaultPayableAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'VENDOR_ADVANCE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyVendorAdvanceAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'EMPLOYEE_ADVANCE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyEmployeeAdvanceAccount];
+  }
+
+  if (moduleCode === 'PM' && accountRole === 'EMPLOYEE_PAYABLE_ACCOUNT') {
+    return [SystemAccountGroupTags.partyEmployeePayableAccount];
+  }
+
+  return [];
+}
+
+function getSeededChartAccountStatus(
+  defaultAccount: StandardDefaultChartAccountSeed,
+) {
   if (
     defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC &&
     defaultAccount.accountTitle.startsWith(CashInBankSpecificPrefix)
@@ -296,5 +280,11 @@ function getSeededChartAccountStatus(defaultAccount: DefaultChartAccount) {
     return ChartAccountStatus.INACTIVE;
   }
 
-  return defaultAccount.status;
+  return defaultAccount.status ?? ChartAccountStatus.ACTIVE;
+}
+
+function getSeededIsPostingAccount(defaultAccount: StandardDefaultChartAccountSeed) {
+  return defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC
+    ? (defaultAccount.isPostingAccount ?? true)
+    : false;
 }
