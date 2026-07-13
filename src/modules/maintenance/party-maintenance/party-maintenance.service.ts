@@ -6,8 +6,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
-  ChartAccount,
-  ChartAccountLevel,
   ChartAccountStatus,
   MembershipRole,
   MembershipStatus,
@@ -31,11 +29,6 @@ import {
   findTransactionNumberForCompanyBranch,
   generateTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
-import { StandardDefaultAccountMappings } from '../chart-of-accounts/seed/chart-of-accounts-system-groups.seed';
-import {
-  accountGroupHasTag,
-  SystemAccountGroupTags,
-} from '../chart-of-accounts/utils/system-account-groups.util';
 import { CreatePartyAddressDto } from './dto/create-party-address.dto';
 import { CreatePartyDto } from './dto/create-party.dto';
 import { GetPartyListQueryDto } from './dto/get-party-list-query.dto';
@@ -44,6 +37,7 @@ import { UpdatePartyDto } from './dto/update-party.dto';
 import { mapParty } from './mappers/party-maintenance.mapper';
 import { PartyInclude } from './prisma/party.include';
 import type { PartyWithDetails } from './types/party-with-details.type';
+import { buildPartyAccountingAccountOptions } from './utils/party-accounting-account.util';
 
 @Injectable()
 export class PartyMaintenanceService {
@@ -119,41 +113,17 @@ export class PartyMaintenanceService {
       ],
     });
 
-    const defaultAccounts = Object.fromEntries(
-      PartyAccountingAccountFields.map((field) => {
-        const account = this.findPartyMappedAccount(
-          accounts,
-          PartyAccountingAccountConfig[field].defaultRole,
-        );
-
-        return [field, account?.id.toString() ?? ''];
-      }),
-    ) as PartyAccountingAccountIds;
-    const accountOptions = Object.fromEntries(
-      PartyAccountingAccountFields.map((field) => {
-        const parentAccount = this.findPartyMappedAccount(
-          accounts,
-          PartyAccountingAccountConfig[field].selectionGroupRole,
-        );
-        const options = parentAccount
-          ? this.findPostingDescendants(accounts, parentAccount.id)
-          : [];
-
-        return [field, options.map(mapPartyAccountingAccountOption)];
-      }),
-    ) as PartyAccountingAccountOptions;
-
-    return {
-      defaultAccounts,
-      accountOptions,
-    };
+    return buildPartyAccountingAccountOptions(accounts);
   }
 
   async create(user: AuthUser, dto: CreatePartyDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
-    const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
+    const branchUnitId = await this.resolveBranchUnitId(
+      companyId,
+      dto.branchUnitId,
+    );
     const sequence = await findTransactionNumberForCompanyBranch(this.prisma, {
       branchUnitId,
       companyId,
@@ -446,7 +416,8 @@ export class PartyMaintenanceService {
       const count = group._count._all;
 
       statistics.totalParties += count;
-      if (group.status === PartyStatus.ACTIVE) statistics.activeParties += count;
+      if (group.status === PartyStatus.ACTIVE)
+        statistics.activeParties += count;
       if (group.status === PartyStatus.INACTIVE)
         statistics.inactiveParties += count;
       if (group.classification === PartyClassification.INDIVIDUAL)
@@ -465,7 +436,10 @@ export class PartyMaintenanceService {
   private async mapPartiesWithAuditUsers(parties: PartyWithDetails[]) {
     const userNames = await resolveAuditUserNames(
       this.prisma,
-      parties.flatMap((party) => [party.createdByUserId, party.updatedByUserId]),
+      parties.flatMap((party) => [
+        party.createdByUserId,
+        party.updatedByUserId,
+      ]),
     );
 
     return parties.map((party) => mapParty(party, userNames));
@@ -480,7 +454,10 @@ export class PartyMaintenanceService {
     const termId = this.normalizeOptionalString(dto.termId);
 
     if (termId) {
-      await this.ensureTermBelongsToCompany(companyId, parsePositiveBigIntId(termId));
+      await this.ensureTermBelongsToCompany(
+        companyId,
+        parsePositiveBigIntId(termId),
+      );
     }
 
     const normalized: CreatePartyDto = {
@@ -518,9 +495,7 @@ export class PartyMaintenanceService {
       atcCode: this.normalizeOptionalString(dto.atcCode),
       email: this.normalizeOptionalString(dto.email),
       contactNo: this.normalizeOptionalString(dto.contactNo),
-      addresses: dto.addresses.map((address) =>
-        this.normalizeAddress(address),
-      ),
+      addresses: dto.addresses.map((address) => this.normalizeAddress(address)),
     };
 
     this.validateParty(normalized);
@@ -718,9 +693,7 @@ export class PartyMaintenanceService {
 
     for (const role of roleChecks) {
       if (role.count > 1) {
-        throw new BadRequestException(
-          `Select only one ${role.label} address.`,
-        );
+        throw new BadRequestException(`Select only one ${role.label} address.`);
       }
 
       if (role.enabled && role.count === 0) {
@@ -981,56 +954,6 @@ export class PartyMaintenanceService {
     }
   }
 
-  private findPartyMappedAccount(
-    accounts: ChartAccount[],
-    role: PartyAccountingAccountRole,
-  ) {
-    const roleTag = PartyAccountingAccountRoleTags[role];
-    const mappedCode = StandardDefaultAccountMappings.find(
-      (mapping) => mapping.moduleCode === 'PM' && mapping.accountRole === role,
-    )?.accountCode;
-
-    return (
-      accounts.find((account) =>
-        accountGroupHasTag(account.accountGroup, roleTag),
-      ) ??
-      accounts.find((account) => account.accountCode === mappedCode) ??
-      null
-    );
-  }
-
-  private findPostingDescendants(accounts: ChartAccount[], parentId: bigint) {
-    const childrenByParentId = new Map<string, ChartAccount[]>();
-
-    for (const account of accounts) {
-      if (!account.parentAccountId) {
-        continue;
-      }
-
-      const parentKey = account.parentAccountId.toString();
-      const siblings = childrenByParentId.get(parentKey) ?? [];
-
-      siblings.push(account);
-      childrenByParentId.set(parentKey, siblings);
-    }
-
-    const descendants: ChartAccount[] = [];
-    const visit = (currentParentId: bigint) => {
-      for (const child of childrenByParentId.get(currentParentId.toString()) ??
-        []) {
-        if (child.isPostingAccount) {
-          descendants.push(child);
-        }
-
-        visit(child.id);
-      }
-    };
-
-    visit(parentId);
-
-    return descendants;
-  }
-
   private parseOptionalBigIntId(value: string | null | undefined) {
     const normalized = value?.trim();
 
@@ -1142,7 +1065,9 @@ export class PartyMaintenanceService {
     };
   }
 
-  private normalizeAddress(address: CreatePartyAddressDto): CreatePartyAddressDto {
+  private normalizeAddress(
+    address: CreatePartyAddressDto,
+  ): CreatePartyAddressDto {
     return {
       ...address,
       addressName: address.addressName.trim() || 'Address',
@@ -1279,118 +1204,3 @@ export class PartyMaintenanceService {
 }
 
 const PartyTransactionModuleCode = 'PM';
-
-type PartyAccountingAccountField =
-  | 'customerAdvanceAccount'
-  | 'defaultPayableAccount'
-  | 'defaultReceivableAccount'
-  | 'employeeAdvanceAccount'
-  | 'employeePayableAccount'
-  | 'vendorAdvanceAccount';
-
-type PartyAccountingAccountRole =
-  | 'ACCOUNTS_PAYABLE_GROUP'
-  | 'ACCOUNTS_RECEIVABLE_GROUP'
-  | 'CUSTOMER_ADVANCE_ACCOUNT'
-  | 'DEFAULT_PAYABLE_ACCOUNT'
-  | 'DEFAULT_RECEIVABLE_ACCOUNT'
-  | 'EMPLOYEE_ADVANCE_ACCOUNT'
-  | 'EMPLOYEE_PAYABLE_ACCOUNT'
-  | 'OTHER_CURRENT_LIABILITIES_GROUP'
-  | 'VENDOR_ADVANCE_ACCOUNT';
-
-type PartyAccountingAccountIds = Record<PartyAccountingAccountField, string>;
-
-type PartyAccountingAccountOptions = Record<
-  PartyAccountingAccountField,
-  ReturnType<typeof mapPartyAccountingAccountOption>[]
->;
-
-const PartyAccountingAccountFields = [
-  'defaultReceivableAccount',
-  'customerAdvanceAccount',
-  'defaultPayableAccount',
-  'vendorAdvanceAccount',
-  'employeeAdvanceAccount',
-  'employeePayableAccount',
-] as const satisfies readonly PartyAccountingAccountField[];
-
-const PartyAccountingAccountRoleTags = {
-  ACCOUNTS_PAYABLE_GROUP: SystemAccountGroupTags.partyAccountsPayableGroup,
-  ACCOUNTS_RECEIVABLE_GROUP:
-    SystemAccountGroupTags.partyAccountsReceivableGroup,
-  CUSTOMER_ADVANCE_ACCOUNT: SystemAccountGroupTags.partyCustomerAdvanceAccount,
-  DEFAULT_PAYABLE_ACCOUNT: SystemAccountGroupTags.partyDefaultPayableAccount,
-  DEFAULT_RECEIVABLE_ACCOUNT:
-    SystemAccountGroupTags.partyDefaultReceivableAccount,
-  EMPLOYEE_ADVANCE_ACCOUNT: SystemAccountGroupTags.partyEmployeeAdvanceAccount,
-  EMPLOYEE_PAYABLE_ACCOUNT: SystemAccountGroupTags.partyEmployeePayableAccount,
-  OTHER_CURRENT_LIABILITIES_GROUP:
-    SystemAccountGroupTags.partyOtherCurrentLiabilitiesGroup,
-  VENDOR_ADVANCE_ACCOUNT: SystemAccountGroupTags.partyVendorAdvanceAccount,
-} as const satisfies Record<PartyAccountingAccountRole, string>;
-
-const PartyAccountingAccountConfig = {
-  defaultReceivableAccount: {
-    defaultRole: 'DEFAULT_RECEIVABLE_ACCOUNT',
-    selectionGroupRole: 'ACCOUNTS_RECEIVABLE_GROUP',
-  },
-  customerAdvanceAccount: {
-    defaultRole: 'CUSTOMER_ADVANCE_ACCOUNT',
-    selectionGroupRole: 'OTHER_CURRENT_LIABILITIES_GROUP',
-  },
-  defaultPayableAccount: {
-    defaultRole: 'DEFAULT_PAYABLE_ACCOUNT',
-    selectionGroupRole: 'ACCOUNTS_PAYABLE_GROUP',
-  },
-  vendorAdvanceAccount: {
-    defaultRole: 'VENDOR_ADVANCE_ACCOUNT',
-    selectionGroupRole: 'ACCOUNTS_RECEIVABLE_GROUP',
-  },
-  employeeAdvanceAccount: {
-    defaultRole: 'EMPLOYEE_ADVANCE_ACCOUNT',
-    selectionGroupRole: 'ACCOUNTS_RECEIVABLE_GROUP',
-  },
-  employeePayableAccount: {
-    defaultRole: 'EMPLOYEE_PAYABLE_ACCOUNT',
-    selectionGroupRole: 'OTHER_CURRENT_LIABILITIES_GROUP',
-  },
-} as const satisfies Record<
-  PartyAccountingAccountField,
-  {
-    defaultRole: PartyAccountingAccountRole;
-    selectionGroupRole: PartyAccountingAccountRole;
-  }
->;
-
-function mapPartyAccountingAccountOption(account: ChartAccount) {
-  return {
-    id: account.id.toString(),
-    accountNumber: account.accountCode,
-    accountName: account.accountTitle,
-    accountType: mapPartyAccountingAccountType(account),
-    statementGroup: account.statementSection ?? '',
-    statementSection: account.statementSection ?? '',
-    normalBalance: account.accountNature === 'CREDIT' ? 'Credit' : 'Debit',
-    accountCategory: account.statementSection ?? '',
-    description: account.description ?? account.accountTitle,
-    status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
-  };
-}
-
-function mapPartyAccountingAccountType(account: ChartAccount) {
-  switch (account.accountType) {
-    case 'ASSET':
-      return 'Assets';
-    case 'LIABILITY':
-      return 'Liabilities';
-    case 'EQUITY':
-      return 'Equity';
-    case 'REVENUE':
-      return 'Revenues';
-    case 'EXPENSE':
-      return 'Expenses';
-    default:
-      return '';
-  }
-}
