@@ -13,7 +13,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { BillingCycle } from '@prisma/client';
+import { BillingCycle, BillingMode } from '@prisma/client';
 
 const NamePattern = /^[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*$/u;
 const OptionalNamePattern = /^(?:$|[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*)$/u;
@@ -35,6 +35,10 @@ export class CreateWorkspaceCompanyBillingDto {
   @IsOptional()
   @IsEmail()
   billingEmail?: string;
+
+  @IsOptional()
+  @IsEnum(BillingMode)
+  billingMode?: BillingMode;
 
   @IsOptional()
   @IsString()

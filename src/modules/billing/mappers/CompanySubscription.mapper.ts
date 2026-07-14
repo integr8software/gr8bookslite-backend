@@ -14,6 +14,8 @@ export function mapCompanySubscription(
     status: subscription.status,
     billingCycle: subscription.billingCycle,
     billingProvider: subscription.billingProvider,
+    billingMode: subscription.billingMode,
+    autoRenew: subscription.autoRenew,
     startsAt: subscription.startsAt,
     trialEndsAt: subscription.trialEndsAt,
     currentPeriodStartAt: subscription.currentPeriodStartAt,

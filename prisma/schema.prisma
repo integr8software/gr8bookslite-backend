@@ -12,31 +12,32 @@ datasource db {
 // =========================================================
 
 model User {
-  id                    Int                     @id @default(autoincrement())
-  email                 String                  @unique
-  passwordHash          String?                 @map("password_hash")
-  name                  String
-  contactNumber         String?                 @map("contact_number")
-  avatarFileName        String?                 @map("avatar_file_name")
-  avatarMimeType        String?                 @map("avatar_mime_type")
-  avatarStoragePath     String?                 @map("avatar_storage_path")
-  avatarPublicUrl       String?                 @map("avatar_public_url")
-  systemRole            SystemRole              @default(STANDARD) @map("system_role")
-  status                UserStatus              @default(PENDING_VERIFICATION)
-  emailVerifiedAt       DateTime?               @map("email_verified_at")
-  createdAt             DateTime                @default(now()) @map("created_at")
-  updatedAt             DateTime?               @updatedAt @map("updated_at")
-  verificationCodes     EmailVerificationCode[]
-  memberships           Membership[]
-  invitedMemberships    Membership[]            @relation("MembershipInvitedBy")
-  createdAuditLogs      AuditLog[]              @relation("AuditActor")
-  onboardingDraft       UserOnboardingDraft?
-  authIdentities        UserAuthIdentity[]
-  billingCustomers      BillingCustomer[]
-  billingPaymentMethods BillingPaymentMethod[]
-  createdCompanies      Company[]               @relation("CompanyCreatedBy")
-  tablePreferences      UserTablePreference[]
-  sidebarPreferences    UserSidebarPreference[]
+  id                     Int                     @id @default(autoincrement())
+  email                  String                  @unique
+  passwordHash           String?                 @map("password_hash")
+  name                   String
+  contactNumber          String?                 @map("contact_number")
+  avatarFileName         String?                 @map("avatar_file_name")
+  avatarMimeType         String?                 @map("avatar_mime_type")
+  avatarStoragePath      String?                 @map("avatar_storage_path")
+  avatarPublicUrl        String?                 @map("avatar_public_url")
+  systemRole             SystemRole              @default(STANDARD) @map("system_role")
+  status                 UserStatus              @default(PENDING_VERIFICATION)
+  emailVerifiedAt        DateTime?               @map("email_verified_at")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime?               @updatedAt @map("updated_at")
+  verificationCodes      EmailVerificationCode[]
+  memberships            Membership[]
+  invitedMemberships     Membership[]            @relation("MembershipInvitedBy")
+  createdAuditLogs       AuditLog[]              @relation("AuditActor")
+  onboardingDraft        UserOnboardingDraft?
+  authIdentities         UserAuthIdentity[]
+  billingCustomers       BillingCustomer[]
+  billingPaymentMethods  BillingPaymentMethod[]
+  billingPaymentAttempts BillingPaymentAttempt[]
+  createdCompanies       Company[]               @relation("CompanyCreatedBy")
+  tablePreferences       UserTablePreference[]
+  sidebarPreferences     UserSidebarPreference[]
 
   @@map("users")
 }
@@ -74,53 +75,54 @@ model AuthSessionHandoff {
 // =========================================================
 
 model Company {
-  id                    Int                     @id @default(autoincrement())
-  name                  String
-  slug                  String                  @unique
-  legalName             String?                 @map("legal_name")
-  companyCode           String?                 @unique @map("company_code")
-  taxpayerType          TaxpayerType?           @map("taxpayer_type")
-  ownerLastName         String?                 @map("owner_last_name")
-  ownerFirstName        String?                 @map("owner_first_name")
-  ownerMiddleName       String?                 @map("owner_middle_name")
-  organizationType      String?                 @map("organization_type")
-  organizationTypeOther String?                 @map("organization_type_other")
-  logoFileName          String?                 @map("logo_file_name")
-  logoMimeType          String?                 @map("logo_mime_type")
-  logoStoragePath       String?                 @map("logo_storage_path")
-  logoPublicUrl         String?                 @map("logo_public_url")
-  address               String?
-  tin                   String?
-  email                 String?
-  website               String?
-  contactNumber         String?                 @map("contact_number")
-  reportStartDate       DateTime?               @map("report_start_date")
-  reportEndDate         DateTime?               @map("report_end_date")
-  createdByUserId       Int?                    @map("created_by_user_id")
-  isActive              Boolean                 @default(true) @map("is_active")
-  status                CompanyStatus           @default(PENDING)
-  createdAt             DateTime                @default(now()) @map("created_at")
-  updatedAt             DateTime                @updatedAt @map("updated_at")
-  subscriptions         CompanySubscription[]
-  billingCustomers      BillingCustomer[]
-  billingPaymentMethods BillingPaymentMethod[]
-  memberships           Membership[]
-  roles                 CompanyRole[]
-  sidebarPreferences    UserSidebarPreference[]
-  units                 CompanyUnit[]
-  formSignatorySetups   FormSignatorySetup[]
-  chartAccounts         ChartAccount[]
-  bankAccounts          BankAccount[]
-  defaultAccounts       DefaultAccount[]
-  terms                 Term[]
-  paymentTypes          PaymentType[]
-  discounts             Discount[]
-  responsibilityCenters ResponsibilityCenter[]
-  parties               Party[]
-  userTablePreferences  UserTablePreference[]
-  auditLogs             AuditLog[]
-  onboardingDrafts      UserOnboardingDraft[]   @relation("ProvisionedOnboardingCompany")
-  createdByUser         User?                   @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  id                     Int                     @id @default(autoincrement())
+  name                   String
+  slug                   String                  @unique
+  legalName              String?                 @map("legal_name")
+  companyCode            String?                 @unique @map("company_code")
+  taxpayerType           TaxpayerType?           @map("taxpayer_type")
+  ownerLastName          String?                 @map("owner_last_name")
+  ownerFirstName         String?                 @map("owner_first_name")
+  ownerMiddleName        String?                 @map("owner_middle_name")
+  organizationType       String?                 @map("organization_type")
+  organizationTypeOther  String?                 @map("organization_type_other")
+  logoFileName           String?                 @map("logo_file_name")
+  logoMimeType           String?                 @map("logo_mime_type")
+  logoStoragePath        String?                 @map("logo_storage_path")
+  logoPublicUrl          String?                 @map("logo_public_url")
+  address                String?
+  tin                    String?
+  email                  String?
+  website                String?
+  contactNumber          String?                 @map("contact_number")
+  reportStartDate        DateTime?               @map("report_start_date")
+  reportEndDate          DateTime?               @map("report_end_date")
+  createdByUserId        Int?                    @map("created_by_user_id")
+  isActive               Boolean                 @default(true) @map("is_active")
+  status                 CompanyStatus           @default(PENDING)
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+  subscriptions          CompanySubscription[]
+  billingCustomers       BillingCustomer[]
+  billingPaymentMethods  BillingPaymentMethod[]
+  billingPaymentAttempts BillingPaymentAttempt[]
+  memberships            Membership[]
+  roles                  CompanyRole[]
+  sidebarPreferences     UserSidebarPreference[]
+  units                  CompanyUnit[]
+  formSignatorySetups    FormSignatorySetup[]
+  chartAccounts          ChartAccount[]
+  bankAccounts           BankAccount[]
+  defaultAccounts        DefaultAccount[]
+  terms                  Term[]
+  paymentTypes           PaymentType[]
+  discounts              Discount[]
+  responsibilityCenters  ResponsibilityCenter[]
+  parties                Party[]
+  userTablePreferences   UserTablePreference[]
+  auditLogs              AuditLog[]
+  onboardingDrafts       UserOnboardingDraft[]   @relation("ProvisionedOnboardingCompany")
+  createdByUser          User?                   @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
 
   @@index([createdByUserId])
   @@map("companies")
@@ -904,6 +906,7 @@ model SubscriptionPlan {
   modules          SubscriptionPlanModule[]
   systems          SubscriptionPlanSystem[]
   subscriptions    CompanySubscription[]
+  paymentAttempts  BillingPaymentAttempt[]
   onboardingDrafts UserOnboardingDraft[]
 
   @@index([scope, isActive], map: "subscription_plans_scope_is_active_idx")
@@ -911,20 +914,21 @@ model SubscriptionPlan {
 }
 
 model SubscriptionPlanPrice {
-  id                   Int                   @id @default(autoincrement())
-  subscriptionPlanId   Int                   @map("subscription_plan_id")
-  billingCycle         BillingCycle          @map("billing_cycle")
-  intervalCount        Int                   @default(1) @map("interval_count")
-  intervalUnit         BillingIntervalUnit   @map("interval_unit")
-  priceInCents         Int                   @map("price_in_cents")
-  compareAtInCents     Int?                  @map("compare_at_in_cents")
-  externalPlanId       String?               @unique @map("external_plan_id")
-  billingMetadata      Json?                 @map("billing_metadata")
-  isActive             Boolean               @default(true) @map("is_active")
-  createdAt            DateTime              @default(now()) @map("created_at")
-  updatedAt            DateTime              @updatedAt @map("updated_at")
-  subscriptionPlan     SubscriptionPlan      @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+  id                   Int                     @id @default(autoincrement())
+  subscriptionPlanId   Int                     @map("subscription_plan_id")
+  billingCycle         BillingCycle            @map("billing_cycle")
+  intervalCount        Int                     @default(1) @map("interval_count")
+  intervalUnit         BillingIntervalUnit     @map("interval_unit")
+  priceInCents         Int                     @map("price_in_cents")
+  compareAtInCents     Int?                    @map("compare_at_in_cents")
+  externalPlanId       String?                 @unique @map("external_plan_id")
+  billingMetadata      Json?                   @map("billing_metadata")
+  isActive             Boolean                 @default(true) @map("is_active")
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @updatedAt @map("updated_at")
+  subscriptionPlan     SubscriptionPlan        @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
   companySubscriptions CompanySubscription[]
+  paymentAttempts      BillingPaymentAttempt[]
 
   @@unique([subscriptionPlanId, billingCycle])
   @@index([billingCycle, isActive])
@@ -1050,38 +1054,41 @@ model UserOnboardingDraft {
 }
 
 model CompanySubscription {
-  id                      Int                    @id @default(autoincrement())
-  companyId               Int                    @map("company_id")
-  subscriptionPlanId      Int                    @map("subscription_plan_id")
-  subscriptionPlanPriceId Int?                   @map("subscription_plan_price_id")
-  billingCustomerId       Int?                   @map("billing_customer_id")
-  billingCycle            BillingCycle           @default(MONTHLY) @map("billing_cycle")
-  billingProvider         BillingProvider        @default(PAYMONGO) @map("billing_provider")
-  status                  SubscriptionStatus     @default(TRIALING)
-  externalCustomerId      String?                @map("external_customer_id")
-  externalSubscriptionId  String?                @unique @map("external_subscription_id")
-  externalPlanId          String?                @map("external_plan_id")
-  externalPaymentMethodId String?                @map("external_payment_method_id")
-  latestInvoiceExternalId String?                @map("latest_invoice_external_id")
-  latestPaymentIntentId   String?                @map("latest_payment_intent_id")
-  cancelAtPeriodEnd       Boolean                @default(false) @map("cancel_at_period_end")
-  currentPeriodStartAt    DateTime?              @map("current_period_start_at")
-  nextBillingAt           DateTime?              @map("next_billing_at")
-  failureCode             String?                @map("failure_code")
-  failureMessage          String?                @map("failure_message")
-  rawProviderPayload      Json?                  @map("raw_provider_payload")
-  startsAt                DateTime               @default(now()) @map("starts_at")
-  trialEndsAt             DateTime?              @map("trial_ends_at")
-  endsAt                  DateTime?              @map("ends_at")
-  canceledAt              DateTime?              @map("canceled_at")
-  createdAt               DateTime               @default(now()) @map("created_at")
-  updatedAt               DateTime               @updatedAt @map("updated_at")
-  company                 Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  plan                    SubscriptionPlan       @relation(fields: [subscriptionPlanId], references: [id])
-  planPrice               SubscriptionPlanPrice? @relation(fields: [subscriptionPlanPriceId], references: [id], onDelete: SetNull)
-  billingCustomer         BillingCustomer?       @relation(fields: [billingCustomerId], references: [id], onDelete: SetNull)
+  id                      Int                     @id @default(autoincrement())
+  companyId               Int                     @map("company_id")
+  subscriptionPlanId      Int                     @map("subscription_plan_id")
+  subscriptionPlanPriceId Int?                    @map("subscription_plan_price_id")
+  billingCustomerId       Int?                    @map("billing_customer_id")
+  billingCycle            BillingCycle            @default(MONTHLY) @map("billing_cycle")
+  billingMode             BillingMode             @default(AUTO) @map("billing_mode")
+  autoRenew               Boolean                 @default(true) @map("auto_renew")
+  billingProvider         BillingProvider         @default(PAYMONGO) @map("billing_provider")
+  status                  SubscriptionStatus      @default(TRIALING)
+  externalCustomerId      String?                 @map("external_customer_id")
+  externalSubscriptionId  String?                 @unique @map("external_subscription_id")
+  externalPlanId          String?                 @map("external_plan_id")
+  externalPaymentMethodId String?                 @map("external_payment_method_id")
+  latestInvoiceExternalId String?                 @map("latest_invoice_external_id")
+  latestPaymentIntentId   String?                 @map("latest_payment_intent_id")
+  cancelAtPeriodEnd       Boolean                 @default(false) @map("cancel_at_period_end")
+  currentPeriodStartAt    DateTime?               @map("current_period_start_at")
+  nextBillingAt           DateTime?               @map("next_billing_at")
+  failureCode             String?                 @map("failure_code")
+  failureMessage          String?                 @map("failure_message")
+  rawProviderPayload      Json?                   @map("raw_provider_payload")
+  startsAt                DateTime                @default(now()) @map("starts_at")
+  trialEndsAt             DateTime?               @map("trial_ends_at")
+  endsAt                  DateTime?               @map("ends_at")
+  canceledAt              DateTime?               @map("canceled_at")
+  createdAt               DateTime                @default(now()) @map("created_at")
+  updatedAt               DateTime                @updatedAt @map("updated_at")
+  company                 Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan                    SubscriptionPlan        @relation(fields: [subscriptionPlanId], references: [id])
+  planPrice               SubscriptionPlanPrice?  @relation(fields: [subscriptionPlanPriceId], references: [id], onDelete: SetNull)
+  billingCustomer         BillingCustomer?        @relation(fields: [billingCustomerId], references: [id], onDelete: SetNull)
   invoices                SubscriptionInvoice[]
   paymentMethods          BillingPaymentMethod[]
+  paymentAttempts         BillingPaymentAttempt[]
 
   @@index([companyId])
   @@index([subscriptionPlanId])
@@ -1090,6 +1097,64 @@ model CompanySubscription {
   @@index([status])
   @@index([companyId, status])
   @@map("company_subscriptions")
+}
+
+model BillingPaymentAttempt {
+  id                        Int                         @id @default(autoincrement())
+  subscriptionInvoiceId     Int                         @map("subscription_invoice_id")
+  companyId                 Int                         @map("company_id")
+  ownerUserId               Int?                        @map("owner_user_id")
+  companySubscriptionId     Int?                        @map("company_subscription_id")
+  subscriptionPlanId        Int                         @map("subscription_plan_id")
+  subscriptionPlanPriceId   Int?                        @map("subscription_plan_price_id")
+  purpose                   BillingPaymentPurpose
+  billingMode               BillingMode                 @default(MANUAL) @map("billing_mode")
+  status                    BillingPaymentAttemptStatus @default(PENDING)
+  applicationStatus         BillingApplicationStatus    @default(PENDING) @map("application_status")
+  billingProvider           BillingProvider             @default(PAYMONGO) @map("billing_provider")
+  attemptNumber             Int                         @map("attempt_number")
+  externalCheckoutSessionId String?                     @map("external_checkout_session_id")
+  externalPaymentIntentId   String?                     @map("external_payment_intent_id")
+  externalPaymentId         String?                     @map("external_payment_id")
+  paymentMethodType         String?                     @map("payment_method_type")
+  amountInCents             Int                         @map("amount_in_cents")
+  currency                  String                      @default("PHP")
+  successUrl                String                      @map("success_url")
+  cancelUrl                 String                      @map("cancel_url")
+  metadata                  Json?
+  rawProviderPayload        Json?                       @map("raw_provider_payload")
+  confirmedAt               DateTime?                   @map("confirmed_at")
+  failedAt                  DateTime?                   @map("failed_at")
+  expiredAt                 DateTime?                   @map("expired_at")
+  canceledAt                DateTime?                   @map("canceled_at")
+  applicationAttempts       Int                         @default(0) @map("application_attempts")
+  lastApplicationAttemptAt  DateTime?                   @map("last_application_attempt_at")
+  applicationError          String?                     @map("application_error")
+  appliedAt                 DateTime?                   @map("applied_at")
+  createdAt                 DateTime                    @default(now()) @map("created_at")
+  updatedAt                 DateTime                    @updatedAt @map("updated_at")
+  subscriptionInvoice       SubscriptionInvoice         @relation(fields: [subscriptionInvoiceId], references: [id], onDelete: Restrict)
+  company                   Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ownerUser                 User?                       @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  companySubscription       CompanySubscription?        @relation(fields: [companySubscriptionId], references: [id], onDelete: SetNull)
+  subscriptionPlan          SubscriptionPlan            @relation(fields: [subscriptionPlanId], references: [id])
+  subscriptionPlanPrice     SubscriptionPlanPrice?      @relation(fields: [subscriptionPlanPriceId], references: [id], onDelete: SetNull)
+
+  @@unique([subscriptionInvoiceId, attemptNumber])
+  @@unique([billingProvider, externalCheckoutSessionId], map: "billing_payment_attempts_provider_checkout_session_key")
+  @@unique([billingProvider, externalPaymentIntentId], map: "billing_payment_attempts_provider_payment_intent_key")
+  @@unique([billingProvider, externalPaymentId], map: "billing_payment_attempts_provider_payment_key")
+  @@index([subscriptionInvoiceId])
+  @@index([companyId])
+  @@index([ownerUserId])
+  @@index([companySubscriptionId])
+  @@index([subscriptionPlanId])
+  @@index([subscriptionPlanPriceId])
+  @@index([status])
+  @@index([applicationStatus])
+  @@index([purpose])
+  @@index([createdAt])
+  @@map("billing_payment_attempts")
 }
 
 model BillingCustomer {
@@ -1115,28 +1180,54 @@ model BillingCustomer {
 }
 
 model SubscriptionInvoice {
-  id                      Int                 @id @default(autoincrement())
-  companySubscriptionId   Int                 @map("company_subscription_id")
-  billingProvider         BillingProvider     @default(PAYMONGO) @map("billing_provider")
-  externalInvoiceId       String              @unique @map("external_invoice_id")
-  externalPaymentIntentId String?             @map("external_payment_intent_id")
-  status                  String
-  billingReason           String?             @map("billing_reason")
-  currency                String              @default("PHP")
-  amountDueInCents        Int?                @map("amount_due_in_cents")
-  amountPaidInCents       Int?                @map("amount_paid_in_cents")
-  dueAt                   DateTime?           @map("due_at")
-  paidAt                  DateTime?           @map("paid_at")
-  finalizedAt             DateTime?           @map("finalized_at")
-  periodStartAt           DateTime?           @map("period_start_at")
-  periodEndAt             DateTime?           @map("period_end_at")
-  rawProviderPayload      Json?               @map("raw_provider_payload")
-  createdAt               DateTime            @default(now()) @map("created_at")
-  updatedAt               DateTime            @updatedAt @map("updated_at")
-  companySubscription     CompanySubscription @relation(fields: [companySubscriptionId], references: [id], onDelete: Cascade)
+  id                      Int                       @id @default(autoincrement())
+  companySubscriptionId   Int?                      @map("company_subscription_id")
+  companyId               Int?                      @map("company_id")
+  ownerUserId             Int?                      @map("owner_user_id")
+  onboardingDraftId       Int?                      @map("onboarding_draft_id")
+  subscriptionPlanId      Int?                      @map("subscription_plan_id")
+  subscriptionPlanPriceId Int?                      @map("subscription_plan_price_id")
+  billingProvider         BillingProvider           @default(PAYMONGO) @map("billing_provider")
+  externalInvoiceId       String?                   @unique @map("external_invoice_id")
+  externalPaymentIntentId String?                   @map("external_payment_intent_id")
+  status                  SubscriptionInvoiceStatus @default(OPEN)
+  purpose                 BillingPaymentPurpose?
+  billingMode             BillingMode?              @map("billing_mode")
+  billingReason           String?                   @map("billing_reason")
+  invoiceNumber           String?                   @unique @map("invoice_number")
+  planCode                String?                   @map("plan_code")
+  planName                String?                   @map("plan_name")
+  billingCycle            BillingCycle?             @map("billing_cycle")
+  description             String?
+  quantity                Int                       @default(1)
+  unitAmountInCents       Int?                      @map("unit_amount_in_cents")
+  subtotalInCents         Int?                      @map("subtotal_in_cents")
+  discountInCents         Int                       @default(0) @map("discount_in_cents")
+  taxInCents              Int                       @default(0) @map("tax_in_cents")
+  totalAmountInCents      Int?                      @map("total_amount_in_cents")
+  currency                String                    @default("PHP")
+  amountDueInCents        Int?                      @map("amount_due_in_cents")
+  amountPaidInCents       Int?                      @map("amount_paid_in_cents")
+  issuedAt                DateTime                  @default(now()) @map("issued_at")
+  dueAt                   DateTime?                 @map("due_at")
+  paidAt                  DateTime?                 @map("paid_at")
+  finalizedAt             DateTime?                 @map("finalized_at")
+  periodStartAt           DateTime?                 @map("period_start_at")
+  periodEndAt             DateTime?                 @map("period_end_at")
+  rawProviderPayload      Json?                     @map("raw_provider_payload")
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime                  @updatedAt @map("updated_at")
+  companySubscription     CompanySubscription?      @relation(fields: [companySubscriptionId], references: [id], onDelete: Cascade)
+  paymentAttempts         BillingPaymentAttempt[]
 
   @@index([companySubscriptionId])
+  @@index([companyId])
+  @@index([ownerUserId])
+  @@index([onboardingDraftId])
+  @@index([subscriptionPlanId])
+  @@index([subscriptionPlanPriceId])
   @@index([status])
+  @@index([purpose])
   @@map("subscription_invoices")
 }
 
@@ -1169,19 +1260,21 @@ model BillingPaymentMethod {
 }
 
 model BillingWebhookEvent {
-  id                 BigInt                  @id @default(autoincrement())
-  billingProvider    BillingProvider         @default(PAYMONGO) @map("billing_provider")
-  eventId            String                  @map("event_id")
-  eventType          String                  @map("event_type")
-  isLiveMode         Boolean                 @default(false) @map("is_live_mode")
-  signature          String?
-  payload            Json
-  processingStatus   WebhookProcessingStatus @default(PENDING) @map("processing_status")
-  processingAttempts Int                     @default(0) @map("processing_attempts")
-  processedAt        DateTime?               @map("processed_at")
-  lastError          String?                 @map("last_error")
-  createdAt          DateTime                @default(now()) @map("created_at")
-  updatedAt          DateTime                @updatedAt @map("updated_at")
+  id                  BigInt                  @id @default(autoincrement())
+  billingProvider     BillingProvider         @default(PAYMONGO) @map("billing_provider")
+  eventId             String                  @map("event_id")
+  eventType           String                  @map("event_type")
+  isLiveMode          Boolean                 @default(false) @map("is_live_mode")
+  signature           String?
+  payload             Json
+  processingStatus    WebhookProcessingStatus @default(RECEIVED) @map("processing_status")
+  processingAttempts  Int                     @default(0) @map("processing_attempts")
+  processingStartedAt DateTime?               @map("processing_started_at")
+  processedAt         DateTime?               @map("processed_at")
+  nextRetryAt         DateTime?               @map("next_retry_at")
+  lastError           String?                 @map("last_error")
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
 
   @@unique([billingProvider, eventId])
   @@index([eventType])
@@ -1307,6 +1400,42 @@ enum BillingProvider {
   PAYMONGO
 }
 
+enum BillingMode {
+  MANUAL
+  AUTO
+}
+
+enum BillingPaymentPurpose {
+  ONBOARDING
+  RENEWAL
+  ADDITIONAL_COMPANY
+}
+
+enum BillingPaymentAttemptStatus {
+  PENDING
+  AWAITING_PAYMENT
+  PAID
+  FAILED
+  CANCELED
+  EXPIRED
+}
+
+enum BillingApplicationStatus {
+  PENDING
+  PROCESSING
+  APPLIED
+  FAILED
+}
+
+enum SubscriptionInvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  EXPIRED
+  UNCOLLECTIBLE
+}
+
 enum SubscriptionPlanScope {
   ONBOARDING
   ADDITIONAL_COMPANY
@@ -1331,8 +1460,11 @@ enum SubscriptionStatus {
 
 enum WebhookProcessingStatus {
   PENDING
+  RECEIVED
+  PROCESSING
   PROCESSED
   FAILED
+  IGNORED
 }
 
 enum VerificationPurpose {

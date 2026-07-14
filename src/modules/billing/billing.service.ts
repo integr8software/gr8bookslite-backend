@@ -9,11 +9,16 @@ import {
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
 import {
+  BillingMode,
+  BillingPaymentPurpose,
+  BillingApplicationStatus,
+  BillingPaymentAttemptStatus,
   BillingCycle,
   BillingProvider,
   CompanyStatus,
   MembershipRole,
   Prisma,
+  SubscriptionInvoiceStatus,
   SubscriptionPlanScope,
   SubscriptionStatus,
 } from '@prisma/client';
@@ -26,11 +31,13 @@ import { mapBillingPlan } from './mappers/BillingPlan.mapper';
 import { mapCompanySubscription } from './mappers/CompanySubscription.mapper';
 import { AttachCompanySubscriptionPaymentMethodDto } from './dto/attach-company-subscription-payment-method.dto';
 import { CancelCompanySubscriptionDto } from './dto/cancel-company-subscription.dto';
+import { CreateManualCheckoutSessionDto } from './dto/create-manual-checkout-session.dto';
 import { SubscribeCompanyDto } from './dto/subscribe-company.dto';
 import {
   PaymongoRequestException,
   PaymongoService,
 } from './services/paymongo.service';
+import { BillingPaymentApplicationService } from './services/billing-payment-application.service';
 import { companySubscriptionDetailsInclude } from './utils/BillingPrisma.util';
 import {
   readFirstProviderArrayObject,
@@ -54,6 +61,7 @@ export class BillingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paymongoService: PaymongoService,
+    private readonly paymentApplicationService: BillingPaymentApplicationService,
     private readonly configService: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
@@ -215,6 +223,261 @@ export class BillingService {
       planCode: dto.planCode,
       billingCycle: dto.billingCycle,
     });
+  }
+
+  async createManualCheckoutSession(
+    user: AuthUser,
+    dto: CreateManualCheckoutSessionDto,
+  ) {
+    const context = await this.resolveManualCheckoutContext(user, dto);
+    const { company, plan, planPrice } = context;
+    const subscription = await this.ensureManualCompanySubscription({
+      companyId: company.id,
+      ownerUserId: user.id,
+      planId: plan.id,
+      planPriceId: planPrice.id,
+      billingCycle: dto.billingCycle,
+    });
+    const periodStart = new Date();
+    const periodEnd = this.addBillingInterval(periodStart, {
+      intervalCount: planPrice.intervalCount,
+      intervalUnit: planPrice.intervalUnit,
+    });
+    const invoice = await this.ensureManualSubscriptionInvoice({
+      companyId: company.id,
+      ownerUserId: user.id,
+      companySubscriptionId: subscription.id,
+      subscriptionPlanId: plan.id,
+      subscriptionPlanPriceId: planPrice.id,
+      purpose: dto.purpose,
+      billingCycle: dto.billingCycle,
+      planCode: plan.code,
+      planName: plan.name,
+      description: `${plan.name} ${this.getBillingCycleLabel(dto.billingCycle)} manual payment`,
+      amountInCents: planPrice.priceInCents,
+      currency: plan.currency,
+      periodStart,
+      periodEnd,
+    });
+    const reusableAttempt = await this.findReusableManualCheckoutAttempt(
+      invoice.id,
+    );
+
+    if (reusableAttempt?.externalCheckoutSessionId) {
+      const checkoutUrl = this.getCheckoutUrlFromProviderPayload(
+        reusableAttempt.rawProviderPayload,
+      );
+
+      if (checkoutUrl) {
+        return {
+          paymentAttemptId: reusableAttempt.id,
+          paymentRequestId: reusableAttempt.id,
+          checkoutSessionId: reusableAttempt.externalCheckoutSessionId,
+          checkoutUrl,
+          status: reusableAttempt.status,
+        };
+      }
+    }
+
+    const paymentAttempt = await this.createManualPaymentAttempt({
+      invoiceId: invoice.id,
+      companyId: company.id,
+      ownerUserId: user.id,
+      companySubscriptionId: subscription.id,
+      subscriptionPlanId: plan.id,
+      subscriptionPlanPriceId: planPrice.id,
+      purpose: dto.purpose,
+      amountInCents: invoice.totalAmountInCents ?? planPrice.priceInCents,
+      currency: invoice.currency,
+      successUrl: dto.successUrl,
+      cancelUrl: dto.cancelUrl,
+      billingCycle: dto.billingCycle,
+      planCode: plan.code,
+    });
+    const successUrl = this.withQueryParams(dto.successUrl, {
+      paymentAttemptId: String(paymentAttempt.id),
+      paymentRequestId: String(paymentAttempt.id),
+      status: 'success',
+    });
+    const cancelUrl = this.withQueryParams(dto.cancelUrl, {
+      paymentAttemptId: String(paymentAttempt.id),
+      paymentRequestId: String(paymentAttempt.id),
+      status: 'cancelled',
+    });
+    const metadata = {
+      billing_mode: BillingMode.MANUAL,
+      payment_purpose: dto.purpose,
+      environment: this.configService.get<string>('APP_ENV') ?? 'unknown',
+      company_id: company.id,
+      owner_user_id: user.id,
+      subscription_plan_id: plan.id,
+      subscription_plan_code: plan.code,
+      subscription_plan_price_id: planPrice.id,
+      billing_cycle: dto.billingCycle,
+      company_subscription_id: subscription.id,
+      local_payment_attempt_id: paymentAttempt.id,
+      local_payment_request_id: paymentAttempt.id,
+      local_invoice_id: invoice.id,
+    };
+
+    let checkoutSession: unknown;
+
+    try {
+      checkoutSession = await this.paymongoService.createCheckoutSession({
+        amountInCents: paymentAttempt.amountInCents,
+        currency: paymentAttempt.currency,
+        description: invoice.description ?? `${plan.name} manual payment`,
+        lineItemName: `${plan.name} (${this.getBillingCycleLabel(dto.billingCycle)})`,
+        metadata,
+        referenceNumber: `GBN-${paymentAttempt.id}`,
+        successUrl,
+        cancelUrl,
+      });
+    } catch (error) {
+      await this.prisma.billingPaymentAttempt.update({
+        where: { id: paymentAttempt.id },
+        data: {
+          status: BillingPaymentAttemptStatus.FAILED,
+          failedAt: new Date(),
+          applicationError:
+            error instanceof Error
+              ? `Checkout creation failed: ${error.message}`
+              : 'Checkout creation failed.',
+        },
+      });
+      throw error;
+    }
+
+    const checkoutData = readProviderResponseData(
+      checkoutSession as Record<string, unknown>,
+    );
+    const checkoutAttributes = readProviderResponseAttributes(checkoutData);
+    const checkoutSessionId = readProviderString(checkoutData.id);
+    const checkoutUrl =
+      readProviderString(checkoutAttributes.checkout_url) ??
+      readProviderString(checkoutAttributes.url);
+
+    if (!checkoutSessionId || !checkoutUrl) {
+      throw new BadRequestException(
+        'PayMongo checkout session response did not include a checkout URL.',
+      );
+    }
+
+    await this.prisma.billingPaymentAttempt.update({
+      where: {
+        id: paymentAttempt.id,
+      },
+      data: {
+        externalCheckoutSessionId: checkoutSessionId,
+        status: BillingPaymentAttemptStatus.AWAITING_PAYMENT,
+        successUrl,
+        cancelUrl,
+        metadata,
+        rawProviderPayload: checkoutSession as Prisma.InputJsonValue,
+      },
+    });
+
+    return {
+      paymentAttemptId: paymentAttempt.id,
+      paymentRequestId: paymentAttempt.id,
+      checkoutSessionId,
+      checkoutUrl,
+      status: BillingPaymentAttemptStatus.AWAITING_PAYMENT,
+    };
+  }
+
+  async getManualPaymentAttempt(user: AuthUser, paymentAttemptId: number) {
+    const paymentAttempt = await this.prisma.billingPaymentAttempt.findUnique({
+      where: {
+        id: paymentAttemptId,
+      },
+      include: {
+        subscriptionInvoice: true,
+        companySubscription: {
+          include: companySubscriptionDetailsInclude,
+        },
+      },
+    });
+
+    if (!paymentAttempt) {
+      throw new NotFoundException('Payment attempt not found.');
+    }
+
+    if (
+      paymentAttempt.ownerUserId !== user.id &&
+      user.role !== AppRole.SUPER_ADMIN
+    ) {
+      const membership = await this.prisma.membership.findUnique({
+        where: {
+          userId_companyId: {
+            userId: user.id,
+            companyId: paymentAttempt.companyId,
+          },
+        },
+        select: {
+          role: true,
+        },
+      });
+
+      if (membership?.role !== MembershipRole.ADMIN) {
+        throw new ForbiddenException(
+          'This payment attempt is not available to this account.',
+        );
+      }
+    }
+
+    return {
+      id: paymentAttempt.id,
+      paymentAttemptId: paymentAttempt.id,
+      paymentRequestId: paymentAttempt.id,
+      purpose: paymentAttempt.purpose,
+      status: paymentAttempt.status,
+      applicationStatus: paymentAttempt.applicationStatus,
+      invoice: this.mapSubscriptionInvoice(paymentAttempt.subscriptionInvoice),
+      amountInCents: paymentAttempt.amountInCents,
+      currency: paymentAttempt.currency,
+      checkoutSessionId: paymentAttempt.externalCheckoutSessionId,
+      paidAt: paymentAttempt.confirmedAt,
+      confirmedAt: paymentAttempt.confirmedAt,
+      failedAt: paymentAttempt.failedAt,
+      expiredAt: paymentAttempt.expiredAt,
+      canceledAt: paymentAttempt.canceledAt,
+      appliedAt: paymentAttempt.appliedAt,
+      applicationAttempts: paymentAttempt.applicationAttempts,
+      lastApplicationAttemptAt: paymentAttempt.lastApplicationAttemptAt,
+      applicationError: paymentAttempt.applicationError,
+      subscription: paymentAttempt.companySubscription
+        ? mapCompanySubscription(paymentAttempt.companySubscription)
+        : null,
+    };
+  }
+
+  /** @deprecated Use getManualPaymentAttempt. */
+  async getManualPaymentRequest(user: AuthUser, paymentAttemptId: number) {
+    return this.getManualPaymentAttempt(user, paymentAttemptId);
+  }
+
+  async retryPaymentAttemptApplication(
+    user: AuthUser,
+    paymentAttemptId: number,
+  ) {
+    if (user.role !== AppRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Only super administrators can retry billing payment application.',
+      );
+    }
+
+    const result =
+      await this.paymentApplicationService.applyPaidAttempt(paymentAttemptId);
+    const paymentAttempt = await this.getManualPaymentAttempt(
+      user,
+      paymentAttemptId,
+    );
+
+    return {
+      ...paymentAttempt,
+      retry: result,
+    };
   }
 
   async prepareCompanySubscription(input: {
@@ -426,8 +689,9 @@ export class BillingService {
               externalPaymentIntentId: readProviderString(
                 latestPaymentIntent?.id,
               ),
-              status:
-                readProviderString(latestInvoiceAttributes?.status) ?? 'draft',
+              status: this.normalizeSubscriptionInvoiceStatus(
+                readProviderString(latestInvoiceAttributes?.status),
+              ),
               billingReason:
                 readProviderString(latestInvoiceAttributes?.billing_reason) ??
                 'subscription_create',
@@ -452,8 +716,9 @@ export class BillingService {
               externalPaymentIntentId: readProviderString(
                 latestPaymentIntent?.id,
               ),
-              status:
-                readProviderString(latestInvoiceAttributes?.status) ?? 'draft',
+              status: this.normalizeSubscriptionInvoiceStatus(
+                readProviderString(latestInvoiceAttributes?.status),
+              ),
               billingReason:
                 readProviderString(latestInvoiceAttributes?.billing_reason) ??
                 'subscription_create',
@@ -519,6 +784,437 @@ export class BillingService {
         pendingProviderActivation: true,
       };
     }
+  }
+
+  private async resolveManualCheckoutContext(
+    user: AuthUser,
+    dto: CreateManualCheckoutSessionDto,
+  ) {
+    const plan = await this.prisma.subscriptionPlan.findUnique({
+      where: {
+        code: dto.planCode.trim().toUpperCase(),
+      },
+      include: {
+        prices: {
+          where: { isActive: true },
+          orderBy: [{ billingCycle: 'asc' }],
+        },
+      },
+    });
+
+    if (!plan || !plan.isActive || plan.status !== 'ACTIVE') {
+      throw new BadRequestException('Selected subscription plan is invalid.');
+    }
+
+    this.assertManualPurposeMatchesPlanScope(dto.purpose, plan.scope);
+    const planPrice = plan.prices.find(
+      (price) => price.billingCycle === dto.billingCycle,
+    );
+
+    if (!planPrice) {
+      throw new BadRequestException(
+        'Selected billing interval is not available for this plan.',
+      );
+    }
+
+    const companyId =
+      dto.purpose === BillingPaymentPurpose.ONBOARDING
+        ? await this.resolveOnboardingManualCompanyId(user.id, plan.id, dto)
+        : dto.companyId ?? this.getCompanyId(user);
+    const company = await this.prisma.company.findUnique({
+      where: {
+        id: companyId,
+      },
+    });
+
+    if (!company) {
+      throw new NotFoundException('Company not found.');
+    }
+
+    if (dto.purpose !== BillingPaymentPurpose.ONBOARDING) {
+      await this.assertCanManageCompanyBilling(user, company.id);
+    }
+
+    return {
+      company,
+      plan,
+      planPrice,
+    };
+  }
+
+  private assertManualPurposeMatchesPlanScope(
+    purpose: BillingPaymentPurpose,
+    scope: SubscriptionPlanScope,
+  ) {
+    if (
+      purpose === BillingPaymentPurpose.ONBOARDING &&
+      scope !== SubscriptionPlanScope.ONBOARDING
+    ) {
+      throw new BadRequestException(
+        'Selected plan is not available for onboarding.',
+      );
+    }
+
+    if (
+      purpose === BillingPaymentPurpose.ADDITIONAL_COMPANY &&
+      scope !== SubscriptionPlanScope.ADDITIONAL_COMPANY
+    ) {
+      throw new BadRequestException(
+        'Selected plan is not available for additional companies.',
+      );
+    }
+  }
+
+  private async resolveOnboardingManualCompanyId(
+    userId: number,
+    planId: number,
+    dto: CreateManualCheckoutSessionDto,
+  ) {
+    const draft = await this.prisma.userOnboardingDraft.findUnique({
+      where: {
+        userId,
+      },
+      select: {
+        billingCycle: true,
+        provisionedCompanyId: true,
+        subscriptionPlanId: true,
+      },
+    });
+
+    if (!draft?.provisionedCompanyId) {
+      throw new BadRequestException(
+        'Complete company details before starting manual checkout.',
+      );
+    }
+
+    if (
+      draft.subscriptionPlanId !== planId ||
+      draft.billingCycle !== dto.billingCycle
+    ) {
+      throw new BadRequestException(
+        'Manual checkout must match the selected onboarding plan.',
+      );
+    }
+
+    return draft.provisionedCompanyId;
+  }
+
+  private async assertCanManageCompanyBilling(user: AuthUser, companyId: number) {
+    if (user.role === AppRole.SUPER_ADMIN) {
+      return;
+    }
+
+    const membership = await this.prisma.membership.findUnique({
+      where: {
+        userId_companyId: {
+          userId: user.id,
+          companyId,
+        },
+      },
+      select: {
+        role: true,
+      },
+    });
+
+    if (membership?.role !== MembershipRole.ADMIN) {
+      throw new ForbiddenException('Only company admins can manage billing.');
+    }
+  }
+
+  private async ensureManualCompanySubscription(input: {
+    companyId: number;
+    ownerUserId: number;
+    planId: number;
+    planPriceId: number;
+    billingCycle: BillingCycle;
+  }) {
+    const reusableStatuses = [
+      SubscriptionStatus.INCOMPLETE,
+      SubscriptionStatus.TRIALING,
+      SubscriptionStatus.ACTIVE,
+      SubscriptionStatus.PAST_DUE,
+      SubscriptionStatus.UNPAID,
+    ];
+    const existingSubscription =
+      await this.prisma.companySubscription.findFirst({
+        where: {
+          companyId: input.companyId,
+          subscriptionPlanId: input.planId,
+          billingCycle: input.billingCycle,
+          status: {
+            in: reusableStatuses,
+          },
+        },
+        include: companySubscriptionDetailsInclude,
+        orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    if (existingSubscription) {
+      return existingSubscription;
+    }
+
+    return this.prisma.companySubscription.create({
+      data: {
+        companyId: input.companyId,
+        subscriptionPlanId: input.planId,
+        subscriptionPlanPriceId: input.planPriceId,
+        billingCycle: input.billingCycle,
+        billingMode: BillingMode.MANUAL,
+        autoRenew: false,
+        billingProvider: BillingProvider.PAYMONGO,
+        status: SubscriptionStatus.INCOMPLETE,
+        startsAt: new Date(),
+        rawProviderPayload: {
+          billingMode: BillingMode.MANUAL,
+          createdBy: 'manual_checkout_session',
+          ownerUserId: input.ownerUserId,
+        },
+      },
+      include: companySubscriptionDetailsInclude,
+    });
+  }
+
+  private async ensureManualSubscriptionInvoice(input: {
+    companyId: number;
+    ownerUserId: number;
+    companySubscriptionId: number;
+    subscriptionPlanId: number;
+    subscriptionPlanPriceId: number;
+    purpose: BillingPaymentPurpose;
+    billingCycle: BillingCycle;
+    planCode: string;
+    planName: string;
+    description: string;
+    amountInCents: number;
+    currency: string;
+    periodStart: Date;
+    periodEnd: Date;
+  }) {
+    const existingInvoice = await this.prisma.subscriptionInvoice.findFirst({
+      where: {
+        companyId: input.companyId,
+        ownerUserId: input.ownerUserId,
+        companySubscriptionId: input.companySubscriptionId,
+        subscriptionPlanId: input.subscriptionPlanId,
+        subscriptionPlanPriceId: input.subscriptionPlanPriceId,
+        purpose: input.purpose,
+        billingMode: BillingMode.MANUAL,
+        billingCycle: input.billingCycle,
+        totalAmountInCents: input.amountInCents,
+        currency: input.currency,
+        status: SubscriptionInvoiceStatus.OPEN,
+      },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+
+    if (existingInvoice) {
+      return existingInvoice;
+    }
+
+    const invoice = await this.prisma.subscriptionInvoice.create({
+      data: {
+        companyId: input.companyId,
+        ownerUserId: input.ownerUserId,
+        companySubscriptionId: input.companySubscriptionId,
+        subscriptionPlanId: input.subscriptionPlanId,
+        subscriptionPlanPriceId: input.subscriptionPlanPriceId,
+        billingProvider: BillingProvider.PAYMONGO,
+        status: SubscriptionInvoiceStatus.OPEN,
+        purpose: input.purpose,
+        billingMode: BillingMode.MANUAL,
+        billingReason: input.purpose.toLowerCase(),
+        planCode: input.planCode,
+        planName: input.planName,
+        billingCycle: input.billingCycle,
+        description: input.description,
+        quantity: 1,
+        unitAmountInCents: input.amountInCents,
+        subtotalInCents: input.amountInCents,
+        discountInCents: 0,
+        taxInCents: 0,
+        totalAmountInCents: input.amountInCents,
+        amountDueInCents: input.amountInCents,
+        amountPaidInCents: 0,
+        currency: input.currency,
+        issuedAt: new Date(),
+        dueAt: input.periodStart,
+        periodStartAt: input.periodStart,
+        periodEndAt: input.periodEnd,
+      },
+    });
+
+    return this.prisma.subscriptionInvoice.update({
+      where: {
+        id: invoice.id,
+      },
+      data: {
+        invoiceNumber: `GBN-INV-${invoice.id}`,
+      },
+    });
+  }
+
+  private async findReusableManualCheckoutAttempt(invoiceId: number) {
+    return this.prisma.billingPaymentAttempt.findFirst({
+      where: {
+        subscriptionInvoiceId: invoiceId,
+        status: BillingPaymentAttemptStatus.AWAITING_PAYMENT,
+        applicationStatus: BillingApplicationStatus.PENDING,
+      },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+  }
+
+  private async createManualPaymentAttempt(input: {
+    invoiceId: number;
+    companyId: number;
+    ownerUserId: number;
+    companySubscriptionId: number;
+    subscriptionPlanId: number;
+    subscriptionPlanPriceId: number;
+    purpose: BillingPaymentPurpose;
+    amountInCents: number;
+    currency: string;
+    successUrl: string;
+    cancelUrl: string;
+    billingCycle: BillingCycle;
+    planCode: string;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const latestAttempt = await tx.billingPaymentAttempt.findFirst({
+        where: {
+          subscriptionInvoiceId: input.invoiceId,
+        },
+        orderBy: {
+          attemptNumber: 'desc',
+        },
+        select: {
+          attemptNumber: true,
+          status: true,
+        },
+      });
+
+      if (latestAttempt?.status === BillingPaymentAttemptStatus.PAID) {
+        throw new BadRequestException(
+          'This invoice already has a confirmed payment.',
+        );
+      }
+
+      return tx.billingPaymentAttempt.create({
+        data: {
+          subscriptionInvoiceId: input.invoiceId,
+          companyId: input.companyId,
+          ownerUserId: input.ownerUserId,
+          companySubscriptionId: input.companySubscriptionId,
+          subscriptionPlanId: input.subscriptionPlanId,
+          subscriptionPlanPriceId: input.subscriptionPlanPriceId,
+          purpose: input.purpose,
+          billingMode: BillingMode.MANUAL,
+          status: BillingPaymentAttemptStatus.PENDING,
+          applicationStatus: BillingApplicationStatus.PENDING,
+          billingProvider: BillingProvider.PAYMONGO,
+          attemptNumber: (latestAttempt?.attemptNumber ?? 0) + 1,
+          amountInCents: input.amountInCents,
+          currency: input.currency,
+          successUrl: input.successUrl,
+          cancelUrl: input.cancelUrl,
+          metadata: {
+            billing_mode: BillingMode.MANUAL,
+            payment_purpose: input.purpose,
+            environment: this.configService.get<string>('APP_ENV') ?? 'unknown',
+            company_id: input.companyId,
+            owner_user_id: input.ownerUserId,
+            company_subscription_id: input.companySubscriptionId,
+            subscription_plan_id: input.subscriptionPlanId,
+            subscription_plan_price_id: input.subscriptionPlanPriceId,
+            subscription_plan_code: input.planCode,
+            billing_cycle: input.billingCycle,
+            local_invoice_id: input.invoiceId,
+          },
+        },
+      });
+    });
+  }
+
+  private getCheckoutUrlFromProviderPayload(payload: Prisma.JsonValue | null) {
+    const data = readProviderResponseData(readProviderObject(payload));
+    const attributes = readProviderResponseAttributes(data);
+
+    return (
+      readProviderString(attributes.checkout_url) ??
+      readProviderString(attributes.url)
+    );
+  }
+
+  private mapSubscriptionInvoice(invoice: {
+    id: number;
+    externalInvoiceId: string | null;
+    externalPaymentIntentId: string | null;
+    status: SubscriptionInvoiceStatus;
+    billingReason: string | null;
+    currency: string;
+    amountDueInCents: number | null;
+    amountPaidInCents: number | null;
+    dueAt: Date | null;
+    paidAt: Date | null;
+    finalizedAt: Date | null;
+    periodStartAt: Date | null;
+    periodEndAt: Date | null;
+  }) {
+    return {
+      id: invoice.id,
+      externalInvoiceId: invoice.externalInvoiceId,
+      externalPaymentIntentId: invoice.externalPaymentIntentId,
+      status: invoice.status,
+      billingReason: invoice.billingReason,
+      currency: invoice.currency,
+      amountDueInCents: invoice.amountDueInCents,
+      amountPaidInCents: invoice.amountPaidInCents,
+      dueAt: invoice.dueAt,
+      paidAt: invoice.paidAt,
+      finalizedAt: invoice.finalizedAt,
+      periodStartAt: invoice.periodStartAt,
+      periodEndAt: invoice.periodEndAt,
+    };
+  }
+
+  private normalizeSubscriptionInvoiceStatus(status?: string | null) {
+    switch (status?.trim().toLowerCase()) {
+      case 'draft':
+        return SubscriptionInvoiceStatus.DRAFT;
+      case 'paid':
+      case 'succeeded':
+        return SubscriptionInvoiceStatus.PAID;
+      case 'void':
+      case 'voided':
+        return SubscriptionInvoiceStatus.VOID;
+      case 'expired':
+        return SubscriptionInvoiceStatus.EXPIRED;
+      case 'uncollectible':
+        return SubscriptionInvoiceStatus.UNCOLLECTIBLE;
+      case 'open':
+      default:
+      return SubscriptionInvoiceStatus.OPEN;
+    }
+  }
+
+  private addBillingInterval(
+    start: Date,
+    input: { intervalCount: number; intervalUnit: 'DAY' | 'MONTH' | 'YEAR' },
+  ) {
+    const end = new Date(start);
+
+    if (input.intervalUnit === 'DAY') {
+      end.setDate(end.getDate() + input.intervalCount);
+      return end;
+    }
+
+    if (input.intervalUnit === 'YEAR') {
+      end.setFullYear(end.getFullYear() + input.intervalCount);
+      return end;
+    }
+
+    end.setMonth(end.getMonth() + input.intervalCount);
+    return end;
   }
 
   private async createPendingProviderActivationSubscription(input: {
@@ -1227,6 +1923,16 @@ export class BillingService {
       case BillingCycle.YEARLY:
         return 'Yearly';
     }
+  }
+
+  private withQueryParams(url: string, params: Record<string, string>) {
+    const parsedUrl = new URL(url);
+
+    for (const [key, value] of Object.entries(params)) {
+      parsedUrl.searchParams.set(key, value);
+    }
+
+    return parsedUrl.toString();
   }
 
   private getProviderInterval(intervalUnit: 'DAY' | 'MONTH' | 'YEAR') {
