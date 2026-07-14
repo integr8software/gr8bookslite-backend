@@ -21,8 +21,13 @@ export const PaymentTypeMaintenanceSeedRecords = [
     classification: PaymentTypeClassification.WITH_BANK,
   },
   {
-    name: 'Bank Transfer',
-    description: 'Transfer from one bank account to a recipient bank account.',
+    name: 'Bank Transfer within Company',
+    description: 'Transfer between bank accounts within the same company.',
+    classification: PaymentTypeClassification.BANK_TRANSFER,
+  },
+  {
+    name: 'Bank Transfer for Another Company',
+    description: 'Transfer from a company bank account to another company.',
     classification: PaymentTypeClassification.BANK_TRANSFER,
   },
   {
