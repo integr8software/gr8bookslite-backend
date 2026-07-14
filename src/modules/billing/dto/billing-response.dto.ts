@@ -1,7 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  BillingMode,
+  BillingPaymentPurpose,
+  BillingApplicationStatus,
+  BillingPaymentAttemptStatus,
   BillingCycle,
   BillingProvider,
+  SubscriptionInvoiceStatus,
   SubscriptionStatus,
 } from '@prisma/client';
 
@@ -219,14 +224,14 @@ export class BillingInvoiceResponseDto {
   @ApiProperty()
   id!: number;
 
-  @ApiProperty()
-  externalInvoiceId!: string;
+  @ApiProperty({ nullable: true })
+  externalInvoiceId!: string | null;
 
   @ApiProperty({ nullable: true })
   externalPaymentIntentId!: string | null;
 
-  @ApiProperty()
-  status!: string;
+  @ApiProperty({ enum: SubscriptionInvoiceStatus })
+  status!: SubscriptionInvoiceStatus;
 
   @ApiProperty({ nullable: true })
   billingReason!: string | null;
@@ -353,6 +358,12 @@ export class CompanySubscriptionResponseDto {
   @ApiProperty({ enum: BillingProvider })
   billingProvider!: BillingProvider;
 
+  @ApiProperty({ enum: BillingMode })
+  billingMode!: BillingMode;
+
+  @ApiProperty()
+  autoRenew!: boolean;
+
   @ApiProperty({ nullable: true })
   startsAt!: Date | null;
 
@@ -413,6 +424,90 @@ export class SubscribeCompanyResponseDto {
   @ApiProperty({ type: CompanySubscriptionResponseDto })
   subscription!: CompanySubscriptionResponseDto;
 }
+
+export class ManualCheckoutSessionResponseDto {
+  @ApiProperty()
+  paymentAttemptId!: number;
+
+  /** @deprecated Use paymentAttemptId. Kept temporarily for Phase 2 frontend rollout. */
+  @ApiProperty()
+  paymentRequestId!: number;
+
+  @ApiProperty()
+  checkoutSessionId!: string;
+
+  @ApiProperty()
+  checkoutUrl!: string;
+
+  @ApiProperty({ enum: BillingPaymentAttemptStatus })
+  status!: BillingPaymentAttemptStatus;
+}
+
+export class BillingPaymentAttemptResponseDto {
+  @ApiProperty()
+  id!: number;
+
+  @ApiProperty()
+  paymentAttemptId!: number;
+
+  /** @deprecated Use paymentAttemptId. Kept temporarily for Phase 2 frontend rollout. */
+  @ApiProperty()
+  paymentRequestId!: number;
+
+  @ApiProperty({ enum: BillingPaymentPurpose })
+  purpose!: BillingPaymentPurpose;
+
+  @ApiProperty({ enum: BillingPaymentAttemptStatus })
+  status!: BillingPaymentAttemptStatus;
+
+  @ApiProperty({ enum: BillingApplicationStatus })
+  applicationStatus!: BillingApplicationStatus;
+
+  @ApiProperty({ type: BillingInvoiceResponseDto })
+  invoice!: BillingInvoiceResponseDto;
+
+  @ApiProperty()
+  amountInCents!: number;
+
+  @ApiProperty()
+  currency!: string;
+
+  @ApiProperty({ nullable: true })
+  checkoutSessionId!: string | null;
+
+  @ApiProperty({ nullable: true })
+  paidAt!: Date | null;
+
+  @ApiProperty({ nullable: true })
+  confirmedAt!: Date | null;
+
+  @ApiProperty({ nullable: true })
+  failedAt!: Date | null;
+
+  @ApiProperty({ nullable: true })
+  expiredAt!: Date | null;
+
+  @ApiProperty({ nullable: true })
+  canceledAt!: Date | null;
+
+  @ApiProperty({ nullable: true })
+  appliedAt!: Date | null;
+
+  @ApiProperty()
+  applicationAttempts!: number;
+
+  @ApiProperty({ nullable: true })
+  lastApplicationAttemptAt!: Date | null;
+
+  @ApiProperty({ nullable: true })
+  applicationError!: string | null;
+
+  @ApiProperty({ type: CompanySubscriptionResponseDto, nullable: true })
+  subscription!: CompanySubscriptionResponseDto | null;
+}
+
+/** @deprecated Use BillingPaymentAttemptResponseDto. */
+export class BillingPaymentRequestResponseDto extends BillingPaymentAttemptResponseDto {}
 
 export class PaymentIntentResponseDto {
   @ApiProperty({ nullable: true })

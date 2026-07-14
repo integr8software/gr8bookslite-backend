@@ -5,9 +5,12 @@ import {
   Logger,
 } from '@nestjs/common';
 import {
+  BillingApplicationStatus,
+  BillingPaymentAttemptStatus,
   BillingProvider,
   BillingWebhookEvent,
   Prisma,
+  SubscriptionInvoiceStatus,
   SubscriptionStatus,
   WebhookProcessingStatus,
 } from '@prisma/client';
@@ -15,6 +18,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PaymongoWebhookEventEnvelope } from '../types/paymongo-webhook-event.type';
 import {
+  readFirstProviderArrayObject,
   readProviderNumber,
   readProviderObject,
   readProviderString,
@@ -22,9 +26,9 @@ import {
 } from '../utils/ProviderPayload.util';
 import {
   deriveSubscriptionStatusFromWebhookEvent,
-  mapInvoiceStatusFromWebhookEvent,
   mapProviderSubscriptionStatus,
 } from '../utils/SubscriptionStatus.util';
+import { BillingPaymentApplicationService } from './billing-payment-application.service';
 import { PaymongoService } from './paymongo.service';
 
 @Injectable()
@@ -34,6 +38,7 @@ export class PaymongoWebhookService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paymongoService: PaymongoService,
+    private readonly paymentApplicationService: BillingPaymentApplicationService,
   ) {}
 
   async handleWebhook(
@@ -83,6 +88,7 @@ export class PaymongoWebhookService {
             isLiveMode: event.isLiveMode,
             signature: signatureHeader,
             payload: payload as Prisma.InputJsonValue,
+            processingStatus: WebhookProcessingStatus.RECEIVED,
             processingAttempts: 1,
           },
         });
@@ -118,6 +124,16 @@ export class PaymongoWebhookService {
     webhookEvent: BillingWebhookEvent,
     event: ReturnType<PaymongoWebhookService['extractEvent']>,
   ) {
+    await this.prisma.billingWebhookEvent.update({
+      where: { id: webhookEvent.id },
+      data: {
+        processingStatus: WebhookProcessingStatus.PROCESSING,
+        processingStartedAt: new Date(),
+      },
+    });
+
+    let ignored = false;
+
     switch (event.eventType) {
       case 'subscription.activated':
       case 'subscription.updated':
@@ -135,17 +151,30 @@ export class PaymongoWebhookService {
       case 'payment.failed':
         await this.processPaymentEvent(event);
         break;
+      case 'checkout_session.payment.paid':
+        await this.processManualCheckoutPaidEvent(event);
+        break;
+      case 'checkout_session.payment.failed':
+      case 'checkout_session.expired':
+      case 'checkout_session.payment.expired':
+      case 'checkout_session.payment.cancelled':
+      case 'checkout_session.payment.canceled':
+        await this.processManualCheckoutTerminalEvent(event);
+        break;
       default:
         this.logger.log(
           `Unhandled PayMongo webhook event received: ${event.eventType}`,
         );
+        ignored = true;
         break;
     }
 
     await this.prisma.billingWebhookEvent.update({
       where: { id: webhookEvent.id },
       data: {
-        processingStatus: WebhookProcessingStatus.PROCESSED,
+        processingStatus: ignored
+          ? WebhookProcessingStatus.IGNORED
+          : WebhookProcessingStatus.PROCESSED,
         processedAt: new Date(),
         lastError: null,
       },
@@ -260,9 +289,10 @@ export class PaymongoWebhookService {
           externalPaymentIntentId:
             readProviderString(paymentIntent?.id) ??
             readProviderString(attributes.payment_intent_id),
-          status:
-            readProviderString(attributes.status) ??
-            mapInvoiceStatusFromWebhookEvent(event.eventType),
+          status: this.mapProviderInvoiceStatus(
+            readProviderString(attributes.status),
+            event.eventType,
+          ),
           billingReason: readProviderString(attributes.billing_reason),
           currency: readProviderString(attributes.currency) ?? 'PHP',
           amountDueInCents: readProviderNumber(attributes.amount_due),
@@ -281,9 +311,10 @@ export class PaymongoWebhookService {
           externalPaymentIntentId:
             readProviderString(paymentIntent?.id) ??
             readProviderString(attributes.payment_intent_id),
-          status:
-            readProviderString(attributes.status) ??
-            mapInvoiceStatusFromWebhookEvent(event.eventType),
+          status: this.mapProviderInvoiceStatus(
+            readProviderString(attributes.status),
+            event.eventType,
+          ),
           billingReason: readProviderString(attributes.billing_reason),
           currency: readProviderString(attributes.currency) ?? 'PHP',
           amountDueInCents: readProviderNumber(attributes.amount_due),
@@ -357,6 +388,209 @@ export class PaymongoWebhookService {
         rawProviderPayload: event.payload as Prisma.InputJsonValue,
       },
     });
+  }
+
+  private async processManualCheckoutPaidEvent(
+    event: ReturnType<PaymongoWebhookService['extractEvent']>,
+  ) {
+    const attributes = event.resourceAttributes;
+    const paymentAttempt = await this.findManualPaymentAttempt(event);
+
+    if (!paymentAttempt) {
+      this.logger.warn(
+        `Skipping ${event.eventType}: no local manual payment attempt matched checkout session ${event.resourceId}.`,
+      );
+      return;
+    }
+
+    if (
+      paymentAttempt.status === BillingPaymentAttemptStatus.PAID &&
+      paymentAttempt.applicationStatus === BillingApplicationStatus.APPLIED
+    ) {
+      return;
+    }
+
+    const now = new Date();
+    const payment = readFirstProviderArrayObject(attributes.payments);
+    const paymentAttributes = readProviderObject(payment?.attributes);
+    const paymentIntent = readProviderObject(attributes.payment_intent);
+    const providerPaymentId =
+      readProviderString(payment?.id) ?? readProviderString(attributes.payment_id);
+    const providerPaymentIntentId =
+      readProviderString(paymentIntent?.id) ??
+      readProviderString(attributes.payment_intent_id);
+
+    await this.prisma.$transaction(async (tx) => {
+      const paidAttemptForInvoice = await tx.billingPaymentAttempt.findFirst({
+        where: {
+          subscriptionInvoiceId: paymentAttempt.subscriptionInvoiceId,
+          status: BillingPaymentAttemptStatus.PAID,
+          id: {
+            not: paymentAttempt.id,
+          },
+        },
+        select: {
+          id: true,
+          externalPaymentId: true,
+          externalPaymentIntentId: true,
+        },
+      });
+
+      if (paidAttemptForInvoice) {
+        const sameProviderPayment =
+          (providerPaymentId &&
+            paidAttemptForInvoice.externalPaymentId === providerPaymentId) ||
+          (providerPaymentIntentId &&
+            paidAttemptForInvoice.externalPaymentIntentId ===
+              providerPaymentIntentId);
+
+        if (!sameProviderPayment) {
+          await tx.billingPaymentAttempt.update({
+            where: { id: paymentAttempt.id },
+            data: {
+              applicationStatus: BillingApplicationStatus.FAILED,
+              applicationError: `Invoice already has paid attempt ${paidAttemptForInvoice.id}; manual reconciliation required.`,
+              rawProviderPayload: event.payload as Prisma.InputJsonValue,
+            },
+          });
+          return;
+        }
+      }
+
+      await tx.subscriptionInvoice.update({
+        where: {
+          id: paymentAttempt.subscriptionInvoiceId,
+        },
+        data: {
+          status: SubscriptionInvoiceStatus.PAID,
+          amountPaidInCents: paymentAttempt.amountInCents,
+          paidAt: now,
+          finalizedAt: now,
+          externalPaymentIntentId: providerPaymentIntentId,
+          rawProviderPayload: event.payload as Prisma.InputJsonValue,
+        },
+      });
+
+      await tx.billingPaymentAttempt.update({
+        where: {
+          id: paymentAttempt.id,
+        },
+        data: {
+          status: BillingPaymentAttemptStatus.PAID,
+          applicationStatus:
+            paymentAttempt.applicationStatus === BillingApplicationStatus.APPLIED
+              ? BillingApplicationStatus.APPLIED
+              : BillingApplicationStatus.PENDING,
+          externalPaymentIntentId: providerPaymentIntentId,
+          externalPaymentId: providerPaymentId,
+          paymentMethodType:
+            readProviderString(attributes.payment_method_type) ??
+            readProviderString(paymentAttributes?.payment_method_type),
+          confirmedAt: now,
+          failedAt: null,
+          expiredAt: null,
+          canceledAt: null,
+          rawProviderPayload: event.payload as Prisma.InputJsonValue,
+        },
+      });
+    });
+
+    const applicationResult =
+      await this.paymentApplicationService.applyPaidAttempt(paymentAttempt.id);
+
+    if (!applicationResult.applied) {
+      this.logger.warn(
+        `Paid manual attempt ${paymentAttempt.id} was recorded but application is pending/failed: ${applicationResult.reason}.`,
+      );
+    }
+  }
+
+  private async processManualCheckoutTerminalEvent(
+    event: ReturnType<PaymongoWebhookService['extractEvent']>,
+  ) {
+    const paymentAttempt = await this.findManualPaymentAttempt(event);
+
+    if (!paymentAttempt) {
+      this.logger.warn(
+        `Skipping ${event.eventType}: no local manual payment attempt matched checkout session ${event.resourceId}.`,
+      );
+      return;
+    }
+
+    if (
+      paymentAttempt.status === BillingPaymentAttemptStatus.PAID
+    ) {
+      return;
+    }
+
+    const isExpired = event.eventType.includes('expired');
+    const isCanceled =
+      event.eventType.includes('cancelled') ||
+      event.eventType.includes('canceled');
+
+    await this.prisma.billingPaymentAttempt.update({
+      where: {
+        id: paymentAttempt.id,
+      },
+      data: {
+        status: isExpired
+          ? BillingPaymentAttemptStatus.EXPIRED
+          : isCanceled
+            ? BillingPaymentAttemptStatus.CANCELED
+            : BillingPaymentAttemptStatus.FAILED,
+        failedAt: isExpired ? null : new Date(),
+        expiredAt: isExpired ? new Date() : null,
+        canceledAt: isCanceled ? new Date() : null,
+        rawProviderPayload: event.payload as Prisma.InputJsonValue,
+      },
+    });
+  }
+
+  private async findManualPaymentAttempt(
+    event: ReturnType<PaymongoWebhookService['extractEvent']>,
+  ) {
+    const metadata = readProviderObject(event.resourceAttributes.metadata);
+    const metadataPaymentAttemptId = this.readIntegerMetadata(
+      metadata?.local_payment_attempt_id ?? metadata?.local_payment_request_id,
+    );
+    const filters = [
+      event.resourceId
+        ? {
+            externalCheckoutSessionId: event.resourceId,
+          }
+        : undefined,
+      metadataPaymentAttemptId
+        ? {
+            id: metadataPaymentAttemptId,
+          }
+        : undefined,
+    ].filter(Boolean) as Prisma.BillingPaymentAttemptWhereInput[];
+
+    if (filters.length === 0) {
+      return null;
+    }
+
+    return this.prisma.billingPaymentAttempt.findFirst({
+      where: {
+        OR: filters,
+      },
+      include: {
+        companySubscription: true,
+        subscriptionPlanPrice: true,
+      },
+    });
+  }
+
+  private readIntegerMetadata(value: unknown) {
+    if (typeof value === 'number' && Number.isInteger(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string' && /^\d+$/.test(value)) {
+      return Number(value);
+    }
+
+    return null;
   }
 
   private verifySignature(
@@ -462,9 +696,35 @@ export class PaymongoWebhookService {
         processingAttempts: {
           increment: 1,
         },
-        processingStatus: WebhookProcessingStatus.PENDING,
+        processingStatus: WebhookProcessingStatus.RECEIVED,
       },
     });
+  }
+
+  private mapProviderInvoiceStatus(
+    providerStatus: string | null,
+    eventType: string,
+  ) {
+    switch (providerStatus?.trim().toLowerCase()) {
+      case 'draft':
+        return SubscriptionInvoiceStatus.DRAFT;
+      case 'paid':
+      case 'succeeded':
+        return SubscriptionInvoiceStatus.PAID;
+      case 'void':
+      case 'voided':
+        return SubscriptionInvoiceStatus.VOID;
+      case 'expired':
+        return SubscriptionInvoiceStatus.EXPIRED;
+      case 'uncollectible':
+        return SubscriptionInvoiceStatus.UNCOLLECTIBLE;
+    }
+
+    if (eventType === 'subscription.invoice.paid') {
+      return SubscriptionInvoiceStatus.PAID;
+    }
+
+    return SubscriptionInvoiceStatus.OPEN;
   }
 
   private timingSafeEqual(a: string, b: string) {
