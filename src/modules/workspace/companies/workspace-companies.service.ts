@@ -26,6 +26,7 @@ import { seedCompanyChartAccountDefaults } from '../../maintenance/chart-of-acco
 import { seedCompanyDefaultAccountDefaults } from '../../maintenance/default-account/seed/default-accounts.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../../maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import { seedCompanyBankAccountDefaults } from '../../maintenance/bank-masterfile/seed/bank-masterfile.seed';
+import { seedCompanyResponsibilityCenterDefaults } from '../../maintenance/responsibility-center/seed/responsibility-center.seed';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
@@ -172,6 +173,7 @@ export class WorkspaceCompaniesService {
       await seedCompanyChartAccountDefaults(tx, createdCompany.id);
       await seedCompanyDefaultAccountDefaults(tx, createdCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, createdCompany.id);
+      await seedCompanyResponsibilityCenterDefaults(tx, createdCompany.id);
       await seedCompanyBankAccountDefaults(tx, createdCompany.id);
       if (user.role !== AppRole.SUPER_ADMIN) {
         await tx.membership.upsert({

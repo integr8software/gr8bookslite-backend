@@ -22,6 +22,10 @@ import {
   seedCompanyDiscountMaintenanceDefaults,
 } from '../../src/modules/maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import {
+  ResponsibilityCenterSeedRecords,
+  seedCompanyResponsibilityCenterDefaults,
+} from '../../src/modules/maintenance/responsibility-center/seed/responsibility-center.seed';
+import {
   TermMaintenanceSeedRecords,
   seedCompanyTermMaintenanceDefaults,
 } from '../../src/modules/maintenance/term-maintenance/seed/term-maintenance.seed';
@@ -138,6 +142,7 @@ async function backupCounts(
     terms,
     paymentTypes,
     discounts,
+    responsibilityCenters,
     bankAccounts,
     transactionNumberSequences,
     formSignatorySetups,
@@ -153,6 +158,10 @@ async function backupCounts(
       tx.paymentType.count({ where: { companyId } }),
     ),
     countForBackup('discounts', tx.discount.count({ where: { companyId } })),
+    countForBackup(
+      'responsibility_centers',
+      tx.responsibilityCenter.count({ where: { companyId } }),
+    ),
     countForBackup(
       'bank_accounts',
       tx.bankAccount.count({ where: { companyId } }),
@@ -177,6 +186,7 @@ async function backupCounts(
       terms,
       paymentTypes,
       discounts,
+      responsibilityCenters,
       bankAccounts,
       transactionNumberSequences,
       formSignatorySetups,
@@ -514,6 +524,48 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     backup: (companyId, tx) => backupCounts('discounts', companyId, tx),
     async apply(companyId, tx) {
       await seedCompanyDiscountMaintenanceDefaults(tx, companyId);
+    },
+  },
+  {
+    key: 'responsibility-centers',
+    label: 'Responsibility center defaults bootstrap',
+    async inspect(companyId, tx) {
+      const existingCenters = await tx.responsibilityCenter.findMany({
+        where: {
+          companyId,
+          code: {
+            in: ResponsibilityCenterSeedRecords.map((center) => center.code),
+          },
+        },
+        select: { code: true },
+      });
+      const existingCodes = new Set(
+        existingCenters.map((center) => center.code),
+      );
+      const missingCenters = ResponsibilityCenterSeedRecords.filter(
+        (center) => !existingCodes.has(center.code),
+      );
+
+      return missingCenters.length === 0
+        ? ok('Responsibility center defaults exist.', {
+            count: existingCenters.length,
+          })
+        : missing(
+            'Default responsibility centers are incomplete.',
+            [
+              `Seed ${missingCenters.length} missing responsibility center records.`,
+            ],
+            {
+              count: existingCenters.length,
+              expectedCount: ResponsibilityCenterSeedRecords.length,
+              missingCodes: missingCenters.map((center) => center.code),
+            },
+          );
+    },
+    backup: (companyId, tx) =>
+      backupCounts('responsibility-centers', companyId, tx),
+    async apply(companyId, tx) {
+      await seedCompanyResponsibilityCenterDefaults(tx, companyId);
     },
   },
   {
