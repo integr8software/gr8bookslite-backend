@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import {
   BillingCycle,
+  BillingMode,
   CompanyStatus,
   CompanyUnitType,
   AccessScopeLevel,
@@ -120,6 +121,7 @@ export class WorkspaceCompaniesService {
     const name = getCompanyName(dto);
     await this.ensureCompanyNameAvailable(name);
     const slug = await this.createUniqueSlug(name);
+    const isManualBilling = dto.billing?.billingMode === BillingMode.MANUAL;
 
     const company = await this.prisma.$transaction(async (tx) => {
       const createdCompany = await tx.company.create({
@@ -145,8 +147,10 @@ export class WorkspaceCompaniesService {
           reportStartDate: parseDate(dto.reportStartDate),
           reportEndDate: parseDate(dto.reportEndDate),
           createdByUserId: user.id,
-          status: CompanyStatus.ACTIVE,
-          isActive: true,
+          status: isManualBilling
+            ? CompanyStatus.PROVISIONING
+            : CompanyStatus.ACTIVE,
+          isActive: !isManualBilling,
         },
       });
 
@@ -801,6 +805,10 @@ export class WorkspaceCompaniesService {
     const billing = input.dto.billing;
 
     if (!billing?.planCode?.trim()) {
+      return undefined;
+    }
+
+    if (billing.billingMode === BillingMode.MANUAL) {
       return undefined;
     }
 

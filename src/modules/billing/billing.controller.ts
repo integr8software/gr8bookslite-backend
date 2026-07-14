@@ -16,14 +16,17 @@ import { BillingService } from './billing.service';
 import { AttachCompanySubscriptionPaymentMethodDto } from './dto/attach-company-subscription-payment-method.dto';
 import {
   AttachPaymentMethodResponseDto,
+  BillingPaymentAttemptResponseDto,
   BillingPaymentMethodsResponseDto,
   BillingPlansResponseDto,
   BillingSubscriptionSetupResponseDto,
   CancelSubscriptionResponseDto,
   CurrentSubscriptionResponseDto,
+  ManualCheckoutSessionResponseDto,
   SubscribeCompanyResponseDto,
 } from './dto/billing-response.dto';
 import { CancelCompanySubscriptionDto } from './dto/cancel-company-subscription.dto';
+import { CreateManualCheckoutSessionDto } from './dto/create-manual-checkout-session.dto';
 import { SubscribeCompanyDto } from './dto/subscribe-company.dto';
 
 @UseGuards(JwtAuthGuard)
@@ -69,6 +72,46 @@ export class BillingController {
     @Body() dto: SubscribeCompanyDto,
   ) {
     return this.billingService.subscribeCompany(user, dto);
+  }
+
+  @Post('checkout-sessions')
+  @ApiCreatedResponse({ type: ManualCheckoutSessionResponseDto })
+  createManualCheckoutSession(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: CreateManualCheckoutSessionDto,
+  ) {
+    return this.billingService.createManualCheckoutSession(user, dto);
+  }
+
+  @Get('payment-attempts/:paymentAttemptId')
+  @ApiOkResponse({ type: BillingPaymentAttemptResponseDto })
+  getManualPaymentAttempt(
+    @CurrentUser() user: AuthUser,
+    @Param('paymentAttemptId', ParseIntPipe) paymentAttemptId: number,
+  ) {
+    return this.billingService.getManualPaymentAttempt(user, paymentAttemptId);
+  }
+
+  /** @deprecated Use /billing/payment-attempts/:paymentAttemptId. */
+  @Get('payment-requests/:paymentRequestId')
+  @ApiOkResponse({ type: BillingPaymentAttemptResponseDto })
+  getManualPaymentRequest(
+    @CurrentUser() user: AuthUser,
+    @Param('paymentRequestId', ParseIntPipe) paymentRequestId: number,
+  ) {
+    return this.billingService.getManualPaymentAttempt(user, paymentRequestId);
+  }
+
+  @Post('payment-attempts/:paymentAttemptId/retry-application')
+  @ApiOkResponse({ type: BillingPaymentAttemptResponseDto })
+  retryPaymentAttemptApplication(
+    @CurrentUser() user: AuthUser,
+    @Param('paymentAttemptId', ParseIntPipe) paymentAttemptId: number,
+  ) {
+    return this.billingService.retryPaymentAttemptApplication(
+      user,
+      paymentAttemptId,
+    );
   }
 
   @Post('subscriptions/:subscriptionId/attach-payment-method')

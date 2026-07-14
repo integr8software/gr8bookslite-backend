@@ -111,6 +111,48 @@ export class PaymongoService {
     });
   }
 
+  async createCheckoutSession(input: {
+    amountInCents: number;
+    currency: string;
+    description: string;
+    lineItemName: string;
+    metadata?: PaymongoMetadata;
+    referenceNumber: string;
+    successUrl: string;
+    cancelUrl: string;
+  }) {
+    return this.request('POST', '/checkout_sessions', {
+      data: {
+        attributes: {
+          cancel_url: input.cancelUrl,
+          description: input.description,
+          line_items: [
+            {
+              amount: input.amountInCents,
+              currency: input.currency,
+              name: input.lineItemName,
+              quantity: 1,
+            },
+          ],
+          metadata: input.metadata,
+          payment_method_types: [
+            'card',
+            'gcash',
+            'paymaya',
+            'qrph',
+            'dob',
+            'dob_ubp',
+          ],
+          reference_number: input.referenceNumber,
+          send_email_receipt: true,
+          show_description: true,
+          show_line_items: true,
+          success_url: input.successUrl,
+        },
+      },
+    });
+  }
+
   async retrieveSubscription(subscriptionId: string) {
     return this.request('GET', `/subscriptions/${subscriptionId}`);
   }
