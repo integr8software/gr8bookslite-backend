@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "billing_payment_attempts_subscription_invoice_id_attempt_number" RENAME TO "billing_payment_attempts_subscription_invoice_id_attempt_nu_key";
