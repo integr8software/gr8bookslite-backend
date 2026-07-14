@@ -117,6 +117,7 @@ model Company {
   terms                  Term[]
   paymentTypes           PaymentType[]
   discounts              Discount[]
+  responsibilityCenters  ResponsibilityCenter[]
   parties                Party[]
   userTablePreferences   UserTablePreference[]
   auditLogs              AuditLog[]
@@ -770,6 +771,35 @@ model Discount {
   @@index([companyId, status], map: "discounts_company_status_idx")
   @@index([companyId, type], map: "discounts_company_type_idx")
   @@map("discounts")
+}
+
+model ResponsibilityCenter {
+  id            BigInt                            @id @default(autoincrement())
+  companyId     Int                               @map("company_id")
+  code          String                            @db.VarChar(50)
+  name          String                            @db.VarChar(150)
+  category      ResponsibilityCenterCategory
+  financialType ResponsibilityCenterFinancialType @map("financial_type")
+  manager       String?                           @db.VarChar(150)
+  parentId      BigInt?                           @map("parent_id")
+  status        ResponsibilityCenterStatus        @default(ACTIVE)
+  description   String?                           @db.VarChar(500)
+  createdByUserId Int?                            @map("created_by_user_id")
+  updatedByUserId Int?                            @map("updated_by_user_id")
+  deletedAt     DateTime?                         @map("deleted_at")
+  createdAt     DateTime                          @default(now()) @map("created_at")
+  updatedAt     DateTime                          @updatedAt @map("updated_at")
+  company       Company                           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parent        ResponsibilityCenter?             @relation("ResponsibilityCenterHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children      ResponsibilityCenter[]            @relation("ResponsibilityCenterHierarchy")
+
+  @@unique([companyId, code], map: "responsibility_centers_company_code_key")
+  @@unique([companyId, name], map: "responsibility_centers_company_name_key")
+  @@index([companyId, status], map: "responsibility_centers_company_status_idx")
+  @@index([companyId, category], map: "responsibility_centers_company_category_idx")
+  @@index([companyId, financialType], map: "responsibility_centers_company_financial_type_idx")
+  @@index([companyId, parentId], map: "responsibility_centers_company_parent_idx")
+  @@map("responsibility_centers")
 }
 
 model Party {
@@ -1528,6 +1558,36 @@ enum DiscountValueType {
 }
 
 enum DiscountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ResponsibilityCenterCategory {
+  CORPORATE
+  DIVISION
+  DEPARTMENT
+  SECTION
+  TEAM
+  BRANCH
+  BUILDING
+  PROJECT
+  BUSINESS_UNIT
+  REGION
+  SALESMAN
+  WAREHOUSE
+  OUTLET
+  SALES_TERRITORY
+  FLEET
+}
+
+enum ResponsibilityCenterFinancialType {
+  COST_CENTER
+  PROFIT_CENTER
+  REVENUE_CENTER
+  INVESTMENT_CENTER
+}
+
+enum ResponsibilityCenterStatus {
   ACTIVE
   INACTIVE
 }

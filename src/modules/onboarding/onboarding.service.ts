@@ -27,6 +27,7 @@ import { seedCompanyChartAccountDefaults } from '../maintenance/chart-of-account
 import { seedCompanyDefaultAccountDefaults } from '../maintenance/default-account/seed/default-accounts.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import { seedCompanyBankAccountDefaults } from '../maintenance/bank-masterfile/seed/bank-masterfile.seed';
+import { seedCompanyResponsibilityCenterDefaults } from '../maintenance/responsibility-center/seed/responsibility-center.seed';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
@@ -540,10 +541,14 @@ export class OnboardingService {
       });
 
       await seedCompanyTermMaintenanceDefaults(tx, provisionedCompany.id);
-      await seedCompanyPaymentTypeMaintenanceDefaults(tx, provisionedCompany.id);
+      await seedCompanyPaymentTypeMaintenanceDefaults(
+        tx,
+        provisionedCompany.id,
+      );
       await seedCompanyChartAccountDefaults(tx, provisionedCompany.id);
       await seedCompanyDefaultAccountDefaults(tx, provisionedCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, provisionedCompany.id);
+      await seedCompanyResponsibilityCenterDefaults(tx, provisionedCompany.id);
       await seedCompanyBankAccountDefaults(tx, provisionedCompany.id);
 
       const updatedDraft = await tx.userOnboardingDraft.update({
