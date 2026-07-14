@@ -1,2 +1,6 @@
--- RenameIndex
-ALTER INDEX "billing_payment_attempts_subscription_invoice_id_attempt_number" RENAME TO "billing_payment_attempts_subscription_invoice_id_attempt_nu_key";
+-- Compatibility placeholder.
+--
+-- The billing_payment_attempts table is created by the later migration:
+-- 20260710084724_add_manual_billing_checkout_requests
+--
+-- This migration must remain a no-op because it runs before that table exists.
