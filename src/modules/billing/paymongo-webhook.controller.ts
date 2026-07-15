@@ -4,7 +4,6 @@ import {
   HttpCode,
   Post,
   Req,
-  VERSION_NEUTRAL,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
@@ -13,7 +12,7 @@ import { PaymongoWebhookService } from './services/paymongo-webhook.service';
 @Public()
 @Controller({
   path: 'webhooks/paymongo',
-  version: VERSION_NEUTRAL,
+  version: '1',
 })
 export class PaymongoWebhookController {
   constructor(

@@ -270,7 +270,7 @@ Responsibilities:
 - attach payment method to the first invoice payment intent
 - return redirect or next action data when authentication is required
 
-## `POST /billing/webhooks/paymongo`
+## `POST /api/v1/webhooks/paymongo`
 
 Responsibilities:
 
