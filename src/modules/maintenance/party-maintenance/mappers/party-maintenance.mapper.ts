@@ -15,6 +15,12 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     middleName: party.middleName ?? '',
     lastName: party.lastName ?? '',
     suffixName: party.suffixName ?? '',
+    honorific: party.honorific ?? '',
+    gender: party.gender ?? '',
+    civilStatus: party.civilStatus ?? '',
+    nationality: party.nationality ?? '',
+    memberRegistrationDate:
+      party.memberRegistrationDate?.toISOString().slice(0, 10) ?? '',
     address: mapPartyAddress(getDefaultPartyAddress(party.addresses)),
     addresses: party.addresses.map(mapPartyAddress),
     defaultReceivableAccount:
@@ -44,9 +50,18 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     termName: party.term?.name ?? '',
     tin: party.tin ?? '',
     vatRegistrationType: party.vatRegistrationType ?? null,
+    vatRegistrationTypeId: party.vatRegistrationTypeId?.toString() ?? '',
+    vatRegistration: party.vatRegistration
+      ? {
+          id: party.vatRegistration.id.toString(),
+          name: party.vatRegistration.name,
+          percentage: Number(party.vatRegistration.percentage),
+        }
+      : null,
     atcCode: party.atcCode ?? '',
     email: party.email ?? '',
     contactNo: party.contactNo ?? '',
+    landline: party.landline ?? '',
     createdBy:
       party.createdByUserId === null
         ? SystemGeneratedAuditLabel

@@ -130,7 +130,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   },
   {
     code: 'TT',
-    name: 'Transaction Type',
+    name: 'Inventory Transaction Type',
     icon: 'receipt',
     type: Maintenance,
   },
@@ -144,6 +144,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     code: 'RC',
     name: 'Responsibility Center',
     icon: 'target',
+    type: Maintenance,
+  },
+  {
+    code: 'TXM',
+    name: 'Tax Maintenance',
+    icon: 'receipt',
     type: Maintenance,
   },
   {

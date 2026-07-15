@@ -41,11 +41,11 @@ export const AccountingSidebarTemplate = [
     children: [
       link('financial-maintenance-charts-of-accounts', 'COA', 'scale'),
       link('financial-maintenance-default-accounts', 'DA', 'scale'),
-      link('financial-maintenance-discount-management', 'DSM', 'promotion'),
       link('financial-maintenance-bank-masterfile', 'BM', 'bank'),
-      link('financial-maintenance-term-management', 'TM', 'calendar'),
-      link('financial-maintenance-transaction-type', 'TT', 'receipt'),
       link('financial-maintenance-payment-type', 'PT', 'creditCard'),
+      link('financial-maintenance-discount-management', 'DSM', 'promotion'),
+      link('financial-maintenance-term-management', 'TM', 'calendar'),
+      link('financial-maintenance-tax-maintenance', 'TXM', 'receipt'),
       link('financial-maintenance-responsibility-center', 'RC', 'target'),
     ],
   },
@@ -169,6 +169,7 @@ export const AccountingAndInventorySidebarTemplate = [
       link('item-management-unit-of-measurement', 'UOM', 'ruler'),
       link('item-management-item-promotions', 'IPR', 'promotion'),
       link('item-management-price-lists', 'PLS', 'tags'),
+      link('item-management-inventory-transaction-type', 'TT', 'receipt'),
     ],
   },
   {

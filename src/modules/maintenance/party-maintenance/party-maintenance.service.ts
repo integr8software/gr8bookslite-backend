@@ -23,7 +23,10 @@ import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
-import { parsePositiveBigIntId } from '../../../common/utils/id.util';
+import {
+  parseOptionalPositiveBigIntId,
+  parsePositiveBigIntId,
+} from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AddressService } from '../../address/address.service';
 import {
@@ -332,6 +335,7 @@ export class PartyMaintenanceService {
               { tin: { contains: search, mode: 'insensitive' } },
               { email: { contains: search, mode: 'insensitive' } },
               { contactNo: { contains: search, mode: 'insensitive' } },
+              { landline: { contains: search, mode: 'insensitive' } },
               {
                 addresses: {
                   some: {
@@ -470,6 +474,17 @@ export class PartyMaintenanceService {
       );
     }
 
+    const vatRegistrationTypeId = this.normalizeOptionalString(
+      dto.vatRegistrationTypeId,
+    );
+
+    if (vatRegistrationTypeId) {
+      await this.ensureTaxMaintenanceBelongsToCompany(
+        companyId,
+        parsePositiveBigIntId(vatRegistrationTypeId),
+      );
+    }
+
     const normalized: CreatePartyDto = {
       ...dto,
       partyCodeNo: dto.partyCodeNo.trim(),
@@ -483,6 +498,16 @@ export class PartyMaintenanceService {
       middleName: this.normalizeOptionalString(dto.middleName),
       lastName: this.normalizeOptionalString(dto.lastName),
       suffixName: this.normalizeOptionalString(dto.suffixName),
+      honorific: this.normalizeOptionalString(dto.honorific),
+      gender: this.normalizeOptionalString(dto.gender),
+      civilStatus: this.normalizeOptionalString(dto.civilStatus),
+      nationality:
+        this.normalizeOptionalString(dto.nationality) ??
+        (hasPersonalInformationPartyType(partyTypes) ? 'Filipino' : null),
+      memberRegistrationDate: partyTypes.includes(PartyType.MEMBER)
+        ? (this.normalizeOptionalString(dto.memberRegistrationDate) ??
+          getTodayDateValue())
+        : null,
       defaultReceivableAccount: this.normalizeOptionalString(
         dto.defaultReceivableAccount,
       ),
@@ -504,9 +529,11 @@ export class PartyMaintenanceService {
       termId,
       tin: this.normalizeOptionalString(dto.tin),
       vatRegistrationType: dto.vatRegistrationType ?? null,
+      vatRegistrationTypeId,
       atcCode: this.normalizeOptionalString(dto.atcCode),
       email: this.normalizeOptionalString(dto.email),
       contactNo: this.normalizeOptionalString(dto.contactNo),
+      landline: this.normalizeOptionalString(dto.landline),
       addresses: dto.addresses.map((address) => this.normalizeAddress(address)),
     };
 
@@ -543,6 +570,14 @@ export class PartyMaintenanceService {
       middleName: dto.middleName ?? current.middleName ?? '',
       lastName: dto.lastName ?? current.lastName ?? '',
       suffixName: dto.suffixName ?? current.suffixName ?? '',
+      honorific: dto.honorific ?? current.honorific ?? '',
+      gender: dto.gender ?? current.gender ?? '',
+      civilStatus: dto.civilStatus ?? current.civilStatus ?? '',
+      nationality: dto.nationality ?? current.nationality ?? '',
+      memberRegistrationDate:
+        dto.memberRegistrationDate ??
+        current.memberRegistrationDate?.toISOString().slice(0, 10) ??
+        null,
       addresses:
         dto.addresses ??
         current.addresses.map((address) => ({
@@ -592,9 +627,14 @@ export class PartyMaintenanceService {
       tin: dto.tin ?? current.tin ?? '',
       vatRegistrationType:
         dto.vatRegistrationType ?? current.vatRegistrationType ?? null,
+      vatRegistrationTypeId:
+        dto.vatRegistrationTypeId ??
+        current.vatRegistrationTypeId?.toString() ??
+        '',
       atcCode: dto.atcCode ?? current.atcCode ?? '',
       email: dto.email ?? current.email ?? '',
       contactNo: dto.contactNo ?? current.contactNo ?? '',
+      landline: dto.landline ?? current.landline ?? '',
     };
   }
 
@@ -626,10 +666,11 @@ export class PartyMaintenanceService {
 
     if (
       dto.classification === PartyClassification.NON_INDIVIDUAL &&
-      dto.partyTypes.includes(PartyType.EMPLOYEE)
+      (dto.partyTypes.includes(PartyType.EMPLOYEE) ||
+        dto.partyTypes.includes(PartyType.MEMBER))
     ) {
       throw new BadRequestException(
-        'Employee is only available for individual parties.',
+        'Employee and Member are only available for individual parties.',
       );
     }
 
@@ -705,7 +746,9 @@ export class PartyMaintenanceService {
         label: 'delivery',
       },
       {
-        enabled: dto.partyTypes.includes(PartyType.EMPLOYEE),
+        enabled:
+          dto.partyTypes.includes(PartyType.EMPLOYEE) ||
+          dto.partyTypes.includes(PartyType.MEMBER),
         count: dto.addresses.filter((address) => address.isHome).length,
         label: 'home',
       },
@@ -982,7 +1025,7 @@ export class PartyMaintenanceService {
         ? dto.employeePayableAccount
         : null,
     ]
-      .map((value) => this.parseOptionalBigIntId(value))
+      .map((value) => parseOptionalPositiveBigIntId(value))
       .filter((value): value is bigint => value !== null);
 
     if (requiredAccountIds.length === 0) {
@@ -1008,10 +1051,10 @@ export class PartyMaintenanceService {
     }
   }
 
-  private parseOptionalBigIntId(value: string | null | undefined) {
+  private parseOptionalDate(value: string | null | undefined) {
     const normalized = value?.trim();
 
-    return normalized ? parsePositiveBigIntId(normalized) : null;
+    return normalized ? new Date(`${normalized}T00:00:00.000Z`) : null;
   }
 
   private async ensureTermBelongsToCompany(companyId: number, termId: bigint) {
@@ -1022,6 +1065,20 @@ export class PartyMaintenanceService {
 
     if (!term) {
       throw new BadRequestException('Selected term does not exist.');
+    }
+  }
+
+  private async ensureTaxMaintenanceBelongsToCompany(
+    companyId: number,
+    taxMaintenanceId: bigint,
+  ) {
+    const tax = await this.prisma.taxMaintenance.findFirst({
+      where: { id: taxMaintenanceId, companyId, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!tax) {
+      throw new BadRequestException('Selected VAT registration type does not exist.');
     }
   }
 
@@ -1069,29 +1126,52 @@ export class PartyMaintenanceService {
         dto.classification === PartyClassification.INDIVIDUAL
           ? dto.suffixName
           : null,
+      honorific:
+        dto.classification === PartyClassification.INDIVIDUAL
+          ? dto.honorific
+          : null,
+      gender:
+        hasPersonalInformationPartyType(dto.partyTypes)
+          ? dto.gender
+          : null,
+      civilStatus:
+        hasPersonalInformationPartyType(dto.partyTypes)
+          ? dto.civilStatus
+          : null,
+      nationality:
+        hasPersonalInformationPartyType(dto.partyTypes)
+          ? (dto.nationality ?? null)
+          : null,
+      memberRegistrationDate: dto.partyTypes.includes(PartyType.MEMBER)
+        ? this.parseOptionalDate(dto.memberRegistrationDate)
+        : null,
       defaultReceivableAccountId: dto.partyTypes.includes(PartyType.CUSTOMER)
-        ? this.parseOptionalBigIntId(dto.defaultReceivableAccount)
+        ? parseOptionalPositiveBigIntId(dto.defaultReceivableAccount)
         : null,
       customerAdvanceAccountId: dto.partyTypes.includes(PartyType.CUSTOMER)
-        ? this.parseOptionalBigIntId(dto.customerAdvanceAccount)
+        ? parseOptionalPositiveBigIntId(dto.customerAdvanceAccount)
         : null,
       defaultPayableAccountId: dto.partyTypes.includes(PartyType.VENDOR)
-        ? this.parseOptionalBigIntId(dto.defaultPayableAccount)
+        ? parseOptionalPositiveBigIntId(dto.defaultPayableAccount)
         : null,
       vendorAdvanceAccountId: dto.partyTypes.includes(PartyType.VENDOR)
-        ? this.parseOptionalBigIntId(dto.vendorAdvanceAccount)
+        ? parseOptionalPositiveBigIntId(dto.vendorAdvanceAccount)
         : null,
       employeeAdvanceAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE)
-        ? this.parseOptionalBigIntId(dto.employeeAdvanceAccount)
+        ? parseOptionalPositiveBigIntId(dto.employeeAdvanceAccount)
         : null,
       employeePayableAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE)
-        ? this.parseOptionalBigIntId(dto.employeePayableAccount)
+        ? parseOptionalPositiveBigIntId(dto.employeePayableAccount)
         : null,
       tin: dto.tin,
       vatRegistrationType: dto.vatRegistrationType,
+      vatRegistrationTypeId: parseOptionalPositiveBigIntId(
+        dto.vatRegistrationTypeId,
+      ),
       atcCode: dto.atcCode,
       email: dto.email,
       contactNo: dto.contactNo,
+      landline: dto.landline,
     };
   }
 
@@ -1255,6 +1335,17 @@ export class PartyMaintenanceService {
       throw new ConflictException('A party with this code already exists.');
     }
   }
+}
+
+function hasPersonalInformationPartyType(partyTypes: PartyType[]) {
+  return (
+    partyTypes.includes(PartyType.EMPLOYEE) ||
+    partyTypes.includes(PartyType.MEMBER)
+  );
+}
+
+function getTodayDateValue() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 const PartyTransactionModuleCode = 'PM';

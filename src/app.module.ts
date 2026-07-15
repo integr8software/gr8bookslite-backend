@@ -30,6 +30,7 @@ import { PartyMaintenanceModule } from './modules/maintenance/party-maintenance/
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
 import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
 import { ResponsibilityCenterModule } from './modules/maintenance/responsibility-center/responsibility-center.module';
+import { TaxMaintenanceModule } from './modules/maintenance/tax-maintenance/tax-maintenance.module';
 import { validateEnvironment } from './config/environment';
 import { ApprovalManagementModule } from './modules/system-administration/approval-management/approval-management.module';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
@@ -80,6 +81,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     BankMasterfileModule,
     DefaultAccountModule,
     ResponsibilityCenterModule,
+    TaxMaintenanceModule,
     ApprovalManagementModule,
     TransactionNumberSequencesModule,
     UserSidebarModule,

@@ -17,7 +17,10 @@ import {
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
-import { parsePositiveBigIntId } from '../../../common/utils/id.util';
+import {
+  parseOptionalPositiveBigIntIdOrUndefined,
+  parsePositiveBigIntId,
+} from '../../../common/utils/id.util';
 import {
   cleanCurrencyCode,
   cleanOptional,
@@ -56,7 +59,7 @@ export class ChartOfAccountsService {
   async findAll(user: AuthUser, query: GetChartAccountListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const parentAccountId = parseOptionalBigIntId(
+    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(
       query.parentAccountId,
       'parentAccountId',
     );
@@ -136,7 +139,7 @@ export class ChartOfAccountsService {
   async findNextCode(user: AuthUser, query: GetNextChartAccountCodeQueryDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const parentAccountId = parseOptionalBigIntId(
+    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(
       query.parentAccountId,
       'parentAccountId',
     );
@@ -163,7 +166,7 @@ export class ChartOfAccountsService {
   async create(user: AuthUser, dto: CreateChartAccountDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
-    const parentAccountId = parseOptionalBigIntId(
+    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(
       dto.parentAccountId,
       'parentAccountId',
     );
@@ -311,7 +314,7 @@ export class ChartOfAccountsService {
       );
     }
 
-    const parentAccountId = parseOptionalBigIntId(
+    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(
       dto.parentAccountId,
       'parentAccountId',
     );
@@ -863,10 +866,3 @@ function buildChartAccountTree(accounts: ChartAccountTreePayload[]) {
   return rootNodes;
 }
 
-function parseOptionalBigIntId(value: string | undefined, label: string) {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  return parsePositiveBigIntId(value, label);
-}

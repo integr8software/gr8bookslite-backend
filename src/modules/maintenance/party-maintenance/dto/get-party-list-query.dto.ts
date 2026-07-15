@@ -10,6 +10,7 @@ import {
   Min,
 } from 'class-validator';
 import { PartyClassification, PartyStatus, PartyType } from '@prisma/client';
+import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetPartyListQueryDto {
   @IsOptional()
@@ -80,10 +81,3 @@ export class GetPartyListQueryDto {
   sortDirection?: 'asc' | 'desc';
 }
 
-function toOptionalInt(value: unknown) {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-
-  return Number(value);
-}

@@ -14,6 +14,7 @@ import {
   ResponsibilityCenterFinancialType,
   ResponsibilityCenterStatus,
 } from '@prisma/client';
+import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetResponsibilityCenterListQueryDto {
   @IsOptional()
@@ -72,10 +73,3 @@ export class GetResponsibilityCenterListQueryDto {
   sortDirection?: 'asc' | 'desc';
 }
 
-function toOptionalInt(value: unknown) {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-
-  return Number(value);
-}

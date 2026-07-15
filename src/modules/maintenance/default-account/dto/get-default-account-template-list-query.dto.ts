@@ -13,6 +13,7 @@ import {
   ChartAccountStatus,
   DefaultAccountTemplateType,
 } from '@prisma/client';
+import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetDefaultAccountTemplateListQueryDto {
   @IsOptional()
@@ -50,10 +51,3 @@ export class GetDefaultAccountTemplateListQueryDto {
   sortDirection?: 'asc' | 'desc';
 }
 
-function toOptionalInt(value: unknown) {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-
-  return Number(value);
-}

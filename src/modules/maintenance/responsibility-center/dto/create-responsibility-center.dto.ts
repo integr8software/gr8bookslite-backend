@@ -5,6 +5,11 @@ import {
   ResponsibilityCenterFinancialType,
   ResponsibilityCenterStatus,
 } from '@prisma/client';
+import {
+  emptyStringToUndefined,
+  normalizeCode,
+  trimString,
+} from '../../../../common/utils/dto-transform.util';
 
 export class CreateResponsibilityCenterDto {
   @Transform(({ value }) => normalizeCode(value))
@@ -45,18 +50,3 @@ export class CreateResponsibilityCenterDto {
   description?: string;
 }
 
-function normalizeCode(value: unknown) {
-  return typeof value === 'string' ? value.trim().toUpperCase() : value;
-}
-
-function trimString(value: unknown) {
-  return typeof value === 'string' ? value.trim() : value;
-}
-
-function emptyStringToUndefined(value: unknown) {
-  if (value === '') {
-    return undefined;
-  }
-
-  return value;
-}

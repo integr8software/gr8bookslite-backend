@@ -10,5 +10,6 @@ export const PartyInclude = {
   employeeAdvanceAccount: true,
   employeePayableAccount: true,
   term: true,
+  vatRegistration: true,
   vendorAdvanceAccount: true,
 } satisfies Prisma.PartyInclude;
