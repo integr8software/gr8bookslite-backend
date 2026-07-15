@@ -1,0 +1,26 @@
+name: Backend Advisory Analysis
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-advisory-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  advisory-analysis:
+    name: Backend Advisory Analysis
+    if: github.event.pull_request.draft == false
+    uses: integr8software/gr8booksneo-automation/.github/workflows/backend-advisory.yml@develop
+    with:
+      toolkit-ref: develop
