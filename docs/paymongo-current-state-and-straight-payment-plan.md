@@ -56,7 +56,7 @@ Public webhook endpoint:
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /webhooks/paymongo` | Receives PayMongo webhook events and updates local billing state. |
+| `POST /api/v1/webhooks/paymongo` | Receives PayMongo webhook events and updates local billing state. |
 
 ### Current PayMongo Environment Variables
 
@@ -178,7 +178,7 @@ This fallback is for subscription-provider activation only. It is not a manual o
 
 ### Webhook Handling
 
-`PaymongoWebhookController` receives `POST /webhooks/paymongo`.
+`PaymongoWebhookController` receives `POST /api/v1/webhooks/paymongo`.
 
 `PaymongoWebhookService`:
 
