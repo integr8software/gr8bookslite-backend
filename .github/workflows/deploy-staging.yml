@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: backend-staging
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -16,21 +16,29 @@ jobs:
       - Windows
       - X64
 
+    defaults:
+      run:
+        shell: powershell
+
     steps:
-      - name: Deploy backend from VPS folder
-        shell: cmd
+      - name: Deploy backend staging
         run: |
-          cd /d I:\Gr8BooksNeo\apps\backend-shared-dev && ^
-          git fetch origin && ^
-          git reset --hard origin/staging && ^
-          git clean -fd && ^
-          pm2 stop gr8booksneo-backend-shared-dev && ^
-          npm ci && ^
-          node scripts/run-with-env.cjs .env prisma migrate deploy && ^
-          node scripts/run-with-env.cjs .env prisma generate && ^
-          node scripts/run-with-env.cjs .env ts-node prisma/scripts/provision-platform.ts && ^
-          node scripts/run-with-env.cjs .env ts-node prisma/scripts/repair-company-bootstrap.ts --apply && ^
-          node scripts/run-with-env.cjs .env prisma migrate status && ^
-          npm run build && ^
-          pm2 restart gr8booksneo-backend-shared-dev --update-env && ^
+          $ErrorActionPreference = "Stop"
+
+          Set-Location "I:\Gr8BooksNeo\apps\backend-shared-dev"
+
+          git fetch origin staging:refs/remotes/origin/staging
+          git reset --hard origin/staging
+
+          pm2 stop gr8booksneo-backend-shared-dev
+
+          npm ci
+
+          node scripts/run-with-env.cjs .env prisma migrate deploy
+          node scripts/run-with-env.cjs .env prisma generate
+          node scripts/run-with-env.cjs .env prisma migrate status
+
+          npm run build
+
+          pm2 startOrRestart ecosystem.config.cjs --update-env
           pm2 save
