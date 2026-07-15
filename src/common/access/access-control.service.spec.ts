@@ -170,7 +170,7 @@ describe('AccessControlService', () => {
     ]);
   });
 
-  it('resolves a legacy company admin sidebar from SaaS plan entitlements when custom rows are empty', async () => {
+  it('resolves a company admin sidebar from SaaS plan entitlements when custom rows are empty', async () => {
     const service = createAccessControlService({
       user: buildResolvedUser(),
       membership: buildMembership({
@@ -180,7 +180,7 @@ describe('AccessControlService', () => {
               systems: [
                 {
                   system: {
-                    code: 'ACCOUNTING_TRADING',
+                    code: 'ACCOUNTING_AND_INVENTORY',
                     modules: [
                       buildEnabledModule(5, 'TM', 'Term Management'),
                       buildEnabledModule(6, 'COA', 'Chart of Accounts'),
@@ -235,7 +235,7 @@ describe('AccessControlService', () => {
     expect(authUser.userModules.items).toHaveLength(1);
     expect(authUser.userModules.items[0]).toEqual(
       expect.objectContaining({
-        key: 'accounting_trading-financial-maintenance',
+        key: 'accounting_and_inventory-financial-maintenance',
       }),
     );
     expect(authUser.userModules.items[0].children).toEqual(
