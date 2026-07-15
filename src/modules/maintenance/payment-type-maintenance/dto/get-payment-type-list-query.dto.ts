@@ -13,6 +13,7 @@ import {
   PaymentTypeClassification,
   PaymentTypeStatus,
 } from '@prisma/client';
+import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetPaymentTypeListQueryDto {
   @IsOptional()
@@ -42,18 +43,24 @@ export class GetPaymentTypeListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn(['name', 'classification', 'status', 'createdAt', 'updatedAt'])
-  sortBy?: 'name' | 'classification' | 'status' | 'createdAt' | 'updatedAt';
+  @IsIn([
+    'name',
+    'classification',
+    'sortOrder',
+    'status',
+    'createdAt',
+    'updatedAt',
+  ])
+  sortBy?:
+    | 'name'
+    | 'classification'
+    | 'sortOrder'
+    | 'status'
+    | 'createdAt'
+    | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortDirection?: 'asc' | 'desc';
 }
 
-function toOptionalInt(value: unknown) {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-
-  return Number(value);
-}

@@ -1,4 +1,11 @@
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import {
   PaymentTypeClassification,
   PaymentTypeStatus,
@@ -16,6 +23,11 @@ export class CreatePaymentTypeDto {
 
   @IsEnum(PaymentTypeClassification)
   classification!: PaymentTypeClassification;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
 
   @IsOptional()
   @IsEnum(PaymentTypeStatus)

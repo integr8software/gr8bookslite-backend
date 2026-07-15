@@ -9,18 +9,18 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { ChartAccountStatus } from '@prisma/client';
+import { TaxMaintenanceStatus } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
-export class GetBankAccountListQueryDto {
+export class GetTaxMaintenanceListQueryDto {
   @IsOptional()
   @IsString()
   @MaxLength(120)
   search?: string;
 
   @IsOptional()
-  @IsEnum(ChartAccountStatus)
-  status?: ChartAccountStatus;
+  @IsEnum(TaxMaintenanceStatus)
+  status?: TaxMaintenanceStatus;
 
   @IsOptional()
   @Transform(({ value }) => toOptionalInt(value))
@@ -36,23 +36,8 @@ export class GetBankAccountListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn([
-    'bankName',
-    'branch',
-    'accountName',
-    'accountNumber',
-    'status',
-    'createdAt',
-    'updatedAt',
-  ])
-  sortBy?:
-    | 'bankName'
-    | 'branch'
-    | 'accountName'
-    | 'accountNumber'
-    | 'status'
-    | 'createdAt'
-    | 'updatedAt';
+  @IsIn(['name', 'percentage', 'status', 'createdAt', 'updatedAt'])
+  sortBy?: 'name' | 'percentage' | 'status' | 'createdAt' | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

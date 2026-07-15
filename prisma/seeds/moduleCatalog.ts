@@ -147,6 +147,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
+    code: 'TXM',
+    name: 'Tax Maintenance',
+    icon: 'receipt',
+    type: Maintenance,
+  },
+  {
     code: 'OR',
     name: 'Official Receipt',
     icon: 'cashIn',

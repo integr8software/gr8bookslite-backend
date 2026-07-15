@@ -10,6 +10,7 @@ import {
   Min,
 } from 'class-validator';
 import { TermDateMode, TermStatus } from '@prisma/client';
+import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetTermListQueryDto {
   @IsOptional()
@@ -51,12 +52,4 @@ export class GetTermListQueryDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortDirection?: 'asc' | 'desc';
-}
-
-function toOptionalInt(value: unknown) {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-
-  return Number(value);
 }

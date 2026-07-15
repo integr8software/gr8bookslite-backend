@@ -11,49 +11,58 @@ type PaymentTypeWriteClient =
 
 export const PaymentTypeMaintenanceSeedRecords = [
   {
-    name: 'Cash',
-    description: 'Cash payment without additional bank details.',
-    classification: PaymentTypeClassification.CASH,
-  },
-  {
-    name: 'Check',
-    description: 'Bank-issued check payment requiring bank and check details.',
-    classification: PaymentTypeClassification.WITH_BANK,
-  },
-  {
-    name: 'Bank Transfer within Company',
+    name: 'Internal Bank Transfer',
     description: 'Transfer between bank accounts within the same company.',
     classification: PaymentTypeClassification.BANK_TRANSFER,
+    sortOrder: 10,
   },
   {
-    name: 'Bank Transfer for Another Company',
+    name: 'Intercompany Bank Transfer',
     description: 'Transfer from a company bank account to another company.',
     classification: PaymentTypeClassification.BANK_TRANSFER,
-  },
-  {
-    name: 'Debit Memo',
-    description: 'Debit memo payment requiring bank and debit memo details.',
-    classification: PaymentTypeClassification.DEBIT,
-  },
-  {
-    name: "Manager's Check",
-    description: "Bank-issued manager's check payment.",
-    classification: PaymentTypeClassification.MULTIPLE_CHECK,
+    sortOrder: 20,
   },
   {
     name: 'InstaPay',
     description: 'Real-time bank transfer through InstaPay.',
-    classification: PaymentTypeClassification.ONLINE_PAYMENT,
+    classification: PaymentTypeClassification.BANK_TRANSFER,
+    sortOrder: 30,
   },
   {
-    name: 'PesoNet',
-    description: 'Electronic fund transfer through PesoNet.',
-    classification: PaymentTypeClassification.ONLINE_PAYMENT,
+    name: 'PESONet',
+    description: 'Electronic fund transfer through PESONet.',
+    classification: PaymentTypeClassification.BANK_TRANSFER,
+    sortOrder: 40,
   },
   {
-    name: 'eWallet',
-    description: 'Digital wallet payment through an eWallet provider.',
-    classification: PaymentTypeClassification.ONLINE_PAYMENT,
+    name: 'Cash',
+    description: 'Cash payment without additional bank details.',
+    classification: PaymentTypeClassification.CASH,
+    sortOrder: 50,
+  },
+  {
+    name: 'Check',
+    description: 'Bank-issued check payment requiring bank and check details.',
+    classification: PaymentTypeClassification.CHECK,
+    sortOrder: 60,
+  },
+  {
+    name: "Manager's Check",
+    description: "Bank-issued manager's check payment.",
+    classification: PaymentTypeClassification.CHECK,
+    sortOrder: 70,
+  },
+  {
+    name: 'E-Wallet',
+    description: 'Digital wallet payment through an e-wallet provider.',
+    classification: PaymentTypeClassification.DIGITAL_WALLET,
+    sortOrder: 80,
+  },
+  {
+    name: 'Debit Memo',
+    description: 'Non-cash settlement through debit memo.',
+    classification: PaymentTypeClassification.NON_CASH_SETTLEMENT,
+    sortOrder: 90,
   },
 ] as const;
 
@@ -89,6 +98,7 @@ export async function seedCompanyPaymentTypeMaintenanceDefaults(
       name: paymentType.name,
       description: paymentType.description,
       classification: paymentType.classification,
+      sortOrder: paymentType.sortOrder,
       status: PaymentTypeStatus.ACTIVE,
       createdByUserId: null,
     })),

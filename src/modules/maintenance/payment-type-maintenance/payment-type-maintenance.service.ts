@@ -89,12 +89,15 @@ export class PaymentTypeMaintenanceService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     await this.ensureNameAvailable(companyId, dto.name);
+    const sortOrder =
+      dto.sortOrder ?? (await this.getNextPaymentTypeSortOrder(companyId));
 
     try {
       const paymentType = await this.prisma.paymentType.create({
         data: {
           companyId,
           ...this.toCreatePaymentTypeData(dto),
+          sortOrder,
           status: dto.status ?? PaymentTypeStatus.ACTIVE,
           createdByUserId: user.id,
         },
@@ -227,7 +230,7 @@ export class PaymentTypeMaintenanceService {
   private buildOrderBy(
     query: GetPaymentTypeListQueryDto,
   ): Prisma.PaymentTypeOrderByWithRelationInput[] {
-    const sortBy = query.sortBy ?? 'name';
+    const sortBy = query.sortBy ?? 'sortOrder';
     const sortDirection = query.sortDirection ?? 'asc';
 
     return [{ [sortBy]: sortDirection }, { id: 'asc' }];
@@ -251,11 +254,10 @@ export class PaymentTypeMaintenanceService {
           activePaymentTypes: 0,
           inactivePaymentTypes: 0,
           cashPaymentTypes: 0,
-          withBankPaymentTypes: 0,
           bankTransferPaymentTypes: 0,
-          onlinePaymentTypes: 0,
-          multipleCheckPaymentTypes: 0,
-          debitPaymentTypes: 0,
+          checkPaymentTypes: 0,
+          digitalWalletPaymentTypes: 0,
+          nonCashSettlementPaymentTypes: 0,
         };
 
         for (const group of groups) {
@@ -271,26 +273,24 @@ export class PaymentTypeMaintenanceService {
           if (group.classification === PaymentTypeClassification.CASH) {
             statistics.cashPaymentTypes += count;
           }
-          if (group.classification === PaymentTypeClassification.WITH_BANK) {
-            statistics.withBankPaymentTypes += count;
-          }
           if (
             group.classification === PaymentTypeClassification.BANK_TRANSFER
           ) {
             statistics.bankTransferPaymentTypes += count;
           }
-          if (
-            group.classification === PaymentTypeClassification.ONLINE_PAYMENT
-          ) {
-            statistics.onlinePaymentTypes += count;
+          if (group.classification === PaymentTypeClassification.CHECK) {
+            statistics.checkPaymentTypes += count;
           }
           if (
-            group.classification === PaymentTypeClassification.MULTIPLE_CHECK
+            group.classification === PaymentTypeClassification.DIGITAL_WALLET
           ) {
-            statistics.multipleCheckPaymentTypes += count;
+            statistics.digitalWalletPaymentTypes += count;
           }
-          if (group.classification === PaymentTypeClassification.DEBIT) {
-            statistics.debitPaymentTypes += count;
+          if (
+            group.classification ===
+            PaymentTypeClassification.NON_CASH_SETTLEMENT
+          ) {
+            statistics.nonCashSettlementPaymentTypes += count;
           }
         }
 
@@ -317,6 +317,7 @@ export class PaymentTypeMaintenanceService {
       name: dto.name.trim(),
       description: dto.description?.trim() ?? '',
       classification: dto.classification,
+      ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
     };
   }
 
@@ -329,8 +330,19 @@ export class PaymentTypeMaintenanceService {
       ...(dto.classification !== undefined
         ? { classification: dto.classification }
         : {}),
+      ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
       ...(dto.status !== undefined ? { status: dto.status } : {}),
     };
+  }
+
+  private async getNextPaymentTypeSortOrder(companyId: number) {
+    const lastPaymentType = await this.prisma.paymentType.findFirst({
+      where: { companyId, deletedAt: null },
+      orderBy: [{ sortOrder: 'desc' }, { id: 'desc' }],
+      select: { sortOrder: true },
+    });
+
+    return (lastPaymentType?.sortOrder ?? 0) + 10;
   }
 
   private async findPaymentTypeOrThrow(

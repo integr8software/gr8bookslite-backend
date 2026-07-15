@@ -18,7 +18,7 @@ import {
   ChartAccountType,
 } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { normalizeOptionalQueryString } from '../utils/chart-account-query.util';
+import { normalizeOptionalQueryString } from '../../../../common/utils/dto-transform.util';
 
 enum LinkedChartAccountDetailsKind {
   BANK = 'BANK',

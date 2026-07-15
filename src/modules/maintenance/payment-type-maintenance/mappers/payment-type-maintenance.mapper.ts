@@ -10,6 +10,7 @@ export function mapPaymentType(
     name: paymentType.name,
     description: paymentType.description ?? '',
     classification: paymentType.classification,
+    sortOrder: paymentType.sortOrder,
     status: paymentType.status,
     createdBy:
       paymentType.createdByUserId === null

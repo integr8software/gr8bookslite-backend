@@ -119,6 +119,7 @@ model Company {
   discounts              Discount[]
   responsibilityCenters  ResponsibilityCenter[]
   parties                Party[]
+  taxMaintenance         TaxMaintenance[]
   userTablePreferences   UserTablePreference[]
   auditLogs              AuditLog[]
   onboardingDrafts       UserOnboardingDraft[]   @relation("ProvisionedOnboardingCompany")
@@ -632,6 +633,11 @@ model ChartAccount {
   partyVendorAdvanceAccounts             Party[]            @relation("PartyVendorAdvanceAccount")
   partyEmployeeAdvanceAccounts           Party[]            @relation("PartyEmployeeAdvanceAccount")
   partyEmployeePayableAccounts           Party[]            @relation("PartyEmployeePayableAccount")
+  taxMaintenanceInputVatAccounts         TaxMaintenance[]   @relation("TaxMaintenanceInputVatAccount")
+  taxMaintenanceOutputVatAccounts        TaxMaintenance[]   @relation("TaxMaintenanceOutputVatAccount")
+  taxMaintenanceVatPayableAccounts       TaxMaintenance[]   @relation("TaxMaintenanceVatPayableAccount")
+  taxMaintenanceDeferredInputTaxAccounts TaxMaintenance[]   @relation("TaxMaintenanceDeferredInputTaxAccount")
+  taxMaintenanceDeferredOutputVatAccounts TaxMaintenance[]  @relation("TaxMaintenanceDeferredOutputVatAccount")
   defaultExpenseAccounts                 DefaultAccount[]   @relation("DefaultAccountExpenseCoa")
   defaultRevenueAccounts                 DefaultAccount[]   @relation("DefaultAccountRevenueCoa")
   defaultAssetAccounts                   DefaultAccount[]   @relation("DefaultAccountAssetCoa")
@@ -732,6 +738,7 @@ model PaymentType {
   name            String                    @db.VarChar(150)
   description     String?                   @db.VarChar(500)
   classification  PaymentTypeClassification
+  sortOrder       Int                       @default(0) @map("sort_order")
   status          PaymentTypeStatus         @default(ACTIVE)
   createdByUserId Int?                      @map("created_by_user_id")
   updatedByUserId Int?                      @map("updated_by_user_id")
@@ -742,6 +749,7 @@ model PaymentType {
 
   @@unique([companyId, name], map: "payment_types_company_name_key")
   @@index([companyId], map: "payment_types_company_id_idx")
+  @@index([companyId, sortOrder], map: "payment_types_company_sort_order_idx")
   @@index([companyId, status], map: "payment_types_company_status_idx")
   @@index([companyId, classification], map: "payment_types_company_classification_idx")
   @@map("payment_types")
@@ -806,6 +814,7 @@ model Party {
   id                       BigInt                    @id @default(autoincrement())
   companyId                Int                       @map("company_id")
   termId                   BigInt?                   @map("term_id")
+  vatRegistrationTypeId    BigInt?                   @map("vat_registration_type_id")
   partyCodeNo              String                    @map("party_code_no") @db.VarChar(80)
   classification           PartyClassification
   partyTypes               PartyType[]               @map("party_types")
@@ -816,6 +825,11 @@ model Party {
   middleName               String?                   @map("middle_name") @db.VarChar(120)
   lastName                 String?                   @map("last_name") @db.VarChar(120)
   suffixName               String?                   @map("suffix_name") @db.VarChar(40)
+  honorific                String?                   @db.VarChar(80)
+  gender                   String?                   @db.VarChar(40)
+  civilStatus              String?                   @map("civil_status") @db.VarChar(40)
+  nationality              String?                   @db.VarChar(80)
+  memberRegistrationDate   DateTime?                 @map("member_registration_date")
   defaultReceivableAccountId BigInt?                 @map("default_receivable_account_id")
   customerAdvanceAccountId   BigInt?                 @map("customer_advance_account_id")
   defaultPayableAccountId    BigInt?                 @map("default_payable_account_id")
@@ -827,6 +841,7 @@ model Party {
   atcCode                  String?                   @map("atc_code") @db.VarChar(40)
   email                    String?                   @db.VarChar(255)
   contactNo                String?                   @map("contact_no") @db.VarChar(40)
+  landline                 String?                   @db.VarChar(40)
   createdByUserId          Int?                      @map("created_by_user_id")
   updatedByUserId          Int?                      @map("updated_by_user_id")
   deletedAt                DateTime?                 @map("deleted_at")
@@ -834,6 +849,7 @@ model Party {
   updatedAt                DateTime                  @updatedAt @map("updated_at")
   company                  Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   term                     Term?                     @relation(fields: [termId], references: [id], onDelete: SetNull)
+  vatRegistration          TaxMaintenance?           @relation(fields: [vatRegistrationTypeId], references: [id], onDelete: SetNull)
   defaultReceivableAccount ChartAccount?             @relation("PartyDefaultReceivableAccount", fields: [defaultReceivableAccountId], references: [id], onDelete: Restrict)
   customerAdvanceAccount   ChartAccount?             @relation("PartyCustomerAdvanceAccount", fields: [customerAdvanceAccountId], references: [id], onDelete: Restrict)
   defaultPayableAccount    ChartAccount?             @relation("PartyDefaultPayableAccount", fields: [defaultPayableAccountId], references: [id], onDelete: Restrict)
@@ -847,6 +863,7 @@ model Party {
   @@index([companyId, status], map: "parties_company_status_idx")
   @@index([companyId, classification], map: "parties_company_classification_idx")
   @@index([termId], map: "parties_term_id_idx")
+  @@index([vatRegistrationTypeId], map: "parties_vat_registration_type_id_idx")
   @@index([defaultReceivableAccountId], map: "parties_default_receivable_account_id_idx")
   @@index([customerAdvanceAccountId], map: "parties_customer_advance_account_id_idx")
   @@index([defaultPayableAccountId], map: "parties_default_payable_account_id_idx")
@@ -880,6 +897,40 @@ model PartyAddress {
 
   @@index([partyId], map: "party_addresses_party_id_idx")
   @@map("party_addresses")
+}
+
+model TaxMaintenance {
+  id                         BigInt               @id @default(autoincrement())
+  companyId                  Int                  @map("company_id")
+  name                       String               @db.VarChar(120)
+  percentage                 Decimal              @default(0) @db.Decimal(7, 4)
+  inputVatAccountId          BigInt?              @map("input_vat_account_id")
+  outputVatAccountId         BigInt?              @map("output_vat_account_id")
+  vatPayableAccountId        BigInt?              @map("vat_payable_account_id")
+  deferredInputTaxAccountId  BigInt?              @map("deferred_input_tax_account_id")
+  deferredOutputVatAccountId BigInt?              @map("deferred_output_vat_account_id")
+  status                     TaxMaintenanceStatus @default(ACTIVE)
+  createdByUserId            Int?                 @map("created_by_user_id")
+  updatedByUserId            Int?                 @map("updated_by_user_id")
+  deletedAt                  DateTime?            @map("deleted_at")
+  createdAt                  DateTime             @default(now()) @map("created_at")
+  updatedAt                  DateTime             @updatedAt @map("updated_at")
+  company                    Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  inputVatAccount            ChartAccount?        @relation("TaxMaintenanceInputVatAccount", fields: [inputVatAccountId], references: [id], onDelete: SetNull)
+  outputVatAccount           ChartAccount?        @relation("TaxMaintenanceOutputVatAccount", fields: [outputVatAccountId], references: [id], onDelete: SetNull)
+  vatPayableAccount          ChartAccount?        @relation("TaxMaintenanceVatPayableAccount", fields: [vatPayableAccountId], references: [id], onDelete: SetNull)
+  deferredInputTaxAccount    ChartAccount?        @relation("TaxMaintenanceDeferredInputTaxAccount", fields: [deferredInputTaxAccountId], references: [id], onDelete: SetNull)
+  deferredOutputVatAccount   ChartAccount?        @relation("TaxMaintenanceDeferredOutputVatAccount", fields: [deferredOutputVatAccountId], references: [id], onDelete: SetNull)
+  parties                    Party[]
+
+  @@unique([companyId, name], map: "tax_maintenance_company_name_key")
+  @@index([companyId, status], map: "tax_maintenance_company_status_idx")
+  @@index([inputVatAccountId], map: "tax_maintenance_input_vat_account_id_idx")
+  @@index([outputVatAccountId], map: "tax_maintenance_output_vat_account_id_idx")
+  @@index([vatPayableAccountId], map: "tax_maintenance_vat_payable_account_id_idx")
+  @@index([deferredInputTaxAccountId], map: "tax_maintenance_deferred_input_tax_account_id_idx")
+  @@index([deferredOutputVatAccountId], map: "tax_maintenance_deferred_output_vat_account_id_idx")
+  @@map("tax_maintenance")
 }
 
 // =========================================================
@@ -1535,11 +1586,10 @@ enum TermStatus {
 
 enum PaymentTypeClassification {
   CASH
-  WITH_BANK
+  CHECK
   BANK_TRANSFER
-  ONLINE_PAYMENT
-  MULTIPLE_CHECK
-  DEBIT
+  DIGITAL_WALLET
+  NON_CASH_SETTLEMENT
 }
 
 enum PaymentTypeStatus {
@@ -1601,6 +1651,7 @@ enum PartyType {
   VENDOR
   CUSTOMER
   EMPLOYEE
+  MEMBER
 }
 
 enum PartyStatus {
@@ -1616,4 +1667,9 @@ enum PartyVatRegistrationType {
   CAPITAL_GOODS
   OTHER_THAN_CAPITAL_GOODS
   SERVICES
+}
+
+enum TaxMaintenanceStatus {
+  ACTIVE
+  INACTIVE
 }
