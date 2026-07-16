@@ -230,7 +230,9 @@ export class TaxMaintenanceService {
       percentage: new Prisma.Decimal(dto.percentage),
       inputVatAccountId: parseOptionalPositiveBigIntId(dto.inputVatAccountId),
       outputVatAccountId: parseOptionalPositiveBigIntId(dto.outputVatAccountId),
-      vatPayableAccountId: parseOptionalPositiveBigIntId(dto.vatPayableAccountId),
+      vatPayableAccountId: parseOptionalPositiveBigIntId(
+        dto.vatPayableAccountId,
+      ),
       deferredInputTaxAccountId: parseOptionalPositiveBigIntId(
         dto.deferredInputTaxAccountId,
       ),

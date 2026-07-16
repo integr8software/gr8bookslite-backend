@@ -95,7 +95,7 @@ describe('EntitlementService', () => {
     expect(
       service.getEnabledModuleCodes({
         company,
-      } as never),
+      }),
     ).toEqual(['TM']);
   });
 

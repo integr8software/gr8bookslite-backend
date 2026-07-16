@@ -126,9 +126,7 @@ export async function seedCompanyChartAccountDefaults(
   }
 }
 
-function getSeededAccountGroupTags(
-  account: StandardDefaultChartAccountSeed,
-) {
+function getSeededAccountGroupTags(account: StandardDefaultChartAccountSeed) {
   const mappingTags = AccountGroupTagsByAccountCode.get(account.accountCode);
 
   return mergeAccountGroupTags(
@@ -239,7 +237,10 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
     return [SystemAccountGroupTags.partyAccountsPayableGroup];
   }
 
-  if (moduleCode === 'PM' && accountRole === 'OTHER_CURRENT_LIABILITIES_GROUP') {
+  if (
+    moduleCode === 'PM' &&
+    accountRole === 'OTHER_CURRENT_LIABILITIES_GROUP'
+  ) {
     return [SystemAccountGroupTags.partyOtherCurrentLiabilitiesGroup];
   }
 
@@ -283,7 +284,9 @@ function getSeededChartAccountStatus(
   return defaultAccount.status ?? ChartAccountStatus.ACTIVE;
 }
 
-function getSeededIsPostingAccount(defaultAccount: StandardDefaultChartAccountSeed) {
+function getSeededIsPostingAccount(
+  defaultAccount: StandardDefaultChartAccountSeed,
+) {
   return defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC
     ? (defaultAccount.isPostingAccount ?? true)
     : false;

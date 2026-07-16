@@ -57,9 +57,7 @@ export function assertCanCreateAccountLevel(
 ) {
   if (!parentLevel) {
     if (accountLevel !== ChartAccountLevel.MAJOR) {
-      throw new BadRequestException(
-        'Only Major Account can omit a parent.',
-      );
+      throw new BadRequestException('Only Major Account can omit a parent.');
     }
 
     return;

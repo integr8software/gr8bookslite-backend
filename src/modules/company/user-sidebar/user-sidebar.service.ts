@@ -458,11 +458,7 @@ export class UserSidebarService {
 
       if (
         submitted.parentKey != null &&
-        this.isDescendantKey(
-          submitted.parentKey,
-          submitted.key,
-          defaultByKey,
-        )
+        this.isDescendantKey(submitted.parentKey, submitted.key, defaultByKey)
       ) {
         throw new BadRequestException(
           `Sidebar item cannot be moved under its own descendant: ${submitted.key}`,

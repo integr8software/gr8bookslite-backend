@@ -134,7 +134,7 @@ describe('AiAssistantService', () => {
       {
         ...user,
         permissions: ['TM:view'],
-      } as AuthUser,
+      },
       {
         message: 'edit Net 30',
       },

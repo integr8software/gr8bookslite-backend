@@ -19,22 +19,26 @@ export class HealthController {
   @Get()
   async getHealth() {
     const database = await this.getDatabaseHealth();
-    const [modules, permissions, moduleSystemSidebarTemplates, platformVersion] =
-      await Promise.all([
-        this.prisma.module.count().catch(() => null),
-        this.prisma.permission.count().catch(() => null),
-        this.prisma.moduleSystemSidebar.count().catch(() => null),
-        this.prisma.platformVersion
-          .findUnique({
-            where: { id: 1 },
-            select: {
-              appliedAt: true,
-              currentVersion: true,
-              status: true,
-            },
-          })
-          .catch(() => null),
-      ]);
+    const [
+      modules,
+      permissions,
+      moduleSystemSidebarTemplates,
+      platformVersion,
+    ] = await Promise.all([
+      this.prisma.module.count().catch(() => null),
+      this.prisma.permission.count().catch(() => null),
+      this.prisma.moduleSystemSidebar.count().catch(() => null),
+      this.prisma.platformVersion
+        .findUnique({
+          where: { id: 1 },
+          select: {
+            appliedAt: true,
+            currentVersion: true,
+            status: true,
+          },
+        })
+        .catch(() => null),
+    ]);
     const provisioned =
       database.status === 'ok' &&
       Boolean(platformVersion?.currentVersion) &&

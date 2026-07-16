@@ -2594,4 +2594,3 @@ export const StandardDefaultChartAccounts = [
 ] as const;
 
 export const ActiveDefaultCoaStatus = ChartAccountStatus.ACTIVE;
-

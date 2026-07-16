@@ -6,10 +6,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import {
-  PaymentTypeClassification,
-  PaymentTypeStatus,
-} from '@prisma/client';
+import { PaymentTypeClassification, PaymentTypeStatus } from '@prisma/client';
 
 export class CreatePaymentTypeDto {
   @IsString()

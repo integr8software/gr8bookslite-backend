@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, SidebarItemType } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -105,7 +109,10 @@ export class ModuleSystemsService {
       include: moduleSystemInclude,
     });
 
-    return { message: 'System status updated.', system: this.mapSystem(system) };
+    return {
+      message: 'System status updated.',
+      system: this.mapSystem(system),
+    };
   }
 
   async saveModules(systemId: number, dto: SaveModuleSystemModulesDto) {
@@ -211,7 +218,8 @@ export class ModuleSystemsService {
       where: { code },
       select: { id: true },
     });
-    if (existing) throw new BadRequestException('A system with this code already exists.');
+    if (existing)
+      throw new BadRequestException('A system with this code already exists.');
   }
 
   private validateSidebarTree(
@@ -222,23 +230,32 @@ export class ModuleSystemsService {
     const linkedModuleIds = new Set<number>();
     const walk = (siblings: ModuleSystemSidebarItemDto[], depth: number) => {
       if (!siblings.length) return;
-      if (depth > 3) throw new BadRequestException('Sidebar supports at most three levels.');
+      if (depth > 3)
+        throw new BadRequestException('Sidebar supports at most three levels.');
       for (const item of siblings) {
         const key = item.key.trim();
         if (!key || keys.has(key)) {
-          throw new BadRequestException(`Duplicate or empty sidebar key: ${item.key}`);
+          throw new BadRequestException(
+            `Duplicate or empty sidebar key: ${item.key}`,
+          );
         }
         keys.add(key);
         if (item.itemType === 'LINK') {
           if (!item.moduleId || !assignedModuleIds.has(item.moduleId)) {
-            throw new BadRequestException('Sidebar links must use modules assigned to the system.');
+            throw new BadRequestException(
+              'Sidebar links must use modules assigned to the system.',
+            );
           }
           if (linkedModuleIds.has(item.moduleId)) {
-            throw new BadRequestException('A module can appear only once in the system sidebar.');
+            throw new BadRequestException(
+              'A module can appear only once in the system sidebar.',
+            );
           }
           linkedModuleIds.add(item.moduleId);
         } else if (item.moduleId) {
-          throw new BadRequestException('Only sidebar links can reference modules.');
+          throw new BadRequestException(
+            'Only sidebar links can reference modules.',
+          );
         }
         walk(item.children ?? [], depth + 1);
       }
@@ -247,7 +264,9 @@ export class ModuleSystemsService {
 
     for (const moduleId of assignedModuleIds) {
       if (!linkedModuleIds.has(moduleId)) {
-        throw new BadRequestException('Every assigned module must be included in the system sidebar.');
+        throw new BadRequestException(
+          'Every assigned module must be included in the system sidebar.',
+        );
       }
     }
   }
@@ -264,7 +283,7 @@ export class ModuleSystemsService {
         systemId,
         parentId,
         moduleId: item.itemType === 'LINK' ? item.moduleId! : null,
-        itemType: item.itemType as SidebarItemType,
+        itemType: item.itemType,
         key: item.key.trim(),
         label: item.label.trim(),
         description: item.description?.trim() || null,
@@ -335,7 +354,11 @@ export class ModuleSystemsService {
     return system.modules
       .filter((item) => item.isActive && item.module.isActive)
       .map((item) => item.module)
-      .sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code))
+      .sort(
+        (left, right) =>
+          left.name.localeCompare(right.name) ||
+          left.code.localeCompare(right.code),
+      )
       .map((module, index) => ({
         id: null,
         key: `module-${module.code.toLowerCase()}`,

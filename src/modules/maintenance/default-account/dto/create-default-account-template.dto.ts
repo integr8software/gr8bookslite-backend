@@ -1,8 +1,5 @@
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-import {
-  ChartAccountStatus,
-  DefaultAccountTemplateType,
-} from '@prisma/client';
+import { ChartAccountStatus, DefaultAccountTemplateType } from '@prisma/client';
 
 export class CreateDefaultAccountTemplateDto {
   @IsEnum(DefaultAccountTemplateType)

@@ -1078,7 +1078,9 @@ export class PartyMaintenanceService {
     });
 
     if (!tax) {
-      throw new BadRequestException('Selected VAT registration type does not exist.');
+      throw new BadRequestException(
+        'Selected VAT registration type does not exist.',
+      );
     }
   }
 
@@ -1130,18 +1132,15 @@ export class PartyMaintenanceService {
         dto.classification === PartyClassification.INDIVIDUAL
           ? dto.honorific
           : null,
-      gender:
-        hasPersonalInformationPartyType(dto.partyTypes)
-          ? dto.gender
-          : null,
-      civilStatus:
-        hasPersonalInformationPartyType(dto.partyTypes)
-          ? dto.civilStatus
-          : null,
-      nationality:
-        hasPersonalInformationPartyType(dto.partyTypes)
-          ? (dto.nationality ?? null)
-          : null,
+      gender: hasPersonalInformationPartyType(dto.partyTypes)
+        ? dto.gender
+        : null,
+      civilStatus: hasPersonalInformationPartyType(dto.partyTypes)
+        ? dto.civilStatus
+        : null,
+      nationality: hasPersonalInformationPartyType(dto.partyTypes)
+        ? (dto.nationality ?? null)
+        : null,
       memberRegistrationDate: dto.partyTypes.includes(PartyType.MEMBER)
         ? this.parseOptionalDate(dto.memberRegistrationDate)
         : null,

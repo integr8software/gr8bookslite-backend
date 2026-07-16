@@ -13,8 +13,7 @@ export function mapTaxMaintenance(
     inputVatAccountId: tax.inputVatAccountId?.toString() ?? '',
     outputVatAccountId: tax.outputVatAccountId?.toString() ?? '',
     vatPayableAccountId: tax.vatPayableAccountId?.toString() ?? '',
-    deferredInputTaxAccountId:
-      tax.deferredInputTaxAccountId?.toString() ?? '',
+    deferredInputTaxAccountId: tax.deferredInputTaxAccountId?.toString() ?? '',
     deferredOutputVatAccountId:
       tax.deferredOutputVatAccountId?.toString() ?? '',
     accounts: {

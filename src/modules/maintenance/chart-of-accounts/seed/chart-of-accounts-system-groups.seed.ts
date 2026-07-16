@@ -100,7 +100,8 @@ export const StandardDefaultAccountMappings = [
     accountCode: '1010103000',
     requiredLevel: ChartAccountLevel.SUB3,
     usageType: DefaultAccountUsageType.SELECTION_GROUP,
-    description: 'Accounts receivable group for Party Management customer and advance choices.',
+    description:
+      'Accounts receivable group for Party Management customer and advance choices.',
   },
   {
     moduleCode: 'PM',
@@ -108,7 +109,8 @@ export const StandardDefaultAccountMappings = [
     accountCode: '2010001000',
     requiredLevel: ChartAccountLevel.SUB3,
     usageType: DefaultAccountUsageType.SELECTION_GROUP,
-    description: 'Accounts payable group for Party Management vendor payable choices.',
+    description:
+      'Accounts payable group for Party Management vendor payable choices.',
   },
   {
     moduleCode: 'PM',
@@ -168,5 +170,3 @@ export const StandardDefaultAccountMappings = [
     description: 'Default employee payable account for employee parties.',
   },
 ] as const;
-
-

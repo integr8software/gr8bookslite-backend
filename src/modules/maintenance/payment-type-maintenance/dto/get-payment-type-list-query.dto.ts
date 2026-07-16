@@ -9,10 +9,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import {
-  PaymentTypeClassification,
-  PaymentTypeStatus,
-} from '@prisma/client';
+import { PaymentTypeClassification, PaymentTypeStatus } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetPaymentTypeListQueryDto {
@@ -63,4 +60,3 @@ export class GetPaymentTypeListQueryDto {
   @IsIn(['asc', 'desc'])
   sortDirection?: 'asc' | 'desc';
 }
-

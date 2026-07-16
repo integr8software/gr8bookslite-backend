@@ -415,7 +415,8 @@ export class PaymongoWebhookService {
     const paymentAttributes = readProviderObject(payment?.attributes);
     const paymentIntent = readProviderObject(attributes.payment_intent);
     const providerPaymentId =
-      readProviderString(payment?.id) ?? readProviderString(attributes.payment_id);
+      readProviderString(payment?.id) ??
+      readProviderString(attributes.payment_id);
     const providerPaymentIntentId =
       readProviderString(paymentIntent?.id) ??
       readProviderString(attributes.payment_intent_id);
@@ -478,7 +479,8 @@ export class PaymongoWebhookService {
         data: {
           status: BillingPaymentAttemptStatus.PAID,
           applicationStatus:
-            paymentAttempt.applicationStatus === BillingApplicationStatus.APPLIED
+            paymentAttempt.applicationStatus ===
+            BillingApplicationStatus.APPLIED
               ? BillingApplicationStatus.APPLIED
               : BillingApplicationStatus.PENDING,
           externalPaymentIntentId: providerPaymentIntentId,
@@ -517,9 +519,7 @@ export class PaymongoWebhookService {
       return;
     }
 
-    if (
-      paymentAttempt.status === BillingPaymentAttemptStatus.PAID
-    ) {
+    if (paymentAttempt.status === BillingPaymentAttemptStatus.PAID) {
       return;
     }
 

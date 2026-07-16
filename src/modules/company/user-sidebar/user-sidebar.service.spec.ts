@@ -145,44 +145,43 @@ describe('UserSidebarService tree validation', () => {
   });
 
   it('stores parent override deltas when moving plan sidebar items into a different group', () => {
-    const preferences =
-      (
-        service as unknown as {
-          derivePreferenceDeltas: (
-            defaultItems: unknown[],
-            submittedItems: unknown[],
-          ) => unknown[];
-        }
-      ).derivePreferenceDeltas(
-        [
-          {
-            key: 'section-a',
-            label: 'Section A',
-            itemType: 'SECTION',
-            children: [link('module-a', 1)],
-          },
-          {
-            key: 'section-b',
-            label: 'Section B',
-            itemType: 'SECTION',
-            children: [],
-          },
-        ],
-        [
-          {
-            key: 'section-a',
-            label: 'Section A',
-            itemType: 'SECTION',
-            children: [],
-          },
-          {
-            key: 'section-b',
-            label: 'Section B',
-            itemType: 'SECTION',
-            children: [link('module-a', 1)],
-          },
-        ],
-      );
+    const preferences = (
+      service as unknown as {
+        derivePreferenceDeltas: (
+          defaultItems: unknown[],
+          submittedItems: unknown[],
+        ) => unknown[];
+      }
+    ).derivePreferenceDeltas(
+      [
+        {
+          key: 'section-a',
+          label: 'Section A',
+          itemType: 'SECTION',
+          children: [link('module-a', 1)],
+        },
+        {
+          key: 'section-b',
+          label: 'Section B',
+          itemType: 'SECTION',
+          children: [],
+        },
+      ],
+      [
+        {
+          key: 'section-a',
+          label: 'Section A',
+          itemType: 'SECTION',
+          children: [],
+        },
+        {
+          key: 'section-b',
+          label: 'Section B',
+          itemType: 'SECTION',
+          children: [link('module-a', 1)],
+        },
+      ],
+    );
 
     expect(preferences).toEqual(
       expect.arrayContaining([

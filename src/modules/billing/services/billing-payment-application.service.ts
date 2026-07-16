@@ -57,7 +57,8 @@ export class BillingPaymentApplicationService {
 
     if (
       (attempt.subscriptionInvoice.totalAmountInCents ??
-        attempt.subscriptionInvoice.amountPaidInCents) !== attempt.amountInCents ||
+        attempt.subscriptionInvoice.amountPaidInCents) !==
+        attempt.amountInCents ||
       attempt.subscriptionInvoice.currency !== attempt.currency
     ) {
       await this.markApplicationFailed(
@@ -113,7 +114,8 @@ export class BillingPaymentApplicationService {
         const periodEnd =
           lockedAttempt.subscriptionInvoice.periodEndAt ??
           this.addBillingInterval(periodStart, {
-            intervalCount: lockedAttempt.subscriptionPlanPrice?.intervalCount ?? 1,
+            intervalCount:
+              lockedAttempt.subscriptionPlanPrice?.intervalCount ?? 1,
             intervalUnit:
               lockedAttempt.subscriptionPlanPrice?.intervalUnit ?? 'MONTH',
           });

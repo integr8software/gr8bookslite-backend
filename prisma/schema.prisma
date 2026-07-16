@@ -117,6 +117,7 @@ model Company {
   terms                  Term[]
   paymentTypes           PaymentType[]
   discounts              Discount[]
+  responsibilityCenterTypes ResponsibilityCenterType[]
   responsibilityCenters  ResponsibilityCenter[]
   parties                Party[]
   taxMaintenance         TaxMaintenance[]
@@ -784,6 +785,7 @@ model Discount {
 model ResponsibilityCenter {
   id            BigInt                            @id @default(autoincrement())
   companyId     Int                               @map("company_id")
+  typeId        BigInt                            @map("type_id")
   code          String                            @db.VarChar(50)
   name          String                            @db.VarChar(150)
   category      ResponsibilityCenterCategory
@@ -798,16 +800,58 @@ model ResponsibilityCenter {
   createdAt     DateTime                          @default(now()) @map("created_at")
   updatedAt     DateTime                          @updatedAt @map("updated_at")
   company       Company                           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  type          ResponsibilityCenterType          @relation(fields: [typeId], references: [id], onDelete: Restrict)
   parent        ResponsibilityCenter?             @relation("ResponsibilityCenterHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children      ResponsibilityCenter[]            @relation("ResponsibilityCenterHierarchy")
 
   @@unique([companyId, code], map: "responsibility_centers_company_code_key")
   @@unique([companyId, name], map: "responsibility_centers_company_name_key")
+  @@index([companyId, typeId], map: "responsibility_centers_company_type_idx")
   @@index([companyId, status], map: "responsibility_centers_company_status_idx")
   @@index([companyId, category], map: "responsibility_centers_company_category_idx")
   @@index([companyId, financialType], map: "responsibility_centers_company_financial_type_idx")
   @@index([companyId, parentId], map: "responsibility_centers_company_parent_idx")
   @@map("responsibility_centers")
+}
+
+model ResponsibilityCenterClassification {
+  id               BigInt                               @id @default(autoincrement())
+  code             String                               @unique @db.VarChar(10)
+  name             String                               @unique @db.VarChar(80)
+  trackingBehavior ResponsibilityCenterTrackingBehavior @map("tracking_behavior")
+  isSystem         Boolean                              @default(true) @map("is_system")
+  status           ResponsibilityCenterStatus           @default(ACTIVE)
+  createdAt        DateTime                             @default(now()) @map("created_at")
+  updatedAt        DateTime                             @updatedAt @map("updated_at")
+  types            ResponsibilityCenterType[]
+
+  @@index([status], map: "responsibility_center_classifications_status_idx")
+  @@map("responsibility_center_classifications")
+}
+
+model ResponsibilityCenterType {
+  id               BigInt                             @id @default(autoincrement())
+  companyId        Int                                @map("company_id")
+  classificationId BigInt                             @map("classification_id")
+  name             String                             @db.VarChar(120)
+  codePrefix       String                             @map("code_prefix") @db.VarChar(20)
+  description      String?                            @db.VarChar(500)
+  sortOrder        Int                                @default(0) @map("sort_order")
+  isRequired       Boolean                            @default(false) @map("is_required")
+  status           ResponsibilityCenterStatus         @default(ACTIVE)
+  createdByUserId  Int?                               @map("created_by_user_id")
+  updatedByUserId  Int?                               @map("updated_by_user_id")
+  createdAt        DateTime                           @default(now()) @map("created_at")
+  updatedAt        DateTime                           @updatedAt @map("updated_at")
+  company          Company                            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  classification   ResponsibilityCenterClassification @relation(fields: [classificationId], references: [id], onDelete: Restrict)
+  centers          ResponsibilityCenter[]
+
+  @@unique([companyId, classificationId, name], map: "responsibility_center_types_company_classification_name_key")
+  @@unique([companyId, classificationId, codePrefix], map: "responsibility_center_types_company_classification_prefix_key")
+  @@index([companyId, status], map: "responsibility_center_types_company_status_idx")
+  @@index([classificationId], map: "responsibility_center_types_classification_idx")
+  @@map("responsibility_center_types")
 }
 
 model Party {
@@ -1635,6 +1679,13 @@ enum ResponsibilityCenterFinancialType {
   PROFIT_CENTER
   REVENUE_CENTER
   INVESTMENT_CENTER
+}
+
+enum ResponsibilityCenterTrackingBehavior {
+  EXPENSES
+  REVENUE
+  REVENUE_AND_EXPENSES
+  REVENUE_EXPENSES_AND_ASSETS
 }
 
 enum ResponsibilityCenterStatus {
