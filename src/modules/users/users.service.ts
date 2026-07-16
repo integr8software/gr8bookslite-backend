@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, SystemRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { AppRole } from '../../common/enums/app-role.enum';
@@ -165,10 +159,7 @@ export class UsersService {
     const data: Prisma.UserUpdateInput = {
       email: dto.email ? (normalizeEmail(dto.email) as string) : dto.email,
       name: dto.name,
-      contactNumber:
-        dto.contactNumber === undefined
-          ? undefined
-          : dto.contactNumber.trim() || null,
+      contactNumber: dto.contactNumber === undefined ? undefined : dto.contactNumber.trim() || null,
       systemRole: dto.systemRole,
     };
 
@@ -214,10 +205,7 @@ export class UsersService {
       where: { id },
       data: {
         name,
-        contactNumber:
-          dto.contactNumber === undefined
-            ? undefined
-            : dto.contactNumber.trim() || null,
+        contactNumber: dto.contactNumber === undefined ? undefined : dto.contactNumber.trim() || null,
       },
     });
 
@@ -281,9 +269,7 @@ export class UsersService {
       },
     });
 
-    await this.userAvatarStorageService.removeAvatar(
-      existingUser.avatarStoragePath,
-    );
+    await this.userAvatarStorageService.removeAvatar(existingUser.avatarStoragePath);
 
     return sanitizeUser(user);
   }
@@ -316,17 +302,11 @@ export class UsersService {
     try {
       await this.userAvatarStorageService.removeAvatar(storagePath);
     } catch (error) {
-      this.logger.warn(
-        `Unable to delete previous avatar "${storagePath}": ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-      );
+      this.logger.warn(`Unable to delete previous avatar "${storagePath}": ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  private ensureCompanyContext(
-    authUser: AuthUser,
-  ): asserts authUser is AuthUser & {
+  private ensureCompanyContext(authUser: AuthUser): asserts authUser is AuthUser & {
     companyId: number;
   } {
     if (!authUser.companyId) {

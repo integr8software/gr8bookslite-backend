@@ -1,12 +1,4 @@
-import {
-  IsArray,
-  IsBoolean,
-  IsIn,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { ActivePermissionActions } from '../../../../common/constants/active-permission-actions.constant';
 
 export class BranchRolePermissionDto {

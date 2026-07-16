@@ -1,14 +1,7 @@
-import {
-  Prisma,
-  ResponsibilityCenterCategory,
-  ResponsibilityCenterFinancialType,
-  ResponsibilityCenterStatus,
-} from '@prisma/client';
+import { Prisma, ResponsibilityCenterCategory, ResponsibilityCenterFinancialType, ResponsibilityCenterStatus } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 
-type ResponsibilityCenterWriteClient =
-  | Pick<PrismaService, 'responsibilityCenter'>
-  | Prisma.TransactionClient;
+type ResponsibilityCenterWriteClient = Pick<PrismaService, 'responsibilityCenter'> | Prisma.TransactionClient;
 
 export const ResponsibilityCenterSeedRecords = [
   {
@@ -45,8 +38,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.PROFIT_CENTER,
     manager: 'Sales Manager',
     parentCode: 'CORP',
-    description:
-      'Revenue, gross margin, discounts, and sales campaign ownership.',
+    description: 'Revenue, gross margin, discounts, and sales campaign ownership.',
   },
   {
     code: 'MAIN-BR',
@@ -55,8 +47,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.PROFIT_CENTER,
     manager: 'Branch Manager',
     parentCode: 'CORP',
-    description:
-      'Primary branch for sales, cash collection, and local expenses.',
+    description: 'Primary branch for sales, cash collection, and local expenses.',
   },
   {
     code: 'MAIN-WHSE',
@@ -65,8 +56,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.COST_CENTER,
     manager: 'Warehouse Supervisor',
     parentCode: 'OPS',
-    description:
-      'Receiving, storage, inventory handling, and warehouse expenses.',
+    description: 'Receiving, storage, inventory handling, and warehouse expenses.',
   },
   {
     code: 'PROC',
@@ -75,8 +65,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.COST_CENTER,
     manager: 'Procurement Lead',
     parentCode: 'OPS',
-    description:
-      'Supplier sourcing, purchase processing, and landed cost support.',
+    description: 'Supplier sourcing, purchase processing, and landed cost support.',
   },
   {
     code: 'ONLINE',
@@ -103,8 +92,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.COST_CENTER,
     manager: 'Project Coordinator',
     parentCode: 'OPS',
-    description:
-      'Customer onboarding, branch setup, and one-time project costs.',
+    description: 'Customer onboarding, branch setup, and one-time project costs.',
   },
   {
     code: 'HR',
@@ -126,10 +114,7 @@ export const ResponsibilityCenterSeedRecords = [
   },
 ] as const;
 
-export async function seedCompanyResponsibilityCenterDefaults(
-  tx: ResponsibilityCenterWriteClient,
-  companyId: number,
-) {
+export async function seedCompanyResponsibilityCenterDefaults(tx: ResponsibilityCenterWriteClient, companyId: number) {
   const existingCenters = await tx.responsibilityCenter.findMany({
     where: {
       companyId,
@@ -140,9 +125,7 @@ export async function seedCompanyResponsibilityCenterDefaults(
     },
     select: { id: true, code: true },
   });
-  const centerIdByCode = new Map(
-    existingCenters.map((center) => [center.code, center.id]),
-  );
+  const centerIdByCode = new Map(existingCenters.map((center) => [center.code, center.id]));
 
   if (centerIdByCode.size === ResponsibilityCenterSeedRecords.length) {
     return 0;
@@ -155,9 +138,7 @@ export async function seedCompanyResponsibilityCenterDefaults(
       continue;
     }
 
-    const parentId = record.parentCode
-      ? (centerIdByCode.get(record.parentCode) ?? null)
-      : null;
+    const parentId = record.parentCode ? (centerIdByCode.get(record.parentCode) ?? null) : null;
     const center = await tx.responsibilityCenter.create({
       data: {
         companyId,

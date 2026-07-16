@@ -1,30 +1,10 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-} from '@prisma/client';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
-import {
-  parseOptionalPositiveBigIntIdOrUndefined,
-  parsePositiveBigIntId,
-} from '../../../common/utils/id.util';
-import {
-  cleanCurrencyCode,
-  cleanOptional,
-} from '../../../common/utils/string-normalization.util';
+import { parseOptionalPositiveBigIntIdOrUndefined, parsePositiveBigIntId } from '../../../common/utils/id.util';
+import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CoaBankSyncService } from '../coa-bank-sync/coa-bank-sync.service';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -33,20 +13,10 @@ import { GetChartAccountListQueryDto } from './dto/get-chart-account-list-query.
 import { GetNextChartAccountCodeQueryDto } from './dto/get-next-chart-account-code-query.dto';
 import { UpdateChartAccountStatusDto } from './dto/update-chart-account-status.dto';
 import { UpdateChartAccountDto } from './dto/update-chart-account.dto';
-import {
-  mapChartAccount,
-  mapChartAccountTreeNode,
-  parseChartAccountAuditUserId,
-} from './mappers/chart-account.mapper';
+import { mapChartAccount, mapChartAccountTreeNode, parseChartAccountAuditUserId } from './mappers/chart-account.mapper';
 import { ChartAccountInclude } from './prisma/chart-account.include';
-import type {
-  ChartAccountPayload,
-  ChartAccountTreePayload,
-} from './types/chart-account.type';
-import {
-  assertCanCreateAccountLevel,
-  generateNextAccountCodeFromSiblings,
-} from './utils/chart-account-code.util';
+import type { ChartAccountPayload, ChartAccountResponse, ChartAccountTreePayload, ChartAccountTreeResponse } from './types/chart-account.type';
+import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings } from './utils/chart-account-code.util';
 import { toAccountGroupJson } from './utils/system-account-groups.util';
 
 @Injectable()
@@ -59,10 +29,7 @@ export class ChartOfAccountsService {
   async findAll(user: AuthUser, query: GetChartAccountListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(
-      query.parentAccountId,
-      'parentAccountId',
-    );
+    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(query.parentAccountId, 'parentAccountId');
     const search = query.search?.trim();
 
     const accounts = await this.prisma.chartAccount.findMany({
@@ -91,11 +58,7 @@ export class ChartOfAccountsService {
           : {}),
       },
       include: ChartAccountInclude,
-      orderBy: [
-        { accountCode: 'asc' },
-        { orderNo: 'asc' },
-        { accountTitle: 'asc' },
-      ],
+      orderBy: [{ accountCode: 'asc' }, { orderNo: 'asc' }, { accountTitle: 'asc' }],
     });
 
     return {
@@ -111,11 +74,7 @@ export class ChartOfAccountsService {
         companyId,
       },
       include: ChartAccountInclude,
-      orderBy: [
-        { accountCode: 'asc' },
-        { orderNo: 'asc' },
-        { accountTitle: 'asc' },
-      ],
+      orderBy: [{ accountCode: 'asc' }, { orderNo: 'asc' }, { accountTitle: 'asc' }],
     });
 
     return {
@@ -126,10 +85,7 @@ export class ChartOfAccountsService {
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const account = await this.findAccountOrThrow(
-      companyId,
-      parsePositiveBigIntId(id),
-    );
+    const account = await this.findAccountOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       account: (await this.mapChartAccountsWithAuditUsers([account]))[0],
@@ -139,18 +95,10 @@ export class ChartOfAccountsService {
   async findNextCode(user: AuthUser, query: GetNextChartAccountCodeQueryDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(
-      query.parentAccountId,
-      'parentAccountId',
-    );
-    const parentAccount = parentAccountId
-      ? await this.findActiveParentAccount(companyId, parentAccountId)
-      : null;
+    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(query.parentAccountId, 'parentAccountId');
+    const parentAccount = parentAccountId ? await this.findActiveParentAccount(companyId, parentAccountId) : null;
 
-    assertCanCreateAccountLevel(
-      parentAccount?.accountLevel ?? null,
-      query.accountLevel,
-    );
+    assertCanCreateAccountLevel(parentAccount?.accountLevel ?? null, query.accountLevel);
     const accountCode = await this.generateNextAccountCode({
       companyId,
       parentAccountId: parentAccount?.id ?? null,
@@ -166,117 +114,92 @@ export class ChartOfAccountsService {
   async create(user: AuthUser, dto: CreateChartAccountDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
-    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(
-      dto.parentAccountId,
-      'parentAccountId',
-    );
+    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(dto.parentAccountId, 'parentAccountId');
 
     try {
-      const account = await this.prisma.$transaction<ChartAccountPayload>(
-        async (tx) => {
-          const parentAccount = parentAccountId
-            ? await this.findActiveParentAccount(companyId, parentAccountId, tx)
-            : null;
-          const isBankSyncedAccount =
-            parentAccount &&
-            dto.accountLevel === ChartAccountLevel.SPECIFIC &&
-            (await this.isCashInBankParent(companyId, parentAccount.id, tx));
+      const account = await this.prisma.$transaction<ChartAccountPayload>(async (tx) => {
+        const parentAccount = parentAccountId ? await this.findActiveParentAccount(companyId, parentAccountId, tx) : null;
+        const isBankSyncedAccount =
+          parentAccount && dto.accountLevel === ChartAccountLevel.SPECIFIC && (await this.isCashInBankParent(companyId, parentAccount.id, tx));
 
-          assertCanCreateAccountLevel(
-            parentAccount?.accountLevel ?? null,
-            dto.accountLevel,
-          );
-          await this.assertUniqueAccountTitleUnderParent({
-            companyId,
-            parentAccountId: parentAccount?.id ?? null,
-            accountTitle: dto.accountTitle,
-            tx,
-          });
-          const accountCode = await this.generateNextAccountCode({
-            companyId,
-            parentAccountId: parentAccount?.id ?? null,
-            parentAccountCode: parentAccount?.accountCode ?? null,
+        assertCanCreateAccountLevel(parentAccount?.accountLevel ?? null, dto.accountLevel);
+        await this.assertUniqueAccountTitleUnderParent({
+          companyId,
+          parentAccountId: parentAccount?.id ?? null,
+          accountTitle: dto.accountTitle,
+          tx,
+        });
+        const accountCode = await this.generateNextAccountCode({
+          companyId,
+          parentAccountId: parentAccount?.id ?? null,
+          parentAccountCode: parentAccount?.accountCode ?? null,
+          accountLevel: dto.accountLevel,
+          tx,
+        });
+
+        if (isBankSyncedAccount) {
+          this.assertBankSyncedChartAccountInput(dto);
+        }
+
+        const requestedStatus = dto.status ?? ChartAccountStatus.ACTIVE;
+
+        if (isBankSyncedAccount && requestedStatus === ChartAccountStatus.ACTIVE) {
+          this.assertBankLinkedDetailsInput(dto);
+        }
+        const savedAccount = await tx.chartAccount.create({
+          data: {
+            ...this.toChartAccountData(dto),
+            accountTitle: dto.accountTitle.trim(),
+            accountCode,
             accountLevel: dto.accountLevel,
+            companyId,
+            parentAccountId: parentAccount?.id ?? null,
+            currencyCode: isBankSyncedAccount ? (cleanCurrencyCode(dto.currencyCode) ?? cleanCurrencyCode(dto.linkedDetails?.currencyCode)) : undefined,
+            status: isBankSyncedAccount ? ChartAccountStatus.INACTIVE : requestedStatus,
+            deletedAt: isBankSyncedAccount ? new Date() : requestedStatus === ChartAccountStatus.INACTIVE ? new Date() : null,
+            whoCreated: String(user.id),
+          },
+          include: ChartAccountInclude,
+        });
+
+        if (!isBankSyncedAccount) {
+          return savedAccount;
+        }
+
+        const bankAccount = await tx.bankAccount.create({
+          data: {
+            companyId,
+            coaId: savedAccount.id,
+            ...this.toBankAccountData(dto),
+            status: ChartAccountStatus.INACTIVE,
+            createdByUserId: user.id,
+          },
+        });
+
+        if (requestedStatus === ChartAccountStatus.ACTIVE) {
+          await this.coaBankSyncService.validateLinkedPairOrThrow({
+            companyId,
+            bankAccount,
+            chartAccount: savedAccount,
             tx,
           });
 
-          if (isBankSyncedAccount) {
-            this.assertBankSyncedChartAccountInput(dto);
-          }
-
-          const requestedStatus = dto.status ?? ChartAccountStatus.ACTIVE;
-
-          if (
-            isBankSyncedAccount &&
-            requestedStatus === ChartAccountStatus.ACTIVE
-          ) {
-            this.assertBankLinkedDetailsInput(dto);
-          }
-          const savedAccount = await tx.chartAccount.create({
-            data: {
-              ...this.toChartAccountData(dto),
-              accountTitle: dto.accountTitle.trim(),
-              accountCode,
-              accountLevel: dto.accountLevel,
-              companyId,
-              parentAccountId: parentAccount?.id ?? null,
-              currencyCode: isBankSyncedAccount
-                ? (cleanCurrencyCode(dto.currencyCode) ??
-                  cleanCurrencyCode(dto.linkedDetails?.currencyCode))
-                : undefined,
-              status: isBankSyncedAccount
-                ? ChartAccountStatus.INACTIVE
-                : requestedStatus,
-              deletedAt: isBankSyncedAccount
-                ? new Date()
-                : requestedStatus === ChartAccountStatus.INACTIVE
-                  ? new Date()
-                  : null,
-              whoCreated: String(user.id),
-            },
-            include: ChartAccountInclude,
-          });
-
-          if (!isBankSyncedAccount) {
-            return savedAccount;
-          }
-
-          const bankAccount = await tx.bankAccount.create({
-            data: {
-              companyId,
-              coaId: savedAccount.id,
-              ...this.toBankAccountData(dto),
-              status: ChartAccountStatus.INACTIVE,
-              createdByUserId: user.id,
-            },
-          });
-
-          if (requestedStatus === ChartAccountStatus.ACTIVE) {
-            await this.coaBankSyncService.validateLinkedPairOrThrow({
-              companyId,
-              bankAccount,
-              chartAccount: savedAccount,
-              tx,
-            });
-
-            await tx.chartAccount.update({
-              where: { id: savedAccount.id },
-              data: { status: ChartAccountStatus.ACTIVE, deletedAt: null },
-            });
-
-            await tx.bankAccount.update({
-              where: { id: bankAccount.id },
-              data: { status: ChartAccountStatus.ACTIVE },
-            });
-          }
-
-          return tx.chartAccount.findUniqueOrThrow({
+          await tx.chartAccount.update({
             where: { id: savedAccount.id },
-            include: ChartAccountInclude,
+            data: { status: ChartAccountStatus.ACTIVE, deletedAt: null },
           });
-        },
-        MaintenanceTransactionOptions,
-      );
+
+          await tx.bankAccount.update({
+            where: { id: bankAccount.id },
+            data: { status: ChartAccountStatus.ACTIVE },
+          });
+        }
+
+        return tx.chartAccount.findUniqueOrThrow({
+          where: { id: savedAccount.id },
+          include: ChartAccountInclude,
+        });
+      }, MaintenanceTransactionOptions);
 
       return {
         message: 'Chart account created.',
@@ -295,67 +218,34 @@ export class ChartOfAccountsService {
     const existingAccount = await this.findAccountOrThrow(companyId, accountId);
     this.assertCompanyEditableAccount(existingAccount);
 
-    if (
-      dto.accountLevel !== undefined &&
-      dto.accountLevel !== existingAccount.accountLevel
-    ) {
-      throw new BadRequestException(
-        'Account level cannot be changed after the account is created.',
-      );
+    if (dto.accountLevel !== undefined && dto.accountLevel !== existingAccount.accountLevel) {
+      throw new BadRequestException('Account level cannot be changed after the account is created.');
     }
 
-    if (
-      dto.parentAccountId !== undefined &&
-      dto.parentAccountId !==
-        (existingAccount.parentAccountId?.toString() ?? undefined)
-    ) {
-      throw new BadRequestException(
-        'Accounts cannot be reparented from the company Chart of Accounts.',
-      );
+    if (dto.parentAccountId !== undefined && dto.parentAccountId !== (existingAccount.parentAccountId?.toString() ?? undefined)) {
+      throw new BadRequestException('Accounts cannot be reparented from the company Chart of Accounts.');
     }
 
-    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(
-      dto.parentAccountId,
-      'parentAccountId',
-    );
+    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(dto.parentAccountId, 'parentAccountId');
 
     try {
       const account = await this.prisma.$transaction(async (tx) => {
-        const currentAccount = await this.findAccountOrThrow(
-          companyId,
-          accountId,
-          tx,
-        );
+        const currentAccount = await this.findAccountOrThrow(companyId, accountId, tx);
         const nextLevel = dto.accountLevel ?? currentAccount.accountLevel;
-        const shouldReparent =
-          dto.parentAccountId !== undefined || dto.accountLevel !== undefined;
+        const shouldReparent = dto.parentAccountId !== undefined || dto.accountLevel !== undefined;
         let nextParentAccountId = currentAccount.parentAccountId;
         let nextAccountCode = currentAccount.accountCode;
 
         if (shouldReparent) {
-          nextParentAccountId =
-            dto.parentAccountId === undefined
-              ? currentAccount.parentAccountId
-              : (parentAccountId ?? null);
+          nextParentAccountId = dto.parentAccountId === undefined ? currentAccount.parentAccountId : (parentAccountId ?? null);
 
           if (nextParentAccountId === accountId) {
-            throw new BadRequestException(
-              'An account cannot be its own parent.',
-            );
+            throw new BadRequestException('An account cannot be its own parent.');
           }
 
-          const parentAccount = nextParentAccountId
-            ? await this.findActiveParentAccount(
-                companyId,
-                nextParentAccountId,
-                tx,
-              )
-            : null;
+          const parentAccount = nextParentAccountId ? await this.findActiveParentAccount(companyId, nextParentAccountId, tx) : null;
 
-          assertCanCreateAccountLevel(
-            parentAccount?.accountLevel ?? null,
-            nextLevel,
-          );
+          assertCanCreateAccountLevel(parentAccount?.accountLevel ?? null, nextLevel);
           nextAccountCode = await this.generateNextAccountCode({
             companyId,
             parentAccountId: parentAccount?.id ?? null,
@@ -399,11 +289,7 @@ export class ChartOfAccountsService {
     }
   }
 
-  async updateStatus(
-    user: AuthUser,
-    id: string,
-    dto: UpdateChartAccountStatusDto,
-  ) {
+  async updateStatus(user: AuthUser, id: string, dto: UpdateChartAccountStatusDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
     const accountId = parsePositiveBigIntId(id);
@@ -421,24 +307,13 @@ export class ChartOfAccountsService {
       });
 
       if (activeChildCount > 0) {
-        throw new BadRequestException(
-          'Deactivate child accounts before deactivating this account.',
-        );
+        throw new BadRequestException('Deactivate child accounts before deactivating this account.');
       }
     }
 
     const account = await this.prisma.$transaction(async (tx) => {
-      const currentAccount = await this.findAccountOrThrow(
-        companyId,
-        accountId,
-        tx,
-      );
-      const isBankSyncedAccount =
-        await this.coaBankSyncService.isCashInBankPostingAccount(
-          companyId,
-          currentAccount,
-          tx,
-        );
+      const currentAccount = await this.findAccountOrThrow(companyId, accountId, tx);
+      const isBankSyncedAccount = await this.coaBankSyncService.isCashInBankPostingAccount(companyId, currentAccount, tx);
 
       if (isBankSyncedAccount && dto.status === ChartAccountStatus.ACTIVE) {
         const linkedBankAccount = currentAccount.bankAccounts[0];
@@ -471,8 +346,7 @@ export class ChartOfAccountsService {
         },
         data: {
           status: dto.status,
-          deletedAt:
-            dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
+          deletedAt: dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
           whoModified: String(user.id),
         },
         include: ChartAccountInclude,
@@ -480,39 +354,27 @@ export class ChartOfAccountsService {
     }, MaintenanceTransactionOptions);
 
     return {
-      message:
-        dto.status === ChartAccountStatus.ACTIVE
-          ? 'Chart account activated.'
-          : 'Chart account deactivated.',
+      message: dto.status === ChartAccountStatus.ACTIVE ? 'Chart account activated.' : 'Chart account deactivated.',
       account: (await this.mapChartAccountsWithAuditUsers([account]))[0],
     };
   }
 
-  private async mapChartAccountsWithAuditUsers(
-    accounts: ChartAccountPayload[],
-  ) {
+  private async mapChartAccountsWithAuditUsers(accounts: ChartAccountPayload[]): Promise<ChartAccountResponse[]> {
     const userNames = await this.getChartAccountAuditUserNames(accounts);
 
     return accounts.map((account) => mapChartAccount(account, userNames));
   }
 
-  private async mapChartAccountTreeWithAuditUsers(
-    accounts: ChartAccountPayload[],
-  ) {
+  private async mapChartAccountTreeWithAuditUsers(accounts: ChartAccountPayload[]): Promise<ChartAccountTreeResponse[]> {
     const userNames = await this.getChartAccountAuditUserNames(accounts);
 
-    return buildChartAccountTree(accounts).map((account) =>
-      mapChartAccountTreeNode(account, userNames),
-    );
+    return buildChartAccountTree(accounts).map((account) => mapChartAccountTreeNode(account, userNames));
   }
 
   private async getChartAccountAuditUserNames(accounts: ChartAccountPayload[]) {
     return resolveAuditUserNames(
       this.prisma,
-      accounts.flatMap((account) => [
-        parseChartAccountAuditUserId(account.whoCreated),
-        parseChartAccountAuditUserId(account.whoModified),
-      ]),
+      accounts.flatMap((account) => [parseChartAccountAuditUserId(account.whoCreated), parseChartAccountAuditUserId(account.whoModified)]),
     );
   }
 
@@ -559,11 +421,7 @@ export class ChartOfAccountsService {
     });
   }
 
-  private async findAccountOrThrow(
-    companyId: number,
-    accountId: bigint,
-    tx: Prisma.TransactionClient | PrismaService = this.prisma,
-  ) {
+  private async findAccountOrThrow(companyId: number, accountId: bigint, tx: Prisma.TransactionClient | PrismaService = this.prisma) {
     const account = await tx.chartAccount.findFirst({
       where: {
         id: accountId,
@@ -579,16 +437,8 @@ export class ChartOfAccountsService {
     return account;
   }
 
-  private async findActiveParentAccount(
-    companyId: number,
-    parentAccountId: bigint,
-    tx: Prisma.TransactionClient | PrismaService = this.prisma,
-  ) {
-    const parentAccount = await this.findAccountOrThrow(
-      companyId,
-      parentAccountId,
-      tx,
-    );
+  private async findActiveParentAccount(companyId: number, parentAccountId: bigint, tx: Prisma.TransactionClient | PrismaService = this.prisma) {
+    const parentAccount = await this.findAccountOrThrow(companyId, parentAccountId, tx);
 
     if (parentAccount.status !== ChartAccountStatus.ACTIVE) {
       throw new BadRequestException('Select an active parent account.');
@@ -636,58 +486,30 @@ export class ChartOfAccountsService {
     });
 
     if (duplicateAccount) {
-      throw new ConflictException(
-        'An account with this title already exists under the selected parent.',
-      );
+      throw new ConflictException('An account with this title already exists under the selected parent.');
     }
   }
 
-  private assertCompanyEditableAccount(
-    account: Pick<ChartAccountPayload, 'whoCreated' | 'bankAccounts'>,
-  ) {
+  private assertCompanyEditableAccount(account: Pick<ChartAccountPayload, 'whoCreated' | 'bankAccounts'>) {
     if (account.whoCreated || account.bankAccounts.length > 0) {
       return;
     }
 
-    throw new BadRequestException(
-      'Default chart accounts cannot be edited or deactivated.',
-    );
+    throw new BadRequestException('Default chart accounts cannot be edited or deactivated.');
   }
 
-  private toChartAccountData(
-    dto: CreateChartAccountDto | UpdateChartAccountDto,
-  ) {
+  private toChartAccountData(dto: CreateChartAccountDto | UpdateChartAccountDto) {
     return {
-      ...(dto.accountTitle !== undefined
-        ? { accountTitle: dto.accountTitle.trim() }
-        : {}),
-      ...(dto.accountType !== undefined
-        ? { accountType: dto.accountType }
-        : {}),
-      ...(dto.accountNature !== undefined
-        ? { accountNature: dto.accountNature }
-        : {}),
-      ...(dto.accountGroup !== undefined
-        ? { accountGroup: toAccountGroupJson(dto.accountGroup) }
-        : {}),
-      ...(dto.statementSection !== undefined
-        ? { statementSection: cleanOptional(dto.statementSection) }
-        : {}),
-      ...(dto.reportAlias !== undefined
-        ? { reportAlias: cleanOptional(dto.reportAlias) }
-        : {}),
-      ...(dto.description !== undefined
-        ? { description: cleanOptional(dto.description) }
-        : {}),
-      ...(dto.isPostingAccount !== undefined
-        ? { isPostingAccount: dto.isPostingAccount }
-        : {}),
-      ...(dto.withSubsidiary !== undefined
-        ? { withSubsidiary: dto.withSubsidiary }
-        : {}),
-      ...(dto.contraAccount !== undefined
-        ? { contraAccount: dto.contraAccount }
-        : {}),
+      ...(dto.accountTitle !== undefined ? { accountTitle: dto.accountTitle.trim() } : {}),
+      ...(dto.accountType !== undefined ? { accountType: dto.accountType } : {}),
+      ...(dto.accountNature !== undefined ? { accountNature: dto.accountNature } : {}),
+      ...(dto.accountGroup !== undefined ? { accountGroup: toAccountGroupJson(dto.accountGroup) } : {}),
+      ...(dto.statementSection !== undefined ? { statementSection: cleanOptional(dto.statementSection) } : {}),
+      ...(dto.reportAlias !== undefined ? { reportAlias: cleanOptional(dto.reportAlias) } : {}),
+      ...(dto.description !== undefined ? { description: cleanOptional(dto.description) } : {}),
+      ...(dto.isPostingAccount !== undefined ? { isPostingAccount: dto.isPostingAccount } : {}),
+      ...(dto.withSubsidiary !== undefined ? { withSubsidiary: dto.withSubsidiary } : {}),
+      ...(dto.contraAccount !== undefined ? { contraAccount: dto.contraAccount } : {}),
       ...(dto.showTotal !== undefined ? { showTotal: dto.showTotal } : {}),
       ...(dto.orderNo !== undefined ? { orderNo: dto.orderNo } : {}),
       ...(dto.currencyCode !== undefined
@@ -698,15 +520,8 @@ export class ChartOfAccountsService {
     };
   }
 
-  private async isCashInBankParent(
-    companyId: number,
-    parentAccountId: bigint,
-    tx: Prisma.TransactionClient | PrismaService,
-  ) {
-    const cashInBankParent = await this.coaBankSyncService.findCashInBankParent(
-      companyId,
-      tx,
-    );
+  private async isCashInBankParent(companyId: number, parentAccountId: bigint, tx: Prisma.TransactionClient | PrismaService) {
+    const cashInBankParent = await this.coaBankSyncService.findCashInBankParent(companyId, tx);
 
     return cashInBankParent?.id === parentAccountId;
   }
@@ -718,9 +533,7 @@ export class ChartOfAccountsService {
       dto.accountNature !== AccountNature.DEBIT ||
       dto.isPostingAccount !== true
     ) {
-      throw new BadRequestException(
-        'Cannot activate bank account. The linked Chart of Accounts posting account is incomplete.',
-      );
+      throw new BadRequestException('Cannot activate bank account. The linked Chart of Accounts posting account is incomplete.');
     }
   }
 
@@ -731,14 +544,9 @@ export class ChartOfAccountsService {
       !linkedDetails ||
       !linkedDetails.bankName?.trim() ||
       !linkedDetails.accountNumber?.trim() ||
-      !(
-        cleanCurrencyCode(linkedDetails.currencyCode) ??
-        cleanCurrencyCode(dto.currencyCode)
-      )
+      !(cleanCurrencyCode(linkedDetails.currencyCode) ?? cleanCurrencyCode(dto.currencyCode))
     ) {
-      throw new BadRequestException(
-        'Cannot activate bank account. Bank Masterfile information is incomplete.',
-      );
+      throw new BadRequestException('Cannot activate bank account. Bank Masterfile information is incomplete.');
     }
   }
 
@@ -754,13 +562,8 @@ export class ChartOfAccountsService {
       seriesStart: cleanOptional(linkedDetails?.seriesStart) ?? null,
       seriesEnd: cleanOptional(linkedDetails?.seriesEnd) ?? null,
       seriesDigits: linkedDetails?.seriesDigits,
-      currencyCode:
-        cleanCurrencyCode(linkedDetails?.currencyCode) ??
-        cleanCurrencyCode(dto.currencyCode),
-      currencyExchangeRate:
-        linkedDetails?.currencyExchangeRate === undefined
-          ? undefined
-          : new Prisma.Decimal(linkedDetails.currencyExchangeRate),
+      currencyCode: cleanCurrencyCode(linkedDetails?.currencyCode) ?? cleanCurrencyCode(dto.currencyCode),
+      currencyExchangeRate: linkedDetails?.currencyExchangeRate === undefined ? undefined : new Prisma.Decimal(linkedDetails.currencyExchangeRate),
       isDefault: false,
     };
   }
@@ -813,30 +616,19 @@ export class ChartOfAccountsService {
       },
     });
 
-    if (
-      !membership ||
-      membership.status !== MembershipStatus.ACTIVE ||
-      membership.role !== MembershipRole.ADMIN
-    ) {
-      throw new ForbiddenException(
-        'Admin access is required to manage chart accounts.',
-      );
+    if (!membership || membership.status !== MembershipStatus.ACTIVE || membership.role !== MembershipRole.ADMIN) {
+      throw new ForbiddenException('Admin access is required to manage chart accounts.');
     }
   }
 
   private throwFriendlyPrismaError(error: unknown) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
-      throw new ConflictException(
-        'A chart account with this code already exists.',
-      );
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ConflictException('A chart account with this code already exists.');
     }
   }
 }
 
-function buildChartAccountTree(accounts: ChartAccountTreePayload[]) {
+function buildChartAccountTree(accounts: ChartAccountTreePayload[]): ChartAccountTreePayload[] {
   const nodeById = new Map<string, ChartAccountTreePayload>();
   const rootNodes: ChartAccountTreePayload[] = [];
 
@@ -865,4 +657,3 @@ function buildChartAccountTree(accounts: ChartAccountTreePayload[]) {
 
   return rootNodes;
 }
-

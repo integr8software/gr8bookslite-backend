@@ -35,11 +35,7 @@ describe('PermissionService', () => {
     );
 
     expect(permissions).toEqual(
-      expect.arrayContaining([
-        `PCFR:${PermissionAction.VIEW}`,
-        `PCFR:${PermissionAction.CANCEL}`,
-        `PCFR:${PermissionAction.UNCANCEL}`,
-      ]),
+      expect.arrayContaining([`PCFR:${PermissionAction.VIEW}`, `PCFR:${PermissionAction.CANCEL}`, `PCFR:${PermissionAction.UNCANCEL}`]),
     );
   });
 
@@ -71,9 +67,7 @@ describe('PermissionService', () => {
       permissionOverrides: [],
     };
 
-    expect(
-      service.computePermissions(membership, ['cash-disbursement']),
-    ).toContain('PCFR:view');
+    expect(service.computePermissions(membership, ['cash-disbursement'])).toContain('PCFR:view');
     expect(service.computePermissions(membership, ['OTHER'])).toEqual([]);
   });
 
@@ -164,15 +158,7 @@ describe('PermissionService', () => {
   });
 });
 
-function buildRolePermission({
-  code,
-  canView,
-  canCreate,
-}: {
-  code: string;
-  canView: boolean;
-  canCreate: boolean;
-}) {
+function buildRolePermission({ code, canView, canCreate }: { code: string; canView: boolean; canCreate: boolean }) {
   return {
     canView,
     canCreate,

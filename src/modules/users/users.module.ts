@@ -11,13 +11,7 @@ import { UsersService } from './users.service';
 @Module({
   imports: [AccessControlModule, StorageModule],
   controllers: [UsersController],
-  providers: [
-    UsersService,
-    UserAvatarStorageService,
-    RolesGuard,
-    PermissionsGuard,
-    JwtAuthGuard,
-  ],
+  providers: [UsersService, UserAvatarStorageService, RolesGuard, PermissionsGuard, JwtAuthGuard],
   exports: [UsersService],
 })
 export class UsersModule {}

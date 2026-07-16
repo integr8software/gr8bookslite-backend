@@ -44,10 +44,7 @@ describe('EntitlementService', () => {
         buildSource({
           planSystems: [
             {
-              modules: [
-                buildPlanModule(5, 'TM'),
-                buildPlanModule(8, 'COA', false),
-              ],
+              modules: [buildPlanModule(5, 'TM'), buildPlanModule(8, 'COA', false)],
             },
           ],
         }),
@@ -58,12 +55,8 @@ describe('EntitlementService', () => {
   it('returns empty modules when no usable plan exists', () => {
     const service = new EntitlementService();
 
-    expect(
-      service.getEnabledModuleCodes(buildSource({ noPlan: true })),
-    ).toEqual([]);
-    expect([
-      ...service.getEnabledModuleIds(buildSource({ noPlan: true })),
-    ]).toEqual([]);
+    expect(service.getEnabledModuleCodes(buildSource({ noPlan: true }))).toEqual([]);
+    expect([...service.getEnabledModuleIds(buildSource({ noPlan: true }))]).toEqual([]);
   });
 
   it('uses subscription plan modules even when legacy-shaped fields are present', () => {
@@ -95,27 +88,16 @@ describe('EntitlementService', () => {
     expect(
       service.getEnabledModuleCodes({
         company,
-      } as never),
+      }),
     ).toEqual(['TM']);
   });
 
   it('filters enabled modules by permission while preserving admin access behavior', () => {
     const service = new EntitlementService();
-    const enabledModules = [
-      buildPlanModule(5, 'TM'),
-      buildPlanModule(8, 'COA'),
-    ];
+    const enabledModules = [buildPlanModule(5, 'TM'), buildPlanModule(8, 'COA')];
 
-    expect(
-      service.getPermittedEnabledModules(
-        enabledModules,
-        new Set(['TM:view']),
-        false,
-      ),
-    ).toEqual([enabledModules[0]]);
-    expect(
-      service.getPermittedEnabledModules(enabledModules, new Set(), true),
-    ).toEqual(enabledModules);
+    expect(service.getPermittedEnabledModules(enabledModules, new Set(['TM:view']), false)).toEqual([enabledModules[0]]);
+    expect(service.getPermittedEnabledModules(enabledModules, new Set(), true)).toEqual(enabledModules);
   });
 });
 

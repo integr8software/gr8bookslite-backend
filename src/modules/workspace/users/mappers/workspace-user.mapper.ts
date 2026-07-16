@@ -1,9 +1,7 @@
 import type { WorkspaceUserResponse } from '../interfaces/workspace-user-response.interface';
 import type { WorkspaceUserMembershipRecord } from '../prisma/workspace-user.include';
 
-export function mapWorkspaceUserMemberships(
-  memberships: WorkspaceUserMembershipRecord[],
-): WorkspaceUserResponse[] {
+export function mapWorkspaceUserMemberships(memberships: WorkspaceUserMembershipRecord[]): WorkspaceUserResponse[] {
   const usersById = new Map<number, WorkspaceUserResponse>();
 
   for (const membership of memberships) {
@@ -36,7 +34,5 @@ export function mapWorkspaceUserMemberships(
     });
   }
 
-  return [...usersById.values()].sort((left, right) =>
-    left.name.localeCompare(right.name),
-  );
+  return [...usersById.values()].sort((left, right) => left.name.localeCompare(right.name));
 }

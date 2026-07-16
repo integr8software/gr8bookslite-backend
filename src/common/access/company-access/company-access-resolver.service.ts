@@ -1,20 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  CompanyStatus,
-  MembershipStatus,
-  SubscriptionStatus,
-  SystemRole,
-  UserStatus,
-} from '@prisma/client';
+import { CompanyStatus, MembershipStatus, SubscriptionStatus, SystemRole, UserStatus } from '@prisma/client';
 import { JwtPayload } from '../../interfaces/jwt-payload.interface';
 import { getSubscriptionAccessDenialReason } from '../../utils/subscription-access.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import type {
-  ActiveUserRecord,
-  CompanyAccessContext,
-  MembershipAccessRecord,
-} from './company-access-resolver.types';
+import type { ActiveUserRecord, CompanyAccessContext, MembershipAccessRecord } from './company-access-resolver.types';
 
 @Injectable()
 export class CompanyAccessResolver {
@@ -34,20 +24,14 @@ export class CompanyAccessResolver {
   async resolve(payload: JwtPayload): Promise<CompanyAccessContext> {
     const user = await this.getActiveUser(payload.sub);
 
-    if (
-      user.systemRole === SystemRole.SUPER_ADMIN ||
-      payload.companyId == null
-    ) {
+    if (user.systemRole === SystemRole.SUPER_ADMIN || payload.companyId == null) {
       return {
         user,
         membership: null,
       };
     }
 
-    const membership = await this.getMembershipAccess(
-      user.id,
-      payload.companyId,
-    );
+    const membership = await this.getMembershipAccess(user.id, payload.companyId);
 
     this.assertMembershipIsUsable(membership);
 
@@ -77,10 +61,7 @@ export class CompanyAccessResolver {
     };
   }
 
-  private async getMembershipAccess(
-    userId: number,
-    companyId: number,
-  ): Promise<MembershipAccessRecord> {
+  private async getMembershipAccess(userId: number, companyId: number): Promise<MembershipAccessRecord> {
     const membership = await this.prisma.membership.findUnique({
       where: {
         userId_companyId: {
@@ -235,10 +216,7 @@ export class CompanyAccessResolver {
       throw new UnauthorizedException('This company is inactive.');
     }
 
-    if (
-      membership.company.status === CompanyStatus.SUSPENDED ||
-      membership.company.status === CompanyStatus.FAILED
-    ) {
+    if (membership.company.status === CompanyStatus.SUSPENDED || membership.company.status === CompanyStatus.FAILED) {
       throw new UnauthorizedException('This company is unavailable.');
     }
 
@@ -248,13 +226,9 @@ export class CompanyAccessResolver {
       return;
     }
 
-    const denialReason = getSubscriptionAccessDenialReason(
-      latestSubscription,
-      new Date(),
-      {
-        allowProviderActivationFallback: this.isProviderFallbackAllowed(),
-      },
-    );
+    const denialReason = getSubscriptionAccessDenialReason(latestSubscription, new Date(), {
+      allowProviderActivationFallback: this.isProviderFallbackAllowed(),
+    });
 
     if (denialReason) {
       throw new UnauthorizedException(denialReason);
@@ -262,10 +236,6 @@ export class CompanyAccessResolver {
   }
 
   private isProviderFallbackAllowed() {
-    return (
-      this.configService
-        .get<string>('PAYMONGO_ALLOW_PROVIDER_FALLBACK', 'false')
-        .toLowerCase() === 'true'
-    );
+    return this.configService.get<string>('PAYMONGO_ALLOW_PROVIDER_FALLBACK', 'false').toLowerCase() === 'true';
   }
 }

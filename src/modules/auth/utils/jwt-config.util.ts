@@ -18,10 +18,5 @@ export function getJwtSecret(configService: ConfigService) {
 }
 
 export function getJwtExpiresInSeconds(configService: ConfigService) {
-  return Number(
-    configService.get<string | number>(
-      'JWT_EXPIRES_IN_SECONDS',
-      DefaultJwtExpiresInSeconds,
-    ),
-  );
+  return Number(configService.get<string | number>('JWT_EXPIRES_IN_SECONDS', DefaultJwtExpiresInSeconds));
 }

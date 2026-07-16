@@ -1,17 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  Query,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -37,9 +24,7 @@ import { WorkspaceCompaniesService } from './workspace-companies.service';
   version: '1',
 })
 export class WorkspaceCompaniesController {
-  constructor(
-    private readonly workspaceCompaniesService: WorkspaceCompaniesService,
-  ) {}
+  constructor(private readonly workspaceCompaniesService: WorkspaceCompaniesService) {}
 
   @Get()
   @ApiOkResponse({ type: [WorkspaceCompanyResponseDto] })
@@ -49,99 +34,62 @@ export class WorkspaceCompaniesController {
 
   @Get('management-summary')
   @ApiOkResponse({ type: WorkspaceCompanyManagementSummaryResponseDto })
-  getManagementSummary(
-    @CurrentUser() user: AuthUser,
-    @Query('includeUsers') includeUsers?: string,
-  ) {
-    return this.workspaceCompaniesService.getManagementSummary(
-      user,
-      includeUsers !== 'false',
-    );
+  getManagementSummary(@CurrentUser() user: AuthUser, @Query('includeUsers') includeUsers?: string) {
+    return this.workspaceCompaniesService.getManagementSummary(user, includeUsers !== 'false');
   }
 
   @Post()
   @ApiCreatedResponse({ type: WorkspaceCompanyResponseDto })
-  create(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: CreateWorkspaceCompanyDto,
-  ) {
+  create(@CurrentUser() user: AuthUser, @Body() dto: CreateWorkspaceCompanyDto) {
     return this.workspaceCompaniesService.create(user, dto);
   }
 
   @Get(':companyId')
   @ApiOkResponse({ type: WorkspaceCompanyResponseDto })
-  findOne(
-    @CurrentUser() user: AuthUser,
-    @Param('companyId', ParseIntPipe) companyId: number,
-  ) {
+  findOne(@CurrentUser() user: AuthUser, @Param('companyId', ParseIntPipe) companyId: number) {
     return this.workspaceCompaniesService.findOne(user, companyId);
   }
 
   @Patch(':companyId')
   @ApiOkResponse({ type: WorkspaceCompanyResponseDto })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('companyId', ParseIntPipe) companyId: number,
-    @Body() dto: UpdateWorkspaceCompanyDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('companyId', ParseIntPipe) companyId: number, @Body() dto: UpdateWorkspaceCompanyDto) {
     return this.workspaceCompaniesService.update(user, companyId, dto);
   }
 
   @Post(':companyId/logo')
   @UseInterceptors(FileInterceptor('logo'))
   @ApiCreatedResponse({ type: WorkspaceCompanyLogoUploadResponseDto })
-  uploadLogo(
-    @CurrentUser() user: AuthUser,
-    @Param('companyId', ParseIntPipe) companyId: number,
-    @UploadedFile() file: UploadedCompanyLogoFile | undefined,
-  ) {
+  uploadLogo(@CurrentUser() user: AuthUser, @Param('companyId', ParseIntPipe) companyId: number, @UploadedFile() file: UploadedCompanyLogoFile | undefined) {
     return this.workspaceCompaniesService.uploadLogo(user, companyId, file);
   }
 
   @Delete(':companyId')
   @ApiOkResponse({ type: WorkspaceCompanyResponseDto })
-  deactivate(
-    @CurrentUser() user: AuthUser,
-    @Param('companyId', ParseIntPipe) companyId: number,
-  ) {
+  deactivate(@CurrentUser() user: AuthUser, @Param('companyId', ParseIntPipe) companyId: number) {
     return this.workspaceCompaniesService.deactivate(user, companyId);
   }
 
   @Get(':companyId/units')
   @ApiOkResponse({ type: [WorkspaceCompanyUnitResponseDto] })
-  findUnits(
-    @CurrentUser() user: AuthUser,
-    @Param('companyId', ParseIntPipe) companyId: number,
-  ) {
+  findUnits(@CurrentUser() user: AuthUser, @Param('companyId', ParseIntPipe) companyId: number) {
     return this.workspaceCompaniesService.findUnits(user, companyId);
   }
 
   @Post(':companyId/units')
   @ApiCreatedResponse({ type: WorkspaceCompanyUnitResponseDto })
-  createUnit(
-    @CurrentUser() user: AuthUser,
-    @Param('companyId', ParseIntPipe) companyId: number,
-    @Body() dto: CreateCompanyUnitDto,
-  ) {
+  createUnit(@CurrentUser() user: AuthUser, @Param('companyId', ParseIntPipe) companyId: number, @Body() dto: CreateCompanyUnitDto) {
     return this.workspaceCompaniesService.createUnit(user, companyId, dto);
   }
 
   @Patch('units/:unitId')
   @ApiOkResponse({ type: WorkspaceCompanyUnitResponseDto })
-  updateUnit(
-    @CurrentUser() user: AuthUser,
-    @Param('unitId', ParseIntPipe) unitId: number,
-    @Body() dto: UpdateCompanyUnitDto,
-  ) {
+  updateUnit(@CurrentUser() user: AuthUser, @Param('unitId', ParseIntPipe) unitId: number, @Body() dto: UpdateCompanyUnitDto) {
     return this.workspaceCompaniesService.updateUnit(user, unitId, dto);
   }
 
   @Delete('units/:unitId')
   @ApiOkResponse({ type: WorkspaceCompanyUnitResponseDto })
-  deactivateUnit(
-    @CurrentUser() user: AuthUser,
-    @Param('unitId', ParseIntPipe) unitId: number,
-  ) {
+  deactivateUnit(@CurrentUser() user: AuthUser, @Param('unitId', ParseIntPipe) unitId: number) {
     return this.workspaceCompaniesService.deactivateUnit(user, unitId);
   }
 }

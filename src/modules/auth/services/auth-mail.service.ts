@@ -1,17 +1,6 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  Job,
-  Queue,
-  Worker,
-  type JobsOptions,
-  type RedisOptions,
-} from 'bullmq';
+import { Job, Queue, Worker, type JobsOptions, type RedisOptions } from 'bullmq';
 import { Resend, type CreateEmailOptions } from 'resend';
 
 type MailJobName =
@@ -98,15 +87,9 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
   private mailWorker?: Worker<MailJobData>;
 
   constructor(private readonly configService: ConfigService) {
-    this.queueEnabled =
-      this.configService.get<string>('MAIL_QUEUE_ENABLED', 'false') === 'true';
-    this.fromEmail = this.configService.get<string>(
-      'MAIL_FROM',
-      'no-reply@example.com',
-    );
-    const resendApiKey = this.configService
-      .get<string>('RESEND_API_KEY')
-      ?.trim();
+    this.queueEnabled = this.configService.get<string>('MAIL_QUEUE_ENABLED', 'false') === 'true';
+    this.fromEmail = this.configService.get<string>('MAIL_FROM', 'no-reply@example.com');
+    const resendApiKey = this.configService.get<string>('RESEND_API_KEY')?.trim();
 
     if (resendApiKey) {
       this.resendClient = new Resend(resendApiKey);
@@ -131,23 +114,16 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       connection,
       defaultJobOptions: this.jobOptions,
     });
-    this.mailWorker = new Worker<MailJobData>(
-      AuthMailService.queueName,
-      (job) => this.processMailJob(job),
-      {
-        connection,
-        concurrency: this.getMailWorkerConcurrency(),
-      },
-    );
+    this.mailWorker = new Worker<MailJobData>(AuthMailService.queueName, (job) => this.processMailJob(job), {
+      connection,
+      concurrency: this.getMailWorkerConcurrency(),
+    });
 
     this.mailWorker.on('completed', (job) => {
       this.logger.debug(`Mail job ${job.id} completed: ${job.name}.`);
     });
     this.mailWorker.on('failed', (job, error) => {
-      this.logger.error(
-        `Mail job ${job?.id ?? 'unknown'} failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Mail job ${job?.id ?? 'unknown'} failed: ${error.message}`, error.stack);
     });
 
     this.logger.log('Mail queue enabled with BullMQ.');
@@ -184,11 +160,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     await this.sendPasswordResetCodeNow(email, code);
   }
 
-  async sendOnboardingCongratulations(
-    email: string,
-    recipientName: string,
-    companyName: string,
-  ): Promise<void> {
+  async sendOnboardingCongratulations(email: string, recipientName: string, companyName: string): Promise<void> {
     if (this.mailQueue) {
       await this.enqueueMail('onboarding-congratulations', {
         type: 'onboarding-congratulations',
@@ -199,18 +171,10 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    await this.sendOnboardingCongratulationsNow(
-      email,
-      recipientName,
-      companyName,
-    );
+    await this.sendOnboardingCongratulationsNow(email, recipientName, companyName);
   }
 
-  async sendCompanyCreated(
-    email: string,
-    recipientName: string,
-    companyName: string,
-  ): Promise<void> {
+  async sendCompanyCreated(email: string, recipientName: string, companyName: string): Promise<void> {
     if (this.mailQueue) {
       await this.enqueueMail('company-created', {
         type: 'company-created',
@@ -224,13 +188,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     await this.sendCompanyCreatedNow(email, recipientName, companyName);
   }
 
-  async sendWorkspaceUserInvitation(
-    email: string,
-    recipientName: string,
-    invitedByName: string,
-    companyNames: string[],
-    activationUrl: string,
-  ): Promise<void> {
+  async sendWorkspaceUserInvitation(email: string, recipientName: string, invitedByName: string, companyNames: string[], activationUrl: string): Promise<void> {
     if (this.mailQueue) {
       await this.enqueueMail('workspace-user-invitation', {
         type: 'workspace-user-invitation',
@@ -243,13 +201,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    await this.sendWorkspaceUserInvitationNow(
-      email,
-      recipientName,
-      invitedByName,
-      companyNames,
-      activationUrl,
-    );
+    await this.sendWorkspaceUserInvitationNow(email, recipientName, invitedByName, companyNames, activationUrl);
   }
 
   async sendWorkspaceUserActivated(
@@ -271,13 +223,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    await this.sendWorkspaceUserActivatedNow(
-      email,
-      recipientName,
-      activatedUserName,
-      activatedUserEmail,
-      companyNames,
-    );
+    await this.sendWorkspaceUserActivatedNow(email, recipientName, activatedUserName, activatedUserEmail, companyNames);
   }
 
   private async enqueueMail(name: MailJobName, data: MailJobData) {
@@ -294,18 +240,10 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
         await this.sendPasswordResetCodeNow(job.data.email, job.data.code);
         return;
       case 'onboarding-congratulations':
-        await this.sendOnboardingCongratulationsNow(
-          job.data.email,
-          job.data.recipientName,
-          job.data.companyName,
-        );
+        await this.sendOnboardingCongratulationsNow(job.data.email, job.data.recipientName, job.data.companyName);
         return;
       case 'company-created':
-        await this.sendCompanyCreatedNow(
-          job.data.email,
-          job.data.recipientName,
-          job.data.companyName,
-        );
+        await this.sendCompanyCreatedNow(job.data.email, job.data.recipientName, job.data.companyName);
         return;
       case 'workspace-user-invitation':
         await this.sendWorkspaceUserInvitationNow(
@@ -328,10 +266,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async sendVerificationCodeNow(
-    email: string,
-    code: string,
-  ): Promise<void> {
+  private async sendVerificationCodeNow(email: string, code: string): Promise<void> {
     await this.sendMail({
       to: email,
       subject: 'Verify your account',
@@ -342,10 +277,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     this.logger.debug(`Verification email sent for ${email}.`);
   }
 
-  private async sendPasswordResetCodeNow(
-    email: string,
-    code: string,
-  ): Promise<void> {
+  private async sendPasswordResetCodeNow(email: string, code: string): Promise<void> {
     await this.sendMail({
       to: email,
       subject: 'Reset your password',
@@ -356,11 +288,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     this.logger.debug(`Password reset email sent for ${email}.`);
   }
 
-  private async sendOnboardingCongratulationsNow(
-    email: string,
-    recipientName: string,
-    companyName: string,
-  ): Promise<void> {
+  private async sendOnboardingCongratulationsNow(email: string, recipientName: string, companyName: string): Promise<void> {
     await this.sendMail({
       to: email,
       subject: 'Congratulations on completing your setup',
@@ -375,11 +303,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     this.logger.debug(`Onboarding congratulations email sent for ${email}.`);
   }
 
-  private async sendCompanyCreatedNow(
-    email: string,
-    recipientName: string,
-    companyName: string,
-  ): Promise<void> {
+  private async sendCompanyCreatedNow(email: string, recipientName: string, companyName: string): Promise<void> {
     await this.sendMail({
       to: email,
       subject: 'Company created successfully',
@@ -401,9 +325,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     companyNames: string[],
     activationUrl: string,
   ): Promise<void> {
-    const companyList = companyNames.length
-      ? companyNames.join(', ')
-      : 'the selected workspace companies';
+    const companyList = companyNames.length ? companyNames.join(', ') : 'the selected workspace companies';
 
     await this.sendMail({
       to: email,
@@ -427,8 +349,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
     activatedUserEmail: string,
     companyNames: string[],
   ): Promise<void> {
-    const companyList =
-      companyNames.length > 0 ? companyNames.join(', ') : 'your workspace';
+    const companyList = companyNames.length > 0 ? companyNames.join(', ') : 'your workspace';
 
     await this.sendMail({
       to: email,
@@ -462,9 +383,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    this.logger.warn(
-      `Mail delivery skipped because RESEND_API_KEY is not configured. Message type: ${payload.subject}; recipient: ${payload.to}.`,
-    );
+    this.logger.warn(`Mail delivery skipped because RESEND_API_KEY is not configured. Message type: ${payload.subject}; recipient: ${payload.to}.`);
   }
 
   private getRedisConnectionOptions(): RedisOptions {
@@ -476,15 +395,9 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
       return {
         host: parsedUrl.hostname,
         port: Number(parsedUrl.port || 6379),
-        username: parsedUrl.username
-          ? decodeURIComponent(parsedUrl.username)
-          : undefined,
-        password: parsedUrl.password
-          ? decodeURIComponent(parsedUrl.password)
-          : undefined,
-        db: parsedUrl.pathname
-          ? Number(parsedUrl.pathname.replace('/', '') || 0)
-          : undefined,
+        username: parsedUrl.username ? decodeURIComponent(parsedUrl.username) : undefined,
+        password: parsedUrl.password ? decodeURIComponent(parsedUrl.password) : undefined,
+        db: parsedUrl.pathname ? Number(parsedUrl.pathname.replace('/', '') || 0) : undefined,
         tls: parsedUrl.protocol === 'rediss:' ? {} : undefined,
         maxRetriesPerRequest: null,
       };
@@ -501,9 +414,7 @@ export class AuthMailService implements OnModuleInit, OnModuleDestroy {
   }
 
   private getMailWorkerConcurrency() {
-    const concurrency = Number(
-      this.configService.get<string | number>('MAIL_QUEUE_CONCURRENCY', 2),
-    );
+    const concurrency = Number(this.configService.get<string | number>('MAIL_QUEUE_CONCURRENCY', 2));
 
     return Number.isFinite(concurrency) && concurrency > 0 ? concurrency : 2;
   }

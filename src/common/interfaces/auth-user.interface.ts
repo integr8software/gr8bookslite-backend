@@ -1,9 +1,4 @@
-import {
-  AccessScopeLevel,
-  MembershipRole,
-  MembershipStatus,
-  SystemRole,
-} from '@prisma/client';
+import { AccessScopeLevel, MembershipRole, MembershipStatus, SystemRole } from '@prisma/client';
 import { AppRole } from '../enums/app-role.enum';
 
 export interface AuthUserModuleItem {

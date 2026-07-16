@@ -1,22 +1,6 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-  Term,
-  TermDateMode,
-  TermStatus,
-} from '@prisma/client';
-import {
-  DefaultLimit,
-  DefaultPage,
-} from '../../../common/constants/pagination.constant';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { MembershipRole, MembershipStatus, Prisma, Term, TermDateMode, TermStatus } from '@prisma/client';
+import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -72,10 +56,7 @@ export class TermMaintenanceService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
-    const term = await this.findTermOrThrow(
-      companyId,
-      parsePositiveBigIntId(id),
-    );
+    const term = await this.findTermOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       term: (await this.mapTermsWithAuditUsers([term]))[0],
@@ -164,9 +145,7 @@ export class TermMaintenanceService {
     });
 
     if (existingTerms.length > 0) {
-      throw new ConflictException(
-        `Term already exists: ${existingTerms[0].name}.`,
-      );
+      throw new ConflictException(`Term already exists: ${existingTerms[0].name}.`);
     }
 
     const terms = await this.prisma.$transaction(async (tx) => {
@@ -198,10 +177,7 @@ export class TermMaintenanceService {
     };
   }
 
-  private buildListWhere(
-    companyId: number,
-    query: GetTermListQueryDto,
-  ): Prisma.TermWhereInput {
+  private buildListWhere(companyId: number, query: GetTermListQueryDto): Prisma.TermWhereInput {
     const search = query.search?.trim();
 
     return {
@@ -211,10 +187,7 @@ export class TermMaintenanceService {
       ...(query.status ? { status: query.status } : {}),
       ...(search
         ? {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { description: { contains: search, mode: 'insensitive' } },
-            ],
+            OR: [{ name: { contains: search, mode: 'insensitive' } }, { description: { contains: search, mode: 'insensitive' } }],
           }
         : {}),
     };
@@ -229,9 +202,7 @@ export class TermMaintenanceService {
     return terms.map((term) => mapTerm(term, userNames));
   }
 
-  private buildOrderBy(
-    query: GetTermListQueryDto,
-  ): Prisma.TermOrderByWithRelationInput[] {
+  private buildOrderBy(query: GetTermListQueryDto): Prisma.TermOrderByWithRelationInput[] {
     const sortBy = query.sortBy ?? 'name';
     const sortDirection = query.sortDirection ?? 'asc';
     const field = sortBy === 'dateMode' ? 'dateMode' : sortBy;
@@ -265,15 +236,11 @@ export class TermMaintenanceService {
           const count = group._count._all;
 
           statistics.totalTerms += count;
-          if (group.status === TermStatus.ACTIVE)
-            statistics.activeTerms += count;
-          if (group.status === TermStatus.INACTIVE)
-            statistics.inactiveTerms += count;
+          if (group.status === TermStatus.ACTIVE) statistics.activeTerms += count;
+          if (group.status === TermStatus.INACTIVE) statistics.inactiveTerms += count;
           if (group.dateMode === TermDateMode.DAY) statistics.dayTerms += count;
-          if (group.dateMode === TermDateMode.MONTH)
-            statistics.monthTerms += count;
-          if (group.dateMode === TermDateMode.YEAR)
-            statistics.yearTerms += count;
+          if (group.dateMode === TermDateMode.MONTH) statistics.monthTerms += count;
+          if (group.dateMode === TermDateMode.YEAR) statistics.yearTerms += count;
         }
 
         return statistics;
@@ -292,9 +259,7 @@ export class TermMaintenanceService {
   private toTermData(dto: UpdateTermDto) {
     return {
       ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
-      ...(dto.description !== undefined
-        ? { description: dto.description.trim() }
-        : {}),
+      ...(dto.description !== undefined ? { description: dto.description.trim() } : {}),
       ...(dto.dateMode !== undefined ? { dateMode: dto.dateMode } : {}),
       ...(dto.period !== undefined ? { period: dto.period } : {}),
       ...(dto.status !== undefined ? { status: dto.status } : {}),
@@ -317,11 +282,7 @@ export class TermMaintenanceService {
     return term;
   }
 
-  private async ensureNameAvailable(
-    companyId: number,
-    name: string,
-    excludedTermId?: bigint,
-  ) {
+  private async ensureNameAvailable(companyId: number, name: string, excludedTermId?: bigint) {
     const normalizedName = name.trim();
 
     if (!normalizedName) {
@@ -352,15 +313,10 @@ export class TermMaintenanceService {
     const names = new Set<string>();
 
     for (const term of terms) {
-      const normalizedName = term.name
-        .trim()
-        .replace(/\s+/g, ' ')
-        .toLowerCase();
+      const normalizedName = term.name.trim().replace(/\s+/g, ' ').toLowerCase();
 
       if (names.has(normalizedName)) {
-        throw new BadRequestException(
-          `Duplicate term in upload: ${term.name.trim()}.`,
-        );
+        throw new BadRequestException(`Duplicate term in upload: ${term.name.trim()}.`);
       }
 
       names.add(normalizedName);
@@ -397,25 +353,16 @@ export class TermMaintenanceService {
     }
   }
 
-  private ensureCan(
-    user: AuthUser,
-    companyId: number,
-    action: PermissionAction,
-  ) {
+  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {
       return;
     }
 
-    if (
-      user.companyId === companyId &&
-      user.permissions.includes(`TM:${action}`)
-    ) {
+    if (user.companyId === companyId && user.permissions.includes(`TM:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException(
-      'You do not have permission to manage term definitions.',
-    );
+    throw new ForbiddenException('You do not have permission to manage term definitions.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -433,9 +380,7 @@ export class TermMaintenanceService {
       return true;
     }
 
-    return (
-      user.companyId === companyId && user.permissions.includes(`TM:${action}`)
-    );
+    return user.companyId === companyId && user.permissions.includes(`TM:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -446,16 +391,12 @@ export class TermMaintenanceService {
     return (
       user.companyId === companyId &&
       user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN ||
-        user.membershipRole === MembershipRole.ADMIN)
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
     );
   }
 
   private throwFriendlyPrismaError(error: unknown) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       throw new ConflictException('A term with this name already exists.');
     }
   }

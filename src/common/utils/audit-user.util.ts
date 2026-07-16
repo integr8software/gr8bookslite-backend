@@ -2,17 +2,8 @@ import type { AuditUserLookupClient } from '../interfaces/audit-user-lookup-clie
 
 export const SystemGeneratedAuditLabel = 'System Generated';
 
-export async function resolveAuditUserNames(
-  prisma: AuditUserLookupClient,
-  userIds: Array<number | null | undefined>,
-) {
-  const uniqueUserIds = [
-    ...new Set(
-      userIds.filter(
-        (userId): userId is number => userId !== null && userId !== undefined,
-      ),
-    ),
-  ];
+export async function resolveAuditUserNames(prisma: AuditUserLookupClient, userIds: Array<number | null | undefined>) {
+  const uniqueUserIds = [...new Set(userIds.filter((userId): userId is number => userId !== null && userId !== undefined))];
   const users = uniqueUserIds.length
     ? await prisma.user.findMany({
         where: { id: { in: uniqueUserIds } },

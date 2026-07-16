@@ -1,11 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { ChartAccountLevel } from '@prisma/client';
-import {
-  assertCanCreateAccountLevel,
-  generateNextAccountCodeFromSiblings,
-  inferAccountLevelFromCode,
-  parseChartAccountCode,
-} from './chart-account-code.util';
+import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings, inferAccountLevelFromCode, parseChartAccountCode } from './chart-account-code.util';
 
 describe('chart-account-code.util', () => {
   it('parses valid 10-digit account codes', () => {
@@ -23,21 +18,11 @@ describe('chart-account-code.util', () => {
   });
 
   it('infers the account level from populated code segments', () => {
-    expect(inferAccountLevelFromCode('1000000000')).toBe(
-      ChartAccountLevel.MAJOR,
-    );
-    expect(inferAccountLevelFromCode('1010000000')).toBe(
-      ChartAccountLevel.SUB1,
-    );
-    expect(inferAccountLevelFromCode('1010300000')).toBe(
-      ChartAccountLevel.SUB2,
-    );
-    expect(inferAccountLevelFromCode('1010301000')).toBe(
-      ChartAccountLevel.SUB3,
-    );
-    expect(inferAccountLevelFromCode('1010301001')).toBe(
-      ChartAccountLevel.SPECIFIC,
-    );
+    expect(inferAccountLevelFromCode('1000000000')).toBe(ChartAccountLevel.MAJOR);
+    expect(inferAccountLevelFromCode('1010000000')).toBe(ChartAccountLevel.SUB1);
+    expect(inferAccountLevelFromCode('1010300000')).toBe(ChartAccountLevel.SUB2);
+    expect(inferAccountLevelFromCode('1010301000')).toBe(ChartAccountLevel.SUB3);
+    expect(inferAccountLevelFromCode('1010301001')).toBe(ChartAccountLevel.SPECIFIC);
   });
 
   it('generates major accounts and fills gaps', () => {
@@ -91,50 +76,20 @@ describe('chart-account-code.util', () => {
   });
 
   it('rejects invalid child levels', () => {
-    expect(() =>
-      assertCanCreateAccountLevel(
-        ChartAccountLevel.SUB1,
-        ChartAccountLevel.SUB3,
-      ),
-    ).toThrow(BadRequestException);
+    expect(() => assertCanCreateAccountLevel(ChartAccountLevel.SUB1, ChartAccountLevel.SUB3)).toThrow(BadRequestException);
   });
 
   it('rejects specific accounts directly under major accounts', () => {
-    expect(() =>
-      assertCanCreateAccountLevel(
-        ChartAccountLevel.MAJOR,
-        ChartAccountLevel.SPECIFIC,
-      ),
-    ).toThrow(BadRequestException);
+    expect(() => assertCanCreateAccountLevel(ChartAccountLevel.MAJOR, ChartAccountLevel.SPECIFIC)).toThrow(BadRequestException);
   });
 
   it('allows specific accounts under sub account 1, 2, or 3', () => {
-    expect(() =>
-      assertCanCreateAccountLevel(
-        ChartAccountLevel.SUB1,
-        ChartAccountLevel.SPECIFIC,
-      ),
-    ).not.toThrow();
-    expect(() =>
-      assertCanCreateAccountLevel(
-        ChartAccountLevel.SUB2,
-        ChartAccountLevel.SPECIFIC,
-      ),
-    ).not.toThrow();
-    expect(() =>
-      assertCanCreateAccountLevel(
-        ChartAccountLevel.SUB3,
-        ChartAccountLevel.SPECIFIC,
-      ),
-    ).not.toThrow();
+    expect(() => assertCanCreateAccountLevel(ChartAccountLevel.SUB1, ChartAccountLevel.SPECIFIC)).not.toThrow();
+    expect(() => assertCanCreateAccountLevel(ChartAccountLevel.SUB2, ChartAccountLevel.SPECIFIC)).not.toThrow();
+    expect(() => assertCanCreateAccountLevel(ChartAccountLevel.SUB3, ChartAccountLevel.SPECIFIC)).not.toThrow();
   });
 
   it('rejects child accounts under specific accounts', () => {
-    expect(() =>
-      assertCanCreateAccountLevel(
-        ChartAccountLevel.SPECIFIC,
-        ChartAccountLevel.SUB1,
-      ),
-    ).toThrow(BadRequestException);
+    expect(() => assertCanCreateAccountLevel(ChartAccountLevel.SPECIFIC, ChartAccountLevel.SUB1)).toThrow(BadRequestException);
   });
 });

@@ -1,15 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-import {
-  ResponsibilityCenterCategory,
-  ResponsibilityCenterFinancialType,
-  ResponsibilityCenterStatus,
-} from '@prisma/client';
-import {
-  emptyStringToUndefined,
-  normalizeCode,
-  trimString,
-} from '../../../../common/utils/dto-transform.util';
+import { ResponsibilityCenterCategory, ResponsibilityCenterFinancialType, ResponsibilityCenterStatus } from '@prisma/client';
+import { emptyStringToUndefined, normalizeCode, trimString } from '../../../../common/utils/dto-transform.util';
 
 export class CreateResponsibilityCenterDto {
   @Transform(({ value }) => normalizeCode(value))
@@ -49,4 +41,3 @@ export class CreateResponsibilityCenterDto {
   @MaxLength(500)
   description?: string;
 }
-

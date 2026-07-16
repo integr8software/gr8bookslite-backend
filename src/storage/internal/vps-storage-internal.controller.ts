@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Headers,
-  Post,
-  UploadedFile,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Headers, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VpsStorageInternalService } from './vps-storage-internal.service';
 
@@ -22,9 +14,7 @@ type UploadedStorageFile = {
   version: '1',
 })
 export class VpsStorageInternalController {
-  constructor(
-    private readonly vpsStorageInternalService: VpsStorageInternalService,
-  ) {}
+  constructor(private readonly vpsStorageInternalService: VpsStorageInternalService) {}
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
@@ -43,10 +33,7 @@ export class VpsStorageInternalController {
   }
 
   @Delete('file')
-  delete(
-    @Headers('authorization') authorization: string | undefined,
-    @Body('relativePath') relativePath: string,
-  ) {
+  delete(@Headers('authorization') authorization: string | undefined, @Body('relativePath') relativePath: string) {
     return this.vpsStorageInternalService.delete({
       authorization,
       relativePath,

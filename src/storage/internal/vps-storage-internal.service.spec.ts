@@ -36,17 +36,11 @@ describe('VpsStorageInternalService', () => {
       },
     });
 
-    expect(result.relativePath).toMatch(
-      /^shared-dev\/avatars\/user-4\/\d+-[\da-f-]+-My-Avatar\.jpg$/,
-    );
-    expect(result.publicUrl).toBe(
-      `http://storage.example.com/${result.relativePath}`,
-    );
+    expect(result.relativePath).toMatch(/^shared-dev\/avatars\/user-4\/\d+-[\da-f-]+-My-Avatar\.jpg$/);
+    expect(result.publicUrl).toBe(`http://storage.example.com/${result.relativePath}`);
     expect(result.mimeType).toBe('image/jpeg');
     expect(result.size).toBe(12);
-    await expect(
-      readFile(path.join(root, result.relativePath), 'utf8'),
-    ).resolves.toBe('avatar-bytes');
+    await expect(readFile(path.join(root, result.relativePath), 'utf8')).resolves.toBe('avatar-bytes');
   });
 
   it('deletes files by relative path', async () => {

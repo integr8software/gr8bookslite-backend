@@ -1,21 +1,11 @@
 import { ChartAccountLevel, ChartAccountStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import {
-  findSystemAccountGroupOrThrow,
-  SystemAccountGroups,
-} from '../../chart-of-accounts/utils/system-account-groups.util';
+import { findSystemAccountGroupOrThrow, SystemAccountGroups } from '../../chart-of-accounts/utils/system-account-groups.util';
 
 const CashInBankSpecificPrefix = 'Cash in Bank - ';
 
-export async function seedCompanyBankAccountDefaults(
-  tx: Prisma.TransactionClient | PrismaService,
-  companyId: number,
-) {
-  const cashInBankParent = await findSystemAccountGroupOrThrow(
-    tx,
-    companyId,
-    SystemAccountGroups.bankMasterfile.cashInBankParent,
-  );
+export async function seedCompanyBankAccountDefaults(tx: Prisma.TransactionClient | PrismaService, companyId: number) {
+  const cashInBankParent = await findSystemAccountGroupOrThrow(tx, companyId, SystemAccountGroups.bankMasterfile.cashInBankParent);
 
   const cashInBankAccounts = await tx.chartAccount.findMany({
     where: {
@@ -51,8 +41,7 @@ export async function seedCompanyBankAccountDefaults(
         existingBank.status === ChartAccountStatus.INACTIVE ||
         !existingBank.accountNumber ||
         !existingBank.accountName ||
-        (existingBank.accountNumber === account.accountCode &&
-          existingBank.accountName === account.accountTitle)
+        (existingBank.accountNumber === account.accountCode && existingBank.accountName === account.accountTitle)
       ) {
         await tx.chartAccount.update({
           where: { id: account.id },
@@ -71,9 +60,7 @@ export async function seedCompanyBankAccountDefaults(
       continue;
     }
 
-    const bankName = account.accountTitle
-      .slice(CashInBankSpecificPrefix.length)
-      .trim();
+    const bankName = account.accountTitle.slice(CashInBankSpecificPrefix.length).trim();
 
     if (!bankName) {
       continue;

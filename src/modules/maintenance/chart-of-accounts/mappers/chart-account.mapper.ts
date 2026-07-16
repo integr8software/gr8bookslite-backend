@@ -1,25 +1,15 @@
 import { normalizeAccountGroupTags } from '../utils/system-account-groups.util';
-import {
-  parseAuditUserId,
-  SystemGeneratedAuditLabel,
-} from '../../../../common/utils/audit-user.util';
-import type {
-  ChartAccountPayload,
-  ChartAccountTreePayload,
-} from '../types/chart-account.type';
+import { parseAuditUserId, SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.util';
+import type { ChartAccountPayload, ChartAccountResponse, ChartAccountTreePayload, ChartAccountTreeResponse } from '../types/chart-account.type';
 
-export function mapChartAccount(
-  account: ChartAccountPayload,
-  userNames: Map<number, string> = new Map(),
-) {
+export function mapChartAccount(account: ChartAccountPayload, userNames: Map<number, string> = new Map()): ChartAccountResponse {
   const createdByUserId = parseAuditUserId(account.whoCreated);
   const updatedByUserId = parseAuditUserId(account.whoModified);
 
   return {
     id: Number(account.id),
     companyId: account.companyId,
-    parentAccountId:
-      account.parentAccountId === null ? null : Number(account.parentAccountId),
+    parentAccountId: account.parentAccountId === null ? null : Number(account.parentAccountId),
     accountCode: account.accountCode,
     accountTitle: account.accountTitle,
     accountLevel: account.accountLevel,
@@ -40,12 +30,9 @@ export function mapChartAccount(
     isUserCreated: Boolean(account.whoCreated),
     isBankLinked: account.bankAccounts.length > 0,
     deletedAt: account.deletedAt?.toISOString() ?? null,
-    createdBy:
-      createdByUserId === null
-        ? SystemGeneratedAuditLabel
-        : (userNames.get(createdByUserId) ?? null),
+    createdBy: createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(createdByUserId) ?? null),
     createdAt: account.createdAt.toISOString(),
-    updatedBy: (updatedByUserId && userNames.get(updatedByUserId)) ?? null,
+    updatedBy: updatedByUserId === null ? null : (userNames.get(updatedByUserId) ?? null),
     updatedAt: account.updatedAt.toISOString(),
     bankAccounts: account.bankAccounts.map((bankAccount) => ({
       id: Number(bankAccount.id),
@@ -62,15 +49,10 @@ export function mapChartAccount(
   };
 }
 
-export function mapChartAccountTreeNode(
-  account: ChartAccountTreePayload,
-  userNames: Map<number, string> = new Map(),
-) {
+export function mapChartAccountTreeNode(account: ChartAccountTreePayload, userNames: Map<number, string> = new Map()): ChartAccountTreeResponse {
   return {
     ...mapChartAccount(account, userNames),
-    children: (account.children ?? []).map((child) =>
-      mapChartAccountTreeNode(child, userNames),
-    ),
+    children: (account.children ?? []).map((child) => mapChartAccountTreeNode(child, userNames)),
   };
 }
 

@@ -27,12 +27,7 @@ export function normalizeOptionalQueryString(value: unknown) {
     return normalizeOptionalQueryString(value[0]);
   }
 
-  if (
-    typeof value !== 'string' &&
-    typeof value !== 'number' &&
-    typeof value !== 'bigint' &&
-    typeof value !== 'boolean'
-  ) {
+  if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'bigint' && typeof value !== 'boolean') {
     return undefined;
   }
 

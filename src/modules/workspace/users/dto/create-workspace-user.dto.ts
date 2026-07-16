@@ -1,14 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMinSize,
-  IsArray,
-  IsEmail,
-  IsOptional,
-  IsString,
-  Matches,
-  MinLength,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayMinSize, IsArray, IsEmail, IsOptional, IsString, Matches, MinLength, ValidateNested } from 'class-validator';
 import { WorkspaceUserAssignmentDto } from './workspace-user-assignment.dto';
 
 const ContactNumberPattern = /^\+63 [\d ]{7,14}$/;

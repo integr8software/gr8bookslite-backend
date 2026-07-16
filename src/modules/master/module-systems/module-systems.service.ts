@@ -127,9 +127,7 @@ export class ModuleSystemsService {
         where: { systemId },
         select: { id: true, moduleId: true },
       });
-      const existingByModuleId = new Map(
-        existing.map((item) => [item.moduleId, item.id]),
-      );
+      const existingByModuleId = new Map(existing.map((item) => [item.moduleId, item.id]));
 
       await tx.moduleSystemModule.deleteMany({
         where: {
@@ -176,11 +174,7 @@ export class ModuleSystemsService {
 
   async saveSidebar(systemId: number, dto: SaveModuleSystemSidebarDto) {
     const system = await this.findSystem(systemId);
-    const assignedModuleIds = new Set(
-      system.modules
-        .filter((item) => item.isActive)
-        .map((item) => item.moduleId),
-    );
+    const assignedModuleIds = new Set(system.modules.filter((item) => item.isActive).map((item) => item.moduleId));
     this.validateSidebarTree(dto.items, assignedModuleIds);
 
     await this.prisma.$transaction(async (tx) => {
@@ -214,10 +208,7 @@ export class ModuleSystemsService {
     if (existing) throw new BadRequestException('A system with this code already exists.');
   }
 
-  private validateSidebarTree(
-    items: ModuleSystemSidebarItemDto[],
-    assignedModuleIds: Set<number>,
-  ) {
+  private validateSidebarTree(items: ModuleSystemSidebarItemDto[], assignedModuleIds: Set<number>) {
     const keys = new Set<string>();
     const linkedModuleIds = new Set<number>();
     const walk = (siblings: ModuleSystemSidebarItemDto[], depth: number) => {
@@ -264,7 +255,7 @@ export class ModuleSystemsService {
         systemId,
         parentId,
         moduleId: item.itemType === 'LINK' ? item.moduleId! : null,
-        itemType: item.itemType as SidebarItemType,
+        itemType: item.itemType,
         key: item.key.trim(),
         label: item.label.trim(),
         description: item.description?.trim() || null,
@@ -356,10 +347,6 @@ export class ModuleSystemsService {
   }
 
   private normalizeCodes(codes: string[]) {
-    return [
-      ...new Set(
-        codes.map((code) => code.trim().toUpperCase()).filter(Boolean),
-      ),
-    ];
+    return [...new Set(codes.map((code) => code.trim().toUpperCase()).filter(Boolean))];
   }
 }

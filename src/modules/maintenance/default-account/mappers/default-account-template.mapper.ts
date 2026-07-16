@@ -1,13 +1,7 @@
 import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.util';
-import type {
-  DefaultAccountPayload,
-  GeneratedDefaultAccount,
-} from '../types/default-account.type';
+import type { DefaultAccountPayload, GeneratedDefaultAccount } from '../types/default-account.type';
 
-export function mapDefaultAccount(
-  template: DefaultAccountPayload,
-  userNames: Map<number, string> = new Map(),
-) {
+export function mapDefaultAccount(template: DefaultAccountPayload, userNames: Map<number, string> = new Map()) {
   return {
     id: template.id.toString(),
     companyId: template.companyId,
@@ -16,35 +10,21 @@ export function mapDefaultAccount(
     description: template.description ?? '',
     status: template.status,
     generatedAccounts: [
-      mapGeneratedAccount(
-        template.type === 'FIXED_ASSET' ? 'DEPRECIATION_EXPENSE' : 'EXPENSE',
-        template.expenseCoa,
-      ),
+      mapGeneratedAccount(template.type === 'FIXED_ASSET' ? 'DEPRECIATION_EXPENSE' : 'EXPENSE', template.expenseCoa),
       mapGeneratedAccount('REVENUE', template.revenueCoa),
       mapGeneratedAccount('FIXED_ASSET', template.assetCoa),
-      mapGeneratedAccount(
-        'ACCUMULATED_DEPRECIATION',
-        template.accumulatedDepreciationCoa,
-      ),
+      mapGeneratedAccount('ACCUMULATED_DEPRECIATION', template.accumulatedDepreciationCoa),
     ].filter(Boolean),
-    createdBy:
-      template.createdByUserId === null
-        ? SystemGeneratedAuditLabel
-        : (userNames.get(template.createdByUserId) ?? null),
+    createdBy: template.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(template.createdByUserId) ?? null),
     createdAt: template.createdAt.toISOString(),
-    updatedBy:
-      (template.updatedByUserId && userNames.get(template.updatedByUserId)) ??
-      null,
+    updatedBy: (template.updatedByUserId && userNames.get(template.updatedByUserId)) ?? null,
     updatedAt: template.updatedAt.toISOString(),
     createdByUserId: template.createdByUserId,
     updatedByUserId: template.updatedByUserId,
   };
 }
 
-function mapGeneratedAccount(
-  role: string,
-  account: GeneratedDefaultAccount | null,
-) {
+function mapGeneratedAccount(role: string, account: GeneratedDefaultAccount | null) {
   if (!account) {
     return null;
   }

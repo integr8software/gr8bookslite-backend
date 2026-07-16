@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -22,18 +14,12 @@ export class BranchUsersController {
   constructor(private readonly branchUsersService: BranchUsersService) {}
 
   @Get()
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Param('unitId', ParseIntPipe) unitId: number,
-  ) {
+  findAll(@CurrentUser() user: AuthUser, @Param('unitId', ParseIntPipe) unitId: number) {
     return this.branchUsersService.findAll(user, unitId);
   }
 
   @Get('roles')
-  findAssignableRoles(
-    @CurrentUser() user: AuthUser,
-    @Param('unitId', ParseIntPipe) unitId: number,
-  ) {
+  findAssignableRoles(@CurrentUser() user: AuthUser, @Param('unitId', ParseIntPipe) unitId: number) {
     return this.branchUsersService.findAssignableRoles(user, unitId);
   }
 

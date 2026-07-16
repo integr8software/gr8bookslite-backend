@@ -53,35 +53,24 @@ describe('BranchRolesService permission architecture', () => {
     ]);
     entitlementService.getCompanyPlanSidebarItems.mockResolvedValue([]);
 
-    await expect(service.getPermissionCatalog(superAdmin, 10)).resolves.toEqual(
-      {
-        modules: [
-          {
-            code: 'other-modules',
-            name: 'Other Modules',
-            submodules: [
-              {
-                code: 'PCFR',
-                name: 'Petty Cash Fund Replenishment',
-                permissionCode: 'PCFR',
-                actions: [
-                  'view',
-                  'create',
-                  'update',
-                  'cancel',
-                  'uncancel',
-                  'export',
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    );
+    await expect(service.getPermissionCatalog(superAdmin, 10)).resolves.toEqual({
+      modules: [
+        {
+          code: 'other-modules',
+          name: 'Other Modules',
+          submodules: [
+            {
+              code: 'PCFR',
+              name: 'Petty Cash Fund Replenishment',
+              permissionCode: 'PCFR',
+              actions: ['view', 'create', 'update', 'cancel', 'uncancel', 'export'],
+            },
+          ],
+        },
+      ],
+    });
 
-    expect(entitlementService.getCompanyAllowedModules).toHaveBeenCalledWith(
-      20,
-    );
+    expect(entitlementService.getCompanyAllowedModules).toHaveBeenCalledWith(20);
   });
 
   it('lists only roles scoped to the requested branch unit', async () => {
@@ -131,31 +120,22 @@ describe('BranchRolesService permission architecture', () => {
       },
     ]);
 
-    await expect(service.getPermissionCatalog(superAdmin, 10)).resolves.toEqual(
-      {
-        modules: [
-          {
-            code: 'system-dashboard',
-            name: 'Dashboard',
-            submodules: [
-              {
-                code: 'DO',
-                name: 'Dashboard',
-                permissionCode: 'DO',
-                actions: [
-                  'view',
-                  'create',
-                  'update',
-                  'cancel',
-                  'uncancel',
-                  'export',
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    );
+    await expect(service.getPermissionCatalog(superAdmin, 10)).resolves.toEqual({
+      modules: [
+        {
+          code: 'system-dashboard',
+          name: 'Dashboard',
+          submodules: [
+            {
+              code: 'DO',
+              name: 'Dashboard',
+              permissionCode: 'DO',
+              actions: ['view', 'create', 'update', 'cancel', 'uncancel', 'export'],
+            },
+          ],
+        },
+      ],
+    });
   });
 
   it('accepts the preferred payload without frontend catalog names', async () => {
@@ -178,9 +158,7 @@ describe('BranchRolesService permission architecture', () => {
 
     const resolved = await (
       service as unknown as {
-        resolveRolePermissions: (
-          permissions: unknown[],
-        ) => Promise<Record<string, unknown>[]>;
+        resolveRolePermissions: (permissions: unknown[]) => Promise<Record<string, unknown>[]>;
       }
     ).resolveRolePermissions([
       {
@@ -224,9 +202,7 @@ describe('BranchRolesService permission architecture', () => {
 
     const resolved = await (
       service as unknown as {
-        resolveRolePermissions: (
-          permissions: unknown[],
-        ) => Promise<Record<string, unknown>[]>;
+        resolveRolePermissions: (permissions: unknown[]) => Promise<Record<string, unknown>[]>;
       }
     ).resolveRolePermissions([
       {
@@ -268,64 +244,53 @@ describe('BranchRolesService permission architecture', () => {
       moduleCode: 'accounts-payable',
       moduleName: 'Accounts Payable',
     },
-  ])(
-    'maps legacy $legacyCode payloads to $canonicalCode',
-    async ({
-      legacyCode,
-      canonicalCode,
-      permissionName,
-      moduleCode,
-      moduleName,
-    }) => {
-      const { prisma, service } = createService();
-      prisma.permission.findUnique.mockResolvedValue({
-        id: 100,
-        code: canonicalCode,
-        name: permissionName,
+  ])('maps legacy $legacyCode payloads to $canonicalCode', async ({ legacyCode, canonicalCode, permissionName, moduleCode, moduleName }) => {
+    const { prisma, service } = createService();
+    prisma.permission.findUnique.mockResolvedValue({
+      id: 100,
+      code: canonicalCode,
+      name: permissionName,
+      isActive: true,
+      module: null,
+      submodule: {
         isActive: true,
-        module: null,
-        submodule: {
+        module: {
+          code: moduleCode,
+          name: moduleName,
           isActive: true,
-          module: {
-            code: moduleCode,
-            name: moduleName,
-            isActive: true,
-          },
         },
-      });
+      },
+    });
 
-      const resolved = await (
-        service as unknown as {
-          resolveRolePermissions: (
-            permissions: unknown[],
-          ) => Promise<Record<string, unknown>[]>;
-        }
-      ).resolveRolePermissions([
-        {
-          permissionCode: legacyCode,
-          actions: ['create'],
+    const resolved = await (
+      service as unknown as {
+        resolveRolePermissions: (permissions: unknown[]) => Promise<Record<string, unknown>[]>;
+      }
+    ).resolveRolePermissions([
+      {
+        permissionCode: legacyCode,
+        actions: ['create'],
+      },
+    ]);
+
+    expect(prisma.permission.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          code: canonicalCode,
         },
-      ]);
-
-      expect(prisma.permission.findUnique).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            code: canonicalCode,
-          },
-        }),
-      );
-      expect(resolved[0]).toEqual(
-        expect.objectContaining({
-          permissionCode: canonicalCode,
-          permissionName,
-          moduleCode,
-          moduleName,
-          canView: true,
-          canCreate: true,
-        }),
-      );
-    },
-  );
+      }),
+    );
+    expect(resolved[0]).toEqual(
+      expect.objectContaining({
+        permissionCode: canonicalCode,
+        permissionName,
+        moduleCode,
+        moduleName,
+        canView: true,
+        canCreate: true,
+      }),
+    );
+  });
 
   it('rejects unsupported permission codes', async () => {
     const { prisma, service } = createService();
@@ -397,9 +362,7 @@ describe('BranchRolesService permission architecture', () => {
 
     const resolved = await (
       service as unknown as {
-        resolveRolePermissions: (
-          permissions: unknown[],
-        ) => Promise<Record<string, unknown>[]>;
+        resolveRolePermissions: (permissions: unknown[]) => Promise<Record<string, unknown>[]>;
       }
     ).resolveRolePermissions([
       {

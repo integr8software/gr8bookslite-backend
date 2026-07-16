@@ -1,24 +1,14 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import {
-  cleanCurrencyCode,
-  cleanOptional,
-  normalizeIdentityValue,
-} from '../../../../common/utils/string-normalization.util';
+import { cleanCurrencyCode, cleanOptional, normalizeIdentityValue } from '../../../../common/utils/string-normalization.util';
 import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
 import { GetBankAccountListQueryDto } from '../dto/get-bank-account-list-query.dto';
 import { UpdateBankAccountDto } from '../dto/update-bank-account.dto';
-import type {
-  BankAccountIdentity,
-  BankAccountPayload,
-} from '../types/bank-account.type';
+import type { BankAccountIdentity, BankAccountPayload } from '../types/bank-account.type';
 
 const BaseCurrencyCode = 'PHP';
 
-export function buildBankAccountListWhere(
-  companyId: number,
-  query: GetBankAccountListQueryDto,
-): Prisma.BankAccountWhereInput {
+export function buildBankAccountListWhere(companyId: number, query: GetBankAccountListQueryDto): Prisma.BankAccountWhereInput {
   const search = query.search?.trim();
 
   return {
@@ -42,18 +32,14 @@ export function buildBankAccountListWhere(
   };
 }
 
-export function buildBankAccountOrderBy(
-  query: GetBankAccountListQueryDto,
-): Prisma.BankAccountOrderByWithRelationInput[] {
+export function buildBankAccountOrderBy(query: GetBankAccountListQueryDto): Prisma.BankAccountOrderByWithRelationInput[] {
   const sortBy = query.sortBy ?? 'bankName';
   const sortDirection = query.sortDirection ?? 'asc';
 
   return [{ [sortBy]: sortDirection }, { id: 'asc' }];
 }
 
-export function validateBankInput(
-  dto: CreateBankAccountDto | UpdateBankAccountDto,
-) {
+export function validateBankInput(dto: CreateBankAccountDto | UpdateBankAccountDto) {
   const bankName = dto.bankName?.trim();
 
   if (!bankName) {
@@ -77,9 +63,7 @@ export function validateBankInput(
   }
 
   if (!Number.isInteger(dto.seriesDigits) || dto.seriesDigits < 1) {
-    throw new BadRequestException(
-      'Series digits must be a positive whole number.',
-    );
+    throw new BadRequestException('Series digits must be a positive whole number.');
   }
 
   if (
@@ -89,44 +73,30 @@ export function validateBankInput(
     dto.seriesEnd.trim() &&
     Number(dto.seriesStart) > Number(dto.seriesEnd)
   ) {
-    throw new BadRequestException(
-      'Series start should not be greater than series end.',
-    );
+    throw new BadRequestException('Series start should not be greater than series end.');
   }
 
   const currencyCode = cleanCurrencyCode(dto.currencyCode);
-  if (
-    currencyCode &&
-    currencyCode !== BaseCurrencyCode &&
-    (!dto.currencyExchangeRate || dto.currencyExchangeRate <= 0)
-  ) {
-    throw new BadRequestException(
-      'Currency exchange rate must be greater than 0 for non-PHP bank accounts.',
-    );
+  if (currencyCode && currencyCode !== BaseCurrencyCode && (!dto.currencyExchangeRate || dto.currencyExchangeRate <= 0)) {
+    throw new BadRequestException('Currency exchange rate must be greater than 0 for non-PHP bank accounts.');
   }
 }
 
-export function ensureNoDuplicateImportedBankAccounts(
-  banks: CreateBankAccountDto[],
-) {
+export function ensureNoDuplicateImportedBankAccounts(banks: CreateBankAccountDto[]) {
   const seenKeys = new Set<string>();
 
   for (const bank of banks) {
     const key = getBankAccountIdentityKey(bank);
 
     if (seenKeys.has(key)) {
-      throw new ConflictException(
-        `Duplicate bank account in import: ${bank.bankName.trim()} ${(bank.accountNumber ?? '').trim()}.`,
-      );
+      throw new ConflictException(`Duplicate bank account in import: ${bank.bankName.trim()} ${(bank.accountNumber ?? '').trim()}.`);
     }
 
     seenKeys.add(key);
   }
 }
 
-export function ensureNoDuplicateImportedAccountCodes(
-  banks: CreateBankAccountDto[],
-) {
+export function ensureNoDuplicateImportedAccountCodes(banks: CreateBankAccountDto[]) {
   const seenCodes = new Set<string>();
 
   for (const bank of banks) {
@@ -137,44 +107,26 @@ export function ensureNoDuplicateImportedAccountCodes(
     }
 
     if (seenCodes.has(accountCode)) {
-      throw new ConflictException(
-        `Duplicate account code in import: ${accountCode}.`,
-      );
+      throw new ConflictException(`Duplicate account code in import: ${accountCode}.`);
     }
 
     seenCodes.add(accountCode);
   }
 }
 
-export function ensureAtMostOneDefaultImportedBank(
-  banks: CreateBankAccountDto[],
-) {
+export function ensureAtMostOneDefaultImportedBank(banks: CreateBankAccountDto[]) {
   const defaultBanks = banks.filter((bank) => bank.isDefault === true);
 
   if (defaultBanks.length > 1) {
-    throw new BadRequestException(
-      'Only one imported bank account can be marked as default.',
-    );
+    throw new BadRequestException('Only one imported bank account can be marked as default.');
   }
 }
 
-export function resolveBankAccountName(
-  dto: CreateBankAccountDto | UpdateBankAccountDto,
-) {
-  return [
-    'Cash in Bank',
-    dto.bankName?.trim(),
-    dto.branch?.trim(),
-    dto.accountNumber?.trim(),
-  ]
-    .filter(Boolean)
-    .join(' - ');
+export function resolveBankAccountName(dto: CreateBankAccountDto | UpdateBankAccountDto) {
+  return ['Cash in Bank', dto.bankName?.trim(), dto.branch?.trim(), dto.accountNumber?.trim()].filter(Boolean).join(' - ');
 }
 
-export function toCreateBankAccountData(
-  dto: CreateBankAccountDto,
-  accountName: string,
-) {
+export function toCreateBankAccountData(dto: CreateBankAccountDto, accountName: string) {
   return {
     bankName: dto.bankName.trim(),
     branch: cleanOptional(dto.branch),
@@ -185,48 +137,23 @@ export function toCreateBankAccountData(
     seriesEnd: cleanOptional(dto.seriesEnd),
     seriesDigits: dto.seriesDigits,
     currencyCode: cleanCurrencyCode(dto.currencyCode),
-    currencyExchangeRate:
-      dto.currencyExchangeRate === undefined
-        ? undefined
-        : new Prisma.Decimal(dto.currencyExchangeRate),
+    currencyExchangeRate: dto.currencyExchangeRate === undefined ? undefined : new Prisma.Decimal(dto.currencyExchangeRate),
     isDefault: dto.isDefault ?? false,
   };
 }
 
-export function toUpdateBankAccountData(
-  dto: UpdateBankAccountDto,
-  accountName: string,
-): Prisma.BankAccountUpdateInput {
+export function toUpdateBankAccountData(dto: UpdateBankAccountDto, accountName: string): Prisma.BankAccountUpdateInput {
   return {
     ...(dto.bankName !== undefined ? { bankName: dto.bankName.trim() } : {}),
     ...(dto.branch !== undefined ? { branch: cleanOptional(dto.branch) } : {}),
-    ...(dto.accountNumber !== undefined
-      ? { accountNumber: dto.accountNumber.trim() }
-      : {}),
-    ...(dto.accountName !== undefined ||
-    dto.bankName !== undefined ||
-    dto.branch !== undefined ||
-    dto.accountNumber !== undefined
-      ? { accountName }
-      : {}),
-    ...(dto.accountType !== undefined
-      ? { accountType: cleanOptional(dto.accountType) }
-      : {}),
-    ...(dto.seriesStart !== undefined
-      ? { seriesStart: cleanOptional(dto.seriesStart) }
-      : {}),
-    ...(dto.seriesEnd !== undefined
-      ? { seriesEnd: cleanOptional(dto.seriesEnd) }
-      : {}),
-    ...(dto.seriesDigits !== undefined
-      ? { seriesDigits: dto.seriesDigits }
-      : {}),
-    ...(dto.currencyCode !== undefined
-      ? { currencyCode: cleanCurrencyCode(dto.currencyCode) }
-      : {}),
-    ...(dto.currencyExchangeRate !== undefined
-      ? { currencyExchangeRate: new Prisma.Decimal(dto.currencyExchangeRate) }
-      : {}),
+    ...(dto.accountNumber !== undefined ? { accountNumber: dto.accountNumber.trim() } : {}),
+    ...(dto.accountName !== undefined || dto.bankName !== undefined || dto.branch !== undefined || dto.accountNumber !== undefined ? { accountName } : {}),
+    ...(dto.accountType !== undefined ? { accountType: cleanOptional(dto.accountType) } : {}),
+    ...(dto.seriesStart !== undefined ? { seriesStart: cleanOptional(dto.seriesStart) } : {}),
+    ...(dto.seriesEnd !== undefined ? { seriesEnd: cleanOptional(dto.seriesEnd) } : {}),
+    ...(dto.seriesDigits !== undefined ? { seriesDigits: dto.seriesDigits } : {}),
+    ...(dto.currencyCode !== undefined ? { currencyCode: cleanCurrencyCode(dto.currencyCode) } : {}),
+    ...(dto.currencyExchangeRate !== undefined ? { currencyExchangeRate: new Prisma.Decimal(dto.currencyExchangeRate) } : {}),
     ...(dto.isDefault !== undefined ? { isDefault: dto.isDefault } : {}),
     ...(dto.status !== undefined ? { status: dto.status } : {}),
   };
@@ -243,16 +170,12 @@ export function toBankAccountDtoLike(bankAccount: BankAccountPayload) {
     seriesEnd: bankAccount.seriesEnd ?? undefined,
     seriesDigits: bankAccount.seriesDigits ?? undefined,
     currencyCode: bankAccount.currencyCode ?? undefined,
-    currencyExchangeRate: bankAccount.currencyExchangeRate
-      ? Number(bankAccount.currencyExchangeRate)
-      : undefined,
+    currencyExchangeRate: bankAccount.currencyExchangeRate ? Number(bankAccount.currencyExchangeRate) : undefined,
     isDefault: bankAccount.isDefault,
     status: bankAccount.status,
   };
 }
 
 export function getBankAccountIdentityKey(bank: BankAccountIdentity) {
-  return [bank.bankName, bank.branch ?? '', bank.accountNumber]
-    .map((value) => normalizeIdentityValue(value))
-    .join('|');
+  return [bank.bankName, bank.branch ?? '', bank.accountNumber].map((value) => normalizeIdentityValue(value)).join('|');
 }

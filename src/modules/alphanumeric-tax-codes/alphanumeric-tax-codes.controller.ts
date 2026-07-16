@@ -10,9 +10,7 @@ import { AlphanumericTaxCodeListQueryDto } from './dto/alphanumeric-tax-code-lis
   version: '1',
 })
 export class AlphanumericTaxCodesController {
-  constructor(
-    private readonly alphanumericTaxCodesService: AlphanumericTaxCodesService,
-  ) {}
+  constructor(private readonly alphanumericTaxCodesService: AlphanumericTaxCodesService) {}
 
   @Get('alphanumeric-tax-codes')
   listTaxCodes(@Query() query: AlphanumericTaxCodeListQueryDto) {

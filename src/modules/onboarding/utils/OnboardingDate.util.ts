@@ -14,11 +14,7 @@ export function getOnboardingDateParts(value: string) {
   const day = Number(match[3]);
   const date = new Date(year, month - 1, day);
 
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
     return null;
   }
 
@@ -40,7 +36,5 @@ export function getSyncedReportEndDate(startDate: string) {
   endDate.setFullYear(endDate.getFullYear() + 1);
   endDate.setDate(endDate.getDate() - 1);
 
-  return `${endDate.getFullYear()}-${padDatePart(
-    endDate.getMonth() + 1,
-  )}-${padDatePart(endDate.getDate())}`;
+  return `${endDate.getFullYear()}-${padDatePart(endDate.getMonth() + 1)}-${padDatePart(endDate.getDate())}`;
 }

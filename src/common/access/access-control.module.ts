@@ -6,12 +6,7 @@ import { PermissionModule } from './permissions/permission.module';
 import { SidebarBuilderModule } from './sidebar/sidebar-builder.module';
 
 @Module({
-  imports: [
-    CompanyAccessResolverModule,
-    EntitlementModule,
-    PermissionModule,
-    SidebarBuilderModule,
-  ],
+  imports: [CompanyAccessResolverModule, EntitlementModule, PermissionModule, SidebarBuilderModule],
   providers: [AccessControlService],
   exports: [AccessControlService],
 })

@@ -1,9 +1,4 @@
-import {
-  DiscountStatus,
-  DiscountType,
-  DiscountValueType,
-  Prisma,
-} from '@prisma/client';
+import { DiscountStatus, DiscountType, DiscountValueType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { resolveDiscountChartAccount } from '../utils/discount-chart-account.util';
 
@@ -12,8 +7,7 @@ type DiscountWriteClient = PrismaService | Prisma.TransactionClient;
 export const DiscountMaintenanceSeedRecords = [
   {
     name: 'Prompt Payment',
-    description:
-      'Use for sales invoices when customers receive a discount for paying within the agreed early-payment period.',
+    description: 'Use for sales invoices when customers receive a discount for paying within the agreed early-payment period.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 5,
@@ -21,8 +15,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Trade Discount',
-    description:
-      'Use for standard sales price reductions given to resellers, dealers, or trade customers before billing.',
+    description: 'Use for standard sales price reductions given to resellers, dealers, or trade customers before billing.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 7.5,
@@ -30,8 +23,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Volume Sales Discount',
-    description:
-      'Use for sales transactions where the customer qualifies for a discount because the order meets a volume threshold.',
+    description: 'Use for sales transactions where the customer qualifies for a discount because the order meets a volume threshold.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 10,
@@ -39,8 +31,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Senior Citizen Discount',
-    description:
-      'Use for legally required or company-approved senior citizen sales discounts when the customer is eligible.',
+    description: 'Use for legally required or company-approved senior citizen sales discounts when the customer is eligible.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 20,
@@ -48,8 +39,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'PWD Discount',
-    description:
-      'Use for legally required or company-approved PWD sales discounts when the customer is eligible.',
+    description: 'Use for legally required or company-approved PWD sales discounts when the customer is eligible.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 20,
@@ -57,8 +47,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Promotional Discount',
-    description:
-      'Use for temporary campaign, seasonal, launch, or marketing discounts applied to customer sales.',
+    description: 'Use for temporary campaign, seasonal, launch, or marketing discounts applied to customer sales.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 10,
@@ -66,8 +55,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Loyalty Discount',
-    description:
-      'Use for sales discounts granted to repeat customers, members, or loyalty program participants.',
+    description: 'Use for sales discounts granted to repeat customers, members, or loyalty program participants.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 5,
@@ -75,8 +63,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Employee Discount',
-    description:
-      'Use for sales discounts granted to employees under an approved employee purchase policy.',
+    description: 'Use for sales discounts granted to employees under an approved employee purchase policy.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 10,
@@ -84,8 +71,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Special Approval Discount',
-    description:
-      'Use for sales discounts that require manager or authorized approval outside standard discount policies.',
+    description: 'Use for sales discounts that require manager or authorized approval outside standard discount policies.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 15,
@@ -93,8 +79,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Fixed Sales Discount',
-    description:
-      'Use for sales transactions where a fixed amount is deducted from the invoice instead of a percentage.',
+    description: 'Use for sales transactions where a fixed amount is deducted from the invoice instead of a percentage.',
     type: DiscountType.SALES,
     valueType: DiscountValueType.FIXED,
     value: 100,
@@ -102,8 +87,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Supplier Early Payment',
-    description:
-      'Use for purchase transactions when the supplier gives a discount for paying before the due date.',
+    description: 'Use for purchase transactions when the supplier gives a discount for paying before the due date.',
     type: DiscountType.PURCHASE,
     valueType: DiscountValueType.PERCENTAGE,
     value: 2,
@@ -111,8 +95,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Volume Purchase Discount',
-    description:
-      'Use for purchase transactions where the supplier grants a fixed discount because the order meets a volume threshold.',
+    description: 'Use for purchase transactions where the supplier grants a fixed discount because the order meets a volume threshold.',
     type: DiscountType.PURCHASE,
     valueType: DiscountValueType.FIXED,
     value: 100,
@@ -120,8 +103,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Supplier Trade Discount',
-    description:
-      'Use for regular supplier trade discounts deducted from purchase cost before recording the payable.',
+    description: 'Use for regular supplier trade discounts deducted from purchase cost before recording the payable.',
     type: DiscountType.PURCHASE,
     valueType: DiscountValueType.PERCENTAGE,
     value: 5,
@@ -129,8 +111,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Purchase Rebate',
-    description:
-      'Use for supplier rebates or purchase discounts earned after meeting agreed buying conditions.',
+    description: 'Use for supplier rebates or purchase discounts earned after meeting agreed buying conditions.',
     type: DiscountType.PURCHASE,
     valueType: DiscountValueType.PERCENTAGE,
     value: 3,
@@ -138,8 +119,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
   {
     name: 'Bulk Purchase Discount',
-    description:
-      'Use for supplier discounts granted when purchases are ordered or received in bulk quantities.',
+    description: 'Use for supplier discounts granted when purchases are ordered or received in bulk quantities.',
     type: DiscountType.PURCHASE,
     valueType: DiscountValueType.PERCENTAGE,
     value: 10,
@@ -147,10 +127,7 @@ export const DiscountMaintenanceSeedRecords = [
   },
 ] as const;
 
-export async function seedCompanyDiscountMaintenanceDefaults(
-  tx: DiscountWriteClient,
-  companyId: number,
-) {
+export async function seedCompanyDiscountMaintenanceDefaults(tx: DiscountWriteClient, companyId: number) {
   const existingDiscounts = await tx.discount.findMany({
     where: {
       companyId,
@@ -160,12 +137,8 @@ export async function seedCompanyDiscountMaintenanceDefaults(
     },
     select: { name: true },
   });
-  const existingNames = new Set(
-    existingDiscounts.map((discount) => discount.name),
-  );
-  const missingDiscounts = DiscountMaintenanceSeedRecords.filter(
-    (discount) => !existingNames.has(discount.name),
-  );
+  const existingNames = new Set(existingDiscounts.map((discount) => discount.name));
+  const missingDiscounts = DiscountMaintenanceSeedRecords.filter((discount) => !existingNames.has(discount.name));
 
   let createdCount = 0;
 

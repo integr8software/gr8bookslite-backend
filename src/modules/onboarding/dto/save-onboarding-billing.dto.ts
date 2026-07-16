@@ -1,12 +1,4 @@
-import {
-  IsEmail,
-  IsInt,
-  IsString,
-  Matches,
-  Max,
-  Min,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsInt, IsString, Matches, Max, Min, MinLength } from 'class-validator';
 
 const NamePattern = /^[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*$/u;
 

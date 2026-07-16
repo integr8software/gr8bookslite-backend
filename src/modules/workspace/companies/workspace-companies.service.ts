@@ -1,21 +1,5 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  BillingCycle,
-  BillingMode,
-  CompanyStatus,
-  CompanyUnitType,
-  AccessScopeLevel,
-  MembershipRole,
-  MembershipStatus,
-  TaxpayerType,
-} from '@prisma/client';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BillingCycle, BillingMode, CompanyStatus, CompanyUnitType, AccessScopeLevel, MembershipRole, MembershipStatus, TaxpayerType } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -28,20 +12,15 @@ import { seedCompanyDefaultAccountDefaults } from '../../maintenance/default-acc
 import { seedCompanyDiscountMaintenanceDefaults } from '../../maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import { seedCompanyBankAccountDefaults } from '../../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyResponsibilityCenterDefaults } from '../../maintenance/responsibility-center/seed/responsibility-center.seed';
+import { seedCompanyTaxMaintenanceDefaults } from '../../maintenance/tax-maintenance/seed/tax-maintenance.seed';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
 import { CreateCompanyUnitDto } from './dto/create-company-unit.dto';
 import { CreateWorkspaceCompanyDto } from './dto/create-workspace-company.dto';
 import { UpdateCompanyUnitDto } from './dto/update-company-unit.dto';
 import { UpdateWorkspaceCompanyDto } from './dto/update-workspace-company.dto';
-import {
-  mapCompanyUnit,
-  mapWorkspaceCompany,
-} from './mappers/workspace-company.mapper';
-import {
-  WorkspaceCompanyDetailsInclude,
-  WorkspaceCompanyListInclude,
-} from './prisma/workspace-company.include';
+import { mapCompanyUnit, mapWorkspaceCompany } from './mappers/workspace-company.mapper';
+import { WorkspaceCompanyDetailsInclude, WorkspaceCompanyListInclude } from './prisma/workspace-company.include';
 import { WorkspaceCompanyLogoStorageService } from './services/workspace-company-logo-storage.service';
 import type { UploadedCompanyLogoFile } from './types/uploaded-company-logo-file.type';
 
@@ -90,10 +69,7 @@ export class WorkspaceCompaniesService {
       };
     }
 
-    const [companies, users] = await Promise.all([
-      companiesPromise,
-      this.workspaceUsersService.findAll(user),
-    ]);
+    const [companies, users] = await Promise.all([companiesPromise, this.workspaceUsersService.findAll(user)]);
 
     return {
       companies,
@@ -148,9 +124,7 @@ export class WorkspaceCompaniesService {
           reportStartDate: parseDate(dto.reportStartDate),
           reportEndDate: parseDate(dto.reportEndDate),
           createdByUserId: user.id,
-          status: isManualBilling
-            ? CompanyStatus.PROVISIONING
-            : CompanyStatus.ACTIVE,
+          status: isManualBilling ? CompanyStatus.PROVISIONING : CompanyStatus.ACTIVE,
           isActive: !isManualBilling,
         },
       });
@@ -175,6 +149,7 @@ export class WorkspaceCompaniesService {
       await seedCompanyTermMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyChartAccountDefaults(tx, createdCompany.id);
+      await seedCompanyTaxMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyDefaultAccountDefaults(tx, createdCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyResponsibilityCenterDefaults(tx, createdCompany.id);
@@ -246,17 +221,11 @@ export class WorkspaceCompaniesService {
       : mappedCompany;
   }
 
-  async uploadLogo(
-    user: AuthUser,
-    companyId: number,
-    file: UploadedCompanyLogoFile | undefined,
-  ) {
+  async uploadLogo(user: AuthUser, companyId: number, file: UploadedCompanyLogoFile | undefined) {
     await this.ensureCompanyAdminAccess(user, companyId);
     const validatedFile = validateCompanyLogoFile(file);
 
-    let upload: Awaited<
-      ReturnType<WorkspaceCompanyLogoStorageService['uploadLogo']>
-    >;
+    let upload: Awaited<ReturnType<WorkspaceCompanyLogoStorageService['uploadLogo']>>;
 
     try {
       upload = await this.logoStorageService.uploadLogo({
@@ -293,11 +262,7 @@ export class WorkspaceCompaniesService {
     };
   }
 
-  async update(
-    user: AuthUser,
-    companyId: number,
-    dto: UpdateWorkspaceCompanyDto,
-  ) {
+  async update(user: AuthUser, companyId: number, dto: UpdateWorkspaceCompanyDto) {
     await this.ensureCompanyAdminAccess(user, companyId);
 
     const current = await this.prisma.company.findUnique({
@@ -316,9 +281,7 @@ export class WorkspaceCompaniesService {
       data: {
         name: nextName,
         legalName: nextName,
-        taxpayerType: dto.taxpayerType
-          ? mapTaxpayerType(dto.taxpayerType)
-          : undefined,
+        taxpayerType: dto.taxpayerType ? mapTaxpayerType(dto.taxpayerType) : undefined,
         ownerLastName: cleanOptional(dto.lastName),
         ownerFirstName: cleanOptional(dto.firstName),
         ownerMiddleName: cleanOptional(dto.middleName),
@@ -330,16 +293,11 @@ export class WorkspaceCompaniesService {
         logoPublicUrl: cleanOptional(dto.logoPublicUrl),
         address: cleanOptional(dto.address),
         tin: cleanOptional(dto.tin),
-        email:
-          dto.email === undefined ? undefined : dto.email.trim().toLowerCase(),
+        email: dto.email === undefined ? undefined : dto.email.trim().toLowerCase(),
         website: cleanOptional(dto.website),
         contactNumber: cleanOptional(dto.contactNumber),
-        reportStartDate: dto.reportStartDate
-          ? parseDate(dto.reportStartDate)
-          : undefined,
-        reportEndDate: dto.reportEndDate
-          ? parseDate(dto.reportEndDate)
-          : undefined,
+        reportStartDate: dto.reportStartDate ? parseDate(dto.reportStartDate) : undefined,
+        reportEndDate: dto.reportEndDate ? parseDate(dto.reportEndDate) : undefined,
       },
       include: WorkspaceCompanyDetailsInclude,
     });
@@ -387,10 +345,7 @@ export class WorkspaceCompaniesService {
   }
 
   async findUnits(user: AuthUser, companyId: number) {
-    const accessibleUnitIds = await this.getAccessibleUnitIdsForUnitList(
-      user,
-      companyId,
-    );
+    const accessibleUnitIds = await this.getAccessibleUnitIdsForUnitList(user, companyId);
 
     const units = await this.prisma.companyUnit.findMany({
       where: {
@@ -399,23 +354,12 @@ export class WorkspaceCompaniesService {
       },
       orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
     });
-    const headOfficeTin = units.find(
-      (unit) => unit.type === CompanyUnitType.HEAD_OFFICE,
-    )?.tin;
+    const headOfficeTin = units.find((unit) => unit.type === CompanyUnitType.HEAD_OFFICE)?.tin;
 
-    return units
-      .map((unit) =>
-        unit.type === CompanyUnitType.SATELLITE && headOfficeTin
-          ? { ...unit, tin: headOfficeTin }
-          : unit,
-      )
-      .map(mapCompanyUnit);
+    return units.map((unit) => (unit.type === CompanyUnitType.SATELLITE && headOfficeTin ? { ...unit, tin: headOfficeTin } : unit)).map(mapCompanyUnit);
   }
 
-  private async getAccessibleUnitIdsForUnitList(
-    user: AuthUser,
-    companyId: number,
-  ) {
+  private async getAccessibleUnitIdsForUnitList(user: AuthUser, companyId: number) {
     if (user.role === AppRole.SUPER_ADMIN) {
       return null;
     }
@@ -443,21 +387,14 @@ export class WorkspaceCompaniesService {
       throw new NotFoundException('Company not found.');
     }
 
-    if (
-      membership.role === MembershipRole.ADMIN ||
-      membership.accessScope === AccessScopeLevel.COMPANY
-    ) {
+    if (membership.role === MembershipRole.ADMIN || membership.accessScope === AccessScopeLevel.COMPANY) {
       return null;
     }
 
     return membership.unitAccess.map((access) => access.unitId);
   }
 
-  async createUnit(
-    user: AuthUser,
-    companyId: number,
-    dto: CreateCompanyUnitDto,
-  ) {
+  async createUnit(user: AuthUser, companyId: number, dto: CreateCompanyUnitDto) {
     await this.ensureCompanyAdminAccess(user, companyId);
 
     const company = await this.prisma.company.findUnique({
@@ -471,33 +408,20 @@ export class WorkspaceCompaniesService {
 
     const type = dto.type;
     const parentUnit =
-      type === CompanyUnitType.SATELLITE
-        ? await this.resolveSatelliteParent(companyId, dto.parentUnitId)
-        : await this.resolveHeadOfficeParent(companyId);
-    const headOffice =
-      type === CompanyUnitType.SATELLITE
-        ? await this.resolveHeadOfficeParent(companyId)
-        : null;
+      type === CompanyUnitType.SATELLITE ? await this.resolveSatelliteParent(companyId, dto.parentUnitId) : await this.resolveHeadOfficeParent(companyId);
+    const headOffice = type === CompanyUnitType.SATELLITE ? await this.resolveHeadOfficeParent(companyId) : null;
 
     if (type === CompanyUnitType.BRANCH && !dto.tin?.trim()) {
       throw new BadRequestException('TIN is required for a branch.');
     }
 
-    const tin =
-      type === CompanyUnitType.SATELLITE
-        ? headOffice?.tin || company.tin
-        : dto.tin?.trim();
+    const tin = type === CompanyUnitType.SATELLITE ? headOffice?.tin || company.tin : dto.tin?.trim();
 
     if (!tin) {
-      throw new BadRequestException(
-        'A satellite requires an active head office with TIN.',
-      );
+      throw new BadRequestException('A satellite requires an active head office with TIN.');
     }
 
-    const code = await this.createAvailableUnitCode(
-      companyId,
-      dto.code?.trim() || createUnitCode(dto.name),
-    );
+    const code = await this.createAvailableUnitCode(companyId, dto.code?.trim() || createUnitCode(dto.name));
 
     const unit = await this.prisma.companyUnit.create({
       data: {
@@ -546,20 +470,13 @@ export class WorkspaceCompaniesService {
     await this.ensureCompanyAdminAccess(user, current.companyId);
 
     const parentUnit =
-      current.type === CompanyUnitType.SATELLITE &&
-      dto.parentUnitId !== undefined
+      current.type === CompanyUnitType.SATELLITE && dto.parentUnitId !== undefined
         ? await this.resolveSatelliteParent(current.companyId, dto.parentUnitId)
         : current.type === CompanyUnitType.BRANCH && !current.parentUnitId
           ? await this.resolveHeadOfficeParent(current.companyId)
           : null;
-    const headOffice =
-      current.type === CompanyUnitType.SATELLITE
-        ? await this.resolveHeadOfficeParent(current.companyId)
-        : null;
-    const tin =
-      current.type === CompanyUnitType.SATELLITE
-        ? (headOffice?.tin ?? current.tin)
-        : cleanOptional(dto.tin);
+    const headOffice = current.type === CompanyUnitType.SATELLITE ? await this.resolveHeadOfficeParent(current.companyId) : null;
+    const tin = current.type === CompanyUnitType.SATELLITE ? (headOffice?.tin ?? current.tin) : cleanOptional(dto.tin);
 
     if (current.type === CompanyUnitType.BRANCH && dto.tin === '') {
       throw new BadRequestException('TIN is required for a branch.');
@@ -585,8 +502,7 @@ export class WorkspaceCompaniesService {
         tin,
         address: cleanOptional(dto.address),
         contactNumber: cleanOptional(dto.contactNumber),
-        email:
-          dto.email === undefined ? undefined : dto.email.trim().toLowerCase(),
+        email: dto.email === undefined ? undefined : dto.email.trim().toLowerCase(),
         isActive: dto.isActive,
       },
     });
@@ -660,9 +576,7 @@ export class WorkspaceCompaniesService {
         return;
       }
 
-      throw new ForbiddenException(
-        'Only admins can manage workspace companies.',
-      );
+      throw new ForbiddenException('Only admins can manage workspace companies.');
     }
   }
 
@@ -699,21 +613,12 @@ export class WorkspaceCompaniesService {
       },
     });
 
-    if (
-      !membership ||
-      membership.status !== MembershipStatus.ACTIVE ||
-      membership.role !== MembershipRole.ADMIN
-    ) {
-      throw new ForbiddenException(
-        'Admin access is required for this company.',
-      );
+    if (!membership || membership.status !== MembershipStatus.ACTIVE || membership.role !== MembershipRole.ADMIN) {
+      throw new ForbiddenException('Admin access is required for this company.');
     }
   }
 
-  private async resolveSatelliteParent(
-    companyId: number,
-    parentUnitId?: number,
-  ) {
+  private async resolveSatelliteParent(companyId: number, parentUnitId?: number) {
     if (parentUnitId) {
       const parentUnit = await this.prisma.companyUnit.findFirst({
         where: {
@@ -727,9 +632,7 @@ export class WorkspaceCompaniesService {
       });
 
       if (!parentUnit) {
-        throw new BadRequestException(
-          'Select an active head office or branch for this satellite.',
-        );
+        throw new BadRequestException('Select an active head office or branch for this satellite.');
       }
 
       return parentUnit;
@@ -779,10 +682,7 @@ export class WorkspaceCompaniesService {
     return slug;
   }
 
-  private async ensureCompanyNameAvailable(
-    name: string,
-    excludedCompanyId?: number,
-  ) {
+  private async ensureCompanyNameAvailable(name: string, excludedCompanyId?: number) {
     const existingCompany = await this.prisma.company.findFirst({
       where: {
         name: {
@@ -799,11 +699,7 @@ export class WorkspaceCompaniesService {
     }
   }
 
-  private async setupCompanyBilling(input: {
-    companyId: number;
-    dto: CreateWorkspaceCompanyDto;
-    user: AuthUser;
-  }) {
+  private async setupCompanyBilling(input: { companyId: number; dto: CreateWorkspaceCompanyDto; user: AuthUser }) {
     const billing = input.dto.billing;
 
     if (!billing?.planCode?.trim()) {
@@ -814,20 +710,18 @@ export class WorkspaceCompaniesService {
       return undefined;
     }
 
-    const preparedSubscription =
-      await this.billingService.prepareCompanySubscription({
-        companyId: input.companyId,
-        ownerUserId: input.user.id,
-        planCode: billing.planCode.trim(),
-        billingCycle: billing.billingCycle ?? BillingCycle.MONTHLY,
-        billingEmail: billing.billingEmail ?? input.dto.email,
-      });
+    const preparedSubscription = await this.billingService.prepareCompanySubscription({
+      companyId: input.companyId,
+      ownerUserId: input.user.id,
+      planCode: billing.planCode.trim(),
+      billingCycle: billing.billingCycle ?? BillingCycle.MONTHLY,
+      billingEmail: billing.billingEmail ?? input.dto.email,
+    });
 
     if (!billing.paymentMethodId?.trim()) {
       return {
         subscription: preparedSubscription.subscription,
-        pendingProviderActivation:
-          preparedSubscription.pendingProviderActivation ?? false,
+        pendingProviderActivation: preparedSubscription.pendingProviderActivation ?? false,
         paymentSetup: preparedSubscription.paymentSetup,
       };
     }
@@ -852,14 +746,8 @@ export class WorkspaceCompaniesService {
 
     return {
       subscription: paymentResult.subscription,
-      paymentIntent:
-        'paymentIntent' in paymentResult
-          ? paymentResult.paymentIntent
-          : undefined,
-      pendingProviderActivation:
-        paymentResult.pendingProviderActivation ??
-        preparedSubscription.pendingProviderActivation ??
-        false,
+      paymentIntent: 'paymentIntent' in paymentResult ? paymentResult.paymentIntent : undefined,
+      pendingProviderActivation: paymentResult.pendingProviderActivation ?? preparedSubscription.pendingProviderActivation ?? false,
       paymentSetup: preparedSubscription.paymentSetup,
     };
   }
@@ -873,26 +761,14 @@ export class WorkspaceCompaniesService {
       });
     } catch (cleanupError) {
       this.logger.warn(
-        `Unable to clean up company ${companyId} after billing setup failed: ${
-          cleanupError instanceof Error
-            ? cleanupError.message
-            : 'Unknown cleanup error'
-        }`,
+        `Unable to clean up company ${companyId} after billing setup failed: ${cleanupError instanceof Error ? cleanupError.message : 'Unknown cleanup error'}`,
       );
     }
 
-    this.logger.warn(
-      `Rolled back company ${companyId} after billing setup failed: ${
-        error instanceof Error ? error.message : 'Unknown billing error'
-      }`,
-    );
+    this.logger.warn(`Rolled back company ${companyId} after billing setup failed: ${error instanceof Error ? error.message : 'Unknown billing error'}`);
   }
 
-  private async ensureUnitCodeAvailable(
-    companyId: number,
-    code: string,
-    excludedUnitId?: number,
-  ) {
+  private async ensureUnitCodeAvailable(companyId: number, code: string, excludedUnitId?: number) {
     const existingUnit = await this.prisma.companyUnit.findFirst({
       where: {
         companyId,
@@ -903,9 +779,7 @@ export class WorkspaceCompaniesService {
     });
 
     if (existingUnit) {
-      throw new ConflictException(
-        'A branch or satellite with this code already exists for this company.',
-      );
+      throw new ConflictException('A branch or satellite with this code already exists for this company.');
     }
   }
 
@@ -944,11 +818,7 @@ export class WorkspaceCompaniesService {
     }
 
     try {
-      await this.authMailService.sendCompanyCreated(
-        adminUser.email,
-        adminUser.name || adminUser.email,
-        companyName,
-      );
+      await this.authMailService.sendCompanyCreated(adminUser.email, adminUser.name || adminUser.email, companyName);
     } catch {
       // Company creation should not fail because a notification failed.
     }
@@ -956,9 +826,7 @@ export class WorkspaceCompaniesService {
 }
 
 function mapTaxpayerType(type: 'individual' | 'non-individual') {
-  return type === 'individual'
-    ? TaxpayerType.INDIVIDUAL
-    : TaxpayerType.NON_INDIVIDUAL;
+  return type === 'individual' ? TaxpayerType.INDIVIDUAL : TaxpayerType.NON_INDIVIDUAL;
 }
 
 function getCompanyName(dto: CreateWorkspaceCompanyDto) {
@@ -972,10 +840,7 @@ function getCompanyName(dto: CreateWorkspaceCompanyDto) {
   return dto.companyName?.trim() ?? '';
 }
 
-function getUpdatedCompanyName(
-  currentName: string,
-  dto: UpdateWorkspaceCompanyDto,
-) {
+function getUpdatedCompanyName(currentName: string, dto: UpdateWorkspaceCompanyDto) {
   if (dto.taxpayerType === 'individual' || dto.firstName || dto.lastName) {
     const name = [dto.firstName, dto.middleName, dto.lastName]
       .map((value) => value?.trim())

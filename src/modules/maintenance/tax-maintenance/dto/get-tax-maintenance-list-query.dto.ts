@@ -1,14 +1,5 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { TaxMaintenanceStatus } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 

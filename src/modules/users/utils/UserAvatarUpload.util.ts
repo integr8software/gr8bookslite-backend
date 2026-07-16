@@ -1,11 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import type { UploadedAvatarFile } from '../types/uploaded-avatar-file.type';
 
-const AllowedAvatarMimeTypes = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
+const AllowedAvatarMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const MaxAvatarFileSizeInBytes = 2 * 1024 * 1024;
 
 export function validateUserAvatarFile(file: UploadedAvatarFile | undefined) {

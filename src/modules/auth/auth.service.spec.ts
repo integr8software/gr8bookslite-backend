@@ -1,17 +1,10 @@
-import {
-  CompanyStatus,
-  MembershipRole,
-  MembershipStatus,
-} from '@prisma/client';
+import { CompanyStatus, MembershipRole, MembershipStatus } from '@prisma/client';
 import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 describe('AuthService company context resolution', () => {
   const service = Object.create(AuthService.prototype) as {
-    resolveDefaultCompanyContext: (
-      user: { systemRole: string; memberships: unknown[] },
-      requestedCompanyId: number | null,
-    ) => number | null;
+    resolveDefaultCompanyContext: (user: { systemRole: string; memberships: unknown[] }, requestedCompanyId: number | null) => number | null;
   };
 
   it('skips inactive companies when choosing the default login company', () => {

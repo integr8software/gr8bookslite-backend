@@ -1,14 +1,5 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { TermDateMode, TermStatus } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
@@ -41,13 +32,7 @@ export class GetTermListQueryDto {
 
   @IsOptional()
   @IsIn(['name', 'dateMode', 'period', 'status', 'createdAt', 'updatedAt'])
-  sortBy?:
-    | 'name'
-    | 'dateMode'
-    | 'period'
-    | 'status'
-    | 'createdAt'
-    | 'updatedAt';
+  sortBy?: 'name' | 'dateMode' | 'period' | 'status' | 'createdAt' | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

@@ -1,11 +1,6 @@
 import path from 'node:path';
 import { BadRequestException } from '@nestjs/common';
-import {
-  StorageEnvironments,
-  StorageFolders,
-  type StorageEnvironment,
-  type StorageFolder,
-} from './storage.types';
+import { StorageEnvironments, StorageFolders, type StorageEnvironment, type StorageFolder } from './storage.types';
 
 export function sanitizeRelativePath(value: string) {
   const normalized = value.replace(/\\/g, '/');
@@ -14,11 +9,7 @@ export function sanitizeRelativePath(value: string) {
     .map((segment) => segment.trim())
     .filter(Boolean);
 
-  if (
-    segments.length === 0 ||
-    normalized.startsWith('/') ||
-    segments.some((segment) => segment === '.' || segment === '..')
-  ) {
+  if (segments.length === 0 || normalized.startsWith('/') || segments.some((segment) => segment === '.' || segment === '..')) {
     throw new BadRequestException('Invalid storage path.');
   }
 
@@ -76,10 +67,7 @@ export function stripStorageEnvironment(relativePath: string) {
   const cleanPath = sanitizeRelativePath(relativePath);
   const [firstSegment, ...remainingSegments] = cleanPath.split('/');
 
-  if (
-    StorageEnvironments.includes(firstSegment as StorageEnvironment) &&
-    remainingSegments.length > 0
-  ) {
+  if (StorageEnvironments.includes(firstSegment as StorageEnvironment) && remainingSegments.length > 0) {
     return remainingSegments.join('/');
   }
 

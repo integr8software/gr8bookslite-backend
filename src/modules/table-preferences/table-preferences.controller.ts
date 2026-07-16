@@ -10,26 +10,17 @@ import { TablePreferencesService } from './table-preferences.service';
 @ApiTags('Table Preferences')
 @Controller({ path: 'table-preferences', version: '1' })
 export class TablePreferencesController {
-  constructor(
-    private readonly tablePreferencesService: TablePreferencesService,
-  ) {}
+  constructor(private readonly tablePreferencesService: TablePreferencesService) {}
 
   @Get(':moduleKey')
   @ApiOkResponse({ description: 'Table preference retrieved.' })
-  findOne(
-    @CurrentUser() user: AuthUser,
-    @Param('moduleKey') moduleKey: string,
-  ) {
+  findOne(@CurrentUser() user: AuthUser, @Param('moduleKey') moduleKey: string) {
     return this.tablePreferencesService.findOne(user, moduleKey);
   }
 
   @Put(':moduleKey')
   @ApiOkResponse({ description: 'Table preference saved.' })
-  save(
-    @CurrentUser() user: AuthUser,
-    @Param('moduleKey') moduleKey: string,
-    @Body() dto: SaveTablePreferenceDto,
-  ) {
+  save(@CurrentUser() user: AuthUser, @Param('moduleKey') moduleKey: string, @Body() dto: SaveTablePreferenceDto) {
     return this.tablePreferencesService.save(user, moduleKey, dto);
   }
 }

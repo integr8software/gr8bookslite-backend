@@ -10,10 +10,6 @@ import { BankMasterfileSupportService } from './services/bank-masterfile-support
 @Module({
   imports: [PrismaModule, AccessControlModule, AuthModule],
   controllers: [BankMasterfileController],
-  providers: [
-    BankMasterfileService,
-    BankMasterfileSupportService,
-    CoaBankSyncService,
-  ],
+  providers: [BankMasterfileService, BankMasterfileSupportService, CoaBankSyncService],
 })
 export class BankMasterfileModule {}

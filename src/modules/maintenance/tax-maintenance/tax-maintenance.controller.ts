@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -28,10 +19,7 @@ export class TaxMaintenanceController {
 
   @Get()
   @ApiOkResponse({ description: 'Tax maintenance list retrieved.' })
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Query() query: GetTaxMaintenanceListQueryDto,
-  ) {
+  findAll(@CurrentUser() user: AuthUser, @Query() query: GetTaxMaintenanceListQueryDto) {
     return this.taxMaintenanceService.findAll(user, query);
   }
 
@@ -49,11 +37,7 @@ export class TaxMaintenanceController {
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Tax maintenance record updated.' })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateTaxMaintenanceDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateTaxMaintenanceDto) {
     return this.taxMaintenanceService.update(user, id, dto);
   }
 }

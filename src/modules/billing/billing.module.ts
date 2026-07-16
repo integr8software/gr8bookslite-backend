@@ -11,12 +11,7 @@ import { PaymongoWebhookService } from './services/paymongo-webhook.service';
 @Module({
   imports: [AuthModule, AccessControlModule],
   controllers: [BillingController, PaymongoWebhookController],
-  providers: [
-    BillingService,
-    BillingPaymentApplicationService,
-    PaymongoService,
-    PaymongoWebhookService,
-  ],
+  providers: [BillingService, BillingPaymentApplicationService, PaymongoService, PaymongoWebhookService],
   exports: [BillingService, BillingPaymentApplicationService],
 })
 export class BillingModule {}

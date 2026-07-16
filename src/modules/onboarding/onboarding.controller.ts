@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -27,10 +19,7 @@ export class OnboardingController {
 
   @Post('company-logo')
   @UseInterceptors(FileInterceptor('logo'))
-  uploadCompanyLogo(
-    @CurrentUser() user: AuthUser,
-    @UploadedFile() file: UploadedLogoFile | undefined,
-  ) {
+  uploadCompanyLogo(@CurrentUser() user: AuthUser, @UploadedFile() file: UploadedLogoFile | undefined) {
     return this.onboardingService.uploadCompanyLogo(user, file);
   }
 
@@ -45,26 +34,17 @@ export class OnboardingController {
   }
 
   @Post('plan')
-  selectPlan(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: SelectOnboardingPlanDto,
-  ) {
+  selectPlan(@CurrentUser() user: AuthUser, @Body() dto: SelectOnboardingPlanDto) {
     return this.onboardingService.selectPlan(user, dto);
   }
 
   @Post('billing')
-  saveBilling(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: SaveOnboardingBillingDto,
-  ) {
+  saveBilling(@CurrentUser() user: AuthUser, @Body() dto: SaveOnboardingBillingDto) {
     return this.onboardingService.saveBilling(user, dto);
   }
 
   @Post('company-details')
-  saveCompanyDetails(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: SaveOnboardingCompanyDetailsDto,
-  ) {
+  saveCompanyDetails(@CurrentUser() user: AuthUser, @Body() dto: SaveOnboardingCompanyDetailsDto) {
     return this.onboardingService.saveCompanyDetails(user, dto);
   }
 

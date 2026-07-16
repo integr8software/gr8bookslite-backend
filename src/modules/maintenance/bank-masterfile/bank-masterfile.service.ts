@@ -1,23 +1,6 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-} from '@prisma/client';
-import {
-  DefaultLimit,
-  DefaultPage,
-} from '../../../common/constants/pagination.constant';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
+import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
@@ -82,10 +65,7 @@ export class BankMasterfileService {
     ]);
 
     return {
-      bankAccounts: await mapBankAccountsWithAuditUsers(
-        this.prisma,
-        bankAccounts,
-      ),
+      bankAccounts: await mapBankAccountsWithAuditUsers(this.prisma, bankAccounts),
       statistics,
       pagination: {
         page,
@@ -101,14 +81,8 @@ export class BankMasterfileService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
-    const cashInBankAccount =
-      await this.support.findCashInBankParentOrThrow(companyId);
-    const accountCode = await this.support.generateNextCashInBankAccountCode(
-      companyId,
-      cashInBankAccount.id,
-      cashInBankAccount.accountCode,
-      this.prisma,
-    );
+    const cashInBankAccount = await this.support.findCashInBankParentOrThrow(companyId);
+    const accountCode = await this.support.generateNextCashInBankAccountCode(companyId, cashInBankAccount.id, cashInBankAccount.accountCode, this.prisma);
 
     return {
       accountCode,
@@ -121,15 +95,10 @@ export class BankMasterfileService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
-    const bankAccount = await this.support.findBankAccountOrThrow(
-      companyId,
-      parsePositiveBigIntId(id),
-    );
+    const bankAccount = await this.support.findBankAccountOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
-      bankAccount: (
-        await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount])
-      )[0],
+      bankAccount: (await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount]))[0],
       permissions: this.getPermissions(user, companyId),
     };
   }
@@ -142,20 +111,10 @@ export class BankMasterfileService {
 
     try {
       const bankAccount = await this.prisma.$transaction(async (tx) => {
-        const cashInBankAccount =
-          await this.support.findCashInBankParentOrThrow(companyId, tx);
+        const cashInBankAccount = await this.support.findCashInBankParentOrThrow(companyId, tx);
         const accountCode = dto.accountCode?.trim()
-          ? await this.support.validateManualAccountCode(
-              companyId,
-              dto.accountCode,
-              tx,
-            )
-          : await this.support.generateNextCashInBankAccountCode(
-              companyId,
-              cashInBankAccount.id,
-              cashInBankAccount.accountCode,
-              tx,
-            );
+          ? await this.support.validateManualAccountCode(companyId, dto.accountCode, tx)
+          : await this.support.generateNextCashInBankAccountCode(companyId, cashInBankAccount.id, cashInBankAccount.accountCode, tx);
         const accountName = resolveBankAccountName(dto);
         const requestedStatus = dto.status ?? ChartAccountStatus.ACTIVE;
         await this.support.ensureBankAccountAvailable(companyId, dto);
@@ -220,9 +179,7 @@ export class BankMasterfileService {
 
       return {
         message: 'Bank account created successfully.',
-        bankAccount: (
-          await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount])
-        )[0],
+        bankAccount: (await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount]))[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -239,19 +196,12 @@ export class BankMasterfileService {
     ensureNoDuplicateImportedBankAccounts(dto.banks);
     ensureNoDuplicateImportedAccountCodes(dto.banks);
     ensureAtMostOneDefaultImportedBank(dto.banks);
-    await this.support.ensureImportedBankAccountsAvailable(
-      companyId,
-      dto.banks,
-    );
-    await this.support.ensureImportedAccountCodesAvailable(
-      companyId,
-      dto.banks,
-    );
+    await this.support.ensureImportedBankAccountsAvailable(companyId, dto.banks);
+    await this.support.ensureImportedAccountCodesAvailable(companyId, dto.banks);
 
     try {
       const bankAccounts = await this.prisma.$transaction(async (tx) => {
-        const cashInBankAccount =
-          await this.support.findCashInBankParentOrThrow(companyId, tx);
+        const cashInBankAccount = await this.support.findCashInBankParentOrThrow(companyId, tx);
 
         if (dto.banks.some((bank) => bank.isDefault === true)) {
           await tx.bankAccount.updateMany({
@@ -264,17 +214,8 @@ export class BankMasterfileService {
 
         for (const bank of dto.banks) {
           const accountCode = bank.accountCode?.trim()
-            ? await this.support.validateManualAccountCode(
-                companyId,
-                bank.accountCode,
-                tx,
-              )
-            : await this.support.generateNextCashInBankAccountCode(
-                companyId,
-                cashInBankAccount.id,
-                cashInBankAccount.accountCode,
-                tx,
-              );
+            ? await this.support.validateManualAccountCode(companyId, bank.accountCode, tx)
+            : await this.support.generateNextCashInBankAccountCode(companyId, cashInBankAccount.id, cashInBankAccount.accountCode, tx);
           const accountName = resolveBankAccountName(bank);
           const requestedStatus = bank.status ?? ChartAccountStatus.ACTIVE;
           const chartAccount = await tx.chartAccount.create({
@@ -336,10 +277,7 @@ export class BankMasterfileService {
 
       return {
         message: `${bankAccounts.length} bank account${bankAccounts.length === 1 ? '' : 's'} imported successfully.`,
-        bankAccounts: await mapBankAccountsWithAuditUsers(
-          this.prisma,
-          bankAccounts,
-        ),
+        bankAccounts: await mapBankAccountsWithAuditUsers(this.prisma, bankAccounts),
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -351,10 +289,7 @@ export class BankMasterfileService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const bankAccountId = parsePositiveBigIntId(id);
-    const currentBankAccount = await this.support.findBankAccountOrThrow(
-      companyId,
-      bankAccountId,
-    );
+    const currentBankAccount = await this.support.findBankAccountOrThrow(companyId, bankAccountId);
 
     if (dto.accountCode !== undefined) {
       throw new BadRequestException('Account code cannot be changed here.');
@@ -363,11 +298,7 @@ export class BankMasterfileService {
     const nextDto = { ...toBankAccountDtoLike(currentBankAccount), ...dto };
     const nextAccountName = resolveBankAccountName(nextDto);
     validateBankInput(nextDto);
-    await this.support.ensureBankAccountAvailable(
-      companyId,
-      dto,
-      bankAccountId,
-    );
+    await this.support.ensureBankAccountAvailable(companyId, dto, bankAccountId);
 
     try {
       const bankAccount = await this.prisma.$transaction(async (tx) => {
@@ -391,17 +322,9 @@ export class BankMasterfileService {
           where: { id: updatedBankAccount.coaId },
           data: {
             accountTitle: nextAccountName,
-            currencyCode:
-              dto.currencyCode !== undefined
-                ? cleanCurrencyCode(dto.currencyCode)
-                : undefined,
+            currencyCode: dto.currencyCode !== undefined ? cleanCurrencyCode(dto.currencyCode) : undefined,
             status: dto.status,
-            deletedAt:
-              dto.status === undefined
-                ? undefined
-                : dto.status === ChartAccountStatus.INACTIVE
-                  ? new Date()
-                  : null,
+            deletedAt: dto.status === undefined ? undefined : dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
             whoModified: String(user.id),
           },
         });
@@ -425,9 +348,7 @@ export class BankMasterfileService {
 
       return {
         message: 'Bank account updated successfully.',
-        bankAccount: (
-          await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount])
-        )[0],
+        bankAccount: (await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount]))[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -435,19 +356,12 @@ export class BankMasterfileService {
     }
   }
 
-  async updateStatus(
-    user: AuthUser,
-    id: string,
-    dto: UpdateBankAccountStatusDto,
-  ) {
+  async updateStatus(user: AuthUser, id: string, dto: UpdateBankAccountStatusDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const bankAccountId = parsePositiveBigIntId(id);
-    const currentBankAccount = await this.support.findBankAccountOrThrow(
-      companyId,
-      bankAccountId,
-    );
+    const currentBankAccount = await this.support.findBankAccountOrThrow(companyId, bankAccountId);
 
     const bankAccount = await this.prisma.$transaction(async (tx) => {
       if (dto.status === ChartAccountStatus.ACTIVE) {
@@ -463,8 +377,7 @@ export class BankMasterfileService {
         where: { id: currentBankAccount.coaId },
         data: {
           status: dto.status,
-          deletedAt:
-            dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
+          deletedAt: dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
           whoModified: String(user.id),
         },
       });
@@ -480,13 +393,8 @@ export class BankMasterfileService {
     }, MaintenanceTransactionOptions);
 
     return {
-      message:
-        dto.status === ChartAccountStatus.ACTIVE
-          ? 'Bank account activated successfully.'
-          : 'Bank account inactivated successfully.',
-      bankAccount: (
-        await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount])
-      )[0],
+      message: dto.status === ChartAccountStatus.ACTIVE ? 'Bank account activated successfully.' : 'Bank account inactivated successfully.',
+      bankAccount: (await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount]))[0],
     };
   }
 
@@ -513,25 +421,16 @@ export class BankMasterfileService {
     }
   }
 
-  private ensureCan(
-    user: AuthUser,
-    companyId: number,
-    action: PermissionAction,
-  ) {
+  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {
       return;
     }
 
-    if (
-      user.companyId === companyId &&
-      user.permissions.includes(`BM:${action}`)
-    ) {
+    if (user.companyId === companyId && user.permissions.includes(`BM:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException(
-      'You do not have permission to manage bank masterfile records.',
-    );
+    throw new ForbiddenException('You do not have permission to manage bank masterfile records.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -549,9 +448,7 @@ export class BankMasterfileService {
       return true;
     }
 
-    return (
-      user.companyId === companyId && user.permissions.includes(`BM:${action}`)
-    );
+    return user.companyId === companyId && user.permissions.includes(`BM:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -562,19 +459,13 @@ export class BankMasterfileService {
     return (
       user.companyId === companyId &&
       user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN ||
-        user.membershipRole === MembershipRole.ADMIN)
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
     );
   }
 
   private throwFriendlyPrismaError(error: unknown) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
-      throw new ConflictException(
-        'This bank masterfile record already exists.',
-      );
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ConflictException('This bank masterfile record already exists.');
     }
   }
 }

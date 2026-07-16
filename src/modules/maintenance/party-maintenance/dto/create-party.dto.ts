@@ -1,24 +1,6 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMinSize,
-  IsDateString,
-  IsArray,
-  IsEmail,
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  Matches,
-  MaxLength,
-  Min,
-  ValidateNested,
-} from 'class-validator';
-import {
-  PartyClassification,
-  PartyStatus,
-  PartyType,
-  PartyVatRegistrationType,
-} from '@prisma/client';
+import { ArrayMinSize, IsDateString, IsArray, IsEmail, IsEnum, IsInt, IsOptional, IsString, Matches, MaxLength, Min, ValidateNested } from 'class-validator';
+import { PartyClassification, PartyStatus, PartyType, PartyVatRegistrationType } from '@prisma/client';
 import { CreatePartyAddressDto } from './create-party-address.dto';
 
 export class CreatePartyDto {

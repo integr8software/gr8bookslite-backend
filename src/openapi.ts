@@ -21,24 +21,16 @@ export function createOpenApiDocument(app: INestApplication) {
 
 export function setupOpenApi(app: INestApplication) {
   const configService = app.get(ConfigService);
-  const isProduction =
-    configService.get<string>('NODE_ENV')?.toLowerCase() === 'production';
-  const isEnabled =
-    configService.get<string>('OPENAPI_ENABLED')?.toLowerCase() === 'true' ||
-    !isProduction;
+  const isProduction = configService.get<string>('NODE_ENV')?.toLowerCase() === 'production';
+  const isEnabled = configService.get<string>('OPENAPI_ENABLED')?.toLowerCase() === 'true' || !isProduction;
 
   if (!isEnabled) {
     return;
   }
 
-  SwaggerModule.setup(
-    OpenApiDocumentPath,
-    app,
-    () => createOpenApiDocument(app),
-    {
-      jsonDocumentUrl: OpenApiJsonPath,
-      useGlobalPrefix: false,
-      customSiteTitle: 'GR8Books Neo API Docs',
-    },
-  );
+  SwaggerModule.setup(OpenApiDocumentPath, app, () => createOpenApiDocument(app), {
+    jsonDocumentUrl: OpenApiJsonPath,
+    useGlobalPrefix: false,
+    customSiteTitle: 'GR8Books Neo API Docs',
+  });
 }

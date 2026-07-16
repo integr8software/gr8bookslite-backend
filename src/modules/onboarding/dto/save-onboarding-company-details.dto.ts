@@ -1,17 +1,8 @@
-import {
-  IsEmail,
-  IsIn,
-  IsOptional,
-  IsString,
-  Matches,
-  MinLength,
-  ValidateIf,
-} from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, Matches, MinLength, ValidateIf } from 'class-validator';
 
 const NamePattern = /^[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*$/u;
 const OptionalNamePattern = /^(?:$|[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*)$/u;
-const TinPattern =
-  /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
+const TinPattern = /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
 const ContactNumberPattern = /^\+63 \d{3} \d{3} \d{4}$/;
 const DatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -19,9 +10,7 @@ export class SaveOnboardingCompanyDetailsDto {
   @IsIn(['individual', 'non-individual'])
   taxpayerType!: 'individual' | 'non-individual';
 
-  @ValidateIf(
-    (dto: SaveOnboardingCompanyDetailsDto) => dto.taxpayerType === 'individual',
-  )
+  @ValidateIf((dto: SaveOnboardingCompanyDetailsDto) => dto.taxpayerType === 'individual')
   @IsString()
   @MinLength(2)
   @Matches(NamePattern, {
@@ -29,9 +18,7 @@ export class SaveOnboardingCompanyDetailsDto {
   })
   lastName?: string;
 
-  @ValidateIf(
-    (dto: SaveOnboardingCompanyDetailsDto) => dto.taxpayerType === 'individual',
-  )
+  @ValidateIf((dto: SaveOnboardingCompanyDetailsDto) => dto.taxpayerType === 'individual')
   @IsString()
   @MinLength(2)
   @Matches(NamePattern, {
@@ -39,9 +26,7 @@ export class SaveOnboardingCompanyDetailsDto {
   })
   firstName?: string;
 
-  @ValidateIf(
-    (dto: SaveOnboardingCompanyDetailsDto) => dto.taxpayerType === 'individual',
-  )
+  @ValidateIf((dto: SaveOnboardingCompanyDetailsDto) => dto.taxpayerType === 'individual')
   @IsOptional()
   @IsString()
   @Matches(OptionalNamePattern, {
@@ -49,27 +34,17 @@ export class SaveOnboardingCompanyDetailsDto {
   })
   middleName?: string;
 
-  @ValidateIf(
-    (dto: SaveOnboardingCompanyDetailsDto) =>
-      dto.taxpayerType === 'non-individual',
-  )
+  @ValidateIf((dto: SaveOnboardingCompanyDetailsDto) => dto.taxpayerType === 'non-individual')
   @IsString()
   @MinLength(2)
   companyName?: string;
 
-  @ValidateIf(
-    (dto: SaveOnboardingCompanyDetailsDto) =>
-      dto.taxpayerType === 'non-individual',
-  )
+  @ValidateIf((dto: SaveOnboardingCompanyDetailsDto) => dto.taxpayerType === 'non-individual')
   @IsString()
   @MinLength(2)
   nonIndividualType?: string;
 
-  @ValidateIf(
-    (dto: SaveOnboardingCompanyDetailsDto) =>
-      dto.taxpayerType === 'non-individual' &&
-      dto.nonIndividualType === 'Others',
-  )
+  @ValidateIf((dto: SaveOnboardingCompanyDetailsDto) => dto.taxpayerType === 'non-individual' && dto.nonIndividualType === 'Others')
   @IsString()
   @MinLength(2)
   nonIndividualTypeOther?: string;

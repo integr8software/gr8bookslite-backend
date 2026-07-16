@@ -1,16 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  BillingCycle,
-  BillingIntervalUnit,
-  Prisma,
-  SubscriptionPlanStatus,
-} from '@prisma/client';
+import { BillingCycle, BillingIntervalUnit, Prisma, SubscriptionPlanStatus } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateMasterPlanAndPackageDto } from './dto/create-master-plan-and-package.dto';
-import {
-  mapMasterPlanAndPackage,
-  masterPlanAndPackageInclude,
-} from './mappers/MasterPlanAndPackage.mapper';
+import { mapMasterPlanAndPackage, masterPlanAndPackageInclude } from './mappers/MasterPlanAndPackage.mapper';
 
 @Injectable()
 export class MasterPlanAndPackagesService {
@@ -32,9 +24,7 @@ export class MasterPlanAndPackagesService {
     const normalizedSystemCodes = this.normalizeCodes(dto.systemCodes);
     const normalizedPrices = this.normalizePrices(dto.prices);
     const normalizedUsageRules = this.normalizeUsageRules(dto.usageRules);
-    const normalizedDiscountTiers = this.normalizeDiscountTiers(
-      dto.discountTiers,
-    );
+    const normalizedDiscountTiers = this.normalizeDiscountTiers(dto.discountTiers);
 
     if (normalizedSystemCodes.length === 0) {
       throw new BadRequestException('Select at least one system.');
@@ -46,16 +36,10 @@ export class MasterPlanAndPackagesService {
     if (selectedSystems.length !== normalizedSystemCodes.length) {
       throw new BadRequestException('One or more system codes are invalid.');
     }
-    const systemIdByCode = new Map(
-      selectedSystems.map((system) => [system.code, system.id]),
-    );
+    const systemIdByCode = new Map(selectedSystems.map((system) => [system.code, system.id]));
 
-    const monthlyPrice = normalizedPrices.find(
-      (price) => price.billingCycle === BillingCycle.MONTHLY,
-    );
-    const yearlyPrice = normalizedPrices.find(
-      (price) => price.billingCycle === BillingCycle.YEARLY,
-    );
+    const monthlyPrice = normalizedPrices.find((price) => price.billingCycle === BillingCycle.MONTHLY);
+    const yearlyPrice = normalizedPrices.find((price) => price.billingCycle === BillingCycle.YEARLY);
 
     if (!monthlyPrice || !yearlyPrice) {
       throw new BadRequestException('Monthly and yearly prices are required.');
@@ -132,13 +116,7 @@ export class MasterPlanAndPackagesService {
   }
 
   private normalizeCodes(codes: string[]) {
-    return [
-      ...new Set(
-        codes
-          .map((code) => code.trim().toUpperCase())
-          .filter((code) => code.length > 0),
-      ),
-    ];
+    return [...new Set(codes.map((code) => code.trim().toUpperCase()).filter((code) => code.length > 0))];
   }
 
   private normalizePrices(prices: CreateMasterPlanAndPackageDto['prices']) {
@@ -148,30 +126,18 @@ export class MasterPlanAndPackagesService {
       uniquePrices.set(price.billingCycle, {
         ...price,
         intervalCount: price.intervalCount || 1,
-        intervalUnit:
-          price.intervalUnit ||
-          (price.billingCycle === BillingCycle.YEARLY
-            ? BillingIntervalUnit.YEAR
-            : BillingIntervalUnit.MONTH),
+        intervalUnit: price.intervalUnit || (price.billingCycle === BillingCycle.YEARLY ? BillingIntervalUnit.YEAR : BillingIntervalUnit.MONTH),
       });
     }
 
     return [...uniquePrices.values()];
   }
 
-  private normalizeUsageRules(
-    usageRules: CreateMasterPlanAndPackageDto['usageRules'],
-  ) {
+  private normalizeUsageRules(usageRules: CreateMasterPlanAndPackageDto['usageRules']) {
     return [...new Map(usageRules.map((rule) => [rule.metric, rule])).values()];
   }
 
-  private normalizeDiscountTiers(
-    discountTiers: CreateMasterPlanAndPackageDto['discountTiers'],
-  ) {
-    return [...discountTiers].sort(
-      (left, right) =>
-        left.metric.localeCompare(right.metric) ||
-        left.thresholdCount - right.thresholdCount,
-    );
+  private normalizeDiscountTiers(discountTiers: CreateMasterPlanAndPackageDto['discountTiers']) {
+    return [...discountTiers].sort((left, right) => left.metric.localeCompare(right.metric) || left.thresholdCount - right.thresholdCount);
   }
 }

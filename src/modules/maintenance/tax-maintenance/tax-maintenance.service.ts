@@ -1,39 +1,26 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  ChartAccountStatus,
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-  TaxMaintenanceStatus,
-} from '@prisma/client';
-import {
-  DefaultLimit,
-  DefaultPage,
-} from '../../../common/constants/pagination.constant';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ChartAccountStatus, ChartAccountType, MembershipRole, MembershipStatus, Prisma, TaxMaintenanceStatus } from '@prisma/client';
+import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
-import {
-  parseOptionalPositiveBigIntId,
-  parsePositiveBigIntId,
-} from '../../../common/utils/id.util';
+import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
+import { cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { accountGroupHasTag, SystemAccountGroupTags } from '../chart-of-accounts/utils/system-account-groups.util';
 import { TaxMaintenanceInclude } from './prisma/tax-maintenance.include';
 import { seedCompanyTaxMaintenanceDefaults } from './seed/tax-maintenance.seed';
 import type { TaxMaintenanceWithAccounts } from './types/tax-maintenance-with-accounts.type';
+import { buildTaxMaintenanceAccountingAccountOptions } from './utils/tax-maintenance-accounting-account.util';
 import { CreateTaxMaintenanceDto } from './dto/create-tax-maintenance.dto';
 import { GetTaxMaintenanceListQueryDto } from './dto/get-tax-maintenance-list-query.dto';
 import { UpdateTaxMaintenanceDto } from './dto/update-tax-maintenance.dto';
 import { mapTaxMaintenance } from './mappers/tax-maintenance.mapper';
 
 const TaxMaintenanceModuleCode = 'TXM';
+const TaxesPayablesAccountTitle = 'Taxes Payables';
+const TaxesPayablesAccountGroupTag = SystemAccountGroupTags.taxMaintenanceTaxesPayablesGroup;
 
 @Injectable()
 export class TaxMaintenanceService {
@@ -51,7 +38,7 @@ export class TaxMaintenanceService {
     const where = this.buildListWhere(companyId, query);
     const orderBy = this.buildOrderBy(query);
 
-    const [taxMaintenance, total, statistics] = await Promise.all([
+    const [taxMaintenance, total, statistics, accountingOptions] = await Promise.all([
       this.prisma.taxMaintenance.findMany({
         where,
         include: TaxMaintenanceInclude,
@@ -61,11 +48,12 @@ export class TaxMaintenanceService {
       }),
       this.prisma.taxMaintenance.count({ where }),
       this.getStatistics(companyId),
+      this.getAccountingOptions(companyId),
     ]);
 
     return {
-      taxMaintenance:
-        await this.mapTaxMaintenanceWithAuditUsers(taxMaintenance),
+      taxMaintenance: await this.mapTaxMaintenanceWithAuditUsers(taxMaintenance),
+      ...accountingOptions,
       statistics,
       pagination: {
         page,
@@ -83,10 +71,7 @@ export class TaxMaintenanceService {
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     await this.ensureDefaultRows(companyId);
 
-    const tax = await this.findTaxMaintenanceOrThrow(
-      companyId,
-      parsePositiveBigIntId(id),
-    );
+    const tax = await this.findTaxMaintenanceOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       taxMaintenance: (await this.mapTaxMaintenanceWithAuditUsers([tax]))[0],
@@ -157,10 +142,7 @@ export class TaxMaintenanceService {
     }
   }
 
-  private buildListWhere(
-    companyId: number,
-    query: GetTaxMaintenanceListQueryDto,
-  ): Prisma.TaxMaintenanceWhereInput {
+  private buildListWhere(companyId: number, query: GetTaxMaintenanceListQueryDto): Prisma.TaxMaintenanceWhereInput {
     const search = query.search?.trim();
 
     return {
@@ -169,15 +151,13 @@ export class TaxMaintenanceService {
       ...(query.status ? { status: query.status } : {}),
       ...(search
         ? {
-            OR: [{ name: { contains: search, mode: 'insensitive' } }],
+            OR: [{ name: { contains: search, mode: 'insensitive' } }, { description: { contains: search, mode: 'insensitive' } }],
           }
         : {}),
     };
   }
 
-  private buildOrderBy(
-    query: GetTaxMaintenanceListQueryDto,
-  ): Prisma.TaxMaintenanceOrderByWithRelationInput[] {
+  private buildOrderBy(query: GetTaxMaintenanceListQueryDto): Prisma.TaxMaintenanceOrderByWithRelationInput[] {
     const sortBy = query.sortBy ?? 'name';
     const sortDirection = query.sortDirection ?? 'asc';
 
@@ -213,9 +193,7 @@ export class TaxMaintenanceService {
       });
   }
 
-  private async mapTaxMaintenanceWithAuditUsers(
-    taxes: TaxMaintenanceWithAccounts[],
-  ) {
+  private async mapTaxMaintenanceWithAuditUsers(taxes: TaxMaintenanceWithAccounts[]) {
     const userNames = await resolveAuditUserNames(
       this.prisma,
       taxes.flatMap((tax) => [tax.createdByUserId, tax.updatedByUserId]),
@@ -227,58 +205,56 @@ export class TaxMaintenanceService {
   private toCreateTaxMaintenanceData(dto: CreateTaxMaintenanceDto) {
     return {
       name: dto.name.trim(),
+      description: cleanOptional(dto.description),
       percentage: new Prisma.Decimal(dto.percentage),
       inputVatAccountId: parseOptionalPositiveBigIntId(dto.inputVatAccountId),
       outputVatAccountId: parseOptionalPositiveBigIntId(dto.outputVatAccountId),
-      vatPayableAccountId: parseOptionalPositiveBigIntId(dto.vatPayableAccountId),
-      deferredInputTaxAccountId: parseOptionalPositiveBigIntId(
-        dto.deferredInputTaxAccountId,
-      ),
-      deferredOutputVatAccountId: parseOptionalPositiveBigIntId(
-        dto.deferredOutputVatAccountId,
-      ),
+      deferredVatAccountId: parseOptionalPositiveBigIntId(dto.deferredVatAccountId),
+      expandedWithholdingTaxAccountId: parseOptionalPositiveBigIntId(dto.expandedWithholdingTaxAccountId),
+      creditableWithholdingTaxAccountId: parseOptionalPositiveBigIntId(dto.creditableWithholdingTaxAccountId),
+      withholdingVatableTaxAccountId: parseOptionalPositiveBigIntId(dto.withholdingVatableTaxAccountId),
+      finalWithholdingTaxAccountId: parseOptionalPositiveBigIntId(dto.finalWithholdingTaxAccountId),
     };
   }
 
   private toTaxMaintenanceData(dto: UpdateTaxMaintenanceDto) {
     return {
       ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
-      ...(dto.percentage !== undefined
-        ? { percentage: new Prisma.Decimal(dto.percentage) }
-        : {}),
+      ...(dto.description !== undefined ? { description: cleanOptional(dto.description) } : {}),
+      ...(dto.percentage !== undefined ? { percentage: new Prisma.Decimal(dto.percentage) } : {}),
       ...(dto.inputVatAccountId !== undefined
         ? {
-            inputVatAccountId: parseOptionalPositiveBigIntId(
-              dto.inputVatAccountId,
-            ),
+            inputVatAccountId: parseOptionalPositiveBigIntId(dto.inputVatAccountId),
           }
         : {}),
       ...(dto.outputVatAccountId !== undefined
         ? {
-            outputVatAccountId: parseOptionalPositiveBigIntId(
-              dto.outputVatAccountId,
-            ),
+            outputVatAccountId: parseOptionalPositiveBigIntId(dto.outputVatAccountId),
           }
         : {}),
-      ...(dto.vatPayableAccountId !== undefined
+      ...(dto.deferredVatAccountId !== undefined
         ? {
-            vatPayableAccountId: parseOptionalPositiveBigIntId(
-              dto.vatPayableAccountId,
-            ),
+            deferredVatAccountId: parseOptionalPositiveBigIntId(dto.deferredVatAccountId),
           }
         : {}),
-      ...(dto.deferredInputTaxAccountId !== undefined
+      ...(dto.expandedWithholdingTaxAccountId !== undefined
         ? {
-            deferredInputTaxAccountId: parseOptionalPositiveBigIntId(
-              dto.deferredInputTaxAccountId,
-            ),
+            expandedWithholdingTaxAccountId: parseOptionalPositiveBigIntId(dto.expandedWithholdingTaxAccountId),
           }
         : {}),
-      ...(dto.deferredOutputVatAccountId !== undefined
+      ...(dto.creditableWithholdingTaxAccountId !== undefined
         ? {
-            deferredOutputVatAccountId: parseOptionalPositiveBigIntId(
-              dto.deferredOutputVatAccountId,
-            ),
+            creditableWithholdingTaxAccountId: parseOptionalPositiveBigIntId(dto.creditableWithholdingTaxAccountId),
+          }
+        : {}),
+      ...(dto.withholdingVatableTaxAccountId !== undefined
+        ? {
+            withholdingVatableTaxAccountId: parseOptionalPositiveBigIntId(dto.withholdingVatableTaxAccountId),
+          }
+        : {}),
+      ...(dto.finalWithholdingTaxAccountId !== undefined
+        ? {
+            finalWithholdingTaxAccountId: parseOptionalPositiveBigIntId(dto.finalWithholdingTaxAccountId),
           }
         : {}),
       ...(dto.status !== undefined ? { status: dto.status } : {}),
@@ -286,16 +262,23 @@ export class TaxMaintenanceService {
   }
 
   private async ensureDefaultRows(companyId: number) {
-    await this.prisma.$transaction((tx) =>
-      seedCompanyTaxMaintenanceDefaults(tx, companyId),
-    );
+    await this.prisma.$transaction((tx) => seedCompanyTaxMaintenanceDefaults(tx, companyId));
   }
 
-  private async ensureNameAvailable(
-    companyId: number,
-    name: string,
-    excludedTaxMaintenanceId?: bigint,
-  ) {
+  private async getAccountingOptions(companyId: number) {
+    const accounts = await this.prisma.chartAccount.findMany({
+      where: {
+        companyId,
+        status: ChartAccountStatus.ACTIVE,
+        deletedAt: null,
+      },
+      orderBy: [{ accountCode: 'asc' }, { orderNo: 'asc' }, { accountTitle: 'asc' }],
+    });
+
+    return buildTaxMaintenanceAccountingAccountOptions(accounts);
+  }
+
+  private async ensureNameAvailable(companyId: number, name: string, excludedTaxMaintenanceId?: bigint) {
     const normalizedName = name.trim();
 
     if (!normalizedName) {
@@ -306,31 +289,26 @@ export class TaxMaintenanceService {
       where: {
         companyId,
         deletedAt: null,
-        id: excludedTaxMaintenanceId
-          ? { not: excludedTaxMaintenanceId }
-          : undefined,
+        id: excludedTaxMaintenanceId ? { not: excludedTaxMaintenanceId } : undefined,
         name: { equals: normalizedName, mode: 'insensitive' },
       },
       select: { id: true },
     });
 
     if (existingTax) {
-      throw new ConflictException(
-        'A tax maintenance record with this name already exists.',
-      );
+      throw new ConflictException('A tax maintenance record with this name already exists.');
     }
   }
 
-  private async ensureChartAccountsBelongToCompany(
-    companyId: number,
-    dto: CreateTaxMaintenanceDto | UpdateTaxMaintenanceDto,
-  ) {
+  private async ensureChartAccountsBelongToCompany(companyId: number, dto: CreateTaxMaintenanceDto | UpdateTaxMaintenanceDto) {
     const accountIds = [
       dto.inputVatAccountId,
       dto.outputVatAccountId,
-      dto.vatPayableAccountId,
-      dto.deferredInputTaxAccountId,
-      dto.deferredOutputVatAccountId,
+      dto.deferredVatAccountId,
+      dto.expandedWithholdingTaxAccountId,
+      dto.creditableWithholdingTaxAccountId,
+      dto.withholdingVatableTaxAccountId,
+      dto.finalWithholdingTaxAccountId,
     ]
       .map((value) => parseOptionalPositiveBigIntId(value))
       .filter((value): value is bigint => value !== null);
@@ -345,23 +323,33 @@ export class TaxMaintenanceService {
         id: { in: uniqueAccountIds },
         companyId,
         deletedAt: null,
+        accountType: ChartAccountType.LIABILITY,
         isPostingAccount: true,
         status: ChartAccountStatus.ACTIVE,
       },
-      select: { id: true },
+      include: { parentAccount: true },
     });
 
-    if (accounts.length !== uniqueAccountIds.length) {
-      throw new BadRequestException(
-        'Select active posting accounts from this company.',
-      );
+    const validAccountIds = new Set(
+      accounts
+        .filter((account) => {
+          const parent = account.parentAccount;
+
+          return (
+            parent?.companyId === companyId &&
+            parent.deletedAt === null &&
+            (accountGroupHasTag(parent.accountGroup, TaxesPayablesAccountGroupTag) || parent.accountTitle === TaxesPayablesAccountTitle)
+          );
+        })
+        .map((account) => account.id.toString()),
+    );
+
+    if (accounts.length !== uniqueAccountIds.length || uniqueAccountIds.some((accountId) => !validAccountIds.has(accountId.toString()))) {
+      throw new BadRequestException('Select active posting liability accounts under Taxes Payables.');
     }
   }
 
-  private async findTaxMaintenanceOrThrow(
-    companyId: number,
-    taxMaintenanceId: bigint,
-  ) {
+  private async findTaxMaintenanceOrThrow(companyId: number, taxMaintenanceId: bigint) {
     const tax = await this.prisma.taxMaintenance.findFirst({
       where: { id: taxMaintenanceId, companyId, deletedAt: null },
       include: TaxMaintenanceInclude,
@@ -402,25 +390,16 @@ export class TaxMaintenanceService {
     }
   }
 
-  private ensureCan(
-    user: AuthUser,
-    companyId: number,
-    action: PermissionAction,
-  ) {
+  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {
       return;
     }
 
-    if (
-      user.companyId === companyId &&
-      user.permissions.includes(`${TaxMaintenanceModuleCode}:${action}`)
-    ) {
+    if (user.companyId === companyId && user.permissions.includes(`${TaxMaintenanceModuleCode}:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException(
-      'You do not have permission to manage tax maintenance.',
-    );
+    throw new ForbiddenException('You do not have permission to manage tax maintenance.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -438,10 +417,7 @@ export class TaxMaintenanceService {
       return true;
     }
 
-    return (
-      user.companyId === companyId &&
-      user.permissions.includes(`${TaxMaintenanceModuleCode}:${action}`)
-    );
+    return user.companyId === companyId && user.permissions.includes(`${TaxMaintenanceModuleCode}:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -452,19 +428,13 @@ export class TaxMaintenanceService {
     return (
       user.companyId === companyId &&
       user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN ||
-        user.membershipRole === MembershipRole.ADMIN)
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
     );
   }
 
   private throwFriendlyPrismaError(error: unknown) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
-      throw new ConflictException(
-        'A tax maintenance record with this name already exists.',
-      );
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ConflictException('A tax maintenance record with this name already exists.');
     }
   }
 }

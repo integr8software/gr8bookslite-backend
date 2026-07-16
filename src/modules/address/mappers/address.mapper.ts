@@ -1,9 +1,4 @@
-import type {
-  Barangay,
-  CityMunicipality,
-  Province,
-  Region,
-} from '@prisma/client';
+import type { Barangay, CityMunicipality, Province, Region } from '@prisma/client';
 import type { AddressAutocompleteRow } from '../types/address-autocomplete-row.type';
 
 export function mapRegion(region: Region) {

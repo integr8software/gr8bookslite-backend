@@ -16,17 +16,12 @@ export function mapAlphanumericTaxCode(taxCode: AlphanumericTaxCode) {
   };
 }
 
-export function mapAlphanumericTaxCodeAutocomplete(
-  taxCode: AlphanumericTaxCode,
-) {
+export function mapAlphanumericTaxCodeAutocomplete(taxCode: AlphanumericTaxCode) {
   const mappedTaxCode = mapAlphanumericTaxCode(taxCode);
 
   return {
     label: taxCode.taxDescription,
-    description:
-      taxCode.natureOfIncome ??
-      taxCode.officialAtcCode ??
-      `${taxCode.transactionType} - ${taxCode.taxType}`,
+    description: taxCode.natureOfIncome ?? taxCode.officialAtcCode ?? `${taxCode.transactionType} - ${taxCode.taxType}`,
     taxCode: mappedTaxCode,
   };
 }

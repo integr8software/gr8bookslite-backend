@@ -1,22 +1,6 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  DiscountStatus,
-  DiscountType,
-  DiscountValueType,
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-} from '@prisma/client';
-import {
-  DefaultLimit,
-  DefaultPage,
-} from '../../../common/constants/pagination.constant';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { DiscountStatus, DiscountType, DiscountValueType, MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
+import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -30,10 +14,7 @@ import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { mapDiscount } from './mappers/discount-maintenance.mapper';
 import { DiscountInclude } from './prisma/discount.include';
 import type { DiscountWithAccount } from './types/discount-with-account.type';
-import {
-  getGeneratedDiscountAccountTitle,
-  resolveDiscountChartAccount,
-} from './utils/discount-chart-account.util';
+import { getGeneratedDiscountAccountTitle, resolveDiscountChartAccount } from './utils/discount-chart-account.util';
 
 @Injectable()
 export class DiscountMaintenanceService {
@@ -79,10 +60,7 @@ export class DiscountMaintenanceService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
-    const discount = await this.findDiscountOrThrow(
-      companyId,
-      parsePositiveBigIntId(id),
-    );
+    const discount = await this.findDiscountOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       discount: (await this.mapDiscountsWithAuditUsers([discount]))[0],
@@ -138,8 +116,7 @@ export class DiscountMaintenanceService {
     const nextName = dto.name?.trim() ?? current.name;
     const nextType = dto.type ?? current.type;
     const nextValueType = dto.valueType ?? current.valueType;
-    const nextValue =
-      dto.value === undefined ? Number(current.value) : Number(dto.value);
+    const nextValue = dto.value === undefined ? Number(current.value) : Number(dto.value);
 
     this.validateDiscountValue(nextValueType, nextValue);
 
@@ -149,16 +126,12 @@ export class DiscountMaintenanceService {
 
     try {
       const discount = await this.prisma.$transaction(async (tx) => {
-        const needsNewAccount =
-          dto.name !== undefined || dto.type !== undefined;
+        const needsNewAccount = dto.name !== undefined || dto.type !== undefined;
         const chartAccount = needsNewAccount
           ? await resolveDiscountChartAccount(tx, {
               companyId,
               type: nextType,
-              accountTitle: getGeneratedDiscountAccountTitle(
-                nextType,
-                nextName,
-              ),
+              accountTitle: getGeneratedDiscountAccountTitle(nextType, nextName),
               createdByUserId: user.id,
             })
           : current.chartAccount;
@@ -207,9 +180,7 @@ export class DiscountMaintenanceService {
     });
 
     if (existingDiscounts.length > 0) {
-      throw new ConflictException(
-        `Discount already exists: ${existingDiscounts[0].name}.`,
-      );
+      throw new ConflictException(`Discount already exists: ${existingDiscounts[0].name}.`);
     }
 
     const discounts = await this.prisma.$transaction(async (tx) => {
@@ -217,10 +188,7 @@ export class DiscountMaintenanceService {
         const chartAccount = await resolveDiscountChartAccount(tx, {
           companyId,
           type: input.type,
-          accountTitle: getGeneratedDiscountAccountTitle(
-            input.type,
-            input.name,
-          ),
+          accountTitle: getGeneratedDiscountAccountTitle(input.type, input.name),
           createdByUserId: user.id,
         });
 
@@ -255,10 +223,7 @@ export class DiscountMaintenanceService {
     };
   }
 
-  private buildListWhere(
-    companyId: number,
-    query: GetDiscountListQueryDto,
-  ): Prisma.DiscountWhereInput {
+  private buildListWhere(companyId: number, query: GetDiscountListQueryDto): Prisma.DiscountWhereInput {
     const search = query.search?.trim();
 
     return {
@@ -288,9 +253,7 @@ export class DiscountMaintenanceService {
     };
   }
 
-  private buildOrderBy(
-    query: GetDiscountListQueryDto,
-  ): Prisma.DiscountOrderByWithRelationInput[] {
+  private buildOrderBy(query: GetDiscountListQueryDto): Prisma.DiscountOrderByWithRelationInput[] {
     const sortBy = query.sortBy ?? 'name';
     const sortDirection = query.sortDirection ?? 'asc';
     const field = sortBy === 'valueType' ? 'valueType' : sortBy;
@@ -324,16 +287,11 @@ export class DiscountMaintenanceService {
           const count = group._count._all;
 
           statistics.totalDiscounts += count;
-          if (group.status === DiscountStatus.ACTIVE)
-            statistics.activeDiscounts += count;
-          if (group.status === DiscountStatus.INACTIVE)
-            statistics.inactiveDiscounts += count;
-          if (group.type === DiscountType.PURCHASE)
-            statistics.purchaseDiscounts += count;
-          if (group.type === DiscountType.SALES)
-            statistics.salesDiscounts += count;
-          if (group.valueType === DiscountValueType.PERCENTAGE)
-            statistics.percentageDiscounts += count;
+          if (group.status === DiscountStatus.ACTIVE) statistics.activeDiscounts += count;
+          if (group.status === DiscountStatus.INACTIVE) statistics.inactiveDiscounts += count;
+          if (group.type === DiscountType.PURCHASE) statistics.purchaseDiscounts += count;
+          if (group.type === DiscountType.SALES) statistics.salesDiscounts += count;
+          if (group.valueType === DiscountValueType.PERCENTAGE) statistics.percentageDiscounts += count;
         }
 
         return statistics;
@@ -343,10 +301,7 @@ export class DiscountMaintenanceService {
   private async mapDiscountsWithAuditUsers(discounts: DiscountWithAccount[]) {
     const userNames = await resolveAuditUserNames(
       this.prisma,
-      discounts.flatMap((discount) => [
-        discount.createdByUserId,
-        discount.updatedByUserId,
-      ]),
+      discounts.flatMap((discount) => [discount.createdByUserId, discount.updatedByUserId]),
     );
 
     return discounts.map((discount) => mapDiscount(discount, userNames));
@@ -365,9 +320,7 @@ export class DiscountMaintenanceService {
   private toDiscountData(dto: UpdateDiscountDto) {
     return {
       ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
-      ...(dto.description !== undefined
-        ? { description: dto.description.trim() }
-        : {}),
+      ...(dto.description !== undefined ? { description: dto.description.trim() } : {}),
       ...(dto.type !== undefined ? { type: dto.type } : {}),
       ...(dto.valueType !== undefined ? { valueType: dto.valueType } : {}),
       ...(dto.value !== undefined ? { value: dto.value } : {}),
@@ -381,9 +334,7 @@ export class DiscountMaintenanceService {
     }
 
     if (valueType === DiscountValueType.PERCENTAGE && value > 100) {
-      throw new BadRequestException(
-        'Percentage discount value cannot exceed 100.',
-      );
+      throw new BadRequestException('Percentage discount value cannot exceed 100.');
     }
   }
 
@@ -404,11 +355,7 @@ export class DiscountMaintenanceService {
     return discount;
   }
 
-  private async ensureNameAvailable(
-    companyId: number,
-    name: string,
-    excludedDiscountId?: bigint,
-  ) {
+  private async ensureNameAvailable(companyId: number, name: string, excludedDiscountId?: bigint) {
     const normalizedName = name.trim();
 
     if (!normalizedName) {
@@ -437,15 +384,10 @@ export class DiscountMaintenanceService {
     const names = new Set<string>();
 
     for (const discount of discounts) {
-      const normalizedName = discount.name
-        .trim()
-        .replace(/\s+/g, ' ')
-        .toLowerCase();
+      const normalizedName = discount.name.trim().replace(/\s+/g, ' ').toLowerCase();
 
       if (names.has(normalizedName)) {
-        throw new BadRequestException(
-          `Duplicate discount in upload: ${discount.name.trim()}.`,
-        );
+        throw new BadRequestException(`Duplicate discount in upload: ${discount.name.trim()}.`);
       }
 
       names.add(normalizedName);
@@ -480,25 +422,16 @@ export class DiscountMaintenanceService {
     }
   }
 
-  private ensureCan(
-    user: AuthUser,
-    companyId: number,
-    action: PermissionAction,
-  ) {
+  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {
       return;
     }
 
-    if (
-      user.companyId === companyId &&
-      user.permissions.includes(`DSM:${action}`)
-    ) {
+    if (user.companyId === companyId && user.permissions.includes(`DSM:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException(
-      'You do not have permission to manage discount definitions.',
-    );
+    throw new ForbiddenException('You do not have permission to manage discount definitions.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -516,9 +449,7 @@ export class DiscountMaintenanceService {
       return true;
     }
 
-    return (
-      user.companyId === companyId && user.permissions.includes(`DSM:${action}`)
-    );
+    return user.companyId === companyId && user.permissions.includes(`DSM:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -529,16 +460,12 @@ export class DiscountMaintenanceService {
     return (
       user.companyId === companyId &&
       user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN ||
-        user.membershipRole === MembershipRole.ADMIN)
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
     );
   }
 
   private throwFriendlyPrismaError(error: unknown) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       throw new ConflictException('A discount with this name already exists.');
     }
   }

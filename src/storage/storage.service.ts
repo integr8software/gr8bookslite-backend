@@ -2,25 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SupabaseStorageProvider } from './providers/supabase-storage.provider';
 import { VpsStorageProvider } from './providers/vps-storage.provider';
-import type {
-  StorageProvider,
-  StorageProviderName,
-  StorageUploadInput,
-} from './storage.types';
+import type { StorageProvider, StorageProviderName, StorageUploadInput } from './storage.types';
 
 @Injectable()
 export class StorageService {
   private readonly provider: StorageProvider;
 
-  constructor(
-    configService: ConfigService,
-    vpsStorageProvider: VpsStorageProvider,
-    supabaseStorageProvider: SupabaseStorageProvider,
-  ) {
-    const providerName = configService
-      .get<StorageProviderName>('STORAGE_PROVIDER', 'supabase')
-      .trim()
-      .toLowerCase() as StorageProviderName;
+  constructor(configService: ConfigService, vpsStorageProvider: VpsStorageProvider, supabaseStorageProvider: SupabaseStorageProvider) {
+    const providerName = configService.get<StorageProviderName>('STORAGE_PROVIDER', 'supabase').trim().toLowerCase() as StorageProviderName;
 
     if (providerName === 'vps') {
       this.provider = vpsStorageProvider;
@@ -32,9 +21,7 @@ export class StorageService {
       return;
     }
 
-    throw new Error(
-      'Invalid STORAGE_PROVIDER. Expected one of: vps, supabase.',
-    );
+    throw new Error('Invalid STORAGE_PROVIDER. Expected one of: vps, supabase.');
   }
 
   uploadFile(input: StorageUploadInput) {

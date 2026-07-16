@@ -7,6 +7,7 @@ import {
 import { EntitlementService } from '../../src/common/access/entitlements/entitlement.service';
 import { seedCompanyBankAccountDefaults } from '../../src/modules/maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyChartAccountDefaults } from '../../src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
+import { StandardDefaultChartAccounts } from '../../src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts-defaults.seed';
 import { seedCompanyDefaultAccountDefaults } from '../../src/modules/maintenance/default-account/seed/default-accounts.seed';
 import {
   findSystemAccountGroupOrThrow,
@@ -25,6 +26,10 @@ import {
   ResponsibilityCenterSeedRecords,
   seedCompanyResponsibilityCenterDefaults,
 } from '../../src/modules/maintenance/responsibility-center/seed/responsibility-center.seed';
+import {
+  TaxMaintenanceSeedRecords,
+  seedCompanyTaxMaintenanceDefaults,
+} from '../../src/modules/maintenance/tax-maintenance/seed/tax-maintenance.seed';
 import {
   TermMaintenanceSeedRecords,
   seedCompanyTermMaintenanceDefaults,
@@ -142,6 +147,7 @@ async function backupCounts(
     terms,
     paymentTypes,
     discounts,
+    taxMaintenance,
     responsibilityCenters,
     bankAccounts,
     transactionNumberSequences,
@@ -158,6 +164,10 @@ async function backupCounts(
       tx.paymentType.count({ where: { companyId } }),
     ),
     countForBackup('discounts', tx.discount.count({ where: { companyId } })),
+    countForBackup(
+      'tax_maintenance',
+      tx.taxMaintenance.count({ where: { companyId } }),
+    ),
     countForBackup(
       'responsibility_centers',
       tx.responsibilityCenter.count({ where: { companyId } }),
@@ -186,6 +196,7 @@ async function backupCounts(
       terms,
       paymentTypes,
       discounts,
+      taxMaintenance,
       responsibilityCenters,
       bankAccounts,
       transactionNumberSequences,
@@ -343,26 +354,76 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     key: 'coa',
     label: 'Chart of Accounts bootstrap',
     async inspect(companyId, tx) {
-      const chartAccountCount = await tx.chartAccount.count({
-        where: { companyId },
+      const existingAccounts = await tx.chartAccount.findMany({
+        where: {
+          companyId,
+          accountCode: {
+            in: StandardDefaultChartAccounts.map(
+              (account) => account.accountCode,
+            ),
+          },
+        },
+        select: { accountCode: true },
       });
+      const existingAccountCodes = new Set(
+        existingAccounts.map((account) => account.accountCode),
+      );
+      const missingAccountCodes = StandardDefaultChartAccounts.filter(
+        (account) => !existingAccountCodes.has(account.accountCode),
+      ).map((account) => account.accountCode);
 
-      return chartAccountCount > 0
-        ? ok('Company COA exists.', { chartAccountCount })
+      return missingAccountCodes.length === 0
+        ? ok('Company COA defaults exist.', {
+            chartAccountCount: existingAccounts.length,
+          })
         : missing(
-            'Company has no chart accounts.',
-            ['Seed company COA from system-owned Chart of Accounts seed.'],
-            { chartAccountCount },
+            'Company COA defaults are incomplete.',
+            [`Seed ${missingAccountCodes.length} missing standard COA rows.`],
+            {
+              chartAccountCount: existingAccounts.length,
+              expectedCount: StandardDefaultChartAccounts.length,
+              missingAccountCodes,
+            },
           );
     },
     backup: (companyId, tx) => backupCounts('coa', companyId, tx),
     async apply(companyId, tx) {
-      const chartAccountCount = await tx.chartAccount.count({
-        where: { companyId },
+      await seedCompanyChartAccountDefaults(tx, companyId);
+    },
+  },
+  {
+    key: 'tax-maintenance',
+    label: 'Tax maintenance defaults bootstrap',
+    async inspect(companyId, tx) {
+      const existingTaxes = await tx.taxMaintenance.findMany({
+        where: {
+          companyId,
+          name: {
+            in: TaxMaintenanceSeedRecords.map((tax) => tax.name),
+          },
+        },
+        select: { name: true },
       });
-      if (chartAccountCount === 0) {
-        await seedCompanyChartAccountDefaults(tx, companyId);
-      }
+      const existingNames = new Set(existingTaxes.map((tax) => tax.name));
+      const missingTaxes = TaxMaintenanceSeedRecords.filter(
+        (tax) => !existingNames.has(tax.name),
+      );
+
+      return missingTaxes.length === 0
+        ? ok('Tax maintenance defaults exist.', { count: existingTaxes.length })
+        : missing(
+            'Tax maintenance defaults are incomplete.',
+            [`Seed ${missingTaxes.length} missing tax maintenance records.`],
+            {
+              count: existingTaxes.length,
+              expectedCount: TaxMaintenanceSeedRecords.length,
+              missingNames: missingTaxes.map((tax) => tax.name),
+            },
+          );
+    },
+    backup: (companyId, tx) => backupCounts('tax-maintenance', companyId, tx),
+    async apply(companyId, tx) {
+      await seedCompanyTaxMaintenanceDefaults(tx, companyId);
     },
   },
   {

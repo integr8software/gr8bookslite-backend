@@ -56,14 +56,10 @@ export class BillingPaymentApplicationService {
     }
 
     if (
-      (attempt.subscriptionInvoice.totalAmountInCents ??
-        attempt.subscriptionInvoice.amountPaidInCents) !== attempt.amountInCents ||
+      (attempt.subscriptionInvoice.totalAmountInCents ?? attempt.subscriptionInvoice.amountPaidInCents) !== attempt.amountInCents ||
       attempt.subscriptionInvoice.currency !== attempt.currency
     ) {
-      await this.markApplicationFailed(
-        attempt.id,
-        'Paid attempt amount or currency does not match its invoice.',
-      );
+      await this.markApplicationFailed(attempt.id, 'Paid attempt amount or currency does not match its invoice.');
       return {
         applied: false,
         reason: 'amount_or_currency_mismatch',
@@ -91,9 +87,7 @@ export class BillingPaymentApplicationService {
           },
         });
 
-        if (
-          lockedAttempt.applicationStatus === BillingApplicationStatus.APPLIED
-        ) {
+        if (lockedAttempt.applicationStatus === BillingApplicationStatus.APPLIED) {
           return;
         }
 
@@ -101,21 +95,16 @@ export class BillingPaymentApplicationService {
           throw new Error('Payment attempt is no longer paid.');
         }
 
-        if (
-          lockedAttempt.subscriptionInvoice.status !==
-          SubscriptionInvoiceStatus.PAID
-        ) {
+        if (lockedAttempt.subscriptionInvoice.status !== SubscriptionInvoiceStatus.PAID) {
           throw new Error('Subscription invoice is no longer paid.');
         }
 
-        const periodStart =
-          lockedAttempt.subscriptionInvoice.periodStartAt ?? new Date();
+        const periodStart = lockedAttempt.subscriptionInvoice.periodStartAt ?? new Date();
         const periodEnd =
           lockedAttempt.subscriptionInvoice.periodEndAt ??
           this.addBillingInterval(periodStart, {
             intervalCount: lockedAttempt.subscriptionPlanPrice?.intervalCount ?? 1,
-            intervalUnit:
-              lockedAttempt.subscriptionPlanPrice?.intervalUnit ?? 'MONTH',
+            intervalUnit: lockedAttempt.subscriptionPlanPrice?.intervalUnit ?? 'MONTH',
           });
 
         if (lockedAttempt.companySubscriptionId) {
@@ -132,9 +121,7 @@ export class BillingPaymentApplicationService {
               endsAt: periodEnd,
               trialEndsAt: null,
               externalPaymentMethodId: null,
-              latestPaymentIntentId:
-                lockedAttempt.externalPaymentIntentId ??
-                lockedAttempt.companySubscription?.latestPaymentIntentId,
+              latestPaymentIntentId: lockedAttempt.externalPaymentIntentId ?? lockedAttempt.companySubscription?.latestPaymentIntentId,
             },
           });
         }
@@ -146,9 +133,7 @@ export class BillingPaymentApplicationService {
             },
             data: {
               billingCompletedAt: new Date(),
-              paymentMethodReference:
-                lockedAttempt.externalCheckoutSessionId ??
-                lockedAttempt.externalPaymentIntentId,
+              paymentMethodReference: lockedAttempt.externalCheckoutSessionId ?? lockedAttempt.externalPaymentIntentId,
             },
           });
         } else {
@@ -178,12 +163,9 @@ export class BillingPaymentApplicationService {
         reason: 'applied',
       };
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Payment application failed.';
+      const message = error instanceof Error ? error.message : 'Payment application failed.';
       await this.markApplicationFailed(attempt.id, message);
-      this.logger.error(
-        `Failed to apply paid billing attempt ${attempt.id}: ${message}`,
-      );
+      this.logger.error(`Failed to apply paid billing attempt ${attempt.id}: ${message}`);
       return {
         applied: false,
         reason: 'application_failed',
@@ -202,10 +184,7 @@ export class BillingPaymentApplicationService {
     });
   }
 
-  private addBillingInterval(
-    start: Date,
-    input: { intervalCount: number; intervalUnit: 'DAY' | 'MONTH' | 'YEAR' },
-  ) {
+  private addBillingInterval(start: Date, input: { intervalCount: number; intervalUnit: 'DAY' | 'MONTH' | 'YEAR' }) {
     const end = new Date(start);
 
     if (input.intervalUnit === 'DAY') {
