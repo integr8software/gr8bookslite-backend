@@ -221,7 +221,7 @@ export const AccountingAndInventorySidebarTemplate = [
       link('inventory-goods-receipt', 'GR', 'inventory'),
       link('inventory-receiving-report', 'RR', 'fileCheck'),
       link('inventory-material-request', 'MR', 'clipboard'),
-      link('inventory-inventory-account', 'IA', 'inventory'),
+      link('inventory-inventory-count', 'INC', 'inventory'),
     ],
   },
   {
