@@ -15,7 +15,7 @@ import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
 import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
 import { WorkspaceAuditLogsModule } from './modules/workspace/audit-logs/workspace-audit-logs.module';
-import { TablePreferencesModule } from './modules/workspace/table-preferences/table-preferences.module';
+import { TablePreferencesModule } from './modules/table-preferences/table-preferences.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import { AlphanumericTaxCodesModule } from './modules/alphanumeric-tax-codes/alphanumeric-tax-codes.module';
 import { AddressModule } from './modules/address/address.module';
