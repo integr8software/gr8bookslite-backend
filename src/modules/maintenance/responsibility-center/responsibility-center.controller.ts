@@ -47,6 +47,29 @@ export class ResponsibilityCenterController {
     return this.responsibilityCenterService.findTree(user, query);
   }
 
+  @Get('classifications')
+  @ApiOkResponse({
+    description: 'Responsibility center classifications retrieved.',
+  })
+  findClassifications(@CurrentUser() user: AuthUser) {
+    return this.responsibilityCenterService.findClassifications(user);
+  }
+
+  @Get('types')
+  @ApiOkResponse({ description: 'Responsibility center types retrieved.' })
+  findTypes(
+    @CurrentUser() user: AuthUser,
+    @Query('classificationId') classificationId?: string,
+  ) {
+    return this.responsibilityCenterService.findTypes(user, classificationId);
+  }
+
+  @Get('code-suggestion')
+  @ApiOkResponse({ description: 'Responsibility center code suggested.' })
+  suggestCode(@CurrentUser() user: AuthUser, @Query('typeId') typeId: string) {
+    return this.responsibilityCenterService.suggestCode(user, typeId);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Responsibility center retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {

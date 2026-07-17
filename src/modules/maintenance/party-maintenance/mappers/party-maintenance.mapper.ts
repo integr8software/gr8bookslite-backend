@@ -2,7 +2,10 @@ import type { ChartAccount, PartyAddress } from '@prisma/client';
 import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.util';
 import type { PartyWithDetails } from '../types/party-with-details.type';
 
-export function mapParty(party: PartyWithDetails, userNames: Map<number, string>) {
+export function mapParty(
+  party: PartyWithDetails,
+  userNames: Map<number, string>,
+) {
   return {
     id: party.id.toString(),
     partyCodeNo: party.partyCodeNo,
@@ -37,7 +40,9 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
       customerAdvanceAccount: mapChartAccountSummary(
         party.customerAdvanceAccount,
       ),
-      defaultPayableAccount: mapChartAccountSummary(party.defaultPayableAccount),
+      defaultPayableAccount: mapChartAccountSummary(
+        party.defaultPayableAccount,
+      ),
       vendorAdvanceAccount: mapChartAccountSummary(party.vendorAdvanceAccount),
       employeeAdvanceAccount: mapChartAccountSummary(
         party.employeeAdvanceAccount,

@@ -25,7 +25,9 @@ import { TermMaintenanceService } from './term-maintenance.service';
   version: '1',
 })
 export class TermMaintenanceController {
-  constructor(private readonly termMaintenanceService: TermMaintenanceService) {}
+  constructor(
+    private readonly termMaintenanceService: TermMaintenanceService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Term list retrieved.' })

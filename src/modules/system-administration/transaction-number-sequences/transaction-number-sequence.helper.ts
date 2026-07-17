@@ -104,10 +104,7 @@ export async function generateTransactionNumberForCompanyBranch(
 }
 
 export function formatTransactionNumber(
-  sequence: Pick<
-    TransactionNumberSequence,
-    'padding' | 'prefix' | 'suffix'
-  >,
+  sequence: Pick<TransactionNumberSequence, 'padding' | 'prefix' | 'suffix'>,
   runningNumber: number,
 ) {
   return `${sequence.prefix}${String(runningNumber).padStart(

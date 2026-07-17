@@ -76,5 +76,4 @@ export class DefaultAccountController {
   ) {
     return this.defaultAccountService.updateStatus(user, id, dto);
   }
-
 }

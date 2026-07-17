@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Headers,
-  HttpCode,
-  Post,
-  Req,
-} from '@nestjs/common';
+import { Controller, Headers, HttpCode, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { PaymongoWebhookService } from './services/paymongo-webhook.service';

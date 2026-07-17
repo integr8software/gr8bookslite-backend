@@ -70,4 +70,3 @@ export class GetDiscountListQueryDto {
   @IsIn(['asc', 'desc'])
   sortDirection?: 'asc' | 'desc';
 }
-

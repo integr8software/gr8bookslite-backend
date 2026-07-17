@@ -116,7 +116,9 @@ export function mapCompanySubscription(
   };
 }
 
-function deriveSubscriptionPlanModules(subscription: CompanySubscriptionDetails) {
+function deriveSubscriptionPlanModules(
+  subscription: CompanySubscriptionDetails,
+) {
   const modulesById = new Map<
     number,
     CompanySubscriptionDetails['plan']['systems'][number]['system']['modules'][number]['module']
@@ -130,6 +132,7 @@ function deriveSubscriptionPlanModules(subscription: CompanySubscriptionDetails)
 
   return [...modulesById.values()].sort(
     (left, right) =>
-      left.name.localeCompare(right.name) || left.code.localeCompare(right.code),
+      left.name.localeCompare(right.name) ||
+      left.code.localeCompare(right.code),
   );
 }

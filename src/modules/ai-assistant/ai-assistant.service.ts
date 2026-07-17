@@ -786,27 +786,29 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
           ? candidate.description
           : undefined,
       datemode: this.normalizeTermDatemode(candidate.datemode),
-      period: typeof candidate.period === 'string' ? candidate.period : undefined,
+      period:
+        typeof candidate.period === 'string' ? candidate.period : undefined,
       status: this.normalizeTermStatus(candidate.status),
     };
   }
 
-  private normalizeTermDatemode(value: unknown): 'Day' | 'Month' | 'Year' | undefined {
+  private normalizeTermDatemode(
+    value: unknown,
+  ): 'Day' | 'Month' | 'Year' | undefined {
     return value === 'Day' || value === 'Month' || value === 'Year'
       ? value
       : undefined;
   }
 
-  private normalizeTermStatus(value: unknown): 'Active' | 'Inactive' | undefined {
+  private normalizeTermStatus(
+    value: unknown,
+  ): 'Active' | 'Inactive' | undefined {
     return value === 'Active' || value === 'Inactive' ? value : undefined;
   }
 
   private getTermManagementPermissionDenialMessage(
     user: AuthUser,
-    command: Extract<
-      AiAssistantAction,
-      { type: 'term_management' }
-    >['command'],
+    command: Extract<AiAssistantAction, { type: 'term_management' }>['command'],
   ) {
     if (!user.companyId) {
       return 'Please select a company before I can help with Term Management.';

@@ -423,7 +423,8 @@ export class SidebarBuilder {
 
   private getSubtreeDepth(item: AuthUserModuleItem): number {
     return item.children.length
-      ? 1 + Math.max(...item.children.map((child) => this.getSubtreeDepth(child)))
+      ? 1 +
+          Math.max(...item.children.map((child) => this.getSubtreeDepth(child)))
       : 1;
   }
 

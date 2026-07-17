@@ -865,4 +865,3 @@ function buildChartAccountTree(accounts: ChartAccountTreePayload[]) {
 
   return rootNodes;
 }
-

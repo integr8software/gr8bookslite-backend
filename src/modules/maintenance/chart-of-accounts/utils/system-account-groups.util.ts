@@ -30,8 +30,7 @@ export const SystemAccountGroupTags = {
   partyAccountsPayableGroup: 'Party Management Accounts Payable Group',
   partyOtherCurrentLiabilitiesGroup:
     'Party Management Other Current Liabilities Group',
-  partyDefaultReceivableAccount:
-    'Party Management Default Receivable Account',
+  partyDefaultReceivableAccount: 'Party Management Default Receivable Account',
   partyCustomerAdvanceAccount:
     'Party Management Default Customer Advance Account',
   partyDefaultPayableAccount: 'Party Management Default Payable Account',
@@ -65,7 +64,8 @@ export const SystemAccountGroups = {
       accountNature: AccountNature.CREDIT,
     },
     fixedAssetParent: {
-      accountGroupIncludes: SystemAccountGroupTags.defaultAccountFixedAssetParent,
+      accountGroupIncludes:
+        SystemAccountGroupTags.defaultAccountFixedAssetParent,
       requiredLevel: ChartAccountLevel.SUB2,
       accountType: ChartAccountType.ASSET,
       accountNature: AccountNature.DEBIT,
@@ -87,7 +87,8 @@ export const SystemAccountGroups = {
   },
   discountManagement: {
     salesDiscountParent: {
-      accountGroupIncludes: SystemAccountGroupTags.discountManagementSalesParent,
+      accountGroupIncludes:
+        SystemAccountGroupTags.discountManagementSalesParent,
       requiredLevel: ChartAccountLevel.SUB3,
       accountType: ChartAccountType.REVENUE,
       accountNature: AccountNature.DEBIT,
@@ -152,9 +153,7 @@ export function normalizeAccountGroupTags(
     return [
       ...new Set(
         value
-          .flatMap((item) =>
-            typeof item === 'string' ? [item.trim()] : [],
-          )
+          .flatMap((item) => (typeof item === 'string' ? [item.trim()] : []))
           .filter(Boolean),
       ),
     ];

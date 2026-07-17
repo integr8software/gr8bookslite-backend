@@ -820,7 +820,7 @@ export class BillingService {
     const companyId =
       dto.purpose === BillingPaymentPurpose.ONBOARDING
         ? await this.resolveOnboardingManualCompanyId(user.id, plan.id, dto)
-        : dto.companyId ?? this.getCompanyId(user);
+        : (dto.companyId ?? this.getCompanyId(user));
     const company = await this.prisma.company.findUnique({
       where: {
         id: companyId,
@@ -899,7 +899,10 @@ export class BillingService {
     return draft.provisionedCompanyId;
   }
 
-  private async assertCanManageCompanyBilling(user: AuthUser, companyId: number) {
+  private async assertCanManageCompanyBilling(
+    user: AuthUser,
+    companyId: number,
+  ) {
     if (user.role === AppRole.SUPER_ADMIN) {
       return;
     }
@@ -947,7 +950,7 @@ export class BillingService {
         },
         include: companySubscriptionDetailsInclude,
         orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
-    });
+      });
 
     if (existingSubscription) {
       return existingSubscription;
@@ -1193,7 +1196,7 @@ export class BillingService {
         return SubscriptionInvoiceStatus.UNCOLLECTIBLE;
       case 'open':
       default:
-      return SubscriptionInvoiceStatus.OPEN;
+        return SubscriptionInvoiceStatus.OPEN;
     }
   }
 

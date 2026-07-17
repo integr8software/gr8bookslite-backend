@@ -37,7 +37,10 @@ describe('BranchRolesService permission architecture', () => {
     return {
       entitlementService,
       prisma,
-      service: new BranchRolesService(prisma as never, entitlementService as never),
+      service: new BranchRolesService(
+        prisma as never,
+        entitlementService as never,
+      ),
     };
   }
 

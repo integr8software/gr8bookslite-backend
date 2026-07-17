@@ -35,6 +35,14 @@ export class GetResponsibilityCenterListQueryDto {
   financialType?: ResponsibilityCenterFinancialType;
 
   @IsOptional()
+  @IsString()
+  classificationId?: string;
+
+  @IsOptional()
+  @IsString()
+  typeId?: string;
+
+  @IsOptional()
   @Transform(({ value }) => toOptionalInt(value))
   @IsInt()
   @Min(1)
@@ -72,4 +80,3 @@ export class GetResponsibilityCenterListQueryDto {
   @IsIn(['asc', 'desc'])
   sortDirection?: 'asc' | 'desc';
 }
-

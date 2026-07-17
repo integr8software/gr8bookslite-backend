@@ -123,10 +123,11 @@ export class BranchRolesService {
       unit.companyId,
     );
     const moduleIds = new Set(modules.map((module) => module.id));
-    const sidebarItems = await this.entitlementService.getCompanyPlanSidebarItems(
-      unit.companyId,
-      moduleIds,
-    );
+    const sidebarItems =
+      await this.entitlementService.getCompanyPlanSidebarItems(
+        unit.companyId,
+        moduleIds,
+      );
 
     const modulesById = new Map<number, PermissionCatalogModule>(
       modules.map((module) => [module.id, module]),
@@ -405,8 +406,8 @@ export class BranchRolesService {
 
       resolvedPermissions.push({
         ...permission,
-        moduleCode: resolvedModule!.code,
-        moduleName: resolvedModule!.name,
+        moduleCode: resolvedModule.code,
+        moduleName: resolvedModule.name,
         permissionName: permissionRecord.name,
         permissionId: permissionRecord.id,
       });

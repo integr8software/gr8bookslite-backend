@@ -80,4 +80,3 @@ export class GetPartyListQueryDto {
   @IsIn(['asc', 'desc'])
   sortDirection?: 'asc' | 'desc';
 }
-
