@@ -1,9 +1,4 @@
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-} from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
 
 export const StandardDefaultChartAccounts = [
   {
@@ -1323,6 +1318,19 @@ export const StandardDefaultChartAccounts = [
     accountCode: '2010002010',
     parentAccountCode: '2010002000',
     accountTitle: 'Withholding Tax Payable - Expanded',
+    accountLevel: ChartAccountLevel.SPECIFIC,
+    accountType: ChartAccountType.LIABILITY,
+    accountNature: AccountNature.CREDIT,
+    accountGroup: null,
+    statementSection: 'Balance Sheet',
+    reportAlias: null,
+    isPostingAccount: true,
+    orderNo: 100,
+  },
+  {
+    accountCode: '2010002011',
+    parentAccountCode: '2010002000',
+    accountTitle: 'Input Tax',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,

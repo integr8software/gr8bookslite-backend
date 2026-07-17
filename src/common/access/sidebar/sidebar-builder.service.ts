@@ -15,44 +15,22 @@ import type {
 export class SidebarBuilder {
   constructor(private readonly entitlementService: EntitlementService) {}
 
-  buildUserModules(
-    membership: SidebarMembershipSource,
-    permissions: string[],
-  ): SidebarUserModules {
+  buildUserModules(membership: SidebarMembershipSource, permissions: string[]): SidebarUserModules {
     const permissionSet = new Set(permissions);
     const hasAdminModuleAccess = membership.role === MembershipRole.ADMIN;
-    const enabledModules =
-      this.entitlementService.getEnabledModules(membership);
-    const permittedEnabledModules =
-      this.entitlementService.getPermittedEnabledModules(
-        enabledModules,
-        permissionSet,
-        hasAdminModuleAccess,
-      );
-    const fallbackItems = permittedEnabledModules.map((item) =>
-      this.buildFallbackUserModuleItem(item.module),
-    );
+    const enabledModules = this.entitlementService.getEnabledModules(membership);
+    const permittedEnabledModules = this.entitlementService.getPermittedEnabledModules(enabledModules, permissionSet, hasAdminModuleAccess);
+    const fallbackItems = permittedEnabledModules.map((item) => this.buildFallbackUserModuleItem(item.module));
     const branchIds = this.getAccessibleBranchIds(membership);
     const systemSidebarItems = this.getActiveSystemSidebarItems(membership);
-    const byBranch = branchIds.map((branchUnitId) =>
-      this.buildBranchModuleAccess(
-        membership,
-        branchUnitId,
-        permittedEnabledModules,
-        systemSidebarItems,
-      ),
-    );
+    const byBranch = branchIds.map((branchUnitId) => this.buildBranchModuleAccess(membership, branchUnitId, permittedEnabledModules, systemSidebarItems));
 
     return { items: byBranch[0]?.items ?? fallbackItems, byBranch };
   }
 
-  private getAccessibleBranchIds(
-    membership: SidebarMembershipSource,
-  ): number[] {
+  private getAccessibleBranchIds(membership: SidebarMembershipSource): number[] {
     const defaultBranchIds =
-      membership.role === MembershipRole.ADMIN ||
-      membership.accessScope === 'COMPANY' ||
-      membership.unitAccess.length === 0
+      membership.role === MembershipRole.ADMIN || membership.accessScope === 'COMPANY' || membership.unitAccess.length === 0
         ? membership.company.units.map((item) => item.id)
         : membership.unitAccess.map((item) => item.unitId);
 
@@ -60,9 +38,7 @@ export class SidebarBuilder {
       new Set([
         ...defaultBranchIds,
         ...membership.unitAccess.map((item) => item.unitId),
-        ...membership.company.sidebarPreferences.map(
-          (item) => item.branchUnitId,
-        ),
+        ...membership.company.sidebarPreferences.map((item) => item.branchUnitId),
       ]),
     );
   }
@@ -73,9 +49,7 @@ export class SidebarBuilder {
     permittedEnabledModules: SidebarEntitledModule[],
     systemSidebarItems: SidebarSystemTemplateRow[],
   ) {
-    const branchAccess = membership.unitAccess.find(
-      (item) => item.unitId === branchUnitId,
-    );
+    const branchAccess = membership.unitAccess.find((item) => item.unitId === branchUnitId);
 
     return {
       branchUnitId,
@@ -83,18 +57,14 @@ export class SidebarBuilder {
       companyRoleCode: branchAccess?.companyRole?.code ?? null,
       companyRoleName: branchAccess?.companyRole?.name ?? null,
       items: this.buildBranchUserModules({
-        preferences: membership.company.sidebarPreferences.filter(
-          (item) => item.branchUnitId === branchUnitId,
-        ),
+        preferences: membership.company.sidebarPreferences.filter((item) => item.branchUnitId === branchUnitId),
         enabledModules: permittedEnabledModules,
         systemSidebarItems,
       }),
     };
   }
 
-  private getActiveSystemSidebarItems(
-    membership: SidebarMembershipSource,
-  ): SidebarSystemTemplateRow[] {
+  private getActiveSystemSidebarItems(membership: SidebarMembershipSource): SidebarSystemTemplateRow[] {
     const subscription = membership.company.subscriptions[0];
 
     if (!subscription) {
@@ -118,27 +88,16 @@ export class SidebarBuilder {
     enabledModules: SidebarEntitledModule[];
     systemSidebarItems: SidebarSystemTemplateRow[];
   }) {
-    const systemTree = this.buildSystemSidebarTree(
-      systemSidebarItems,
-      enabledModules,
-    );
+    const systemTree = this.buildSystemSidebarTree(systemSidebarItems, enabledModules);
     const systemModuleIds = this.collectModuleIds(systemTree);
 
-    const defaultTree = [
-      ...systemTree,
-      ...this.buildMissingFallbackItems(enabledModules, systemModuleIds),
-    ];
+    const defaultTree = [...systemTree, ...this.buildMissingFallbackItems(enabledModules, systemModuleIds)];
 
     return this.applyPreferences(defaultTree, preferences);
   }
 
-  private buildMissingFallbackItems(
-    enabledModules: SidebarEntitledModule[],
-    existingModuleIds: Set<number>,
-  ) {
-    return enabledModules
-      .filter((item) => !existingModuleIds.has(item.moduleId))
-      .map((item) => this.buildFallbackUserModuleItem(item.module));
+  private buildMissingFallbackItems(enabledModules: SidebarEntitledModule[], existingModuleIds: Set<number>) {
+    return enabledModules.filter((item) => !existingModuleIds.has(item.moduleId)).map((item) => this.buildFallbackUserModuleItem(item.module));
   }
 
   private collectModuleIds(items: AuthUserModuleItem[]) {
@@ -153,9 +112,7 @@ export class SidebarBuilder {
     return moduleIds;
   }
 
-  private buildFallbackUserModuleItem(
-    module: SidebarEnabledModule,
-  ): AuthUserModuleItem {
+  private buildFallbackUserModuleItem(module: SidebarEnabledModule): AuthUserModuleItem {
     const permission = module.permissions[0];
     const routeKey = `module-${module.code.toLowerCase()}`;
 
@@ -178,13 +135,8 @@ export class SidebarBuilder {
     };
   }
 
-  private buildSystemSidebarTree(
-    items: SidebarSystemTemplateRow[],
-    enabledModules: SidebarEntitledModule[],
-  ) {
-    const enabledModulesById = new Map(
-      enabledModules.map((item) => [item.moduleId, item.module]),
-    );
+  private buildSystemSidebarTree(items: SidebarSystemTemplateRow[], enabledModules: SidebarEntitledModule[]) {
+    const enabledModulesById = new Map(enabledModules.map((item) => [item.moduleId, item.module]));
     const byParent = new Map<number | null, SidebarSystemTemplateRow[]>();
     const renderedModuleIds = new Set<number>();
 
@@ -197,11 +149,7 @@ export class SidebarBuilder {
     const visit = (parentId: number | null): AuthUserModuleItem[] =>
       (byParent.get(parentId) ?? []).flatMap((item): AuthUserModuleItem[] => {
         if (item.itemType === 'LINK') {
-          if (
-            item.moduleId == null ||
-            renderedModuleIds.has(item.moduleId) ||
-            !enabledModulesById.has(item.moduleId)
-          ) {
+          if (item.moduleId == null || renderedModuleIds.has(item.moduleId) || !enabledModulesById.has(item.moduleId)) {
             return [];
           }
 
@@ -261,21 +209,14 @@ export class SidebarBuilder {
     return visit(null);
   }
 
-  private applyPreferences(
-    items: AuthUserModuleItem[],
-    preferences: SidebarPreferenceRow[],
-  ): AuthUserModuleItem[] {
+  private applyPreferences(items: AuthUserModuleItem[], preferences: SidebarPreferenceRow[]): AuthUserModuleItem[] {
     if (preferences.length === 0) {
       return items;
     }
 
-    const preferencesByKey = new Map(
-      preferences.map((preference) => [preference.itemKey, preference]),
-    );
+    const preferencesByKey = new Map(preferences.map((preference) => [preference.itemKey, preference]));
     const defaultEntries = this.flattenUserModuleItems(items);
-    const entriesByKey = new Map(
-      defaultEntries.map((entry) => [entry.item.key, entry]),
-    );
+    const entriesByKey = new Map(defaultEntries.map((entry) => [entry.item.key, entry]));
     const visibleItemsByKey = new Map<string, AuthUserModuleItem>();
 
     for (const entry of defaultEntries) {
@@ -374,9 +315,7 @@ export class SidebarBuilder {
     return requestedParentKey;
   }
 
-  private pruneAndSortSidebarItems(
-    items: AuthUserModuleItem[],
-  ): AuthUserModuleItem[] {
+  private pruneAndSortSidebarItems(items: AuthUserModuleItem[]): AuthUserModuleItem[] {
     return items
       .flatMap((item): AuthUserModuleItem[] => {
         const children = this.pruneAndSortSidebarItems(item.children);
@@ -387,11 +326,7 @@ export class SidebarBuilder {
 
         return [{ ...item, children }];
       })
-      .sort(
-        (left, right) =>
-          left.sortOrder - right.sortOrder ||
-          left.label.localeCompare(right.label),
-      );
+      .sort((left, right) => left.sortOrder - right.sortOrder || left.label.localeCompare(right.label));
   }
 
   private flattenUserModuleItems(items: AuthUserModuleItem[]) {
@@ -401,11 +336,7 @@ export class SidebarBuilder {
       depth: number;
       subtreeDepth: number;
     }> = [];
-    const visit = (
-      siblings: AuthUserModuleItem[],
-      parentKey: string | null = null,
-      depth = 1,
-    ) => {
+    const visit = (siblings: AuthUserModuleItem[], parentKey: string | null = null, depth = 1) => {
       siblings.forEach((item) => {
         entries.push({
           item,
@@ -422,17 +353,10 @@ export class SidebarBuilder {
   }
 
   private getSubtreeDepth(item: AuthUserModuleItem): number {
-    return item.children.length
-      ? 1 +
-          Math.max(...item.children.map((child) => this.getSubtreeDepth(child)))
-      : 1;
+    return item.children.length ? 1 + Math.max(...item.children.map((child) => this.getSubtreeDepth(child))) : 1;
   }
 
-  private isDescendantKey(
-    candidateKey: string,
-    ancestorKey: string,
-    entriesByKey: Map<string, { parentKey: string | null }>,
-  ) {
+  private isDescendantKey(candidateKey: string, ancestorKey: string, entriesByKey: Map<string, { parentKey: string | null }>) {
     let current = entriesByKey.get(candidateKey)?.parentKey ?? null;
 
     while (current) {

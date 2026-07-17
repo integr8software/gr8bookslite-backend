@@ -10,10 +10,7 @@ describe('UserSidebarService tree validation', () => {
     moduleId,
     children: [],
   });
-  const validate = (items: unknown[]) =>
-    (
-      service as unknown as { validateTree(value: unknown[]): void }
-    ).validateTree(items);
+  const validate = (items: unknown[]) => (service as unknown as { validateTree(value: unknown[]): void }).validateTree(items);
 
   it('accepts a root-level link', () => {
     expect(() => validate([link('root-link', 1)])).not.toThrow();
@@ -46,18 +43,12 @@ describe('UserSidebarService tree validation', () => {
   });
 
   it('rejects duplicate modules and children below links', () => {
-    expect(() => validate([link('first', 1), link('second', 1)])).toThrow(
-      BadRequestException,
-    );
-    expect(() =>
-      validate([{ ...link('parent-link', 2), children: [link('child', 3)] }]),
-    ).toThrow(BadRequestException);
+    expect(() => validate([link('first', 1), link('second', 1)])).toThrow(BadRequestException);
+    expect(() => validate([{ ...link('parent-link', 2), children: [link('child', 3)] }])).toThrow(BadRequestException);
   });
 
   it('rejects a non-allowlisted icon', () => {
-    expect(() =>
-      validate([{ ...link('icon', 1), iconName: 'ArbitraryImport' }]),
-    ).toThrow(BadRequestException);
+    expect(() => validate([{ ...link('icon', 1), iconName: 'ArbitraryImport' }])).toThrow(BadRequestException);
   });
 
   it('accepts supported customization icons', () => {
@@ -74,10 +65,7 @@ describe('UserSidebarService tree validation', () => {
   it('derives user sidebar preference deltas from the plan default tree', () => {
     const preferences = (
       service as unknown as {
-        derivePreferenceDeltas: (
-          defaultItems: unknown[],
-          submittedItems: unknown[],
-        ) => unknown[];
+        derivePreferenceDeltas: (defaultItems: unknown[], submittedItems: unknown[]) => unknown[];
       }
     ).derivePreferenceDeltas(
       [
@@ -147,10 +135,7 @@ describe('UserSidebarService tree validation', () => {
   it('stores parent override deltas when moving plan sidebar items into a different group', () => {
     const preferences = (
       service as unknown as {
-        derivePreferenceDeltas: (
-          defaultItems: unknown[],
-          submittedItems: unknown[],
-        ) => unknown[];
+        derivePreferenceDeltas: (defaultItems: unknown[], submittedItems: unknown[]) => unknown[];
       }
     ).derivePreferenceDeltas(
       [
@@ -199,10 +184,7 @@ describe('UserSidebarService tree validation', () => {
     expect(() =>
       (
         service as unknown as {
-          derivePreferenceDeltas: (
-            defaultItems: unknown[],
-            submittedItems: unknown[],
-          ) => unknown[];
+          derivePreferenceDeltas: (defaultItems: unknown[], submittedItems: unknown[]) => unknown[];
         }
       ).derivePreferenceDeltas([link('module-a', 1)], [link('module-a', 2)]),
     ).toThrow(BadRequestException);

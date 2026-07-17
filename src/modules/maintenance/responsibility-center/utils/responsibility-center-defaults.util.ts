@@ -1,8 +1,4 @@
-import {
-  ResponsibilityCenterCategory,
-  ResponsibilityCenterFinancialType,
-  ResponsibilityCenterTrackingBehavior,
-} from '@prisma/client';
+import { ResponsibilityCenterCategory, ResponsibilityCenterFinancialType, ResponsibilityCenterTrackingBehavior } from '@prisma/client';
 
 export const ResponsibilityCenterClassificationDefaults = [
   {
@@ -27,15 +23,11 @@ export const ResponsibilityCenterClassificationDefaults = [
     code: 'IC',
     name: 'Investment Center',
     financialType: ResponsibilityCenterFinancialType.INVESTMENT_CENTER,
-    trackingBehavior:
-      ResponsibilityCenterTrackingBehavior.REVENUE_EXPENSES_AND_ASSETS,
+    trackingBehavior: ResponsibilityCenterTrackingBehavior.REVENUE_EXPENSES_AND_ASSETS,
   },
 ] as const;
 
-export const ResponsibilityCenterTypePrefixByCategory: Record<
-  ResponsibilityCenterCategory,
-  string
-> = {
+export const ResponsibilityCenterTypePrefixByCategory: Record<ResponsibilityCenterCategory, string> = {
   CORPORATE: 'CORP',
   DIVISION: 'DIV',
   DEPARTMENT: 'DEPT',
@@ -53,10 +45,7 @@ export const ResponsibilityCenterTypePrefixByCategory: Record<
   FLEET: 'FLEET',
 };
 
-export const ResponsibilityCenterTypeNameByCategory: Record<
-  ResponsibilityCenterCategory,
-  string
-> = {
+export const ResponsibilityCenterTypeNameByCategory: Record<ResponsibilityCenterCategory, string> = {
   CORPORATE: 'Corporate',
   DIVISION: 'Division',
   DEPARTMENT: 'Department',
@@ -74,16 +63,10 @@ export const ResponsibilityCenterTypeNameByCategory: Record<
   FLEET: 'Fleet',
 };
 
-export function getClassificationDefaultByFinancialType(
-  financialType: ResponsibilityCenterFinancialType,
-) {
-  return ResponsibilityCenterClassificationDefaults.find(
-    (classification) => classification.financialType === financialType,
-  );
+export function getClassificationDefaultByFinancialType(financialType: ResponsibilityCenterFinancialType) {
+  return ResponsibilityCenterClassificationDefaults.find((classification) => classification.financialType === financialType);
 }
 
 export function getFinancialTypeByClassificationCode(code: string) {
-  return ResponsibilityCenterClassificationDefaults.find(
-    (classification) => classification.code === code,
-  )?.financialType;
+  return ResponsibilityCenterClassificationDefaults.find((classification) => classification.code === code)?.financialType;
 }

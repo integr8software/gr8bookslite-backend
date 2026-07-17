@@ -1,12 +1,4 @@
-import {
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { TaxMaintenanceStatus } from '@prisma/client';
 
 export class CreateTaxMaintenanceDto {
@@ -14,30 +6,43 @@ export class CreateTaxMaintenanceDto {
   @MaxLength(120)
   name!: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string | null;
+
   @IsNumber({ maxDecimalPlaces: 4 })
   @Min(0)
   @Max(100)
   percentage!: number;
 
-  @IsOptional()
   @IsString()
-  inputVatAccountId?: string | null;
+  @IsNotEmpty()
+  inputVatAccountId!: string;
 
-  @IsOptional()
   @IsString()
-  outputVatAccountId?: string | null;
+  @IsNotEmpty()
+  outputVatAccountId!: string;
 
-  @IsOptional()
   @IsString()
-  vatPayableAccountId?: string | null;
+  @IsNotEmpty()
+  deferredVatAccountId!: string;
 
-  @IsOptional()
   @IsString()
-  deferredInputTaxAccountId?: string | null;
+  @IsNotEmpty()
+  expandedWithholdingTaxAccountId!: string;
 
-  @IsOptional()
   @IsString()
-  deferredOutputVatAccountId?: string | null;
+  @IsNotEmpty()
+  creditableWithholdingTaxAccountId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  withholdingVatableTaxAccountId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  finalWithholdingTaxAccountId!: string;
 
   @IsOptional()
   @IsEnum(TaxMaintenanceStatus)

@@ -11,54 +11,46 @@ export class DashboardService {
   async getWorkspaceOverview(user: AuthUser) {
     this.ensureWorkspaceDashboardAccess(user);
 
-    const [membershipCompanies, totalCompanies, activeCompanies] =
-      await Promise.all([
-        this.prisma.membership.findMany({
-          where: {
-            userId: user.id,
-            status: 'ACTIVE',
-          },
-          include: {
-            company: {
-              include: {
-                units: {
-                  where: {
-                    isActive: true,
-                  },
-                  orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
+    const [membershipCompanies, totalCompanies, activeCompanies] = await Promise.all([
+      this.prisma.membership.findMany({
+        where: {
+          userId: user.id,
+          status: 'ACTIVE',
+        },
+        include: {
+          company: {
+            include: {
+              units: {
+                where: {
+                  isActive: true,
                 },
+                orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
               },
             },
           },
-          orderBy: {
-            createdAt: 'asc',
-          },
-        }),
-        this.prisma.company.count(),
-        this.prisma.company.count({
-          where: {
-            status: CompanyStatus.ACTIVE,
-            isActive: true,
-          },
-        }),
-      ]);
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      }),
+      this.prisma.company.count(),
+      this.prisma.company.count({
+        where: {
+          status: CompanyStatus.ACTIVE,
+          isActive: true,
+        },
+      }),
+    ]);
 
     const companies = membershipCompanies.map((membership) => {
-      const primaryUnit =
-        membership.company.units.find((unit) => unit.type === 'HEAD_OFFICE') ??
-        membership.company.units[0] ??
-        null;
+      const primaryUnit = membership.company.units.find((unit) => unit.type === 'HEAD_OFFICE') ?? membership.company.units[0] ?? null;
 
       return {
         companyId: membership.company.id,
         companyName: membership.company.name,
         unitName: primaryUnit?.name ?? null,
         unitType: primaryUnit?.type ?? null,
-        status:
-          membership.company.isActive &&
-          membership.company.status === CompanyStatus.ACTIVE
-            ? 'ACTIVE'
-            : 'INACTIVE',
+        status: membership.company.isActive && membership.company.status === CompanyStatus.ACTIVE ? 'ACTIVE' : 'INACTIVE',
       };
     });
 
@@ -83,8 +75,6 @@ export class DashboardService {
       return;
     }
 
-    throw new ForbiddenException(
-      'You do not have access to the workspace dashboard.',
-    );
+    throw new ForbiddenException('You do not have access to the workspace dashboard.');
   }
 }

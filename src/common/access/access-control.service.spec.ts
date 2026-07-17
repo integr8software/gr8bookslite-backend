@@ -1,9 +1,4 @@
-import {
-  AccessScopeLevel,
-  MembershipRole,
-  MembershipStatus,
-  SystemRole,
-} from '@prisma/client';
+import { AccessScopeLevel, MembershipRole, MembershipStatus, SystemRole } from '@prisma/client';
 import { AppRole } from '../enums/app-role.enum';
 import { PermissionAction } from '../enums/permission-action.enum';
 import { AccessControlService } from './access-control.service';
@@ -181,10 +176,7 @@ describe('AccessControlService', () => {
                 {
                   system: {
                     code: 'ACCOUNTING_AND_INVENTORY',
-                    modules: [
-                      buildEnabledModule(5, 'TM', 'Term Management'),
-                      buildEnabledModule(6, 'COA', 'Chart of Accounts'),
-                    ],
+                    modules: [buildEnabledModule(5, 'TM', 'Term Management'), buildEnabledModule(6, 'COA', 'Chart of Accounts')],
                     sidebarItems: [
                       {
                         id: 100,
@@ -239,10 +231,7 @@ describe('AccessControlService', () => {
       }),
     );
     expect(authUser.userModules.items[0].children).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ moduleCode: 'TM' }),
-        expect.objectContaining({ moduleCode: 'COA' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ moduleCode: 'TM' }), expect.objectContaining({ moduleCode: 'COA' })]),
     );
     expect(authUser.userModules.byBranch[0].items).not.toEqual([]);
   });
@@ -260,12 +249,7 @@ function createAccessControlService({
     resolve: jest.fn().mockResolvedValue({ user, membership }),
   };
 
-  return new AccessControlService(
-    companyAccessResolver as never,
-    entitlementService,
-    new PermissionService(),
-    new SidebarBuilder(entitlementService),
-  );
+  return new AccessControlService(companyAccessResolver as never, entitlementService, new PermissionService(), new SidebarBuilder(entitlementService));
 }
 
 function buildPayload() {

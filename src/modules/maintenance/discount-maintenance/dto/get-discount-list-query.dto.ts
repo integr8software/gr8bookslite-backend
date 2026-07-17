@@ -1,19 +1,6 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
-import {
-  DiscountStatus,
-  DiscountType,
-  DiscountValueType,
-} from '@prisma/client';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { DiscountStatus, DiscountType, DiscountValueType } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetDiscountListQueryDto {
@@ -48,23 +35,8 @@ export class GetDiscountListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn([
-    'name',
-    'type',
-    'valueType',
-    'value',
-    'status',
-    'createdAt',
-    'updatedAt',
-  ])
-  sortBy?:
-    | 'name'
-    | 'type'
-    | 'valueType'
-    | 'value'
-    | 'status'
-    | 'createdAt'
-    | 'updatedAt';
+  @IsIn(['name', 'type', 'valueType', 'value', 'status', 'createdAt', 'updatedAt'])
+  sortBy?: 'name' | 'type' | 'valueType' | 'value' | 'status' | 'createdAt' | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

@@ -47,8 +47,7 @@ export const StandardDefaultAccountMappings = [
     accountCode: '4020000000',
     requiredLevel: ChartAccountLevel.SUB1,
     usageType: DefaultAccountUsageType.PARENT,
-    description:
-      'Parent for Default Account generated collection revenue accounts.',
+    description: 'Parent for Default Account generated collection revenue accounts.',
   },
   {
     moduleCode: 'DA',
@@ -64,8 +63,7 @@ export const StandardDefaultAccountMappings = [
     accountCode: '1020100000',
     requiredLevel: ChartAccountLevel.SUB2,
     usageType: DefaultAccountUsageType.PARENT,
-    description:
-      'Parent for Default Account generated accumulated depreciation accounts.',
+    description: 'Parent for Default Account generated accumulated depreciation accounts.',
   },
   {
     moduleCode: 'DA',
@@ -73,8 +71,7 @@ export const StandardDefaultAccountMappings = [
     accountCode: '6030000000',
     requiredLevel: ChartAccountLevel.SUB1,
     usageType: DefaultAccountUsageType.PARENT,
-    description:
-      'Parent for Default Account generated depreciation expense accounts.',
+    description: 'Parent for Default Account generated depreciation expense accounts.',
   },
   {
     moduleCode: 'DSM',
@@ -82,8 +79,7 @@ export const StandardDefaultAccountMappings = [
     accountCode: '4010001000',
     requiredLevel: ChartAccountLevel.SUB3,
     usageType: DefaultAccountUsageType.SELECTION_GROUP,
-    description:
-      'Parent for Discount Management generated sales discount accounts.',
+    description: 'Parent for Discount Management generated sales discount accounts.',
   },
   {
     moduleCode: 'DSM',
@@ -91,8 +87,7 @@ export const StandardDefaultAccountMappings = [
     accountCode: '5000003000',
     requiredLevel: ChartAccountLevel.SUB3,
     usageType: DefaultAccountUsageType.SELECTION_GROUP,
-    description:
-      'Parent for Discount Management generated purchase discount accounts.',
+    description: 'Parent for Discount Management generated purchase discount accounts.',
   },
   {
     moduleCode: 'PM',
@@ -100,8 +95,7 @@ export const StandardDefaultAccountMappings = [
     accountCode: '1010103000',
     requiredLevel: ChartAccountLevel.SUB3,
     usageType: DefaultAccountUsageType.SELECTION_GROUP,
-    description:
-      'Accounts receivable group for Party Management customer and advance choices.',
+    description: 'Accounts receivable group for Party Management customer and advance choices.',
   },
   {
     moduleCode: 'PM',
@@ -109,8 +103,7 @@ export const StandardDefaultAccountMappings = [
     accountCode: '2010001000',
     requiredLevel: ChartAccountLevel.SUB3,
     usageType: DefaultAccountUsageType.SELECTION_GROUP,
-    description:
-      'Accounts payable group for Party Management vendor payable choices.',
+    description: 'Accounts payable group for Party Management vendor payable choices.',
   },
   {
     moduleCode: 'PM',
@@ -118,8 +111,7 @@ export const StandardDefaultAccountMappings = [
     accountCode: '2010004000',
     requiredLevel: ChartAccountLevel.SUB3,
     usageType: DefaultAccountUsageType.SELECTION_GROUP,
-    description:
-      'Other current liabilities group for Party Management advance/payable choices.',
+    description: 'Other current liabilities group for Party Management advance/payable choices.',
   },
   {
     moduleCode: 'PM',
@@ -168,5 +160,69 @@ export const StandardDefaultAccountMappings = [
     requiredLevel: ChartAccountLevel.SPECIFIC,
     usageType: DefaultAccountUsageType.POSTING,
     description: 'Default employee payable account for employee parties.',
+  },
+  {
+    moduleCode: 'TXM',
+    accountRole: 'TAXES_PAYABLES_GROUP',
+    accountCode: '2010002000',
+    requiredLevel: ChartAccountLevel.SUB3,
+    usageType: DefaultAccountUsageType.SELECTION_GROUP,
+    description: 'Taxes payable group for Tax Maintenance account choices.',
+  },
+  {
+    moduleCode: 'TXM',
+    accountRole: 'INPUT_TAX_ACCOUNT',
+    accountCode: '2010002011',
+    requiredLevel: ChartAccountLevel.SPECIFIC,
+    usageType: DefaultAccountUsageType.POSTING,
+    description: 'Default input tax account for VAT tax maintenance.',
+  },
+  {
+    moduleCode: 'TXM',
+    accountRole: 'OUTPUT_VAT_ACCOUNT',
+    accountCode: '2010002005',
+    requiredLevel: ChartAccountLevel.SPECIFIC,
+    usageType: DefaultAccountUsageType.POSTING,
+    description: 'Default output VAT account for Tax Maintenance.',
+  },
+  {
+    moduleCode: 'TXM',
+    accountRole: 'DEFERRED_VAT_ACCOUNT',
+    accountCode: '2010002004',
+    requiredLevel: ChartAccountLevel.SPECIFIC,
+    usageType: DefaultAccountUsageType.POSTING,
+    description: 'Default deferred VAT account for Tax Maintenance.',
+  },
+  {
+    moduleCode: 'TXM',
+    accountRole: 'EXPANDED_WITHHOLDING_TAX_ACCOUNT',
+    accountCode: '2010002002',
+    requiredLevel: ChartAccountLevel.SPECIFIC,
+    usageType: DefaultAccountUsageType.POSTING,
+    description: 'Default expanded withholding tax account for Tax Maintenance.',
+  },
+  {
+    moduleCode: 'TXM',
+    accountRole: 'CREDITABLE_WITHHOLDING_TAX_ACCOUNT',
+    accountCode: '2010002001',
+    requiredLevel: ChartAccountLevel.SPECIFIC,
+    usageType: DefaultAccountUsageType.POSTING,
+    description: 'Default creditable withholding tax account for Tax Maintenance.',
+  },
+  {
+    moduleCode: 'TXM',
+    accountRole: 'WITHHOLDING_VATABLE_TAX_ACCOUNT',
+    accountCode: '2010002009',
+    requiredLevel: ChartAccountLevel.SPECIFIC,
+    usageType: DefaultAccountUsageType.POSTING,
+    description: 'Default withholding vatable tax account for Tax Maintenance.',
+  },
+  {
+    moduleCode: 'TXM',
+    accountRole: 'FINAL_WITHHOLDING_TAX_ACCOUNT',
+    accountCode: '2010002003',
+    requiredLevel: ChartAccountLevel.SPECIFIC,
+    usageType: DefaultAccountUsageType.POSTING,
+    description: 'Default final withholding tax account for Tax Maintenance.',
   },
 ] as const;

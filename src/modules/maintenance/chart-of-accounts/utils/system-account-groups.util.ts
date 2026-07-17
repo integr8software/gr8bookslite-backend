@@ -1,10 +1,4 @@
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-  Prisma,
-} from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, Prisma } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
 
@@ -17,28 +11,30 @@ export const SystemAccountGroupTags = {
   fixedAssets: 'Fixed Assets',
   defaultAccountFixedAssetParent: 'Default Account Fixed Asset Parent',
   accumulatedDepreciation: 'Accumulated Depreciation',
-  defaultAccountAccumulatedDepreciationParent:
-    'Default Account Accumulated Depreciation Parent',
+  defaultAccountAccumulatedDepreciationParent: 'Default Account Accumulated Depreciation Parent',
   depreciationExpense: 'Depreciation Expense',
-  defaultAccountDepreciationExpenseParent:
-    'Default Account Depreciation Expense Parent',
+  defaultAccountDepreciationExpenseParent: 'Default Account Depreciation Expense Parent',
   salesDiscount: 'Sales Discount',
   discountManagementSalesParent: 'Discount Management Sales Parent',
   purchaseDiscount: 'Purchase Discount',
   discountManagementPurchaseParent: 'Discount Management Purchase Parent',
   partyAccountsReceivableGroup: 'Party Management Accounts Receivable Group',
   partyAccountsPayableGroup: 'Party Management Accounts Payable Group',
-  partyOtherCurrentLiabilitiesGroup:
-    'Party Management Other Current Liabilities Group',
+  partyOtherCurrentLiabilitiesGroup: 'Party Management Other Current Liabilities Group',
   partyDefaultReceivableAccount: 'Party Management Default Receivable Account',
-  partyCustomerAdvanceAccount:
-    'Party Management Default Customer Advance Account',
+  partyCustomerAdvanceAccount: 'Party Management Default Customer Advance Account',
   partyDefaultPayableAccount: 'Party Management Default Payable Account',
   partyVendorAdvanceAccount: 'Party Management Default Vendor Advance Account',
-  partyEmployeeAdvanceAccount:
-    'Party Management Default Employee Advance Account',
-  partyEmployeePayableAccount:
-    'Party Management Default Employee Payable Account',
+  partyEmployeeAdvanceAccount: 'Party Management Default Employee Advance Account',
+  partyEmployeePayableAccount: 'Party Management Default Employee Payable Account',
+  taxMaintenanceTaxesPayablesGroup: 'Tax Maintenance Taxes Payables Group',
+  taxMaintenanceInputTaxAccount: 'Tax Maintenance Input Tax Account',
+  taxMaintenanceOutputVatAccount: 'Tax Maintenance Output VAT Account',
+  taxMaintenanceDeferredVatAccount: 'Tax Maintenance Deferred VAT Account',
+  taxMaintenanceExpandedWithholdingTaxAccount: 'Tax Maintenance Expanded Withholding Tax Account',
+  taxMaintenanceCreditableWithholdingTaxAccount: 'Tax Maintenance Creditable Withholding Tax Account',
+  taxMaintenanceWithholdingVatableTaxAccount: 'Tax Maintenance Withholding Vatable Tax Account',
+  taxMaintenanceFinalWithholdingTaxAccount: 'Tax Maintenance Final Withholding Tax Account',
 } as const;
 
 export const SystemAccountGroups = {
@@ -64,22 +60,19 @@ export const SystemAccountGroups = {
       accountNature: AccountNature.CREDIT,
     },
     fixedAssetParent: {
-      accountGroupIncludes:
-        SystemAccountGroupTags.defaultAccountFixedAssetParent,
+      accountGroupIncludes: SystemAccountGroupTags.defaultAccountFixedAssetParent,
       requiredLevel: ChartAccountLevel.SUB2,
       accountType: ChartAccountType.ASSET,
       accountNature: AccountNature.DEBIT,
     },
     accumulatedDepreciationParent: {
-      accountGroupIncludes:
-        SystemAccountGroupTags.defaultAccountAccumulatedDepreciationParent,
+      accountGroupIncludes: SystemAccountGroupTags.defaultAccountAccumulatedDepreciationParent,
       requiredLevel: ChartAccountLevel.SUB2,
       accountType: ChartAccountType.ASSET,
       accountNature: AccountNature.DEBIT,
     },
     depreciationExpenseParent: {
-      accountGroupIncludes:
-        SystemAccountGroupTags.defaultAccountDepreciationExpenseParent,
+      accountGroupIncludes: SystemAccountGroupTags.defaultAccountDepreciationExpenseParent,
       requiredLevel: ChartAccountLevel.SUB3,
       accountType: ChartAccountType.EXPENSE,
       accountNature: AccountNature.DEBIT,
@@ -87,15 +80,13 @@ export const SystemAccountGroups = {
   },
   discountManagement: {
     salesDiscountParent: {
-      accountGroupIncludes:
-        SystemAccountGroupTags.discountManagementSalesParent,
+      accountGroupIncludes: SystemAccountGroupTags.discountManagementSalesParent,
       requiredLevel: ChartAccountLevel.SUB3,
       accountType: ChartAccountType.REVENUE,
       accountNature: AccountNature.DEBIT,
     },
     purchaseDiscountParent: {
-      accountGroupIncludes:
-        SystemAccountGroupTags.discountManagementPurchaseParent,
+      accountGroupIncludes: SystemAccountGroupTags.discountManagementPurchaseParent,
       requiredLevel: ChartAccountLevel.SUB3,
       accountType: ChartAccountType.EXPENSE,
       accountNature: AccountNature.CREDIT,
@@ -112,11 +103,7 @@ type SystemAccountGroupDefinition = {
 
 type PrismaClientLike = Prisma.TransactionClient | PrismaService;
 
-export async function findSystemAccountGroupOrThrow(
-  tx: PrismaClientLike,
-  companyId: number,
-  definition: SystemAccountGroupDefinition,
-) {
+export async function findSystemAccountGroupOrThrow(tx: PrismaClientLike, companyId: number, definition: SystemAccountGroupDefinition) {
   const candidates = await tx.chartAccount.findMany({
     where: {
       companyId,
@@ -129,34 +116,22 @@ export async function findSystemAccountGroupOrThrow(
     },
     orderBy: [{ accountCode: 'asc' }],
   });
-  const account = candidates.find((candidate) =>
-    accountGroupHasTag(candidate.accountGroup, definition.accountGroupIncludes),
-  );
+  const account = candidates.find((candidate) => accountGroupHasTag(candidate.accountGroup, definition.accountGroupIncludes));
 
   if (!account) {
-    throw new BadRequestException(
-      `Required system account group was not found: ${definition.accountGroupIncludes}.`,
-    );
+    throw new BadRequestException(`Required system account group was not found: ${definition.accountGroupIncludes}.`);
   }
 
   return account;
 }
 
-export function normalizeAccountGroupTags(
-  value: Prisma.JsonValue | string | string[] | null | undefined,
-) {
+export function normalizeAccountGroupTags(value: Prisma.JsonValue | string | string[] | null | undefined) {
   if (value === undefined || value === null) {
     return [];
   }
 
   if (Array.isArray(value)) {
-    return [
-      ...new Set(
-        value
-          .flatMap((item) => (typeof item === 'string' ? [item.trim()] : []))
-          .filter(Boolean),
-      ),
-    ];
+    return [...new Set(value.flatMap((item) => (typeof item === 'string' ? [item.trim()] : [])).filter(Boolean))];
   }
 
   if (typeof value === 'string') {
@@ -167,25 +142,16 @@ export function normalizeAccountGroupTags(
   return [];
 }
 
-export function toAccountGroupJson(
-  value: Prisma.JsonValue | string | string[] | null | undefined,
-) {
+export function toAccountGroupJson(value: Prisma.JsonValue | string | string[] | null | undefined) {
   const tags = normalizeAccountGroupTags(value);
   return tags.length > 0 ? tags : undefined;
 }
 
-export function accountGroupHasTag(
-  value: Prisma.JsonValue | string[] | string | null | undefined,
-  tag: string,
-) {
-  return normalizeAccountGroupTags(value).some(
-    (item) => item.toLowerCase() === tag.trim().toLowerCase(),
-  );
+export function accountGroupHasTag(value: Prisma.JsonValue | string[] | string | null | undefined, tag: string) {
+  return normalizeAccountGroupTags(value).some((item) => item.toLowerCase() === tag.trim().toLowerCase());
 }
 
-export function mergeAccountGroupTags(
-  ...values: Array<Prisma.JsonValue | string | string[] | null | undefined>
-) {
+export function mergeAccountGroupTags(...values: Array<Prisma.JsonValue | string | string[] | null | undefined>) {
   const tags = values.flatMap((value) => normalizeAccountGroupTags(value));
   return tags.length > 0 ? [...new Set(tags)] : undefined;
 }

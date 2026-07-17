@@ -1,15 +1,6 @@
-import {
-  IsEmail,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Matches,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsIn, IsInt, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
-const TinPattern =
-  /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
+const TinPattern = /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
 const ContactNumberPattern = /^\+63 [\d ]{7,14}$/;
 
 export class CreateCompanyUnitDto {

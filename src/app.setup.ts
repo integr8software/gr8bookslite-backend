@@ -33,16 +33,8 @@ export function shouldServeLocalStorage(publicUrl: string | undefined) {
   return shouldServeStoragePublicUrl(publicUrl);
 }
 
-export function shouldServeVpsStaticStorage(config: {
-  provider: string | undefined;
-  publicUrl: string | undefined;
-  storageRoot: string | undefined;
-}) {
-  return (
-    config.provider?.trim().toLowerCase() === 'vps' &&
-    Boolean(config.storageRoot?.trim()) &&
-    shouldServeStoragePublicUrl(config.publicUrl)
-  );
+export function shouldServeVpsStaticStorage(config: { provider: string | undefined; publicUrl: string | undefined; storageRoot: string | undefined }) {
+  return config.provider?.trim().toLowerCase() === 'vps' && Boolean(config.storageRoot?.trim()) && shouldServeStoragePublicUrl(config.publicUrl);
 }
 
 function shouldServeStoragePublicUrl(publicUrl: string | undefined) {
@@ -61,10 +53,7 @@ function shouldServeStoragePublicUrl(publicUrl: string | undefined) {
   return parsedUrl.pathname.replace(/\/+$/, '') === '/storage';
 }
 
-function configureVpsStorageStaticServing(
-  app: INestApplication,
-  configService: ConfigService,
-) {
+function configureVpsStorageStaticServing(app: INestApplication, configService: ConfigService) {
   const provider = configService.get<string>('STORAGE_PROVIDER');
   const publicUrl = configService.get<string>('VPS_STORAGE_PUBLIC_URL');
   const storageRoot = configService.get<string>('VPS_STORAGE_ROOT', '').trim();
@@ -90,9 +79,7 @@ function configureVpsStorageStaticServing(
 }
 
 function createCorsOptions(configService: ConfigService): CorsOptions {
-  const corsAllowedOrigins = (
-    configService.get<string>('CORS_ALLOWED_ORIGINS') ?? ''
-  )
+  const corsAllowedOrigins = (configService.get<string>('CORS_ALLOWED_ORIGINS') ?? '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
@@ -112,11 +99,7 @@ function createCorsOptions(configService: ConfigService): CorsOptions {
   };
 }
 
-function applySecurityHeaders(
-  _request: Request,
-  response: Response,
-  next: NextFunction,
-) {
+function applySecurityHeaders(_request: Request, response: Response, next: NextFunction) {
   response.setHeader('X-Content-Type-Options', 'nosniff');
   response.setHeader('X-Frame-Options', 'DENY');
   response.setHeader('Referrer-Policy', 'no-referrer');
@@ -124,11 +107,7 @@ function applySecurityHeaders(
   next();
 }
 
-function applyFaviconResponse(
-  request: Request,
-  response: Response,
-  next: NextFunction,
-) {
+function applyFaviconResponse(request: Request, response: Response, next: NextFunction) {
   if (request.path !== '/favicon.ico' || request.method !== 'GET') {
     next();
     return;
@@ -137,11 +116,7 @@ function applyFaviconResponse(
   response.status(204).end();
 }
 
-function applyRootHealthCheck(
-  request: Request,
-  response: Response,
-  next: NextFunction,
-) {
+function applyRootHealthCheck(request: Request, response: Response, next: NextFunction) {
   if (request.path !== '/' || !['GET', 'HEAD'].includes(request.method)) {
     next();
     return;

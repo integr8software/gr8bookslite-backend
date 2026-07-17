@@ -1,13 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMaxSize,
-  ArrayMinSize,
-  IsArray,
-  IsInt,
-  IsString,
-  MaxLength,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsInt, IsString, MaxLength, ValidateNested } from 'class-validator';
 import { FormSignatoryRowDto } from './form-signatory-row.dto';
 
 export class SaveFormSignatoryDto {

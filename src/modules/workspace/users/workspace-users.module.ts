@@ -7,12 +7,7 @@ import { WorkspaceUsersController } from './workspace-users.controller';
 import { WorkspaceUsersService } from './workspace-users.service';
 
 @Module({
-  imports: [
-    PrismaModule,
-    AccessControlModule,
-    AuthModule,
-    WorkspaceAuditLogsModule,
-  ],
+  imports: [PrismaModule, AccessControlModule, AuthModule, WorkspaceAuditLogsModule],
   controllers: [WorkspaceUsersController],
   providers: [WorkspaceUsersService],
   exports: [WorkspaceUsersService],

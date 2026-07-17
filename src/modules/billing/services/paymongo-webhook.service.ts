@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import {
   BillingApplicationStatus,
   BillingPaymentAttemptStatus,
@@ -17,17 +12,8 @@ import {
 import * as crypto from 'crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PaymongoWebhookEventEnvelope } from '../types/paymongo-webhook-event.type';
-import {
-  readFirstProviderArrayObject,
-  readProviderNumber,
-  readProviderObject,
-  readProviderString,
-  readProviderUnixDate,
-} from '../utils/ProviderPayload.util';
-import {
-  deriveSubscriptionStatusFromWebhookEvent,
-  mapProviderSubscriptionStatus,
-} from '../utils/SubscriptionStatus.util';
+import { readFirstProviderArrayObject, readProviderNumber, readProviderObject, readProviderString, readProviderUnixDate } from '../utils/ProviderPayload.util';
+import { deriveSubscriptionStatusFromWebhookEvent, mapProviderSubscriptionStatus } from '../utils/SubscriptionStatus.util';
 import { BillingPaymentApplicationService } from './billing-payment-application.service';
 import { PaymongoService } from './paymongo.service';
 
@@ -41,19 +27,12 @@ export class PaymongoWebhookService {
     private readonly paymentApplicationService: BillingPaymentApplicationService,
   ) {}
 
-  async handleWebhook(
-    rawBody: Buffer | string | undefined,
-    signatureHeader: string | undefined,
-  ) {
+  async handleWebhook(rawBody: Buffer | string | undefined, signatureHeader: string | undefined) {
     if (!rawBody || !signatureHeader) {
-      throw new BadRequestException(
-        'Missing webhook body or Paymongo-Signature header.',
-      );
+      throw new BadRequestException('Missing webhook body or Paymongo-Signature header.');
     }
 
-    const rawPayload = Buffer.isBuffer(rawBody)
-      ? rawBody.toString('utf8')
-      : rawBody;
+    const rawPayload = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : rawBody;
     const signatureParts = this.parseSignature(signatureHeader);
     const payload = this.parsePayload(rawPayload);
     const event = this.extractEvent(payload);
@@ -102,8 +81,7 @@ export class PaymongoWebhookService {
         eventType: event.eventType,
       };
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Webhook processing failed.';
+      const message = error instanceof Error ? error.message : 'Webhook processing failed.';
 
       await this.prisma.billingWebhookEvent.update({
         where: { id: webhookEvent.id },
@@ -113,17 +91,12 @@ export class PaymongoWebhookService {
         },
       });
 
-      this.logger.error(
-        `Failed to process webhook ${event.eventType} (${event.eventId}): ${message}`,
-      );
+      this.logger.error(`Failed to process webhook ${event.eventType} (${event.eventId}): ${message}`);
       throw new InternalServerErrorException('Webhook processing failed.');
     }
   }
 
-  private async processEvent(
-    webhookEvent: BillingWebhookEvent,
-    event: ReturnType<PaymongoWebhookService['extractEvent']>,
-  ) {
+  private async processEvent(webhookEvent: BillingWebhookEvent, event: ReturnType<PaymongoWebhookService['extractEvent']>) {
     await this.prisma.billingWebhookEvent.update({
       where: { id: webhookEvent.id },
       data: {
@@ -162,9 +135,7 @@ export class PaymongoWebhookService {
         await this.processManualCheckoutTerminalEvent(event);
         break;
       default:
-        this.logger.log(
-          `Unhandled PayMongo webhook event received: ${event.eventType}`,
-        );
+        this.logger.log(`Unhandled PayMongo webhook event received: ${event.eventType}`);
         ignored = true;
         break;
     }
@@ -172,18 +143,14 @@ export class PaymongoWebhookService {
     await this.prisma.billingWebhookEvent.update({
       where: { id: webhookEvent.id },
       data: {
-        processingStatus: ignored
-          ? WebhookProcessingStatus.IGNORED
-          : WebhookProcessingStatus.PROCESSED,
+        processingStatus: ignored ? WebhookProcessingStatus.IGNORED : WebhookProcessingStatus.PROCESSED,
         processedAt: new Date(),
         lastError: null,
       },
     });
   }
 
-  private async processSubscriptionEvent(
-    event: ReturnType<PaymongoWebhookService['extractEvent']>,
-  ) {
+  private async processSubscriptionEvent(event: ReturnType<PaymongoWebhookService['extractEvent']>) {
     const subscriptionId = event.resourceId;
 
     if (!subscriptionId) {
@@ -198,58 +165,33 @@ export class PaymongoWebhookService {
     });
 
     if (!subscription) {
-      this.logger.warn(
-        `Skipping ${event.eventType}: local subscription not found for ${subscriptionId}.`,
-      );
+      this.logger.warn(`Skipping ${event.eventType}: local subscription not found for ${subscriptionId}.`);
       return;
     }
 
     const attributes = event.resourceAttributes;
     const latestInvoice = readProviderObject(attributes.latest_invoice);
-    const latestInvoicePaymentIntent = readProviderObject(
-      latestInvoice?.payment_intent,
-    );
+    const latestInvoicePaymentIntent = readProviderObject(latestInvoice?.payment_intent);
 
     await this.prisma.companySubscription.update({
       where: { id: subscription.id },
       data: {
-        status: mapProviderSubscriptionStatus(
-          readProviderString(attributes.status) ??
-            deriveSubscriptionStatusFromWebhookEvent(event.eventType),
-        ),
-        externalCustomerId:
-          readProviderString(attributes.customer_id) ??
-          subscription.externalCustomerId,
-        externalPlanId:
-          readProviderString(attributes.plan_id) ?? subscription.externalPlanId,
-        externalPaymentMethodId:
-          readProviderString(attributes.default_customer_payment_method_id) ??
-          subscription.externalPaymentMethodId,
-        latestInvoiceExternalId:
-          readProviderString(latestInvoice?.id) ??
-          subscription.latestInvoiceExternalId,
-        latestPaymentIntentId:
-          readProviderString(latestInvoicePaymentIntent?.id) ??
-          subscription.latestPaymentIntentId,
-        nextBillingAt:
-          readProviderUnixDate(attributes.next_billing_schedule) ??
-          subscription.nextBillingAt,
-        startsAt:
-          readProviderUnixDate(attributes.created_at) ?? subscription.startsAt,
-        canceledAt:
-          readProviderUnixDate(attributes.cancelled_at) ??
-          subscription.canceledAt,
-        currentPeriodStartAt:
-          readProviderUnixDate(attributes.current_billing_period_start) ??
-          subscription.currentPeriodStartAt,
+        status: mapProviderSubscriptionStatus(readProviderString(attributes.status) ?? deriveSubscriptionStatusFromWebhookEvent(event.eventType)),
+        externalCustomerId: readProviderString(attributes.customer_id) ?? subscription.externalCustomerId,
+        externalPlanId: readProviderString(attributes.plan_id) ?? subscription.externalPlanId,
+        externalPaymentMethodId: readProviderString(attributes.default_customer_payment_method_id) ?? subscription.externalPaymentMethodId,
+        latestInvoiceExternalId: readProviderString(latestInvoice?.id) ?? subscription.latestInvoiceExternalId,
+        latestPaymentIntentId: readProviderString(latestInvoicePaymentIntent?.id) ?? subscription.latestPaymentIntentId,
+        nextBillingAt: readProviderUnixDate(attributes.next_billing_schedule) ?? subscription.nextBillingAt,
+        startsAt: readProviderUnixDate(attributes.created_at) ?? subscription.startsAt,
+        canceledAt: readProviderUnixDate(attributes.cancelled_at) ?? subscription.canceledAt,
+        currentPeriodStartAt: readProviderUnixDate(attributes.current_billing_period_start) ?? subscription.currentPeriodStartAt,
         rawProviderPayload: event.payload as Prisma.InputJsonValue,
       },
     });
   }
 
-  private async processSubscriptionInvoiceEvent(
-    event: ReturnType<PaymongoWebhookService['extractEvent']>,
-  ) {
+  private async processSubscriptionInvoiceEvent(event: ReturnType<PaymongoWebhookService['extractEvent']>) {
     const attributes = event.resourceAttributes;
     const subscriptionId = readProviderString(attributes.subscription_id);
 
@@ -265,9 +207,7 @@ export class PaymongoWebhookService {
     });
 
     if (!subscription) {
-      this.logger.warn(
-        `Skipping ${event.eventType}: local subscription not found for ${subscriptionId}.`,
-      );
+      this.logger.warn(`Skipping ${event.eventType}: local subscription not found for ${subscriptionId}.`);
       return;
     }
 
@@ -286,13 +226,8 @@ export class PaymongoWebhookService {
           externalInvoiceId: invoiceId,
         },
         update: {
-          externalPaymentIntentId:
-            readProviderString(paymentIntent?.id) ??
-            readProviderString(attributes.payment_intent_id),
-          status: this.mapProviderInvoiceStatus(
-            readProviderString(attributes.status),
-            event.eventType,
-          ),
+          externalPaymentIntentId: readProviderString(paymentIntent?.id) ?? readProviderString(attributes.payment_intent_id),
+          status: this.mapProviderInvoiceStatus(readProviderString(attributes.status), event.eventType),
           billingReason: readProviderString(attributes.billing_reason),
           currency: readProviderString(attributes.currency) ?? 'PHP',
           amountDueInCents: readProviderNumber(attributes.amount_due),
@@ -308,13 +243,8 @@ export class PaymongoWebhookService {
           companySubscriptionId: subscription.id,
           billingProvider: BillingProvider.PAYMONGO,
           externalInvoiceId: invoiceId,
-          externalPaymentIntentId:
-            readProviderString(paymentIntent?.id) ??
-            readProviderString(attributes.payment_intent_id),
-          status: this.mapProviderInvoiceStatus(
-            readProviderString(attributes.status),
-            event.eventType,
-          ),
+          externalPaymentIntentId: readProviderString(paymentIntent?.id) ?? readProviderString(attributes.payment_intent_id),
+          status: this.mapProviderInvoiceStatus(readProviderString(attributes.status), event.eventType),
           billingReason: readProviderString(attributes.billing_reason),
           currency: readProviderString(attributes.currency) ?? 'PHP',
           amountDueInCents: readProviderNumber(attributes.amount_due),
@@ -333,23 +263,18 @@ export class PaymongoWebhookService {
         data: {
           latestInvoiceExternalId: invoiceId,
           latestPaymentIntentId:
-            readProviderString(paymentIntent?.id) ??
-            readProviderString(attributes.payment_intent_id) ??
-            subscription.latestPaymentIntentId,
+            readProviderString(paymentIntent?.id) ?? readProviderString(attributes.payment_intent_id) ?? subscription.latestPaymentIntentId,
           rawProviderPayload: event.payload as Prisma.InputJsonValue,
         },
       });
     });
   }
 
-  private async processPaymentEvent(
-    event: ReturnType<PaymongoWebhookService['extractEvent']>,
-  ) {
+  private async processPaymentEvent(event: ReturnType<PaymongoWebhookService['extractEvent']>) {
     const attributes = event.resourceAttributes;
     const paymentIntentId = readProviderString(attributes.payment_intent_id);
     const description = readProviderString(attributes.description);
-    const subscriptionIdFromDescription =
-      description?.match(/subs_[A-Za-z0-9]+/)?.[0] ?? null;
+    const subscriptionIdFromDescription = description?.match(/subs_[A-Za-z0-9]+/)?.[0] ?? null;
 
     const subscription = paymentIntentId
       ? await this.prisma.companySubscription.findFirst({
@@ -366,9 +291,7 @@ export class PaymongoWebhookService {
         : null;
 
     if (!subscription) {
-      this.logger.warn(
-        `Skipping ${event.eventType}: no local subscription matched the payment event.`,
-      );
+      this.logger.warn(`Skipping ${event.eventType}: no local subscription matched the payment event.`);
       return;
     }
 
@@ -390,23 +313,16 @@ export class PaymongoWebhookService {
     });
   }
 
-  private async processManualCheckoutPaidEvent(
-    event: ReturnType<PaymongoWebhookService['extractEvent']>,
-  ) {
+  private async processManualCheckoutPaidEvent(event: ReturnType<PaymongoWebhookService['extractEvent']>) {
     const attributes = event.resourceAttributes;
     const paymentAttempt = await this.findManualPaymentAttempt(event);
 
     if (!paymentAttempt) {
-      this.logger.warn(
-        `Skipping ${event.eventType}: no local manual payment attempt matched checkout session ${event.resourceId}.`,
-      );
+      this.logger.warn(`Skipping ${event.eventType}: no local manual payment attempt matched checkout session ${event.resourceId}.`);
       return;
     }
 
-    if (
-      paymentAttempt.status === BillingPaymentAttemptStatus.PAID &&
-      paymentAttempt.applicationStatus === BillingApplicationStatus.APPLIED
-    ) {
+    if (paymentAttempt.status === BillingPaymentAttemptStatus.PAID && paymentAttempt.applicationStatus === BillingApplicationStatus.APPLIED) {
       return;
     }
 
@@ -414,12 +330,8 @@ export class PaymongoWebhookService {
     const payment = readFirstProviderArrayObject(attributes.payments);
     const paymentAttributes = readProviderObject(payment?.attributes);
     const paymentIntent = readProviderObject(attributes.payment_intent);
-    const providerPaymentId =
-      readProviderString(payment?.id) ??
-      readProviderString(attributes.payment_id);
-    const providerPaymentIntentId =
-      readProviderString(paymentIntent?.id) ??
-      readProviderString(attributes.payment_intent_id);
+    const providerPaymentId = readProviderString(payment?.id) ?? readProviderString(attributes.payment_id);
+    const providerPaymentIntentId = readProviderString(paymentIntent?.id) ?? readProviderString(attributes.payment_intent_id);
 
     await this.prisma.$transaction(async (tx) => {
       const paidAttemptForInvoice = await tx.billingPaymentAttempt.findFirst({
@@ -439,11 +351,8 @@ export class PaymongoWebhookService {
 
       if (paidAttemptForInvoice) {
         const sameProviderPayment =
-          (providerPaymentId &&
-            paidAttemptForInvoice.externalPaymentId === providerPaymentId) ||
-          (providerPaymentIntentId &&
-            paidAttemptForInvoice.externalPaymentIntentId ===
-              providerPaymentIntentId);
+          (providerPaymentId && paidAttemptForInvoice.externalPaymentId === providerPaymentId) ||
+          (providerPaymentIntentId && paidAttemptForInvoice.externalPaymentIntentId === providerPaymentIntentId);
 
         if (!sameProviderPayment) {
           await tx.billingPaymentAttempt.update({
@@ -479,15 +388,10 @@ export class PaymongoWebhookService {
         data: {
           status: BillingPaymentAttemptStatus.PAID,
           applicationStatus:
-            paymentAttempt.applicationStatus ===
-            BillingApplicationStatus.APPLIED
-              ? BillingApplicationStatus.APPLIED
-              : BillingApplicationStatus.PENDING,
+            paymentAttempt.applicationStatus === BillingApplicationStatus.APPLIED ? BillingApplicationStatus.APPLIED : BillingApplicationStatus.PENDING,
           externalPaymentIntentId: providerPaymentIntentId,
           externalPaymentId: providerPaymentId,
-          paymentMethodType:
-            readProviderString(attributes.payment_method_type) ??
-            readProviderString(paymentAttributes?.payment_method_type),
+          paymentMethodType: readProviderString(attributes.payment_method_type) ?? readProviderString(paymentAttributes?.payment_method_type),
           confirmedAt: now,
           failedAt: null,
           expiredAt: null,
@@ -497,25 +401,18 @@ export class PaymongoWebhookService {
       });
     });
 
-    const applicationResult =
-      await this.paymentApplicationService.applyPaidAttempt(paymentAttempt.id);
+    const applicationResult = await this.paymentApplicationService.applyPaidAttempt(paymentAttempt.id);
 
     if (!applicationResult.applied) {
-      this.logger.warn(
-        `Paid manual attempt ${paymentAttempt.id} was recorded but application is pending/failed: ${applicationResult.reason}.`,
-      );
+      this.logger.warn(`Paid manual attempt ${paymentAttempt.id} was recorded but application is pending/failed: ${applicationResult.reason}.`);
     }
   }
 
-  private async processManualCheckoutTerminalEvent(
-    event: ReturnType<PaymongoWebhookService['extractEvent']>,
-  ) {
+  private async processManualCheckoutTerminalEvent(event: ReturnType<PaymongoWebhookService['extractEvent']>) {
     const paymentAttempt = await this.findManualPaymentAttempt(event);
 
     if (!paymentAttempt) {
-      this.logger.warn(
-        `Skipping ${event.eventType}: no local manual payment attempt matched checkout session ${event.resourceId}.`,
-      );
+      this.logger.warn(`Skipping ${event.eventType}: no local manual payment attempt matched checkout session ${event.resourceId}.`);
       return;
     }
 
@@ -524,20 +421,14 @@ export class PaymongoWebhookService {
     }
 
     const isExpired = event.eventType.includes('expired');
-    const isCanceled =
-      event.eventType.includes('cancelled') ||
-      event.eventType.includes('canceled');
+    const isCanceled = event.eventType.includes('cancelled') || event.eventType.includes('canceled');
 
     await this.prisma.billingPaymentAttempt.update({
       where: {
         id: paymentAttempt.id,
       },
       data: {
-        status: isExpired
-          ? BillingPaymentAttemptStatus.EXPIRED
-          : isCanceled
-            ? BillingPaymentAttemptStatus.CANCELED
-            : BillingPaymentAttemptStatus.FAILED,
+        status: isExpired ? BillingPaymentAttemptStatus.EXPIRED : isCanceled ? BillingPaymentAttemptStatus.CANCELED : BillingPaymentAttemptStatus.FAILED,
         failedAt: isExpired ? null : new Date(),
         expiredAt: isExpired ? new Date() : null,
         canceledAt: isCanceled ? new Date() : null,
@@ -546,13 +437,9 @@ export class PaymongoWebhookService {
     });
   }
 
-  private async findManualPaymentAttempt(
-    event: ReturnType<PaymongoWebhookService['extractEvent']>,
-  ) {
+  private async findManualPaymentAttempt(event: ReturnType<PaymongoWebhookService['extractEvent']>) {
     const metadata = readProviderObject(event.resourceAttributes.metadata);
-    const metadataPaymentAttemptId = this.readIntegerMetadata(
-      metadata?.local_payment_attempt_id ?? metadata?.local_payment_request_id,
-    );
+    const metadataPaymentAttemptId = this.readIntegerMetadata(metadata?.local_payment_attempt_id ?? metadata?.local_payment_request_id);
     const filters = [
       event.resourceId
         ? {
@@ -593,41 +480,25 @@ export class PaymongoWebhookService {
     return null;
   }
 
-  private verifySignature(
-    rawPayload: string,
-    signatureParts: { t: string; te: string; li: string },
-    isLiveMode: boolean,
-  ) {
+  private verifySignature(rawPayload: string, signatureParts: { t: string; te: string; li: string }, isLiveMode: boolean) {
     const timestamp = Number(signatureParts.t);
 
     if (!Number.isFinite(timestamp)) {
-      throw new BadRequestException(
-        'Invalid PayMongo webhook signature timestamp.',
-      );
+      throw new BadRequestException('Invalid PayMongo webhook signature timestamp.');
     }
 
-    const expectedSignature = crypto
-      .createHmac('sha256', this.paymongoService.getWebhookSecret())
-      .update(`${signatureParts.t}.${rawPayload}`)
-      .digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', this.paymongoService.getWebhookSecret()).update(`${signatureParts.t}.${rawPayload}`).digest('hex');
 
-    const providedSignature = isLiveMode
-      ? signatureParts.li
-      : signatureParts.te;
+    const providedSignature = isLiveMode ? signatureParts.li : signatureParts.te;
 
-    if (
-      !providedSignature ||
-      !this.timingSafeEqual(expectedSignature, providedSignature)
-    ) {
+    if (!providedSignature || !this.timingSafeEqual(expectedSignature, providedSignature)) {
       throw new BadRequestException('Invalid PayMongo webhook signature.');
     }
 
     const ageInSeconds = Math.abs(Date.now() - timestamp * 1000) / 1000;
 
     if (ageInSeconds > this.paymongoService.getWebhookToleranceInSeconds()) {
-      throw new BadRequestException(
-        'PayMongo webhook signature timestamp is outside the tolerance window.',
-      );
+      throw new BadRequestException('PayMongo webhook signature timestamp is outside the tolerance window.');
     }
   }
 
@@ -640,15 +511,11 @@ export class PaymongoWebhookService {
     );
 
     if (!parts.t || parts.te === undefined || parts.li === undefined) {
-      throw new BadRequestException(
-        'Invalid PayMongo signature header format.',
-      );
+      throw new BadRequestException('Invalid PayMongo signature header format.');
     }
 
     if (!/^\d+$/.test(parts.t)) {
-      throw new BadRequestException(
-        'Invalid PayMongo signature header timestamp.',
-      );
+      throw new BadRequestException('Invalid PayMongo signature header timestamp.');
     }
 
     return {
@@ -673,9 +540,7 @@ export class PaymongoWebhookService {
     const resource = payload.data?.attributes?.data;
 
     if (!eventId || !eventType || !resource?.attributes) {
-      throw new BadRequestException(
-        'PayMongo webhook payload is missing required event data.',
-      );
+      throw new BadRequestException('PayMongo webhook payload is missing required event data.');
     }
 
     return {
@@ -701,10 +566,7 @@ export class PaymongoWebhookService {
     });
   }
 
-  private mapProviderInvoiceStatus(
-    providerStatus: string | null,
-    eventType: string,
-  ) {
+  private mapProviderInvoiceStatus(providerStatus: string | null, eventType: string) {
     switch (providerStatus?.trim().toLowerCase()) {
       case 'draft':
         return SubscriptionInvoiceStatus.DRAFT;

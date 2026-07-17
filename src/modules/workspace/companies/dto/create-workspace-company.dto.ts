@@ -1,24 +1,10 @@
-import {
-  IsEnum,
-  IsEmail,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Matches,
-  Max,
-  Min,
-  MinLength,
-  ValidateNested,
-  ValidateIf,
-} from 'class-validator';
+import { IsEnum, IsEmail, IsIn, IsInt, IsOptional, IsString, Matches, Max, Min, MinLength, ValidateNested, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 import { BillingCycle, BillingMode } from '@prisma/client';
 
 const NamePattern = /^[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*$/u;
 const OptionalNamePattern = /^(?:$|[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*)$/u;
-const TinPattern =
-  /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
+const TinPattern = /^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{3}-\d{3}-\d{3}$|^\d{9}$|^\d{12}$/;
 const ContactNumberPattern = /^\+63 [\d ]{7,14}$/;
 const DatePattern = /^\d{4}-\d{2}-\d{2}$/;
 const PaymentMethodPattern = /^pm_[A-Za-z0-9]+$/;
@@ -73,17 +59,13 @@ export class CreateWorkspaceCompanyDto {
   @IsIn(['individual', 'non-individual'])
   taxpayerType!: 'individual' | 'non-individual';
 
-  @ValidateIf(
-    (dto: CreateWorkspaceCompanyDto) => dto.taxpayerType === 'individual',
-  )
+  @ValidateIf((dto: CreateWorkspaceCompanyDto) => dto.taxpayerType === 'individual')
   @IsString()
   @MinLength(2)
   @Matches(NamePattern)
   lastName?: string;
 
-  @ValidateIf(
-    (dto: CreateWorkspaceCompanyDto) => dto.taxpayerType === 'individual',
-  )
+  @ValidateIf((dto: CreateWorkspaceCompanyDto) => dto.taxpayerType === 'individual')
   @IsString()
   @MinLength(2)
   @Matches(NamePattern)
@@ -94,25 +76,17 @@ export class CreateWorkspaceCompanyDto {
   @Matches(OptionalNamePattern)
   middleName?: string;
 
-  @ValidateIf(
-    (dto: CreateWorkspaceCompanyDto) => dto.taxpayerType === 'non-individual',
-  )
+  @ValidateIf((dto: CreateWorkspaceCompanyDto) => dto.taxpayerType === 'non-individual')
   @IsString()
   @MinLength(2)
   companyName?: string;
 
-  @ValidateIf(
-    (dto: CreateWorkspaceCompanyDto) => dto.taxpayerType === 'non-individual',
-  )
+  @ValidateIf((dto: CreateWorkspaceCompanyDto) => dto.taxpayerType === 'non-individual')
   @IsString()
   @MinLength(2)
   nonIndividualType?: string;
 
-  @ValidateIf(
-    (dto: CreateWorkspaceCompanyDto) =>
-      dto.taxpayerType === 'non-individual' &&
-      dto.nonIndividualType === 'Others',
-  )
+  @ValidateIf((dto: CreateWorkspaceCompanyDto) => dto.taxpayerType === 'non-individual' && dto.nonIndividualType === 'Others')
   @IsString()
   @MinLength(2)
   nonIndividualTypeOther?: string;

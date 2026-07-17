@@ -4,20 +4,13 @@ import type { ParsedChartAccountCode } from '../types/chart-account-code.type';
 
 const AccountCodePattern = /^\d{10}$/;
 
-const ChildLevelsByParentLevel: Record<ChartAccountLevel, ChartAccountLevel[]> =
-  {
-    [ChartAccountLevel.MAJOR]: [ChartAccountLevel.SUB1],
-    [ChartAccountLevel.SUB1]: [
-      ChartAccountLevel.SUB2,
-      ChartAccountLevel.SPECIFIC,
-    ],
-    [ChartAccountLevel.SUB2]: [
-      ChartAccountLevel.SUB3,
-      ChartAccountLevel.SPECIFIC,
-    ],
-    [ChartAccountLevel.SUB3]: [ChartAccountLevel.SPECIFIC],
-    [ChartAccountLevel.SPECIFIC]: [],
-  };
+const ChildLevelsByParentLevel: Record<ChartAccountLevel, ChartAccountLevel[]> = {
+  [ChartAccountLevel.MAJOR]: [ChartAccountLevel.SUB1],
+  [ChartAccountLevel.SUB1]: [ChartAccountLevel.SUB2, ChartAccountLevel.SPECIFIC],
+  [ChartAccountLevel.SUB2]: [ChartAccountLevel.SUB3, ChartAccountLevel.SPECIFIC],
+  [ChartAccountLevel.SUB3]: [ChartAccountLevel.SPECIFIC],
+  [ChartAccountLevel.SPECIFIC]: [],
+};
 
 const AccountLevelLabels: Record<ChartAccountLevel, string> = {
   [ChartAccountLevel.MAJOR]: 'Major Account',
@@ -51,10 +44,7 @@ export function buildChartAccountCode(parts: ParsedChartAccountCode) {
   ].join('');
 }
 
-export function assertCanCreateAccountLevel(
-  parentLevel: ChartAccountLevel | null,
-  accountLevel: ChartAccountLevel,
-) {
+export function assertCanCreateAccountLevel(parentLevel: ChartAccountLevel | null, accountLevel: ChartAccountLevel) {
   if (!parentLevel) {
     if (accountLevel !== ChartAccountLevel.MAJOR) {
       throw new BadRequestException('Only Major Account can omit a parent.');
@@ -64,9 +54,7 @@ export function assertCanCreateAccountLevel(
   }
 
   if (!ChildLevelsByParentLevel[parentLevel].includes(accountLevel)) {
-    throw new BadRequestException(
-      `${AccountLevelLabels[accountLevel]} cannot be created under ${AccountLevelLabels[parentLevel]}.`,
-    );
+    throw new BadRequestException(`${AccountLevelLabels[accountLevel]} cannot be created under ${AccountLevelLabels[parentLevel]}.`);
   }
 }
 
@@ -101,9 +89,7 @@ export function generateNextAccountCodeFromSiblings({
   accountLevel: ChartAccountLevel;
   siblingCodes: string[];
 }) {
-  const parentParts = parentCode
-    ? parseChartAccountCode(parentCode)
-    : { major: 0, sub1: 0, sub2: 0, sub3: 0, specific: 0 };
+  const parentParts = parentCode ? parseChartAccountCode(parentCode) : { major: 0, sub1: 0, sub2: 0, sub3: 0, specific: 0 };
   const nextSequence = findFirstAvailablePositiveNumber(
     siblingCodes.map((code) => extractSequence(code, accountLevel)),
     getMaxSequence(accountLevel),
@@ -153,13 +139,8 @@ export function generateNextAccountCodeFromSiblings({
   }
 }
 
-export function findFirstAvailablePositiveNumber(
-  existingNumbers: number[],
-  max: number,
-) {
-  const usedNumbers = new Set(
-    existingNumbers.filter((value) => Number.isInteger(value) && value > 0),
-  );
+export function findFirstAvailablePositiveNumber(existingNumbers: number[], max: number) {
+  const usedNumbers = new Set(existingNumbers.filter((value) => Number.isInteger(value) && value > 0));
 
   for (let value = 1; value <= max; value += 1) {
     if (!usedNumbers.has(value)) {

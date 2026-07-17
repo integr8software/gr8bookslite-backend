@@ -7,12 +7,7 @@ const AllowedMimeTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 export class UserAvatarStorageService {
   constructor(private readonly storageService: StorageService) {}
 
-  async uploadAvatar(params: {
-    userId: number;
-    fileName: string;
-    mimeType: string;
-    fileBuffer: Buffer;
-  }) {
+  async uploadAvatar(params: { userId: number; fileName: string; mimeType: string; fileBuffer: Buffer }) {
     if (!AllowedMimeTypes.has(params.mimeType)) {
       throw new BadGatewayException('Unsupported avatar file type.');
     }

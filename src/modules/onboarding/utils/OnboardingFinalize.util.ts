@@ -7,18 +7,12 @@ export function buildCompanyDisplayName(input: {
   ownerFirstName: string | null;
   ownerLastName: string | null;
 }) {
-  if (
-    input.taxpayerType === 'NON_INDIVIDUAL' &&
-    input.companyName &&
-    input.companyName.trim().length > 0
-  ) {
+  if (input.taxpayerType === 'NON_INDIVIDUAL' && input.companyName && input.companyName.trim().length > 0) {
     return input.companyName.trim();
   }
 
   const ownerName = [input.ownerFirstName, input.ownerLastName]
-    .filter((value): value is string =>
-      Boolean(value && value.trim().length > 0),
-    )
+    .filter((value): value is string => Boolean(value && value.trim().length > 0))
     .map((value) => value.trim())
     .join(' ');
 
@@ -26,11 +20,7 @@ export function buildCompanyDisplayName(input: {
 }
 
 export function buildSlugBase(value: string) {
-  const normalized = value
-    .trim()
-    .toLowerCase()
-    .replace(NON_ALPHANUMERIC_PATTERN, '-')
-    .replace(TRIM_DASH_PATTERN, '');
+  const normalized = value.trim().toLowerCase().replace(NON_ALPHANUMERIC_PATTERN, '-').replace(TRIM_DASH_PATTERN, '');
 
   return normalized || 'company';
 }
@@ -42,10 +32,7 @@ export function getTrialEndsAt(startDate: Date, trialDays: number) {
   return trialEndsAt;
 }
 
-export function buildCompanyLogoStoragePath(
-  companyId: number,
-  sourceStoragePath: string,
-) {
+export function buildCompanyLogoStoragePath(companyId: number, sourceStoragePath: string) {
   const fileName = sourceStoragePath.split('/').pop() || 'logo';
 
   return `company-logos/company-${companyId}/${fileName}`;

@@ -1,22 +1,6 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  MembershipRole,
-  MembershipStatus,
-  PaymentType,
-  PaymentTypeClassification,
-  PaymentTypeStatus,
-  Prisma,
-} from '@prisma/client';
-import {
-  DefaultLimit,
-  DefaultPage,
-} from '../../../common/constants/pagination.constant';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { MembershipRole, MembershipStatus, PaymentType, PaymentTypeClassification, PaymentTypeStatus, Prisma } from '@prisma/client';
+import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -72,10 +56,7 @@ export class PaymentTypeMaintenanceService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
-    const paymentType = await this.findPaymentTypeOrThrow(
-      companyId,
-      parsePositiveBigIntId(id),
-    );
+    const paymentType = await this.findPaymentTypeOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       paymentType: (await this.mapPaymentTypesWithAuditUsers([paymentType]))[0],
@@ -89,8 +70,7 @@ export class PaymentTypeMaintenanceService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     await this.ensureNameAvailable(companyId, dto.name);
-    const sortOrder =
-      dto.sortOrder ?? (await this.getNextPaymentTypeSortOrder(companyId));
+    const sortOrder = dto.sortOrder ?? (await this.getNextPaymentTypeSortOrder(companyId));
 
     try {
       const paymentType = await this.prisma.paymentType.create({
@@ -105,9 +85,7 @@ export class PaymentTypeMaintenanceService {
 
       return {
         message: 'Payment type created successfully.',
-        paymentType: (
-          await this.mapPaymentTypesWithAuditUsers([paymentType])
-        )[0],
+        paymentType: (await this.mapPaymentTypesWithAuditUsers([paymentType]))[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -140,9 +118,7 @@ export class PaymentTypeMaintenanceService {
 
       return {
         message: 'Payment type updated successfully.',
-        paymentType: (
-          await this.mapPaymentTypesWithAuditUsers([paymentType])
-        )[0],
+        paymentType: (await this.mapPaymentTypesWithAuditUsers([paymentType]))[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -171,9 +147,7 @@ export class PaymentTypeMaintenanceService {
     });
 
     if (existingPaymentTypes.length > 0) {
-      throw new ConflictException(
-        `Payment type already exists: ${existingPaymentTypes[0].name}.`,
-      );
+      throw new ConflictException(`Payment type already exists: ${existingPaymentTypes[0].name}.`);
     }
 
     const paymentTypes = await this.prisma.$transaction(async (tx) => {
@@ -205,10 +179,7 @@ export class PaymentTypeMaintenanceService {
     };
   }
 
-  private buildListWhere(
-    companyId: number,
-    query: GetPaymentTypeListQueryDto,
-  ): Prisma.PaymentTypeWhereInput {
+  private buildListWhere(companyId: number, query: GetPaymentTypeListQueryDto): Prisma.PaymentTypeWhereInput {
     const search = query.search?.trim();
 
     return {
@@ -218,18 +189,13 @@ export class PaymentTypeMaintenanceService {
       ...(query.status ? { status: query.status } : {}),
       ...(search
         ? {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { description: { contains: search, mode: 'insensitive' } },
-            ],
+            OR: [{ name: { contains: search, mode: 'insensitive' } }, { description: { contains: search, mode: 'insensitive' } }],
           }
         : {}),
     };
   }
 
-  private buildOrderBy(
-    query: GetPaymentTypeListQueryDto,
-  ): Prisma.PaymentTypeOrderByWithRelationInput[] {
+  private buildOrderBy(query: GetPaymentTypeListQueryDto): Prisma.PaymentTypeOrderByWithRelationInput[] {
     const sortBy = query.sortBy ?? 'sortOrder';
     const sortDirection = query.sortDirection ?? 'asc';
 
@@ -273,23 +239,16 @@ export class PaymentTypeMaintenanceService {
           if (group.classification === PaymentTypeClassification.CASH) {
             statistics.cashPaymentTypes += count;
           }
-          if (
-            group.classification === PaymentTypeClassification.BANK_TRANSFER
-          ) {
+          if (group.classification === PaymentTypeClassification.BANK_TRANSFER) {
             statistics.bankTransferPaymentTypes += count;
           }
           if (group.classification === PaymentTypeClassification.CHECK) {
             statistics.checkPaymentTypes += count;
           }
-          if (
-            group.classification === PaymentTypeClassification.DIGITAL_WALLET
-          ) {
+          if (group.classification === PaymentTypeClassification.DIGITAL_WALLET) {
             statistics.digitalWalletPaymentTypes += count;
           }
-          if (
-            group.classification ===
-            PaymentTypeClassification.NON_CASH_SETTLEMENT
-          ) {
+          if (group.classification === PaymentTypeClassification.NON_CASH_SETTLEMENT) {
             statistics.nonCashSettlementPaymentTypes += count;
           }
         }
@@ -301,15 +260,10 @@ export class PaymentTypeMaintenanceService {
   private async mapPaymentTypesWithAuditUsers(paymentTypes: PaymentType[]) {
     const userNames = await resolveAuditUserNames(
       this.prisma,
-      paymentTypes.flatMap((paymentType) => [
-        paymentType.createdByUserId,
-        paymentType.updatedByUserId,
-      ]),
+      paymentTypes.flatMap((paymentType) => [paymentType.createdByUserId, paymentType.updatedByUserId]),
     );
 
-    return paymentTypes.map((paymentType) =>
-      mapPaymentType(paymentType, userNames),
-    );
+    return paymentTypes.map((paymentType) => mapPaymentType(paymentType, userNames));
   }
 
   private toCreatePaymentTypeData(dto: CreatePaymentTypeDto) {
@@ -324,12 +278,8 @@ export class PaymentTypeMaintenanceService {
   private toPaymentTypeData(dto: UpdatePaymentTypeDto) {
     return {
       ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
-      ...(dto.description !== undefined
-        ? { description: dto.description.trim() }
-        : {}),
-      ...(dto.classification !== undefined
-        ? { classification: dto.classification }
-        : {}),
+      ...(dto.description !== undefined ? { description: dto.description.trim() } : {}),
+      ...(dto.classification !== undefined ? { classification: dto.classification } : {}),
       ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
       ...(dto.status !== undefined ? { status: dto.status } : {}),
     };
@@ -345,10 +295,7 @@ export class PaymentTypeMaintenanceService {
     return (lastPaymentType?.sortOrder ?? 0) + 10;
   }
 
-  private async findPaymentTypeOrThrow(
-    companyId: number,
-    paymentTypeId: bigint,
-  ) {
+  private async findPaymentTypeOrThrow(companyId: number, paymentTypeId: bigint) {
     const paymentType = await this.prisma.paymentType.findFirst({
       where: {
         id: paymentTypeId,
@@ -364,11 +311,7 @@ export class PaymentTypeMaintenanceService {
     return paymentType;
   }
 
-  private async ensureNameAvailable(
-    companyId: number,
-    name: string,
-    excludedPaymentTypeId?: bigint,
-  ) {
+  private async ensureNameAvailable(companyId: number, name: string, excludedPaymentTypeId?: bigint) {
     const normalizedName = name.trim();
 
     if (!normalizedName) {
@@ -391,9 +334,7 @@ export class PaymentTypeMaintenanceService {
     });
 
     if (existingPaymentType) {
-      throw new ConflictException(
-        'A payment type with this name already exists.',
-      );
+      throw new ConflictException('A payment type with this name already exists.');
     }
   }
 
@@ -401,15 +342,10 @@ export class PaymentTypeMaintenanceService {
     const names = new Set<string>();
 
     for (const paymentType of paymentTypes) {
-      const normalizedName = paymentType.name
-        .trim()
-        .replace(/\s+/g, ' ')
-        .toLowerCase();
+      const normalizedName = paymentType.name.trim().replace(/\s+/g, ' ').toLowerCase();
 
       if (names.has(normalizedName)) {
-        throw new BadRequestException(
-          `Duplicate payment type in upload: ${paymentType.name.trim()}.`,
-        );
+        throw new BadRequestException(`Duplicate payment type in upload: ${paymentType.name.trim()}.`);
       }
 
       names.add(normalizedName);
@@ -446,25 +382,16 @@ export class PaymentTypeMaintenanceService {
     }
   }
 
-  private ensureCan(
-    user: AuthUser,
-    companyId: number,
-    action: PermissionAction,
-  ) {
+  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {
       return;
     }
 
-    if (
-      user.companyId === companyId &&
-      user.permissions.includes(`PT:${action}`)
-    ) {
+    if (user.companyId === companyId && user.permissions.includes(`PT:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException(
-      'You do not have permission to manage payment types.',
-    );
+    throw new ForbiddenException('You do not have permission to manage payment types.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -482,9 +409,7 @@ export class PaymentTypeMaintenanceService {
       return true;
     }
 
-    return (
-      user.companyId === companyId && user.permissions.includes(`PT:${action}`)
-    );
+    return user.companyId === companyId && user.permissions.includes(`PT:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -495,19 +420,13 @@ export class PaymentTypeMaintenanceService {
     return (
       user.companyId === companyId &&
       user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN ||
-        user.membershipRole === MembershipRole.ADMIN)
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
     );
   }
 
   private throwFriendlyPrismaError(error: unknown) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
-      throw new ConflictException(
-        'A payment type with this name already exists.',
-      );
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ConflictException('A payment type with this name already exists.');
     }
   }
 }

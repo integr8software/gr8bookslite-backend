@@ -1,14 +1,5 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { ChartAccountStatus, DefaultAccountTemplateType } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
@@ -41,13 +32,7 @@ export class GetDefaultAccountTemplateListQueryDto {
 
   @IsOptional()
   @IsIn(['name', 'description', 'type', 'status', 'createdAt', 'updatedAt'])
-  sortBy?:
-    | 'name'
-    | 'description'
-    | 'type'
-    | 'status'
-    | 'createdAt'
-    | 'updatedAt';
+  sortBy?: 'name' | 'description' | 'type' | 'status' | 'createdAt' | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

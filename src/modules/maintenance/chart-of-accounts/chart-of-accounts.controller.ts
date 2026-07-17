@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -33,16 +24,11 @@ import { UpdateChartAccountDto } from './dto/update-chart-account.dto';
   version: '1',
 })
 export class ChartOfAccountsController {
-  constructor(
-    private readonly chartOfAccountsService: ChartOfAccountsService,
-  ) {}
+  constructor(private readonly chartOfAccountsService: ChartOfAccountsService) {}
 
   @Get()
   @ApiOkResponse({ type: ChartAccountListResponseDto })
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Query() query: GetChartAccountListQueryDto,
-  ) {
+  findAll(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
     return this.chartOfAccountsService.findAll(user, query);
   }
 
@@ -54,10 +40,7 @@ export class ChartOfAccountsController {
 
   @Get('next-code')
   @ApiOkResponse({ type: ChartAccountNextCodeResponseDto })
-  findNextCode(
-    @CurrentUser() user: AuthUser,
-    @Query() query: GetNextChartAccountCodeQueryDto,
-  ) {
+  findNextCode(@CurrentUser() user: AuthUser, @Query() query: GetNextChartAccountCodeQueryDto) {
     return this.chartOfAccountsService.findNextCode(user, query);
   }
 
@@ -75,21 +58,13 @@ export class ChartOfAccountsController {
 
   @Patch(':id')
   @ApiOkResponse({ type: ChartAccountSaveResponseDto })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateChartAccountDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateChartAccountDto) {
     return this.chartOfAccountsService.update(user, id, dto);
   }
 
   @Patch(':id/status')
   @ApiOkResponse({ type: ChartAccountSaveResponseDto })
-  updateStatus(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateChartAccountStatusDto,
-  ) {
+  updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateChartAccountStatusDto) {
     return this.chartOfAccountsService.updateStatus(user, id, dto);
   }
 }

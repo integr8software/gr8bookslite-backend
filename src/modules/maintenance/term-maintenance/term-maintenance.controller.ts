@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -25,9 +16,7 @@ import { TermMaintenanceService } from './term-maintenance.service';
   version: '1',
 })
 export class TermMaintenanceController {
-  constructor(
-    private readonly termMaintenanceService: TermMaintenanceService,
-  ) {}
+  constructor(private readonly termMaintenanceService: TermMaintenanceService) {}
 
   @Get()
   @ApiOkResponse({ description: 'Term list retrieved.' })
@@ -55,11 +44,7 @@ export class TermMaintenanceController {
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Term updated.' })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateTermDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateTermDto) {
     return this.termMaintenanceService.update(user, id, dto);
   }
 }

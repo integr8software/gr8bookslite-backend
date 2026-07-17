@@ -12,6 +12,4 @@ export type BankAccountIdentity = {
   accountNumber?: string | null;
 };
 
-export type BankMasterfilePrismaClient =
-  | Prisma.TransactionClient
-  | PrismaService;
+export type BankMasterfilePrismaClient = Prisma.TransactionClient | PrismaService;

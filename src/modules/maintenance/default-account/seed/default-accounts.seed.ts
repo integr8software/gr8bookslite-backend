@@ -7,10 +7,7 @@ type ChartAccountReference = {
   status: ChartAccountStatus;
 };
 
-export async function seedCompanyDefaultAccountDefaults(
-  tx: Prisma.TransactionClient | PrismaService,
-  companyId: number,
-) {
+export async function seedCompanyDefaultAccountDefaults(tx: Prisma.TransactionClient | PrismaService, companyId: number) {
   const copiedChartAccountByCode = new Map<string, ChartAccountReference>();
   const accountCodes: string[] = [
     ...new Set(
@@ -18,9 +15,7 @@ export async function seedCompanyDefaultAccountDefaults(
         'expenseAccountCode' in template ? template.expenseAccountCode : null,
         'revenueAccountCode' in template ? template.revenueAccountCode : null,
         'assetAccountCode' in template ? template.assetAccountCode : null,
-        'accumulatedDepreciationAccountCode' in template
-          ? template.accumulatedDepreciationAccountCode
-          : null,
+        'accumulatedDepreciationAccountCode' in template ? template.accumulatedDepreciationAccountCode : null,
       ])
         .filter(Boolean)
         .map(String),
@@ -47,50 +42,21 @@ export async function seedCompanyDefaultAccountDefaults(
 
   for (const template of StandardDefaultAccountTemplates) {
     const expenseAccount =
-      'expenseAccountCode' in template
-        ? getCopiedTemplateAccount(
-            copiedChartAccountByCode,
-            template.expenseAccountCode,
-            template.name,
-          )
-        : null;
+      'expenseAccountCode' in template ? getCopiedTemplateAccount(copiedChartAccountByCode, template.expenseAccountCode, template.name) : null;
     const revenueAccount =
-      'revenueAccountCode' in template
-        ? getCopiedTemplateAccount(
-            copiedChartAccountByCode,
-            template.revenueAccountCode,
-            template.name,
-          )
-        : null;
-    const assetAccount =
-      'assetAccountCode' in template
-        ? getCopiedTemplateAccount(
-            copiedChartAccountByCode,
-            template.assetAccountCode,
-            template.name,
-          )
-        : null;
+      'revenueAccountCode' in template ? getCopiedTemplateAccount(copiedChartAccountByCode, template.revenueAccountCode, template.name) : null;
+    const assetAccount = 'assetAccountCode' in template ? getCopiedTemplateAccount(copiedChartAccountByCode, template.assetAccountCode, template.name) : null;
     const accumulatedDepreciationAccount =
       'accumulatedDepreciationAccountCode' in template
-        ? getCopiedTemplateAccount(
-            copiedChartAccountByCode,
-            template.accumulatedDepreciationAccountCode,
-            template.name,
-          )
+        ? getCopiedTemplateAccount(copiedChartAccountByCode, template.accumulatedDepreciationAccountCode, template.name)
         : null;
-    const linkedAccounts = [
-      expenseAccount,
-      revenueAccount,
-      assetAccount,
-      accumulatedDepreciationAccount,
-    ].filter((account): account is ChartAccountReference => Boolean(account));
-    const templateStatus = linkedAccounts.every(
-      (account) => account.status === ChartAccountStatus.ACTIVE,
-    )
+    const linkedAccounts = [expenseAccount, revenueAccount, assetAccount, accumulatedDepreciationAccount].filter((account): account is ChartAccountReference =>
+      Boolean(account),
+    );
+    const templateStatus = linkedAccounts.every((account) => account.status === ChartAccountStatus.ACTIVE)
       ? ChartAccountStatus.ACTIVE
       : ChartAccountStatus.INACTIVE;
-    const templateDeletedAt =
-      templateStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
+    const templateDeletedAt = templateStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
 
     await tx.defaultAccount.upsert({
       where: {
@@ -106,8 +72,7 @@ export async function seedCompanyDefaultAccountDefaults(
         expenseCoaId: expenseAccount?.id ?? null,
         revenueCoaId: revenueAccount?.id ?? null,
         assetCoaId: assetAccount?.id ?? null,
-        accumulatedDepreciationCoaId:
-          accumulatedDepreciationAccount?.id ?? null,
+        accumulatedDepreciationCoaId: accumulatedDepreciationAccount?.id ?? null,
         deletedAt: templateDeletedAt,
       },
       create: {
@@ -119,25 +84,18 @@ export async function seedCompanyDefaultAccountDefaults(
         expenseCoaId: expenseAccount?.id ?? null,
         revenueCoaId: revenueAccount?.id ?? null,
         assetCoaId: assetAccount?.id ?? null,
-        accumulatedDepreciationCoaId:
-          accumulatedDepreciationAccount?.id ?? null,
+        accumulatedDepreciationCoaId: accumulatedDepreciationAccount?.id ?? null,
         deletedAt: templateDeletedAt,
       },
     });
   }
 }
 
-function getCopiedTemplateAccount(
-  copiedChartAccountByCode: Map<string, ChartAccountReference>,
-  accountCode: string,
-  templateName: string,
-) {
+function getCopiedTemplateAccount(copiedChartAccountByCode: Map<string, ChartAccountReference>, accountCode: string, templateName: string) {
   const account = copiedChartAccountByCode.get(accountCode);
 
   if (!account) {
-    throw new Error(
-      `Default account ${templateName} references an account that was not copied: ${accountCode}.`,
-    );
+    throw new Error(`Default account ${templateName} references an account that was not copied: ${accountCode}.`);
   }
 
   return account;

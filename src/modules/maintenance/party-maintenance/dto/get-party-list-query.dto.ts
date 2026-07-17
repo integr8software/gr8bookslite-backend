@@ -1,14 +1,5 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { PartyClassification, PartyStatus, PartyType } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
@@ -56,25 +47,8 @@ export class GetPartyListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn([
-    'partyCodeNo',
-    'name',
-    'classification',
-    'partyTypes',
-    'address',
-    'status',
-    'createdAt',
-    'updatedAt',
-  ])
-  sortBy?:
-    | 'partyCodeNo'
-    | 'name'
-    | 'classification'
-    | 'partyTypes'
-    | 'address'
-    | 'status'
-    | 'createdAt'
-    | 'updatedAt';
+  @IsIn(['partyCodeNo', 'name', 'classification', 'partyTypes', 'address', 'status', 'createdAt', 'updatedAt'])
+  sortBy?: 'partyCodeNo' | 'name' | 'classification' | 'partyTypes' | 'address' | 'status' | 'createdAt' | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

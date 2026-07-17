@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import {
   AccessScopeLevel,
   MembershipRole,
@@ -22,14 +18,7 @@ describe('ResponsibilityCenterService', () => {
     const tx = {
       $queryRaw: jest.fn(),
       responsibilityCenter: {
-        findMany: jest
-          .fn()
-          .mockResolvedValue([
-            { code: 'CC-D.E-001' },
-            { code: 'CC-D.E-002' },
-            { code: 'CC-DXE-999' },
-            { code: 'CC-D.E-ABC' },
-          ]),
+        findMany: jest.fn().mockResolvedValue([{ code: 'CC-D.E-001' }, { code: 'CC-D.E-002' }, { code: 'CC-DXE-999' }, { code: 'CC-D.E-ABC' }]),
       },
     };
 
@@ -58,16 +47,7 @@ describe('ResponsibilityCenterService', () => {
       },
     };
 
-    await expect(
-      callPrivate(
-        service,
-        'ensureCodeAvailable',
-        9,
-        ' cc-dept-001 ',
-        undefined,
-        client,
-      ),
-    ).rejects.toBeInstanceOf(ConflictException);
+    await expect(callPrivate(service, 'ensureCodeAvailable', 9, ' cc-dept-001 ', undefined, client)).rejects.toBeInstanceOf(ConflictException);
 
     expect(client.responsibilityCenter.findFirst).toHaveBeenCalledWith({
       where: {
@@ -83,16 +63,11 @@ describe('ResponsibilityCenterService', () => {
   it('rejects a parent that would create a hierarchy cycle', async () => {
     const service = createService({
       responsibilityCenter: {
-        findFirst: jest
-          .fn()
-          .mockResolvedValueOnce({ parentId: 3n })
-          .mockResolvedValueOnce({ parentId: 1n }),
+        findFirst: jest.fn().mockResolvedValueOnce({ parentId: 3n }).mockResolvedValueOnce({ parentId: 1n }),
       },
     });
 
-    await expect(
-      callPrivate(service, 'ensureNoHierarchyCycle', 12, 1n, 2n),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(callPrivate(service, 'ensureNoHierarchyCycle', 12, 1n, 2n)).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('scopes center lookup by company id', async () => {
@@ -101,9 +76,7 @@ describe('ResponsibilityCenterService', () => {
       responsibilityCenter: { findFirst },
     });
 
-    await expect(
-      callPrivate(service, 'findCenterOrThrow', 23, 99n),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(callPrivate(service, 'findCenterOrThrow', 23, 99n)).rejects.toBeInstanceOf(NotFoundException);
 
     expect(findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -260,9 +233,7 @@ describe('ResponsibilityCenterService', () => {
   it('does not silently map custom type names to a legacy TEAM category', () => {
     const service = createService();
 
-    expect(() =>
-      callPrivate(service, 'categoryFromTypeName', 'Custom Storefront Segment'),
-    ).toThrow(BadRequestException);
+    expect(() => callPrivate(service, 'categoryFromTypeName', 'Custom Storefront Segment')).toThrow(BadRequestException);
   });
 });
 
@@ -276,14 +247,8 @@ function createService(prismaOverrides: Record<string, unknown> = {}) {
   return new ResponsibilityCenterService(prisma as never);
 }
 
-function callPrivate<TReturn = unknown>(
-  service: ResponsibilityCenterService,
-  methodName: string,
-  ...args: unknown[]
-): TReturn {
-  return (service as never as Record<string, (...args: unknown[]) => TReturn>)[
-    methodName
-  ](...args);
+function callPrivate<TReturn = unknown>(service: ResponsibilityCenterService, methodName: string, ...args: unknown[]): TReturn {
+  return (service as never as Record<string, (...args: unknown[]) => TReturn>)[methodName](...args);
 }
 
 function createSuperAdmin(): AuthUser {

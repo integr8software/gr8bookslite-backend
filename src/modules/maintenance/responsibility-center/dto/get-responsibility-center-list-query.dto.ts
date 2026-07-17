@@ -1,19 +1,6 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
-import {
-  ResponsibilityCenterCategory,
-  ResponsibilityCenterFinancialType,
-  ResponsibilityCenterStatus,
-} from '@prisma/client';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { ResponsibilityCenterCategory, ResponsibilityCenterFinancialType, ResponsibilityCenterStatus } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetResponsibilityCenterListQueryDto {
@@ -56,25 +43,8 @@ export class GetResponsibilityCenterListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn([
-    'code',
-    'name',
-    'category',
-    'financialType',
-    'manager',
-    'status',
-    'createdAt',
-    'updatedAt',
-  ])
-  sortBy?:
-    | 'code'
-    | 'name'
-    | 'category'
-    | 'financialType'
-    | 'manager'
-    | 'status'
-    | 'createdAt'
-    | 'updatedAt';
+  @IsIn(['code', 'name', 'category', 'financialType', 'manager', 'status', 'createdAt', 'updatedAt'])
+  sortBy?: 'code' | 'name' | 'category' | 'financialType' | 'manager' | 'status' | 'createdAt' | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

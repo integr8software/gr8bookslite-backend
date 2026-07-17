@@ -1,21 +1,6 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  AccessScopeLevel,
-  CompanyUnitType,
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-  SystemRole,
-  UserStatus,
-} from '@prisma/client';
+import { AccessScopeLevel, CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SystemRole, UserStatus } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { normalizeEmail } from '../../../common/utils/email.util';
@@ -65,8 +50,7 @@ export class WorkspaceUsersService {
   }
 
   async create(user: AuthUser, dto: CreateWorkspaceUserDto) {
-    const { assignments, manageableCompanyIds } =
-      await this.validateAssignments(user, dto);
+    const { assignments, manageableCompanyIds } = await this.validateAssignments(user, dto);
     const actor = await this.getActor(user.id);
     const normalizedEmail = normalizeEmail(dto.email) as string;
     const existingUser = await this.prisma.user.findUnique({
@@ -123,8 +107,7 @@ export class WorkspaceUsersService {
   }
 
   async update(user: AuthUser, userId: number, dto: UpdateWorkspaceUserDto) {
-    const { assignments, manageableCompanyIds } =
-      await this.validateAssignments(user, dto);
+    const { assignments, manageableCompanyIds } = await this.validateAssignments(user, dto);
     const normalizedEmail = normalizeEmail(dto.email) as string;
     const existingUser = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -137,13 +120,8 @@ export class WorkspaceUsersService {
 
     const emailChanged = normalizedEmail !== existingUser.email;
 
-    if (
-      emailChanged &&
-      existingUser.status !== UserStatus.PENDING_VERIFICATION
-    ) {
-      throw new BadRequestException(
-        'Email can only be changed before the user activates the account.',
-      );
+    if (emailChanged && existingUser.status !== UserStatus.PENDING_VERIFICATION) {
+      throw new BadRequestException('Email can only be changed before the user activates the account.');
     }
 
     if (emailChanged) {
@@ -193,10 +171,7 @@ export class WorkspaceUsersService {
       targetUserId: updatedUser.id,
     });
 
-    if (
-      emailChanged &&
-      updatedUser.status === UserStatus.PENDING_VERIFICATION
-    ) {
+    if (emailChanged && updatedUser.status === UserStatus.PENDING_VERIFICATION) {
       const actor = await this.getActor(user.id);
       await this.sendUserInvitationEmail(actor, updatedUser, assignments);
     }
@@ -208,9 +183,7 @@ export class WorkspaceUsersService {
     const manageableCompanyIds = await this.getManageableCompanyIds(user);
 
     if (manageableCompanyIds.length === 0) {
-      throw new ForbiddenException(
-        'Admin access is required to resend invites.',
-      );
+      throw new ForbiddenException('Admin access is required to resend invites.');
     }
 
     const targetUser = await this.prisma.user.findUnique({
@@ -241,9 +214,7 @@ export class WorkspaceUsersService {
     }
 
     if (targetUser.status !== UserStatus.PENDING_VERIFICATION) {
-      throw new BadRequestException(
-        'Invitation can only be resent to pending users.',
-      );
+      throw new BadRequestException('Invitation can only be resent to pending users.');
     }
 
     const actor = await this.getActor(user.id);
@@ -273,9 +244,7 @@ export class WorkspaceUsersService {
     const manageableCompanyIds = await this.getManageableCompanyIds(user);
 
     if (manageableCompanyIds.length === 0) {
-      throw new ForbiddenException(
-        'Admin access is required to cancel invites.',
-      );
+      throw new ForbiddenException('Admin access is required to cancel invites.');
     }
 
     const targetUser = await this.prisma.user.findUnique({
@@ -300,20 +269,14 @@ export class WorkspaceUsersService {
     }
 
     if (targetUser.status !== UserStatus.PENDING_VERIFICATION) {
-      throw new BadRequestException(
-        'Only pending invitations can be cancelled.',
-      );
+      throw new BadRequestException('Only pending invitations can be cancelled.');
     }
 
     const manageableCompanyIdSet = new Set(manageableCompanyIds);
-    const hasBlockedMembership = targetUser.memberships.some(
-      (membership) => !manageableCompanyIdSet.has(membership.companyId),
-    );
+    const hasBlockedMembership = targetUser.memberships.some((membership) => !manageableCompanyIdSet.has(membership.companyId));
 
     if (hasBlockedMembership) {
-      throw new ForbiddenException(
-        'Admin access is required for every company assigned to this pending user.',
-      );
+      throw new ForbiddenException('Admin access is required for every company assigned to this pending user.');
     }
 
     await this.recordUserAssignmentLogs({
@@ -337,17 +300,12 @@ export class WorkspaceUsersService {
     };
   }
 
-  private async validateAssignments(
-    user: AuthUser,
-    dto: CreateWorkspaceUserDto | UpdateWorkspaceUserDto,
-  ) {
+  private async validateAssignments(user: AuthUser, dto: CreateWorkspaceUserDto | UpdateWorkspaceUserDto) {
     const assignments = dto.companyAssignments.map((assignment) => ({
       companyId: assignment.companyId,
       unitIds: [...new Set(assignment.unitIds)],
     }));
-    const companyIds = [
-      ...new Set(assignments.map(({ companyId }) => companyId)),
-    ];
+    const companyIds = [...new Set(assignments.map(({ companyId }) => companyId))];
 
     if (companyIds.length !== assignments.length) {
       throw new BadRequestException('Company assignments must be unique.');
@@ -367,18 +325,14 @@ export class WorkspaceUsersService {
 
     for (const assignment of assignments) {
       if (assignment.unitIds.length === 0) {
-        throw new BadRequestException(
-          'Select at least one head office, branch, or satellite.',
-        );
+        throw new BadRequestException('Select at least one head office, branch, or satellite.');
       }
 
       for (const unitId of assignment.unitIds) {
         const unit = unitById.get(unitId);
 
         if (!unit || unit.companyId !== assignment.companyId) {
-          throw new BadRequestException(
-            'Selected branch or satellite does not belong to the selected company.',
-          );
+          throw new BadRequestException('Selected branch or satellite does not belong to the selected company.');
         }
       }
     }
@@ -386,9 +340,7 @@ export class WorkspaceUsersService {
     return {
       assignments: assignments.map((assignment) => ({
         ...assignment,
-        accessScope: getAccessScope(
-          assignment.unitIds.map((unitId) => unitById.get(unitId)?.type),
-        ),
+        accessScope: getAccessScope(assignment.unitIds.map((unitId) => unitById.get(unitId)?.type)),
       })),
       manageableCompanyIds: await this.getManageableCompanyIds(user),
     };
@@ -407,17 +359,13 @@ export class WorkspaceUsersService {
       }[];
     },
   ) {
-    const assignedCompanyIds = input.assignments.map(
-      ({ companyId }) => companyId,
-    );
+    const assignedCompanyIds = input.assignments.map(({ companyId }) => companyId);
 
     await tx.membership.deleteMany({
       where: {
         userId: input.targetUserId,
         companyId: {
-          in: input.manageableCompanyIds.filter(
-            (companyId) => !assignedCompanyIds.includes(companyId),
-          ),
+          in: input.manageableCompanyIds.filter((companyId) => !assignedCompanyIds.includes(companyId)),
         },
       },
     });
@@ -487,9 +435,7 @@ export class WorkspaceUsersService {
     description: string;
     targetUserId?: number;
   }) {
-    const unitIds = input.assignments.flatMap(
-      (assignment) => assignment.unitIds,
-    );
+    const unitIds = input.assignments.flatMap((assignment) => assignment.unitIds);
     const units =
       unitIds.length > 0
         ? await this.prisma.companyUnit.findMany({
@@ -500,9 +446,7 @@ export class WorkspaceUsersService {
     const unitNameById = new Map(units.map((unit) => [unit.id, unit.name]));
 
     for (const assignment of input.assignments) {
-      const branchNames = assignment.unitIds
-        .map((unitId) => unitNameById.get(unitId))
-        .filter(Boolean);
+      const branchNames = assignment.unitIds.map((unitId) => unitNameById.get(unitId)).filter(Boolean);
 
       await this.auditLogsService.record({
         actorUserId: input.actorUserId,
@@ -511,16 +455,8 @@ export class WorkspaceUsersService {
         entityType: 'WorkspaceUser',
         entityId: input.targetUserId,
         metadata: {
-          branchId:
-            assignment.unitIds.length === 1
-              ? String(assignment.unitIds[0])
-              : 'workspace',
-          branchName:
-            branchNames.length === 1
-              ? branchNames[0]
-              : branchNames.length > 1
-                ? 'Multiple branches'
-                : 'Workspace',
+          branchId: assignment.unitIds.length === 1 ? String(assignment.unitIds[0]) : 'workspace',
+          branchName: branchNames.length === 1 ? branchNames[0] : branchNames.length > 1 ? 'Multiple branches' : 'Workspace',
           description: input.description,
           module: 'User Management',
         },
@@ -556,14 +492,10 @@ export class WorkspaceUsersService {
 
     const manageableCompanyIds = await this.getManageableCompanyIds(user);
     const manageableCompanyIdSet = new Set(manageableCompanyIds);
-    const hasBlockedCompany = companyIds.some(
-      (companyId) => !manageableCompanyIdSet.has(companyId),
-    );
+    const hasBlockedCompany = companyIds.some((companyId) => !manageableCompanyIdSet.has(companyId));
 
     if (hasBlockedCompany) {
-      throw new ForbiddenException(
-        'Admin access is required for every selected company.',
-      );
+      throw new ForbiddenException('Admin access is required for every selected company.');
     }
   }
 
@@ -588,38 +520,16 @@ export class WorkspaceUsersService {
     const companyNames =
       typeof assignmentsOrCompanyNames[0] === 'string'
         ? (assignmentsOrCompanyNames as string[])
-        : await this.getCompanyNamesForAssignments(
-            assignmentsOrCompanyNames as { companyId: number }[],
-          );
-    const inviteToken = await this.authService.createWorkspaceInviteToken(
-      user.id,
-      user.email,
-    );
-    const activationUrl = this.buildActivationUrl(
-      user.email,
-      inviteToken.rawToken,
-    );
+        : await this.getCompanyNamesForAssignments(assignmentsOrCompanyNames as { companyId: number }[]);
+    const inviteToken = await this.authService.createWorkspaceInviteToken(user.id, user.email);
+    const activationUrl = this.buildActivationUrl(user.email, inviteToken.rawToken);
 
-    void this.authMailService
-      .sendWorkspaceUserInvitation(
-        user.email,
-        user.name,
-        actor.name,
-        companyNames,
-        activationUrl,
-      )
-      .catch((error: unknown) => {
-        this.logger.warn(
-          `Unable to queue workspace invitation email for user ${user.id}: ${
-            error instanceof Error ? error.message : 'Unknown error'
-          }`,
-        );
-      });
+    void this.authMailService.sendWorkspaceUserInvitation(user.email, user.name, actor.name, companyNames, activationUrl).catch((error: unknown) => {
+      this.logger.warn(`Unable to queue workspace invitation email for user ${user.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    });
   }
 
-  private async getCompanyNamesForAssignments(
-    assignments: { companyId: number }[],
-  ) {
+  private async getCompanyNamesForAssignments(assignments: { companyId: number }[]) {
     const companies = await this.prisma.company.findMany({
       where: { id: { in: assignments.map(({ companyId }) => companyId) } },
       select: { name: true },
@@ -640,9 +550,7 @@ export class WorkspaceUsersService {
 
   private resolveFrontendUrl() {
     const appEnvironment = this.configService.get<string>('APP_ENV', 'local');
-    const configuredUrl = this.configService
-      .get<string>('FRONTEND_URL')
-      ?.trim();
+    const configuredUrl = this.configService.get<string>('FRONTEND_URL')?.trim();
     const corsOrigin = this.getFirstCorsAllowedOrigin();
 
     if (configuredUrl) {
@@ -657,9 +565,7 @@ export class WorkspaceUsersService {
       return 'http://localhost:3001';
     }
 
-    throw new Error(
-      'A frontend origin is required before sending workspace user invitations. Set FRONTEND_URL or CORS_ALLOWED_ORIGINS.',
-    );
+    throw new Error('A frontend origin is required before sending workspace user invitations. Set FRONTEND_URL or CORS_ALLOWED_ORIGINS.');
   }
 
   private getFirstCorsAllowedOrigin() {
@@ -671,9 +577,7 @@ export class WorkspaceUsersService {
   }
 }
 
-function getAccessScope(
-  types: Array<CompanyUnitType | undefined>,
-): AccessScopeLevel {
+function getAccessScope(types: Array<CompanyUnitType | undefined>): AccessScopeLevel {
   if (types.every((type) => type === CompanyUnitType.SATELLITE)) {
     return AccessScopeLevel.SATELLITE;
   }

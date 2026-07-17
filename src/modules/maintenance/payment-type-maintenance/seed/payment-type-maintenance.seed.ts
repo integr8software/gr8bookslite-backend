@@ -1,13 +1,7 @@
-import {
-  PaymentTypeClassification,
-  PaymentTypeStatus,
-  Prisma,
-} from '@prisma/client';
+import { PaymentTypeClassification, PaymentTypeStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 
-type PaymentTypeWriteClient =
-  | Pick<PrismaService, 'paymentType'>
-  | Prisma.TransactionClient;
+type PaymentTypeWriteClient = Pick<PrismaService, 'paymentType'> | Prisma.TransactionClient;
 
 export const PaymentTypeMaintenanceSeedRecords = [
   {
@@ -66,27 +60,18 @@ export const PaymentTypeMaintenanceSeedRecords = [
   },
 ] as const;
 
-export async function seedCompanyPaymentTypeMaintenanceDefaults(
-  tx: PaymentTypeWriteClient,
-  companyId: number,
-) {
+export async function seedCompanyPaymentTypeMaintenanceDefaults(tx: PaymentTypeWriteClient, companyId: number) {
   const existingPaymentTypes = await tx.paymentType.findMany({
     where: {
       companyId,
       name: {
-        in: PaymentTypeMaintenanceSeedRecords.map(
-          (paymentType) => paymentType.name,
-        ),
+        in: PaymentTypeMaintenanceSeedRecords.map((paymentType) => paymentType.name),
       },
     },
     select: { name: true },
   });
-  const existingNames = new Set(
-    existingPaymentTypes.map((paymentType) => paymentType.name),
-  );
-  const missingPaymentTypes = PaymentTypeMaintenanceSeedRecords.filter(
-    (paymentType) => !existingNames.has(paymentType.name),
-  );
+  const existingNames = new Set(existingPaymentTypes.map((paymentType) => paymentType.name));
+  const missingPaymentTypes = PaymentTypeMaintenanceSeedRecords.filter((paymentType) => !existingNames.has(paymentType.name));
 
   if (missingPaymentTypes.length === 0) {
     return 0;

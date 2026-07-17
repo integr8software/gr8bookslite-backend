@@ -1,18 +1,9 @@
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  buildSafeFileName,
-  encodeStoragePath,
-  sanitizeRelativePath,
-  validateStorageEnvironment,
-} from '../storage-path.util';
+import { buildSafeFileName, encodeStoragePath, sanitizeRelativePath, validateStorageEnvironment } from '../storage-path.util';
 import { StorageFolders, type StorageFolder } from '../storage.types';
 
 type UploadedStorageFile = {
@@ -26,12 +17,7 @@ type UploadedStorageFile = {
 export class VpsStorageInternalService {
   constructor(private readonly configService: ConfigService) {}
 
-  async upload(input: {
-    authorization: string | undefined;
-    storageEnv: string;
-    folder: string;
-    file: UploadedStorageFile | undefined;
-  }) {
+  async upload(input: { authorization: string | undefined; storageEnv: string; folder: string; file: UploadedStorageFile | undefined }) {
     this.assertAuthorized(input.authorization);
 
     if (!input.file) {
@@ -40,9 +26,7 @@ export class VpsStorageInternalService {
 
     const storageEnv = validateStorageEnvironment(input.storageEnv);
     const folder = this.validateFolderPath(input.folder);
-    const fileName = `${Date.now()}-${randomUUID()}-${buildSafeFileName(
-      input.file.originalname,
-    )}`;
+    const fileName = `${Date.now()}-${randomUUID()}-${buildSafeFileName(input.file.originalname)}`;
     const relativePath = `${storageEnv}/${folder}/${fileName}`;
     const targetPath = this.resolveInsideRoot(relativePath);
 
@@ -58,10 +42,7 @@ export class VpsStorageInternalService {
     };
   }
 
-  async delete(input: {
-    authorization: string | undefined;
-    relativePath: string;
-  }) {
+  async delete(input: { authorization: string | undefined; relativePath: string }) {
     this.assertAuthorized(input.authorization);
 
     const relativePath = this.validateStoredRelativePath(input.relativePath);
@@ -109,11 +90,7 @@ export class VpsStorageInternalService {
     const targetPath = path.resolve(rootPath, relativePath);
     const relativeToRoot = path.relative(rootPath, targetPath);
 
-    if (
-      relativeToRoot.startsWith('..') ||
-      path.isAbsolute(relativeToRoot) ||
-      relativeToRoot === ''
-    ) {
+    if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot) || relativeToRoot === '') {
       throw new BadRequestException('Invalid storage path.');
     }
 
@@ -121,10 +98,7 @@ export class VpsStorageInternalService {
   }
 
   private getPublicUrl(relativePath: string) {
-    return `${this.requireConfig('VPS_STORAGE_PUBLIC_URL').replace(
-      /\/+$/,
-      '',
-    )}/${encodeStoragePath(relativePath)}`;
+    return `${this.requireConfig('VPS_STORAGE_PUBLIC_URL').replace(/\/+$/, '')}/${encodeStoragePath(relativePath)}`;
   }
 
   private assertAuthorized(authorization: string | undefined) {
@@ -133,10 +107,7 @@ export class VpsStorageInternalService {
     const tokenBuffer = Buffer.from(token);
     const expectedTokenBuffer = Buffer.from(expectedToken);
 
-    if (
-      tokenBuffer.length !== expectedTokenBuffer.length ||
-      !timingSafeEqual(tokenBuffer, expectedTokenBuffer)
-    ) {
+    if (tokenBuffer.length !== expectedTokenBuffer.length || !timingSafeEqual(tokenBuffer, expectedTokenBuffer)) {
       throw new UnauthorizedException('Invalid storage authorization.');
     }
   }

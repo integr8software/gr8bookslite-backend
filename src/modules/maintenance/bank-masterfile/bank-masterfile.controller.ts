@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -30,10 +21,7 @@ export class BankMasterfileController {
 
   @Get()
   @ApiOkResponse({ description: 'Bank accounts retrieved.' })
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Query() query: GetBankAccountListQueryDto,
-  ) {
+  findAll(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
     return this.bankMasterfileService.findAll(user, query);
   }
 
@@ -56,30 +44,19 @@ export class BankMasterfileController {
   }
   @Post('import')
   @ApiCreatedResponse({ description: 'Bank accounts imported.' })
-  importBankAccounts(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: ImportBankAccountsDto,
-  ) {
+  importBankAccounts(@CurrentUser() user: AuthUser, @Body() dto: ImportBankAccountsDto) {
     return this.bankMasterfileService.importBankAccounts(user, dto);
   }
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Bank account updated.' })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateBankAccountDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateBankAccountDto) {
     return this.bankMasterfileService.update(user, id, dto);
   }
 
   @Patch(':id/status')
   @ApiOkResponse({ description: 'Bank account status updated.' })
-  updateStatus(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateBankAccountStatusDto,
-  ) {
+  updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateBankAccountStatusDto) {
     return this.bankMasterfileService.updateStatus(user, id, dto);
   }
 }

@@ -1,17 +1,6 @@
-import {
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import {
-  DiscountStatus,
-  DiscountType,
-  DiscountValueType,
-} from '@prisma/client';
+import { DiscountStatus, DiscountType, DiscountValueType } from '@prisma/client';
 
 export class CreateDiscountDto {
   @IsString()

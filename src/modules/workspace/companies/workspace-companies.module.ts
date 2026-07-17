@@ -11,15 +11,7 @@ import { WorkspaceCompaniesController } from './workspace-companies.controller';
 import { WorkspaceCompaniesService } from './workspace-companies.service';
 
 @Module({
-  imports: [
-    PrismaModule,
-    AccessControlModule,
-    AuthModule,
-    BillingModule,
-    StorageModule,
-    WorkspaceAuditLogsModule,
-    WorkspaceUsersModule,
-  ],
+  imports: [PrismaModule, AccessControlModule, AuthModule, BillingModule, StorageModule, WorkspaceAuditLogsModule, WorkspaceUsersModule],
   controllers: [WorkspaceCompaniesController],
   providers: [WorkspaceCompaniesService, WorkspaceCompanyLogoStorageService],
   exports: [WorkspaceCompaniesService],

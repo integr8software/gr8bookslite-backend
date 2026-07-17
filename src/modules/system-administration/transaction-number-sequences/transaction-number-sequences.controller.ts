@@ -1,21 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import {
-  SaveTransactionNumberSequenceResponseDto,
-  TransactionNumberSequenceBootstrapResponseDto,
-} from './dto/transaction-number-sequence-response.dto';
+import { SaveTransactionNumberSequenceResponseDto, TransactionNumberSequenceBootstrapResponseDto } from './dto/transaction-number-sequence-response.dto';
 import { UpdateTransactionNumberSequenceDto } from './dto/update-transaction-number-sequence.dto';
 import { TransactionNumberSequencesService } from './transaction-number-sequences.service';
 
@@ -26,9 +15,7 @@ import { TransactionNumberSequencesService } from './transaction-number-sequence
   version: '1',
 })
 export class TransactionNumberSequencesController {
-  constructor(
-    private readonly transactionNumberSequencesService: TransactionNumberSequencesService,
-  ) {}
+  constructor(private readonly transactionNumberSequencesService: TransactionNumberSequencesService) {}
 
   @Get('bootstrap')
   @Throttle({
@@ -50,11 +37,7 @@ export class TransactionNumberSequencesController {
     },
   })
   @ApiOkResponse({ type: SaveTransactionNumberSequenceResponseDto })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('moduleId', ParseIntPipe) moduleId: number,
-    @Body() dto: UpdateTransactionNumberSequenceDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('moduleId', ParseIntPipe) moduleId: number, @Body() dto: UpdateTransactionNumberSequenceDto) {
     return this.transactionNumberSequencesService.update(user, moduleId, dto);
   }
 }

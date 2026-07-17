@@ -1,11 +1,6 @@
 export const StorageProviders = ['vps', 'supabase'] as const;
 export const StorageEnvironments = ['local', 'shared-dev', 'staging'] as const;
-export const StorageFolders = [
-  'company-logos',
-  'avatars',
-  'attachments',
-  'exports',
-] as const;
+export const StorageFolders = ['company-logos', 'avatars', 'attachments', 'exports'] as const;
 
 export type StorageProviderName = (typeof StorageProviders)[number];
 export type StorageEnvironment = (typeof StorageEnvironments)[number];
@@ -30,11 +25,6 @@ export type StorageUploadResult = {
 export interface StorageProvider {
   uploadFile(input: StorageUploadInput): Promise<StorageUploadResult>;
   deleteFile(relativePath: string | null | undefined): Promise<void>;
-  moveFile(params: {
-    sourcePath: string;
-    destinationPath: string;
-  }): Promise<
-    Pick<StorageUploadResult, 'relativePath' | 'storagePath' | 'publicUrl'>
-  >;
+  moveFile(params: { sourcePath: string; destinationPath: string }): Promise<Pick<StorageUploadResult, 'relativePath' | 'storagePath' | 'publicUrl'>>;
   getPublicUrl(relativePath: string): string;
 }

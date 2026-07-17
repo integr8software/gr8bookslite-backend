@@ -1,22 +1,6 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-  ResponsibilityCenterCategory,
-  ResponsibilityCenterFinancialType,
-  ResponsibilityCenterStatus,
-} from '@prisma/client';
-import {
-  DefaultLimit,
-  DefaultPage,
-} from '../../../common/constants/pagination.constant';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { MembershipRole, MembershipStatus, Prisma, ResponsibilityCenterCategory, ResponsibilityCenterStatus } from '@prisma/client';
+import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -47,11 +31,10 @@ export class ResponsibilityCenterService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
-    const classifications =
-      await this.prisma.responsibilityCenterClassification.findMany({
-        where: { status: ResponsibilityCenterStatus.ACTIVE },
-        orderBy: { id: 'asc' },
-      });
+    const classifications = await this.prisma.responsibilityCenterClassification.findMany({
+      where: { status: ResponsibilityCenterStatus.ACTIVE },
+      orderBy: { id: 'asc' },
+    });
 
     return {
       classifications: classifications.map((classification) => ({
@@ -70,23 +53,15 @@ export class ResponsibilityCenterService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
-    const parsedClassificationId = classificationId
-      ? parsePositiveBigIntId(classificationId, 'classificationId')
-      : undefined;
+    const parsedClassificationId = classificationId ? parsePositiveBigIntId(classificationId, 'classificationId') : undefined;
     const types = await this.prisma.responsibilityCenterType.findMany({
       where: {
         status: ResponsibilityCenterStatus.ACTIVE,
-        ...(parsedClassificationId
-          ? { classificationId: parsedClassificationId }
-          : {}),
+        ...(parsedClassificationId ? { classificationId: parsedClassificationId } : {}),
         classification: { status: ResponsibilityCenterStatus.ACTIVE },
       },
       include: { classification: true },
-      orderBy: [
-        { classificationId: 'asc' },
-        { sortOrder: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: [{ classificationId: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
     });
 
     return {
@@ -99,13 +74,9 @@ export class ResponsibilityCenterService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
-    const type = await this.findActiveTypeOrThrow(
-      parsePositiveBigIntId(typeId, 'typeId'),
-    );
+    const type = await this.findActiveTypeOrThrow(parsePositiveBigIntId(typeId, 'typeId'));
 
-    const code = await this.prisma.$transaction((tx) =>
-      this.generateNextCode(tx, companyId, type),
-    );
+    const code = await this.prisma.$transaction((tx) => this.generateNextCode(tx, companyId, type));
 
     return { code };
   }
@@ -170,10 +141,7 @@ export class ResponsibilityCenterService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
-    const center = await this.findCenterOrThrow(
-      companyId,
-      parsePositiveBigIntId(id),
-    );
+    const center = await this.findCenterOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       center: (await this.mapCentersWithAuditUsers([center]))[0],
@@ -187,16 +155,12 @@ export class ResponsibilityCenterService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     this.ensureRequiredText(dto.name, 'Name');
     await this.ensureNameAvailable(companyId, dto.name);
-    const type = await this.resolveTypeForWrite(companyId, dto, true);
-    const parentId = dto.parentId
-      ? await this.resolveParentId(companyId, dto.parentId)
-      : null;
+    const type = await this.resolveTypeForWrite(dto, true);
+    const parentId = dto.parentId ? await this.resolveParentId(companyId, dto.parentId) : null;
 
     try {
       const center = await this.prisma.$transaction(async (tx) => {
-        const code = dto.code?.trim()
-          ? dto.code.trim().toUpperCase()
-          : await this.generateNextCode(tx, companyId, type);
+        const code = dto.code?.trim() ? dto.code.trim().toUpperCase() : await this.generateNextCode(tx, companyId, type);
 
         await this.ensureCodeAvailable(companyId, code, undefined, tx);
 
@@ -207,9 +171,7 @@ export class ResponsibilityCenterService {
             code,
             name: dto.name.trim(),
             category: this.categoryFromTypeName(type.name),
-            financialType: this.financialTypeFromClassificationCode(
-              type.classification.code,
-            ),
+            financialType: this.financialTypeFromClassificationCode(type.classification.code),
             manager: dto.manager?.trim() || null,
             parentId,
             status: dto.status ?? ResponsibilityCenterStatus.ACTIVE,
@@ -237,10 +199,7 @@ export class ResponsibilityCenterService {
 
     const centerId = parsePositiveBigIntId(id);
     const existingCenter = await this.findCenterOrThrow(companyId, centerId);
-    const type =
-      dto.typeId || dto.category || dto.financialType || dto.classificationId
-        ? await this.resolveTypeForWrite(companyId, dto, true)
-        : existingCenter.type;
+    const type = dto.typeId || dto.category || dto.financialType || dto.classificationId ? await this.resolveTypeForWrite(dto, true) : existingCenter.type;
 
     if (dto.code !== undefined) {
       this.ensureRequiredText(dto.code, 'Code');
@@ -252,18 +211,11 @@ export class ResponsibilityCenterService {
       await this.ensureNameAvailable(companyId, dto.name, centerId);
     }
 
-    const parentId =
-      dto.parentId === undefined
-        ? undefined
-        : dto.parentId
-          ? await this.resolveParentId(companyId, dto.parentId)
-          : null;
+    const parentId = dto.parentId === undefined ? undefined : dto.parentId ? await this.resolveParentId(companyId, dto.parentId) : null;
 
     if (parentId !== undefined) {
       if (parentId === centerId) {
-        throw new BadRequestException(
-          'A responsibility center cannot be its own parent.',
-        );
+        throw new BadRequestException('A responsibility center cannot be its own parent.');
       }
 
       await this.ensureNoHierarchyCycle(companyId, centerId, parentId);
@@ -273,27 +225,19 @@ export class ResponsibilityCenterService {
       const center = await this.prisma.responsibilityCenter.update({
         where: { id: centerId },
         data: {
-          ...(dto.code !== undefined
-            ? { code: dto.code.trim().toUpperCase() }
-            : {}),
+          ...(dto.code !== undefined ? { code: dto.code.trim().toUpperCase() } : {}),
           ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
           ...(type.id !== existingCenter.typeId
             ? {
                 typeId: type.id,
                 category: this.categoryFromTypeName(type.name),
-                financialType: this.financialTypeFromClassificationCode(
-                  type.classification.code,
-                ),
+                financialType: this.financialTypeFromClassificationCode(type.classification.code),
               }
             : {}),
-          ...(dto.manager !== undefined
-            ? { manager: dto.manager.trim() || null }
-            : {}),
+          ...(dto.manager !== undefined ? { manager: dto.manager.trim() || null } : {}),
           ...(parentId !== undefined ? { parentId } : {}),
           ...(dto.status !== undefined ? { status: dto.status } : {}),
-          ...(dto.description !== undefined
-            ? { description: dto.description.trim() || '' }
-            : {}),
+          ...(dto.description !== undefined ? { description: dto.description.trim() || '' } : {}),
           updatedByUserId: user.id,
         },
         include: ResponsibilityCenterInclude,
@@ -309,11 +253,7 @@ export class ResponsibilityCenterService {
     }
   }
 
-  async updateStatus(
-    user: AuthUser,
-    id: string,
-    dto: UpdateResponsibilityCenterStatusDto,
-  ) {
+  async updateStatus(user: AuthUser, id: string, dto: UpdateResponsibilityCenterStatusDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
@@ -322,15 +262,8 @@ export class ResponsibilityCenterService {
     const existingCenter = await this.findCenterOrThrow(companyId, centerId);
 
     const center = await this.prisma.$transaction(async (tx) => {
-      const descendantIds = await this.collectDescendantIds(
-        tx,
-        companyId,
-        centerId,
-      );
-      const ancestorIds =
-        dto.status === ResponsibilityCenterStatus.ACTIVE
-          ? await this.collectAncestorIds(tx, companyId, existingCenter.parentId)
-          : [];
+      const descendantIds = await this.collectDescendantIds(tx, companyId, centerId);
+      const ancestorIds = dto.status === ResponsibilityCenterStatus.ACTIVE ? await this.collectAncestorIds(tx, companyId, existingCenter.parentId) : [];
       const idsToUpdate = [...ancestorIds, ...descendantIds];
 
       await tx.responsibilityCenter.updateMany({
@@ -357,10 +290,7 @@ export class ResponsibilityCenterService {
     };
   }
 
-  private buildListWhere(
-    companyId: number,
-    query: GetResponsibilityCenterListQueryDto,
-  ): Prisma.ResponsibilityCenterWhereInput {
+  private buildListWhere(companyId: number, query: GetResponsibilityCenterListQueryDto): Prisma.ResponsibilityCenterWhereInput {
     const search = query.search?.trim();
 
     return {
@@ -369,16 +299,11 @@ export class ResponsibilityCenterService {
       ...(query.status ? { status: query.status } : {}),
       ...(query.category ? { category: query.category } : {}),
       ...(query.financialType ? { financialType: query.financialType } : {}),
-      ...(query.typeId
-        ? { typeId: parsePositiveBigIntId(query.typeId, 'typeId') }
-        : {}),
+      ...(query.typeId ? { typeId: parsePositiveBigIntId(query.typeId, 'typeId') } : {}),
       ...(query.classificationId
         ? {
             type: {
-              classificationId: parsePositiveBigIntId(
-                query.classificationId,
-                'classificationId',
-              ),
+              classificationId: parsePositiveBigIntId(query.classificationId, 'classificationId'),
             },
           }
         : {}),
@@ -396,9 +321,7 @@ export class ResponsibilityCenterService {
     };
   }
 
-  private buildOrderBy(
-    query: GetResponsibilityCenterListQueryDto,
-  ): Prisma.ResponsibilityCenterOrderByWithRelationInput[] {
+  private buildOrderBy(query: GetResponsibilityCenterListQueryDto): Prisma.ResponsibilityCenterOrderByWithRelationInput[] {
     const sortBy = query.sortBy ?? 'code';
     const sortDirection = query.sortDirection ?? 'asc';
 
@@ -426,12 +349,9 @@ export class ResponsibilityCenterService {
           const count = group._count._all;
 
           statistics.totalCenters += count;
-          if (group.status === ResponsibilityCenterStatus.ACTIVE)
-            statistics.activeCenters += count;
-          if (group.status === ResponsibilityCenterStatus.INACTIVE)
-            statistics.inactiveCenters += count;
-          if (group.category === 'DEPARTMENT')
-            statistics.departmentCenters += count;
+          if (group.status === ResponsibilityCenterStatus.ACTIVE) statistics.activeCenters += count;
+          if (group.status === ResponsibilityCenterStatus.INACTIVE) statistics.inactiveCenters += count;
+          if (group.category === 'DEPARTMENT') statistics.departmentCenters += count;
           if (group.category === 'BRANCH') statistics.branchCenters += count;
           if (group.category === 'PROJECT') statistics.projectCenters += count;
         }
@@ -440,23 +360,16 @@ export class ResponsibilityCenterService {
       });
   }
 
-  private async mapCentersWithAuditUsers(
-    centers: ResponsibilityCenterWithRelations[],
-  ) {
+  private async mapCentersWithAuditUsers(centers: ResponsibilityCenterWithRelations[]) {
     const userNames = await resolveAuditUserNames(
       this.prisma,
-      centers.flatMap((center) => [
-        center.createdByUserId,
-        center.updatedByUserId,
-      ]),
+      centers.flatMap((center) => [center.createdByUserId, center.updatedByUserId]),
     );
 
     return centers.map((center) => mapResponsibilityCenter(center, userNames));
   }
 
-  private buildTree<TCenter extends { id: string; parentId: string | null }>(
-    centers: TCenter[],
-  ) {
+  private buildTree<TCenter extends { id: string; parentId: string | null }>(centers: TCenter[]) {
     const nodeById = new Map<string, TCenter & { children: TCenter[] }>();
 
     centers.forEach((center) => {
@@ -496,30 +409,19 @@ export class ResponsibilityCenterService {
     const parent = await this.findCenterOrThrow(companyId, parsedParentId);
 
     if (parent.status !== ResponsibilityCenterStatus.ACTIVE) {
-      throw new BadRequestException(
-        'Parent responsibility center is inactive.',
-      );
+      throw new BadRequestException('Parent responsibility center is inactive.');
     }
 
     return parsedParentId;
   }
 
-  private async ensureNoHierarchyCycle(
-    companyId: number,
-    centerId: bigint,
-    parentId: bigint | null,
-  ) {
+  private async ensureNoHierarchyCycle(companyId: number, centerId: bigint, parentId: bigint | null) {
     let nextParentId = parentId;
     const visitedIds = new Set<string>();
 
     while (nextParentId) {
-      if (
-        nextParentId === centerId ||
-        visitedIds.has(nextParentId.toString())
-      ) {
-        throw new BadRequestException(
-          'Parent center creates a circular hierarchy.',
-        );
+      if (nextParentId === centerId || visitedIds.has(nextParentId.toString())) {
+        throw new BadRequestException('Parent center creates a circular hierarchy.');
       }
 
       visitedIds.add(nextParentId.toString());
@@ -536,9 +438,7 @@ export class ResponsibilityCenterService {
     companyId: number,
     code: string,
     excludedCenterId?: bigint,
-    client:
-      | Pick<PrismaService, 'responsibilityCenter'>
-      | Prisma.TransactionClient = this.prisma,
+    client: Pick<PrismaService, 'responsibilityCenter'> | Prisma.TransactionClient = this.prisma,
   ) {
     const normalizedCode = code.trim().toUpperCase();
     const existingCenter = await client.responsibilityCenter.findFirst({
@@ -552,17 +452,11 @@ export class ResponsibilityCenterService {
     });
 
     if (existingCenter) {
-      throw new ConflictException(
-        'A responsibility center with this code already exists.',
-      );
+      throw new ConflictException('A responsibility center with this code already exists.');
     }
   }
 
-  private async ensureNameAvailable(
-    companyId: number,
-    name: string,
-    excludedCenterId?: bigint,
-  ) {
+  private async ensureNameAvailable(companyId: number, name: string, excludedCenterId?: bigint) {
     const normalizedName = name.trim();
     const existingCenter = await this.prisma.responsibilityCenter.findFirst({
       where: {
@@ -575,9 +469,7 @@ export class ResponsibilityCenterService {
     });
 
     if (existingCenter) {
-      throw new ConflictException(
-        'A responsibility center with this name already exists.',
-      );
+      throw new ConflictException('A responsibility center with this name already exists.');
     }
   }
 
@@ -610,27 +502,16 @@ export class ResponsibilityCenterService {
     }
   }
 
-  private ensureCan(
-    user: AuthUser,
-    companyId: number,
-    action: PermissionAction,
-  ) {
+  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {
       return;
     }
 
-    if (
-      user.companyId === companyId &&
-      user.permissions.includes(
-        `${ResponsibilityCenterPermissionModuleCode}:${action}`,
-      )
-    ) {
+    if (user.companyId === companyId && user.permissions.includes(`${ResponsibilityCenterPermissionModuleCode}:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException(
-      'You do not have permission to manage responsibility centers.',
-    );
+    throw new ForbiddenException('You do not have permission to manage responsibility centers.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -647,12 +528,7 @@ export class ResponsibilityCenterService {
       return true;
     }
 
-    return (
-      user.companyId === companyId &&
-      user.permissions.includes(
-        `${ResponsibilityCenterPermissionModuleCode}:${action}`,
-      )
-    );
+    return user.companyId === companyId && user.permissions.includes(`${ResponsibilityCenterPermissionModuleCode}:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -663,35 +539,22 @@ export class ResponsibilityCenterService {
     return (
       user.companyId === companyId &&
       user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN ||
-        user.membershipRole === MembershipRole.ADMIN)
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
     );
   }
 
   private throwFriendlyPrismaError(error: unknown) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
-      throw new ConflictException(
-        'A responsibility center with this code or name already exists.',
-      );
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ConflictException('A responsibility center with this code or name already exists.');
     }
   }
 
   private async resolveTypeForWrite(
-    companyId: number,
-    dto: Pick<
-      CreateResponsibilityCenterDto,
-      'typeId' | 'classificationId' | 'category' | 'financialType'
-    >,
+    dto: Pick<CreateResponsibilityCenterDto, 'typeId' | 'classificationId' | 'category' | 'financialType'>,
     requireActive: boolean,
   ) {
     if (dto.typeId) {
-      const type = await this.findTypeOrThrow(
-        parsePositiveBigIntId(dto.typeId, 'typeId'),
-        requireActive,
-      );
+      const type = await this.findTypeOrThrow(parsePositiveBigIntId(dto.typeId, 'typeId'), requireActive);
       this.ensureTypeMatchesClassification(type, dto.classificationId);
       return type;
     }
@@ -700,14 +563,10 @@ export class ResponsibilityCenterService {
       throw new BadRequestException('Classification and type are required.');
     }
 
-    const classificationDefault = getClassificationDefaultByFinancialType(
-      dto.financialType,
-    );
+    const classificationDefault = getClassificationDefaultByFinancialType(dto.financialType);
 
     if (!classificationDefault) {
-      throw new BadRequestException(
-        'Invalid responsibility center classification.',
-      );
+      throw new BadRequestException('Invalid responsibility center classification.');
     }
 
     const typeName = ResponsibilityCenterTypeNameByCategory[dto.category];
@@ -717,18 +576,14 @@ export class ResponsibilityCenterService {
         ...(requireActive ? { status: ResponsibilityCenterStatus.ACTIVE } : {}),
         classification: {
           code: classificationDefault.code,
-          ...(requireActive
-            ? { status: ResponsibilityCenterStatus.ACTIVE }
-            : {}),
+          ...(requireActive ? { status: ResponsibilityCenterStatus.ACTIVE } : {}),
         },
       },
       include: { classification: true },
     });
 
     if (!type) {
-      throw new BadRequestException(
-        'Selected responsibility center type is not available.',
-      );
+      throw new BadRequestException('Selected responsibility center type is not available.');
     }
 
     return type;
@@ -738,47 +593,32 @@ export class ResponsibilityCenterService {
     return this.findTypeOrThrow(typeId, true);
   }
 
-  private async findTypeOrThrow(
-    typeId: bigint,
-    requireActive: boolean,
-  ) {
+  private async findTypeOrThrow(typeId: bigint, requireActive: boolean) {
     const type = await this.prisma.responsibilityCenterType.findFirst({
       where: {
         id: typeId,
         ...(requireActive ? { status: ResponsibilityCenterStatus.ACTIVE } : {}),
         classification: {
-          ...(requireActive
-            ? { status: ResponsibilityCenterStatus.ACTIVE }
-            : {}),
+          ...(requireActive ? { status: ResponsibilityCenterStatus.ACTIVE } : {}),
         },
       },
       include: { classification: true },
     });
 
     if (!type) {
-      throw new BadRequestException(
-        'Selected responsibility center type is not available.',
-      );
+      throw new BadRequestException('Selected responsibility center type is not available.');
     }
 
     return type;
   }
 
-  private ensureTypeMatchesClassification(
-    type: { classificationId: bigint },
-    classificationId?: string,
-  ) {
+  private ensureTypeMatchesClassification(type: { classificationId: bigint }, classificationId?: string) {
     if (!classificationId) return;
 
-    const parsedClassificationId = parsePositiveBigIntId(
-      classificationId,
-      'classificationId',
-    );
+    const parsedClassificationId = parsePositiveBigIntId(classificationId, 'classificationId');
 
     if (type.classificationId !== parsedClassificationId) {
-      throw new BadRequestException(
-        'Selected type does not belong to the selected classification.',
-      );
+      throw new BadRequestException('Selected type does not belong to the selected classification.');
     }
   }
 
@@ -786,23 +626,17 @@ export class ResponsibilityCenterService {
     const matched = getFinancialTypeByClassificationCode(code);
 
     if (!matched) {
-      throw new BadRequestException(
-        'Selected responsibility center classification is invalid.',
-      );
+      throw new BadRequestException('Selected responsibility center classification is invalid.');
     }
 
     return matched;
   }
 
   private categoryFromTypeName(name: string) {
-    const matched = Object.entries(ResponsibilityCenterTypeNameByCategory).find(
-      ([, typeName]) => typeName === name,
-    );
+    const matched = Object.entries(ResponsibilityCenterTypeNameByCategory).find(([, typeName]) => typeName === name);
 
     if (!matched) {
-      throw new BadRequestException(
-        'Custom responsibility center types are not supported until type maintenance is enabled.',
-      );
+      throw new BadRequestException('Custom responsibility center types are not supported until type maintenance is enabled.');
     }
 
     return matched[0] as ResponsibilityCenterCategory;
@@ -843,11 +677,7 @@ export class ResponsibilityCenterService {
     return `${prefix}-${String(latestSequence + 1).padStart(3, '0')}`;
   }
 
-  private async collectDescendantIds(
-    tx: Prisma.TransactionClient,
-    companyId: number,
-    rootId: bigint,
-  ) {
+  private async collectDescendantIds(tx: Prisma.TransactionClient, companyId: number, rootId: bigint) {
     const ids = [rootId];
     const queue = [rootId];
 
@@ -871,11 +701,7 @@ export class ResponsibilityCenterService {
     return ids;
   }
 
-  private async collectAncestorIds(
-    tx: Prisma.TransactionClient,
-    companyId: number,
-    parentId: bigint | null,
-  ) {
+  private async collectAncestorIds(tx: Prisma.TransactionClient, companyId: number, parentId: bigint | null) {
     const ids: bigint[] = [];
     let currentParentId = parentId;
 
@@ -890,9 +716,7 @@ export class ResponsibilityCenterService {
       });
 
       if (!parent) {
-        throw new BadRequestException(
-          'Cannot activate a responsibility center because its parent no longer exists.',
-        );
+        throw new BadRequestException('Cannot activate a responsibility center because its parent no longer exists.');
       }
 
       ids.unshift(parent.id);

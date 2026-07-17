@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -27,12 +17,7 @@ export class UserSidebarController {
     @Query('branchUnitId', ParseIntPipe) branchUnitId: number,
     @Query('userId') userId?: string,
   ) {
-    return this.userSidebar.getCustomization(
-      user,
-      companyId,
-      branchUnitId,
-      userId ? Number(userId) : user.id,
-    );
+    return this.userSidebar.getCustomization(user, companyId, branchUnitId, userId ? Number(userId) : user.id);
   }
 
   @Put('customization')
@@ -43,13 +28,7 @@ export class UserSidebarController {
     @Query('userId') userId: string | undefined,
     @Body() dto: SaveUserSidebarDto,
   ) {
-    return this.userSidebar.save(
-      user,
-      companyId,
-      branchUnitId,
-      userId ? Number(userId) : user.id,
-      dto,
-    );
+    return this.userSidebar.save(user, companyId, branchUnitId, userId ? Number(userId) : user.id, dto);
   }
 
   @Post('reset')
@@ -60,12 +39,6 @@ export class UserSidebarController {
     @Query('userId') userId?: string,
     @Query('applyScope') applyScope?: 'CURRENT_BRANCH' | 'ALL_BRANCHES',
   ) {
-    return this.userSidebar.reset(
-      user,
-      companyId,
-      branchUnitId,
-      userId ? Number(userId) : user.id,
-      applyScope,
-    );
+    return this.userSidebar.reset(user, companyId, branchUnitId, userId ? Number(userId) : user.id, applyScope);
   }
 }

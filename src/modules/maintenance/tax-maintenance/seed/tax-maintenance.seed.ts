@@ -1,9 +1,6 @@
-import {
-  ChartAccountStatus,
-  Prisma,
-  TaxMaintenanceStatus,
-} from '@prisma/client';
+import { ChartAccountStatus, ChartAccountType, Prisma, TaxMaintenanceStatus } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
+import { getTaxMaintenanceDefaultAccountIds } from '../utils/tax-maintenance-accounting-account.util';
 
 const DefaultTaxMaintenanceRows = [
   { name: 'VAT Registered', percentage: 12 },
@@ -15,25 +12,12 @@ const DefaultTaxMaintenanceRows = [
   { name: 'Services', percentage: 12 },
 ] as const;
 
-const DefaultTaxMaintenanceAccountTitles = {
-  inputVatAccountId: 'Input Tax',
-  outputVatAccountId: 'Output Tax',
-  vatPayableAccountId: 'VAT Payable',
-  deferredInputTaxAccountId: 'Deferred Input Tax',
-  deferredOutputVatAccountId: 'Deferred Output VAT',
-} as const;
-
-type TaxMaintenanceWriteClient =
-  | Pick<PrismaService, 'chartAccount' | 'taxMaintenance'>
-  | Prisma.TransactionClient;
+type TaxMaintenanceWriteClient = Pick<PrismaService, 'chartAccount' | 'taxMaintenance'> | Prisma.TransactionClient;
 
 export const TaxMaintenanceSeedRecords = DefaultTaxMaintenanceRows;
 
-export async function seedCompanyTaxMaintenanceDefaults(
-  tx: TaxMaintenanceWriteClient,
-  companyId: number,
-) {
-  const accountIds = await getDefaultAccountIds(tx, companyId);
+export async function seedCompanyTaxMaintenanceDefaults(tx: TaxMaintenanceWriteClient, companyId: number) {
+  const accountIds = await getCompanyTaxMaintenanceDefaultAccountIds(tx, companyId);
 
   const results = await Promise.all(
     TaxMaintenanceSeedRecords.map((row) =>
@@ -57,6 +41,7 @@ export async function seedCompanyTaxMaintenanceDefaults(
           createdByUserId: null,
           ...accountIds,
         },
+        select: { id: true },
       }),
     ),
   );
@@ -64,40 +49,16 @@ export async function seedCompanyTaxMaintenanceDefaults(
   return results.length;
 }
 
-async function getDefaultAccountIds(
-  tx: TaxMaintenanceWriteClient,
-  companyId: number,
-) {
-  const titles = Object.values(DefaultTaxMaintenanceAccountTitles);
+export async function getCompanyTaxMaintenanceDefaultAccountIds(tx: TaxMaintenanceWriteClient, companyId: number) {
   const accounts = await tx.chartAccount.findMany({
     where: {
       companyId,
       deletedAt: null,
+      accountType: ChartAccountType.LIABILITY,
       isPostingAccount: true,
       status: ChartAccountStatus.ACTIVE,
-      accountTitle: { in: titles },
     },
-    select: { id: true, accountTitle: true },
   });
-  const idByTitle = new Map(
-    accounts.map((account) => [account.accountTitle, account.id]),
-  );
 
-  return {
-    inputVatAccountId: idByTitle.get(
-      DefaultTaxMaintenanceAccountTitles.inputVatAccountId,
-    ),
-    outputVatAccountId: idByTitle.get(
-      DefaultTaxMaintenanceAccountTitles.outputVatAccountId,
-    ),
-    vatPayableAccountId: idByTitle.get(
-      DefaultTaxMaintenanceAccountTitles.vatPayableAccountId,
-    ),
-    deferredInputTaxAccountId: idByTitle.get(
-      DefaultTaxMaintenanceAccountTitles.deferredInputTaxAccountId,
-    ),
-    deferredOutputVatAccountId: idByTitle.get(
-      DefaultTaxMaintenanceAccountTitles.deferredOutputVatAccountId,
-    ),
-  };
+  return getTaxMaintenanceDefaultAccountIds(accounts);
 }

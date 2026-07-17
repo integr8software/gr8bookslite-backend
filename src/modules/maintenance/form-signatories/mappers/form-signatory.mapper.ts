@@ -30,8 +30,7 @@ export function mapFormSignatorySetup(setup: FormSignatorySetupPayload) {
         position: row.position,
         signatureName: row.signatureName,
         signatureImage: row.signatureImage,
-        signatureValidUntil:
-          rowWithValidity.signatureValidUntil?.toISOString() ?? null,
+        signatureValidUntil: rowWithValidity.signatureValidUntil?.toISOString() ?? null,
         isThisTemporary: rowWithValidity.isThisTemporary ?? null,
       };
     }),

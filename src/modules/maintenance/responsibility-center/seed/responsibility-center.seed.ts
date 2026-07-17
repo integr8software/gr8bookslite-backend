@@ -1,9 +1,4 @@
-import {
-  Prisma,
-  ResponsibilityCenterCategory,
-  ResponsibilityCenterFinancialType,
-  ResponsibilityCenterStatus,
-} from '@prisma/client';
+import { Prisma, ResponsibilityCenterCategory, ResponsibilityCenterFinancialType, ResponsibilityCenterStatus } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import {
   getClassificationDefaultByFinancialType,
@@ -13,12 +8,7 @@ import {
 } from '../utils/responsibility-center-defaults.util';
 
 type ResponsibilityCenterWriteClient =
-  | Pick<
-      PrismaService,
-      | 'responsibilityCenter'
-      | 'responsibilityCenterClassification'
-      | 'responsibilityCenterType'
-    >
+  | Pick<PrismaService, 'responsibilityCenter' | 'responsibilityCenterClassification' | 'responsibilityCenterType'>
   | Prisma.TransactionClient;
 
 export const ResponsibilityCenterSeedRecords = [
@@ -56,8 +46,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.PROFIT_CENTER,
     manager: 'Sales Manager',
     parentCode: 'CORP',
-    description:
-      'Revenue, gross margin, discounts, and sales campaign ownership.',
+    description: 'Revenue, gross margin, discounts, and sales campaign ownership.',
   },
   {
     code: 'MAIN-BR',
@@ -66,8 +55,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.PROFIT_CENTER,
     manager: 'Branch Manager',
     parentCode: 'CORP',
-    description:
-      'Primary branch for sales, cash collection, and local expenses.',
+    description: 'Primary branch for sales, cash collection, and local expenses.',
   },
   {
     code: 'MAIN-WHSE',
@@ -76,8 +64,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.COST_CENTER,
     manager: 'Warehouse Supervisor',
     parentCode: 'OPS',
-    description:
-      'Receiving, storage, inventory handling, and warehouse expenses.',
+    description: 'Receiving, storage, inventory handling, and warehouse expenses.',
   },
   {
     code: 'PROC',
@@ -86,8 +73,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.COST_CENTER,
     manager: 'Procurement Lead',
     parentCode: 'OPS',
-    description:
-      'Supplier sourcing, purchase processing, and landed cost support.',
+    description: 'Supplier sourcing, purchase processing, and landed cost support.',
   },
   {
     code: 'ONLINE',
@@ -114,8 +100,7 @@ export const ResponsibilityCenterSeedRecords = [
     financialType: ResponsibilityCenterFinancialType.COST_CENTER,
     manager: 'Project Coordinator',
     parentCode: 'OPS',
-    description:
-      'Customer onboarding, branch setup, and one-time project costs.',
+    description: 'Customer onboarding, branch setup, and one-time project costs.',
   },
   {
     code: 'HR',
@@ -137,10 +122,7 @@ export const ResponsibilityCenterSeedRecords = [
   },
 ] as const;
 
-export async function seedCompanyResponsibilityCenterDefaults(
-  tx: ResponsibilityCenterWriteClient,
-  companyId: number,
-) {
+export async function seedCompanyResponsibilityCenterDefaults(tx: ResponsibilityCenterWriteClient, companyId: number) {
   const typeIdByRecordKey = await seedResponsibilityCenterTypes(tx);
   const existingCenters = await tx.responsibilityCenter.findMany({
     where: {
@@ -152,9 +134,7 @@ export async function seedCompanyResponsibilityCenterDefaults(
     },
     select: { id: true, code: true },
   });
-  const centerIdByCode = new Map(
-    existingCenters.map((center) => [center.code, center.id]),
-  );
+  const centerIdByCode = new Map(existingCenters.map((center) => [center.code, center.id]));
 
   if (centerIdByCode.size === ResponsibilityCenterSeedRecords.length) {
     return 0;
@@ -167,9 +147,7 @@ export async function seedCompanyResponsibilityCenterDefaults(
       continue;
     }
 
-    const parentId = record.parentCode
-      ? (centerIdByCode.get(record.parentCode) ?? null)
-      : null;
+    const parentId = record.parentCode ? (centerIdByCode.get(record.parentCode) ?? null) : null;
     const typeId = typeIdByRecordKey.get(createTypeRecordKey(record));
 
     if (!typeId) {
@@ -200,66 +178,48 @@ export async function seedCompanyResponsibilityCenterDefaults(
   return createdCount;
 }
 
-async function seedResponsibilityCenterTypes(
-  tx: ResponsibilityCenterWriteClient,
-) {
-  const classificationIdByFinancialType = new Map<
-    ResponsibilityCenterFinancialType,
-    bigint
-  >();
+async function seedResponsibilityCenterTypes(tx: ResponsibilityCenterWriteClient) {
+  const classificationIdByFinancialType = new Map<ResponsibilityCenterFinancialType, bigint>();
 
   for (const classification of ResponsibilityCenterClassificationDefaults) {
-    const savedClassification =
-      await tx.responsibilityCenterClassification.upsert({
-        where: { code: classification.code },
-        update: {
-          name: classification.name,
-          trackingBehavior: classification.trackingBehavior,
-          isSystem: true,
-          status: ResponsibilityCenterStatus.ACTIVE,
-        },
-        create: {
-          code: classification.code,
-          name: classification.name,
-          trackingBehavior: classification.trackingBehavior,
-          isSystem: true,
-          status: ResponsibilityCenterStatus.ACTIVE,
-        },
-        select: { id: true },
-      });
+    const savedClassification = await tx.responsibilityCenterClassification.upsert({
+      where: { code: classification.code },
+      update: {
+        name: classification.name,
+        trackingBehavior: classification.trackingBehavior,
+        isSystem: true,
+        status: ResponsibilityCenterStatus.ACTIVE,
+      },
+      create: {
+        code: classification.code,
+        name: classification.name,
+        trackingBehavior: classification.trackingBehavior,
+        isSystem: true,
+        status: ResponsibilityCenterStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
 
-    classificationIdByFinancialType.set(
-      classification.financialType,
-      savedClassification.id,
-    );
+    classificationIdByFinancialType.set(classification.financialType, savedClassification.id);
   }
 
   const typeIdByRecordKey = new Map<string, bigint>();
-  const seedTypeKeys = new Set(
-    ResponsibilityCenterSeedRecords.map((record) =>
-      createTypeRecordKey(record),
-    ),
-  );
+  const seedTypeKeys = new Set(ResponsibilityCenterSeedRecords.map((record) => createTypeRecordKey(record)));
 
   for (const record of ResponsibilityCenterSeedRecords) {
     const key = createTypeRecordKey(record);
     if (!seedTypeKeys.has(key)) continue;
     seedTypeKeys.delete(key);
 
-    const classificationDefault = getClassificationDefaultByFinancialType(
-      record.financialType,
-    );
-    const classificationId = classificationIdByFinancialType.get(
-      record.financialType,
-    );
+    const classificationDefault = getClassificationDefaultByFinancialType(record.financialType);
+    const classificationId = classificationIdByFinancialType.get(record.financialType);
 
     if (!classificationDefault || !classificationId) {
       continue;
     }
 
     const typeName = ResponsibilityCenterTypeNameByCategory[record.category];
-    const codePrefix =
-      ResponsibilityCenterTypePrefixByCategory[record.category];
+    const codePrefix = ResponsibilityCenterTypePrefixByCategory[record.category];
     const type = await tx.responsibilityCenterType.upsert({
       where: {
         classificationId_name: {
@@ -290,9 +250,6 @@ async function seedResponsibilityCenterTypes(
   return typeIdByRecordKey;
 }
 
-function createTypeRecordKey(record: {
-  category: ResponsibilityCenterCategory;
-  financialType: ResponsibilityCenterFinancialType;
-}) {
+function createTypeRecordKey(record: { category: ResponsibilityCenterCategory; financialType: ResponsibilityCenterFinancialType }) {
   return `${record.financialType}:${record.category}`;
 }

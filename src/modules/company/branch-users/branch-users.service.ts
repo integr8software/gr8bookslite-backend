@@ -1,24 +1,11 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  AccessScopeLevel,
-  CompanyRoleType,
-  MembershipRole,
-  MembershipStatus,
-} from '@prisma/client';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccessScopeLevel, CompanyRoleType, MembershipRole, MembershipStatus } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateBranchUserRoleDto } from './dto/update-branch-user-role.dto';
 import { mapBranchUser, mapBranchUserRole } from './mappers/branch-user.mapper';
-import {
-  BranchUserMembershipInclude,
-  BranchUserRoleInclude,
-} from './prisma/branch-user.include';
+import { BranchUserMembershipInclude, BranchUserRoleInclude } from './prisma/branch-user.include';
 
 @Injectable()
 export class BranchUsersService {
@@ -81,12 +68,7 @@ export class BranchUsersService {
     };
   }
 
-  async updateRole(
-    user: AuthUser,
-    unitId: number,
-    targetUserId: number,
-    dto: UpdateBranchUserRoleDto,
-  ) {
+  async updateRole(user: AuthUser, unitId: number, targetUserId: number, dto: UpdateBranchUserRoleDto) {
     const unit = await this.getUnitOrThrow(unitId);
     await this.ensureCanManageUnitUsers(user, unit.companyId);
 
@@ -107,9 +89,7 @@ export class BranchUsersService {
     });
 
     if (!membership) {
-      throw new NotFoundException(
-        'User is not assigned to this branch or satellite.',
-      );
+      throw new NotFoundException('User is not assigned to this branch or satellite.');
     }
 
     const companyRoleId = dto.companyRoleId ?? null;
@@ -129,21 +109,15 @@ export class BranchUsersService {
       });
 
       if (!role) {
-        throw new BadRequestException(
-          'Selected role is not available for this company.',
-        );
+        throw new BadRequestException('Selected role is not available for this company.');
       }
 
       if (role.roleType === CompanyRoleType.ADMIN) {
-        throw new BadRequestException(
-          'Company admin roles cannot be assigned from branch user management.',
-        );
+        throw new BadRequestException('Company admin roles cannot be assigned from branch user management.');
       }
 
       if (role.scopeLevel !== AccessScopeLevel.BRANCH) {
-        throw new BadRequestException(
-          'Selected role is not available for branch access.',
-        );
+        throw new BadRequestException('Selected role is not available for branch access.');
       }
     }
 
@@ -200,11 +174,7 @@ export class BranchUsersService {
       return;
     }
 
-    if (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      user.membershipRole === MembershipRole.ADMIN
-    ) {
+    if (user.companyId === companyId && user.membershipStatus === MembershipStatus.ACTIVE && user.membershipRole === MembershipRole.ADMIN) {
       return;
     }
 
@@ -221,14 +191,8 @@ export class BranchUsersService {
       },
     });
 
-    if (
-      !membership ||
-      membership.status !== MembershipStatus.ACTIVE ||
-      membership.role !== MembershipRole.ADMIN
-    ) {
-      throw new ForbiddenException(
-        'Admin access is required to manage branch users.',
-      );
+    if (!membership || membership.status !== MembershipStatus.ACTIVE || membership.role !== MembershipRole.ADMIN) {
+      throw new ForbiddenException('Admin access is required to manage branch users.');
     }
   }
 }

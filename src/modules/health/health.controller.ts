@@ -19,12 +19,7 @@ export class HealthController {
   @Get()
   async getHealth() {
     const database = await this.getDatabaseHealth();
-    const [
-      modules,
-      permissions,
-      moduleSystemSidebarTemplates,
-      platformVersion,
-    ] = await Promise.all([
+    const [modules, permissions, moduleSystemSidebarTemplates, platformVersion] = await Promise.all([
       this.prisma.module.count().catch(() => null),
       this.prisma.permission.count().catch(() => null),
       this.prisma.moduleSystemSidebar.count().catch(() => null),

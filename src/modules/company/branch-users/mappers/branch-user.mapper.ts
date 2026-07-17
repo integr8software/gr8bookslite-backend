@@ -1,19 +1,8 @@
-import type {
-  BranchUserMembershipRecord,
-  BranchUserRoleRecord,
-} from '../prisma/branch-user.include';
-import type {
-  BranchUserResponse,
-  BranchUserRoleResponse,
-} from '../interfaces/branch-user-response.interface';
+import type { BranchUserMembershipRecord, BranchUserRoleRecord } from '../prisma/branch-user.include';
+import type { BranchUserResponse, BranchUserRoleResponse } from '../interfaces/branch-user-response.interface';
 
-export function mapBranchUser(
-  membership: BranchUserMembershipRecord,
-  unitId: number,
-): BranchUserResponse {
-  const branchAccess = membership.unitAccess.find(
-    (unitAccess) => unitAccess.unitId === unitId,
-  );
+export function mapBranchUser(membership: BranchUserMembershipRecord, unitId: number): BranchUserResponse {
+  const branchAccess = membership.unitAccess.find((unitAccess) => unitAccess.unitId === unitId);
 
   return {
     id: membership.user.id,
@@ -26,24 +15,18 @@ export function mapBranchUser(
     membershipStatus: membership.status,
     accessScope: membership.accessScope,
     lastAccessedAt: membership.lastAccessedAt?.toISOString() ?? null,
-    companyRole: branchAccess?.companyRole
-      ? mapBranchUserRole(branchAccess.companyRole)
-      : null,
+    companyRole: branchAccess?.companyRole ? mapBranchUserRole(branchAccess.companyRole) : null,
   };
 }
 
-function getModule(permission: {
-  module?: { code: string; name: string } | null;
-}) {
+function getModule(permission: { module?: { code: string; name: string } | null }) {
   const legacy = permission as typeof permission & {
     submodule?: { module: { code: string; name: string } } | null;
   };
   return permission.module ?? legacy.submodule!.module;
 }
 
-export function mapBranchUserRole(
-  role: BranchUserRoleRecord,
-): BranchUserRoleResponse {
+export function mapBranchUserRole(role: BranchUserRoleRecord): BranchUserRoleResponse {
   return {
     id: role.id,
     code: role.code,

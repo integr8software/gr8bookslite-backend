@@ -30,12 +30,6 @@ export type PartyAccountingAccountOption = {
   status: 'Active' | 'Inactive';
 };
 
-export type PartyAccountingAccountIds = Record<
-  PartyAccountingAccountField,
-  string
->;
+export type PartyAccountingAccountIds = Record<PartyAccountingAccountField, string>;
 
-export type PartyAccountingAccountOptions = Record<
-  PartyAccountingAccountField,
-  PartyAccountingAccountOption[]
->;
+export type PartyAccountingAccountOptions = Record<PartyAccountingAccountField, PartyAccountingAccountOption[]>;

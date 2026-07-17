@@ -35,9 +35,7 @@ export function mapBranchRole(role: BranchRoleRecord): BranchRoleResponse {
   };
 }
 
-function getModule(permission: {
-  module?: { code: string; name: string } | null;
-}) {
+function getModule(permission: { module?: { code: string; name: string } | null }) {
   const legacy = permission as typeof permission & {
     submodule?: { module: { code: string; name: string } } | null;
   };

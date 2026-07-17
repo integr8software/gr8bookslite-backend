@@ -27,10 +27,7 @@ export const TermMaintenanceSeedRecords = [
   { name: 'Long-Term Agreement', dateMode: TermDateMode.YEAR, period: 5 },
 ] as const;
 
-export async function seedCompanyTermMaintenanceDefaults(
-  tx: TermWriteClient,
-  companyId: number,
-) {
+export async function seedCompanyTermMaintenanceDefaults(tx: TermWriteClient, companyId: number) {
   const existingTerms = await tx.term.findMany({
     where: {
       companyId,
@@ -41,9 +38,7 @@ export async function seedCompanyTermMaintenanceDefaults(
     select: { name: true },
   });
   const existingNames = new Set(existingTerms.map((term) => term.name));
-  const missingTerms = TermMaintenanceSeedRecords.filter(
-    (term) => !existingNames.has(term.name),
-  );
+  const missingTerms = TermMaintenanceSeedRecords.filter((term) => !existingNames.has(term.name));
 
   if (missingTerms.length === 0) {
     return 0;

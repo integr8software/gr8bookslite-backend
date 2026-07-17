@@ -1,16 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
@@ -60,10 +48,7 @@ export class UsersController {
 
   @Post('me/avatar')
   @UseInterceptors(FileInterceptor('avatar'))
-  uploadAvatar(
-    @CurrentUser() user: AuthUser,
-    @UploadedFile() file: UploadedAvatarFile | undefined,
-  ) {
+  uploadAvatar(@CurrentUser() user: AuthUser, @UploadedFile() file: UploadedAvatarFile | undefined) {
     return this.usersService.uploadOwnAvatar(user.id, file);
   }
 
@@ -78,10 +63,7 @@ export class UsersController {
     action: PermissionAction.VIEW,
   })
   @Get(':id')
-  findOne(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: AuthUser,
-  ) {
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
     return this.usersService.findById(id, user);
   }
 

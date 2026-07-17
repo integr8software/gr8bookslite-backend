@@ -1,12 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMinSize,
-  IsArray,
-  IsInt,
-  IsOptional,
-  Min,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayMinSize, IsArray, IsInt, IsOptional, Min, ValidateNested } from 'class-validator';
 import { CreatePartyDto } from './create-party.dto';
 
 export class ImportPartiesDto {

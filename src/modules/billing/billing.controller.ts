@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
@@ -52,10 +43,7 @@ export class BillingController {
 
   @Get('subscription-setup')
   @ApiOkResponse({ type: BillingSubscriptionSetupResponseDto })
-  getSubscriptionSetup(
-    @CurrentUser() user: AuthUser,
-    @Query('scope') scope?: string,
-  ) {
+  getSubscriptionSetup(@CurrentUser() user: AuthUser, @Query('scope') scope?: string) {
     return this.billingService.getSubscriptionSetup(user, scope);
   }
 
@@ -67,51 +55,33 @@ export class BillingController {
 
   @Post('subscriptions')
   @ApiCreatedResponse({ type: SubscribeCompanyResponseDto })
-  subscribeCompany(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: SubscribeCompanyDto,
-  ) {
+  subscribeCompany(@CurrentUser() user: AuthUser, @Body() dto: SubscribeCompanyDto) {
     return this.billingService.subscribeCompany(user, dto);
   }
 
   @Post('checkout-sessions')
   @ApiCreatedResponse({ type: ManualCheckoutSessionResponseDto })
-  createManualCheckoutSession(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: CreateManualCheckoutSessionDto,
-  ) {
+  createManualCheckoutSession(@CurrentUser() user: AuthUser, @Body() dto: CreateManualCheckoutSessionDto) {
     return this.billingService.createManualCheckoutSession(user, dto);
   }
 
   @Get('payment-attempts/:paymentAttemptId')
   @ApiOkResponse({ type: BillingPaymentAttemptResponseDto })
-  getManualPaymentAttempt(
-    @CurrentUser() user: AuthUser,
-    @Param('paymentAttemptId', ParseIntPipe) paymentAttemptId: number,
-  ) {
+  getManualPaymentAttempt(@CurrentUser() user: AuthUser, @Param('paymentAttemptId', ParseIntPipe) paymentAttemptId: number) {
     return this.billingService.getManualPaymentAttempt(user, paymentAttemptId);
   }
 
   /** @deprecated Use /billing/payment-attempts/:paymentAttemptId. */
   @Get('payment-requests/:paymentRequestId')
   @ApiOkResponse({ type: BillingPaymentAttemptResponseDto })
-  getManualPaymentRequest(
-    @CurrentUser() user: AuthUser,
-    @Param('paymentRequestId', ParseIntPipe) paymentRequestId: number,
-  ) {
+  getManualPaymentRequest(@CurrentUser() user: AuthUser, @Param('paymentRequestId', ParseIntPipe) paymentRequestId: number) {
     return this.billingService.getManualPaymentAttempt(user, paymentRequestId);
   }
 
   @Post('payment-attempts/:paymentAttemptId/retry-application')
   @ApiOkResponse({ type: BillingPaymentAttemptResponseDto })
-  retryPaymentAttemptApplication(
-    @CurrentUser() user: AuthUser,
-    @Param('paymentAttemptId', ParseIntPipe) paymentAttemptId: number,
-  ) {
-    return this.billingService.retryPaymentAttemptApplication(
-      user,
-      paymentAttemptId,
-    );
+  retryPaymentAttemptApplication(@CurrentUser() user: AuthUser, @Param('paymentAttemptId', ParseIntPipe) paymentAttemptId: number) {
+    return this.billingService.retryPaymentAttemptApplication(user, paymentAttemptId);
   }
 
   @Post('subscriptions/:subscriptionId/attach-payment-method')
@@ -126,11 +96,7 @@ export class BillingController {
 
   @Post('subscriptions/:subscriptionId/cancel')
   @ApiCreatedResponse({ type: CancelSubscriptionResponseDto })
-  cancelSubscription(
-    @CurrentUser() user: AuthUser,
-    @Param('subscriptionId', ParseIntPipe) subscriptionId: number,
-    @Body() dto: CancelCompanySubscriptionDto,
-  ) {
+  cancelSubscription(@CurrentUser() user: AuthUser, @Param('subscriptionId', ParseIntPipe) subscriptionId: number, @Body() dto: CancelCompanySubscriptionDto) {
     return this.billingService.cancelSubscription(user, subscriptionId, dto);
   }
 }

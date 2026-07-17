@@ -1,17 +1,8 @@
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-  Prisma,
-} from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { StandardDefaultChartAccounts } from './chart-of-accounts-defaults.seed';
 import { StandardDefaultAccountMappings } from './chart-of-accounts-system-groups.seed';
-import {
-  mergeAccountGroupTags,
-  SystemAccountGroupTags,
-} from '../utils/system-account-groups.util';
+import { mergeAccountGroupTags, SystemAccountGroupTags } from '../utils/system-account-groups.util';
 
 const CashInBankSpecificPrefix = 'Cash in Bank - ';
 
@@ -36,32 +27,21 @@ type StandardDefaultChartAccountSeed = {
 };
 
 const AccountGroupTagsByAccountCode = new Map<string, string[]>(
-  StandardDefaultAccountMappings.map((mapping) => [
-    mapping.accountCode,
-    getSystemTagsForMapping(mapping.moduleCode, mapping.accountRole),
-  ]),
+  StandardDefaultAccountMappings.map((mapping) => [mapping.accountCode, getSystemTagsForMapping(mapping.moduleCode, mapping.accountRole)]),
 );
 
-export async function seedCompanyChartAccountDefaults(
-  tx: Prisma.TransactionClient | PrismaService,
-  companyId: number,
-) {
+export async function seedCompanyChartAccountDefaults(tx: Prisma.TransactionClient | PrismaService, companyId: number) {
   const chartAccountIdByCode = new Map<string, bigint>();
 
   for (const defaultAccount of StandardDefaultChartAccounts as readonly StandardDefaultChartAccountSeed[]) {
-    const parentAccountId = defaultAccount.parentAccountCode
-      ? chartAccountIdByCode.get(defaultAccount.parentAccountCode)
-      : null;
+    const parentAccountId = defaultAccount.parentAccountCode ? chartAccountIdByCode.get(defaultAccount.parentAccountCode) : null;
 
     if (defaultAccount.parentAccountCode && !parentAccountId) {
-      throw new Error(
-        `Default COA parent was not copied before child ${defaultAccount.accountCode}.`,
-      );
+      throw new Error(`Default COA parent was not copied before child ${defaultAccount.accountCode}.`);
     }
 
     const seededStatus = getSeededChartAccountStatus(defaultAccount);
-    const seededDeletedAt =
-      seededStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
+    const seededDeletedAt = seededStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
     const savedAccount = await tx.chartAccount.upsert({
       where: {
         companyId_accountCode: {
@@ -119,9 +99,7 @@ export async function seedCompanyChartAccountDefaults(
     const copiedAccountId = chartAccountIdByCode.get(mapping.accountCode);
 
     if (!copiedAccountId) {
-      throw new Error(
-        `Required system account was not seeded: ${mapping.moduleCode}:${mapping.accountRole}.`,
-      );
+      throw new Error(`Required system account was not seeded: ${mapping.moduleCode}:${mapping.accountRole}.`);
     }
   }
 }
@@ -129,11 +107,7 @@ export async function seedCompanyChartAccountDefaults(
 function getSeededAccountGroupTags(account: StandardDefaultChartAccountSeed) {
   const mappingTags = AccountGroupTagsByAccountCode.get(account.accountCode);
 
-  return mergeAccountGroupTags(
-    account.accountGroup,
-    getStructuralAccountGroupTag(account.accountTitle),
-    mappingTags,
-  );
+  return mergeAccountGroupTags(account.accountGroup, getStructuralAccountGroupTag(account.accountTitle), mappingTags);
 }
 
 function getStructuralAccountGroupTag(accountTitle: string) {
@@ -178,55 +152,31 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
   }
 
   if (moduleCode === 'DA' && accountRole === 'EXPENSE_PARENT') {
-    return [
-      SystemAccountGroupTags.expenses,
-      SystemAccountGroupTags.defaultAccountExpenseParent,
-    ];
+    return [SystemAccountGroupTags.expenses, SystemAccountGroupTags.defaultAccountExpenseParent];
   }
 
   if (moduleCode === 'DA' && accountRole === 'REVENUE_PARENT') {
-    return [
-      SystemAccountGroupTags.revenue,
-      SystemAccountGroupTags.defaultAccountRevenueParent,
-    ];
+    return [SystemAccountGroupTags.revenue, SystemAccountGroupTags.defaultAccountRevenueParent];
   }
 
   if (moduleCode === 'DA' && accountRole === 'FIXED_ASSET_PARENT') {
-    return [
-      SystemAccountGroupTags.fixedAssets,
-      SystemAccountGroupTags.defaultAccountFixedAssetParent,
-    ];
+    return [SystemAccountGroupTags.fixedAssets, SystemAccountGroupTags.defaultAccountFixedAssetParent];
   }
 
-  if (
-    moduleCode === 'DA' &&
-    accountRole === 'ACCUMULATED_DEPRECIATION_PARENT'
-  ) {
-    return [
-      SystemAccountGroupTags.accumulatedDepreciation,
-      SystemAccountGroupTags.defaultAccountAccumulatedDepreciationParent,
-    ];
+  if (moduleCode === 'DA' && accountRole === 'ACCUMULATED_DEPRECIATION_PARENT') {
+    return [SystemAccountGroupTags.accumulatedDepreciation, SystemAccountGroupTags.defaultAccountAccumulatedDepreciationParent];
   }
 
   if (moduleCode === 'DA' && accountRole === 'DEPRECIATION_EXPENSE_PARENT') {
-    return [
-      SystemAccountGroupTags.depreciationExpense,
-      SystemAccountGroupTags.defaultAccountDepreciationExpenseParent,
-    ];
+    return [SystemAccountGroupTags.depreciationExpense, SystemAccountGroupTags.defaultAccountDepreciationExpenseParent];
   }
 
   if (moduleCode === 'DSM' && accountRole === 'SALES_DISCOUNT_PARENT') {
-    return [
-      SystemAccountGroupTags.salesDiscount,
-      SystemAccountGroupTags.discountManagementSalesParent,
-    ];
+    return [SystemAccountGroupTags.salesDiscount, SystemAccountGroupTags.discountManagementSalesParent];
   }
 
   if (moduleCode === 'DSM' && accountRole === 'PURCHASE_DISCOUNT_PARENT') {
-    return [
-      SystemAccountGroupTags.purchaseDiscount,
-      SystemAccountGroupTags.discountManagementPurchaseParent,
-    ];
+    return [SystemAccountGroupTags.purchaseDiscount, SystemAccountGroupTags.discountManagementPurchaseParent];
   }
 
   if (moduleCode === 'PM' && accountRole === 'ACCOUNTS_RECEIVABLE_GROUP') {
@@ -237,10 +187,7 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
     return [SystemAccountGroupTags.partyAccountsPayableGroup];
   }
 
-  if (
-    moduleCode === 'PM' &&
-    accountRole === 'OTHER_CURRENT_LIABILITIES_GROUP'
-  ) {
+  if (moduleCode === 'PM' && accountRole === 'OTHER_CURRENT_LIABILITIES_GROUP') {
     return [SystemAccountGroupTags.partyOtherCurrentLiabilitiesGroup];
   }
 
@@ -268,26 +215,49 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
     return [SystemAccountGroupTags.partyEmployeePayableAccount];
   }
 
+  if (moduleCode === 'TXM' && accountRole === 'TAXES_PAYABLES_GROUP') {
+    return [SystemAccountGroupTags.taxMaintenanceTaxesPayablesGroup];
+  }
+
+  if (moduleCode === 'TXM' && accountRole === 'INPUT_TAX_ACCOUNT') {
+    return [SystemAccountGroupTags.taxMaintenanceInputTaxAccount];
+  }
+
+  if (moduleCode === 'TXM' && accountRole === 'OUTPUT_VAT_ACCOUNT') {
+    return [SystemAccountGroupTags.taxMaintenanceOutputVatAccount];
+  }
+
+  if (moduleCode === 'TXM' && accountRole === 'DEFERRED_VAT_ACCOUNT') {
+    return [SystemAccountGroupTags.taxMaintenanceDeferredVatAccount];
+  }
+
+  if (moduleCode === 'TXM' && accountRole === 'EXPANDED_WITHHOLDING_TAX_ACCOUNT') {
+    return [SystemAccountGroupTags.taxMaintenanceExpandedWithholdingTaxAccount];
+  }
+
+  if (moduleCode === 'TXM' && accountRole === 'CREDITABLE_WITHHOLDING_TAX_ACCOUNT') {
+    return [SystemAccountGroupTags.taxMaintenanceCreditableWithholdingTaxAccount];
+  }
+
+  if (moduleCode === 'TXM' && accountRole === 'WITHHOLDING_VATABLE_TAX_ACCOUNT') {
+    return [SystemAccountGroupTags.taxMaintenanceWithholdingVatableTaxAccount];
+  }
+
+  if (moduleCode === 'TXM' && accountRole === 'FINAL_WITHHOLDING_TAX_ACCOUNT') {
+    return [SystemAccountGroupTags.taxMaintenanceFinalWithholdingTaxAccount];
+  }
+
   return [];
 }
 
-function getSeededChartAccountStatus(
-  defaultAccount: StandardDefaultChartAccountSeed,
-) {
-  if (
-    defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC &&
-    defaultAccount.accountTitle.startsWith(CashInBankSpecificPrefix)
-  ) {
+function getSeededChartAccountStatus(defaultAccount: StandardDefaultChartAccountSeed) {
+  if (defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC && defaultAccount.accountTitle.startsWith(CashInBankSpecificPrefix)) {
     return ChartAccountStatus.INACTIVE;
   }
 
   return defaultAccount.status ?? ChartAccountStatus.ACTIVE;
 }
 
-function getSeededIsPostingAccount(
-  defaultAccount: StandardDefaultChartAccountSeed,
-) {
-  return defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC
-    ? (defaultAccount.isPostingAccount ?? true)
-    : false;
+function getSeededIsPostingAccount(defaultAccount: StandardDefaultChartAccountSeed) {
+  return defaultAccount.accountLevel === ChartAccountLevel.SPECIFIC ? (defaultAccount.isPostingAccount ?? true) : false;
 }

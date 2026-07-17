@@ -2,10 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AlphanumericTaxCodeListQueryDto } from './dto/alphanumeric-tax-code-list-query.dto';
-import {
-  mapAlphanumericTaxCode,
-  mapAlphanumericTaxCodeAutocomplete,
-} from './mappers/alphanumeric-tax-code.mapper';
+import { mapAlphanumericTaxCode, mapAlphanumericTaxCodeAutocomplete } from './mappers/alphanumeric-tax-code.mapper';
 
 @Injectable()
 export class AlphanumericTaxCodesService {
@@ -14,12 +11,7 @@ export class AlphanumericTaxCodesService {
   async listTaxCodes(query: AlphanumericTaxCodeListQueryDto = {}) {
     const taxCodes = await this.prisma.alphanumericTaxCode.findMany({
       where: this.buildWhereInput(query),
-      orderBy: [
-        { transactionType: 'asc' },
-        { taxType: 'asc' },
-        { taxCode: 'asc' },
-        { taxDescription: 'asc' },
-      ],
+      orderBy: [{ transactionType: 'asc' }, { taxType: 'asc' }, { taxCode: 'asc' }, { taxDescription: 'asc' }],
       take: query.limit ?? 20,
     });
 
@@ -47,12 +39,7 @@ export class AlphanumericTaxCodesService {
   async listAutocomplete(query: AlphanumericTaxCodeListQueryDto) {
     const taxCodes = await this.prisma.alphanumericTaxCode.findMany({
       where: this.buildWhereInput(query),
-      orderBy: [
-        { transactionType: 'asc' },
-        { taxType: 'asc' },
-        { taxCode: 'asc' },
-        { taxDescription: 'asc' },
-      ],
+      orderBy: [{ transactionType: 'asc' }, { taxType: 'asc' }, { taxCode: 'asc' }, { taxDescription: 'asc' }],
       take: query.limit ?? 20,
     });
 
@@ -89,9 +76,7 @@ export class AlphanumericTaxCodesService {
     };
   }
 
-  private buildWhereInput(
-    query: AlphanumericTaxCodeListQueryDto,
-  ): Prisma.AlphanumericTaxCodeWhereInput {
+  private buildWhereInput(query: AlphanumericTaxCodeListQueryDto): Prisma.AlphanumericTaxCodeWhereInput {
     const normalizedQuery = query.query?.trim();
 
     return {

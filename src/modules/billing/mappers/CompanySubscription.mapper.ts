@@ -1,12 +1,8 @@
 import { getSubscriptionPlanPriceSummary } from '../../../common/utils/SubscriptionPlanPricing.util';
 import { CompanySubscriptionDetails } from '../utils/BillingPrisma.util';
 
-export function mapCompanySubscription(
-  subscription: CompanySubscriptionDetails,
-) {
-  const priceSummary = getSubscriptionPlanPriceSummary(
-    subscription.plan.prices,
-  );
+export function mapCompanySubscription(subscription: CompanySubscriptionDetails) {
+  const priceSummary = getSubscriptionPlanPriceSummary(subscription.plan.prices);
   const modules = deriveSubscriptionPlanModules(subscription);
 
   return {
@@ -116,13 +112,8 @@ export function mapCompanySubscription(
   };
 }
 
-function deriveSubscriptionPlanModules(
-  subscription: CompanySubscriptionDetails,
-) {
-  const modulesById = new Map<
-    number,
-    CompanySubscriptionDetails['plan']['systems'][number]['system']['modules'][number]['module']
-  >();
+function deriveSubscriptionPlanModules(subscription: CompanySubscriptionDetails) {
+  const modulesById = new Map<number, CompanySubscriptionDetails['plan']['systems'][number]['system']['modules'][number]['module']>();
   for (const planSystem of subscription.plan.systems) {
     if (!planSystem.isEnabled || !planSystem.system.isActive) continue;
     for (const systemModule of planSystem.system.modules) {
@@ -130,9 +121,5 @@ function deriveSubscriptionPlanModules(
     }
   }
 
-  return [...modulesById.values()].sort(
-    (left, right) =>
-      left.name.localeCompare(right.name) ||
-      left.code.localeCompare(right.code),
-  );
+  return [...modulesById.values()].sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code));
 }

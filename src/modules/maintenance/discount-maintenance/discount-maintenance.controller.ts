@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -25,16 +16,11 @@ import { UpdateDiscountDto } from './dto/update-discount.dto';
   version: '1',
 })
 export class DiscountMaintenanceController {
-  constructor(
-    private readonly discountMaintenanceService: DiscountMaintenanceService,
-  ) {}
+  constructor(private readonly discountMaintenanceService: DiscountMaintenanceService) {}
 
   @Get()
   @ApiOkResponse({ description: 'Discount list retrieved.' })
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Query() query: GetDiscountListQueryDto,
-  ) {
+  findAll(@CurrentUser() user: AuthUser, @Query() query: GetDiscountListQueryDto) {
     return this.discountMaintenanceService.findAll(user, query);
   }
 
@@ -52,20 +38,13 @@ export class DiscountMaintenanceController {
 
   @Post('import')
   @ApiCreatedResponse({ description: 'Discounts imported.' })
-  importDiscounts(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: ImportDiscountsDto,
-  ) {
+  importDiscounts(@CurrentUser() user: AuthUser, @Body() dto: ImportDiscountsDto) {
     return this.discountMaintenanceService.importDiscounts(user, dto);
   }
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Discount updated.' })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateDiscountDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateDiscountDto) {
     return this.discountMaintenanceService.update(user, id, dto);
   }
 }

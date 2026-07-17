@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -25,36 +16,22 @@ export class BranchRolesController {
   constructor(private readonly branchRolesService: BranchRolesService) {}
 
   @Get()
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Param('unitId', ParseIntPipe) unitId: number,
-  ) {
+  findAll(@CurrentUser() user: AuthUser, @Param('unitId', ParseIntPipe) unitId: number) {
     return this.branchRolesService.findAll(user, unitId);
   }
 
   @Get('permission-catalog')
-  getPermissionCatalog(
-    @CurrentUser() user: AuthUser,
-    @Param('unitId', ParseIntPipe) unitId: number,
-  ) {
+  getPermissionCatalog(@CurrentUser() user: AuthUser, @Param('unitId', ParseIntPipe) unitId: number) {
     return this.branchRolesService.getPermissionCatalog(user, unitId);
   }
 
   @Get(':roleId')
-  findOne(
-    @CurrentUser() user: AuthUser,
-    @Param('unitId', ParseIntPipe) unitId: number,
-    @Param('roleId', ParseIntPipe) roleId: number,
-  ) {
+  findOne(@CurrentUser() user: AuthUser, @Param('unitId', ParseIntPipe) unitId: number, @Param('roleId', ParseIntPipe) roleId: number) {
     return this.branchRolesService.findOne(user, unitId, roleId);
   }
 
   @Post()
-  create(
-    @CurrentUser() user: AuthUser,
-    @Param('unitId', ParseIntPipe) unitId: number,
-    @Body() dto: CreateBranchRoleDto,
-  ) {
+  create(@CurrentUser() user: AuthUser, @Param('unitId', ParseIntPipe) unitId: number, @Body() dto: CreateBranchRoleDto) {
     return this.branchRolesService.create(user, unitId, dto);
   }
 

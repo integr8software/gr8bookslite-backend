@@ -17,12 +17,7 @@ describe('FormSignatoriesService permission catalog ownership', () => {
 
     return {
       prisma,
-      service: new FormSignatoriesService(
-        prisma as never,
-        cacheManager as never,
-        auditLogsService as never,
-        {} as never,
-      ),
+      service: new FormSignatoriesService(prisma as never, cacheManager as never, auditLogsService as never, {} as never),
     };
   }
 
@@ -37,10 +32,7 @@ describe('FormSignatoriesService permission catalog ownership', () => {
 
     const module = await (
       service as unknown as {
-        resolveModule: (dto: {
-          moduleCode: string;
-          moduleName: string;
-        }) => Promise<Record<string, unknown>>;
+        resolveModule: (dto: { moduleCode: string; moduleName: string }) => Promise<Record<string, unknown>>;
       }
     ).resolveModule({
       moduleCode: ' cash-disbursement ',
@@ -81,10 +73,7 @@ describe('FormSignatoriesService permission catalog ownership', () => {
     await expect(
       (
         service as unknown as {
-          resolveModule: (dto: {
-            moduleCode: string;
-            moduleName: string;
-          }) => Promise<unknown>;
+          resolveModule: (dto: { moduleCode: string; moduleName: string }) => Promise<unknown>;
         }
       ).resolveModule({
         moduleCode: 'cash-disbursement',

@@ -1,58 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { PermissionAction } from '../../enums/permission-action.enum';
-import type {
-  PermissionActionMap,
-  PermissionMembershipSource,
-  PermissionRecord,
-} from './permission.types';
+import type { PermissionActionMap, PermissionMembershipSource, PermissionRecord } from './permission.types';
 
 @Injectable()
 export class PermissionService {
-  computePermissions(
-    membership: PermissionMembershipSource,
-    enabledModules: string[],
-  ): string[] {
+  computePermissions(membership: PermissionMembershipSource, enabledModules: string[]): string[] {
     const permissions = new Map<string, PermissionActionMap>();
 
     for (const rolePermission of this.collectRolePermissions(membership)) {
-      if (
-        !this.isPermissionWithinEnabledModules(
-          rolePermission.permission,
-          enabledModules,
-        )
-      ) {
+      if (!this.isPermissionWithinEnabledModules(rolePermission.permission, enabledModules)) {
         continue;
       }
 
       const current = permissions.get(rolePermission.permission.code);
       permissions.set(rolePermission.permission.code, {
-        [PermissionAction.VIEW]:
-          Boolean(current?.view) || rolePermission.canView,
-        [PermissionAction.CREATE]:
-          Boolean(current?.create) || rolePermission.canCreate,
-        [PermissionAction.UPDATE]:
-          Boolean(current?.update) || rolePermission.canUpdate,
-        [PermissionAction.CANCEL]:
-          Boolean(current?.cancel) || rolePermission.canCancel,
-        [PermissionAction.UNCANCEL]:
-          Boolean(current?.uncancel) || rolePermission.canUncancel,
-        [PermissionAction.EXPORT]:
-          Boolean(current?.export) || rolePermission.canExport,
+        [PermissionAction.VIEW]: Boolean(current?.view) || rolePermission.canView,
+        [PermissionAction.CREATE]: Boolean(current?.create) || rolePermission.canCreate,
+        [PermissionAction.UPDATE]: Boolean(current?.update) || rolePermission.canUpdate,
+        [PermissionAction.CANCEL]: Boolean(current?.cancel) || rolePermission.canCancel,
+        [PermissionAction.UNCANCEL]: Boolean(current?.uncancel) || rolePermission.canUncancel,
+        [PermissionAction.EXPORT]: Boolean(current?.export) || rolePermission.canExport,
       });
     }
 
     for (const override of membership.permissionOverrides) {
-      if (
-        !this.isPermissionWithinEnabledModules(
-          override.permission,
-          enabledModules,
-        )
-      ) {
+      if (!this.isPermissionWithinEnabledModules(override.permission, enabledModules)) {
         continue;
       }
 
-      const current =
-        permissions.get(override.permission.code) ?? this.buildEmptyActionMap();
+      const current = permissions.get(override.permission.code) ?? this.buildEmptyActionMap();
 
       permissions.set(override.permission.code, {
         [PermissionAction.VIEW]: override.canView ?? current.view,
@@ -68,25 +44,13 @@ export class PermissionService {
   }
 
   private collectRolePermissions(membership: PermissionMembershipSource) {
-    return [
-      ...(membership.companyRole?.permissions ?? []),
-      ...membership.unitAccess.flatMap(
-        (unitAccess) => unitAccess.companyRole?.permissions ?? [],
-      ),
-    ];
+    return [...(membership.companyRole?.permissions ?? []), ...membership.unitAccess.flatMap((unitAccess) => unitAccess.companyRole?.permissions ?? [])];
   }
 
-  private isPermissionWithinEnabledModules(
-    permission: PermissionRecord,
-    enabledModules: string[],
-  ): boolean {
+  private isPermissionWithinEnabledModules(permission: PermissionRecord, enabledModules: string[]): boolean {
     const moduleCode = this.getPermissionModuleCode(permission);
 
-    return (
-      !moduleCode ||
-      enabledModules.length === 0 ||
-      enabledModules.includes(moduleCode)
-    );
+    return !moduleCode || enabledModules.length === 0 || enabledModules.includes(moduleCode);
   }
 
   private getPermissionModuleCode(permission: PermissionRecord) {
@@ -104,21 +68,15 @@ export class PermissionService {
     };
   }
 
-  private serializePermissions(
-    permissions: Map<string, PermissionActionMap>,
-  ): string[] {
-    return Array.from(permissions.entries()).flatMap(
-      ([permissionCode, actions]) =>
-        Object.values(PermissionAction)
-          .filter((action) => actions[action])
-          .map((action) => this.buildPermissionKey(permissionCode, action)),
+  private serializePermissions(permissions: Map<string, PermissionActionMap>): string[] {
+    return Array.from(permissions.entries()).flatMap(([permissionCode, actions]) =>
+      Object.values(PermissionAction)
+        .filter((action) => actions[action])
+        .map((action) => this.buildPermissionKey(permissionCode, action)),
     );
   }
 
-  private buildPermissionKey(
-    permissionCode: string,
-    action: PermissionAction,
-  ): string {
+  private buildPermissionKey(permissionCode: string, action: PermissionAction): string {
     return `${permissionCode}:${action}`;
   }
 }

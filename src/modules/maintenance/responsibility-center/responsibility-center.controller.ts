@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -25,25 +16,17 @@ import { ResponsibilityCenterService } from './responsibility-center.service';
   version: '1',
 })
 export class ResponsibilityCenterController {
-  constructor(
-    private readonly responsibilityCenterService: ResponsibilityCenterService,
-  ) {}
+  constructor(private readonly responsibilityCenterService: ResponsibilityCenterService) {}
 
   @Get()
   @ApiOkResponse({ description: 'Responsibility center list retrieved.' })
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Query() query: GetResponsibilityCenterListQueryDto,
-  ) {
+  findAll(@CurrentUser() user: AuthUser, @Query() query: GetResponsibilityCenterListQueryDto) {
     return this.responsibilityCenterService.findAll(user, query);
   }
 
   @Get('tree')
   @ApiOkResponse({ description: 'Responsibility center tree retrieved.' })
-  findTree(
-    @CurrentUser() user: AuthUser,
-    @Query() query: GetResponsibilityCenterListQueryDto,
-  ) {
+  findTree(@CurrentUser() user: AuthUser, @Query() query: GetResponsibilityCenterListQueryDto) {
     return this.responsibilityCenterService.findTree(user, query);
   }
 
@@ -57,10 +40,7 @@ export class ResponsibilityCenterController {
 
   @Get('types')
   @ApiOkResponse({ description: 'Responsibility center types retrieved.' })
-  findTypes(
-    @CurrentUser() user: AuthUser,
-    @Query('classificationId') classificationId?: string,
-  ) {
+  findTypes(@CurrentUser() user: AuthUser, @Query('classificationId') classificationId?: string) {
     return this.responsibilityCenterService.findTypes(user, classificationId);
   }
 
@@ -78,30 +58,19 @@ export class ResponsibilityCenterController {
 
   @Post()
   @ApiCreatedResponse({ description: 'Responsibility center created.' })
-  create(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: CreateResponsibilityCenterDto,
-  ) {
+  create(@CurrentUser() user: AuthUser, @Body() dto: CreateResponsibilityCenterDto) {
     return this.responsibilityCenterService.create(user, dto);
   }
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Responsibility center updated.' })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateResponsibilityCenterDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateResponsibilityCenterDto) {
     return this.responsibilityCenterService.update(user, id, dto);
   }
 
   @Patch(':id/status')
   @ApiOkResponse({ description: 'Responsibility center status updated.' })
-  updateStatus(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateResponsibilityCenterStatusDto,
-  ) {
+  updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateResponsibilityCenterStatusDto) {
     return this.responsibilityCenterService.updateStatus(user, id, dto);
   }
 }

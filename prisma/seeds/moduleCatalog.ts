@@ -63,7 +63,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
-    code: 'IA2',
+    code: 'IA',
     name: 'Item Attributes',
     icon: 'clipboard',
     type: Maintenance,
@@ -351,8 +351,8 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: TransactionRegistry,
   },
   {
-    code: 'IA',
-    name: 'Inventory Account',
+    code: 'INC',
+    name: 'Inventory Count',
     icon: 'inventory',
     type: TransactionRegistry,
   },

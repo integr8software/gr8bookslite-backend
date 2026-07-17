@@ -1,9 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 
 export function readProviderObject(value: unknown) {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 }
 
 export function readProviderString(value: unknown) {
@@ -23,20 +21,14 @@ export function readProviderUnixDate(value: unknown) {
 }
 
 export function readFirstProviderArrayObject(value: unknown) {
-  return Array.isArray(value) && value.length > 0 && value[0]
-    ? readProviderObject(value[0])
-    : null;
+  return Array.isArray(value) && value.length > 0 && value[0] ? readProviderObject(value[0]) : null;
 }
 
-export function readProviderResponseData(
-  payload: Record<string, unknown> | null,
-) {
+export function readProviderResponseData(payload: Record<string, unknown> | null) {
   const data = payload?.data;
 
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    throw new BadRequestException(
-      'Unexpected billing provider response payload.',
-    );
+    throw new BadRequestException('Unexpected billing provider response payload.');
   }
 
   return data as Record<string, unknown>;
@@ -45,11 +37,7 @@ export function readProviderResponseData(
 export function readProviderResponseAttributes(data: Record<string, unknown>) {
   const attributes = data.attributes;
 
-  if (
-    !attributes ||
-    typeof attributes !== 'object' ||
-    Array.isArray(attributes)
-  ) {
+  if (!attributes || typeof attributes !== 'object' || Array.isArray(attributes)) {
     return {} as Record<string, unknown>;
   }
 

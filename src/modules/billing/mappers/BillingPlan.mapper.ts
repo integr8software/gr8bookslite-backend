@@ -85,21 +85,14 @@ export function mapBillingPlan(plan: SubscriptionPlan | BillingPlanRecord) {
 
 function deriveModules(plan: SubscriptionPlan | BillingPlanRecord) {
   if ('systems' in plan && plan.systems.length > 0) {
-    const modulesById = new Map<
-      number,
-      BillingPlanRecord['systems'][number]['system']['modules'][number]['module']
-    >();
+    const modulesById = new Map<number, BillingPlanRecord['systems'][number]['system']['modules'][number]['module']>();
     for (const planSystem of plan.systems) {
       if (!planSystem.isEnabled || !planSystem.system.isActive) continue;
       for (const systemModule of planSystem.system.modules) {
         modulesById.set(systemModule.module.id, systemModule.module);
       }
     }
-    return [...modulesById.values()].sort(
-      (left, right) =>
-        left.name.localeCompare(right.name) ||
-        left.code.localeCompare(right.code),
-    );
+    return [...modulesById.values()].sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code));
   }
 
   return 'modules' in plan

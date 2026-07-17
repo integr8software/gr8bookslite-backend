@@ -2555,7 +2555,7 @@
         ]
       }
     },
-    "/api/v1/workspace/table-preferences/{moduleKey}": {
+    "/api/v1/table-preferences/{moduleKey}": {
       "get": {
         "operationId": "TablePreferencesController_findOne_v1",
         "parameters": [

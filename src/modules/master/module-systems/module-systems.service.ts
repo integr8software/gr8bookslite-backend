@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, SidebarItemType } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -134,9 +130,7 @@ export class ModuleSystemsService {
         where: { systemId },
         select: { id: true, moduleId: true },
       });
-      const existingByModuleId = new Map(
-        existing.map((item) => [item.moduleId, item.id]),
-      );
+      const existingByModuleId = new Map(existing.map((item) => [item.moduleId, item.id]));
 
       await tx.moduleSystemModule.deleteMany({
         where: {
@@ -183,11 +177,7 @@ export class ModuleSystemsService {
 
   async saveSidebar(systemId: number, dto: SaveModuleSystemSidebarDto) {
     const system = await this.findSystem(systemId);
-    const assignedModuleIds = new Set(
-      system.modules
-        .filter((item) => item.isActive)
-        .map((item) => item.moduleId),
-    );
+    const assignedModuleIds = new Set(system.modules.filter((item) => item.isActive).map((item) => item.moduleId));
     this.validateSidebarTree(dto.items, assignedModuleIds);
 
     await this.prisma.$transaction(async (tx) => {
@@ -218,44 +208,31 @@ export class ModuleSystemsService {
       where: { code },
       select: { id: true },
     });
-    if (existing)
-      throw new BadRequestException('A system with this code already exists.');
+    if (existing) throw new BadRequestException('A system with this code already exists.');
   }
 
-  private validateSidebarTree(
-    items: ModuleSystemSidebarItemDto[],
-    assignedModuleIds: Set<number>,
-  ) {
+  private validateSidebarTree(items: ModuleSystemSidebarItemDto[], assignedModuleIds: Set<number>) {
     const keys = new Set<string>();
     const linkedModuleIds = new Set<number>();
     const walk = (siblings: ModuleSystemSidebarItemDto[], depth: number) => {
       if (!siblings.length) return;
-      if (depth > 3)
-        throw new BadRequestException('Sidebar supports at most three levels.');
+      if (depth > 3) throw new BadRequestException('Sidebar supports at most three levels.');
       for (const item of siblings) {
         const key = item.key.trim();
         if (!key || keys.has(key)) {
-          throw new BadRequestException(
-            `Duplicate or empty sidebar key: ${item.key}`,
-          );
+          throw new BadRequestException(`Duplicate or empty sidebar key: ${item.key}`);
         }
         keys.add(key);
         if (item.itemType === 'LINK') {
           if (!item.moduleId || !assignedModuleIds.has(item.moduleId)) {
-            throw new BadRequestException(
-              'Sidebar links must use modules assigned to the system.',
-            );
+            throw new BadRequestException('Sidebar links must use modules assigned to the system.');
           }
           if (linkedModuleIds.has(item.moduleId)) {
-            throw new BadRequestException(
-              'A module can appear only once in the system sidebar.',
-            );
+            throw new BadRequestException('A module can appear only once in the system sidebar.');
           }
           linkedModuleIds.add(item.moduleId);
         } else if (item.moduleId) {
-          throw new BadRequestException(
-            'Only sidebar links can reference modules.',
-          );
+          throw new BadRequestException('Only sidebar links can reference modules.');
         }
         walk(item.children ?? [], depth + 1);
       }
@@ -264,9 +241,7 @@ export class ModuleSystemsService {
 
     for (const moduleId of assignedModuleIds) {
       if (!linkedModuleIds.has(moduleId)) {
-        throw new BadRequestException(
-          'Every assigned module must be included in the system sidebar.',
-        );
+        throw new BadRequestException('Every assigned module must be included in the system sidebar.');
       }
     }
   }
@@ -354,11 +329,7 @@ export class ModuleSystemsService {
     return system.modules
       .filter((item) => item.isActive && item.module.isActive)
       .map((item) => item.module)
-      .sort(
-        (left, right) =>
-          left.name.localeCompare(right.name) ||
-          left.code.localeCompare(right.code),
-      )
+      .sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code))
       .map((module, index) => ({
         id: null,
         key: `module-${module.code.toLowerCase()}`,
@@ -379,10 +350,6 @@ export class ModuleSystemsService {
   }
 
   private normalizeCodes(codes: string[]) {
-    return [
-      ...new Set(
-        codes.map((code) => code.trim().toUpperCase()).filter(Boolean),
-      ),
-    ];
+    return [...new Set(codes.map((code) => code.trim().toUpperCase()).filter(Boolean))];
   }
 }

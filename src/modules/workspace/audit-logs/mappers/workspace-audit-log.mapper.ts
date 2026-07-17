@@ -8,11 +8,7 @@ export function mapWorkspaceAuditLog(log: WorkspaceAuditLogRecord) {
   const branchName = getString(metadata.branchName) ?? WorkspaceBranch.name;
   const action = toTitleCaseAction(log.action);
   const moduleName = getModuleName(metadata, log.entityType);
-  const recordId =
-    getString(metadata.recordId) ??
-    getNumericString(metadata.module) ??
-    getPathRecordId(metadata.path) ??
-    log.entityId;
+  const recordId = getString(metadata.recordId) ?? getNumericString(metadata.module) ?? getPathRecordId(metadata.path) ?? log.entityId;
 
   return {
     id: log.id.toString(),
@@ -20,15 +16,11 @@ export function mapWorkspaceAuditLog(log: WorkspaceAuditLogRecord) {
     companyName: log.company?.name ?? null,
     actorUserId: log.actorUserId,
     actorName: log.actorUser?.name ?? getString(metadata.actorName) ?? 'System',
-    actorRole:
-      getString(metadata.actorRole) ??
-      formatEntityType(log.actorUser?.systemRole ?? 'System'),
+    actorRole: getString(metadata.actorRole) ?? formatEntityType(log.actorUser?.systemRole ?? 'System'),
     action,
     entityType: log.entityType,
     entityId: log.entityId,
-    description:
-      getDescription(metadata, action, moduleName, recordId ?? undefined) ??
-      createDescription(action, moduleName, recordId ?? undefined),
+    description: getDescription(metadata, action, moduleName, recordId ?? undefined) ?? createDescription(action, moduleName, recordId ?? undefined),
     ipAddress: log.ipAddress,
     module: moduleName,
     branchId,
@@ -47,23 +39,14 @@ function getModuleName(metadata: Record<string, unknown>, entityType: string) {
   return getModuleNameFromPath(metadata.path) ?? formatEntityType(entityType);
 }
 
-function getDescription(
-  metadata: Record<string, unknown>,
-  action: string,
-  moduleName: string,
-  recordId: string | undefined,
-) {
+function getDescription(metadata: Record<string, unknown>, action: string, moduleName: string, recordId: string | undefined) {
   const description = getString(metadata.description);
 
   if (!description || isNumericOpenedDescription(description)) {
     return undefined;
   }
 
-  if (
-    recordId &&
-    action === 'View' &&
-    description === `${moduleName} was opened.`
-  ) {
+  if (recordId && action === 'View' && description === `${moduleName} was opened.`) {
     return createDescription(action, moduleName, recordId);
   }
 
@@ -86,11 +69,7 @@ function toTitleCaseAction(action: string) {
   return formatEntityType(action);
 }
 
-function createDescription(
-  action: string,
-  moduleName: string,
-  recordId: string | undefined,
-) {
+function createDescription(action: string, moduleName: string, recordId: string | undefined) {
   const subject = recordId ? `${moduleName} record ${recordId}` : moduleName;
   const pastTense: Record<string, string> = {
     Approve: 'approved',
@@ -112,10 +91,7 @@ function formatEntityType(value: string) {
     .replace(/[_-]+/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .trim()
-    .replace(
-      /\w\S*/g,
-      (word) => word[0].toUpperCase() + word.slice(1).toLowerCase(),
-    );
+    .replace(/\w\S*/g, (word) => word[0].toUpperCase() + word.slice(1).toLowerCase());
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -153,16 +129,9 @@ function getModuleNameFromPath(value: unknown) {
     .filter(Boolean);
   const editIndex = segments.findIndex((segment) => segment === 'edit');
   const numericIndex = findLastIndex(segments, isNumericString);
-  const moduleSegment =
-    editIndex > 0
-      ? segments[editIndex - 1]
-      : numericIndex > 0
-        ? segments[numericIndex - 1]
-        : segments[segments.length - 1];
+  const moduleSegment = editIndex > 0 ? segments[editIndex - 1] : numericIndex > 0 ? segments[numericIndex - 1] : segments[segments.length - 1];
 
-  return moduleSegment && !isNumericString(moduleSegment)
-    ? formatEntityType(moduleSegment)
-    : undefined;
+  return moduleSegment && !isNumericString(moduleSegment) ? formatEntityType(moduleSegment) : undefined;
 }
 
 function getPathRecordId(value: unknown) {

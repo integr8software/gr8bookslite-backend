@@ -22,8 +22,7 @@ describe('AiAssistantService', () => {
     const response = await createService().chat(user, { message: 'hello' });
 
     expect(response).toEqual({
-      message:
-        'Hello. I am Neo AI. I can explain Gr8Books Neo modules or open the right module page when you need it.',
+      message: 'Hello. I am Neo AI. I can explain Gr8Books Neo modules or open the right module page when you need it.',
       action: null,
     });
   });
@@ -141,8 +140,7 @@ describe('AiAssistantService', () => {
     );
 
     expect(response).toEqual({
-      message:
-        'You can view Term Management, but you do not have permission to edit terms.',
+      message: 'You can view Term Management, but you do not have permission to edit terms.',
       action: null,
     });
   });
@@ -152,9 +150,7 @@ describe('AiAssistantService', () => {
       size: 4 * 1024 * 1024 + 1,
     });
 
-    await expect(
-      createService('gemini-api-key').transcribe(user, file),
-    ).rejects.toThrow('Audio recording is too large.');
+    await expect(createService('gemini-api-key').transcribe(user, file)).rejects.toThrow('Audio recording is too large.');
   });
 
   it('limits concurrent voice transcriptions', async () => {
@@ -167,13 +163,9 @@ describe('AiAssistantService', () => {
     );
 
     const service = createService('gemini-api-key');
-    const requests = Array.from({ length: 4 }, () =>
-      service.transcribe(user, createAudioFile()),
-    );
+    const requests = Array.from({ length: 4 }, () => service.transcribe(user, createAudioFile()));
 
-    await expect(service.transcribe(user, createAudioFile())).rejects.toThrow(
-      'Neo AI voice transcription is busy. Please try again shortly.',
-    );
+    await expect(service.transcribe(user, createAudioFile())).rejects.toThrow('Neo AI voice transcription is busy. Please try again shortly.');
 
     const response = {
       ok: true,
@@ -201,9 +193,7 @@ describe('AiAssistantService', () => {
   });
 });
 
-function createAudioFile(
-  overrides: Partial<UploadedAiAssistantAudioFile> = {},
-): UploadedAiAssistantAudioFile {
+function createAudioFile(overrides: Partial<UploadedAiAssistantAudioFile> = {}): UploadedAiAssistantAudioFile {
   const buffer = Buffer.from('audio');
 
   return {
