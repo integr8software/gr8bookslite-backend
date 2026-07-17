@@ -24,6 +24,7 @@ import { BranchUsersModule } from './modules/company/branch-users/branch-users.m
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { TermMaintenanceModule } from './modules/maintenance/term-maintenance/term-maintenance.module';
+import { UnitOfMeasurementModule } from './modules/maintenance/unit-of-measurement/unit-of-measurement.module';
 import { PaymentTypeMaintenanceModule } from './modules/maintenance/payment-type-maintenance/payment-type-maintenance.module';
 import { DiscountMaintenanceModule } from './modules/maintenance/discount-maintenance/discount-maintenance.module';
 import { PartyMaintenanceModule } from './modules/maintenance/party-maintenance/party-maintenance.module';
@@ -75,6 +76,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     FormSignatoriesModule,
     ChartOfAccountsModule,
     TermMaintenanceModule,
+    UnitOfMeasurementModule,
     PaymentTypeMaintenanceModule,
     DiscountMaintenanceModule,
     PartyMaintenanceModule,

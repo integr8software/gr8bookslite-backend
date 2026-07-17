@@ -34,6 +34,10 @@ import {
   TermMaintenanceSeedRecords,
   seedCompanyTermMaintenanceDefaults,
 } from '../../src/modules/maintenance/term-maintenance/seed/term-maintenance.seed';
+import {
+  UnitOfMeasurementSeedRecords,
+  seedCompanyUnitOfMeasurementDefaults,
+} from '../../src/modules/maintenance/unit-of-measurement/seed/unit-of-measurement.seed';
 import type {
   CompanyBootstrapBackup,
   CompanyBootstrapHandler,
@@ -501,6 +505,46 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     backup: (companyId, tx) => backupCounts('terms', companyId, tx),
     async apply(companyId, tx) {
       await seedCompanyTermMaintenanceDefaults(tx, companyId);
+    },
+  },
+  {
+    key: 'unit-of-measurements',
+    label: 'Unit of measurement defaults bootstrap',
+    async inspect(companyId, tx) {
+      const existingUnits = await tx.unitOfMeasurement.findMany({
+        where: {
+          companyId,
+          symbol: {
+            in: UnitOfMeasurementSeedRecords.map((unit) => unit.symbol),
+          },
+        },
+        select: { symbol: true },
+      });
+      const existingSymbols = new Set(existingUnits.map((unit) => unit.symbol));
+      const missingUnits = UnitOfMeasurementSeedRecords.filter(
+        (unit) => !existingSymbols.has(unit.symbol),
+      );
+
+      return missingUnits.length === 0
+        ? ok('Unit of measurement defaults exist.', {
+            count: existingUnits.length,
+          })
+        : missing(
+            'Default units of measurement are incomplete.',
+            [
+              `Seed ${missingUnits.length} missing default unit of measurement records.`,
+            ],
+            {
+              count: existingUnits.length,
+              expectedCount: UnitOfMeasurementSeedRecords.length,
+              missingSymbols: missingUnits.map((unit) => unit.symbol),
+            },
+          );
+    },
+    backup: (companyId, tx) =>
+      backupCounts('unit-of-measurements', companyId, tx),
+    async apply(companyId, tx) {
+      await seedCompanyUnitOfMeasurementDefaults(tx, companyId);
     },
   },
   {

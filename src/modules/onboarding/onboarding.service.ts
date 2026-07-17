@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
 import { seedCompanyTermMaintenanceDefaults } from '../maintenance/term-maintenance/seed/term-maintenance.seed';
+import { seedCompanyUnitOfMeasurementDefaults } from '../maintenance/unit-of-measurement/seed/unit-of-measurement.seed';
 import { seedCompanyPaymentTypeMaintenanceDefaults } from '../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
 import { seedCompanyChartAccountDefaults } from '../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
 import { seedCompanyDefaultAccountDefaults } from '../maintenance/default-account/seed/default-accounts.seed';
@@ -451,6 +452,7 @@ export class OnboardingService {
       });
 
       await seedCompanyTermMaintenanceDefaults(tx, provisionedCompany.id);
+      await seedCompanyUnitOfMeasurementDefaults(tx, provisionedCompany.id);
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyChartAccountDefaults(tx, provisionedCompany.id);
       await seedCompanyTaxMaintenanceDefaults(tx, provisionedCompany.id);
