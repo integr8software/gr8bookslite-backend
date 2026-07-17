@@ -105,7 +105,10 @@ export class ModuleSystemsService {
       include: moduleSystemInclude,
     });
 
-    return { message: 'System status updated.', system: this.mapSystem(system) };
+    return {
+      message: 'System status updated.',
+      system: this.mapSystem(system),
+    };
   }
 
   async saveModules(systemId: number, dto: SaveModuleSystemModulesDto) {

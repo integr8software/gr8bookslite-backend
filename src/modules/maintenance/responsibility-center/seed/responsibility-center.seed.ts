@@ -1,7 +1,15 @@
 import { Prisma, ResponsibilityCenterCategory, ResponsibilityCenterFinancialType, ResponsibilityCenterStatus } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
+import {
+  getClassificationDefaultByFinancialType,
+  ResponsibilityCenterClassificationDefaults,
+  ResponsibilityCenterTypeNameByCategory,
+  ResponsibilityCenterTypePrefixByCategory,
+} from '../utils/responsibility-center-defaults.util';
 
-type ResponsibilityCenterWriteClient = Pick<PrismaService, 'responsibilityCenter'> | Prisma.TransactionClient;
+type ResponsibilityCenterWriteClient =
+  | Pick<PrismaService, 'responsibilityCenter' | 'responsibilityCenterClassification' | 'responsibilityCenterType'>
+  | Prisma.TransactionClient;
 
 export const ResponsibilityCenterSeedRecords = [
   {
@@ -115,6 +123,7 @@ export const ResponsibilityCenterSeedRecords = [
 ] as const;
 
 export async function seedCompanyResponsibilityCenterDefaults(tx: ResponsibilityCenterWriteClient, companyId: number) {
+  const typeIdByRecordKey = await seedResponsibilityCenterTypes(tx);
   const existingCenters = await tx.responsibilityCenter.findMany({
     where: {
       companyId,
@@ -139,9 +148,16 @@ export async function seedCompanyResponsibilityCenterDefaults(tx: Responsibility
     }
 
     const parentId = record.parentCode ? (centerIdByCode.get(record.parentCode) ?? null) : null;
+    const typeId = typeIdByRecordKey.get(createTypeRecordKey(record));
+
+    if (!typeId) {
+      continue;
+    }
+
     const center = await tx.responsibilityCenter.create({
       data: {
         companyId,
+        typeId,
         code: record.code,
         name: record.name,
         category: record.category,
@@ -160,4 +176,80 @@ export async function seedCompanyResponsibilityCenterDefaults(tx: Responsibility
   }
 
   return createdCount;
+}
+
+async function seedResponsibilityCenterTypes(tx: ResponsibilityCenterWriteClient) {
+  const classificationIdByFinancialType = new Map<ResponsibilityCenterFinancialType, bigint>();
+
+  for (const classification of ResponsibilityCenterClassificationDefaults) {
+    const savedClassification = await tx.responsibilityCenterClassification.upsert({
+      where: { code: classification.code },
+      update: {
+        name: classification.name,
+        trackingBehavior: classification.trackingBehavior,
+        isSystem: true,
+        status: ResponsibilityCenterStatus.ACTIVE,
+      },
+      create: {
+        code: classification.code,
+        name: classification.name,
+        trackingBehavior: classification.trackingBehavior,
+        isSystem: true,
+        status: ResponsibilityCenterStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
+
+    classificationIdByFinancialType.set(classification.financialType, savedClassification.id);
+  }
+
+  const typeIdByRecordKey = new Map<string, bigint>();
+  const seedTypeKeys = new Set(ResponsibilityCenterSeedRecords.map((record) => createTypeRecordKey(record)));
+
+  for (const record of ResponsibilityCenterSeedRecords) {
+    const key = createTypeRecordKey(record);
+    if (!seedTypeKeys.has(key)) continue;
+    seedTypeKeys.delete(key);
+
+    const classificationDefault = getClassificationDefaultByFinancialType(record.financialType);
+    const classificationId = classificationIdByFinancialType.get(record.financialType);
+
+    if (!classificationDefault || !classificationId) {
+      continue;
+    }
+
+    const typeName = ResponsibilityCenterTypeNameByCategory[record.category];
+    const codePrefix = ResponsibilityCenterTypePrefixByCategory[record.category];
+    const type = await tx.responsibilityCenterType.upsert({
+      where: {
+        classificationId_name: {
+          classificationId,
+          name: typeName,
+        },
+      },
+      update: {
+        codePrefix,
+        description: `${typeName} responsibility center type.`,
+        status: ResponsibilityCenterStatus.ACTIVE,
+      },
+      create: {
+        classificationId,
+        name: typeName,
+        codePrefix,
+        description: `${typeName} responsibility center type.`,
+        sortOrder: 100,
+        isRequired: false,
+        status: ResponsibilityCenterStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
+
+    typeIdByRecordKey.set(key, type.id);
+  }
+
+  return typeIdByRecordKey;
+}
+
+function createTypeRecordKey(record: { category: ResponsibilityCenterCategory; financialType: ResponsibilityCenterFinancialType }) {
+  return `${record.financialType}:${record.category}`;
 }

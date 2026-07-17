@@ -4,21 +4,34 @@ import { ResponsibilityCenterCategory, ResponsibilityCenterFinancialType, Respon
 import { emptyStringToUndefined, normalizeCode, trimString } from '../../../../common/utils/dto-transform.util';
 
 export class CreateResponsibilityCenterDto {
+  @IsOptional()
+  @Transform(({ value }) => emptyStringToUndefined(value))
+  @IsString()
+  classificationId?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyStringToUndefined(value))
+  @IsString()
+  typeId?: string;
+
+  @IsOptional()
   @Transform(({ value }) => normalizeCode(value))
   @IsString()
   @MaxLength(50)
-  code!: string;
+  code?: string;
 
   @Transform(({ value }) => trimString(value))
   @IsString()
   @MaxLength(150)
   name!: string;
 
+  @IsOptional()
   @IsEnum(ResponsibilityCenterCategory)
-  category!: ResponsibilityCenterCategory;
+  category?: ResponsibilityCenterCategory;
 
+  @IsOptional()
   @IsEnum(ResponsibilityCenterFinancialType)
-  financialType!: ResponsibilityCenterFinancialType;
+  financialType?: ResponsibilityCenterFinancialType;
 
   @IsOptional()
   @Transform(({ value }) => trimString(value))

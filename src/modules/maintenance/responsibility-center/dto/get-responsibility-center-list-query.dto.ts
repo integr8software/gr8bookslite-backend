@@ -22,6 +22,14 @@ export class GetResponsibilityCenterListQueryDto {
   financialType?: ResponsibilityCenterFinancialType;
 
   @IsOptional()
+  @IsString()
+  classificationId?: string;
+
+  @IsOptional()
+  @IsString()
+  typeId?: string;
+
+  @IsOptional()
   @Transform(({ value }) => toOptionalInt(value))
   @IsInt()
   @Min(1)
