@@ -10,6 +10,7 @@ Available agent docs:
 - `@billing.agent.md`
 - `address-api.md`
 - `ARCHITECTURE_MODULARITY_GUIDE.md`
+- `BACKEND_INTEGRATION_GUIDE.md`
 
 Recommended ownership:
 
@@ -25,6 +26,8 @@ Recommended ownership:
   Documents reusable Philippine address reference tables, seed data, hierarchy routes, and autocomplete API behavior.
 - `ARCHITECTURE_MODULARITY_GUIDE.md`
   Covers backend/frontend folder placement, reusable utilities, mappers, types, strategies, loading boundaries, and anti-redundancy rules for agents.
+- `BACKEND_INTEGRATION_GUIDE.md`
+  Covers backend-to-frontend API integration contracts, DTOs, mappers, tenant-scoped query keys, seed/provision requirements, mock-data removal, and verification.
 
 Suggested next agent docs later:
 
