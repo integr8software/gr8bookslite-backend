@@ -49,12 +49,14 @@ Migration behavior:
    - `RC` Revenue Center
    - `PC` Profit Center
    - `IC` Investment Center
-4. Creates `responsibility_center_types`.
+4. Creates global/system `responsibility_center_types`.
 5. Adds `responsibility_centers.type_id`.
 6. Backfills `type_id` from existing `financial_type + category`.
 7. Makes `type_id` required.
 8. Adds indexes and foreign keys.
 9. Creates new `updated_at` columns without database defaults so Prisma `@updatedAt` remains the source of updates.
+
+Responsibility Center Types are intentionally global platform catalog records. They do not contain `company_id` because custom type maintenance is not part of this phase. Companies own Responsibility Center rows, while the available Classification and Type options come from the system catalog.
 
 ## Existing Data Migration Result
 
@@ -173,37 +175,44 @@ Backend:
 - `npm run db:generate:local`: passed
 - `npm run typecheck`: passed
 - `npm run build`: passed
-- `npm test -- responsibility-center --runInBand`: passed, 7 tests
-- `npm test -- --runInBand`: passed, 20 suites / 109 tests
+- `npm test -- responsibility-center --runInBand`: passed, 9 tests
+- `npm test -- --runInBand`: passed, 20 suites / 111 tests
 - `npm run db:migrate:local`: applied `20260716090000_refactor_responsibility_center_classification_types` locally before the migration was compressed. Local Prisma migration metadata must be repaired once because the temporary follow-up migration was removed.
 
 Frontend:
 
-- `npm run lint`: passed with 7 unrelated existing warnings in Party Management and shared payment type dialog.
-- `npm run build`: passed with network access enabled for Next.js Google Font fetching.
+- `npm run lint`: passed with 12 unrelated existing warnings in Party Management, Delivery Receipt/Sales/Service Invoice report previews, Billing/Service Invoice PDFs, and shared payment type dialog.
+- `npm run typecheck`: unavailable; the frontend package does not define a `typecheck` script.
+- `npm run build`: reached TypeScript after network access was enabled for Next.js Google Font fetching, then failed on an unrelated existing Sales Invoice type error:
+  `app/src/ui/modules/sales/sales-invoice/SalesInvoiceReportPreview.tsx` passes `onPrint` to `ReportPreviewDrawer`, but `ReportPreviewDrawerProps` does not define `onPrint`.
 
 ## Prisma Validation Result
 
 Prisma schema validation passed.
 
-Local migration execution started successfully and applied:
+Local migration execution started successfully and applied an earlier local version of:
 
 ```text
 20260716090000_refactor_responsibility_center_classification_types
 ```
 
-Before shared-dev deployment, repair local-only migration metadata if the temporary follow-up migration was already applied, then rerun locally:
+If a local database already applied the earlier company-scoped version of this migration, it may still have `responsibility_center_types.company_id`. In that case, checksum repair alone is not enough because the physical table shape differs from the final migration. Use one of these local-only paths:
+
+1. Preferred for disposable local databases: reset/recreate local data and rerun migrations.
+2. If local data must be preserved: run a one-off local schema repair that deduplicates type rows, rewires `responsibility_centers.type_id`, drops `responsibility_center_types.company_id`, creates the final global unique indexes, then updates the migration checksum.
+
+Only after the local physical schema matches the final migration should local migration metadata be repaired:
 
 ```sql
 DELETE FROM "_prisma_migrations"
 WHERE migration_name = '20260716062638_align_responsibility_center_updated_at_d_efaults';
 
 UPDATE "_prisma_migrations"
-SET checksum = 'a936b4ed9965bd33ca8e75cd5ddda0ea3acb4dc18defd2dc611e64783f082b86'
+SET checksum = '8f9e0a8f2734f2d3c253aedb46b7705ba5d72ac65f8968e6d175e5d229495a90'
 WHERE migration_name = '20260716090000_refactor_responsibility_center_classification_types';
 ```
 
-This repair is only needed for local databases that already applied the temporary follow-up migration before the migration files were compressed.
+This repair is only needed for local databases that already applied an earlier local version of this migration or the temporary follow-up migration before the migration files were compressed. Fresh local databases, teammate databases that have not applied the Responsibility Center migration yet, shared-dev, staging, and production should use normal Prisma migration commands instead of manually editing `_prisma_migrations`.
 
 ```bash
 npm run db:migrate:local
@@ -218,8 +227,8 @@ Shared-dev deployment should wait until local migration history is clean.
 ## Known Limitations
 
 - `category` and `financialType` remain on `ResponsibilityCenter` for compatibility.
-- Custom Responsibility Center Type maintenance is not enabled in this phase. The backend now rejects custom type names that cannot map to a legacy compatibility category instead of silently storing them as `TEAM`.
-- The migration creates responsibility center types from existing responsibility center rows. Existing companies with no responsibility centers must receive their default type rows through onboarding or the company bootstrap repair path before users create centers.
+- Custom Responsibility Center Type maintenance is not enabled in this phase. Responsibility Center Types are global/system catalog records seeded by migration and seed helpers.
+- Company bootstrap creates company-owned Responsibility Center rows only. It does not create company-specific Responsibility Center Type rows.
 - Full multi-dimensional transaction assignment tables are not part of this phase.
 - Frontend unit tests should be added after the frontend repository has an agreed test runner.
 

@@ -48,7 +48,6 @@ ON CONFLICT ("code") DO UPDATE SET
 
 CREATE TABLE IF NOT EXISTS "responsibility_center_types" (
   "id" BIGSERIAL PRIMARY KEY,
-  "company_id" INTEGER NOT NULL,
   "classification_id" BIGINT NOT NULL,
   "name" VARCHAR(120) NOT NULL,
   "code_prefix" VARCHAR(20) NOT NULL,
@@ -60,20 +59,18 @@ CREATE TABLE IF NOT EXISTS "responsibility_center_types" (
   "updated_by_user_id" INTEGER,
   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP(3) NOT NULL,
-  CONSTRAINT "responsibility_center_types_company_id_fkey"
-    FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT "responsibility_center_types_classification_id_fkey"
     FOREIGN KEY ("classification_id") REFERENCES "responsibility_center_classifications"("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "responsibility_center_types_company_classification_name_key"
-  ON "responsibility_center_types"("company_id", "classification_id", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "responsibility_center_types_classification_name_key"
+  ON "responsibility_center_types"("classification_id", "name");
 
-CREATE UNIQUE INDEX IF NOT EXISTS "responsibility_center_types_company_classification_prefix_key"
-  ON "responsibility_center_types"("company_id", "classification_id", "code_prefix");
+CREATE UNIQUE INDEX IF NOT EXISTS "responsibility_center_types_classification_prefix_key"
+  ON "responsibility_center_types"("classification_id", "code_prefix");
 
-CREATE INDEX IF NOT EXISTS "responsibility_center_types_company_status_idx"
-  ON "responsibility_center_types"("company_id", "status");
+CREATE INDEX IF NOT EXISTS "responsibility_center_types_status_idx"
+  ON "responsibility_center_types"("status");
 
 CREATE INDEX IF NOT EXISTS "responsibility_center_types_classification_idx"
   ON "responsibility_center_types"("classification_id");
@@ -81,11 +78,22 @@ CREATE INDEX IF NOT EXISTS "responsibility_center_types_classification_idx"
 ALTER TABLE "responsibility_centers"
   ADD COLUMN IF NOT EXISTS "type_id" BIGINT;
 
-WITH existing_type_sources AS (
+WITH default_type_sources AS (
+  SELECT *
+  FROM (VALUES
+    ('IC', 'Corporate', 'CORP'),
+    ('CC', 'Department', 'DEPT'),
+    ('CC', 'Division', 'DIV'),
+    ('PC', 'Department', 'DEPT'),
+    ('PC', 'Branch', 'BR'),
+    ('CC', 'Warehouse', 'WHSE'),
+    ('PC', 'Business Unit', 'BU'),
+    ('RC', 'Sales Territory', 'ST'),
+    ('CC', 'Project', 'PROJ')
+  ) AS source(classification_code, type_name, code_prefix)
+),
+existing_type_sources AS (
   SELECT DISTINCT
-    rc."company_id",
-    rc."category",
-    rc."financial_type",
     CASE rc."financial_type"
       WHEN 'COST_CENTER' THEN 'CC'
       WHEN 'REVENUE_CENTER' THEN 'RC'
@@ -128,26 +136,31 @@ WITH existing_type_sources AS (
     END AS code_prefix
   FROM "responsibility_centers" rc
   WHERE rc."deleted_at" IS NULL
+),
+type_sources AS (
+  SELECT classification_code, type_name, code_prefix FROM default_type_sources
+  UNION
+  SELECT classification_code, type_name, code_prefix FROM existing_type_sources
 )
 INSERT INTO "responsibility_center_types"
-  ("company_id", "classification_id", "name", "code_prefix", "description", "sort_order", "is_required", "status", "updated_at")
+  ("classification_id", "name", "code_prefix", "description", "sort_order", "is_required", "status", "updated_at")
 SELECT
-  source."company_id",
   classification."id",
   source."type_name",
   source."code_prefix",
-  source."type_name" || ' responsibility center type migrated from existing responsibility centers.',
+  source."type_name" || ' responsibility center type.',
   100,
   false,
   'ACTIVE',
   CURRENT_TIMESTAMP
-FROM existing_type_sources source
+FROM type_sources source
 JOIN "responsibility_center_classifications" classification
   ON classification."code" = source."classification_code"
 WHERE source."type_name" IS NOT NULL
   AND source."code_prefix" IS NOT NULL
-ON CONFLICT ("company_id", "classification_id", "name") DO UPDATE SET
+ON CONFLICT ("classification_id", "name") DO UPDATE SET
   "code_prefix" = EXCLUDED."code_prefix",
+  "description" = EXCLUDED."description",
   "updated_at" = CURRENT_TIMESTAMP;
 
 UPDATE "responsibility_centers" rc
@@ -155,8 +168,7 @@ SET "type_id" = rct."id"
 FROM "responsibility_center_classifications" classification
 JOIN "responsibility_center_types" rct
   ON rct."classification_id" = classification."id"
-WHERE rct."company_id" = rc."company_id"
-  AND classification."code" = CASE rc."financial_type"
+WHERE classification."code" = CASE rc."financial_type"
     WHEN 'COST_CENTER' THEN 'CC'
     WHEN 'REVENUE_CENTER' THEN 'RC'
     WHEN 'PROFIT_CENTER' THEN 'PC'

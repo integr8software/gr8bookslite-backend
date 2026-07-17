@@ -117,7 +117,6 @@ model Company {
   terms                  Term[]
   paymentTypes           PaymentType[]
   discounts              Discount[]
-  responsibilityCenterTypes ResponsibilityCenterType[]
   responsibilityCenters  ResponsibilityCenter[]
   parties                Party[]
   taxMaintenance         TaxMaintenance[]
@@ -831,7 +830,6 @@ model ResponsibilityCenterClassification {
 
 model ResponsibilityCenterType {
   id               BigInt                             @id @default(autoincrement())
-  companyId        Int                                @map("company_id")
   classificationId BigInt                             @map("classification_id")
   name             String                             @db.VarChar(120)
   codePrefix       String                             @map("code_prefix") @db.VarChar(20)
@@ -843,13 +841,12 @@ model ResponsibilityCenterType {
   updatedByUserId  Int?                               @map("updated_by_user_id")
   createdAt        DateTime                           @default(now()) @map("created_at")
   updatedAt        DateTime                           @updatedAt @map("updated_at")
-  company          Company                            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   classification   ResponsibilityCenterClassification @relation(fields: [classificationId], references: [id], onDelete: Restrict)
   centers          ResponsibilityCenter[]
 
-  @@unique([companyId, classificationId, name], map: "responsibility_center_types_company_classification_name_key")
-  @@unique([companyId, classificationId, codePrefix], map: "responsibility_center_types_company_classification_prefix_key")
-  @@index([companyId, status], map: "responsibility_center_types_company_status_idx")
+  @@unique([classificationId, name], map: "responsibility_center_types_classification_name_key")
+  @@unique([classificationId, codePrefix], map: "responsibility_center_types_classification_prefix_key")
+  @@index([status], map: "responsibility_center_types_status_idx")
   @@index([classificationId], map: "responsibility_center_types_classification_idx")
   @@map("responsibility_center_types")
 }

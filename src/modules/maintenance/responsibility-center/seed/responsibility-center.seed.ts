@@ -141,7 +141,7 @@ export async function seedCompanyResponsibilityCenterDefaults(
   tx: ResponsibilityCenterWriteClient,
   companyId: number,
 ) {
-  const typeIdByRecordKey = await seedResponsibilityCenterTypes(tx, companyId);
+  const typeIdByRecordKey = await seedResponsibilityCenterTypes(tx);
   const existingCenters = await tx.responsibilityCenter.findMany({
     where: {
       companyId,
@@ -202,7 +202,6 @@ export async function seedCompanyResponsibilityCenterDefaults(
 
 async function seedResponsibilityCenterTypes(
   tx: ResponsibilityCenterWriteClient,
-  companyId: number,
 ) {
   const classificationIdByFinancialType = new Map<
     ResponsibilityCenterFinancialType,
@@ -263,8 +262,7 @@ async function seedResponsibilityCenterTypes(
       ResponsibilityCenterTypePrefixByCategory[record.category];
     const type = await tx.responsibilityCenterType.upsert({
       where: {
-        companyId_classificationId_name: {
-          companyId,
+        classificationId_name: {
           classificationId,
           name: typeName,
         },
@@ -275,7 +273,6 @@ async function seedResponsibilityCenterTypes(
         status: ResponsibilityCenterStatus.ACTIVE,
       },
       create: {
-        companyId,
         classificationId,
         name: typeName,
         codePrefix,

@@ -75,7 +75,6 @@ export class ResponsibilityCenterService {
       : undefined;
     const types = await this.prisma.responsibilityCenterType.findMany({
       where: {
-        companyId,
         status: ResponsibilityCenterStatus.ACTIVE,
         ...(parsedClassificationId
           ? { classificationId: parsedClassificationId }
@@ -101,7 +100,6 @@ export class ResponsibilityCenterService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     const type = await this.findActiveTypeOrThrow(
-      companyId,
       parsePositiveBigIntId(typeId, 'typeId'),
     );
 
@@ -691,7 +689,6 @@ export class ResponsibilityCenterService {
   ) {
     if (dto.typeId) {
       const type = await this.findTypeOrThrow(
-        companyId,
         parsePositiveBigIntId(dto.typeId, 'typeId'),
         requireActive,
       );
@@ -716,7 +713,6 @@ export class ResponsibilityCenterService {
     const typeName = ResponsibilityCenterTypeNameByCategory[dto.category];
     const type = await this.prisma.responsibilityCenterType.findFirst({
       where: {
-        companyId,
         name: typeName,
         ...(requireActive ? { status: ResponsibilityCenterStatus.ACTIVE } : {}),
         classification: {
@@ -731,26 +727,24 @@ export class ResponsibilityCenterService {
 
     if (!type) {
       throw new BadRequestException(
-        'Selected responsibility center type is not available for this company.',
+        'Selected responsibility center type is not available.',
       );
     }
 
     return type;
   }
 
-  private async findActiveTypeOrThrow(companyId: number, typeId: bigint) {
-    return this.findTypeOrThrow(companyId, typeId, true);
+  private async findActiveTypeOrThrow(typeId: bigint) {
+    return this.findTypeOrThrow(typeId, true);
   }
 
   private async findTypeOrThrow(
-    companyId: number,
     typeId: bigint,
     requireActive: boolean,
   ) {
     const type = await this.prisma.responsibilityCenterType.findFirst({
       where: {
         id: typeId,
-        companyId,
         ...(requireActive ? { status: ResponsibilityCenterStatus.ACTIVE } : {}),
         classification: {
           ...(requireActive
@@ -915,7 +909,6 @@ export class ResponsibilityCenterService {
   ) {
     return {
       id: type.id.toString(),
-      companyId: type.companyId,
       classificationId: type.classificationId.toString(),
       classificationCode: type.classification.code,
       classificationName: type.classification.name,
