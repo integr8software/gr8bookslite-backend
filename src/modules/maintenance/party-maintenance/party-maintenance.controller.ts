@@ -30,6 +30,12 @@ export class PartyMaintenanceController {
     return this.partyMaintenanceService.findAccountingOptions(user);
   }
 
+  @Get('options/:partyType')
+  @ApiOkResponse({ description: 'Party options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Param('partyType') partyType: string) {
+    return this.partyMaintenanceService.findOptions(user, partyType);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Party retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {

@@ -18,6 +18,10 @@ export const SystemAccountGroupTags = {
   discountManagementSalesParent: 'Discount Management Sales Parent',
   purchaseDiscount: 'Purchase Discount',
   discountManagementPurchaseParent: 'Discount Management Purchase Parent',
+  itemCategoryInventoryParent: 'Item Category Inventory Parent',
+  itemCategorySalesParent: 'Item Category Sales Parent',
+  itemCategoryCostOfSalesParent: 'Item Category Cost of Sales Parent',
+  itemCategoryExpenseParent: 'Item Category Expense Parent',
   partyAccountsReceivableGroup: 'Party Management Accounts Receivable Group',
   partyAccountsPayableGroup: 'Party Management Accounts Payable Group',
   partyOtherCurrentLiabilitiesGroup: 'Party Management Other Current Liabilities Group',
@@ -90,6 +94,32 @@ export const SystemAccountGroups = {
       requiredLevel: ChartAccountLevel.SUB3,
       accountType: ChartAccountType.EXPENSE,
       accountNature: AccountNature.CREDIT,
+    },
+  },
+  itemCategory: {
+    inventoryParent: {
+      accountGroupIncludes: SystemAccountGroupTags.itemCategoryInventoryParent,
+      requiredLevel: ChartAccountLevel.SUB3,
+      accountType: ChartAccountType.ASSET,
+      accountNature: AccountNature.DEBIT,
+    },
+    salesParent: {
+      accountGroupIncludes: SystemAccountGroupTags.itemCategorySalesParent,
+      requiredLevel: ChartAccountLevel.SUB2,
+      accountType: ChartAccountType.REVENUE,
+      accountNature: AccountNature.CREDIT,
+    },
+    costOfSalesParent: {
+      accountGroupIncludes: SystemAccountGroupTags.itemCategoryCostOfSalesParent,
+      requiredLevel: ChartAccountLevel.SUB3,
+      accountType: ChartAccountType.REVENUE,
+      accountNature: AccountNature.CREDIT,
+    },
+    expenseParent: {
+      accountGroupIncludes: SystemAccountGroupTags.itemCategoryExpenseParent,
+      requiredLevel: ChartAccountLevel.SUB1,
+      accountType: ChartAccountType.EXPENSE,
+      accountNature: AccountNature.DEBIT,
     },
   },
 } as const;

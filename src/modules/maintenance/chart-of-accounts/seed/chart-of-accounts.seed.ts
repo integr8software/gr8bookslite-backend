@@ -179,6 +179,22 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
     return [SystemAccountGroupTags.purchaseDiscount, SystemAccountGroupTags.discountManagementPurchaseParent];
   }
 
+  if (moduleCode === 'IC' && accountRole === 'INVENTORY_PARENT') {
+    return [SystemAccountGroupTags.itemCategoryInventoryParent];
+  }
+
+  if (moduleCode === 'IC' && accountRole === 'SALES_PARENT') {
+    return [SystemAccountGroupTags.revenue, SystemAccountGroupTags.itemCategorySalesParent];
+  }
+
+  if (moduleCode === 'IC' && accountRole === 'COST_OF_SALES_PARENT') {
+    return [SystemAccountGroupTags.itemCategoryCostOfSalesParent];
+  }
+
+  if (moduleCode === 'IC' && accountRole === 'EXPENSE_PARENT') {
+    return [SystemAccountGroupTags.expenses, SystemAccountGroupTags.itemCategoryExpenseParent];
+  }
+
   if (moduleCode === 'PM' && accountRole === 'ACCOUNTS_RECEIVABLE_GROUP') {
     return [SystemAccountGroupTags.partyAccountsReceivableGroup];
   }

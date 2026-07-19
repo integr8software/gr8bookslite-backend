@@ -104,6 +104,52 @@ export class PartyMaintenanceService {
     return buildPartyAccountingAccountOptions(accounts);
   }
 
+  async findOptions(user: AuthUser, partyType: string) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const normalizedPartyType = this.parsePartyType(partyType);
+
+    const parties = await this.prisma.party.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: PartyStatus.ACTIVE,
+        partyTypes: {
+          has: normalizedPartyType,
+        },
+      },
+      orderBy: [{ partyName: 'asc' }, { lastName: 'asc' }, { firstName: 'asc' }, { partyCodeNo: 'asc' }],
+      select: {
+        id: true,
+        partyCodeNo: true,
+        classification: true,
+        partyTypes: true,
+        partyName: true,
+        tradeName: true,
+        firstName: true,
+        middleName: true,
+        lastName: true,
+        suffixName: true,
+        email: true,
+        contactNo: true,
+        status: true,
+      },
+    });
+
+    return {
+      parties: parties.map((party) => ({
+        id: party.id.toString(),
+        partyCodeNo: party.partyCodeNo,
+        classification: party.classification,
+        partyTypes: party.partyTypes,
+        name: this.getPartyOptionName(party),
+        email: party.email ?? '',
+        contactNo: party.contactNo ?? '',
+        status: party.status,
+      })),
+    };
+  }
+
   async create(user: AuthUser, dto: CreatePartyDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
@@ -332,6 +378,37 @@ export class PartyMaintenanceService {
           }
         : {}),
     };
+  }
+
+  private parsePartyType(value: string) {
+    const normalizedValue = value.trim().toUpperCase();
+
+    if (normalizedValue in PartyType) {
+      return PartyType[normalizedValue as keyof typeof PartyType];
+    }
+
+    throw new BadRequestException('Choose a valid party type.');
+  }
+
+  private getPartyOptionName(party: {
+    classification: PartyClassification;
+    firstName: string | null;
+    lastName: string | null;
+    middleName: string | null;
+    partyName: string | null;
+    suffixName: string | null;
+    tradeName: string | null;
+  }) {
+    if (party.classification === PartyClassification.NON_INDIVIDUAL) {
+      return party.tradeName?.trim() || party.partyName?.trim() || 'Unnamed Party';
+    }
+
+    const fullName = [party.firstName, party.middleName, party.lastName, party.suffixName]
+      .map((namePart) => namePart?.trim())
+      .filter(Boolean)
+      .join(' ');
+
+    return fullName || party.partyName?.trim() || 'Unnamed Party';
   }
 
   private buildOrderBy(query: GetPartyListQueryDto): Prisma.PartyOrderByWithRelationInput[] {
