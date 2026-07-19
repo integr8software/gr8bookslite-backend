@@ -165,7 +165,7 @@ export const AccountingAndInventorySidebarTemplate = [
       link('item-management-items', 'I', 'package'),
       link('item-management-item-bundles', 'IB', 'packageCheck'),
       link('item-management-item-category', 'IC', 'tags'),
-      link('item-management-item-attributes', 'IA2', 'clipboard'),
+      link('item-management-item-attributes', 'IA', 'clipboard'),
       link('item-management-unit-of-measurement', 'UOM', 'ruler'),
       link('item-management-item-promotions', 'IPR', 'promotion'),
       link('item-management-price-lists', 'PLS', 'tags'),
