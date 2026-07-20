@@ -36,6 +36,7 @@ import { ResponsibilityCenterModule } from './modules/maintenance/responsibility
 import { TaxMaintenanceModule } from './modules/maintenance/tax-maintenance/tax-maintenance.module';
 import { WarehouseMaintenanceModule } from './modules/maintenance/warehouse-maintenance/warehouse-maintenance.module';
 import { WarehouseAccessModule } from './modules/maintenance/warehouse-access/warehouse-access.module';
+import { WarehouseStorageModule } from './modules/maintenance/warehouse-storage/warehouse-storage.module';
 import { validateEnvironment } from './config/environment';
 import { ApprovalManagementModule } from './modules/system-administration/approval-management/approval-management.module';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
@@ -92,6 +93,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     TaxMaintenanceModule,
     WarehouseMaintenanceModule,
     WarehouseAccessModule,
+    WarehouseStorageModule,
     ApprovalManagementModule,
     TransactionNumberSequencesModule,
     UserSidebarModule,
