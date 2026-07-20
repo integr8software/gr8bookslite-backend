@@ -102,7 +102,6 @@ export class WarehouseMaintenanceService {
         const code = await this.resolveWarehouseCodeForCreate(tx, {
           branchUnitId: await this.resolveNumberingBranchUnitId(tx, companyId, branchUnitIds),
           companyId,
-          name,
           requestedCode: dto.code,
         });
         const created = await tx.warehouse.create({
@@ -376,44 +375,21 @@ export class WarehouseMaintenanceService {
     {
       branchUnitId,
       companyId,
-      name,
       requestedCode,
     }: {
       branchUnitId: number;
       companyId: number;
-      name: string;
       requestedCode?: string;
     },
-  ) {
+  ): Promise<string> {
     const sequence = await findTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
       moduleCode: WarehouseMaintenanceModuleCode,
     });
 
-    if (sequence?.inputMode === TransactionNumberInputMode.AUTO) {
-      const generated = await generateTransactionNumberForCompanyBranch(tx, {
-        branchUnitId,
-        companyId,
-        moduleCode: WarehouseMaintenanceModuleCode,
-        isIssued: (transactionNumber) =>
-          tx.warehouse
-            .findFirst({
-              where: {
-                companyId,
-                deletedAt: null,
-                code: { equals: transactionNumber, mode: 'insensitive' },
-              },
-              select: { id: true },
-            })
-            .then(Boolean),
-      });
-
-      return generated.transactionNumber;
-    }
-
     if (sequence?.inputMode === TransactionNumberInputMode.MANUAL) {
-      const normalizedCode = requestedCode?.trim();
+      const normalizedCode = requestedCode?.trim() ?? '';
 
       if (!normalizedCode) {
         throw new BadRequestException('Warehouse code is required for manual numbering.');
@@ -423,7 +399,24 @@ export class WarehouseMaintenanceService {
       return normalizedCode;
     }
 
-    return this.createAvailableWarehouseCode(companyId, requestedCode?.trim() || createWarehouseCode(name));
+    const generated = await generateTransactionNumberForCompanyBranch(tx, {
+      branchUnitId,
+      createDefaultIfMissing: true,
+      companyId,
+      moduleCode: WarehouseMaintenanceModuleCode,
+      isIssued: (transactionNumber) =>
+        tx.warehouse
+          .findFirst({
+            where: {
+              companyId,
+              code: { equals: transactionNumber, mode: 'insensitive' },
+            },
+            select: { id: true },
+          })
+          .then(Boolean),
+    });
+
+    return generated.transactionNumber;
   }
 
   private async ensureWarehouseCodeCanBeUpdated(companyId: number, warehouse: WarehouseMaintenanceWithBranches, requestedCode: string, warehouseId: bigint) {
@@ -606,14 +599,4 @@ export class WarehouseMaintenanceService {
       throw new ConflictException('A warehouse with this code or name already exists.');
     }
   }
-}
-
-function createWarehouseCode(name: string) {
-  const normalizedName = name
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  return normalizedName ? `WH-${normalizedName.slice(0, 70)}` : `WH-${Date.now()}`;
 }

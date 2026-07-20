@@ -161,7 +161,7 @@ export class PartyMaintenanceService {
       moduleCode: PartyTransactionModuleCode,
     });
     const normalized = await this.normalizeCreateDto(companyId, dto, {
-      requirePartyCode: !sequence || sequence.inputMode === TransactionNumberInputMode.MANUAL,
+      requirePartyCode: sequence?.inputMode === TransactionNumberInputMode.MANUAL,
     });
 
     try {
@@ -170,7 +170,7 @@ export class PartyMaintenanceService {
           branchUnitId,
           companyId,
           dto: normalized,
-          isAuto: sequence?.inputMode === TransactionNumberInputMode.AUTO,
+          isAuto: sequence?.inputMode !== TransactionNumberInputMode.MANUAL,
         });
 
         const input = { ...normalized, partyCodeNo };
@@ -256,7 +256,7 @@ export class PartyMaintenanceService {
       companyId,
       moduleCode: PartyTransactionModuleCode,
     });
-    const isManual = !sequence || sequence.inputMode === TransactionNumberInputMode.MANUAL;
+    const isManual = sequence?.inputMode === TransactionNumberInputMode.MANUAL;
     const parties = await Promise.all(
       dto.parties.map((party) =>
         this.normalizeCreateDto(companyId, party, {
@@ -286,6 +286,7 @@ export class PartyMaintenanceService {
           : (
               await generateTransactionNumberForCompanyBranch(tx, {
                 branchUnitId,
+                createDefaultIfMissing: true,
                 companyId,
                 moduleCode: PartyTransactionModuleCode,
                 isIssued: (transactionNumber) => this.isPartyCodeIssued(tx, companyId, transactionNumber),
@@ -892,6 +893,7 @@ export class PartyMaintenanceService {
     return (
       await generateTransactionNumberForCompanyBranch(tx, {
         branchUnitId,
+        createDefaultIfMissing: true,
         companyId,
         moduleCode: PartyTransactionModuleCode,
         isIssued: (transactionNumber) => this.isPartyCodeIssued(tx, companyId, transactionNumber),

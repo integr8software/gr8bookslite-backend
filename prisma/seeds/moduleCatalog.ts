@@ -90,7 +90,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     code: 'WM',
     name: 'Warehouse',
     icon: 'warehouse',
-    type: Maintenance,
+    type: MaintenanceRegistry,
   },
   {
     code: 'WA',
