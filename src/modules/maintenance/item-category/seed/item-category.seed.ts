@@ -313,7 +313,7 @@ async function upsertSeedCategory(
       parentId,
       code,
       name: record.name,
-      description: `Product category for ${record.name}.`,
+      description: '',
       accountingSetupMode: parentId === null ? ItemCategoryAccountingSetupMode.AUTO_CREATE : ItemCategoryAccountingSetupMode.INHERIT,
       ...accountIds,
       allowSubCategory: true,

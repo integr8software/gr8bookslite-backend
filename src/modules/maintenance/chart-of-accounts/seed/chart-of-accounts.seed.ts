@@ -2,9 +2,29 @@ import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType,
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { StandardDefaultChartAccounts } from './chart-of-accounts-defaults.seed';
 import { StandardDefaultAccountMappings } from './chart-of-accounts-system-groups.seed';
-import { mergeAccountGroupTags, SystemAccountGroupTags } from '../utils/system-account-groups.util';
+import { mergeAccountGroupTags, normalizeAccountGroupTags, SystemAccountGroupTags } from '../utils/system-account-groups.util';
 
 const CashInBankSpecificPrefix = 'Cash in Bank - ';
+const ItemCategoryParentAccountTags = [
+  SystemAccountGroupTags.itemCategoryInventoryParent,
+  SystemAccountGroupTags.itemCategorySalesParent,
+  SystemAccountGroupTags.itemCategoryCostOfSalesParent,
+  SystemAccountGroupTags.itemCategoryExpenseParent,
+] as const;
+
+const ItemCategoryParentAccountCodeCorrections = new Map<
+  string,
+  {
+    accountCode: string;
+    parentAccountCode: string;
+  }
+>([
+  ['1010105100', { accountCode: '1010151000', parentAccountCode: '1010100000' }],
+  ['4010002000', { accountCode: '4010200000', parentAccountCode: '4010000000' }],
+  ['5000001100', { accountCode: '5000011000', parentAccountCode: '5000000000' }],
+  ['6000001000', { accountCode: '6040000000', parentAccountCode: '6000000000' }],
+]);
+const LegacyItemCategoryParentAccountCodes = [...ItemCategoryParentAccountCodeCorrections.keys()];
 
 type StandardDefaultChartAccountSeed = {
   parentAccountCode?: string | null;
@@ -27,87 +47,144 @@ type StandardDefaultChartAccountSeed = {
 };
 
 const AccountGroupTagsByAccountCode = new Map<string, string[]>(
-  StandardDefaultAccountMappings.map((mapping) => [mapping.accountCode, getSystemTagsForMapping(mapping.moduleCode, mapping.accountRole)]),
+  StandardDefaultAccountMappings.map((mapping) => [
+    getCorrectedSeedAccountCode(mapping.accountCode),
+    getSystemTagsForMapping(mapping.moduleCode, mapping.accountRole),
+  ]),
 );
 
 export async function seedCompanyChartAccountDefaults(tx: Prisma.TransactionClient | PrismaService, companyId: number) {
   const chartAccountIdByCode = new Map<string, bigint>();
 
   for (const defaultAccount of StandardDefaultChartAccounts as readonly StandardDefaultChartAccountSeed[]) {
-    const parentAccountId = defaultAccount.parentAccountCode ? chartAccountIdByCode.get(defaultAccount.parentAccountCode) : null;
+    const seededAccount = getCorrectedSeedAccount(defaultAccount);
+    const parentAccountId = seededAccount.parentAccountCode ? chartAccountIdByCode.get(seededAccount.parentAccountCode) : null;
 
-    if (defaultAccount.parentAccountCode && !parentAccountId) {
-      throw new Error(`Default COA parent was not copied before child ${defaultAccount.accountCode}.`);
+    if (seededAccount.parentAccountCode && !parentAccountId) {
+      throw new Error(`Default COA parent was not copied before child ${seededAccount.accountCode}.`);
     }
 
-    const seededStatus = getSeededChartAccountStatus(defaultAccount);
+    const seededStatus = getSeededChartAccountStatus(seededAccount);
     const seededDeletedAt = seededStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
     const savedAccount = await tx.chartAccount.upsert({
       where: {
         companyId_accountCode: {
           companyId,
-          accountCode: defaultAccount.accountCode,
+          accountCode: seededAccount.accountCode,
         },
       },
       update: {
         parentAccountId: parentAccountId ?? null,
-        accountTitle: defaultAccount.accountTitle,
-        accountLevel: defaultAccount.accountLevel,
-        accountType: defaultAccount.accountType,
-        accountNature: defaultAccount.accountNature,
-        accountGroup: getSeededAccountGroupTags(defaultAccount),
-        statementSection: defaultAccount.statementSection,
-        reportAlias: defaultAccount.reportAlias,
-        description: defaultAccount.description ?? null,
-        isPostingAccount: getSeededIsPostingAccount(defaultAccount),
-        withSubsidiary: defaultAccount.withSubsidiary ?? false,
-        contraAccount: defaultAccount.contraAccount ?? false,
-        showTotal: defaultAccount.showTotal ?? false,
-        orderNo: defaultAccount.orderNo,
+        accountTitle: seededAccount.accountTitle,
+        accountLevel: seededAccount.accountLevel,
+        accountType: seededAccount.accountType,
+        accountNature: seededAccount.accountNature,
+        accountGroup: getSeededAccountGroupTags(seededAccount),
+        statementSection: seededAccount.statementSection,
+        reportAlias: seededAccount.reportAlias,
+        description: seededAccount.description ?? null,
+        isPostingAccount: getSeededIsPostingAccount(seededAccount),
+        withSubsidiary: seededAccount.withSubsidiary ?? false,
+        contraAccount: seededAccount.contraAccount ?? false,
+        showTotal: seededAccount.showTotal ?? false,
+        orderNo: seededAccount.orderNo,
         status: seededStatus,
-        currencyCode: defaultAccount.currencyCode ?? null,
+        currencyCode: seededAccount.currencyCode ?? null,
         deletedAt: seededDeletedAt,
       },
       create: {
         companyId,
         parentAccountId: parentAccountId ?? null,
-        accountCode: defaultAccount.accountCode,
-        accountTitle: defaultAccount.accountTitle,
-        accountLevel: defaultAccount.accountLevel,
-        accountType: defaultAccount.accountType,
-        accountNature: defaultAccount.accountNature,
-        accountGroup: getSeededAccountGroupTags(defaultAccount),
-        statementSection: defaultAccount.statementSection,
-        reportAlias: defaultAccount.reportAlias,
-        description: defaultAccount.description ?? null,
-        isPostingAccount: getSeededIsPostingAccount(defaultAccount),
-        withSubsidiary: defaultAccount.withSubsidiary ?? false,
-        contraAccount: defaultAccount.contraAccount ?? false,
-        showTotal: defaultAccount.showTotal ?? false,
-        orderNo: defaultAccount.orderNo,
+        accountCode: seededAccount.accountCode,
+        accountTitle: seededAccount.accountTitle,
+        accountLevel: seededAccount.accountLevel,
+        accountType: seededAccount.accountType,
+        accountNature: seededAccount.accountNature,
+        accountGroup: getSeededAccountGroupTags(seededAccount),
+        statementSection: seededAccount.statementSection,
+        reportAlias: seededAccount.reportAlias,
+        description: seededAccount.description ?? null,
+        isPostingAccount: getSeededIsPostingAccount(seededAccount),
+        withSubsidiary: seededAccount.withSubsidiary ?? false,
+        contraAccount: seededAccount.contraAccount ?? false,
+        showTotal: seededAccount.showTotal ?? false,
+        orderNo: seededAccount.orderNo,
         status: seededStatus,
-        currencyCode: defaultAccount.currencyCode ?? null,
+        currencyCode: seededAccount.currencyCode ?? null,
         deletedAt: seededDeletedAt,
       },
       select: { id: true },
     });
 
+    chartAccountIdByCode.set(seededAccount.accountCode, savedAccount.id);
     chartAccountIdByCode.set(defaultAccount.accountCode, savedAccount.id);
   }
 
   for (const mapping of StandardDefaultAccountMappings) {
-    const copiedAccountId = chartAccountIdByCode.get(mapping.accountCode);
+    const copiedAccountId = chartAccountIdByCode.get(getCorrectedSeedAccountCode(mapping.accountCode));
 
     if (!copiedAccountId) {
       throw new Error(`Required system account was not seeded: ${mapping.moduleCode}:${mapping.accountRole}.`);
     }
   }
+
+  await clearLegacyItemCategoryParentAccountTags(tx, companyId);
+}
+
+function getCorrectedSeedAccount(account: StandardDefaultChartAccountSeed): StandardDefaultChartAccountSeed {
+  const correction = ItemCategoryParentAccountCodeCorrections.get(account.accountCode);
+
+  if (!correction) {
+    return account;
+  }
+
+  return {
+    ...account,
+    accountCode: correction.accountCode,
+    parentAccountCode: correction.parentAccountCode,
+  };
+}
+
+function getCorrectedSeedAccountCode(accountCode: string) {
+  return ItemCategoryParentAccountCodeCorrections.get(accountCode)?.accountCode ?? accountCode;
 }
 
 function getSeededAccountGroupTags(account: StandardDefaultChartAccountSeed) {
   const mappingTags = AccountGroupTagsByAccountCode.get(account.accountCode);
 
   return mergeAccountGroupTags(account.accountGroup, getStructuralAccountGroupTag(account.accountTitle), mappingTags);
+}
+
+async function clearLegacyItemCategoryParentAccountTags(tx: Prisma.TransactionClient | PrismaService, companyId: number) {
+  const legacyAccounts = await tx.chartAccount.findMany({
+    where: {
+      companyId,
+      accountCode: {
+        in: LegacyItemCategoryParentAccountCodes,
+      },
+    },
+    select: {
+      id: true,
+      accountGroup: true,
+    },
+  });
+
+  await Promise.all(
+    legacyAccounts.map((account) => {
+      const tags = normalizeAccountGroupTags(account.accountGroup).filter(
+        (tag) => !ItemCategoryParentAccountTags.includes(tag as (typeof ItemCategoryParentAccountTags)[number]),
+      );
+
+      return tx.chartAccount.update({
+        where: {
+          id: account.id,
+        },
+        data: {
+          accountGroup: tags.length > 0 ? tags : Prisma.JsonNull,
+        },
+      });
+    }),
+  );
 }
 
 function getStructuralAccountGroupTag(accountTitle: string) {

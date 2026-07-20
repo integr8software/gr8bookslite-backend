@@ -73,6 +73,7 @@ async function resolvePostingAccount(
 ) {
   const parentAccount = await findSystemAccountGroupOrThrow(tx, companyId, definition.parent);
   const accountTitle = getItemCategoryAccountTitle(definition.titlePrefix, categoryName);
+  const generatedDescription = getItemCategoryAccountDescription(categoryName);
   const existingAccount = await tx.chartAccount.findFirst({
     where: {
       companyId,
@@ -85,10 +86,22 @@ async function resolvePostingAccount(
     },
     select: {
       id: true,
+      description: true,
     },
   });
 
   if (existingAccount) {
+    if (existingAccount.description === generatedDescription) {
+      await tx.chartAccount.update({
+        where: {
+          id: existingAccount.id,
+        },
+        data: {
+          description: null,
+        },
+      });
+    }
+
     return existingAccount.id;
   }
 
@@ -105,7 +118,7 @@ async function resolvePostingAccount(
       accountGroup: parentAccount.accountGroup ?? undefined,
       statementSection: parentAccount.statementSection,
       reportAlias: parentAccount.reportAlias,
-      description: `Auto-created item category account for ${categoryName.trim()}.`,
+      description: null,
       isPostingAccount: true,
       withSubsidiary: false,
       contraAccount: false,
@@ -119,6 +132,10 @@ async function resolvePostingAccount(
   });
 
   return account.id;
+}
+
+function getItemCategoryAccountDescription(categoryName: string) {
+  return `Auto-created item category account for ${categoryName.trim()}.`;
 }
 
 async function generateNextPostingAccountCode(tx: PrismaClientLike, companyId: number, parentAccount: Pick<ChartAccount, 'id' | 'accountCode'>) {
