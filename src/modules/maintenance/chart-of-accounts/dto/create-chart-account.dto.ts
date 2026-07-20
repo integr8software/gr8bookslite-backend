@@ -1,24 +1,8 @@
 import { Transform } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEnum,
-  IsInt,
-  IsNumber,
-  IsObject,
-  IsOptional,
-  IsString,
-  MaxLength,
-  Min,
-  ValidateNested,
-} from 'class-validator';
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-} from '@prisma/client';
+import { IsBoolean, IsEnum, IsInt, IsNumber, IsObject, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { normalizeOptionalQueryString } from '../utils/chart-account-query.util';
+import { normalizeOptionalQueryString } from '../../../../common/utils/dto-transform.util';
 
 enum LinkedChartAccountDetailsKind {
   BANK = 'BANK',
@@ -167,9 +151,7 @@ function normalizeAccountGroupInput(value: unknown) {
   }
 
   if (Array.isArray(value)) {
-    return value
-      .flatMap((item) => (typeof item === 'string' ? [item.trim()] : []))
-      .filter(Boolean);
+    return value.flatMap((item) => (typeof item === 'string' ? [item.trim()] : [])).filter(Boolean);
   }
 
   if (typeof value === 'string') {

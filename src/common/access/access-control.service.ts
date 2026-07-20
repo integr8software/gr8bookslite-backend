@@ -5,10 +5,7 @@ import { PermissionAction } from '../enums/permission-action.enum';
 import { AuthUser } from '../interfaces/auth-user.interface';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { CompanyAccessResolver } from './company-access/company-access-resolver.service';
-import type {
-  ActiveUserRecord,
-  MembershipAccessRecord,
-} from './company-access/company-access-resolver.types';
+import type { ActiveUserRecord, MembershipAccessRecord } from './company-access/company-access-resolver.types';
 import { EntitlementService } from './entitlements/entitlement.service';
 import { PermissionService } from './permissions/permission.service';
 import { SidebarBuilder } from './sidebar/sidebar-builder.service';
@@ -31,8 +28,7 @@ export class AccessControlService {
   ) {}
 
   async resolveAuthUser(payload: JwtPayload): Promise<AuthUser> {
-    const { user, membership } =
-      await this.companyAccessResolver.resolve(payload);
+    const { user, membership } = await this.companyAccessResolver.resolve(payload);
 
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
       return this.buildSuperAdminAuthUser(user, payload.companyId ?? null);
@@ -45,11 +41,7 @@ export class AccessControlService {
     return this.buildCompanyAuthUser(user, membership);
   }
 
-  hasPermission(
-    user: AuthUser,
-    permissionCode: string,
-    action: PermissionAction,
-  ): boolean {
+  hasPermission(user: AuthUser, permissionCode: string, action: PermissionAction): boolean {
     if (user.role === AppRole.SUPER_ADMIN) {
       return true;
     }
@@ -58,9 +50,7 @@ export class AccessControlService {
       return false;
     }
 
-    return user.permissions.includes(
-      this.buildPermissionKey(permissionCode, action),
-    );
+    return user.permissions.includes(this.buildPermissionKey(permissionCode, action));
   }
 
   assertCompanyContext(user: AuthUser): void {
@@ -75,10 +65,7 @@ export class AccessControlService {
 
   // AuthUser assembly
 
-  private buildSuperAdminAuthUser(
-    user: ActiveUserRecord,
-    companyId: number | null,
-  ): AuthUser {
+  private buildSuperAdminAuthUser(user: ActiveUserRecord, companyId: number | null): AuthUser {
     return {
       id: user.id,
       companyId,
@@ -114,20 +101,10 @@ export class AccessControlService {
     };
   }
 
-  private buildCompanyAuthUser(
-    user: ActiveUserRecord,
-    membership: MembershipAccessRecord,
-  ): AuthUser {
-    const enabledModules =
-      this.entitlementService.getEnabledModuleCodes(membership);
-    const permissions = this.permissionService.computePermissions(
-      membership,
-      enabledModules,
-    );
-    const userModules = this.sidebarBuilder.buildUserModules(
-      membership,
-      permissions,
-    );
+  private buildCompanyAuthUser(user: ActiveUserRecord, membership: MembershipAccessRecord): AuthUser {
+    const enabledModules = this.entitlementService.getEnabledModuleCodes(membership);
+    const permissions = this.permissionService.computePermissions(membership, enabledModules);
+    const userModules = this.sidebarBuilder.buildUserModules(membership, permissions);
     const effectiveCompanyRole = this.getEffectiveCompanyRole(membership);
 
     return {
@@ -154,20 +131,12 @@ export class AccessControlService {
   // Company role resolution
 
   private getEffectiveCompanyRole(membership: MembershipAccessRecord) {
-    return (
-      membership.companyRole ??
-      membership.unitAccess.find((unitAccess) => unitAccess.companyRole)
-        ?.companyRole ??
-      null
-    );
+    return membership.companyRole ?? membership.unitAccess.find((unitAccess) => unitAccess.companyRole)?.companyRole ?? null;
   }
 
   // Shared utilities
 
-  private buildPermissionKey(
-    permissionCode: string,
-    action: PermissionAction,
-  ): string {
+  private buildPermissionKey(permissionCode: string, action: PermissionAction): string {
     return `${permissionCode}:${action}`;
   }
 

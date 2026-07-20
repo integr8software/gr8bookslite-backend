@@ -1,9 +1,4 @@
-import type {
-  BillingCycle,
-  CompanyStatus,
-  CompanyUnitType,
-  TaxpayerType,
-} from '@prisma/client';
+import type { BillingCycle, CompanyStatus, CompanyUnitType, TaxpayerType } from '@prisma/client';
 
 export interface CompanyUnitResponse {
   id: number;

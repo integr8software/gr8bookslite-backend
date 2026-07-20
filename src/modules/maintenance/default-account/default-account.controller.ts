@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -29,10 +20,7 @@ export class DefaultAccountController {
 
   @Get()
   @ApiOkResponse({ description: 'Default accounts retrieved.' })
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Query() query: GetDefaultAccountTemplateListQueryDto,
-  ) {
+  findAll(@CurrentUser() user: AuthUser, @Query() query: GetDefaultAccountTemplateListQueryDto) {
     return this.defaultAccountService.findAll(user, query);
   }
 
@@ -50,31 +38,19 @@ export class DefaultAccountController {
 
   @Post()
   @ApiCreatedResponse({ description: 'Default account created.' })
-  create(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: CreateDefaultAccountTemplateDto,
-  ) {
+  create(@CurrentUser() user: AuthUser, @Body() dto: CreateDefaultAccountTemplateDto) {
     return this.defaultAccountService.create(user, dto);
   }
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Default account updated.' })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateDefaultAccountTemplateDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateDefaultAccountTemplateDto) {
     return this.defaultAccountService.update(user, id, dto);
   }
 
   @Patch(':id/status')
   @ApiOkResponse({ description: 'Default account status updated.' })
-  updateStatus(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateDefaultAccountTemplateStatusDto,
-  ) {
+  updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateDefaultAccountTemplateStatusDto) {
     return this.defaultAccountService.updateStatus(user, id, dto);
   }
-
 }

@@ -156,5 +156,3 @@ export const StandardDefaultAccountTemplates = [
     expenseAccountCode: '6030000008',
   },
 ] as const;
-
-

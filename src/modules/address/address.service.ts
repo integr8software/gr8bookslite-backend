@@ -1,24 +1,11 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AddressAutocompleteQueryDto } from './dto/address-autocomplete-query.dto';
 import { BarangayListQueryDto } from './dto/barangay-list-query.dto';
-import {
-  mapAddressAutocomplete,
-  mapBarangay,
-  mapCityMunicipality,
-  mapProvince,
-  mapRegion,
-} from './mappers/address.mapper';
+import { mapAddressAutocomplete, mapBarangay, mapCityMunicipality, mapProvince, mapRegion } from './mappers/address.mapper';
 import type { AddressAutocompleteRow } from './types/address-autocomplete-row.type';
-import type {
-  AddressNameResolutionInput,
-  AddressNameResolutionResult,
-} from './types/address-name-resolution.type';
+import type { AddressNameResolutionInput, AddressNameResolutionResult } from './types/address-name-resolution.type';
 
 @Injectable()
 export class AddressService {
@@ -77,10 +64,7 @@ export class AddressService {
     };
   }
 
-  async listCityMunicipalities(filters: {
-    regionCode?: string;
-    provinceCode?: string;
-  }) {
+  async listCityMunicipalities(filters: { regionCode?: string; provinceCode?: string }) {
     const cityMunicipalities = await this.prisma.cityMunicipality.findMany({
       where: {
         regionCode: filters.regionCode,
@@ -143,15 +127,10 @@ export class AddressService {
     }
 
     if (query.cityMunicipalityCode) {
-      conditions.push(
-        Prisma.sql`"city_municipality_code" = ${query.cityMunicipalityCode}`,
-      );
+      conditions.push(Prisma.sql`"city_municipality_code" = ${query.cityMunicipalityCode}`);
     }
 
-    const whereClause =
-      conditions.length > 0
-        ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}`
-        : Prisma.empty;
+    const whereClause = conditions.length > 0 ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}` : Prisma.empty;
 
     const rows = await this.prisma.$queryRaw<AddressAutocompleteRow[]>`
       SELECT
@@ -175,9 +154,7 @@ export class AddressService {
     };
   }
 
-  async resolveNames(
-    input: AddressNameResolutionInput,
-  ): Promise<AddressNameResolutionResult | null> {
+  async resolveNames(input: AddressNameResolutionInput): Promise<AddressNameResolutionResult | null> {
     const barangay = this.normalizeLookupText(input.barangay);
     const cityMunicipality = this.normalizeLookupText(input.cityMunicipality);
     const province = this.normalizeLookupText(input.province);
@@ -206,9 +183,7 @@ export class AddressService {
     }
 
     if (rows.length > 1) {
-      throw new BadRequestException(
-        'Address is ambiguous. Select the address from the address reference list.',
-      );
+      throw new BadRequestException('Address is ambiguous. Select the address from the address reference list.');
     }
 
     return mapAddressAutocomplete(rows[0]);

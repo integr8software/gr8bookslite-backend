@@ -1,19 +1,7 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
-import {
-  ResponsibilityCenterCategory,
-  ResponsibilityCenterFinancialType,
-  ResponsibilityCenterStatus,
-} from '@prisma/client';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { ResponsibilityCenterCategory, ResponsibilityCenterFinancialType, ResponsibilityCenterStatus } from '@prisma/client';
+import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetResponsibilityCenterListQueryDto {
   @IsOptional()
@@ -34,6 +22,14 @@ export class GetResponsibilityCenterListQueryDto {
   financialType?: ResponsibilityCenterFinancialType;
 
   @IsOptional()
+  @IsString()
+  classificationId?: string;
+
+  @IsOptional()
+  @IsString()
+  typeId?: string;
+
+  @IsOptional()
   @Transform(({ value }) => toOptionalInt(value))
   @IsInt()
   @Min(1)
@@ -47,35 +43,10 @@ export class GetResponsibilityCenterListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn([
-    'code',
-    'name',
-    'category',
-    'financialType',
-    'manager',
-    'status',
-    'createdAt',
-    'updatedAt',
-  ])
-  sortBy?:
-    | 'code'
-    | 'name'
-    | 'category'
-    | 'financialType'
-    | 'manager'
-    | 'status'
-    | 'createdAt'
-    | 'updatedAt';
+  @IsIn(['code', 'name', 'category', 'financialType', 'manager', 'status', 'createdAt', 'updatedAt'])
+  sortBy?: 'code' | 'name' | 'category' | 'financialType' | 'manager' | 'status' | 'createdAt' | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortDirection?: 'asc' | 'desc';
-}
-
-function toOptionalInt(value: unknown) {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-
-  return Number(value);
 }

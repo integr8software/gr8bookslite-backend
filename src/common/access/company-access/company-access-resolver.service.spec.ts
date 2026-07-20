@@ -1,13 +1,5 @@
 import { UnauthorizedException } from '@nestjs/common';
-import {
-  AccessScopeLevel,
-  CompanyStatus,
-  MembershipRole,
-  MembershipStatus,
-  SubscriptionStatus,
-  SystemRole,
-  UserStatus,
-} from '@prisma/client';
+import { AccessScopeLevel, CompanyStatus, MembershipRole, MembershipStatus, SubscriptionStatus, SystemRole, UserStatus } from '@prisma/client';
 import { AppRole } from '../../enums/app-role.enum';
 import { CompanyAccessResolver } from './company-access-resolver.service';
 
@@ -28,9 +20,7 @@ describe('CompanyAccessResolver', () => {
   it('returns active user context without loading membership when no company is selected', async () => {
     const { resolver, prisma } = createResolver();
 
-    await expect(
-      resolver.resolve(buildPayload({ companyId: null })),
-    ).resolves.toEqual({
+    await expect(resolver.resolve(buildPayload({ companyId: null }))).resolves.toEqual({
       user: {
         id: 7,
         systemRole: SystemRole.STANDARD,
@@ -72,17 +62,13 @@ describe('CompanyAccessResolver', () => {
       },
     });
 
-    await expect(resolver.resolve(buildPayload())).rejects.toThrow(
-      new UnauthorizedException('User account is not active.'),
-    );
+    await expect(resolver.resolve(buildPayload())).rejects.toThrow(new UnauthorizedException('User account is not active.'));
   });
 
   it('rejects missing company membership', async () => {
     const { resolver } = createResolver({ membership: null });
 
-    await expect(resolver.resolve(buildPayload())).rejects.toThrow(
-      new UnauthorizedException('You do not belong to this company.'),
-    );
+    await expect(resolver.resolve(buildPayload())).rejects.toThrow(new UnauthorizedException('You do not belong to this company.'));
   });
 
   it('rejects inactive memberships', async () => {
@@ -90,9 +76,7 @@ describe('CompanyAccessResolver', () => {
       membership: buildMembership({ status: MembershipStatus.SUSPENDED }),
     });
 
-    await expect(resolver.resolve(buildPayload())).rejects.toThrow(
-      new UnauthorizedException('Your company membership is not active.'),
-    );
+    await expect(resolver.resolve(buildPayload())).rejects.toThrow(new UnauthorizedException('Your company membership is not active.'));
   });
 
   it('rejects unavailable companies', async () => {
@@ -105,9 +89,7 @@ describe('CompanyAccessResolver', () => {
       }),
     });
 
-    await expect(resolver.resolve(buildPayload())).rejects.toThrow(
-      new UnauthorizedException('This company is unavailable.'),
-    );
+    await expect(resolver.resolve(buildPayload())).rejects.toThrow(new UnauthorizedException('This company is unavailable.'));
   });
 
   it('rejects inactive companies', async () => {
@@ -120,9 +102,7 @@ describe('CompanyAccessResolver', () => {
       }),
     });
 
-    await expect(resolver.resolve(buildPayload())).rejects.toThrow(
-      new UnauthorizedException('This company is inactive.'),
-    );
+    await expect(resolver.resolve(buildPayload())).rejects.toThrow(new UnauthorizedException('This company is inactive.'));
   });
 
   it('preserves subscription access denial behavior', async () => {
@@ -141,9 +121,7 @@ describe('CompanyAccessResolver', () => {
       }),
     });
 
-    await expect(resolver.resolve(buildPayload())).rejects.toThrow(
-      new UnauthorizedException('This company subscription is past due.'),
-    );
+    await expect(resolver.resolve(buildPayload())).rejects.toThrow(new UnauthorizedException('This company subscription is past due.'));
   });
 });
 
@@ -171,10 +149,7 @@ function createResolver({
   };
 
   return {
-    resolver: new CompanyAccessResolver(
-      prisma as never,
-      configService as never,
-    ),
+    resolver: new CompanyAccessResolver(prisma as never, configService as never),
     prisma,
     configService,
   };

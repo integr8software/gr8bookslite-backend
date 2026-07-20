@@ -1,18 +1,11 @@
-import type {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountType,
-  Prisma,
-} from '@prisma/client';
+import type { AccountNature, ChartAccountLevel, ChartAccountType, Prisma } from '@prisma/client';
 import { DefaultAccountInclude } from '../prisma/default-account-template.include';
 
 export type DefaultAccountPayload = Prisma.DefaultAccountGetPayload<{
   include: typeof DefaultAccountInclude;
 }>;
 
-export type GeneratedDefaultAccount = NonNullable<
-  DefaultAccountPayload['expenseCoa']
->;
+export type GeneratedDefaultAccount = NonNullable<DefaultAccountPayload['expenseCoa']>;
 
 export type DefaultAccountParentRole =
   | 'EXPENSE_PARENT'
@@ -23,11 +16,7 @@ export type DefaultAccountParentRole =
 
 export type GeneratedAccountKey = 'fixedAssetGroup';
 
-export type GeneratedAccountResultKey =
-  | 'expenseCoaId'
-  | 'revenueCoaId'
-  | 'assetCoaId'
-  | 'accumulatedDepreciationCoaId';
+export type GeneratedAccountResultKey = 'expenseCoaId' | 'revenueCoaId' | 'assetCoaId' | 'accumulatedDepreciationCoaId';
 
 export type ParentChartAccountReference = {
   id: bigint;

@@ -7,12 +7,7 @@ const AllowedMimeTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 export class WorkspaceCompanyLogoStorageService {
   constructor(private readonly storageService: StorageService) {}
 
-  async uploadLogo(params: {
-    companyId: number;
-    fileName: string;
-    mimeType: string;
-    fileBuffer: Buffer;
-  }) {
+  async uploadLogo(params: { companyId: number; fileName: string; mimeType: string; fileBuffer: Buffer }) {
     if (!AllowedMimeTypes.has(params.mimeType)) {
       throw new BadGatewayException('Unsupported logo file type.');
     }

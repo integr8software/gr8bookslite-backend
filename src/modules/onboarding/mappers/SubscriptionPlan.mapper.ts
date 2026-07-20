@@ -24,9 +24,7 @@ type OnboardingSubscriptionPlanRecord = Prisma.SubscriptionPlanGetPayload<{
   };
 }>;
 
-export function mapSubscriptionPlan(
-  plan: SubscriptionPlan | OnboardingSubscriptionPlanRecord,
-) {
+export function mapSubscriptionPlan(plan: SubscriptionPlan | OnboardingSubscriptionPlanRecord) {
   const prices = 'prices' in plan ? plan.prices : [];
   const priceSummary = getSubscriptionPlanPriceSummary(prices);
   const usageRules = 'usageRules' in plan ? plan.usageRules : [];
@@ -69,9 +67,7 @@ export function mapSubscriptionPlan(
       amountInCents: price.priceInCents,
       display: formatPhpAmount(price.priceInCents),
       compareAtInCents: price.compareAtInCents,
-      compareAtDisplay: price.compareAtInCents
-        ? formatPhpAmount(price.compareAtInCents)
-        : null,
+      compareAtDisplay: price.compareAtInCents ? formatPhpAmount(price.compareAtInCents) : null,
       isActive: price.isActive,
     })),
     usageRules: usageRules.map((rule) => ({
@@ -99,25 +95,16 @@ export function mapSubscriptionPlan(
   };
 }
 
-function deriveModules(
-  plan: SubscriptionPlan | OnboardingSubscriptionPlanRecord,
-) {
+function deriveModules(plan: SubscriptionPlan | OnboardingSubscriptionPlanRecord) {
   if ('systems' in plan && plan.systems.length > 0) {
-    const modulesById = new Map<
-      number,
-      OnboardingSubscriptionPlanRecord['systems'][number]['system']['modules'][number]['module']
-    >();
+    const modulesById = new Map<number, OnboardingSubscriptionPlanRecord['systems'][number]['system']['modules'][number]['module']>();
     for (const planSystem of plan.systems) {
       if (!planSystem.isEnabled || !planSystem.system.isActive) continue;
       for (const systemModule of planSystem.system.modules) {
         modulesById.set(systemModule.module.id, systemModule.module);
       }
     }
-    return [...modulesById.values()].sort(
-      (left, right) =>
-        left.name.localeCompare(right.name) ||
-        left.code.localeCompare(right.code),
-    );
+    return [...modulesById.values()].sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code));
   }
 
   return 'modules' in plan

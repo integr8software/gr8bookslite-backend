@@ -1,16 +1,8 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import {
-  CompanyUnitType,
-  Prisma,
-  TransactionNumberInputMode,
-  TransactionNumberSequence,
-  TransactionNumberStatus,
-} from '@prisma/client';
+import { CompanyUnitType, Prisma, TransactionNumberInputMode, TransactionNumberSequence, TransactionNumberStatus } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 
-export type TransactionNumberWriteClient =
-  | PrismaService
-  | Prisma.TransactionClient;
+export type TransactionNumberWriteClient = PrismaService | Prisma.TransactionClient;
 
 export type TransactionNumberModuleSequence = TransactionNumberSequence & {
   module: { code: string };
@@ -53,31 +45,37 @@ export async function generateTransactionNumberForCompanyBranch(
   {
     branchUnitId,
     companyId,
+    createDefaultIfMissing = false,
     isIssued,
     moduleCode,
   }: {
     branchUnitId: number;
     companyId: number;
+    createDefaultIfMissing?: boolean;
     isIssued?: (transactionNumber: string) => Promise<boolean>;
     moduleCode: string;
   },
 ) {
-  const sequence = await findTransactionNumberForCompanyBranch(tx, {
-    branchUnitId,
-    companyId,
-    moduleCode,
-  });
+  const sequence =
+    (await findTransactionNumberForCompanyBranch(tx, {
+      branchUnitId,
+      companyId,
+      moduleCode,
+    })) ??
+    (createDefaultIfMissing
+      ? await createDefaultAutoTransactionNumberForCompanyBranch(tx, {
+          branchUnitId,
+          companyId,
+          moduleCode,
+        })
+      : null);
 
   if (!sequence) {
-    throw new NotFoundException(
-      `Transaction number setup for ${moduleCode} was not found for this branch.`,
-    );
+    throw new NotFoundException(`Transaction number setup for ${moduleCode} was not found for this branch.`);
   }
 
   if (sequence.inputMode === TransactionNumberInputMode.MANUAL) {
-    throw new BadRequestException(
-      `Transaction number setup for ${moduleCode} is manual for this branch.`,
-    );
+    throw new BadRequestException(`Transaction number setup for ${moduleCode} is manual for this branch.`);
   }
 
   let runningNumber = sequence.currentNumber;
@@ -103,17 +101,59 @@ export async function generateTransactionNumberForCompanyBranch(
   };
 }
 
-export function formatTransactionNumber(
-  sequence: Pick<
-    TransactionNumberSequence,
-    'padding' | 'prefix' | 'suffix'
-  >,
-  runningNumber: number,
+async function createDefaultAutoTransactionNumberForCompanyBranch(
+  tx: Prisma.TransactionClient,
+  {
+    branchUnitId,
+    companyId,
+    moduleCode,
+  }: {
+    branchUnitId: number;
+    companyId: number;
+    moduleCode: string;
+  },
 ) {
-  return `${sequence.prefix}${String(runningNumber).padStart(
-    sequence.padding,
-    '0',
-  )}${sequence.suffix}`;
+  const module = await tx.module.findFirst({
+    where: {
+      code: moduleCode,
+      isActive: true,
+    },
+    select: { id: true },
+  });
+
+  if (!module) {
+    throw new NotFoundException(`Transaction module ${moduleCode} was not found.`);
+  }
+
+  return tx.transactionNumberSequence.upsert({
+    where: {
+      moduleId_branchUnitId: {
+        branchUnitId,
+        moduleId: module.id,
+      },
+    },
+    create: {
+      branchUnitId,
+      currentNumber: 1,
+      inputMode: TransactionNumberInputMode.AUTO,
+      moduleId: module.id,
+      padding: 6,
+      prefix: `${moduleCode}-`,
+      startingNumber: 1,
+      status: TransactionNumberStatus.ACTIVE,
+      suffix: '',
+    },
+    update: {},
+    include: {
+      module: {
+        select: { code: true },
+      },
+    },
+  });
+}
+
+export function formatTransactionNumber(sequence: Pick<TransactionNumberSequence, 'padding' | 'prefix' | 'suffix'>, runningNumber: number) {
+  return `${sequence.prefix}${String(runningNumber).padStart(sequence.padding, '0')}${sequence.suffix}`;
 }
 
 async function ensureBranchBelongsToCompany(
@@ -132,11 +172,7 @@ async function ensureBranchBelongsToCompany(
       companyId,
       isActive: true,
       type: {
-        in: [
-          CompanyUnitType.HEAD_OFFICE,
-          CompanyUnitType.BRANCH,
-          CompanyUnitType.SATELLITE,
-        ],
+        in: [CompanyUnitType.HEAD_OFFICE, CompanyUnitType.BRANCH, CompanyUnitType.SATELLITE],
       },
     },
     select: { id: true },

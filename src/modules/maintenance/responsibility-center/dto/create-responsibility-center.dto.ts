@@ -1,27 +1,37 @@
 import { Transform } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-import {
-  ResponsibilityCenterCategory,
-  ResponsibilityCenterFinancialType,
-  ResponsibilityCenterStatus,
-} from '@prisma/client';
+import { ResponsibilityCenterCategory, ResponsibilityCenterFinancialType, ResponsibilityCenterStatus } from '@prisma/client';
+import { emptyStringToUndefined, normalizeCode, trimString } from '../../../../common/utils/dto-transform.util';
 
 export class CreateResponsibilityCenterDto {
+  @IsOptional()
+  @Transform(({ value }) => emptyStringToUndefined(value))
+  @IsString()
+  classificationId?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => emptyStringToUndefined(value))
+  @IsString()
+  typeId?: string;
+
+  @IsOptional()
   @Transform(({ value }) => normalizeCode(value))
   @IsString()
   @MaxLength(50)
-  code!: string;
+  code?: string;
 
   @Transform(({ value }) => trimString(value))
   @IsString()
   @MaxLength(150)
   name!: string;
 
+  @IsOptional()
   @IsEnum(ResponsibilityCenterCategory)
-  category!: ResponsibilityCenterCategory;
+  category?: ResponsibilityCenterCategory;
 
+  @IsOptional()
   @IsEnum(ResponsibilityCenterFinancialType)
-  financialType!: ResponsibilityCenterFinancialType;
+  financialType?: ResponsibilityCenterFinancialType;
 
   @IsOptional()
   @Transform(({ value }) => trimString(value))
@@ -43,20 +53,4 @@ export class CreateResponsibilityCenterDto {
   @IsString()
   @MaxLength(500)
   description?: string;
-}
-
-function normalizeCode(value: unknown) {
-  return typeof value === 'string' ? value.trim().toUpperCase() : value;
-}
-
-function trimString(value: unknown) {
-  return typeof value === 'string' ? value.trim() : value;
-}
-
-function emptyStringToUndefined(value: unknown) {
-  if (value === '') {
-    return undefined;
-  }
-
-  return value;
 }

@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Patch,
-  Post,
-  Query,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -165,10 +155,7 @@ export class AuthController {
     },
   })
   @Get('google')
-  googleAuth(
-    @Query('mode') mode: string | undefined,
-    @Res() response: Response,
-  ) {
+  googleAuth(@Query('mode') mode: string | undefined, @Res() response: Response) {
     response.redirect(this.authService.beginGoogleAuth(mode));
   }
 
@@ -226,10 +213,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @SkipThrottle()
   @Post('context/company')
-  async switchCompanyContext(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: SwitchCompanyContextDto,
-  ) {
+  async switchCompanyContext(@CurrentUser() user: AuthUser, @Body() dto: SwitchCompanyContextDto) {
     return this.authService.switchCompanyContext(user, dto.companyId);
   }
 
@@ -241,19 +225,13 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('me/password/verify-otp')
-  verifyPasswordChangeOtp(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: VerifyPasswordChangeCodeDto,
-  ) {
+  verifyPasswordChangeOtp(@CurrentUser() user: AuthUser, @Body() dto: VerifyPasswordChangeCodeDto) {
     return this.authService.verifyPasswordChangeOtp(user, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me/password')
-  changeAuthenticatedPassword(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: ChangeAuthenticatedPasswordDto,
-  ) {
+  changeAuthenticatedPassword(@CurrentUser() user: AuthUser, @Body() dto: ChangeAuthenticatedPasswordDto) {
     return this.authService.changeAuthenticatedPassword(user, dto);
   }
 }

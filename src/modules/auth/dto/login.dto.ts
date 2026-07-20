@@ -1,12 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEmail,
-  IsInt,
-  IsOptional,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { IsBoolean, IsEmail, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
   @IsEmail()

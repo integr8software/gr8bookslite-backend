@@ -16,9 +16,7 @@ import { WorkspaceAuditLogsService } from './workspace-audit-logs.service';
   version: '1',
 })
 export class WorkspaceAuditLogsController {
-  constructor(
-    private readonly workspaceAuditLogsService: WorkspaceAuditLogsService,
-  ) {}
+  constructor(private readonly workspaceAuditLogsService: WorkspaceAuditLogsService) {}
 
   @Get()
   @ApiOkResponse({ type: [WorkspaceAuditLogResponseDto] })
@@ -27,11 +25,7 @@ export class WorkspaceAuditLogsController {
   }
 
   @Post('activity')
-  recordActivity(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: RecordWorkspaceActivityDto,
-    @Req() request: Request,
-  ) {
+  recordActivity(@CurrentUser() user: AuthUser, @Body() dto: RecordWorkspaceActivityDto, @Req() request: Request) {
     return this.workspaceAuditLogsService.recordActivity(user, {
       path: dto.path ?? '',
       module: dto.module ?? '',

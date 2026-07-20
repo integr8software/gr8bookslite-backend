@@ -25,12 +25,7 @@ export type AiAssistantAction =
   | {
       type: 'term_management';
       moduleCode: 'TM';
-      command:
-        | 'open'
-        | 'search'
-        | 'filter_status'
-        | 'prepare_add'
-        | 'preview_edit';
+      command: 'open' | 'search' | 'filter_status' | 'prepare_add' | 'preview_edit';
       label?: string;
       query?: string;
       status?: 'Active' | 'Inactive';

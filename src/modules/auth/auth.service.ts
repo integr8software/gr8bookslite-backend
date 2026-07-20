@@ -9,16 +9,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import {
-  AuthProvider,
-  CompanyStatus,
-  MembershipStatus,
-  MembershipRole,
-  Prisma,
-  SystemRole,
-  UserStatus,
-  VerificationPurpose,
-} from '@prisma/client';
+import { AuthProvider, CompanyStatus, MembershipStatus, MembershipRole, Prisma, SystemRole, UserStatus, VerificationPurpose } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
 import { AccessControlService } from '../../common/access/access-control.service';
@@ -73,9 +64,7 @@ export class AuthService {
     const existingUser = await this.usersService.findByEmail(normalizedEmail);
 
     if (existingUser) {
-      throw new ConflictException(
-        'An account already uses this email. Sign in or reset your password.',
-      );
+      throw new ConflictException('An account already uses this email. Sign in or reset your password.');
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -109,10 +98,7 @@ export class AuthService {
       return createdUser;
     });
 
-    await this.authMailService.sendVerificationCode(
-      user.email,
-      verificationCode,
-    );
+    await this.authMailService.sendVerificationCode(user.email, verificationCode);
 
     return {
       message: 'Verification code sent to your email.',
@@ -135,10 +121,7 @@ export class AuthService {
       return this.buildAuthenticatedResponse(user, null);
     }
 
-    const verification = await this.getLatestActiveVerification(
-      user.id,
-      normalizedEmail,
-    );
+    const verification = await this.getLatestActiveVerification(user.id, normalizedEmail);
 
     if (!verification) {
       throw new BadRequestException('No active verification code was found.');
@@ -148,10 +131,7 @@ export class AuthService {
       throw new BadRequestException('Verification code has expired.');
     }
 
-    const isValidCode = await this.otpService.compareCode(
-      dto.code,
-      verification.codeHash,
-    );
+    const isValidCode = await this.otpService.compareCode(dto.code, verification.codeHash);
 
     if (!isValidCode) {
       await this.incrementVerificationAttempt(verification.id);
@@ -172,8 +152,7 @@ export class AuthService {
       }),
     ]);
 
-    const verifiedUser =
-      await this.usersService.findForAuthByEmail(normalizedEmail);
+    const verifiedUser = await this.usersService.findForAuthByEmail(normalizedEmail);
 
     if (!verifiedUser) {
       throw new BadRequestException('Verified user could not be loaded.');
@@ -279,11 +258,7 @@ export class AuthService {
       throw new BadRequestException('Reset code is invalid.');
     }
 
-    const verification = await this.getLatestActiveVerification(
-      user.id,
-      normalizedEmail,
-      VerificationPurpose.PASSWORD_RESET,
-    );
+    const verification = await this.getLatestActiveVerification(user.id, normalizedEmail, VerificationPurpose.PASSWORD_RESET);
 
     if (!verification) {
       throw new BadRequestException('Reset code is invalid.');
@@ -293,10 +268,7 @@ export class AuthService {
       throw new BadRequestException('Reset code has expired.');
     }
 
-    const isValidCode = await this.otpService.compareCode(
-      dto.code,
-      verification.codeHash,
-    );
+    const isValidCode = await this.otpService.compareCode(dto.code, verification.codeHash);
 
     if (!isValidCode) {
       await this.incrementVerificationAttempt(verification.id);
@@ -307,9 +279,7 @@ export class AuthService {
     const verifiedAt = new Date();
 
     await this.consumeVerificationCode(verification.id, verifiedAt);
-    this.logger.log(
-      `Password reset code verified for user ${user.id}; verification ${verification.id}.`,
-    );
+    this.logger.log(`Password reset code verified for user ${user.id}; verification ${verification.id}.`);
 
     return {
       message: 'Reset code verified successfully.',
@@ -362,16 +332,9 @@ export class AuthService {
       });
     });
 
-    if (
-      !updatedUser.passwordHash ||
-      !(await bcrypt.compare(dto.newPassword, updatedUser.passwordHash))
-    ) {
-      this.logger.error(
-        `Password reset persistence check failed for user ${user.id}.`,
-      );
-      throw new InternalServerErrorException(
-        'Password could not be saved. Please try again.',
-      );
+    if (!updatedUser.passwordHash || !(await bcrypt.compare(dto.newPassword, updatedUser.passwordHash))) {
+      this.logger.error(`Password reset persistence check failed for user ${user.id}.`);
+      throw new InternalServerErrorException('Password could not be saved. Please try again.');
     }
 
     this.logger.log(`Password reset completed for user ${user.id}.`);
@@ -388,9 +351,7 @@ export class AuthService {
     }
 
     if (!ActivateWorkspaceUserDto.isStrongPassword(dto.newPassword)) {
-      throw new BadRequestException(
-        'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
-      );
+      throw new BadRequestException('Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
     }
 
     const normalizedEmail = normalizeEmail(dto.email) as string;
@@ -400,11 +361,7 @@ export class AuthService {
       throw new BadRequestException('Invitation link is invalid.');
     }
 
-    const invitation = await this.getLatestActiveVerification(
-      user.id,
-      normalizedEmail,
-      VerificationPurpose.WORKSPACE_INVITE,
-    );
+    const invitation = await this.getLatestActiveVerification(user.id, normalizedEmail, VerificationPurpose.WORKSPACE_INVITE);
 
     if (!invitation) {
       throw new BadRequestException('Invitation link is invalid.');
@@ -451,11 +408,7 @@ export class AuthService {
     const resetCode = this.otpService.generateCode();
     const codeHash = await this.otpService.hashCode(resetCode);
     const expiresAt = this.buildVerificationExpiry();
-    const previousReset = await this.getLatestActiveVerification(
-      user.id,
-      user.email,
-      VerificationPurpose.PASSWORD_RESET,
-    );
+    const previousReset = await this.getLatestActiveVerification(user.id, user.email, VerificationPurpose.PASSWORD_RESET);
 
     const verification = await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({
@@ -482,9 +435,7 @@ export class AuthService {
     });
 
     await this.authMailService.sendPasswordResetCode(user.email, resetCode);
-    this.logger.log(
-      `Password change code issued for user ${user.id}; verification ${verification.id}.`,
-    );
+    this.logger.log(`Password change code issued for user ${user.id}; verification ${verification.id}.`);
 
     return {
       message: 'Password change OTP sent.',
@@ -492,16 +443,9 @@ export class AuthService {
     };
   }
 
-  async verifyPasswordChangeOtp(
-    authUser: AuthUser,
-    dto: VerifyPasswordChangeCodeDto,
-  ) {
+  async verifyPasswordChangeOtp(authUser: AuthUser, dto: VerifyPasswordChangeCodeDto) {
     const user = await this.usersService.findById(authUser.id);
-    const verification = await this.getLatestActiveVerification(
-      user.id,
-      user.email,
-      VerificationPurpose.PASSWORD_RESET,
-    );
+    const verification = await this.getLatestActiveVerification(user.id, user.email, VerificationPurpose.PASSWORD_RESET);
 
     if (!verification) {
       throw new BadRequestException('Password change code is invalid.');
@@ -511,10 +455,7 @@ export class AuthService {
       throw new BadRequestException('Password change code has expired.');
     }
 
-    const isValidCode = await this.otpService.compareCode(
-      dto.code,
-      verification.codeHash,
-    );
+    const isValidCode = await this.otpService.compareCode(dto.code, verification.codeHash);
 
     if (!isValidCode) {
       await this.incrementVerificationAttempt(verification.id);
@@ -537,10 +478,7 @@ export class AuthService {
     };
   }
 
-  async changeAuthenticatedPassword(
-    authUser: AuthUser,
-    dto: ChangeAuthenticatedPasswordDto,
-  ) {
+  async changeAuthenticatedPassword(authUser: AuthUser, dto: ChangeAuthenticatedPasswordDto) {
     if (dto.newPassword !== dto.confirmNewPassword) {
       throw new BadRequestException('Passwords do not match.');
     }
@@ -606,9 +544,7 @@ export class AuthService {
     }
 
     if (!user.passwordHash) {
-      this.logger.warn(
-        `Password login rejected because user ${user.id} has no password hash.`,
-      );
+      this.logger.warn(`Password login rejected because user ${user.id} has no password hash.`);
       await this.recordAuthAudit({
         action: 'LOGIN',
         email: user.email,
@@ -616,15 +552,10 @@ export class AuthService {
         reason: 'Password login is not enabled',
         user,
       });
-      throw new UnauthorizedException(
-        'This account does not have a password yet. Use Continue with Google or reset your password to create one.',
-      );
+      throw new UnauthorizedException('This account does not have a password yet. Use Continue with Google or reset your password to create one.');
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      dto.password,
-      user.passwordHash,
-    );
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!isPasswordValid) {
       this.logger.warn(`Password login rejected for user ${user.id}.`);
@@ -638,10 +569,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    if (
-      user.status === UserStatus.PENDING_VERIFICATION &&
-      user.emailVerifiedAt
-    ) {
+    if (user.status === UserStatus.PENDING_VERIFICATION && user.emailVerifiedAt) {
       await this.prisma.user.update({
         where: { id: user.id },
         data: { status: UserStatus.ACTIVE },
@@ -649,17 +577,13 @@ export class AuthService {
 
       await this.notifyWorkspaceUserActivated(user.id, user.name, user.email);
 
-      const activatedUser =
-        await this.usersService.findForAuthByEmail(normalizedEmail);
+      const activatedUser = await this.usersService.findForAuthByEmail(normalizedEmail);
 
       if (!activatedUser) {
         throw new UnauthorizedException('Invalid credentials.');
       }
 
-      const response = await this.loginActivatedUser(
-        activatedUser,
-        dto.companyId ?? null,
-      );
+      const response = await this.loginActivatedUser(activatedUser, dto.companyId ?? null);
       await this.recordAuthAudit({
         action: 'LOGIN',
         companyId: response.companyId,
@@ -672,8 +596,7 @@ export class AuthService {
     }
 
     if (user.status !== UserStatus.ACTIVE || !user.emailVerifiedAt) {
-      const verificationResponse =
-        await this.resendSignupVerificationCode(user);
+      const verificationResponse = await this.resendSignupVerificationCode(user);
       await this.recordAuthAudit({
         action: 'LOGIN',
         email: user.email,
@@ -683,8 +606,7 @@ export class AuthService {
       });
 
       throw new UnauthorizedException({
-        message:
-          'Please verify your email before logging in. A new verification code was sent.',
+        message: 'Please verify your email before logging in. A new verification code was sent.',
         code: 'EMAIL_NOT_VERIFIED',
         nextStep: 'VERIFY_EMAIL',
         email: user.email,
@@ -704,18 +626,10 @@ export class AuthService {
     return response;
   }
 
-  async createWorkspaceInviteToken(
-    userId: number,
-    email: string,
-  ): Promise<WorkspaceInviteToken> {
+  async createWorkspaceInviteToken(userId: number, email: string): Promise<WorkspaceInviteToken> {
     const rawToken = randomBytes(48).toString('base64url');
     const tokenHash = await bcrypt.hash(rawToken, 10);
-    const expiresInSeconds = Number(
-      this.configService.get<string | number>(
-        'WORKSPACE_INVITE_EXPIRES_IN_SECONDS',
-        60 * 60 * 24 * 7,
-      ),
-    );
+    const expiresInSeconds = Number(this.configService.get<string | number>('WORKSPACE_INVITE_EXPIRES_IN_SECONDS', 60 * 60 * 24 * 7));
     const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
 
     await this.prisma.$transaction(async (tx) => {
@@ -742,11 +656,7 @@ export class AuthService {
     return { rawToken, tokenHash };
   }
 
-  private async notifyWorkspaceUserActivated(
-    activatedUserId: number,
-    activatedUserName: string,
-    activatedUserEmail: string,
-  ) {
+  private async notifyWorkspaceUserActivated(activatedUserId: number, activatedUserName: string, activatedUserEmail: string) {
     const memberships = await this.prisma.membership.findMany({
       where: {
         userId: activatedUserId,
@@ -782,16 +692,10 @@ export class AuthService {
       },
     });
 
-    const recipients = new Map<
-      string,
-      { name: string; companyNames: Set<string> }
-    >();
+    const recipients = new Map<string, { name: string; companyNames: Set<string> }>();
 
     for (const membership of memberships) {
-      const admins =
-        membership.invitedBy != null
-          ? [membership.invitedBy]
-          : membership.company.memberships.map(({ user }) => user);
+      const admins = membership.invitedBy != null ? [membership.invitedBy] : membership.company.memberships.map(({ user }) => user);
 
       for (const admin of admins) {
         if (!admin.email || admin.email === activatedUserEmail) {
@@ -814,21 +718,12 @@ export class AuthService {
 
     await Promise.all(
       [...recipients.entries()].map(([email, recipient]) =>
-        this.authMailService.sendWorkspaceUserActivated(
-          email,
-          recipient.name,
-          activatedUserName,
-          activatedUserEmail,
-          [...recipient.companyNames],
-        ),
+        this.authMailService.sendWorkspaceUserActivated(email, recipient.name, activatedUserName, activatedUserEmail, [...recipient.companyNames]),
       ),
     );
   }
 
-  private async loginActivatedUser(
-    user: UserWithMemberships,
-    requestedCompanyId: number | null,
-  ) {
+  private async loginActivatedUser(user: UserWithMemberships, requestedCompanyId: number | null) {
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
       return this.buildAuthenticatedResponse(user, requestedCompanyId);
     }
@@ -839,10 +734,7 @@ export class AuthService {
       return this.buildAuthenticatedResponse(user, null);
     }
 
-    const resolvedCompanyId = this.resolveDefaultCompanyContext(
-      user,
-      requestedCompanyId,
-    );
+    const resolvedCompanyId = this.resolveDefaultCompanyContext(user, requestedCompanyId);
 
     if (resolvedCompanyId != null) {
       await this.markMembershipAccessed(user.id, resolvedCompanyId);
@@ -899,24 +791,16 @@ export class AuthService {
     }
 
     try {
-      const googleProfile = await this.googleOAuthService.fetchProfile(
-        params.code,
-      );
-      const authenticatedResponse =
-        await this.loginOrRegisterWithGoogleProfile(googleProfile);
-      const handoffCode = await this.createGoogleSessionHandoff(
-        authenticatedResponse.accessToken,
-      );
+      const googleProfile = await this.googleOAuthService.fetchProfile(params.code);
+      const authenticatedResponse = await this.loginOrRegisterWithGoogleProfile(googleProfile);
+      const handoffCode = await this.createGoogleSessionHandoff(authenticatedResponse.accessToken);
 
       return this.googleOAuthService.buildFrontendRedirect({
         mode,
         handoffCode,
       });
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Google sign-in could not be completed.';
+      const message = error instanceof Error ? error.message : 'Google sign-in could not be completed.';
 
       return this.googleOAuthService.buildFrontendRedirect({
         mode,
@@ -953,9 +837,7 @@ export class AuthService {
       activeCompanyId: user.companyId,
       activeAccess,
       onboarding,
-      companies: memberships.map((membership) =>
-        this.mapProfileCompany(membership),
-      ),
+      companies: memberships.map((membership) => this.mapProfileCompany(membership)),
     };
   }
 
@@ -968,14 +850,8 @@ export class AuthService {
         where: { codeHash },
       });
 
-      if (
-        !handoff ||
-        handoff.consumedAt != null ||
-        handoff.expiresAt.getTime() <= now.getTime()
-      ) {
-        throw new BadRequestException(
-          'Google sign-in session is invalid or expired.',
-        );
+      if (!handoff || handoff.consumedAt != null || handoff.expiresAt.getTime() <= now.getTime()) {
+        throw new BadRequestException('Google sign-in session is invalid or expired.');
       }
 
       const consumed = await tx.authSessionHandoff.updateMany({
@@ -989,9 +865,7 @@ export class AuthService {
       });
 
       if (consumed.count !== 1) {
-        throw new BadRequestException(
-          'Google sign-in session is invalid or expired.',
-        );
+        throw new BadRequestException('Google sign-in session is invalid or expired.');
       }
 
       return {
@@ -1002,9 +876,7 @@ export class AuthService {
 
   async switchCompanyContext(user: AuthUser, companyId: number) {
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
-      throw new ForbiddenException(
-        'Super admin accounts use the master workspace.',
-      );
+      throw new ForbiddenException('Super admin accounts use the master workspace.');
     }
 
     const authUser = await this.usersService.findForAuthById(user.id);
@@ -1017,10 +889,7 @@ export class AuthService {
       throw new UnauthorizedException('User account is not active.');
     }
 
-    const resolvedCompanyId = this.resolveDefaultCompanyContext(
-      authUser,
-      companyId,
-    );
+    const resolvedCompanyId = this.resolveDefaultCompanyContext(authUser, companyId);
 
     if (resolvedCompanyId == null) {
       throw new ForbiddenException('Company access is required.');
@@ -1029,10 +898,7 @@ export class AuthService {
     return this.buildAuthenticatedResponse(authUser, resolvedCompanyId);
   }
 
-  async logout(
-    user: AuthUser,
-    requestContext: { ipAddress?: string | null; userAgent?: string | null },
-  ) {
+  async logout(user: AuthUser, requestContext: { ipAddress?: string | null; userAgent?: string | null }) {
     await this.recordAuthAudit({
       action: 'LOGOUT',
       companyId: user.companyId,
@@ -1062,9 +928,7 @@ export class AuthService {
     const description =
       input.result === 'Success'
         ? `${actionLabel} succeeded${email ? ` for ${email}` : ''}.`
-        : `${actionLabel} failed${email ? ` for ${email}` : ''}${
-            input.reason ? `: ${input.reason}.` : '.'
-          }`;
+        : `${actionLabel} failed${email ? ` for ${email}` : ''}${input.reason ? `: ${input.reason}.` : '.'}`;
 
     try {
       await this.prisma.auditLog.create({
@@ -1087,18 +951,11 @@ export class AuthService {
         },
       });
     } catch (error) {
-      this.logger.warn(
-        `Audit log write failed for ${input.action.toLowerCase()}: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
-      );
+      this.logger.warn(`Audit log write failed for ${input.action.toLowerCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  private async buildAuthenticatedResponse(
-    user: UserWithMemberships,
-    companyId: number | null,
-  ) {
+  private async buildAuthenticatedResponse(user: UserWithMemberships, companyId: number | null) {
     const accessContext = this.buildJwtAccessContext(user, companyId);
     const payload: JwtPayload = {
       sub: user.id,
@@ -1108,10 +965,7 @@ export class AuthService {
       membershipRole: accessContext.membershipRole,
       companyRoleId: accessContext.companyRoleId,
     };
-    const resolvedAccess =
-      companyId == null && user.systemRole !== SystemRole.SUPER_ADMIN
-        ? null
-        : await this.accessControlService.resolveAuthUser(payload);
+    const resolvedAccess = companyId == null && user.systemRole !== SystemRole.SUPER_ADMIN ? null : await this.accessControlService.resolveAuthUser(payload);
     const onboarding = this.buildOnboardingState(user, companyId);
 
     return {
@@ -1130,39 +984,30 @@ export class AuthService {
     const googleSubject = profile.sub?.trim();
 
     if (!normalizedEmail) {
-      throw new BadRequestException(
-        'Google did not return a valid email address.',
-      );
+      throw new BadRequestException('Google did not return a valid email address.');
     }
 
     if (!googleSubject) {
-      throw new BadRequestException(
-        'Google did not return a stable account identifier.',
-      );
+      throw new BadRequestException('Google did not return a stable account identifier.');
     }
 
     if (!profile.email_verified) {
-      throw new BadRequestException(
-        'Your Google account email address is not verified.',
-      );
+      throw new BadRequestException('Your Google account email address is not verified.');
     }
 
     const now = new Date();
-    const existingGoogleIdentity =
-      await this.prisma.userAuthIdentity.findUnique({
-        where: {
-          provider_providerUserId: {
-            provider: AuthProvider.GOOGLE,
-            providerUserId: googleSubject,
-          },
+    const existingGoogleIdentity = await this.prisma.userAuthIdentity.findUnique({
+      where: {
+        provider_providerUserId: {
+          provider: AuthProvider.GOOGLE,
+          providerUserId: googleSubject,
         },
-        include: {
-          user: true,
-        },
-      });
-    const existingUser =
-      existingGoogleIdentity?.user ??
-      (await this.usersService.findByEmail(normalizedEmail));
+      },
+      include: {
+        user: true,
+      },
+    });
+    const existingUser = existingGoogleIdentity?.user ?? (await this.usersService.findByEmail(normalizedEmail));
 
     if (existingUser?.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('User account is suspended.');
@@ -1197,15 +1042,9 @@ export class AuthService {
         await tx.user.update({
           where: { id: existingUser.id },
           data: {
-            status:
-              existingUser.status === UserStatus.PENDING_VERIFICATION
-                ? UserStatus.ACTIVE
-                : undefined,
+            status: existingUser.status === UserStatus.PENDING_VERIFICATION ? UserStatus.ACTIVE : undefined,
             emailVerifiedAt: existingUser.emailVerifiedAt ?? now,
-            name:
-              existingUser.name?.trim().length > 0
-                ? existingUser.name
-                : (profile.name?.trim() ?? existingUser.name),
+            name: existingUser.name?.trim().length > 0 ? existingUser.name : (profile.name?.trim() ?? existingUser.name),
           },
         });
 
@@ -1218,9 +1057,7 @@ export class AuthService {
     }
 
     if (resolvedUserId == null) {
-      throw new BadRequestException(
-        'Google user account could not be resolved.',
-      );
+      throw new BadRequestException('Google user account could not be resolved.');
     }
 
     const user = await this.usersService.findForAuthById(resolvedUserId);
@@ -1269,15 +1106,10 @@ export class AuthService {
   }
 
   private getUsableMemberships(user: UserWithMemberships) {
-    return user.memberships.filter((membership) =>
-      this.isMembershipUsable(membership),
-    );
+    return user.memberships.filter((membership) => this.isMembershipUsable(membership));
   }
 
-  private resolveDefaultCompanyContext(
-    user: UserWithMemberships,
-    requestedCompanyId: number | null,
-  ) {
+  private resolveDefaultCompanyContext(user: UserWithMemberships, requestedCompanyId: number | null) {
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
       return requestedCompanyId;
     }
@@ -1285,18 +1117,14 @@ export class AuthService {
     const usableMemberships = this.getUsableMemberships(user);
 
     if (requestedCompanyId != null) {
-      const membership = user.memberships.find(
-        (item) => item.companyId === requestedCompanyId,
-      );
+      const membership = user.memberships.find((item) => item.companyId === requestedCompanyId);
 
       if (!membership) {
         throw new UnauthorizedException('You do not belong to this company.');
       }
 
       if (membership.status !== MembershipStatus.ACTIVE) {
-        throw new UnauthorizedException(
-          'Your company membership is not active.',
-        );
+        throw new UnauthorizedException('Your company membership is not active.');
       }
 
       if (!this.isMembershipCompanyUsable(membership)) {
@@ -1312,9 +1140,7 @@ export class AuthService {
 
     return (
       [...usableMemberships].sort((left, right) => {
-        const lastAccessDifference =
-          (right.lastAccessedAt?.getTime() ?? 0) -
-          (left.lastAccessedAt?.getTime() ?? 0);
+        const lastAccessDifference = (right.lastAccessedAt?.getTime() ?? 0) - (left.lastAccessedAt?.getTime() ?? 0);
 
         if (lastAccessDifference !== 0) {
           return lastAccessDifference;
@@ -1325,50 +1151,29 @@ export class AuthService {
     );
   }
 
-  private isMembershipUsable(
-    membership: UserWithMemberships['memberships'][number],
-  ) {
-    return (
-      membership.status === MembershipStatus.ACTIVE &&
-      this.isMembershipCompanyUsable(membership)
-    );
+  private isMembershipUsable(membership: UserWithMemberships['memberships'][number]) {
+    return membership.status === MembershipStatus.ACTIVE && this.isMembershipCompanyUsable(membership);
   }
 
-  private isMembershipCompanyUsable(
-    membership: UserWithMemberships['memberships'][number],
-  ) {
-    return (
-      membership.company.isActive &&
-      membership.company.status !== CompanyStatus.SUSPENDED &&
-      membership.company.status !== CompanyStatus.FAILED
-    );
+  private isMembershipCompanyUsable(membership: UserWithMemberships['memberships'][number]) {
+    return membership.company.isActive && membership.company.status !== CompanyStatus.SUSPENDED && membership.company.status !== CompanyStatus.FAILED;
   }
 
-  private async issuePasswordResetCode(
-    dto: ForgotPasswordDto,
-    isResend: boolean,
-  ) {
+  private async issuePasswordResetCode(dto: ForgotPasswordDto, isResend: boolean) {
     const normalizedEmail = normalizeEmail(dto.email) as string;
     const user = await this.usersService.findByEmail(normalizedEmail);
 
     if (!user) {
       this.logger.log('Password reset requested for an unknown account.');
       return {
-        message:
-          'If the email is registered, a password reset code will be sent.',
+        message: 'If the email is registered, a password reset code will be sent.',
       };
     }
 
-    if (
-      user.status !== UserStatus.ACTIVE &&
-      user.status !== UserStatus.PENDING_VERIFICATION
-    ) {
-      this.logger.log(
-        `Password reset requested for unavailable user ${user.id} with status ${user.status}.`,
-      );
+    if (user.status !== UserStatus.ACTIVE && user.status !== UserStatus.PENDING_VERIFICATION) {
+      this.logger.log(`Password reset requested for unavailable user ${user.id} with status ${user.status}.`);
       return {
-        message:
-          'If the email is registered, a password reset code will be sent.',
+        message: 'If the email is registered, a password reset code will be sent.',
       };
     }
 
@@ -1376,11 +1181,7 @@ export class AuthService {
     const codeHash = await this.otpService.hashCode(resetCode);
     const expiresAt = this.buildVerificationExpiry();
 
-    const previousReset = await this.getLatestActiveVerification(
-      user.id,
-      user.email,
-      VerificationPurpose.PASSWORD_RESET,
-    );
+    const previousReset = await this.getLatestActiveVerification(user.id, user.email, VerificationPurpose.PASSWORD_RESET);
 
     const createdVerification = await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({
@@ -1407,20 +1208,14 @@ export class AuthService {
     });
 
     await this.authMailService.sendPasswordResetCode(user.email, resetCode);
-    this.logger.log(
-      `Password reset code issued for user ${user.id}; verification ${createdVerification.id}.`,
-    );
+    this.logger.log(`Password reset code issued for user ${user.id}; verification ${createdVerification.id}.`);
 
     return {
-      message:
-        'If the email is registered, a password reset code will be sent.',
+      message: 'If the email is registered, a password reset code will be sent.',
     };
   }
 
-  private async linkGoogleIdentity(
-    tx: Prisma.TransactionClient,
-    params: { userId: number; email: string; providerUserId: string },
-  ) {
+  private async linkGoogleIdentity(tx: Prisma.TransactionClient, params: { userId: number; email: string; providerUserId: string }) {
     const existingIdentity = await tx.userAuthIdentity.findUnique({
       where: {
         userId_provider: {
@@ -1430,13 +1225,8 @@ export class AuthService {
       },
     });
 
-    if (
-      existingIdentity?.providerUserId &&
-      existingIdentity.providerUserId !== params.providerUserId
-    ) {
-      throw new ConflictException(
-        'This email is already linked to a different Google account.',
-      );
+    if (existingIdentity?.providerUserId && existingIdentity.providerUserId !== params.providerUserId) {
+      throw new ConflictException('This email is already linked to a different Google account.');
     }
 
     if (existingIdentity) {
@@ -1462,28 +1252,17 @@ export class AuthService {
   }
 
   private buildVerificationExpiry(): Date {
-    const expirySeconds = Number(
-      this.configService.get<string | number>(
-        'EMAIL_VERIFICATION_EXPIRES_IN_SECONDS',
-        300,
-      ),
-    );
+    const expirySeconds = Number(this.configService.get<string | number>('EMAIL_VERIFICATION_EXPIRES_IN_SECONDS', 300));
 
     return new Date(Date.now() + expirySeconds * 1000);
   }
 
-  private async resendSignupVerificationCode(user: {
-    id: number;
-    email: string;
-  }) {
+  private async resendSignupVerificationCode(user: { id: number; email: string }) {
     const verificationCode = this.otpService.generateCode();
     const codeHash = await this.otpService.hashCode(verificationCode);
     const expiresAt = this.buildVerificationExpiry();
 
-    const previousVerification = await this.getLatestActiveVerification(
-      user.id,
-      user.email,
-    );
+    const previousVerification = await this.getLatestActiveVerification(user.id, user.email);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.updateMany({
@@ -1509,10 +1288,7 @@ export class AuthService {
       });
     });
 
-    await this.authMailService.sendVerificationCode(
-      user.email,
-      verificationCode,
-    );
+    await this.authMailService.sendVerificationCode(user.email, verificationCode);
 
     return {
       message: 'A new verification code was sent.',
@@ -1522,12 +1298,7 @@ export class AuthService {
 
   private buildPasswordResetToken(payload: PasswordResetTokenPayload) {
     return this.jwtService.sign(payload, {
-      expiresIn: Number(
-        this.configService.get<string | number>(
-          'RESET_PASSWORD_TOKEN_EXPIRES_IN_SECONDS',
-          600,
-        ),
-      ),
+      expiresIn: Number(this.configService.get<string | number>('RESET_PASSWORD_TOKEN_EXPIRES_IN_SECONDS', 600)),
     });
   }
 
@@ -1541,17 +1312,11 @@ export class AuthService {
 
       return payload;
     } catch {
-      throw new BadRequestException(
-        'Password reset token is invalid or expired.',
-      );
+      throw new BadRequestException('Password reset token is invalid or expired.');
     }
   }
 
-  private getLatestActiveVerification(
-    userId: number,
-    email: string,
-    purpose: VerificationPurpose = VerificationPurpose.SIGNUP,
-  ) {
+  private getLatestActiveVerification(userId: number, email: string, purpose: VerificationPurpose = VerificationPurpose.SIGNUP) {
     return this.prisma.emailVerificationCode.findFirst({
       where: {
         userId,
@@ -1594,21 +1359,15 @@ export class AuthService {
   }
 
   private mapCompanies(user: UserWithMemberships) {
-    return user.memberships.map((membership) =>
-      this.mapProfileCompany(membership),
-    );
+    return user.memberships.map((membership) => this.mapProfileCompany(membership));
   }
 
-  private mapProfileCompany(
-    membership: UserWithMemberships['memberships'][number],
-  ) {
+  private mapProfileCompany(membership: UserWithMemberships['memberships'][number]) {
     return {
       companyId: membership.companyId,
       companyName: membership.company.name,
       companyStatus: membership.company.status,
-      isCompanyActive:
-        membership.company.isActive &&
-        membership.company.status === CompanyStatus.ACTIVE,
+      isCompanyActive: membership.company.isActive && membership.company.status === CompanyStatus.ACTIVE,
       logoPublicUrl: membership.company.logoPublicUrl,
       role: this.mapMembershipRole(membership.role),
       membershipStatus: membership.status,
@@ -1627,10 +1386,7 @@ export class AuthService {
     };
   }
 
-  private buildJwtAccessContext(
-    user: UserWithMemberships,
-    companyId: number | null,
-  ) {
+  private buildJwtAccessContext(user: UserWithMemberships, companyId: number | null) {
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
       return {
         role: AppRole.SUPER_ADMIN,
@@ -1647,9 +1403,7 @@ export class AuthService {
       };
     }
 
-    const membership = user.memberships.find(
-      (item) => item.companyId === companyId,
-    );
+    const membership = user.memberships.find((item) => item.companyId === companyId);
 
     return {
       role: membership ? this.mapMembershipRole(membership.role) : AppRole.USER,
@@ -1658,18 +1412,12 @@ export class AuthService {
     };
   }
 
-  private buildOnboardingState(
-    user: UserWithMemberships,
-    activeCompanyId: number | null,
-  ) {
+  private buildOnboardingState(user: UserWithMemberships, activeCompanyId: number | null) {
     if (user.systemRole === SystemRole.SUPER_ADMIN) {
       return this.buildSuperAdminOnboardingState();
     }
 
-    return this.buildOnboardingStateFromMemberships(
-      user.memberships,
-      activeCompanyId,
-    );
+    return this.buildOnboardingStateFromMemberships(user.memberships, activeCompanyId);
   }
 
   private buildSuperAdminOnboardingState() {
@@ -1703,12 +1451,7 @@ export class AuthService {
         membership.company.status !== CompanyStatus.SUSPENDED &&
         membership.company.status !== CompanyStatus.FAILED,
     );
-    const activeMembership =
-      activeCompanyId == null
-        ? null
-        : (usableMemberships.find(
-            (membership) => membership.companyId === activeCompanyId,
-          ) ?? null);
+    const activeMembership = activeCompanyId == null ? null : (usableMemberships.find((membership) => membership.companyId === activeCompanyId) ?? null);
 
     return {
       emailVerified: true,
@@ -1717,12 +1460,7 @@ export class AuthService {
       hasActiveCompanyContext: activeMembership !== null,
       requiresCompanySetup: memberships.length === 0,
       canManageCompany: activeMembership?.role === MembershipRole.ADMIN,
-      nextStep:
-        memberships.length === 0
-          ? 'COMPANY_SETUP'
-          : activeMembership === null
-            ? 'SELECT_COMPANY'
-            : 'APP_READY',
+      nextStep: memberships.length === 0 ? 'COMPANY_SETUP' : activeMembership === null ? 'SELECT_COMPANY' : 'APP_READY',
     };
   }
 }
@@ -1731,9 +1469,7 @@ function getAuditUserEmail(user: UserWithMemberships | AuthUser | undefined) {
   return user && 'email' in user ? user.email : undefined;
 }
 
-function getAuditUserCompanyId(
-  user: UserWithMemberships | AuthUser | undefined,
-) {
+function getAuditUserCompanyId(user: UserWithMemberships | AuthUser | undefined) {
   if (!user) {
     return null;
   }
@@ -1743,11 +1479,7 @@ function getAuditUserCompanyId(
   }
 
   if ('memberships' in user) {
-    return (
-      user.memberships.find(
-        (membership) => membership.status === MembershipStatus.ACTIVE,
-      )?.companyId ?? null
-    );
+    return user.memberships.find((membership) => membership.status === MembershipStatus.ACTIVE)?.companyId ?? null;
   }
 
   return null;

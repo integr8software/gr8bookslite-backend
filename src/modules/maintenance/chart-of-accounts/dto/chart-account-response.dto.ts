@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-} from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
 
 export class ChartAccountBankAccountResponseDto {
   @ApiProperty()

@@ -116,10 +116,7 @@ describe('SidebarBuilder', () => {
                 {
                   system: {
                     code: 'ACCOUNTING',
-                    modules: [
-                      buildEnabledModule(5, 'TM', 'Term Management'),
-                      buildEnabledModule(6, 'COA', 'Chart of Accounts'),
-                    ],
+                    modules: [buildEnabledModule(5, 'TM', 'Term Management'), buildEnabledModule(6, 'COA', 'Chart of Accounts')],
                     sidebarItems: [
                       {
                         id: 100,
@@ -213,10 +210,7 @@ describe('SidebarBuilder', () => {
                 {
                   system: {
                     code: 'ACCOUNTING',
-                    modules: [
-                      buildEnabledModule(5, 'TM', 'Term Management'),
-                      buildEnabledModule(6, 'COA', 'Chart of Accounts'),
-                    ],
+                    modules: [buildEnabledModule(5, 'TM', 'Term Management'), buildEnabledModule(6, 'COA', 'Chart of Accounts')],
                     sidebarItems: [
                       {
                         id: 100,
@@ -305,18 +299,12 @@ function createSidebarBuilder() {
   return new SidebarBuilder(new EntitlementService());
 }
 
-type BuildMembershipOptions = Partial<
-  Omit<SidebarMembershipSource['company'], 'subscriptions'>
-> & {
+type BuildMembershipOptions = Partial<Omit<SidebarMembershipSource['company'], 'subscriptions'>> & {
   planModules?: Array<ReturnType<typeof buildEnabledModule>>;
   subscriptions?: SidebarMembershipSource['company']['subscriptions'];
 };
 
-function buildMembership({
-  planModules = [],
-  sidebarPreferences = [],
-  subscriptions,
-}: BuildMembershipOptions = {}): SidebarMembershipSource {
+function buildMembership({ planModules = [], sidebarPreferences = [], subscriptions }: BuildMembershipOptions = {}): SidebarMembershipSource {
   const planSubscriptions =
     subscriptions ??
     (planModules.length

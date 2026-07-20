@@ -82,9 +82,7 @@ export class AddressController {
   }
 
   @Get('provinces/:provinceCode/cities-municipalities')
-  listProvinceCitiesMunicipalities(
-    @Param('provinceCode') provinceCode: string,
-  ) {
+  listProvinceCitiesMunicipalities(@Param('provinceCode') provinceCode: string) {
     return this.addressService.listCityMunicipalities({ provinceCode });
   }
 
@@ -105,16 +103,12 @@ export class AddressController {
   }
 
   @Get('cities-municipalities/:cityMunicipalityCode')
-  getCityMunicipality(
-    @Param('cityMunicipalityCode') cityMunicipalityCode: string,
-  ) {
+  getCityMunicipality(@Param('cityMunicipalityCode') cityMunicipalityCode: string) {
     return this.addressService.getCityMunicipality(cityMunicipalityCode);
   }
 
   @Get('cities-municipalities/:cityMunicipalityCode/barangays')
-  listCityMunicipalityBarangays(
-    @Param('cityMunicipalityCode') cityMunicipalityCode: string,
-  ) {
+  listCityMunicipalityBarangays(@Param('cityMunicipalityCode') cityMunicipalityCode: string) {
     return this.addressService.listBarangays({ cityMunicipalityCode });
   }
 

@@ -1,24 +1,6 @@
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-  MinLength,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import {
-  BillingCycle,
-  BillingIntervalUnit,
-  SubscriptionPlanScope,
-  SubscriptionPlanStatus,
-  SubscriptionUsageMetric,
-} from '@prisma/client';
+import { BillingCycle, BillingIntervalUnit, SubscriptionPlanScope, SubscriptionPlanStatus, SubscriptionUsageMetric } from '@prisma/client';
 
 export class MasterPlanPriceDto {
   @IsEnum(BillingCycle)

@@ -1,15 +1,7 @@
 import { BadGatewayException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  encodeStoragePath,
-  stripStorageEnvironment,
-  validateStorageFolder,
-} from '../storage-path.util';
-import type {
-  StorageProvider,
-  StorageUploadInput,
-  StorageUploadResult,
-} from '../storage.types';
+import { encodeStoragePath, stripStorageEnvironment, validateStorageFolder } from '../storage-path.util';
+import type { StorageProvider, StorageUploadInput, StorageUploadResult } from '../storage.types';
 
 @Injectable()
 export class VpsStorageProvider implements StorageProvider {
@@ -35,9 +27,7 @@ export class VpsStorageProvider implements StorageProvider {
     });
 
     if (!response.ok) {
-      throw new BadGatewayException(
-        await buildVpsFailureMessage('upload', response),
-      );
+      throw new BadGatewayException(await buildVpsFailureMessage('upload', response));
     }
 
     const result = (await response.json()) as StorageUploadResult;
@@ -65,16 +55,12 @@ export class VpsStorageProvider implements StorageProvider {
     });
 
     if (!response.ok && response.status !== 404) {
-      throw new BadGatewayException(
-        await buildVpsFailureMessage('delete', response),
-      );
+      throw new BadGatewayException(await buildVpsFailureMessage('delete', response));
     }
   }
 
-  async moveFile(): Promise<
-    Pick<StorageUploadResult, 'relativePath' | 'storagePath' | 'publicUrl'>
-  > {
-    throw new BadGatewayException('VPS storage move is not supported.');
+  moveFile(): Promise<Pick<StorageUploadResult, 'relativePath' | 'storagePath' | 'publicUrl'>> {
+    return Promise.reject(new BadGatewayException('VPS storage move is not supported.'));
   }
 
   getPublicUrl(relativePath: string) {
@@ -106,8 +92,7 @@ export class VpsStorageProvider implements StorageProvider {
 
 async function buildVpsFailureMessage(operation: string, response: Response) {
   const responseText = await response.text();
-  const detail =
-    responseText.trim() || response.statusText || 'No response body.';
+  const detail = responseText.trim() || response.statusText || 'No response body.';
 
   return `VPS storage ${operation} failed with HTTP ${response.status}: ${detail}`;
 }

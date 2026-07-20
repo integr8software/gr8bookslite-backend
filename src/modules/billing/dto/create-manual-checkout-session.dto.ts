@@ -1,12 +1,5 @@
 import { BillingCycle, BillingPaymentPurpose } from '@prisma/client';
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUrl,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, IsUrl, Min } from 'class-validator';
 
 export class CreateManualCheckoutSessionDto {
   @IsEnum(BillingPaymentPurpose)

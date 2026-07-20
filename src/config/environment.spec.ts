@@ -4,8 +4,7 @@ describe('validateEnvironment', () => {
   it.each(AppEnvironments)('accepts APP_ENV=%s', (appEnvironment) => {
     const environment = {
       APP_ENV: appEnvironment,
-      CORS_ALLOWED_ORIGINS:
-        appEnvironment === 'local' ? undefined : 'https://staging.example.com',
+      CORS_ALLOWED_ORIGINS: appEnvironment === 'local' ? undefined : 'https://staging.example.com',
       STORAGE_PROVIDER: 'vps',
       STORAGE_ENV: appEnvironment === 'staging' ? 'staging' : 'local',
       VPS_STORAGE_API_URL: 'http://storage.example.com/api/v1/storage/internal',
@@ -18,9 +17,7 @@ describe('validateEnvironment', () => {
   });
 
   it('rejects a missing APP_ENV', () => {
-    expect(() => validateEnvironment({})).toThrow(
-      'APP_ENV is required. Expected one of: local, shared-dev, staging, production.',
-    );
+    expect(() => validateEnvironment({})).toThrow('APP_ENV is required. Expected one of: local, shared-dev, staging, production.');
   });
 
   it('rejects an invalid APP_ENV', () => {
@@ -35,15 +32,12 @@ describe('validateEnvironment', () => {
         APP_ENV: 'staging',
         STORAGE_PROVIDER: 'vps',
         STORAGE_ENV: 'staging',
-        VPS_STORAGE_API_URL:
-          'http://storage.example.com/api/v1/storage/internal',
+        VPS_STORAGE_API_URL: 'http://storage.example.com/api/v1/storage/internal',
         VPS_STORAGE_PUBLIC_URL: 'http://storage.example.com',
         VPS_STORAGE_ROOT: './storage',
         VPS_STORAGE_SECRET: 'test-secret',
       }),
-    ).toThrow(
-      'A frontend origin is required when APP_ENV is shared-dev, staging, or production. Set FRONTEND_URL or CORS_ALLOWED_ORIGINS.',
-    );
+    ).toThrow('A frontend origin is required when APP_ENV is shared-dev, staging, or production. Set FRONTEND_URL or CORS_ALLOWED_ORIGINS.');
   });
 
   it('rejects localhost frontend origin for staging', () => {
@@ -53,15 +47,12 @@ describe('validateEnvironment', () => {
         CORS_ALLOWED_ORIGINS: 'http://localhost:3001',
         STORAGE_PROVIDER: 'vps',
         STORAGE_ENV: 'staging',
-        VPS_STORAGE_API_URL:
-          'http://storage.example.com/api/v1/storage/internal',
+        VPS_STORAGE_API_URL: 'http://storage.example.com/api/v1/storage/internal',
         VPS_STORAGE_PUBLIC_URL: 'http://storage.example.com',
         VPS_STORAGE_ROOT: './storage',
         VPS_STORAGE_SECRET: 'test-secret',
       }),
-    ).toThrow(
-      'The configured frontend origin cannot point to localhost for staging or production.',
-    );
+    ).toThrow('The configured frontend origin cannot point to localhost for staging or production.');
   });
 
   it('accepts FRONTEND_URL as an explicit override', () => {
@@ -86,9 +77,7 @@ describe('validateEnvironment', () => {
         APP_ENV: 'local',
         STORAGE_PROVIDER: 'vps',
       }),
-    ).toThrow(
-      'Missing required environment value(s): STORAGE_ENV, VPS_STORAGE_API_URL, VPS_STORAGE_PUBLIC_URL, VPS_STORAGE_ROOT, VPS_STORAGE_SECRET.',
-    );
+    ).toThrow('Missing required environment value(s): STORAGE_ENV, VPS_STORAGE_API_URL, VPS_STORAGE_PUBLIC_URL, VPS_STORAGE_ROOT, VPS_STORAGE_SECRET.');
   });
 
   it('rejects invalid VPS storage environments', () => {
@@ -97,15 +86,12 @@ describe('validateEnvironment', () => {
         APP_ENV: 'local',
         STORAGE_PROVIDER: 'vps',
         STORAGE_ENV: 'production',
-        VPS_STORAGE_API_URL:
-          'http://storage.example.com/api/v1/storage/internal',
+        VPS_STORAGE_API_URL: 'http://storage.example.com/api/v1/storage/internal',
         VPS_STORAGE_PUBLIC_URL: 'http://storage.example.com',
         VPS_STORAGE_ROOT: './storage',
         VPS_STORAGE_SECRET: 'test-secret',
       }),
-    ).toThrow(
-      'Invalid STORAGE_ENV "production". Expected one of: local, shared-dev, staging.',
-    );
+    ).toThrow('Invalid STORAGE_ENV "production". Expected one of: local, shared-dev, staging.');
   });
 
   it('requires Supabase settings when STORAGE_PROVIDER=supabase', () => {
@@ -114,8 +100,6 @@ describe('validateEnvironment', () => {
         APP_ENV: 'local',
         STORAGE_PROVIDER: 'supabase',
       }),
-    ).toThrow(
-      'Missing required environment value(s): SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET.',
-    );
+    ).toThrow('Missing required environment value(s): SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET.');
   });
 });

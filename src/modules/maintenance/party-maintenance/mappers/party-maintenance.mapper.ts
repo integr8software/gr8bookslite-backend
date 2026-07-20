@@ -15,45 +15,46 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     middleName: party.middleName ?? '',
     lastName: party.lastName ?? '',
     suffixName: party.suffixName ?? '',
+    honorific: party.honorific ?? '',
+    gender: party.gender ?? '',
+    civilStatus: party.civilStatus ?? '',
+    nationality: party.nationality ?? '',
+    memberRegistrationDate: party.memberRegistrationDate?.toISOString().slice(0, 10) ?? '',
     address: mapPartyAddress(getDefaultPartyAddress(party.addresses)),
     addresses: party.addresses.map(mapPartyAddress),
-    defaultReceivableAccount:
-      party.defaultReceivableAccountId?.toString() ?? '',
+    defaultReceivableAccount: party.defaultReceivableAccountId?.toString() ?? '',
     customerAdvanceAccount: party.customerAdvanceAccountId?.toString() ?? '',
     defaultPayableAccount: party.defaultPayableAccountId?.toString() ?? '',
     vendorAdvanceAccount: party.vendorAdvanceAccountId?.toString() ?? '',
     employeeAdvanceAccount: party.employeeAdvanceAccountId?.toString() ?? '',
     employeePayableAccount: party.employeePayableAccountId?.toString() ?? '',
     accountingAccounts: {
-      defaultReceivableAccount: mapChartAccountSummary(
-        party.defaultReceivableAccount,
-      ),
-      customerAdvanceAccount: mapChartAccountSummary(
-        party.customerAdvanceAccount,
-      ),
+      defaultReceivableAccount: mapChartAccountSummary(party.defaultReceivableAccount),
+      customerAdvanceAccount: mapChartAccountSummary(party.customerAdvanceAccount),
       defaultPayableAccount: mapChartAccountSummary(party.defaultPayableAccount),
       vendorAdvanceAccount: mapChartAccountSummary(party.vendorAdvanceAccount),
-      employeeAdvanceAccount: mapChartAccountSummary(
-        party.employeeAdvanceAccount,
-      ),
-      employeePayableAccount: mapChartAccountSummary(
-        party.employeePayableAccount,
-      ),
+      employeeAdvanceAccount: mapChartAccountSummary(party.employeeAdvanceAccount),
+      employeePayableAccount: mapChartAccountSummary(party.employeePayableAccount),
     },
     termId: party.termId?.toString() ?? '',
     termName: party.term?.name ?? '',
     tin: party.tin ?? '',
     vatRegistrationType: party.vatRegistrationType ?? null,
+    vatRegistrationTypeId: party.vatRegistrationTypeId?.toString() ?? '',
+    vatRegistration: party.vatRegistration
+      ? {
+          id: party.vatRegistration.id.toString(),
+          name: party.vatRegistration.name,
+          percentage: Number(party.vatRegistration.percentage),
+        }
+      : null,
     atcCode: party.atcCode ?? '',
     email: party.email ?? '',
     contactNo: party.contactNo ?? '',
-    createdBy:
-      party.createdByUserId === null
-        ? SystemGeneratedAuditLabel
-        : (userNames.get(party.createdByUserId) ?? null),
+    landline: party.landline ?? '',
+    createdBy: party.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(party.createdByUserId) ?? null),
     createdAt: party.createdAt,
-    updatedBy:
-      (party.updatedByUserId && userNames.get(party.updatedByUserId)) ?? null,
+    updatedBy: (party.updatedByUserId && userNames.get(party.updatedByUserId)) ?? null,
     updatedAt: party.updatedAt,
   };
 }

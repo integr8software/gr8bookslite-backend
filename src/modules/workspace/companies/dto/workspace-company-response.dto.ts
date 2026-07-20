@@ -1,10 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  BillingCycle,
-  CompanyStatus,
-  CompanyUnitType,
-  TaxpayerType,
-} from '@prisma/client';
+import { BillingCycle, CompanyStatus, CompanyUnitType, TaxpayerType } from '@prisma/client';
 import { WorkspaceUserResponseDto } from '../../users/dto/workspace-user-response.dto';
 
 export class WorkspaceCompanyCreatedByResponseDto {

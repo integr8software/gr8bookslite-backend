@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -25,16 +16,11 @@ import { PaymentTypeMaintenanceService } from './payment-type-maintenance.servic
   version: '1',
 })
 export class PaymentTypeMaintenanceController {
-  constructor(
-    private readonly paymentTypeMaintenanceService: PaymentTypeMaintenanceService,
-  ) {}
+  constructor(private readonly paymentTypeMaintenanceService: PaymentTypeMaintenanceService) {}
 
   @Get()
   @ApiOkResponse({ description: 'Payment type list retrieved.' })
-  findAll(
-    @CurrentUser() user: AuthUser,
-    @Query() query: GetPaymentTypeListQueryDto,
-  ) {
+  findAll(@CurrentUser() user: AuthUser, @Query() query: GetPaymentTypeListQueryDto) {
     return this.paymentTypeMaintenanceService.findAll(user, query);
   }
 
@@ -52,20 +38,13 @@ export class PaymentTypeMaintenanceController {
 
   @Post('import')
   @ApiCreatedResponse({ description: 'Payment types imported.' })
-  importPaymentTypes(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: ImportPaymentTypesDto,
-  ) {
+  importPaymentTypes(@CurrentUser() user: AuthUser, @Body() dto: ImportPaymentTypesDto) {
     return this.paymentTypeMaintenanceService.importPaymentTypes(user, dto);
   }
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Payment type updated.' })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdatePaymentTypeDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdatePaymentTypeDto) {
     return this.paymentTypeMaintenanceService.update(user, id, dto);
   }
 }

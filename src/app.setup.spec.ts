@@ -1,26 +1,15 @@
-import {
-  shouldServeLocalStorage,
-  shouldServeVpsStaticStorage,
-} from './app.setup';
+import { shouldServeLocalStorage, shouldServeVpsStaticStorage } from './app.setup';
 
 describe('shouldServeLocalStorage', () => {
   it('enables static storage for /storage URLs', () => {
     expect(shouldServeLocalStorage('http://localhost:3000/storage')).toBe(true);
     expect(shouldServeLocalStorage('http://127.0.0.1:3000/storage')).toBe(true);
-    expect(
-      shouldServeLocalStorage(
-        'https://gr8booksneo-storage.integr8.com.ph/storage',
-      ),
-    ).toBe(true);
+    expect(shouldServeLocalStorage('https://gr8booksneo-storage.integr8.com.ph/storage')).toBe(true);
   });
 
   it('does not enable static storage for non-storage public URL paths', () => {
-    expect(
-      shouldServeLocalStorage('http://gr8booksneo-storage.integr8.com.ph'),
-    ).toBe(false);
-    expect(shouldServeLocalStorage('http://localhost:3000/api/storage')).toBe(
-      false,
-    );
+    expect(shouldServeLocalStorage('http://gr8booksneo-storage.integr8.com.ph')).toBe(false);
+    expect(shouldServeLocalStorage('http://localhost:3000/api/storage')).toBe(false);
     expect(shouldServeLocalStorage('http://localhost:3000')).toBe(false);
   });
 });

@@ -15,7 +15,7 @@ import { MasterPlanAndPackagesModule } from './modules/master/plan-and-packages/
 import { WorkspaceCompaniesModule } from './modules/workspace/companies/workspace-companies.module';
 import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.module';
 import { WorkspaceAuditLogsModule } from './modules/workspace/audit-logs/workspace-audit-logs.module';
-import { TablePreferencesModule } from './modules/workspace/table-preferences/table-preferences.module';
+import { TablePreferencesModule } from './modules/table-preferences/table-preferences.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import { AlphanumericTaxCodesModule } from './modules/alphanumeric-tax-codes/alphanumeric-tax-codes.module';
 import { AddressModule } from './modules/address/address.module';
@@ -24,12 +24,19 @@ import { BranchUsersModule } from './modules/company/branch-users/branch-users.m
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { TermMaintenanceModule } from './modules/maintenance/term-maintenance/term-maintenance.module';
+import { ItemAttributesModule } from './modules/maintenance/item-attributes/item-attributes.module';
+import { ItemCategoryModule } from './modules/maintenance/item-category/item-category.module';
+import { UnitOfMeasurementModule } from './modules/maintenance/unit-of-measurement/unit-of-measurement.module';
 import { PaymentTypeMaintenanceModule } from './modules/maintenance/payment-type-maintenance/payment-type-maintenance.module';
 import { DiscountMaintenanceModule } from './modules/maintenance/discount-maintenance/discount-maintenance.module';
 import { PartyMaintenanceModule } from './modules/maintenance/party-maintenance/party-maintenance.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
 import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
 import { ResponsibilityCenterModule } from './modules/maintenance/responsibility-center/responsibility-center.module';
+import { TaxMaintenanceModule } from './modules/maintenance/tax-maintenance/tax-maintenance.module';
+import { WarehouseMaintenanceModule } from './modules/maintenance/warehouse-maintenance/warehouse-maintenance.module';
+import { WarehouseAccessModule } from './modules/maintenance/warehouse-access/warehouse-access.module';
+import { WarehouseStorageModule } from './modules/maintenance/warehouse-storage/warehouse-storage.module';
 import { validateEnvironment } from './config/environment';
 import { ApprovalManagementModule } from './modules/system-administration/approval-management/approval-management.module';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
@@ -74,12 +81,19 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     FormSignatoriesModule,
     ChartOfAccountsModule,
     TermMaintenanceModule,
+    ItemAttributesModule,
+    ItemCategoryModule,
+    UnitOfMeasurementModule,
     PaymentTypeMaintenanceModule,
     DiscountMaintenanceModule,
     PartyMaintenanceModule,
     BankMasterfileModule,
     DefaultAccountModule,
     ResponsibilityCenterModule,
+    TaxMaintenanceModule,
+    WarehouseMaintenanceModule,
+    WarehouseAccessModule,
+    WarehouseStorageModule,
     ApprovalManagementModule,
     TransactionNumberSequencesModule,
     UserSidebarModule,

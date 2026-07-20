@@ -18,20 +18,14 @@ export function getSubscriptionAccessDenialReason(
 ): string | null {
   switch (subscription.status) {
     case SubscriptionStatus.ACTIVE:
-      if (
-        subscription.endsAt &&
-        subscription.endsAt.getTime() < now.getTime()
-      ) {
+      if (subscription.endsAt && subscription.endsAt.getTime() < now.getTime()) {
         return 'This company subscription has expired.';
       }
 
       return null;
 
     case SubscriptionStatus.TRIALING:
-      if (
-        subscription.trialEndsAt &&
-        subscription.trialEndsAt.getTime() < now.getTime()
-      ) {
+      if (subscription.trialEndsAt && subscription.trialEndsAt.getTime() < now.getTime()) {
         return 'This company trial has expired.';
       }
 
@@ -41,10 +35,7 @@ export function getSubscriptionAccessDenialReason(
       return 'This company subscription is past due.';
 
     case SubscriptionStatus.INCOMPLETE:
-      if (
-        options.allowProviderActivationFallback &&
-        subscription.failureCode === 'pending_provider_activation'
-      ) {
+      if (options.allowProviderActivationFallback && subscription.failureCode === 'pending_provider_activation') {
         return null;
       }
 

@@ -30,9 +30,7 @@ export class GoogleOAuthService {
       } satisfies GoogleOAuthStatePayload,
       { expiresIn: 600 },
     );
-    const authorizationUrl = new URL(
-      'https://accounts.google.com/o/oauth2/v2/auth',
-    );
+    const authorizationUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
 
     authorizationUrl.search = new URLSearchParams({
       client_id: googleConfig.clientId,
@@ -63,33 +61,21 @@ export class GoogleOAuthService {
       }),
     });
 
-    const tokenPayload = (await tokenResponse
-      .json()
-      .catch(() => null)) as GoogleTokenResponse | null;
+    const tokenPayload = (await tokenResponse.json().catch(() => null)) as GoogleTokenResponse | null;
 
     if (!tokenResponse.ok || !tokenPayload?.access_token) {
-      throw new BadRequestException(
-        tokenPayload?.error_description ??
-          'Failed to exchange the Google authorization code.',
-      );
+      throw new BadRequestException(tokenPayload?.error_description ?? 'Failed to exchange the Google authorization code.');
     }
 
-    const profileResponse = await fetch(
-      'https://openidconnect.googleapis.com/v1/userinfo',
-      {
-        headers: {
-          Authorization: `Bearer ${tokenPayload.access_token}`,
-        },
+    const profileResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+      headers: {
+        Authorization: `Bearer ${tokenPayload.access_token}`,
       },
-    );
-    const profile = (await profileResponse
-      .json()
-      .catch(() => null)) as GoogleUserProfile | null;
+    });
+    const profile = (await profileResponse.json().catch(() => null)) as GoogleUserProfile | null;
 
     if (!profileResponse.ok || !profile) {
-      throw new BadRequestException(
-        'Failed to read the Google account profile.',
-      );
+      throw new BadRequestException('Failed to read the Google account profile.');
     }
 
     return profile;
@@ -125,11 +111,7 @@ export class GoogleOAuthService {
     }
   }
 
-  buildFrontendRedirect(params: {
-    mode: GoogleAuthMode;
-    handoffCode?: string;
-    error?: string;
-  }) {
+  buildFrontendRedirect(params: { mode: GoogleAuthMode; handoffCode?: string; error?: string }) {
     const { frontendCallbackUrl } = this.getConfig();
     const redirectUrl = new URL(frontendCallbackUrl);
 
@@ -150,14 +132,10 @@ export class GoogleOAuthService {
     const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
     const clientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
     const redirectUri = this.configService.get<string>('GOOGLE_REDIRECT_URI');
-    const frontendCallbackUrl = this.configService.get<string>(
-      'GOOGLE_FRONTEND_CALLBACK_URL',
-    );
+    const frontendCallbackUrl = this.configService.get<string>('GOOGLE_FRONTEND_CALLBACK_URL');
 
     if (!clientId || !clientSecret || !redirectUri || !frontendCallbackUrl) {
-      throw new BadRequestException(
-        'Google OAuth is not configured correctly on the server.',
-      );
+      throw new BadRequestException('Google OAuth is not configured correctly on the server.');
     }
 
     return {

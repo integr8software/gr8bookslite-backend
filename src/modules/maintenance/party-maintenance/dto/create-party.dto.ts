@@ -1,23 +1,6 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMinSize,
-  IsArray,
-  IsEmail,
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  Matches,
-  MaxLength,
-  Min,
-  ValidateNested,
-} from 'class-validator';
-import {
-  PartyClassification,
-  PartyStatus,
-  PartyType,
-  PartyVatRegistrationType,
-} from '@prisma/client';
+import { ArrayMinSize, IsDateString, IsArray, IsEmail, IsEnum, IsInt, IsOptional, IsString, Matches, MaxLength, Min, ValidateNested } from 'class-validator';
+import { PartyClassification, PartyStatus, PartyType, PartyVatRegistrationType } from '@prisma/client';
 import { CreatePartyAddressDto } from './create-party-address.dto';
 
 export class CreatePartyDto {
@@ -73,6 +56,30 @@ export class CreatePartyDto {
   @MaxLength(40)
   suffixName?: string | null;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  honorific?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  gender?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  civilStatus?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  nationality?: string | null;
+
+  @IsOptional()
+  @IsDateString()
+  memberRegistrationDate?: string | null;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
@@ -126,6 +133,10 @@ export class CreatePartyDto {
 
   @IsOptional()
   @IsString()
+  vatRegistrationTypeId?: string | null;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(40)
   atcCode?: string | null;
 
@@ -140,4 +151,9 @@ export class CreatePartyDto {
     message: 'Contact number must use the format +63 000 000 0000.',
   })
   contactNo?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  landline?: string | null;
 }

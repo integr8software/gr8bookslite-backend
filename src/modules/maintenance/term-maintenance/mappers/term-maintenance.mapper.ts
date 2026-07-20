@@ -9,13 +9,9 @@ export function mapTerm(term: Term, userNames: Map<number, string>) {
     dateMode: term.dateMode,
     period: term.period,
     status: term.status,
-    createdBy:
-      term.createdByUserId === null
-        ? SystemGeneratedAuditLabel
-        : (userNames.get(term.createdByUserId) ?? null),
+    createdBy: term.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(term.createdByUserId) ?? null),
     createdAt: term.createdAt,
-    updatedBy:
-      (term.updatedByUserId && userNames.get(term.updatedByUserId)) ?? null,
+    updatedBy: (term.updatedByUserId && userNames.get(term.updatedByUserId)) ?? null,
     updatedAt: term.updatedAt,
   };
 }

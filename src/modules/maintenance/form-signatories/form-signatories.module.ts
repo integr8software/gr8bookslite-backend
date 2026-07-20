@@ -8,13 +8,7 @@ import { FormSignatoriesController } from './form-signatories.controller';
 import { FormSignatoriesService } from './form-signatories.service';
 
 @Module({
-  imports: [
-    PrismaModule,
-    AccessControlModule,
-    EntitlementModule,
-    AuthModule,
-    WorkspaceAuditLogsModule,
-  ],
+  imports: [PrismaModule, AccessControlModule, EntitlementModule, AuthModule, WorkspaceAuditLogsModule],
   controllers: [FormSignatoriesController],
   providers: [FormSignatoriesService],
 })

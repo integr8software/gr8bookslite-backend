@@ -13,3 +13,13 @@ export function parsePositiveBigIntId(value: string, label = 'id') {
 
   return id;
 }
+
+export function parseOptionalPositiveBigIntId(value: string | null | undefined, label = 'id') {
+  const normalized = value?.trim();
+
+  return normalized ? parsePositiveBigIntId(normalized, label) : null;
+}
+
+export function parseOptionalPositiveBigIntIdOrUndefined(value: string | undefined, label = 'id') {
+  return value === undefined ? undefined : parseOptionalPositiveBigIntId(value, label);
+}

@@ -1,18 +1,7 @@
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-  DiscountType,
-  Prisma,
-} from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, DiscountType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { generateNextAccountCodeFromSiblings } from '../../chart-of-accounts/utils/chart-account-code.util';
-import {
-  findSystemAccountGroupOrThrow,
-  mergeAccountGroupTags,
-  SystemAccountGroups,
-} from '../../chart-of-accounts/utils/system-account-groups.util';
+import { findSystemAccountGroupOrThrow, mergeAccountGroupTags, SystemAccountGroups } from '../../chart-of-accounts/utils/system-account-groups.util';
 
 type DiscountChartAccountWriteClient = PrismaService | Prisma.TransactionClient;
 
@@ -71,14 +60,8 @@ export async function resolveDiscountChartAccount(
       accountCode,
       accountTitle: input.accountTitle,
       accountLevel: ChartAccountLevel.SPECIFIC,
-      accountType:
-        input.type === DiscountType.PURCHASE
-          ? ChartAccountType.EXPENSE
-          : ChartAccountType.REVENUE,
-      accountNature:
-        input.type === DiscountType.PURCHASE
-          ? AccountNature.CREDIT
-          : AccountNature.DEBIT,
+      accountType: input.type === DiscountType.PURCHASE ? ChartAccountType.EXPENSE : ChartAccountType.REVENUE,
+      accountNature: input.type === DiscountType.PURCHASE ? AccountNature.CREDIT : AccountNature.DEBIT,
       accountGroup: mergeAccountGroupTags(parent.accountGroup),
       statementSection: parent.statementSection,
       reportAlias: input.accountTitle,
@@ -89,15 +72,11 @@ export async function resolveDiscountChartAccount(
       showTotal: false,
       status: ChartAccountStatus.ACTIVE,
       currencyCode: parent.currencyCode,
-      whoCreated:
-        input.createdByUserId === null ? null : String(input.createdByUserId),
+      whoCreated: input.createdByUserId === null ? null : String(input.createdByUserId),
     },
   });
 }
 
-export function getGeneratedDiscountAccountTitle(
-  type: DiscountType,
-  name: string,
-) {
+export function getGeneratedDiscountAccountTitle(type: DiscountType, name: string) {
   return `${type === DiscountType.PURCHASE ? 'Purchase' : 'Sales'} Discount - ${name.trim()}`;
 }

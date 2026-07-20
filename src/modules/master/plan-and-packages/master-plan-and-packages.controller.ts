@@ -13,9 +13,7 @@ import { MasterPlanAndPackagesService } from './master-plan-and-packages.service
   version: '1',
 })
 export class MasterPlanAndPackagesController {
-  constructor(
-    private readonly masterPlanAndPackagesService: MasterPlanAndPackagesService,
-  ) {}
+  constructor(private readonly masterPlanAndPackagesService: MasterPlanAndPackagesService) {}
 
   @Get()
   listPlans() {

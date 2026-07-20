@@ -1,13 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import {
-  BillingCycle,
-  BillingProvider,
-  CompanyStatus,
-  SubscriptionPlanScope,
-  SubscriptionPlanStatus,
-  SubscriptionStatus,
-  TaxpayerType,
-} from '@prisma/client';
+import { BillingCycle, BillingProvider, CompanyStatus, SubscriptionPlanScope, SubscriptionPlanStatus, SubscriptionStatus, TaxpayerType } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { OnboardingService } from './onboarding.service';
 
@@ -45,12 +37,7 @@ describe('OnboardingService plan-derived module entitlements', () => {
     await service.complete(user);
 
     expect(tx.company.update).toHaveBeenCalled();
-    const updateCompany = tx.company.update as jest.MockedFunction<
-      (input: {
-        where: { id: number };
-        data: { status: CompanyStatus };
-      }) => Promise<unknown>
-    >;
+    const updateCompany = tx.company.update as jest.MockedFunction<(input: { where: { id: number }; data: { status: CompanyStatus } }) => Promise<unknown>>;
     const updateArgs = updateCompany.mock.calls[0]?.[0];
 
     expect(updateArgs).toBeDefined();
@@ -100,9 +87,7 @@ function createService({
     userOnboardingDraft: {
       findUnique: jest.fn().mockResolvedValue(draft),
     },
-    $transaction: jest.fn(
-      (callback: (txClient: typeof tx) => Promise<unknown>) => callback(tx),
-    ),
+    $transaction: jest.fn((callback: (txClient: typeof tx) => Promise<unknown>) => callback(tx)),
     user: {
       findUnique: jest.fn().mockResolvedValue({
         email: 'owner@example.com',
@@ -183,15 +168,7 @@ function buildPlan({
   };
 }
 
-function buildPlanSystem({
-  systemId,
-  isEnabled = true,
-  modules,
-}: {
-  systemId: number;
-  isEnabled?: boolean;
-  modules: ReturnType<typeof buildSystemModule>[];
-}) {
+function buildPlanSystem({ systemId, isEnabled = true, modules }: { systemId: number; isEnabled?: boolean; modules: ReturnType<typeof buildSystemModule>[] }) {
   return {
     id: systemId,
     subscriptionPlanId: 3,

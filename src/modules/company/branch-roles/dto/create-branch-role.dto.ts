@@ -1,13 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMinSize,
-  IsArray,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayMinSize, IsArray, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
 import { BranchRolePermissionDto } from './branch-role-permission.dto';
 
 export class CreateBranchRoleDto {

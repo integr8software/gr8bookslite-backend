@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -25,9 +16,7 @@ import { PartyMaintenanceService } from './party-maintenance.service';
   version: '1',
 })
 export class PartyMaintenanceController {
-  constructor(
-    private readonly partyMaintenanceService: PartyMaintenanceService,
-  ) {}
+  constructor(private readonly partyMaintenanceService: PartyMaintenanceService) {}
 
   @Get()
   @ApiOkResponse({ description: 'Party list retrieved.' })
@@ -39,6 +28,12 @@ export class PartyMaintenanceController {
   @ApiOkResponse({ description: 'Party accounting account options retrieved.' })
   findAccountingOptions(@CurrentUser() user: AuthUser) {
     return this.partyMaintenanceService.findAccountingOptions(user);
+  }
+
+  @Get('options/:partyType')
+  @ApiOkResponse({ description: 'Party options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Param('partyType') partyType: string) {
+    return this.partyMaintenanceService.findOptions(user, partyType);
   }
 
   @Get(':id')
@@ -61,11 +56,7 @@ export class PartyMaintenanceController {
 
   @Patch(':id')
   @ApiOkResponse({ description: 'Party updated.' })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdatePartyDto,
-  ) {
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdatePartyDto) {
     return this.partyMaintenanceService.update(user, id, dto);
   }
 }

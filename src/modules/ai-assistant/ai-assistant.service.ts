@@ -17,18 +17,13 @@ import { AppRole } from '../../common/enums/app-role.enum';
 import { PermissionAction } from '../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AiAssistantChatDto } from './dto/ai-assistant-chat.dto';
-import {
-  AiAssistantAction,
-  AiAssistantChatResponse,
-  GeminiGenerateContentResponse,
-} from './ai-assistant.types';
+import { AiAssistantAction, AiAssistantChatResponse, GeminiGenerateContentResponse } from './ai-assistant.types';
 import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant-audio-file.type';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const PRODUCT_NAME = 'Gr8Books Neo';
 const SHORT_PRODUCT_NAME_PATTERN = /\bGr8Books\b(?!\s+Neo)/gi;
-const PURCHASE_REQUEST_ADD_ROUTE =
-  '/purchasing/purchase-request/add?assistant=1';
+const PURCHASE_REQUEST_ADD_ROUTE = '/purchasing/purchase-request/add?assistant=1';
 const TERM_MANAGEMENT_PERMISSION_CODE = 'TM';
 export const MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES = 4 * 1024 * 1024;
 const GEMINI_TRANSCRIPTION_TIMEOUT_MS = 90_000;
@@ -52,76 +47,49 @@ const moduleGuide = [
     route: '/purchasing/purchase-request',
     aliases: ['purchase request', 'pr', 'purchasing request'],
     actions: ['navigate', 'explain'],
-    notes:
-      'Use Purchase Request to start a controlled request for goods or services before procurement continues to canvass, purchase order, and receiving.',
+    notes: 'Use Purchase Request to start a controlled request for goods or services before procurement continues to canvass, purchase order, and receiving.',
   },
   {
     label: 'Purchasing > Canvass Form',
     route: '/purchasing/canvass-form',
     aliases: ['canvass', 'canvass form', 'quotation comparison'],
     actions: ['navigate', 'explain'],
-    notes:
-      'Use Canvass Form when comparing supplier quotations before choosing where to buy.',
+    notes: 'Use Canvass Form when comparing supplier quotations before choosing where to buy.',
   },
   {
     label: 'Inventory > Material Request',
     route: '/inventory/material-request',
     aliases: ['material request', 'inventory request'],
     actions: ['navigate', 'explain'],
-    notes:
-      'Use Material Request when a department needs items from inventory stock.',
+    notes: 'Use Material Request when a department needs items from inventory stock.',
   },
   {
     label: 'Accounts Payable > Accounts Payable Voucher',
     route: '/accounts-payable/accounts-payable-voucher',
     aliases: ['accounts payable voucher', 'ap voucher', 'payables voucher'],
     actions: ['navigate', 'explain'],
-    notes:
-      'Use Accounts Payable Voucher to record and track supplier obligations before payment.',
+    notes: 'Use Accounts Payable Voucher to record and track supplier obligations before payment.',
   },
   {
     label: 'Sales > Sales Invoice',
     route: '/sales/sales-invoice',
     aliases: ['sales invoice', 'customer invoice'],
     actions: ['navigate', 'explain'],
-    notes:
-      'Use Sales Invoice to bill customers for delivered goods or completed services.',
+    notes: 'Use Sales Invoice to bill customers for delivered goods or completed services.',
   },
   {
     label: 'Maintenance > Charts of Accounts',
     route: '/maintenance/charts-of-accounts',
-    aliases: [
-      'chart of accounts',
-      'charts of accounts',
-      'coa',
-      'accounts list',
-    ],
+    aliases: ['chart of accounts', 'charts of accounts', 'coa', 'accounts list'],
     actions: ['navigate', 'explain'],
-    notes:
-      'Use Charts of Accounts to maintain the account codes and names used for posting accounting entries.',
+    notes: 'Use Charts of Accounts to maintain the account codes and names used for posting accounting entries.',
   },
   {
     label: 'Maintenance > Term Management',
     moduleCode: 'TM',
-    aliases: [
-      'term management',
-      'term',
-      'terms',
-      'payment term',
-      'payment terms',
-      'due term',
-      'datemode',
-    ],
-    actions: [
-      'open',
-      'explain',
-      'search',
-      'filter_status',
-      'prepare_add',
-      'preview_edit',
-    ],
-    notes:
-      'Use Term Management to maintain payment term definitions, including term name, datemode, period, and active status.',
+    aliases: ['term management', 'term', 'terms', 'payment term', 'payment terms', 'due term', 'datemode'],
+    actions: ['open', 'explain', 'search', 'filter_status', 'prepare_add', 'preview_edit'],
+    notes: 'Use Term Management to maintain payment term definitions, including term name, datemode, period, and active status.',
   },
 ];
 
@@ -150,41 +118,26 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit() {
-    if (
-      this.configService.get<string>('VOICE_TRANSCRIPTION_QUEUE_ENABLED') !==
-      'true'
-    ) {
-      this.logger.log(
-        'Voice transcription queue disabled; transcription will run inline.',
-      );
+    if (this.configService.get<string>('VOICE_TRANSCRIPTION_QUEUE_ENABLED') !== 'true') {
+      this.logger.log('Voice transcription queue disabled; transcription will run inline.');
       return;
     }
 
     const connection = this.getRedisConnectionOptions();
-    this.transcriptionQueue = new Queue<VoiceTranscriptionJobData>(
-      VOICE_TRANSCRIPTION_QUEUE_NAME,
-      {
-        connection,
-        defaultJobOptions: this.transcriptionJobOptions,
-      },
-    );
-    this.transcriptionWorker = new Worker<VoiceTranscriptionJobData>(
-      VOICE_TRANSCRIPTION_QUEUE_NAME,
-      (job) => this.processTranscriptionJob(job),
-      {
-        connection,
-        concurrency: this.getVoiceTranscriptionWorkerConcurrency(),
-      },
-    );
+    this.transcriptionQueue = new Queue<VoiceTranscriptionJobData>(VOICE_TRANSCRIPTION_QUEUE_NAME, {
+      connection,
+      defaultJobOptions: this.transcriptionJobOptions,
+    });
+    this.transcriptionWorker = new Worker<VoiceTranscriptionJobData>(VOICE_TRANSCRIPTION_QUEUE_NAME, (job) => this.processTranscriptionJob(job), {
+      connection,
+      concurrency: this.getVoiceTranscriptionWorkerConcurrency(),
+    });
 
     this.transcriptionWorker.on('completed', (job) => {
       this.logger.debug(`Voice transcription job ${job.id} completed.`);
     });
     this.transcriptionWorker.on('failed', (job, error) => {
-      this.logger.error(
-        `Voice transcription job ${job?.id ?? 'unknown'} failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Voice transcription job ${job?.id ?? 'unknown'} failed: ${error.message}`, error.stack);
     });
 
     this.logger.log('Voice transcription queue enabled with BullMQ.');
@@ -195,10 +148,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     await this.transcriptionQueue?.close();
   }
 
-  async chat(
-    user: AuthUser,
-    dto: AiAssistantChatDto,
-  ): Promise<AiAssistantChatResponse> {
+  async chat(user: AuthUser, dto: AiAssistantChatDto): Promise<AiAssistantChatResponse> {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
 
     if (!apiKey) {
@@ -206,41 +156,38 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: this.createSystemPrompt() }],
-            },
-            contents: [
-              ...(dto.history ?? []).slice(-6).map((message) => ({
-                role: message.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: message.content }],
-              })),
-              {
-                role: 'user',
-                parts: [
-                  {
-                    text: JSON.stringify({
-                      message: dto.message,
-                      currentPath: dto.currentPath ?? '',
-                    }),
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.35,
-              responseMimeType: 'application/json',
-            },
-          }),
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: this.createSystemPrompt() }],
+          },
+          contents: [
+            ...(dto.history ?? []).slice(-6).map((message) => ({
+              role: message.role === 'assistant' ? 'model' : 'user',
+              parts: [{ text: message.content }],
+            })),
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: JSON.stringify({
+                    message: dto.message,
+                    currentPath: dto.currentPath ?? '',
+                  }),
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.35,
+            responseMimeType: 'application/json',
+          },
+        }),
+      });
 
       if (!response.ok) {
         return this.createLocalDemoResponse(user, dto.message);
@@ -255,16 +202,11 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async transcribe(
-    user: AuthUser,
-    file: UploadedAiAssistantAudioFile | undefined,
-  ) {
+  async transcribe(user: AuthUser, file: UploadedAiAssistantAudioFile | undefined) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
 
     if (!apiKey) {
-      throw new BadRequestException(
-        'Neo AI voice transcription is not configured.',
-      );
+      throw new BadRequestException('Neo AI voice transcription is not configured.');
     }
 
     this.validateTranscriptionAudio(file);
@@ -296,9 +238,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
   async getTranscriptionJob(user: AuthUser, jobId: string) {
     if (!this.transcriptionQueue) {
-      throw new BadRequestException(
-        'Voice transcription queue is not enabled.',
-      );
+      throw new BadRequestException('Voice transcription queue is not enabled.');
     }
 
     const job = await this.transcriptionQueue.getJob(jobId);
@@ -319,9 +259,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
     if (state === 'failed') {
       return {
-        error:
-          job.failedReason ||
-          'Neo AI could not transcribe that recording. Please try again.',
+        error: job.failedReason || 'Neo AI could not transcribe that recording. Please try again.',
         jobId,
         status: 'failed' as const,
       };
@@ -329,8 +267,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
     return {
       jobId,
-      status:
-        state === 'active' ? ('processing' as const) : ('queued' as const),
+      status: state === 'active' ? ('processing' as const) : ('queued' as const),
     };
   }
 
@@ -351,61 +288,50 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
 
     if (!apiKey) {
-      throw new BadRequestException(
-        'Neo AI voice transcription is not configured.',
-      );
+      throw new BadRequestException('Neo AI voice transcription is not configured.');
     }
 
     this.reserveTranscriptionSlot();
 
     const abortController = new AbortController();
-    const timeout = setTimeout(
-      () => abortController.abort(),
-      GEMINI_TRANSCRIPTION_TIMEOUT_MS,
-    );
+    const timeout = setTimeout(() => abortController.abort(), GEMINI_TRANSCRIPTION_TIMEOUT_MS);
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          signal: abortController.signal,
-          body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  {
-                    text: 'Transcribe this audio into plain text. Return only the transcript. If there is no clear speech, return an empty string.',
-                  },
-                  {
-                    inlineData: {
-                      mimeType: this.normalizeAudioMimeType(file.mimetype),
-                      data: file.buffer.toString('base64'),
-                    },
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0,
-            },
-          }),
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        signal: abortController.signal,
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: 'Transcribe this audio into plain text. Return only the transcript. If there is no clear speech, return an empty string.',
+                },
+                {
+                  inlineData: {
+                    mimeType: this.normalizeAudioMimeType(file.mimetype),
+                    data: file.buffer.toString('base64'),
+                  },
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0,
+          },
+        }),
+      });
 
       if (!response.ok) {
-        throw new BadRequestException(
-          'Neo AI could not transcribe that audio. Please try again.',
-        );
+        throw new BadRequestException('Neo AI could not transcribe that audio. Please try again.');
       }
 
       const payload = (await response.json()) as GeminiGenerateContentResponse;
-      const transcript =
-        payload.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
+      const transcript = payload.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
 
       return transcript;
     } catch (error) {
@@ -414,14 +340,10 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       }
 
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new RequestTimeoutException(
-          'Neo AI transcription took too long. Please try a shorter recording.',
-        );
+        throw new RequestTimeoutException('Neo AI transcription took too long. Please try a shorter recording.');
       }
 
-      throw new BadRequestException(
-        'Neo AI could not transcribe that audio. Please try again.',
-      );
+      throw new BadRequestException('Neo AI could not transcribe that audio. Please try again.');
     } finally {
       this.releaseTranscriptionSlot();
       clearTimeout(timeout);
@@ -448,10 +370,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     ].join('\n');
   }
 
-  private normalizeResponse(
-    user: AuthUser,
-    text?: string,
-  ): AiAssistantChatResponse {
+  private normalizeResponse(user: AuthUser, text?: string): AiAssistantChatResponse {
     if (!text) {
       return {
         message: `I am Neo AI, your ${PRODUCT_NAME} assistant. I can guide you through modules, open approved pages, and prepare forms for your review. What would you like to do?`,
@@ -465,10 +384,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
       return {
         message:
-          actionResult.denialMessage ??
-          (typeof parsed.message === 'string'
-            ? this.normalizeProductName(parsed.message)
-            : 'I prepared the next step for you.'),
+          actionResult.denialMessage ?? (typeof parsed.message === 'string' ? this.normalizeProductName(parsed.message) : 'I prepared the next step for you.'),
         action: actionResult.action,
       };
     } catch {
@@ -479,9 +395,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private validateTranscriptionAudio(
-    file: UploadedAiAssistantAudioFile | undefined,
-  ): asserts file is UploadedAiAssistantAudioFile {
+  private validateTranscriptionAudio(file: UploadedAiAssistantAudioFile | undefined): asserts file is UploadedAiAssistantAudioFile {
     if (!file) {
       throw new BadRequestException('Audio recording is required.');
     }
@@ -494,21 +408,14 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       throw new BadRequestException('Audio recording is too large.');
     }
 
-    if (
-      !SUPPORTED_TRANSCRIPTION_AUDIO_TYPES.has(
-        this.normalizeAudioMimeType(file.mimetype),
-      )
-    ) {
+    if (!SUPPORTED_TRANSCRIPTION_AUDIO_TYPES.has(this.normalizeAudioMimeType(file.mimetype))) {
       throw new BadRequestException('Audio format is not supported.');
     }
   }
 
   private reserveTranscriptionSlot() {
     if (this.activeTranscriptions >= MAX_CONCURRENT_TRANSCRIPTIONS) {
-      throw new HttpException(
-        'Neo AI voice transcription is busy. Please try again shortly.',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
+      throw new HttpException('Neo AI voice transcription is busy. Please try again shortly.', HttpStatus.TOO_MANY_REQUESTS);
     }
 
     this.activeTranscriptions += 1;
@@ -527,15 +434,9 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       return {
         host: parsedUrl.hostname,
         port: Number(parsedUrl.port || 6379),
-        username: parsedUrl.username
-          ? decodeURIComponent(parsedUrl.username)
-          : undefined,
-        password: parsedUrl.password
-          ? decodeURIComponent(parsedUrl.password)
-          : undefined,
-        db: parsedUrl.pathname
-          ? Number(parsedUrl.pathname.replace('/', '') || 0)
-          : undefined,
+        username: parsedUrl.username ? decodeURIComponent(parsedUrl.username) : undefined,
+        password: parsedUrl.password ? decodeURIComponent(parsedUrl.password) : undefined,
+        db: parsedUrl.pathname ? Number(parsedUrl.pathname.replace('/', '') || 0) : undefined,
         tls: parsedUrl.protocol === 'rediss:' ? {} : undefined,
         maxRetriesPerRequest: null,
       };
@@ -552,12 +453,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
   }
 
   private getVoiceTranscriptionWorkerConcurrency() {
-    const concurrency = Number(
-      this.configService.get<string | number>(
-        'VOICE_TRANSCRIPTION_QUEUE_CONCURRENCY',
-        4,
-      ),
-    );
+    const concurrency = Number(this.configService.get<string | number>('VOICE_TRANSCRIPTION_QUEUE_CONCURRENCY', 4));
 
     return Number.isFinite(concurrency) && concurrency > 0 ? concurrency : 4;
   }
@@ -570,21 +466,14 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return message.replace(SHORT_PRODUCT_NAME_PATTERN, PRODUCT_NAME);
   }
 
-  private normalizeAction(
-    user: AuthUser,
-    action: unknown,
-  ): AiAssistantActionPermissionResult {
+  private normalizeAction(user: AuthUser, action: unknown): AiAssistantActionPermissionResult {
     if (!action || typeof action !== 'object') {
       return { action: null };
     }
 
     const candidate = action as Partial<AiAssistantAction>;
 
-    if (
-      candidate.type === 'navigate' &&
-      typeof candidate.route === 'string' &&
-      this.isAllowedRoute(candidate.route)
-    ) {
+    if (candidate.type === 'navigate' && typeof candidate.route === 'string' && this.isAllowedRoute(candidate.route)) {
       return {
         action: {
           type: 'navigate',
@@ -594,11 +483,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       };
     }
 
-    if (
-      candidate.type === 'open_form' &&
-      candidate.target === 'purchase_request' &&
-      candidate.route === PURCHASE_REQUEST_ADD_ROUTE
-    ) {
+    if (candidate.type === 'open_form' && candidate.target === 'purchase_request' && candidate.route === PURCHASE_REQUEST_ADD_ROUTE) {
       return {
         action: {
           type: 'open_form',
@@ -610,13 +495,8 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       };
     }
 
-    if (
-      candidate.type === 'term_management' &&
-      candidate.moduleCode === 'TM' &&
-      this.isAllowedTermManagementCommand(candidate.command)
-    ) {
-      const permissionDenialMessage =
-        this.getTermManagementPermissionDenialMessage(user, candidate.command);
+    if (candidate.type === 'term_management' && candidate.moduleCode === 'TM' && this.isAllowedTermManagementCommand(candidate.command)) {
+      const permissionDenialMessage = this.getTermManagementPermissionDenialMessage(user, candidate.command);
 
       if (permissionDenialMessage) {
         return {
@@ -631,14 +511,10 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
           moduleCode: 'TM',
           command: candidate.command,
           label: candidate.label,
-          query:
-            typeof candidate.query === 'string' ? candidate.query : undefined,
+          query: typeof candidate.query === 'string' ? candidate.query : undefined,
           status: this.normalizeTermStatus(candidate.status),
           prefill: this.normalizeTermManagementPrefill(candidate.prefill),
-          targetTermName:
-            typeof candidate.targetTermName === 'string'
-              ? candidate.targetTermName
-              : undefined,
+          targetTermName: typeof candidate.targetTermName === 'string' ? candidate.targetTermName : undefined,
         },
       };
     }
@@ -647,26 +523,17 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
   }
 
   private isAllowedRoute(route?: string) {
-    return moduleGuide.some(
-      (module) => 'route' in module && module.route === route,
-    );
+    return moduleGuide.some((module) => 'route' in module && module.route === route);
   }
 
-  private createLocalDemoResponse(
-    user: AuthUser,
-    message: string,
-  ): AiAssistantChatResponse {
+  private createLocalDemoResponse(user: AuthUser, message: string): AiAssistantChatResponse {
     const normalized = message.toLowerCase();
     const purchaseRequestPrefill = this.createPurchaseRequestPrefill(message);
 
     if (purchaseRequestPrefill && this.isCreateIntent(normalized)) {
       const item = purchaseRequestPrefill.items?.[0];
-      const itemSummary = item?.description
-        ? `${item.quantity ?? 1} ${item.description}`
-        : 'your requested item';
-      const priceSummary = item?.cost
-        ? ` at PHP ${item.cost} per ${item.uom ?? 'qty'}`
-        : '';
+      const itemSummary = item?.description ? `${item.quantity ?? 1} ${item.description}` : 'your requested item';
+      const priceSummary = item?.cost ? ` at PHP ${item.cost} per ${item.uom ?? 'qty'}` : '';
 
       return {
         message: `Okay, I will prepare a Purchase Request draft for ${itemSummary}${priceSummary}. Please review it before saving.`,
@@ -686,10 +553,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       const route = 'route' in module ? module.route : undefined;
 
       if (!route) {
-        const denialMessage = this.getTermManagementPermissionDenialMessage(
-          user,
-          'open',
-        );
+        const denialMessage = this.getTermManagementPermissionDenialMessage(user, 'open');
 
         if (denialMessage) {
           return {
@@ -699,16 +563,13 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
         }
 
         return {
-          message:
-            'Neo AI needs Gemini configured to perform that module action.',
+          message: 'Neo AI needs Gemini configured to perform that module action.',
           action: null,
         };
       }
 
       return {
-        message: `Okay, got it. Give me a moment, I will open ${this.getModuleShortName(
-          module.label,
-        )} for you.`,
+        message: `Okay, got it. Give me a moment, I will open ${this.getModuleShortName(module.label)} for you.`,
         action: {
           type: 'navigate',
           route,
@@ -726,9 +587,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
     if (module) {
       return {
-        message: `${this.getModuleShortName(module.label)} is for ${module.notes
-          .charAt(0)
-          .toLowerCase()}${module.notes.slice(
+        message: `${this.getModuleShortName(module.label)} is for ${module.notes.charAt(0).toLowerCase()}${module.notes.slice(
           1,
         )} I can also open that module if you want.`,
         action: null,
@@ -750,26 +609,11 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
   }
 
   private findModule(message: string) {
-    return moduleGuide.find((module) =>
-      [module.label.toLowerCase(), ...module.aliases].some((alias) =>
-        message.includes(alias),
-      ),
-    );
+    return moduleGuide.find((module) => [module.label.toLowerCase(), ...module.aliases].some((alias) => message.includes(alias)));
   }
 
-  private isAllowedTermManagementCommand(
-    command: unknown,
-  ): command is Extract<
-    AiAssistantAction,
-    { type: 'term_management' }
-  >['command'] {
-    return (
-      command === 'open' ||
-      command === 'search' ||
-      command === 'filter_status' ||
-      command === 'prepare_add' ||
-      command === 'preview_edit'
-    );
+  private isAllowedTermManagementCommand(command: unknown): command is Extract<AiAssistantAction, { type: 'term_management' }>['command'] {
+    return command === 'open' || command === 'search' || command === 'filter_status' || command === 'prepare_add' || command === 'preview_edit';
   }
 
   private normalizeTermManagementPrefill(prefill: unknown) {
@@ -781,10 +625,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
     return {
       name: typeof candidate.name === 'string' ? candidate.name : undefined,
-      description:
-        typeof candidate.description === 'string'
-          ? candidate.description
-          : undefined,
+      description: typeof candidate.description === 'string' ? candidate.description : undefined,
       datemode: this.normalizeTermDatemode(candidate.datemode),
       period: typeof candidate.period === 'string' ? candidate.period : undefined,
       status: this.normalizeTermStatus(candidate.status),
@@ -792,22 +633,14 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
   }
 
   private normalizeTermDatemode(value: unknown): 'Day' | 'Month' | 'Year' | undefined {
-    return value === 'Day' || value === 'Month' || value === 'Year'
-      ? value
-      : undefined;
+    return value === 'Day' || value === 'Month' || value === 'Year' ? value : undefined;
   }
 
   private normalizeTermStatus(value: unknown): 'Active' | 'Inactive' | undefined {
     return value === 'Active' || value === 'Inactive' ? value : undefined;
   }
 
-  private getTermManagementPermissionDenialMessage(
-    user: AuthUser,
-    command: Extract<
-      AiAssistantAction,
-      { type: 'term_management' }
-    >['command'],
-  ) {
+  private getTermManagementPermissionDenialMessage(user: AuthUser, command: Extract<AiAssistantAction, { type: 'term_management' }>['command']) {
     if (!user.companyId) {
       return 'Please select a company before I can help with Term Management.';
     }
@@ -816,17 +649,11 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       return 'You do not have permission to view Term Management.';
     }
 
-    if (
-      command === 'prepare_add' &&
-      !this.canUseTermManagement(user, PermissionAction.CREATE)
-    ) {
+    if (command === 'prepare_add' && !this.canUseTermManagement(user, PermissionAction.CREATE)) {
       return 'You can view Term Management, but you do not have permission to add terms.';
     }
 
-    if (
-      command === 'preview_edit' &&
-      !this.canUseTermManagement(user, PermissionAction.UPDATE)
-    ) {
+    if (command === 'preview_edit' && !this.canUseTermManagement(user, PermissionAction.UPDATE)) {
       return 'You can view Term Management, but you do not have permission to edit terms.';
     }
 
@@ -838,9 +665,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       return true;
     }
 
-    return user.permissions.includes(
-      `${TERM_MANAGEMENT_PERMISSION_CODE}:${action}`,
-    );
+    return user.permissions.includes(`${TERM_MANAGEMENT_PERMISSION_CODE}:${action}`);
   }
 
   private hasReservedCompanyRoleAccess(user: AuthUser) {
@@ -851,15 +676,12 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return (
       user.companyId !== null &&
       user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN ||
-        user.membershipRole === MembershipRole.ADMIN)
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
     );
   }
 
   private isOpenIntent(message: string) {
-    return /\b(open|go to|goto|navigate|show|bring me|take me)\b/i.test(
-      message,
-    );
+    return /\b(open|go to|goto|navigate|show|bring me|take me)\b/i.test(message);
   }
 
   private isCreateIntent(message: string) {
@@ -867,15 +689,11 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
   }
 
   private isIntroIntent(message: string) {
-    return /\b(introduce|who are you|what can you do|your system|help)\b/i.test(
-      message,
-    );
+    return /\b(introduce|who are you|what can you do|your system|help)\b/i.test(message);
   }
 
   private isGreetingIntent(message: string) {
-    return /^(hi|hello|hey|good morning|good afternoon|good evening)\b/i.test(
-      message.trim(),
-    );
+    return /^(hi|hello|hey|good morning|good afternoon|good evening)\b/i.test(message.trim());
   }
 
   private getModuleShortName(label: string) {
@@ -889,9 +707,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       return null;
     }
 
-    const quantityMatch = message.match(
-      /\b(\d+(?:\.\d+)?)\s+([a-z][a-z0-9\s-]*?)(?=\s+(?:with|at|for|priced?|cost|amount|worth)\b|$)/i,
-    );
+    const quantityMatch = message.match(/\b(\d+(?:\.\d+)?)\s+([a-z][a-z0-9\s-]*?)(?=\s+(?:with|at|for|priced?|cost|amount|worth)\b|$)/i);
 
     if (!quantityMatch) {
       return null;
@@ -924,9 +740,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
   private extractUnitCost(message: string) {
     const priceMatch =
-      message.match(
-        /\b(?:price|priced|cost|amount)\s*(?:of|at|is|=|:)?\s*(?:php|pesos?|p|₱)?\s*(\d+(?:\.\d+)?)/i,
-      ) ??
+      message.match(/\b(?:price|priced|cost|amount)\s*(?:of|at|is|=|:)?\s*(?:php|pesos?|p|₱)?\s*(\d+(?:\.\d+)?)/i) ??
       message.match(/\b(?:php|pesos?|p|₱)\s*(\d+(?:\.\d+)?)/i) ??
       message.match(/\b(\d+(?:\.\d+)?)\s*(?:php|pesos?)\b/i);
 
@@ -952,12 +766,7 @@ type AiAssistantActionPermissionResult = {
 };
 
 function readTranscriptionJobReturnValue(value: unknown) {
-  if (
-    value &&
-    typeof value === 'object' &&
-    'transcript' in value &&
-    typeof value.transcript === 'string'
-  ) {
+  if (value && typeof value === 'object' && 'transcript' in value && typeof value.transcript === 'string') {
     return value.transcript;
   }
 

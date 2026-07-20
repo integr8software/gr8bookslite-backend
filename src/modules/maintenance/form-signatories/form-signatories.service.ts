@@ -1,17 +1,6 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  CompanyUnitType,
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-} from '@prisma/client';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { CompanyUnitType, MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
 import type { Cache } from 'cache-manager';
 import { EntitlementService } from '../../../common/access/entitlements/entitlement.service';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
@@ -51,10 +40,7 @@ export class FormSignatoriesService {
   async findBootstrap(user: AuthUser) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const [optionsResponse, setupsResponse] = await Promise.all([
-      this.findOptionsForCompany(companyId),
-      this.findAllForCompany(companyId),
-    ]);
+    const [optionsResponse, setupsResponse] = await Promise.all([this.findOptionsForCompany(companyId), this.findAllForCompany(companyId)]);
 
     return {
       ...optionsResponse,
@@ -106,11 +92,7 @@ export class FormSignatoriesService {
           }),
           this.entitlementService.getCompanyAllowedModules(companyId),
         ]);
-        const sortedModules = [...modules].sort(
-          (left, right) =>
-            left.name.localeCompare(right.name) ||
-            left.code.localeCompare(right.code),
-        );
+        const sortedModules = [...modules].sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code));
 
         return {
           branches: units.map((unit) => ({
@@ -202,8 +184,7 @@ export class FormSignatoriesService {
       const leftIndex = codes.indexOf(left.module.code);
       const rightIndex = codes.indexOf(right.module.code);
       const normalizedLeftIndex = leftIndex === -1 ? codes.length : leftIndex;
-      const normalizedRightIndex =
-        rightIndex === -1 ? codes.length : rightIndex;
+      const normalizedRightIndex = rightIndex === -1 ? codes.length : rightIndex;
 
       return normalizedLeftIndex - normalizedRightIndex;
     })[0];
@@ -242,9 +223,7 @@ export class FormSignatoriesService {
               moduleId: module.id,
             },
           });
-      const savedRows = existingSetup
-        ? mergeRows(await this.readRows(tx, existingSetup.id), rows)
-        : rows;
+      const savedRows = existingSetup ? mergeRows(await this.readRows(tx, existingSetup.id), rows) : rows;
 
       await this.replaceRows(tx, savedSetup.id, savedRows);
 
@@ -306,11 +285,7 @@ export class FormSignatoriesService {
 
       if (targetSetup && targetSetup.id !== setupId) {
         const existingRows = await this.readRows(tx, targetSetup.id);
-        await this.replaceRows(
-          tx,
-          targetSetup.id,
-          mergeRows(existingRows, rows),
-        );
+        await this.replaceRows(tx, targetSetup.id, mergeRows(existingRows, rows));
         await tx.formSignatorySetup.delete({
           where: {
             id: setupId,
@@ -344,8 +319,7 @@ export class FormSignatoriesService {
       });
     }, MaintenanceTransactionOptions);
 
-    const auditAction =
-      rows.length < currentSetup._count.rows ? 'DELETE' : 'UPDATE';
+    const auditAction = rows.length < currentSetup._count.rows ? 'DELETE' : 'UPDATE';
 
     await this.recordFormSignatoryAudit(user, setup, auditAction);
 
@@ -355,11 +329,7 @@ export class FormSignatoriesService {
     };
   }
 
-  private async replaceRows(
-    tx: Prisma.TransactionClient,
-    setupId: number,
-    rows: ReturnType<FormSignatoriesService['normalizeRows']>,
-  ) {
+  private async replaceRows(tx: Prisma.TransactionClient, setupId: number, rows: ReturnType<FormSignatoriesService['normalizeRows']>) {
     await tx.formSignatoryRow.deleteMany({
       where: {
         setupId,
@@ -369,17 +339,12 @@ export class FormSignatoriesService {
     await this.insertRows(tx, setupId, rows);
   }
 
-  private async insertRows(
-    tx: Prisma.TransactionClient,
-    setupId: number,
-    rows: ReturnType<FormSignatoriesService['normalizeRows']>,
-  ) {
-    const [hasSortOrder, hasSignatureValidity, hasIsThisTemporary] =
-      await Promise.all([
-        hasTableColumn(tx, 'form_signatory_rows', 'sort_order'),
-        hasTableColumn(tx, 'form_signatory_rows', 'signature_valid_until'),
-        hasTableColumn(tx, 'form_signatory_rows', 'is_this_temporary'),
-      ]);
+  private async insertRows(tx: Prisma.TransactionClient, setupId: number, rows: ReturnType<FormSignatoriesService['normalizeRows']>) {
+    const [hasSortOrder, hasSignatureValidity, hasIsThisTemporary] = await Promise.all([
+      hasTableColumn(tx, 'form_signatory_rows', 'sort_order'),
+      hasTableColumn(tx, 'form_signatory_rows', 'signature_valid_until'),
+      hasTableColumn(tx, 'form_signatory_rows', 'is_this_temporary'),
+    ]);
 
     for (const [index, row] of rows.entries()) {
       const columns = [
@@ -402,9 +367,7 @@ export class FormSignatoriesService {
         Prisma.sql`${row.position}`,
         Prisma.sql`${row.signatureName}`,
         Prisma.sql`${row.signatureImage}`,
-        ...(hasSignatureValidity
-          ? [Prisma.sql`${row.signatureValidUntil}`]
-          : []),
+        ...(hasSignatureValidity ? [Prisma.sql`${row.signatureValidUntil}`] : []),
         ...(hasIsThisTemporary ? [Prisma.sql`${row.isThisTemporary}`] : []),
         Prisma.sql`CURRENT_TIMESTAMP`,
       ];
@@ -418,10 +381,7 @@ export class FormSignatoriesService {
     }
   }
 
-  private async readRows(
-    tx: Prisma.TransactionClient,
-    setupId: number,
-  ): Promise<ReturnType<FormSignatoriesService['normalizeRows']>> {
+  private async readRows(tx: Prisma.TransactionClient, setupId: number): Promise<ReturnType<FormSignatoriesService['normalizeRows']>> {
     const [hasSignatureValidity, hasIsThisTemporary] = await Promise.all([
       hasTableColumn(tx, 'form_signatory_rows', 'signature_valid_until'),
       hasTableColumn(tx, 'form_signatory_rows', 'is_this_temporary'),
@@ -505,17 +465,8 @@ export class FormSignatoriesService {
     return module;
   }
 
-  private async recordFormSignatoryAudit(
-    user: AuthUser,
-    setup: FormSignatorySetupPayload,
-    action: 'CREATE' | 'UPDATE' | 'DELETE',
-  ) {
-    const verb =
-      action === 'CREATE'
-        ? 'created'
-        : action === 'DELETE'
-          ? 'deleted'
-          : 'updated';
+  private async recordFormSignatoryAudit(user: AuthUser, setup: FormSignatorySetupPayload, action: 'CREATE' | 'UPDATE' | 'DELETE') {
+    const verb = action === 'CREATE' ? 'created' : action === 'DELETE' ? 'deleted' : 'updated';
 
     await this.auditLogsService.record({
       actorUserId: user.id,
@@ -540,11 +491,7 @@ export class FormSignatoriesService {
         companyId,
         isActive: true,
         type: {
-          in: [
-            CompanyUnitType.HEAD_OFFICE,
-            CompanyUnitType.BRANCH,
-            CompanyUnitType.SATELLITE,
-          ],
+          in: [CompanyUnitType.HEAD_OFFICE, CompanyUnitType.BRANCH, CompanyUnitType.SATELLITE],
         },
       },
       select: {
@@ -605,14 +552,8 @@ export class FormSignatoriesService {
       },
     });
 
-    if (
-      !membership ||
-      membership.status !== MembershipStatus.ACTIVE ||
-      membership.role !== MembershipRole.ADMIN
-    ) {
-      throw new ForbiddenException(
-        'Admin access is required to manage form signatories.',
-      );
+    if (!membership || membership.status !== MembershipStatus.ACTIVE || membership.role !== MembershipRole.ADMIN) {
+      throw new ForbiddenException('Admin access is required to manage form signatories.');
     }
   }
 }
@@ -637,10 +578,7 @@ function parseOptionalDbDate(value: Date | string | null) {
   return value instanceof Date ? value : new Date(value);
 }
 
-function mergeRows(
-  existingRows: ReturnType<FormSignatoriesService['normalizeRows']>,
-  incomingRows: ReturnType<FormSignatoriesService['normalizeRows']>,
-) {
+function mergeRows(existingRows: ReturnType<FormSignatoriesService['normalizeRows']>, incomingRows: ReturnType<FormSignatoriesService['normalizeRows']>) {
   const seenRows = new Set(existingRows.map(createRowKey));
   const mergedRows = [...existingRows];
 
@@ -658,9 +596,7 @@ function mergeRows(
   return mergedRows;
 }
 
-function createRowKey(
-  row: ReturnType<FormSignatoriesService['normalizeRows']>[number],
-) {
+function createRowKey(row: ReturnType<FormSignatoriesService['normalizeRows']>[number]) {
   return [
     row.label,
     row.name,
@@ -668,19 +604,11 @@ function createRowKey(
     row.signatureName ?? '',
     row.signatureImage ?? '',
     row.signatureValidUntil?.toISOString() ?? '',
-    row.isThisTemporary === true
-      ? 'true'
-      : row.isThisTemporary === false
-        ? 'false'
-        : '',
+    row.isThisTemporary === true ? 'true' : row.isThisTemporary === false ? 'false' : '',
   ].join('\u001f');
 }
 
-async function hasTableColumn(
-  tx: Prisma.TransactionClient,
-  tableName: string,
-  columnName: string,
-) {
+async function hasTableColumn(tx: Prisma.TransactionClient, tableName: string, columnName: string) {
   const result = await tx.$queryRaw<Array<{ exists: boolean }>>`
     SELECT EXISTS (
       SELECT 1

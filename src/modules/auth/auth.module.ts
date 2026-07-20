@@ -31,14 +31,7 @@ import { getJwtExpiresInSeconds, getJwtSecret } from './utils/jwt-config.util';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    JwtAuthGuard,
-    AuthMailService,
-    GoogleOAuthService,
-    OtpService,
-  ],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, AuthMailService, GoogleOAuthService, OtpService],
   exports: [AuthService, JwtAuthGuard, AuthMailService],
 })
 export class AuthModule {}

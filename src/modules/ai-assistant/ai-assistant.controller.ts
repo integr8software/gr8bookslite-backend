@@ -1,22 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import {
-  AiAssistantService,
-  MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES,
-} from './ai-assistant.service';
+import { AiAssistantService, MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES } from './ai-assistant.service';
 import { AiAssistantChatDto } from './dto/ai-assistant-chat.dto';
 import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant-audio-file.type';
 
@@ -47,18 +35,12 @@ export class AiAssistantController {
       },
     }),
   )
-  transcribe(
-    @CurrentUser() user: AuthUser,
-    @UploadedFile() file: UploadedAiAssistantAudioFile | undefined,
-  ) {
+  transcribe(@CurrentUser() user: AuthUser, @UploadedFile() file: UploadedAiAssistantAudioFile | undefined) {
     return this.aiAssistantService.transcribe(user, file);
   }
 
   @Get('transcribe/:jobId')
-  getTranscriptionJob(
-    @CurrentUser() user: AuthUser,
-    @Param('jobId') jobId: string,
-  ) {
+  getTranscriptionJob(@CurrentUser() user: AuthUser, @Param('jobId') jobId: string) {
     return this.aiAssistantService.getTranscriptionJob(user, jobId);
   }
 }

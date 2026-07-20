@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
-import { PrismaService } from '../../../prisma/prisma.service';
+import type { AuthUser } from '../../common/interfaces/auth-user.interface';
+import { PrismaService } from '../../prisma/prisma.service';
 import { SaveTablePreferenceDto } from './dto/save-table-preference.dto';
 
 @Injectable()

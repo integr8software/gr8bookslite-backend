@@ -5,10 +5,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { mapWorkspaceAuditLog } from './mappers/workspace-audit-log.mapper';
 import { WorkspaceAuditLogListInclude } from './prisma/workspace-audit-log.include';
-import type {
-  CreateWorkspaceAuditLogInput,
-  RecordWorkspaceActivityInput,
-} from './types/workspace-audit-log-input.type';
+import type { CreateWorkspaceAuditLogInput, RecordWorkspaceActivityInput } from './types/workspace-audit-log-input.type';
 
 const QueryResultLimit = 500;
 
@@ -45,10 +42,7 @@ export class WorkspaceAuditLogsService {
         action: normalizeStoredAction(input.action),
         companyId: input.companyId ?? null,
         entityType: input.entityType,
-        entityId:
-          input.entityId === undefined || input.entityId === null
-            ? null
-            : String(input.entityId),
+        entityId: input.entityId === undefined || input.entityId === null ? null : String(input.entityId),
         metadata: input.metadata ?? undefined,
         ipAddress: input.ipAddress ?? null,
         userAgent: input.userAgent ?? null,
@@ -76,11 +70,7 @@ export class WorkspaceAuditLogsService {
       metadata: {
         branchId: input.branchId,
         branchName: input.branchName,
-        description:
-          input.description?.trim() ||
-          (action.toUpperCase() === 'VIEW'
-            ? `${moduleName} was opened.`
-            : `${moduleName} activity was recorded.`),
+        description: input.description?.trim() || (action.toUpperCase() === 'VIEW' ? `${moduleName} was opened.` : `${moduleName} activity was recorded.`),
         module: moduleName,
         path,
       },

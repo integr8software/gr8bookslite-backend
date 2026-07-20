@@ -5,10 +5,7 @@ import { AccessControlModule } from '../../common/access/access-control.module';
 import { StorageModule } from '../../storage/storage.module';
 import { BillingModule } from '../billing/billing.module';
 import { AuthModule } from '../auth/auth.module';
-import {
-  getJwtExpiresInSeconds,
-  getJwtSecret,
-} from '../auth/utils/jwt-config.util';
+import { getJwtExpiresInSeconds, getJwtSecret } from '../auth/utils/jwt-config.util';
 import { OnboardingController } from './onboarding.controller';
 import { OnboardingLogoStorageService } from './services/onboarding-logo-storage.service';
 import { OnboardingService } from './onboarding.service';

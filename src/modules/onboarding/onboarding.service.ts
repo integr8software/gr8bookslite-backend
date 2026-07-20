@@ -1,82 +1,71 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import {
-  CompanyUnitType,
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-  SubscriptionPlanScope,
-  SubscriptionPlanStatus,
-  SubscriptionStatus,
-} from '@prisma/client';
+import { CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SubscriptionPlanScope, SubscriptionPlanStatus, SubscriptionStatus } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
+import { MaintenanceTransactionOptions } from '../../common/constants/transaction.constant';
 import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
+import { seedCompanyItemAttributeDefaults } from '../maintenance/item-attributes/seed/item-attributes.seed';
 import { seedCompanyTermMaintenanceDefaults } from '../maintenance/term-maintenance/seed/term-maintenance.seed';
+import { seedCompanyUnitOfMeasurementDefaults } from '../maintenance/unit-of-measurement/seed/unit-of-measurement.seed';
 import { seedCompanyPaymentTypeMaintenanceDefaults } from '../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
 import { seedCompanyChartAccountDefaults } from '../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
 import { seedCompanyDefaultAccountDefaults } from '../maintenance/default-account/seed/default-accounts.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../maintenance/discount-maintenance/seed/discount-maintenance.seed';
+import { seedCompanyItemCategoryDefaults } from '../maintenance/item-category/seed/item-category.seed';
 import { seedCompanyBankAccountDefaults } from '../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyResponsibilityCenterDefaults } from '../maintenance/responsibility-center/seed/responsibility-center.seed';
+import { seedCompanyTaxMaintenanceDefaults } from '../maintenance/tax-maintenance/seed/tax-maintenance.seed';
+import { seedCompanyWarehouseMaintenanceDefaults } from '../maintenance/warehouse-maintenance/seed/warehouse-maintenance.seed';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
 import { SelectOnboardingPlanDto } from './dto/select-onboarding-plan.dto';
 import { mapSubscriptionPlan } from './mappers/SubscriptionPlan.mapper';
 import { OnboardingLogoStorageService } from './services/onboarding-logo-storage.service';
 import type { UploadedLogoFile } from './types/uploaded-logo-file.type';
-import {
-  getOnboardingDateParts,
-  getSyncedReportEndDate,
-  isValidOnboardingDateValue,
-} from './utils/OnboardingDate.util';
-import {
-  buildCompanyLogoStoragePath,
-  buildCompanyDisplayName,
-  buildSlugBase,
-} from './utils/OnboardingFinalize.util';
+import { getOnboardingDateParts, getSyncedReportEndDate, isValidOnboardingDateValue } from './utils/OnboardingDate.util';
+import { buildCompanyLogoStoragePath, buildCompanyDisplayName, buildSlugBase } from './utils/OnboardingFinalize.util';
 import { validateOnboardingLogoFile } from './utils/OnboardingLogoUpload.util';
 
-const subscriptionPlanInclude =
-  Prisma.validator<Prisma.SubscriptionPlanInclude>()({
-    prices: {
-      where: { isActive: true },
-      orderBy: [{ billingCycle: 'asc' }],
-    },
-    usageRules: {
-      where: { isActive: true },
-      orderBy: [{ metric: 'asc' }],
-    },
-    discountTiers: {
-      where: { isActive: true },
-      orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
-    },
-    modules: {
-      include: { module: true },
-      orderBy: [{ module: { code: 'asc' } }],
-    },
-    systems: {
-      include: {
-        system: {
-          include: {
-            modules: {
-              include: { module: true },
-              where: { isActive: true, module: { isActive: true } },
-            },
+const subscriptionPlanInclude = Prisma.validator<Prisma.SubscriptionPlanInclude>()({
+  prices: {
+    where: { isActive: true },
+    orderBy: [{ billingCycle: 'asc' }],
+  },
+  usageRules: {
+    where: { isActive: true },
+    orderBy: [{ metric: 'asc' }],
+  },
+  discountTiers: {
+    where: { isActive: true },
+    orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
+  },
+  modules: {
+    include: { module: true },
+    orderBy: [{ module: { code: 'asc' } }],
+  },
+  systems: {
+    include: {
+      system: {
+        include: {
+          modules: {
+            include: { module: true },
+            where: { isActive: true, module: { isActive: true } },
           },
         },
       },
     },
-  });
+  },
+});
+
+const OnboardingProvisioningTransactionOptions = {
+  ...MaintenanceTransactionOptions,
+  timeout: 120_000,
+};
 
 type OnboardingSubscriptionPlan = Prisma.SubscriptionPlanGetPayload<{
   include: typeof subscriptionPlanInclude;
@@ -152,9 +141,7 @@ export class OnboardingService {
     return {
       draft: draft
         ? {
-            plan: draft.subscriptionPlan
-              ? mapSubscriptionPlan(draft.subscriptionPlan)
-              : null,
+            plan: draft.subscriptionPlan ? mapSubscriptionPlan(draft.subscriptionPlan) : null,
             billingCycle: draft.billingCycle,
             cardholderName: draft.cardholderName,
             billingEmail: draft.billingEmail,
@@ -168,12 +155,7 @@ export class OnboardingService {
             planSelectedAt: draft.planSelectedAt,
             billingCompletedAt: draft.billingCompletedAt,
             companyDetails: {
-              taxpayerType:
-                draft.taxpayerType === 'INDIVIDUAL'
-                  ? 'individual'
-                  : draft.taxpayerType === 'NON_INDIVIDUAL'
-                    ? 'non-individual'
-                    : null,
+              taxpayerType: draft.taxpayerType === 'INDIVIDUAL' ? 'individual' : draft.taxpayerType === 'NON_INDIVIDUAL' ? 'non-individual' : null,
               lastName: draft.ownerLastName,
               firstName: draft.ownerFirstName,
               middleName: draft.ownerMiddleName,
@@ -189,12 +171,8 @@ export class OnboardingService {
               companyEmail: draft.companyEmail,
               website: draft.website,
               contactNumber: draft.contactNumber,
-              reportStartDate: draft.reportStartDate
-                ? draft.reportStartDate.toISOString().slice(0, 10)
-                : null,
-              reportEndDate: draft.reportEndDate
-                ? draft.reportEndDate.toISOString().slice(0, 10)
-                : null,
+              reportStartDate: draft.reportStartDate ? draft.reportStartDate.toISOString().slice(0, 10) : null,
+              reportEndDate: draft.reportEndDate ? draft.reportEndDate.toISOString().slice(0, 10) : null,
             },
           }
         : null,
@@ -209,12 +187,7 @@ export class OnboardingService {
       },
     });
 
-    if (
-      !plan ||
-      !plan.isActive ||
-      plan.scope !== SubscriptionPlanScope.ONBOARDING ||
-      plan.status !== SubscriptionPlanStatus.ACTIVE
-    ) {
+    if (!plan || !plan.isActive || plan.scope !== SubscriptionPlanScope.ONBOARDING || plan.status !== SubscriptionPlanStatus.ACTIVE) {
       throw new BadRequestException('Selected subscription plan is invalid.');
     }
 
@@ -232,8 +205,7 @@ export class OnboardingService {
     const selectionChanged =
       existingDraft?.subscriptionPlanId !== undefined &&
       existingDraft.subscriptionPlanId !== null &&
-      (existingDraft.subscriptionPlanId !== plan.id ||
-        existingDraft.billingCycle !== dto.billingCycle);
+      (existingDraft.subscriptionPlanId !== plan.id || existingDraft.billingCycle !== dto.billingCycle);
 
     if (selectionChanged && existingDraft.provisionedCompanyId) {
       await this.billingService.supersedeOnboardingSubscriptionsForPlanChange({
@@ -286,39 +258,25 @@ export class OnboardingService {
       },
     });
 
-    if (
-      !existingDraft?.subscriptionPlanId ||
-      !existingDraft.billingCycle ||
-      !existingDraft.subscriptionPlan
-    ) {
-      throw new BadRequestException(
-        'Choose a subscription plan before saving billing details.',
-      );
+    if (!existingDraft?.subscriptionPlanId || !existingDraft.billingCycle || !existingDraft.subscriptionPlan) {
+      throw new BadRequestException('Choose a subscription plan before saving billing details.');
     }
 
-    if (
-      !existingDraft.companyDetailsCompletedAt ||
-      !existingDraft.provisionedCompanyId
-    ) {
-      throw new BadRequestException(
-        'Complete company details before setting up billing.',
-      );
+    if (!existingDraft.companyDetailsCompletedAt || !existingDraft.provisionedCompanyId) {
+      throw new BadRequestException('Complete company details before setting up billing.');
     }
 
     const normalizedEmail = normalizeEmail(dto.billingEmail) as string;
 
-    const preparedSubscription =
-      await this.billingService.prepareCompanySubscription({
-        companyId: existingDraft.provisionedCompanyId,
-        ownerUserId: user.id,
-        planCode: existingDraft.subscriptionPlan.code,
-        billingCycle: existingDraft.billingCycle,
-        billingEmail: normalizedEmail,
-      });
+    const preparedSubscription = await this.billingService.prepareCompanySubscription({
+      companyId: existingDraft.provisionedCompanyId,
+      ownerUserId: user.id,
+      planCode: existingDraft.subscriptionPlan.code,
+      billingCycle: existingDraft.billingCycle,
+      billingEmail: normalizedEmail,
+    });
 
-    const paymentSetupState = preparedSubscription.pendingProviderActivation
-      ? 'pending_provider_activation'
-      : 'ready_for_confirmation';
+    const paymentSetupState = preparedSubscription.pendingProviderActivation ? 'pending_provider_activation' : 'ready_for_confirmation';
 
     const paymentResult = preparedSubscription.pendingProviderActivation
       ? await this.billingService.recordPendingPaymentSetup({
@@ -372,26 +330,17 @@ export class OnboardingService {
         cardLast4: updatedDraft.cardLast4,
         cardExpiryMonth: updatedDraft.cardExpiryMonth,
         cardExpiryYear: updatedDraft.cardExpiryYear,
-        plan: updatedDraft.subscriptionPlan
-          ? mapSubscriptionPlan(updatedDraft.subscriptionPlan)
-          : null,
+        plan: updatedDraft.subscriptionPlan ? mapSubscriptionPlan(updatedDraft.subscriptionPlan) : null,
         trialDays: updatedDraft.subscriptionPlan?.trialDays ?? 15,
       },
-      paymentIntent:
-        'paymentIntent' in paymentResult
-          ? paymentResult.paymentIntent
-          : undefined,
-      pendingProviderActivation:
-        preparedSubscription.pendingProviderActivation ?? false,
+      paymentIntent: 'paymentIntent' in paymentResult ? paymentResult.paymentIntent : undefined,
+      pendingProviderActivation: preparedSubscription.pendingProviderActivation ?? false,
       paymentSetupState,
       nextStep: 'REVIEW_DETAILS',
     };
   }
 
-  async saveCompanyDetails(
-    user: AuthUser,
-    dto: SaveOnboardingCompanyDetailsDto,
-  ) {
+  async saveCompanyDetails(user: AuthUser, dto: SaveOnboardingCompanyDetailsDto) {
     const existingDraft = await this.prisma.userOnboardingDraft.findUnique({
       where: {
         userId: user.id,
@@ -399,9 +348,7 @@ export class OnboardingService {
     });
 
     if (!existingDraft?.subscriptionPlanId || !existingDraft.billingCycle) {
-      throw new BadRequestException(
-        'Complete plan selection before saving company details.',
-      );
+      throw new BadRequestException('Complete plan selection before saving company details.');
     }
 
     this.validateCompanyDetailsInput(dto);
@@ -417,19 +364,12 @@ export class OnboardingService {
       ownerLastName: dto.lastName ?? null,
     });
 
-    const legalName = isIndividual
-      ? companyName
-      : (dto.companyName?.trim() ?? companyName);
+    const legalName = isIndividual ? companyName : (dto.companyName?.trim() ?? companyName);
 
-    await this.ensureCompanyNameAvailable(
-      companyName,
-      existingDraft.provisionedCompanyId ?? undefined,
-    );
+    await this.ensureCompanyNameAvailable(companyName, existingDraft.provisionedCompanyId ?? undefined);
 
     const { updatedDraft } = await this.prisma.$transaction(async (tx) => {
-      const slug = existingDraft.provisionedCompanyId
-        ? null
-        : await this.generateUniqueCompanySlug(tx, companyName);
+      const slug = existingDraft.provisionedCompanyId ? null : await this.generateUniqueCompanySlug(tx, companyName);
 
       const provisionedCompany = existingDraft.provisionedCompanyId
         ? await tx.company.update({
@@ -438,21 +378,11 @@ export class OnboardingService {
               name: companyName,
               legalName,
               taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
-              ownerLastName: isIndividual
-                ? (dto.lastName?.trim() ?? null)
-                : null,
-              ownerFirstName: isIndividual
-                ? (dto.firstName?.trim() ?? null)
-                : null,
-              ownerMiddleName: isIndividual
-                ? dto.middleName?.trim() || null
-                : null,
-              organizationType: isIndividual
-                ? null
-                : (dto.nonIndividualType?.trim() ?? null),
-              organizationTypeOther: isIndividual
-                ? null
-                : dto.nonIndividualTypeOther?.trim() || null,
+              ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
+              ownerFirstName: isIndividual ? (dto.firstName?.trim() ?? null) : null,
+              ownerMiddleName: isIndividual ? dto.middleName?.trim() || null : null,
+              organizationType: isIndividual ? null : (dto.nonIndividualType?.trim() ?? null),
+              organizationTypeOther: isIndividual ? null : dto.nonIndividualTypeOther?.trim() || null,
               logoFileName: dto.logoName.trim(),
               logoMimeType: dto.logoMimeType?.trim() || null,
               logoStoragePath: dto.logoStoragePath?.trim() || null,
@@ -475,21 +405,11 @@ export class OnboardingService {
               slug: slug!,
               legalName,
               taxpayerType: isIndividual ? 'INDIVIDUAL' : 'NON_INDIVIDUAL',
-              ownerLastName: isIndividual
-                ? (dto.lastName?.trim() ?? null)
-                : null,
-              ownerFirstName: isIndividual
-                ? (dto.firstName?.trim() ?? null)
-                : null,
-              ownerMiddleName: isIndividual
-                ? dto.middleName?.trim() || null
-                : null,
-              organizationType: isIndividual
-                ? null
-                : (dto.nonIndividualType?.trim() ?? null),
-              organizationTypeOther: isIndividual
-                ? null
-                : dto.nonIndividualTypeOther?.trim() || null,
+              ownerLastName: isIndividual ? (dto.lastName?.trim() ?? null) : null,
+              ownerFirstName: isIndividual ? (dto.firstName?.trim() ?? null) : null,
+              ownerMiddleName: isIndividual ? dto.middleName?.trim() || null : null,
+              organizationType: isIndividual ? null : (dto.nonIndividualType?.trim() ?? null),
+              organizationTypeOther: isIndividual ? null : dto.nonIndividualTypeOther?.trim() || null,
               logoFileName: dto.logoName.trim(),
               logoMimeType: dto.logoMimeType?.trim() || null,
               logoStoragePath: dto.logoStoragePath?.trim() || null,
@@ -541,15 +461,17 @@ export class OnboardingService {
       });
 
       await seedCompanyTermMaintenanceDefaults(tx, provisionedCompany.id);
-      await seedCompanyPaymentTypeMaintenanceDefaults(
-        tx,
-        provisionedCompany.id,
-      );
+      await seedCompanyItemAttributeDefaults(tx, provisionedCompany.id);
+      await seedCompanyUnitOfMeasurementDefaults(tx, provisionedCompany.id);
+      await seedCompanyPaymentTypeMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyChartAccountDefaults(tx, provisionedCompany.id);
+      await seedCompanyTaxMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyDefaultAccountDefaults(tx, provisionedCompany.id);
+      await seedCompanyItemCategoryDefaults(tx, provisionedCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyResponsibilityCenterDefaults(tx, provisionedCompany.id);
       await seedCompanyBankAccountDefaults(tx, provisionedCompany.id);
+      await seedCompanyWarehouseMaintenanceDefaults(tx, provisionedCompany.id);
 
       const updatedDraft = await tx.userOnboardingDraft.update({
         where: {
@@ -561,12 +483,8 @@ export class OnboardingService {
           ownerFirstName: isIndividual ? (dto.firstName?.trim() ?? null) : null,
           ownerMiddleName: isIndividual ? dto.middleName?.trim() || null : null,
           companyName: isIndividual ? null : (dto.companyName?.trim() ?? null),
-          organizationType: isIndividual
-            ? null
-            : (dto.nonIndividualType?.trim() ?? null),
-          organizationTypeOther: isIndividual
-            ? null
-            : dto.nonIndividualTypeOther?.trim() || null,
+          organizationType: isIndividual ? null : (dto.nonIndividualType?.trim() ?? null),
+          organizationTypeOther: isIndividual ? null : dto.nonIndividualTypeOther?.trim() || null,
           logoFileName: dto.logoName.trim(),
           logoMimeType: dto.logoMimeType?.trim() || null,
           logoStoragePath: dto.logoStoragePath?.trim() || null,
@@ -584,7 +502,7 @@ export class OnboardingService {
       });
 
       return { updatedDraft };
-    });
+    }, OnboardingProvisioningTransactionOptions);
 
     return {
       message: 'Company details saved for onboarding.',
@@ -625,9 +543,7 @@ export class OnboardingService {
     });
 
     if (!draft || !draft.subscriptionPlan) {
-      throw new BadRequestException(
-        'Complete the onboarding draft before finalizing setup.',
-      );
+      throw new BadRequestException('Complete the onboarding draft before finalizing setup.');
     }
     const selectedPlan = draft.subscriptionPlan;
 
@@ -635,9 +551,7 @@ export class OnboardingService {
     const completedAt = new Date();
     const provisionedCompanyId = draft.provisionedCompanyId!;
     const shouldPromoteLogo = Boolean(
-      draft.logoStoragePath &&
-      (draft.logoStoragePath.startsWith('onboarding/') ||
-        draft.logoStoragePath.startsWith('company-logos/onboarding-user-')),
+      draft.logoStoragePath && (draft.logoStoragePath.startsWith('onboarding/') || draft.logoStoragePath.startsWith('company-logos/onboarding-user-')),
     );
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -678,13 +592,7 @@ export class OnboardingService {
           subscriptionPlanId: draft.subscriptionPlanId!,
           billingCycle: draft.billingCycle!,
           status: {
-            in: [
-              SubscriptionStatus.INCOMPLETE,
-              SubscriptionStatus.TRIALING,
-              SubscriptionStatus.ACTIVE,
-              SubscriptionStatus.PAST_DUE,
-              SubscriptionStatus.UNPAID,
-            ],
+            in: [SubscriptionStatus.INCOMPLETE, SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE, SubscriptionStatus.UNPAID],
           },
         },
         include: {
@@ -694,9 +602,7 @@ export class OnboardingService {
       });
 
       if (!subscription) {
-        throw new BadRequestException(
-          'Complete billing setup before finalizing onboarding.',
-        );
+        throw new BadRequestException('Complete billing setup before finalizing onboarding.');
       }
 
       const selectedModuleIds = this.getSelectedPlanModuleIds(selectedPlan);
@@ -719,10 +625,7 @@ export class OnboardingService {
       try {
         const promotedLogo = await this.onboardingLogoStorageService.moveLogo({
           sourcePath: draft.logoStoragePath,
-          destinationPath: buildCompanyLogoStoragePath(
-            result.company.id,
-            draft.logoStoragePath,
-          ),
+          destinationPath: buildCompanyLogoStoragePath(result.company.id, draft.logoStoragePath),
         });
 
         await this.prisma.company.update({
@@ -735,9 +638,7 @@ export class OnboardingService {
           },
         });
       } catch (error) {
-        this.logger.warn(
-          `Unable to promote onboarding logo for company ${result.company.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        );
+        this.logger.warn(`Unable to promote onboarding logo for company ${result.company.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
@@ -756,15 +657,9 @@ export class OnboardingService {
         throw new BadRequestException('User account was not found.');
       }
 
-      await this.authMailService.sendOnboardingCongratulations(
-        completedUser.email,
-        completedUser.name,
-        result.company.name,
-      );
+      await this.authMailService.sendOnboardingCongratulations(completedUser.email, completedUser.name, result.company.name);
     } catch (error) {
-      this.logger.warn(
-        `Unable to queue onboarding congratulations email for user ${user.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      this.logger.warn(`Unable to queue onboarding congratulations email for user ${user.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     return {
@@ -810,9 +705,7 @@ export class OnboardingService {
     });
 
     if (!existingDraft?.subscriptionPlanId) {
-      throw new BadRequestException(
-        'Complete plan selection before uploading a logo.',
-      );
+      throw new BadRequestException('Complete plan selection before uploading a logo.');
     }
 
     const upload = await this.onboardingLogoStorageService.uploadLogo({
@@ -857,18 +750,14 @@ export class OnboardingService {
     const syncedEndDate = getSyncedReportEndDate(dto.reportStartDate);
 
     if (syncedEndDate && dto.reportEndDate !== syncedEndDate) {
-      throw new BadRequestException(
-        'End date must sync to a 1-year report period.',
-      );
+      throw new BadRequestException('End date must sync to a 1-year report period.');
     }
 
     const start = getOnboardingDateParts(dto.reportStartDate);
     const end = getOnboardingDateParts(dto.reportEndDate);
 
     if (!start || !end || end.date.getTime() < start.date.getTime()) {
-      throw new BadRequestException(
-        'Report end date must be after the report start date.',
-      );
+      throw new BadRequestException('Report end date must be after the report start date.');
     }
   }
 
@@ -886,19 +775,11 @@ export class OnboardingService {
     }
 
     if (!draft.billingCycle || !draft.billingCompletedAt) {
-      throw new BadRequestException(
-        'Complete billing before finalizing onboarding.',
-      );
+      throw new BadRequestException('Complete billing before finalizing onboarding.');
     }
 
-    if (
-      !draft.companyDetailsCompletedAt ||
-      !draft.taxpayerType ||
-      !draft.provisionedCompanyId
-    ) {
-      throw new BadRequestException(
-        'Complete company details before finalizing onboarding.',
-      );
+    if (!draft.companyDetailsCompletedAt || !draft.taxpayerType || !draft.provisionedCompanyId) {
+      throw new BadRequestException('Complete company details before finalizing onboarding.');
     }
   }
 
@@ -906,9 +787,7 @@ export class OnboardingService {
     return [
       ...new Set(
         plan.systems.flatMap((planSystem) =>
-          planSystem.isEnabled && planSystem.system.isActive
-            ? planSystem.system.modules.map((item) => item.moduleId)
-            : [],
+          planSystem.isEnabled && planSystem.system.isActive ? planSystem.system.modules.map((item) => item.moduleId) : [],
         ),
       ),
     ];
@@ -916,16 +795,11 @@ export class OnboardingService {
 
   private assertSelectedPlanHasModules(moduleIds: number[]) {
     if (moduleIds.length === 0) {
-      throw new BadRequestException(
-        'Selected subscription plan has no enabled modules configured.',
-      );
+      throw new BadRequestException('Selected subscription plan has no enabled modules configured.');
     }
   }
 
-  private async generateUniqueCompanySlug(
-    tx: Pick<PrismaService, 'company'> | Prisma.TransactionClient,
-    companyName: string,
-  ) {
+  private async generateUniqueCompanySlug(tx: Pick<PrismaService, 'company'> | Prisma.TransactionClient, companyName: string) {
     const baseSlug = buildSlugBase(companyName);
     let slug = baseSlug;
     let suffix = 2;
@@ -947,10 +821,7 @@ export class OnboardingService {
     return slug;
   }
 
-  private async ensureCompanyNameAvailable(
-    name: string,
-    excludedCompanyId?: number,
-  ) {
+  private async ensureCompanyNameAvailable(name: string, excludedCompanyId?: number) {
     const existingCompany = await this.prisma.company.findFirst({
       where: {
         name: {

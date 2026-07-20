@@ -1,47 +1,42 @@
 import { Prisma } from '@prisma/client';
 
-export const masterPlanAndPackageInclude =
-  Prisma.validator<Prisma.SubscriptionPlanInclude>()({
-    prices: {
-      orderBy: [{ billingCycle: 'asc' }],
-    },
-    usageRules: {
-      orderBy: [{ metric: 'asc' }],
-    },
-    discountTiers: {
-      orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
-    },
-    modules: {
-      include: { module: true },
-      orderBy: [{ module: { code: 'asc' } }],
-    },
-    systems: {
-      include: {
-        system: {
-          include: {
-            modules: {
-              include: { module: true },
-              where: { isActive: true, module: { isActive: true } },
-              orderBy: [{ sortOrder: 'asc' }, { module: { name: 'asc' } }],
-            },
+export const masterPlanAndPackageInclude = Prisma.validator<Prisma.SubscriptionPlanInclude>()({
+  prices: {
+    orderBy: [{ billingCycle: 'asc' }],
+  },
+  usageRules: {
+    orderBy: [{ metric: 'asc' }],
+  },
+  discountTiers: {
+    orderBy: [{ metric: 'asc' }, { thresholdCount: 'asc' }],
+  },
+  modules: {
+    include: { module: true },
+    orderBy: [{ module: { code: 'asc' } }],
+  },
+  systems: {
+    include: {
+      system: {
+        include: {
+          modules: {
+            include: { module: true },
+            where: { isActive: true, module: { isActive: true } },
+            orderBy: [{ sortOrder: 'asc' }, { module: { name: 'asc' } }],
           },
         },
       },
-      orderBy: [{ system: { sortOrder: 'asc' } }],
     },
-  });
+    orderBy: [{ system: { sortOrder: 'asc' } }],
+  },
+});
 
 export type MasterPlanAndPackageRecord = Prisma.SubscriptionPlanGetPayload<{
   include: typeof masterPlanAndPackageInclude;
 }>;
 
 export function mapMasterPlanAndPackage(plan: MasterPlanAndPackageRecord) {
-  const monthlyPrice = plan.prices.find(
-    (price) => price.billingCycle === 'MONTHLY',
-  );
-  const yearlyPrice = plan.prices.find(
-    (price) => price.billingCycle === 'YEARLY',
-  );
+  const monthlyPrice = plan.prices.find((price) => price.billingCycle === 'MONTHLY');
+  const yearlyPrice = plan.prices.find((price) => price.billingCycle === 'YEARLY');
 
   return {
     id: plan.id,
@@ -82,9 +77,7 @@ export function mapMasterPlanAndPackage(plan: MasterPlanAndPackageRecord) {
       discountPercent: tier.discountPercent.toNumber(),
       isActive: tier.isActive,
     })),
-    systemCodes: plan.systems
-      .filter((system) => system.isEnabled)
-      .map((system) => system.system.code),
+    systemCodes: plan.systems.filter((system) => system.isEnabled).map((system) => system.system.code),
     systems: plan.systems.map((planSystem) => ({
       id: planSystem.system.id,
       code: planSystem.system.code,
@@ -100,19 +93,14 @@ export function mapMasterPlanAndPackage(plan: MasterPlanAndPackageRecord) {
       name: module.name,
       isEnabled: true,
     })),
-    legacyModuleKeys: plan.modules
-      .filter((module) => module.isEnabled)
-      .map((module) => module.module.code),
+    legacyModuleKeys: plan.modules.filter((module) => module.isEnabled).map((module) => module.module.code),
     createdAt: plan.createdAt,
     updatedAt: plan.updatedAt,
   };
 }
 
 function derivePlanModules(plan: MasterPlanAndPackageRecord) {
-  const modulesById = new Map<
-    number,
-    MasterPlanAndPackageRecord['systems'][number]['system']['modules'][number]['module']
-  >();
+  const modulesById = new Map<number, MasterPlanAndPackageRecord['systems'][number]['system']['modules'][number]['module']>();
 
   for (const planSystem of plan.systems) {
     if (!planSystem.isEnabled || !planSystem.system.isActive) continue;
@@ -121,9 +109,5 @@ function derivePlanModules(plan: MasterPlanAndPackageRecord) {
     }
   }
 
-  return [...modulesById.values()].sort(
-    (left, right) =>
-      left.name.localeCompare(right.name) ||
-      left.code.localeCompare(right.code),
-  );
+  return [...modulesById.values()].sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code));
 }

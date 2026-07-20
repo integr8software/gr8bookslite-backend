@@ -14,9 +14,7 @@ export type EntitledModuleRecord = {
   module: EnabledModuleRecord;
 };
 
-export type PlanModuleEntitlementSource<
-  TEnabledModule extends EntitledModuleRecord = EntitledModuleRecord,
-> = {
+export type PlanModuleEntitlementSource<TEnabledModule extends EntitledModuleRecord = EntitledModuleRecord> = {
   company: {
     subscriptions?: Array<{
       plan: {
