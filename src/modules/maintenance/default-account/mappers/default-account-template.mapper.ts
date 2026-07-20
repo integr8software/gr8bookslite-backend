@@ -9,6 +9,7 @@ export function mapDefaultAccount(template: DefaultAccountPayload, userNames: Ma
     defaultAccountName: template.name,
     description: template.description ?? '',
     status: template.status,
+    expenseParentCoaId: template.type === 'EXPENSE' ? (template.expenseCoa?.parentAccountId?.toString() ?? null) : null,
     generatedAccounts: [
       mapGeneratedAccount(template.type === 'FIXED_ASSET' ? 'DEPRECIATION_EXPENSE' : 'EXPENSE', template.expenseCoa),
       mapGeneratedAccount('REVENUE', template.revenueCoa),

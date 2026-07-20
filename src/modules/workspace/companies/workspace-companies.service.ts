@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { BillingCycle, BillingMode, CompanyStatus, CompanyUnitType, AccessScopeLevel, MembershipRole, MembershipStatus, TaxpayerType } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
@@ -27,6 +28,11 @@ import { mapCompanyUnit, mapWorkspaceCompany } from './mappers/workspace-company
 import { WorkspaceCompanyDetailsInclude, WorkspaceCompanyListInclude } from './prisma/workspace-company.include';
 import { WorkspaceCompanyLogoStorageService } from './services/workspace-company-logo-storage.service';
 import type { UploadedCompanyLogoFile } from './types/uploaded-company-logo-file.type';
+
+const WorkspaceCompanyProvisioningTransactionOptions = {
+  ...MaintenanceTransactionOptions,
+  timeout: 120_000,
+};
 
 @Injectable()
 export class WorkspaceCompaniesService {
@@ -188,7 +194,7 @@ export class WorkspaceCompaniesService {
         where: { id: createdCompany.id },
         include: WorkspaceCompanyDetailsInclude,
       });
-    });
+    }, WorkspaceCompanyProvisioningTransactionOptions);
 
     let billingSetup: Awaited<ReturnType<typeof this.setupCompanyBilling>>;
 

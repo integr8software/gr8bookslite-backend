@@ -29,14 +29,12 @@ describe('ResponsibilityCenterService', () => {
       }),
     ).resolves.toBe('CC-D.E-003');
 
-    expect(tx.responsibilityCenter.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          companyId: 7,
-          code: { startsWith: 'CC-D.E-' },
-        }),
-      }),
-    );
+    const [findManyArgs] = tx.responsibilityCenter.findMany.mock.calls[0] as [{ where: { companyId: number; code: { startsWith: string } } }];
+
+    expect(findManyArgs.where).toMatchObject({
+      companyId: 7,
+      code: { startsWith: 'CC-D.E-' },
+    });
   });
 
   it('checks code uniqueness within the active company only', async () => {
@@ -102,7 +100,7 @@ describe('ResponsibilityCenterService', () => {
       responsibilityCenter: {
         findFirst: jest.fn().mockResolvedValue(existingCenter),
       },
-      $transaction: jest.fn((callback) => callback(tx)),
+      $transaction: createTransactionMock(tx),
       user: { findMany: jest.fn().mockResolvedValue([]) },
     });
 
@@ -147,7 +145,7 @@ describe('ResponsibilityCenterService', () => {
       responsibilityCenter: {
         findFirst: jest.fn().mockResolvedValue(existingCenter),
       },
-      $transaction: jest.fn((callback) => callback(tx)),
+      $transaction: createTransactionMock(tx),
       user: { findMany: jest.fn().mockResolvedValue([]) },
     });
 
@@ -193,7 +191,7 @@ describe('ResponsibilityCenterService', () => {
       responsibilityCenter: {
         findFirst: jest.fn().mockResolvedValue(existingCenter),
       },
-      $transaction: jest.fn((callback) => callback(tx)),
+      $transaction: createTransactionMock(tx),
       user: { findMany: jest.fn().mockResolvedValue([]) },
     });
 
@@ -249,6 +247,10 @@ function createService(prismaOverrides: Record<string, unknown> = {}) {
 
 function callPrivate<TReturn = unknown>(service: ResponsibilityCenterService, methodName: string, ...args: unknown[]): TReturn {
   return (service as never as Record<string, (...args: unknown[]) => TReturn>)[methodName](...args);
+}
+
+function createTransactionMock<TTransaction>(transaction: TTransaction) {
+  return jest.fn((callback: (client: TTransaction) => unknown) => callback(transaction));
 }
 
 function createSuperAdmin(): AuthUser {

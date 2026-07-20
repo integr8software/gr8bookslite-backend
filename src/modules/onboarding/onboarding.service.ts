@@ -4,6 +4,7 @@ import { CompanyUnitType, MembershipRole, MembershipStatus, Prisma, Subscription
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
+import { MaintenanceTransactionOptions } from '../../common/constants/transaction.constant';
 import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
@@ -60,6 +61,11 @@ const subscriptionPlanInclude = Prisma.validator<Prisma.SubscriptionPlanInclude>
     },
   },
 });
+
+const OnboardingProvisioningTransactionOptions = {
+  ...MaintenanceTransactionOptions,
+  timeout: 120_000,
+};
 
 type OnboardingSubscriptionPlan = Prisma.SubscriptionPlanGetPayload<{
   include: typeof subscriptionPlanInclude;
@@ -496,7 +502,7 @@ export class OnboardingService {
       });
 
       return { updatedDraft };
-    });
+    }, OnboardingProvisioningTransactionOptions);
 
     return {
       message: 'Company details saved for onboarding.',

@@ -185,6 +185,16 @@ export class DefaultAccountService {
           await this.updateLinkedChartAccountStatus(currentTemplate, dto.status, tx, user.id);
         }
 
+        if (currentTemplate.type === DefaultAccountTemplateType.EXPENSE && dto.expenseParentCoaId) {
+          await this.updateExpenseGeneratedAccountParent({
+            companyId,
+            expenseParentCoaId: dto.expenseParentCoaId,
+            template: currentTemplate,
+            tx,
+            userId: user.id,
+          });
+        }
+
         return tx.defaultAccount.update({
           where: { id: templateId },
           data: {
@@ -582,6 +592,51 @@ export class DefaultAccountService {
     await this.updateChartAccountTitle(template.assetCoaId, description, tx, userId);
     await this.updateChartAccountTitle(template.accumulatedDepreciationCoaId, `Accumulated Depreciation - ${description}`, tx, userId);
     await this.updateChartAccountTitle(template.expenseCoaId, `Depreciation Expense - ${description}`, tx, userId);
+  }
+
+  private async updateExpenseGeneratedAccountParent({
+    companyId,
+    expenseParentCoaId,
+    template,
+    tx,
+    userId,
+  }: {
+    companyId: number;
+    expenseParentCoaId: string;
+    template: Awaited<ReturnType<DefaultAccountService['findTemplateOrThrow']>>;
+    tx: Prisma.TransactionClient;
+    userId: number;
+  }) {
+    if (!template.expenseCoaId) {
+      return;
+    }
+
+    const parentAccount = await this.findExpenseParentOptionOrThrow(
+      companyId,
+      parsePositiveBigIntId(expenseParentCoaId, 'expenseParentCoaId'),
+      tx,
+    );
+
+    if (template.expenseCoa?.parentAccountId === parentAccount.id) {
+      return;
+    }
+
+    const accountCode = await this.generateNextAccountCode(
+      companyId,
+      parentAccount.id,
+      parentAccount.accountCode,
+      ChartAccountLevel.SPECIFIC,
+      tx,
+    );
+
+    await tx.chartAccount.update({
+      where: { id: template.expenseCoaId },
+      data: {
+        accountCode,
+        parentAccountId: parentAccount.id,
+        whoModified: String(userId),
+      },
+    });
   }
 
   private async updateChartAccountTitle(chartAccountId: bigint | null, accountTitle: string, tx: Prisma.TransactionClient, userId: number) {

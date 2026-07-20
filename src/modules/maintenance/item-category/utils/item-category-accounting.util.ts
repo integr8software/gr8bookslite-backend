@@ -43,12 +43,10 @@ export async function resolveItemCategoryAccountingAccounts(
   companyId: number,
   categoryName: string,
 ): Promise<ResolvedItemCategoryAccountingAccounts> {
-  const [inventoryAccountId, salesAccountId, costOfSalesAccountId, expenseAccountId] = await Promise.all([
-    resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.inventory),
-    resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.sales),
-    resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.costOfSales),
-    resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.expense),
-  ]);
+  const inventoryAccountId = await resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.inventory);
+  const salesAccountId = await resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.sales);
+  const costOfSalesAccountId = await resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.costOfSales);
+  const expenseAccountId = await resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.expense);
 
   return {
     inventoryAccountId,

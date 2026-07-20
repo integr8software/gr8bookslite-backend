@@ -59,8 +59,8 @@ export class VpsStorageProvider implements StorageProvider {
     }
   }
 
-  async moveFile(): Promise<Pick<StorageUploadResult, 'relativePath' | 'storagePath' | 'publicUrl'>> {
-    throw new BadGatewayException('VPS storage move is not supported.');
+  moveFile(): Promise<Pick<StorageUploadResult, 'relativePath' | 'storagePath' | 'publicUrl'>> {
+    return Promise.reject(new BadGatewayException('VPS storage move is not supported.'));
   }
 
   getPublicUrl(relativePath: string) {

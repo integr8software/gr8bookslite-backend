@@ -5,7 +5,6 @@ import {
   BillingPaymentAttemptStatus,
   BillingPaymentPurpose,
   CompanyStatus,
-  Prisma,
   SubscriptionInvoiceStatus,
   SubscriptionStatus,
 } from '@prisma/client';

@@ -79,20 +79,16 @@ describe('BranchRolesService permission architecture', () => {
         findMany: jest.fn().mockResolvedValue([]),
       },
     });
-    const companyRole = prisma as typeof prisma & {
-      companyRole: { findMany: jest.Mock };
-    };
+    const companyRoleFindMany = jest.mocked((prisma as { companyRole: { findMany: jest.Mock } }).companyRole.findMany);
 
     await service.findAll(superAdmin, 10);
 
-    expect(companyRole.companyRole.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          companyId: 20,
-          unitId: 10,
-        }),
-      }),
-    );
+    const [findManyArgs] = companyRoleFindMany.mock.calls[0] as [{ where: { companyId: number; unitId: number } }];
+
+    expect(findManyArgs.where).toMatchObject({
+      companyId: 20,
+      unitId: 10,
+    });
   });
 
   it('keeps a root sidebar module in its own top-level group', async () => {
