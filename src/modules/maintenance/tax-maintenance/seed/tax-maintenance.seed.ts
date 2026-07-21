@@ -10,6 +10,9 @@ const DefaultTaxMaintenanceRows = [
   { name: 'Capital Goods', percentage: 12 },
   { name: 'Other Than Capital Goods', percentage: 12 },
   { name: 'Services', percentage: 12 },
+  { name: 'VAT Exempt', percentage: 0 },
+  { name: 'VAT Inclusive', percentage: 12 },
+  { name: 'VAT Exclusive', percentage: 12 },
 ] as const;
 
 type TaxMaintenanceWriteClient = Pick<PrismaService, 'chartAccount' | 'taxMaintenance'> | Prisma.TransactionClient;

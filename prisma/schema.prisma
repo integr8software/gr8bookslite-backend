@@ -1056,7 +1056,7 @@ model Party {
   employeeAdvanceAccountId   BigInt?                   @map("employee_advance_account_id")
   employeePayableAccountId   BigInt?                   @map("employee_payable_account_id")
   tin                        String?                   @db.VarChar(20)
-  vatRegistrationType        PartyVatRegistrationType? @map("vat_registration_type")
+  vatRegistrationType        String?                  @db.VarChar(50) @map("vat_registration_type")
   atcCode                    String?                   @map("atc_code") @db.VarChar(40)
   email                      String?                   @db.VarChar(255)
   contactNo                  String?                   @map("contact_no") @db.VarChar(40)
@@ -1958,16 +1958,6 @@ enum PartyType {
 enum PartyStatus {
   ACTIVE
   INACTIVE
-}
-
-enum PartyVatRegistrationType {
-  VAT_REGISTERED
-  ZERO_RATED
-  NON_VAT
-  EXEMPT
-  CAPITAL_GOODS
-  OTHER_THAN_CAPITAL_GOODS
-  SERVICES
 }
 
 enum TaxMaintenanceStatus {
