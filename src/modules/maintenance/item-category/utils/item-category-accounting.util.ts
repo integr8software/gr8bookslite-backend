@@ -6,11 +6,25 @@ type PrismaClientLike = Prisma.TransactionClient;
 
 type ItemCategoryAccountRole = 'inventory' | 'sales' | 'costOfSales' | 'expense';
 
-type ResolvedItemCategoryAccountingAccounts = {
-  inventoryAccountId: bigint;
-  salesAccountId: bigint;
-  costOfSalesAccountId: bigint;
-  expenseAccountId: bigint;
+export type ItemCategoryAccountingRequirements = {
+  requiresInventoryAccount: boolean;
+  requiresSalesAccount: boolean;
+  requiresCostOfSalesAccount: boolean;
+  requiresExpenseAccount: boolean;
+};
+
+export type ItemCategoryAccountingAccountIds = {
+  inventoryAccountId?: bigint;
+  salesAccountId?: bigint;
+  costOfSalesAccountId?: bigint;
+  expenseAccountId?: bigint;
+};
+
+const DefaultItemCategoryAccountingRequirements: ItemCategoryAccountingRequirements = {
+  requiresInventoryAccount: true,
+  requiresSalesAccount: true,
+  requiresCostOfSalesAccount: true,
+  requiresExpenseAccount: true,
 };
 
 const ItemCategoryAccountDefinitions: Record<
@@ -42,11 +56,21 @@ export async function resolveItemCategoryAccountingAccounts(
   tx: PrismaClientLike,
   companyId: number,
   categoryName: string,
-): Promise<ResolvedItemCategoryAccountingAccounts> {
-  const inventoryAccountId = await resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.inventory);
-  const salesAccountId = await resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.sales);
-  const costOfSalesAccountId = await resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.costOfSales);
-  const expenseAccountId = await resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.expense);
+  requirements: ItemCategoryAccountingRequirements = DefaultItemCategoryAccountingRequirements,
+  preservedAccountIds: ItemCategoryAccountingAccountIds = {},
+): Promise<ItemCategoryAccountingAccountIds> {
+  const inventoryAccountId = await resolveAccountForRequirement(requirements.requiresInventoryAccount, preservedAccountIds.inventoryAccountId, () =>
+    resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.inventory),
+  );
+  const salesAccountId = await resolveAccountForRequirement(requirements.requiresSalesAccount, preservedAccountIds.salesAccountId, () =>
+    resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.sales),
+  );
+  const costOfSalesAccountId = await resolveAccountForRequirement(requirements.requiresCostOfSalesAccount, preservedAccountIds.costOfSalesAccountId, () =>
+    resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.costOfSales),
+  );
+  const expenseAccountId = await resolveAccountForRequirement(requirements.requiresExpenseAccount, preservedAccountIds.expenseAccountId, () =>
+    resolvePostingAccount(tx, companyId, categoryName, ItemCategoryAccountDefinitions.expense),
+  );
 
   return {
     inventoryAccountId,
@@ -54,6 +78,14 @@ export async function resolveItemCategoryAccountingAccounts(
     costOfSalesAccountId,
     expenseAccountId,
   };
+}
+
+async function resolveAccountForRequirement(required: boolean, preservedAccountId: bigint | undefined, resolve: () => Promise<bigint>) {
+  if (!required || preservedAccountId !== undefined) {
+    return preservedAccountId;
+  }
+
+  return resolve();
 }
 
 function getItemCategoryAccountTitle(prefix: string, categoryName: string) {

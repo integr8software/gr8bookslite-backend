@@ -16,12 +16,7 @@ type ModuleSystemSidebarSeedItem =
       children: readonly ModuleSystemSidebarSeedItem[];
     };
 
-function link(
-  key: string,
-  code: string,
-  iconName: string,
-  label?: string,
-): ModuleSystemSidebarSeedItem {
+function link(key: string, code: string, iconName: string, label?: string): ModuleSystemSidebarSeedItem {
   return {
     itemType: 'LINK',
     key,
@@ -60,11 +55,7 @@ export const AccountingSidebarTemplate = [
       link('cash-receipt-acknowledgement-receipt', 'AR', 'cashIn'),
       link('cash-receipt-provisional-receipt', 'PVR', 'cashIn'),
       link('cash-receipt-bank-reconciliation', 'BR', 'bank'),
-      link(
-        'cash-receipt-product-distribution-center-warehouse',
-        'PDCW',
-        'warehouse',
-      ),
+      link('cash-receipt-product-distribution-center-warehouse', 'PDCW', 'warehouse'),
     ],
   },
   {
@@ -78,17 +69,9 @@ export const AccountingSidebarTemplate = [
       link('cash-disbursement-cash-advance-multiple-entry', 'CAME', 'cashOut'),
       link('cash-disbursement-petty-cash-voucher', 'PCV', 'cashOut'),
       link('cash-disbursement-petty-cash-fund', 'PCF', 'cashOut'),
-      link(
-        'cash-disbursement-petty-cash-fund-replenishment',
-        'PCFR',
-        'cashOut',
-      ),
+      link('cash-disbursement-petty-cash-fund-replenishment', 'PCFR', 'cashOut'),
       link('cash-disbursement-petty-cash-advance', 'PCA', 'cashOut'),
-      link(
-        'cash-disbursement-petty-cash-advance-replenishment',
-        'PCAR',
-        'cashOut',
-      ),
+      link('cash-disbursement-petty-cash-advance-replenishment', 'PCAR', 'cashOut'),
       link('cash-disbursement-revolving-fund', 'RF', 'cashOut'),
       link('cash-disbursement-request-for-payment', 'RFP', 'fileCheck'),
       link('cash-disbursement-advances-to-supplier', 'ATS', 'cashOut'),
@@ -99,9 +82,7 @@ export const AccountingSidebarTemplate = [
     key: 'accounts-payable',
     label: 'Accounts Payable',
     iconName: 'payable',
-    children: [
-      link('accounts-payable-accounts-payable-voucher', 'APV', 'payable'),
-    ],
+    children: [link('accounts-payable-accounts-payable-voucher', 'APV', 'payable')],
   },
   {
     itemType: 'SECTION',
@@ -115,10 +96,7 @@ export const AccountingSidebarTemplate = [
     key: 'others',
     label: 'Others',
     iconName: 'asset',
-    children: [
-      link('others-fixed-asset', 'FA', 'asset'),
-      link('others-beginning-balance-uploader', 'BBU', 'journal'),
-    ],
+    children: [link('others-fixed-asset', 'FA', 'asset'), link('others-beginning-balance-uploader', 'BBU', 'journal')],
   },
   {
     itemType: 'SECTION',
@@ -133,12 +111,7 @@ export const AccountingSidebarTemplate = [
         iconName: 'users',
         children: [
           link('system-administration-users', 'U', 'users'),
-          link(
-            'system-administration-user-role',
-            'UR',
-            'security',
-            'User Role',
-          ),
+          link('system-administration-user-role', 'UR', 'security', 'User Role'),
           link('system-administration-approver-setup', 'AS', 'shieldCheck'),
         ],
       },
@@ -165,7 +138,7 @@ export const AccountingAndInventorySidebarTemplate = [
       link('item-management-items', 'I', 'package'),
       link('item-management-item-bundles', 'IB', 'packageCheck'),
       link('item-management-item-category', 'IC', 'tags'),
-      link('item-management-item-attributes', 'IA', 'clipboard'),
+      link('item-management-item-variations', 'IV', 'clipboard'),
       link('item-management-unit-of-measurement', 'UOM', 'ruler'),
       link('item-management-item-promotions', 'IPR', 'promotion'),
       link('item-management-price-lists', 'PLS', 'tags'),
@@ -289,17 +262,14 @@ export const ModuleSystemCatalog = [
   {
     code: 'ACCOUNTING_AND_INVENTORY',
     name: 'Accounting and Inventory',
-    description:
-      'Accounting with trading, inventory, sales, and purchasing workflows.',
+    description: 'Accounting with trading, inventory, sales, and purchasing workflows.',
     sortOrder: 20,
     moduleCodes: ModuleCatalog.map((module) => module.code),
     sidebar: AccountingAndInventorySidebarTemplate,
   },
 ] as const;
 
-export function collectModuleCodes(
-  items: readonly ModuleSystemSidebarSeedItem[],
-) {
+export function collectModuleCodes(items: readonly ModuleSystemSidebarSeedItem[]) {
   const moduleCodes = new Set<string>();
   const visit = (item: ModuleSystemSidebarSeedItem) => {
     if (item.itemType === 'LINK') {

@@ -9,7 +9,7 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
-import { seedCompanyItemAttributeDefaults } from '../maintenance/item-attributes/seed/item-attributes.seed';
+import { seedCompanyItemVariationDefaults } from '../maintenance/item-variations/seed/item-variations.seed';
 import { seedCompanyTermMaintenanceDefaults } from '../maintenance/term-maintenance/seed/term-maintenance.seed';
 import { seedCompanyUnitOfMeasurementDefaults } from '../maintenance/unit-of-measurement/seed/unit-of-measurement.seed';
 import { seedCompanyPaymentTypeMaintenanceDefaults } from '../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
@@ -461,7 +461,7 @@ export class OnboardingService {
       });
 
       await seedCompanyTermMaintenanceDefaults(tx, provisionedCompany.id);
-      await seedCompanyItemAttributeDefaults(tx, provisionedCompany.id);
+      await seedCompanyItemVariationDefaults(tx, provisionedCompany.id);
       await seedCompanyUnitOfMeasurementDefaults(tx, provisionedCompany.id);
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyChartAccountDefaults(tx, provisionedCompany.id);

@@ -1,9 +1,9 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  ItemAttributeStatus,
-  ItemAttributeUsage,
-  ItemAttributeValue,
-  ItemAttributeValueStatus,
+  ItemAttributeStatus as ItemVariationStatus,
+  ItemAttributeUsage as ItemVariationUsage,
+  ItemAttributeValue as ItemVariationValue,
+  ItemAttributeValueStatus as ItemVariationValueStatus,
   MembershipRole,
   MembershipStatus,
   Prisma,
@@ -14,16 +14,16 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { CreateItemAttributeDto } from './dto/create-item-attribute.dto';
-import { ItemAttributeValueDto } from './dto/item-attribute-value.dto';
-import { UpdateItemAttributeDto } from './dto/update-item-attribute.dto';
-import { mapItemAttribute } from './mappers/item-attribute.mapper';
-import { ItemAttributeWithValues, ItemAttributeWithValuesInclude } from './types/item-attribute-with-values.type';
+import { CreateItemVariationDto } from './dto/create-item-variation.dto';
+import { ItemVariationValueDto } from './dto/item-variation-value.dto';
+import { UpdateItemVariationDto } from './dto/update-item-variation.dto';
+import { mapItemVariation } from './mappers/item-variation.mapper';
+import { ItemVariationWithValues, ItemVariationWithValuesInclude } from './types/item-variation-with-values.type';
 
-const ItemAttributesModuleCode = 'IA';
+const ItemVariationsModuleCode = 'IV';
 
 @Injectable()
-export class ItemAttributesService {
+export class ItemVariationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser) {
@@ -31,20 +31,20 @@ export class ItemAttributesService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
-    const [attributes, statistics] = await Promise.all([
+    const [variations, statistics] = await Promise.all([
       this.prisma.itemAttribute.findMany({
         where: {
           companyId,
           deletedAt: null,
         },
-        include: ItemAttributeWithValuesInclude,
+        include: ItemVariationWithValuesInclude,
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
       }),
       this.getStatistics(companyId),
     ]);
 
     return {
-      attributes: await this.mapAttributesWithAuditUsers(attributes),
+      variations: await this.mapVariationsWithAuditUsers(variations),
       permissions: this.getPermissions(user, companyId),
       statistics,
     };
@@ -54,16 +54,16 @@ export class ItemAttributesService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
 
-    const attributes = await this.prisma.itemAttribute.findMany({
+    const variations = await this.prisma.itemAttribute.findMany({
       where: {
         companyId,
         deletedAt: null,
-        status: ItemAttributeStatus.ACTIVE,
+        status: ItemVariationStatus.ACTIVE,
       },
       include: {
         values: {
           where: {
-            status: ItemAttributeValueStatus.ACTIVE,
+            status: ItemVariationValueStatus.ACTIVE,
           },
           orderBy: [{ sortOrder: 'asc' }, { label: 'asc' }, { id: 'asc' }],
         },
@@ -72,15 +72,15 @@ export class ItemAttributesService {
     });
 
     return {
-      attributes: attributes.map((attribute) => ({
-        id: attribute.id.toString(),
-        code: attribute.code,
-        name: attribute.name,
-        usage: attribute.usage,
-        requiredOnItem: attribute.requiredOnItem,
-        affectsStock: attribute.affectsStock,
-        status: attribute.status,
-        values: attribute.values.map((value) => ({
+      variations: variations.map((variation) => ({
+        id: variation.id.toString(),
+        code: variation.code,
+        name: variation.name,
+        usage: variation.usage,
+        requiredOnItem: variation.requiredOnItem,
+        affectsStock: variation.affectsStock,
+        status: variation.status,
+        values: variation.values.map((value) => ({
           id: value.id.toString(),
           label: value.label,
           isUsed: value.isUsed,
@@ -90,7 +90,7 @@ export class ItemAttributesService {
     };
   }
 
-  async create(user: AuthUser, dto: CreateItemAttributeDto) {
+  async create(user: AuthUser, dto: CreateItemVariationDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
@@ -100,27 +100,27 @@ export class ItemAttributesService {
     this.ensureUniqueValueLabels(values);
 
     try {
-      const attribute = await this.prisma.$transaction(async (tx) => {
+      const variation = await this.prisma.$transaction(async (tx) => {
         const code = await this.createNextCode(tx, companyId);
 
         return tx.itemAttribute.create({
           data: {
             companyId,
             code,
-            ...this.toCreateAttributeData(dto),
-            status: dto.status ?? ItemAttributeStatus.ACTIVE,
+            ...this.toCreateVariationData(dto),
+            status: dto.status ?? ItemVariationStatus.ACTIVE,
             createdByUserId: user.id,
             values: {
               create: values.map((value, index) => this.toCreateValueData(value, index)),
             },
           },
-          include: ItemAttributeWithValuesInclude,
+          include: ItemVariationWithValuesInclude,
         });
       });
 
       return {
-        message: 'Item attribute created successfully.',
-        attribute: (await this.mapAttributesWithAuditUsers([attribute]))[0],
+        message: 'Item variation created successfully.',
+        variation: (await this.mapVariationsWithAuditUsers([variation]))[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -128,44 +128,44 @@ export class ItemAttributesService {
     }
   }
 
-  async update(user: AuthUser, id: string, dto: UpdateItemAttributeDto) {
+  async update(user: AuthUser, id: string, dto: UpdateItemVariationDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const attributeId = parsePositiveBigIntId(id);
-    const attribute = await this.findAttributeOrThrow(companyId, attributeId);
+    const variationId = parsePositiveBigIntId(id);
+    const variation = await this.findVariationOrThrow(companyId, variationId);
 
     if (dto.name !== undefined) {
-      await this.ensureNameAvailable(companyId, dto.name, attributeId);
+      await this.ensureNameAvailable(companyId, dto.name, variationId);
     }
     if (dto.values !== undefined) {
       this.ensureUniqueValueLabels(dto.values);
-      this.ensureUsedValuesRemain(attribute.values, dto.values);
+      this.ensureUsedValuesRemain(variation.values, dto.values);
     }
 
     try {
-      const updatedAttribute = await this.prisma.$transaction(async (tx) => {
+      const updatedVariation = await this.prisma.$transaction(async (tx) => {
         await tx.itemAttribute.update({
-          where: { id: attributeId },
+          where: { id: variationId },
           data: {
-            ...this.toAttributeData(dto),
+            ...this.toVariationData(dto),
             updatedByUserId: user.id,
           },
         });
 
         if (dto.values !== undefined) {
-          await this.syncValues(tx, attributeId, attribute.values, dto.values);
+          await this.syncValues(tx, variationId, variation.values, dto.values);
         }
 
         return tx.itemAttribute.findUniqueOrThrow({
-          where: { id: attributeId },
-          include: ItemAttributeWithValuesInclude,
+          where: { id: variationId },
+          include: ItemVariationWithValuesInclude,
         });
       });
 
       return {
-        message: 'Item attribute updated successfully.',
-        attribute: (await this.mapAttributesWithAuditUsers([updatedAttribute]))[0],
+        message: 'Item variation updated successfully.',
+        variation: (await this.mapVariationsWithAuditUsers([updatedVariation]))[0],
       };
     } catch (error) {
       this.throwFriendlyPrismaError(error);
@@ -173,7 +173,7 @@ export class ItemAttributesService {
     }
   }
 
-  private async syncValues(tx: Prisma.TransactionClient, attributeId: bigint, existingValues: ItemAttributeValue[], nextValues: ItemAttributeValueDto[]) {
+  private async syncValues(tx: Prisma.TransactionClient, variationId: bigint, existingValues: ItemVariationValue[], nextValues: ItemVariationValueDto[]) {
     const existingValueById = new Map(existingValues.map((value) => [value.id.toString(), value]));
     const nextExistingIds = new Set<string>();
 
@@ -197,7 +197,7 @@ export class ItemAttributesService {
 
       await tx.itemAttributeValue.create({
         data: {
-          attributeId,
+          attributeId: variationId,
           ...this.toCreateValueData(value, index),
         },
       });
@@ -214,40 +214,40 @@ export class ItemAttributesService {
         },
         data: {
           deletedAt: new Date(),
-          status: ItemAttributeValueStatus.INACTIVE,
+          status: ItemVariationValueStatus.INACTIVE,
         },
       });
     }
   }
 
-  private async findAttributeOrThrow(companyId: number, attributeId: bigint) {
-    const attribute = await this.prisma.itemAttribute.findFirst({
+  private async findVariationOrThrow(companyId: number, variationId: bigint) {
+    const variation = await this.prisma.itemAttribute.findFirst({
       where: {
-        id: attributeId,
+        id: variationId,
         companyId,
         deletedAt: null,
       },
-      include: ItemAttributeWithValuesInclude,
+      include: ItemVariationWithValuesInclude,
     });
 
-    if (!attribute) {
-      throw new NotFoundException('Item attribute not found.');
+    if (!variation) {
+      throw new NotFoundException('Item variation not found.');
     }
 
-    return attribute;
+    return variation;
   }
 
-  private async mapAttributesWithAuditUsers(attributes: ItemAttributeWithValues[]) {
+  private async mapVariationsWithAuditUsers(variations: ItemVariationWithValues[]) {
     const userNames = await resolveAuditUserNames(
       this.prisma,
-      attributes.flatMap((attribute) => [attribute.createdByUserId, attribute.updatedByUserId]),
+      variations.flatMap((variation) => [variation.createdByUserId, variation.updatedByUserId]),
     );
 
-    return attributes.map((attribute) => mapItemAttribute(attribute, userNames));
+    return variations.map((variation) => mapItemVariation(variation, userNames));
   }
 
   private async getStatistics(companyId: number) {
-    const [attributeGroups, valueGroups] = await Promise.all([
+    const [variationGroups, valueGroups] = await Promise.all([
       this.prisma.itemAttribute.groupBy({
         by: ['status'],
         where: {
@@ -274,41 +274,41 @@ export class ItemAttributesService {
     ]);
 
     const statistics = {
-      totalAttributes: 0,
-      activeAttributes: 0,
-      inactiveAttributes: 0,
+      totalVariations: 0,
+      activeVariations: 0,
+      inactiveVariations: 0,
       totalValues: 0,
       activeValues: 0,
       inactiveValues: 0,
     };
 
-    for (const group of attributeGroups) {
+    for (const group of variationGroups) {
       const count = group._count._all;
-      statistics.totalAttributes += count;
-      if (group.status === ItemAttributeStatus.ACTIVE) statistics.activeAttributes += count;
-      if (group.status === ItemAttributeStatus.INACTIVE) statistics.inactiveAttributes += count;
+      statistics.totalVariations += count;
+      if (group.status === ItemVariationStatus.ACTIVE) statistics.activeVariations += count;
+      if (group.status === ItemVariationStatus.INACTIVE) statistics.inactiveVariations += count;
     }
 
     for (const group of valueGroups) {
       const count = group._count._all;
       statistics.totalValues += count;
-      if (group.status === ItemAttributeValueStatus.ACTIVE) statistics.activeValues += count;
-      if (group.status === ItemAttributeValueStatus.INACTIVE) statistics.inactiveValues += count;
+      if (group.status === ItemVariationValueStatus.ACTIVE) statistics.activeValues += count;
+      if (group.status === ItemVariationValueStatus.INACTIVE) statistics.inactiveValues += count;
     }
 
     return statistics;
   }
 
-  private toCreateAttributeData(dto: CreateItemAttributeDto) {
+  private toCreateVariationData(dto: CreateItemVariationDto) {
     return {
       name: this.normalizeName(dto.name),
-      usage: dto.usage ?? ItemAttributeUsage.ITEM_DETAIL,
+      usage: dto.usage ?? ItemVariationUsage.ITEM_DETAIL,
       requiredOnItem: dto.requiredOnItem ?? false,
       affectsStock: dto.affectsStock ?? false,
     };
   }
 
-  private toAttributeData(dto: UpdateItemAttributeDto) {
+  private toVariationData(dto: UpdateItemVariationDto) {
     return {
       ...(dto.name !== undefined ? { name: this.normalizeName(dto.name) } : {}),
       ...(dto.usage !== undefined ? { usage: dto.usage } : {}),
@@ -318,27 +318,27 @@ export class ItemAttributesService {
     };
   }
 
-  private toCreateValueData(value: ItemAttributeValueDto, index: number) {
+  private toCreateValueData(value: ItemVariationValueDto, index: number) {
     return {
       label: this.normalizeLabel(value.label),
       sortOrder: value.sortOrder ?? index + 1,
       isUsed: Boolean(value.isUsed),
-      status: value.status ?? ItemAttributeValueStatus.ACTIVE,
+      status: value.status ?? ItemVariationValueStatus.ACTIVE,
     };
   }
 
-  private async ensureNameAvailable(companyId: number, name: string, excludedAttributeId?: bigint) {
+  private async ensureNameAvailable(companyId: number, name: string, excludedVariationId?: bigint) {
     const normalizedName = this.normalizeName(name);
 
     if (!normalizedName) {
-      throw new BadRequestException('Item attribute name is required.');
+      throw new BadRequestException('Item variation name is required.');
     }
 
-    const existingAttribute = await this.prisma.itemAttribute.findFirst({
+    const existingVariation = await this.prisma.itemAttribute.findFirst({
       where: {
         companyId,
         deletedAt: null,
-        id: excludedAttributeId ? { not: excludedAttributeId } : undefined,
+        id: excludedVariationId ? { not: excludedVariationId } : undefined,
         name: {
           equals: normalizedName,
           mode: 'insensitive',
@@ -349,29 +349,29 @@ export class ItemAttributesService {
       },
     });
 
-    if (existingAttribute) {
-      throw new ConflictException('An item attribute with this name already exists.');
+    if (existingVariation) {
+      throw new ConflictException('An item variation with this name already exists.');
     }
   }
 
-  private ensureUniqueValueLabels(values: ItemAttributeValueDto[]) {
+  private ensureUniqueValueLabels(values: ItemVariationValueDto[]) {
     const labels = new Set<string>();
 
     for (const value of values) {
       const normalizedLabel = this.normalizeLabel(value.label);
 
       if (!normalizedLabel) {
-        throw new BadRequestException('Item attribute values cannot be blank.');
+        throw new BadRequestException('Item variation values cannot be blank.');
       }
       if (labels.has(normalizedLabel.toLowerCase())) {
-        throw new BadRequestException(`Duplicate item attribute value: ${normalizedLabel}.`);
+        throw new BadRequestException(`Duplicate item variation value: ${normalizedLabel}.`);
       }
 
       labels.add(normalizedLabel.toLowerCase());
     }
   }
 
-  private ensureUsedValuesRemain(existingValues: ItemAttributeValue[], nextValues: ItemAttributeValueDto[]) {
+  private ensureUsedValuesRemain(existingValues: ItemVariationValue[], nextValues: ItemVariationValueDto[]) {
     const nextValueIds = new Set(nextValues.map((value) => value.id).filter(Boolean));
     const removedUsedValue = existingValues.find((value) => value.isUsed && !nextValueIds.has(value.id.toString()));
 
@@ -389,13 +389,13 @@ export class ItemAttributesService {
   }
 
   private async createNextCode(tx: Prisma.TransactionClient, companyId: number) {
-    const existingAttributes = await tx.itemAttribute.findMany({
+    const existingVariations = await tx.itemAttribute.findMany({
       where: { companyId },
       select: { code: true },
     });
-    const usedCodes = new Set(existingAttributes.map((attribute) => attribute.code));
-    let nextNumber = existingAttributes.reduce((max, attribute) => {
-      const match = /^ATT-(\d+)$/.exec(attribute.code);
+    const usedCodes = new Set(existingVariations.map((variation) => variation.code));
+    let nextNumber = existingVariations.reduce((max, variation) => {
+      const match = /^ATT-(\d+)$/.exec(variation.code);
       return match ? Math.max(max, Number(match[1])) : max;
     }, 0);
 
@@ -407,7 +407,7 @@ export class ItemAttributesService {
       }
     } while (nextNumber < 999999);
 
-    throw new BadRequestException('Unable to generate item attribute code.');
+    throw new BadRequestException('Unable to generate item variation code.');
   }
 
   private getActiveCompanyId(user: AuthUser) {
@@ -445,11 +445,11 @@ export class ItemAttributesService {
       return;
     }
 
-    if (user.companyId === companyId && user.permissions.includes(`${ItemAttributesModuleCode}:${action}`)) {
+    if (user.companyId === companyId && user.permissions.includes(`${ItemVariationsModuleCode}:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException('You do not have permission to manage item attributes.');
+    throw new ForbiddenException('You do not have permission to manage item variations.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -467,7 +467,7 @@ export class ItemAttributesService {
       return true;
     }
 
-    return user.companyId === companyId && user.permissions.includes(`${ItemAttributesModuleCode}:${action}`);
+    return user.companyId === companyId && user.permissions.includes(`${ItemVariationsModuleCode}:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -486,9 +486,9 @@ export class ItemAttributesService {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       const target = Array.isArray(error.meta?.target) ? error.meta.target.join(',') : '';
       if (target.includes('code')) {
-        throw new ConflictException('An item attribute with this code already exists.');
+        throw new ConflictException('An item variation with this code already exists.');
       }
-      throw new ConflictException('An item attribute with this name already exists.');
+      throw new ConflictException('An item variation with this name already exists.');
     }
   }
 }

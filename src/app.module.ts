@@ -24,7 +24,7 @@ import { BranchUsersModule } from './modules/company/branch-users/branch-users.m
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { TermMaintenanceModule } from './modules/maintenance/term-maintenance/term-maintenance.module';
-import { ItemAttributesModule } from './modules/maintenance/item-attributes/item-attributes.module';
+import { ItemVariationsModule } from './modules/maintenance/item-variations/item-variations.module';
 import { ItemCategoryModule } from './modules/maintenance/item-category/item-category.module';
 import { UnitOfMeasurementModule } from './modules/maintenance/unit-of-measurement/unit-of-measurement.module';
 import { PaymentTypeMaintenanceModule } from './modules/maintenance/payment-type-maintenance/payment-type-maintenance.module';
@@ -81,7 +81,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     FormSignatoriesModule,
     ChartOfAccountsModule,
     TermMaintenanceModule,
-    ItemAttributesModule,
+    ItemVariationsModule,
     ItemCategoryModule,
     UnitOfMeasurementModule,
     PaymentTypeMaintenanceModule,
