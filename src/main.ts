@@ -20,3 +20,4 @@ void bootstrap();
 // Retrigger after Semgrep setup fix
 // Retrigger after PowerShell script encoding fix
 // Retrigger after Verify QA tools fix
+// Trigger finalized automation structure
