@@ -16,3 +16,4 @@ void bootstrap();
 // Retrigger PR quality workflow
 // Retrigger corrected PR dashboard action
 // Retrigger after PowerShell 7 installation
+// Retrigger after Windows PowerShell action fix
