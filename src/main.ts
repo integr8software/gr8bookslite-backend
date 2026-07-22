@@ -19,3 +19,4 @@ void bootstrap();
 // Retrigger after Windows PowerShell action fix
 // Retrigger after Semgrep setup fix
 // Retrigger after PowerShell script encoding fix
+// Retrigger after Verify QA tools fix
