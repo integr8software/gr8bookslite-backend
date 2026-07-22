@@ -13,3 +13,4 @@ async function bootstrap() {
 void bootstrap();
 
 // PR quality dashboard integration test
+// Retrigger PR quality workflow
