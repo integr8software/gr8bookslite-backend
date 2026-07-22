@@ -15,3 +15,4 @@ void bootstrap();
 // PR quality dashboard integration test
 // Retrigger PR quality workflow
 // Retrigger corrected PR dashboard action
+// Retrigger after PowerShell 7 installation
