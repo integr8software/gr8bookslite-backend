@@ -11,7 +11,11 @@ import { CreateItemCategoryDto } from './dto/create-item-category.dto';
 import { UpdateItemCategoryDto } from './dto/update-item-category.dto';
 import { mapItemCategory } from './mappers/item-category.mapper';
 import { ItemCategoryWithAccounts, ItemCategoryWithAccountsInclude } from './types/item-category-with-accounts.type';
-import { resolveItemCategoryAccountingAccounts } from './utils/item-category-accounting.util';
+import {
+  ItemCategoryAccountingAccountIds,
+  ItemCategoryAccountingRequirements,
+  resolveItemCategoryAccountingAccounts,
+} from './utils/item-category-accounting.util';
 
 const ItemCategoryModuleCode = 'IC';
 
@@ -72,6 +76,7 @@ export class ItemCategoryService {
         name: true,
         description: true,
         parentId: true,
+        behaviors: true,
         allowSubCategory: true,
         status: true,
       },
@@ -84,6 +89,7 @@ export class ItemCategoryService {
         name: category.name,
         description: category.description,
         parentId: category.parentId?.toString() ?? null,
+        behaviors: category.behaviors,
         allowSubCategory: category.allowSubCategory,
         status: category.status,
       })),
@@ -100,6 +106,7 @@ export class ItemCategoryService {
         const parentId = parseOptionalPositiveBigIntId(dto.parentId, 'parentId');
         const name = this.normalizeName(dto.name);
         const accountingSetupMode = dto.accountingSetupMode ?? ItemCategoryAccountingSetupMode.AUTO_CREATE;
+        const accountingRequirements = this.getAccountingRequirements(dto);
 
         await this.validateParentSelection({
           companyId,
@@ -109,7 +116,9 @@ export class ItemCategoryService {
         this.assertRootAccountingMode(parentId, accountingSetupMode);
         await this.ensureNameAvailable(companyId, parentId, name, undefined, tx);
         const accountIds =
-          accountingSetupMode === ItemCategoryAccountingSetupMode.AUTO_CREATE ? await resolveItemCategoryAccountingAccounts(tx, companyId, name) : {};
+          accountingSetupMode === ItemCategoryAccountingSetupMode.AUTO_CREATE
+            ? await resolveItemCategoryAccountingAccounts(tx, companyId, name, accountingRequirements)
+            : {};
         const code = await this.createNextCode(tx, companyId);
 
         return tx.itemCategory.create({
@@ -120,6 +129,8 @@ export class ItemCategoryService {
             name,
             description: this.normalizeDescription(dto.description),
             accountingSetupMode,
+            ...accountingRequirements,
+            behaviors: dto.behaviors ?? ['Sellable Item', 'Purchasable Item', 'Issuable Item', 'Returnable Item'],
             ...accountIds,
             allowSubCategory: dto.allowSubCategory,
             status: dto.status ?? ItemCategoryStatus.ACTIVE,
@@ -151,6 +162,7 @@ export class ItemCategoryService {
         const parentId = dto.parentId === undefined ? existing.parentId : parseOptionalPositiveBigIntId(dto.parentId, 'parentId');
         const name = dto.name === undefined ? existing.name : this.normalizeName(dto.name);
         const accountingSetupMode = dto.accountingSetupMode ?? existing.accountingSetupMode;
+        const accountingRequirements = this.getAccountingRequirements(dto, existing);
         const nextStatus = dto.status ?? existing.status;
 
         await this.validateParentSelection({
@@ -163,13 +175,14 @@ export class ItemCategoryService {
         await this.ensureNameAvailable(companyId, parentId, name, categoryId, tx);
         const accountIds =
           accountingSetupMode === ItemCategoryAccountingSetupMode.AUTO_CREATE
-            ? await resolveItemCategoryAccountingAccounts(tx, companyId, name)
-            : {
-                inventoryAccountId: null,
-                salesAccountId: null,
-                costOfSalesAccountId: null,
-                expenseAccountId: null,
-              };
+            ? await resolveItemCategoryAccountingAccounts(
+                tx,
+                companyId,
+                name,
+                accountingRequirements,
+                this.getPreservedAccountingAccountIds(existing, accountingRequirements),
+              )
+            : {};
 
         await tx.itemCategory.update({
           where: { id: categoryId },
@@ -178,6 +191,8 @@ export class ItemCategoryService {
             ...(dto.description !== undefined ? { description: this.normalizeDescription(dto.description) } : {}),
             ...(dto.parentId !== undefined ? { parentId } : {}),
             ...(dto.accountingSetupMode !== undefined ? { accountingSetupMode } : {}),
+            ...accountingRequirements,
+            ...(dto.behaviors !== undefined ? { behaviors: dto.behaviors } : {}),
             ...accountIds,
             ...(dto.allowSubCategory !== undefined ? { allowSubCategory: dto.allowSubCategory } : {}),
             ...(dto.status !== undefined ? { status: nextStatus } : {}),
@@ -309,6 +324,45 @@ export class ItemCategoryService {
     if (!parentId && accountingSetupMode === ItemCategoryAccountingSetupMode.INHERIT) {
       throw new BadRequestException('Root categories must auto-create item accounts.');
     }
+  }
+
+  private getAccountingRequirements(
+    dto: Pick<CreateItemCategoryDto, 'requiresInventoryAccount' | 'requiresSalesAccount' | 'requiresCostOfSalesAccount' | 'requiresExpenseAccount'>,
+    existing?: ItemCategory,
+  ): ItemCategoryAccountingRequirements {
+    const requirements = {
+      requiresInventoryAccount: dto.requiresInventoryAccount ?? existing?.requiresInventoryAccount ?? true,
+      requiresSalesAccount: dto.requiresSalesAccount ?? existing?.requiresSalesAccount ?? true,
+      requiresCostOfSalesAccount: dto.requiresCostOfSalesAccount ?? existing?.requiresCostOfSalesAccount ?? true,
+      requiresExpenseAccount: dto.requiresExpenseAccount ?? existing?.requiresExpenseAccount ?? true,
+    };
+
+    if (!Object.values(requirements).some(Boolean)) {
+      throw new BadRequestException('Select at least one required item category account.');
+    }
+
+    return requirements;
+  }
+
+  private getPreservedAccountingAccountIds(existing: ItemCategory, requirements: ItemCategoryAccountingRequirements): ItemCategoryAccountingAccountIds {
+    const preserveInheritedAccounts = existing.accountingSetupMode === ItemCategoryAccountingSetupMode.INHERIT;
+
+    return {
+      inventoryAccountId:
+        !requirements.requiresInventoryAccount || !existing.requiresInventoryAccount || preserveInheritedAccounts
+          ? (existing.inventoryAccountId ?? undefined)
+          : undefined,
+      salesAccountId:
+        !requirements.requiresSalesAccount || !existing.requiresSalesAccount || preserveInheritedAccounts ? (existing.salesAccountId ?? undefined) : undefined,
+      costOfSalesAccountId:
+        !requirements.requiresCostOfSalesAccount || !existing.requiresCostOfSalesAccount || preserveInheritedAccounts
+          ? (existing.costOfSalesAccountId ?? undefined)
+          : undefined,
+      expenseAccountId:
+        !requirements.requiresExpenseAccount || !existing.requiresExpenseAccount || preserveInheritedAccounts
+          ? (existing.expenseAccountId ?? undefined)
+          : undefined,
+    };
   }
 
   private async ensureNameAvailable(
@@ -458,12 +512,15 @@ export class ItemCategoryService {
 
       if (category.accountingSetupMode === ItemCategoryAccountingSetupMode.AUTO_CREATE) {
         const setup = {
-          accountingSetup: {
-            inventoryAccount: category.inventoryAccount?.accountTitle ?? '',
-            salesAccount: category.salesAccount?.accountTitle ?? '',
-            costOfSalesAccount: category.costOfSalesAccount?.accountTitle ?? '',
-            expenseAccount: category.expenseAccount?.accountTitle ?? '',
-          },
+          accountingSetup: this.applyAccountingRequirements(
+            {
+              inventoryAccount: category.inventoryAccount?.accountTitle ?? '',
+              salesAccount: category.salesAccount?.accountTitle ?? '',
+              costOfSalesAccount: category.costOfSalesAccount?.accountTitle ?? '',
+              expenseAccount: category.expenseAccount?.accountTitle ?? '',
+            },
+            category,
+          ),
           inheritedAccountingSourceName: null,
         };
 
@@ -476,7 +533,7 @@ export class ItemCategoryService {
         ? resolve(parent, new Set([...path, categoryId]))
         : { accountingSetup: this.createEmptyAccountingSetup(), inheritedAccountingSourceName: null };
       const setup = {
-        accountingSetup: parentSetup.accountingSetup,
+        accountingSetup: this.applyAccountingRequirements(parentSetup.accountingSetup, category),
         inheritedAccountingSourceName: parent?.name ?? parentSetup.inheritedAccountingSourceName,
       };
 
@@ -486,6 +543,18 @@ export class ItemCategoryService {
 
     categories.forEach((category) => resolve(category));
     return setupById;
+  }
+
+  private applyAccountingRequirements(
+    accountingSetup: ItemCategoryAccountingSetup,
+    requirements: ItemCategoryAccountingRequirements,
+  ): ItemCategoryAccountingSetup {
+    return {
+      inventoryAccount: requirements.requiresInventoryAccount ? accountingSetup.inventoryAccount : '',
+      salesAccount: requirements.requiresSalesAccount ? accountingSetup.salesAccount : '',
+      costOfSalesAccount: requirements.requiresCostOfSalesAccount ? accountingSetup.costOfSalesAccount : '',
+      expenseAccount: requirements.requiresExpenseAccount ? accountingSetup.expenseAccount : '',
+    };
   }
 
   private createEmptyAccountingSetup(): ItemCategoryAccountingSetup {

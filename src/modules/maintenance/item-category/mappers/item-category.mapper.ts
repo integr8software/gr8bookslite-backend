@@ -22,13 +22,20 @@ export function mapItemCategory(
     description: category.description ?? '',
     parentId: category.parentId?.toString() ?? null,
     accountingSetupMode: category.accountingSetupMode,
+    requiresInventoryAccount: category.requiresInventoryAccount,
+    requiresSalesAccount: category.requiresSalesAccount,
+    requiresCostOfSalesAccount: category.requiresCostOfSalesAccount,
+    requiresExpenseAccount: category.requiresExpenseAccount,
+    behaviors: category.behaviors,
     accountingSetup:
       category.accountingSetupMode === ItemCategoryAccountingSetupMode.AUTO_CREATE
         ? {
-            inventoryAccount: category.inventoryAccount?.accountTitle ?? effectiveAccountingSetup.inventoryAccount,
-            salesAccount: category.salesAccount?.accountTitle ?? effectiveAccountingSetup.salesAccount,
-            costOfSalesAccount: category.costOfSalesAccount?.accountTitle ?? effectiveAccountingSetup.costOfSalesAccount,
-            expenseAccount: category.expenseAccount?.accountTitle ?? effectiveAccountingSetup.expenseAccount,
+            inventoryAccount: category.requiresInventoryAccount ? (category.inventoryAccount?.accountTitle ?? effectiveAccountingSetup.inventoryAccount) : '',
+            salesAccount: category.requiresSalesAccount ? (category.salesAccount?.accountTitle ?? effectiveAccountingSetup.salesAccount) : '',
+            costOfSalesAccount: category.requiresCostOfSalesAccount
+              ? (category.costOfSalesAccount?.accountTitle ?? effectiveAccountingSetup.costOfSalesAccount)
+              : '',
+            expenseAccount: category.requiresExpenseAccount ? (category.expenseAccount?.accountTitle ?? effectiveAccountingSetup.expenseAccount) : '',
           }
         : null,
     effectiveAccountingSetup,

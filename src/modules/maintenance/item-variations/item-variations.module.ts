@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { AccessControlModule } from '../../../common/access/access-control.module';
 import { PrismaModule } from '../../../prisma/prisma.module';
 import { AuthModule } from '../../auth/auth.module';
-import { ItemAttributesController } from './item-attributes.controller';
-import { ItemAttributesService } from './item-attributes.service';
+import { ItemVariationsController } from './item-variations.controller';
+import { ItemVariationsService } from './item-variations.service';
 
 @Module({
   imports: [PrismaModule, AccessControlModule, AuthModule],
-  controllers: [ItemAttributesController],
-  providers: [ItemAttributesService],
-  exports: [ItemAttributesService],
+  controllers: [ItemVariationsController],
+  providers: [ItemVariationsService],
+  exports: [ItemVariationsService],
 })
-export class ItemAttributesModule {}
+export class ItemVariationsModule {}

@@ -63,8 +63,8 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
-    code: 'IA',
-    name: 'Item Attributes',
+    code: 'IV',
+    name: 'Item Variations',
     icon: 'clipboard',
     type: Maintenance,
   },

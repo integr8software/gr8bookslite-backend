@@ -1,7 +1,7 @@
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
-import { ItemAttributeValueStatus } from '@prisma/client';
+import { ItemAttributeValueStatus as ItemVariationValueStatus } from '@prisma/client';
 
-export class ItemAttributeValueDto {
+export class ItemVariationValueDto {
   @IsOptional()
   @IsString()
   id?: string;
@@ -19,6 +19,6 @@ export class ItemAttributeValueDto {
   sortOrder!: number;
 
   @IsOptional()
-  @IsEnum(ItemAttributeValueStatus)
-  status?: ItemAttributeValueStatus;
+  @IsEnum(ItemVariationValueStatus)
+  status?: ItemVariationValueStatus;
 }

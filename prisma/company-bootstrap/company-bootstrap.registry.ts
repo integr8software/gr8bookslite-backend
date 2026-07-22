@@ -19,7 +19,7 @@ import {
   seedCompanyResponsibilityCenterDefaults,
 } from '../../src/modules/maintenance/responsibility-center/seed/responsibility-center.seed';
 import { TaxMaintenanceSeedRecords, seedCompanyTaxMaintenanceDefaults } from '../../src/modules/maintenance/tax-maintenance/seed/tax-maintenance.seed';
-import { ItemAttributeSeedRecords, seedCompanyItemAttributeDefaults } from '../../src/modules/maintenance/item-attributes/seed/item-attributes.seed';
+import { ItemVariationSeedRecords, seedCompanyItemVariationDefaults } from '../../src/modules/maintenance/item-variations/seed/item-variations.seed';
 import {
   ItemCategorySeedRecords,
   createItemCategorySeedPathName,
@@ -115,7 +115,7 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
     chartAccounts,
     defaultAccounts,
     terms,
-    itemAttributes,
+    itemVariations,
     itemCategories,
     paymentTypes,
     discounts,
@@ -152,7 +152,7 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
       chartAccounts,
       defaultAccounts,
       terms,
-      itemAttributes,
+      itemVariations,
       itemCategories,
       paymentTypes,
       discounts,
@@ -505,33 +505,33 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     },
   },
   {
-    key: 'item-attributes',
-    label: 'Item attribute defaults bootstrap',
+    key: 'item-variations',
+    label: 'Item variation defaults bootstrap',
     async inspect(companyId, tx) {
       const existingAttributes = await tx.itemAttribute.findMany({
         where: {
           companyId,
           deletedAt: null,
           name: {
-            in: ItemAttributeSeedRecords.map((attribute) => attribute.name),
+            in: ItemVariationSeedRecords.map((attribute) => attribute.name),
           },
         },
         select: { name: true },
       });
       const existingNames = new Set(existingAttributes.map((attribute) => attribute.name));
-      const missingAttributes = ItemAttributeSeedRecords.filter((attribute) => !existingNames.has(attribute.name));
+      const missingAttributes = ItemVariationSeedRecords.filter((attribute) => !existingNames.has(attribute.name));
 
       return missingAttributes.length === 0
-        ? ok('Item attribute defaults exist.', { count: existingAttributes.length })
-        : missing('Default item attributes are incomplete.', [`Seed ${missingAttributes.length} missing default item attribute records.`], {
+        ? ok('Item variation defaults exist.', { count: existingAttributes.length })
+        : missing('Default item variations are incomplete.', [`Seed ${missingAttributes.length} missing default item variation records.`], {
             count: existingAttributes.length,
-            expectedCount: ItemAttributeSeedRecords.length,
+            expectedCount: ItemVariationSeedRecords.length,
             missingNames: missingAttributes.map((attribute) => attribute.name),
           });
     },
-    backup: (companyId, tx) => backupCounts('item-attributes', companyId, tx),
+    backup: (companyId, tx) => backupCounts('item-variations', companyId, tx),
     async apply(companyId, tx) {
-      await seedCompanyItemAttributeDefaults(tx, companyId);
+      await seedCompanyItemVariationDefaults(tx, companyId);
     },
   },
   {

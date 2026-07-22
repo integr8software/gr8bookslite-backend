@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-export const ItemAttributeWithValuesInclude = {
+export const ItemVariationWithValuesInclude = {
   values: {
     where: {
       deletedAt: null,
@@ -9,6 +9,6 @@ export const ItemAttributeWithValuesInclude = {
   },
 } satisfies Prisma.ItemAttributeInclude;
 
-export type ItemAttributeWithValues = Prisma.ItemAttributeGetPayload<{
-  include: typeof ItemAttributeWithValuesInclude;
+export type ItemVariationWithValues = Prisma.ItemAttributeGetPayload<{
+  include: typeof ItemVariationWithValuesInclude;
 }>;

@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ItemCategoryAccountingSetupMode, ItemCategoryStatus } from '@prisma/client';
 
 export class CreateItemCategoryDto {
@@ -17,6 +17,44 @@ export class CreateItemCategoryDto {
 
   @IsEnum(ItemCategoryAccountingSetupMode)
   accountingSetupMode!: ItemCategoryAccountingSetupMode;
+
+  @IsOptional()
+  @IsBoolean()
+  requiresInventoryAccount?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  requiresSalesAccount?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  requiresCostOfSalesAccount?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  requiresExpenseAccount?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsIn(
+    [
+      'Sellable Item',
+      'Purchasable Item',
+      'Issuable Item',
+      'Returnable Item',
+      'Non-Inventory Item',
+      'Raw Material',
+      'Semi-Finished Goods/WIP',
+      'Finished Goods',
+      'Asset Item',
+      'Consumable Item',
+    ],
+    {
+      each: true,
+    },
+  )
+  behaviors?: string[];
 
   @IsBoolean()
   allowSubCategory!: boolean;
