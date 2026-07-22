@@ -18,3 +18,4 @@ void bootstrap();
 // Retrigger after PowerShell 7 installation
 // Retrigger after Windows PowerShell action fix
 // Retrigger after Semgrep setup fix
+// Retrigger after PowerShell script encoding fix
