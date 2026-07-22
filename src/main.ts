@@ -21,3 +21,4 @@ void bootstrap();
 // Retrigger after PowerShell script encoding fix
 // Retrigger after Verify QA tools fix
 // Trigger finalized automation structure
+// Trigger rebuilt backend analysis
