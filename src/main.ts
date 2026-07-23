@@ -29,3 +29,4 @@ void bootstrap();
 // Trigger GitHub-hosted PR analysis
 // Trigger GitHub-hosted PowerShell 7 analysis
 // Trigger dashboard exit status fix
+// Trigger refined PR dashboard preview
