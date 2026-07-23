@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { TaxMaintenanceStatus } from '@prisma/client';
 
 export class CreateTaxMaintenanceDto {
@@ -11,10 +11,15 @@ export class CreateTaxMaintenanceDto {
   @MaxLength(500)
   description?: string | null;
 
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 4 })
   @Min(0)
   @Max(100)
-  percentage!: number;
+  percentage?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isExempted?: boolean;
 
   @IsString()
   @IsNotEmpty()

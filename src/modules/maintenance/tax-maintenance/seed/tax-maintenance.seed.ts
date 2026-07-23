@@ -3,16 +3,16 @@ import { PrismaService } from '../../../../prisma/prisma.service';
 import { getTaxMaintenanceDefaultAccountIds } from '../utils/tax-maintenance-accounting-account.util';
 
 const DefaultTaxMaintenanceRows = [
-  { name: 'VAT Registered', percentage: 12 },
-  { name: 'Zero Rated', percentage: 0 },
-  { name: 'Non-VAT', percentage: 0 },
-  { name: 'Exempt', percentage: 0 },
-  { name: 'Capital Goods', percentage: 12 },
-  { name: 'Other Than Capital Goods', percentage: 12 },
-  { name: 'Services', percentage: 12 },
-  { name: 'VAT Exempt', percentage: 0 },
-  { name: 'VAT Inclusive', percentage: 12 },
-  { name: 'VAT Exclusive', percentage: 12 },
+  { name: 'VAT Registered', percentage: 12, isExempted: false },
+  { name: 'Zero Rated', percentage: 0, isExempted: false },
+  { name: 'Non-VAT', percentage: 0, isExempted: true },
+  { name: 'Exempt', percentage: 0, isExempted: true },
+  { name: 'Capital Goods', percentage: 12, isExempted: false },
+  { name: 'Other Than Capital Goods', percentage: 12, isExempted: false },
+  { name: 'Services', percentage: 12, isExempted: false },
+  { name: 'VAT Exempt', percentage: 0, isExempted: true },
+  { name: 'VAT Inclusive', percentage: 12, isExempted: false },
+  { name: 'VAT Exclusive', percentage: 12, isExempted: false },
 ] as const;
 
 type TaxMaintenanceWriteClient = Pick<PrismaService, 'chartAccount' | 'taxMaintenance'> | Prisma.TransactionClient;
@@ -33,6 +33,7 @@ export async function seedCompanyTaxMaintenanceDefaults(tx: TaxMaintenanceWriteC
         },
         update: {
           percentage: new Prisma.Decimal(row.percentage),
+          isExempted: row.isExempted,
           deletedAt: null,
           ...accountIds,
         },
@@ -40,6 +41,7 @@ export async function seedCompanyTaxMaintenanceDefaults(tx: TaxMaintenanceWriteC
           companyId,
           name: row.name,
           percentage: new Prisma.Decimal(row.percentage),
+          isExempted: row.isExempted,
           status: TaxMaintenanceStatus.ACTIVE,
           createdByUserId: null,
           ...accountIds,

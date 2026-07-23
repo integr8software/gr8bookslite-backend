@@ -55,7 +55,7 @@ export const AccountingSidebarTemplate = [
       link('cash-receipt-acknowledgement-receipt', 'AR', 'cashIn'),
       link('cash-receipt-provisional-receipt', 'PVR', 'cashIn'),
       link('cash-receipt-bank-reconciliation', 'BR', 'bank'),
-      link('cash-receipt-product-distribution-center-warehouse', 'PDCW', 'warehouse'),
+      link('cash-receipt-post-dated-check-registry', 'PDCW', 'calendar'),
     ],
   },
   {

@@ -82,7 +82,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   },
   {
     code: 'PLS',
-    name: 'Price Lists',
+    name: 'Item Price List',
     icon: 'tags',
     type: Maintenance,
   },
@@ -328,7 +328,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   },
   {
     code: 'PDCW',
-    name: 'Product Distribution Center Warehouse',
+    name: 'Post-Dated Check Registry',
     icon: 'cashIn',
     type: TransactionRegistry,
   },

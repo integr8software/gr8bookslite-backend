@@ -206,7 +206,8 @@ export class TaxMaintenanceService {
     return {
       name: dto.name.trim(),
       description: cleanOptional(dto.description),
-      percentage: new Prisma.Decimal(dto.percentage),
+      percentage: new Prisma.Decimal(dto.isExempted ? 0 : (dto.percentage ?? 0)),
+      isExempted: dto.isExempted ?? false,
       inputVatAccountId: parseOptionalPositiveBigIntId(dto.inputVatAccountId),
       outputVatAccountId: parseOptionalPositiveBigIntId(dto.outputVatAccountId),
       deferredVatAccountId: parseOptionalPositiveBigIntId(dto.deferredVatAccountId),
@@ -218,10 +219,13 @@ export class TaxMaintenanceService {
   }
 
   private toTaxMaintenanceData(dto: UpdateTaxMaintenanceDto) {
+    const shouldUpdatePercentage = dto.percentage !== undefined || dto.isExempted !== undefined;
+
     return {
       ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
       ...(dto.description !== undefined ? { description: cleanOptional(dto.description) } : {}),
-      ...(dto.percentage !== undefined ? { percentage: new Prisma.Decimal(dto.percentage) } : {}),
+      ...(shouldUpdatePercentage ? { percentage: new Prisma.Decimal(dto.isExempted ? 0 : (dto.percentage ?? 0)) } : {}),
+      ...(dto.isExempted !== undefined ? { isExempted: dto.isExempted } : {}),
       ...(dto.inputVatAccountId !== undefined
         ? {
             inputVatAccountId: parseOptionalPositiveBigIntId(dto.inputVatAccountId),

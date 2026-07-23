@@ -46,6 +46,7 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
           id: party.vatRegistration.id.toString(),
           name: party.vatRegistration.name,
           percentage: Number(party.vatRegistration.percentage),
+          isExempted: party.vatRegistration.isExempted,
         }
       : null,
     atcCode: party.atcCode ?? '',

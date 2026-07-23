@@ -8,6 +8,7 @@ export function mapTaxMaintenance(tax: TaxMaintenanceWithAccounts, userNames: Ma
     name: tax.name,
     description: tax.description ?? '',
     percentage: Number(tax.percentage),
+    isExempted: tax.isExempted,
     inputVatAccountId: tax.inputVatAccountId?.toString() ?? '',
     outputVatAccountId: tax.outputVatAccountId?.toString() ?? '',
     deferredVatAccountId: tax.deferredVatAccountId?.toString() ?? '',

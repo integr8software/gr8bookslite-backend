@@ -1129,6 +1129,7 @@ model TaxMaintenance {
   name                              String               @db.VarChar(120)
   description                       String?              @db.VarChar(500)
   percentage                        Decimal              @default(0) @db.Decimal(7, 4)
+  isExempted                        Boolean              @default(false) @map("is_exempted")
   inputVatAccountId                 BigInt?              @map("input_vat_account_id")
   outputVatAccountId                BigInt?              @map("output_vat_account_id")
   deferredVatAccountId              BigInt?              @map("deferred_vat_account_id")
