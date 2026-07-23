@@ -11,22 +11,3 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();
-
-// PR quality dashboard integration test
-// Retrigger PR quality workflow
-// Retrigger corrected PR dashboard action
-// Retrigger after PowerShell 7 installation
-// Retrigger after Windows PowerShell action fix
-// Retrigger after Semgrep setup fix
-// Retrigger after PowerShell script encoding fix
-// Retrigger after Verify QA tools fix
-// Trigger finalized automation structure
-// Trigger rebuilt backend analysis
-// Trigger after removing legacy backend QA workflow
-// Trigger dashboard indentation fix
-// Trigger common.ps1 compatibility fix
-// Trigger common.ps1 compatibility fix
-// Trigger GitHub-hosted PR analysis
-// Trigger GitHub-hosted PowerShell 7 analysis
-// Trigger dashboard exit status fix
-// Trigger refined PR dashboard preview
