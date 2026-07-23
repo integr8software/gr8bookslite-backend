@@ -27,3 +27,4 @@ void bootstrap();
 // Trigger common.ps1 compatibility fix
 // Trigger common.ps1 compatibility fix
 // Trigger GitHub-hosted PR analysis
+// Trigger GitHub-hosted PowerShell 7 analysis
