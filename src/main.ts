@@ -28,3 +28,4 @@ void bootstrap();
 // Trigger common.ps1 compatibility fix
 // Trigger GitHub-hosted PR analysis
 // Trigger GitHub-hosted PowerShell 7 analysis
+// Trigger dashboard exit status fix
