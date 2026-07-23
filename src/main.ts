@@ -26,3 +26,4 @@ void bootstrap();
 // Trigger dashboard indentation fix
 // Trigger common.ps1 compatibility fix
 // Trigger common.ps1 compatibility fix
+// Trigger GitHub-hosted PR analysis
