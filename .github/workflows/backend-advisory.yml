@@ -11,7 +11,10 @@ on:
       - ready_for_review
 
 permissions:
-  contents: read
+  actions: read
+  contents: write
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: backend-advisory-${{ github.event.pull_request.number }}
@@ -21,4 +24,7 @@ jobs:
   advisory-analysis:
     name: Backend Advisory Analysis
     if: github.event.pull_request.draft == false
+
     uses: integr8software/gr8booksneo-automation/.github/workflows/backend-advisory.yml@develop
+
+    secrets: inherit
