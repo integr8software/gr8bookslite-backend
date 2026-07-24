@@ -163,7 +163,6 @@ export const AccountingAndInventorySidebarTemplate = [
           link('warehouse-management-item-location-setup', 'WILS', 'packageCheck'),
           link('warehouse-management-capacity-storage-rules', 'WCSR', 'ruler'),
           link('warehouse-management-location-availability', 'WLA', 'activity'),
-          link('warehouse-management-location-templates', 'WLT', 'clipboard'),
         ],
       },
       {

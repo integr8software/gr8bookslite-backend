@@ -129,12 +129,6 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
-    code: 'WLT',
-    name: 'Location Templates',
-    icon: 'clipboard',
-    type: Maintenance,
-  },
-  {
     code: 'WSBW',
     name: 'Stock by Warehouse',
     icon: 'warehouse',
