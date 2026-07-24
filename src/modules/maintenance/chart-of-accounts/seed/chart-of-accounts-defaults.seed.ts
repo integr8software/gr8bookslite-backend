@@ -1,4 +1,4 @@
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountType } from '@prisma/client';
 
 export const StandardDefaultChartAccounts = [
   {
@@ -2648,5 +2648,3 @@ export const StandardDefaultChartAccounts = [
     orderNo: 194,
   },
 ] as const;
-
-export const ActiveDefaultCoaStatus = ChartAccountStatus.ACTIVE;

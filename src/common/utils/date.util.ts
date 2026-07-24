@@ -3,7 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 const IsoDatePrefixPattern = /^(\d{4}-\d{2}-\d{2})(?:$|T)/;
 
 export function parseUtcDateOnly(value: string, fieldName = 'date') {
-  const match = IsoDatePrefixPattern.exec(value);
+  const match = value.match(IsoDatePrefixPattern);
   if (!match) {
     throw invalidDate(fieldName);
   }
