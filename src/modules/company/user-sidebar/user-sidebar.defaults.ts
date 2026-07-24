@@ -41,6 +41,7 @@ export const UserSidebarIconNames = [
   'weightTilde',
   'arrowRightLeft',
   'mail',
+  'map',
   'mapPin',
   'ruler',
   'search',
