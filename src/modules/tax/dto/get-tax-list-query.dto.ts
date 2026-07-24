@@ -1,9 +1,9 @@
 import { Transform } from 'class-transformer';
 import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { TaxMaintenanceStatus } from '@prisma/client';
-import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
+import { toOptionalInt } from '../../../common/utils/dto-transform.util';
 
-export class GetTaxMaintenanceListQueryDto {
+export class GetTaxListQueryDto {
   @IsOptional()
   @IsString()
   @MaxLength(120)
@@ -27,8 +27,19 @@ export class GetTaxMaintenanceListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn(['name', 'percentage', 'status', 'createdAt', 'updatedAt'])
-  sortBy?: 'name' | 'percentage' | 'status' | 'createdAt' | 'updatedAt';
+  @IsIn(['sortOrder', 'code', 'name', 'jurisdictionCode', 'taxSystem', 'treatment', 'transactionScope', 'percentage', 'status', 'createdAt', 'updatedAt'])
+  sortBy?:
+    | 'sortOrder'
+    | 'code'
+    | 'name'
+    | 'jurisdictionCode'
+    | 'taxSystem'
+    | 'treatment'
+    | 'transactionScope'
+    | 'percentage'
+    | 'status'
+    | 'createdAt'
+    | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

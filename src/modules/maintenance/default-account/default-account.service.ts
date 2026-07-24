@@ -6,7 +6,6 @@ import {
   ChartAccountType,
   DefaultAccount,
   DefaultAccountTemplateType,
-  MembershipRole,
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
@@ -611,23 +610,13 @@ export class DefaultAccountService {
       return;
     }
 
-    const parentAccount = await this.findExpenseParentOptionOrThrow(
-      companyId,
-      parsePositiveBigIntId(expenseParentCoaId, 'expenseParentCoaId'),
-      tx,
-    );
+    const parentAccount = await this.findExpenseParentOptionOrThrow(companyId, parsePositiveBigIntId(expenseParentCoaId, 'expenseParentCoaId'), tx);
 
     if (template.expenseCoa?.parentAccountId === parentAccount.id) {
       return;
     }
 
-    const accountCode = await this.generateNextAccountCode(
-      companyId,
-      parentAccount.id,
-      parentAccount.accountCode,
-      ChartAccountLevel.SPECIFIC,
-      tx,
-    );
+    const accountCode = await this.generateNextAccountCode(companyId, parentAccount.id, parentAccount.accountCode, ChartAccountLevel.SPECIFIC, tx);
 
     await tx.chartAccount.update({
       where: { id: template.expenseCoaId },
@@ -784,15 +773,11 @@ export class DefaultAccountService {
   }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
+    if (action === PermissionAction.VIEW || user.role === AppRole.SUPER_ADMIN) {
       return;
     }
 
-    if (user.companyId === companyId && user.permissions.includes(`DA:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage default account records.');
+    throw new ForbiddenException('Default accounts are system-seeded and can only be maintained by a superadmin.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -806,23 +791,7 @@ export class DefaultAccountService {
   }
 
   private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`DA:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
+    return action === PermissionAction.VIEW || user.role === AppRole.SUPER_ADMIN;
   }
 
   private throwFriendlyPrismaError(error: unknown) {

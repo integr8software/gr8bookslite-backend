@@ -1212,7 +1212,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002001',
     parentAccountCode: '2010002000',
-    accountTitle: 'CWT - Witholding Tax Payable',
+    accountTitle: 'Creditable Withholding Tax',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1225,7 +1225,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002002',
     parentAccountCode: '2010002000',
-    accountTitle: 'EWT - Witholding Tax Payable',
+    accountTitle: 'Expanded Withholding Tax',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1238,7 +1238,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002003',
     parentAccountCode: '2010002000',
-    accountTitle: 'Final - Withholding Tax Payable',
+    accountTitle: 'Final Withholding Tax',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1316,7 +1316,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002009',
     parentAccountCode: '2010002000',
-    accountTitle: 'Output Tax',
+    accountTitle: 'Withholding VAT',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1342,7 +1342,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002011',
     parentAccountCode: '2010002000',
-    accountTitle: 'Input Tax',
+    accountTitle: 'Input VAT',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,

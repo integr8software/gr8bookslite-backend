@@ -11,6 +11,7 @@ Available agent docs:
 - `address-api.md`
 - `ARCHITECTURE_MODULARITY_GUIDE.md`
 - `BACKEND_INTEGRATION_GUIDE.md`
+- `TAX_MAINTENANCE_GLOBAL_ARCHITECTURE.md`
 
 Recommended ownership:
 
@@ -28,6 +29,8 @@ Recommended ownership:
   Covers backend/frontend folder placement, reusable utilities, mappers, types, strategies, loading boundaries, and anti-redundancy rules for agents.
 - `BACKEND_INTEGRATION_GUIDE.md`
   Covers backend-to-frontend API integration contracts, DTOs, mappers, tenant-scoped query keys, seed/provision requirements, mock-data removal, and verification.
+- `TAX_MAINTENANCE_GLOBAL_ARCHITECTURE.md`
+  Covers global jurisdiction-aware Tax definitions, effective rates, posting rules, company-owned account mappings, multi-tax calculation, and immutable transaction snapshots.
 
 Suggested next agent docs later:
 

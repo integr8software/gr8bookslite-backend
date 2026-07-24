@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { ArrayMinSize, IsDateString, IsArray, IsEmail, IsEnum, IsInt, IsOptional, IsString, Matches, MaxLength, Min, ValidateNested } from 'class-validator';
-import { PartyClassification, PartyStatus, PartyType } from '@prisma/client';
+import { PartyClassification, PartyPurchaseTaxClassification, PartyStatus, PartyTaxRegistrationType, PartyType } from '@prisma/client';
 import { CreatePartyAddressDto } from './create-party-address.dto';
 
 export class CreatePartyDto {
@@ -128,13 +128,12 @@ export class CreatePartyDto {
   tin?: string | null;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  vatRegistrationType?: string | null;
+  @IsEnum(PartyTaxRegistrationType)
+  vatRegistrationType?: PartyTaxRegistrationType | null;
 
   @IsOptional()
-  @IsString()
-  vatRegistrationTypeId?: string | null;
+  @IsEnum(PartyPurchaseTaxClassification)
+  defaultPurchaseTaxClassification?: PartyPurchaseTaxClassification | null;
 
   @IsOptional()
   @IsString()

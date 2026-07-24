@@ -40,15 +40,7 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     termName: party.term?.name ?? '',
     tin: party.tin ?? '',
     vatRegistrationType: party.vatRegistrationType ?? null,
-    vatRegistrationTypeId: party.vatRegistrationTypeId?.toString() ?? '',
-    vatRegistration: party.vatRegistration
-      ? {
-          id: party.vatRegistration.id.toString(),
-          name: party.vatRegistration.name,
-          percentage: Number(party.vatRegistration.percentage),
-          isExempted: party.vatRegistration.isExempted,
-        }
-      : null,
+    defaultPurchaseTaxClassification: party.defaultPurchaseTaxClassification ?? null,
     atcCode: party.atcCode ?? '',
     email: party.email ?? '',
     contactNo: party.contactNo ?? '',

@@ -40,7 +40,6 @@ export const AccountingSidebarTemplate = [
       link('financial-maintenance-payment-type', 'PT', 'creditCard'),
       link('financial-maintenance-discount-management', 'DSM', 'promotion'),
       link('financial-maintenance-term-management', 'TM', 'calendar'),
-      link('financial-maintenance-tax-maintenance', 'TXM', 'receipt'),
       link('financial-maintenance-responsibility-center', 'RC', 'target'),
     ],
   },
