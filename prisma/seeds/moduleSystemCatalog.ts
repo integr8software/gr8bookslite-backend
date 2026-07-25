@@ -199,8 +199,8 @@ export const AccountingAndInventorySidebarTemplate = [
     label: 'Delivery Vehicle Management',
     iconName: 'inventory',
     children: [
-      link('delivery-vehicle-management-vehicle-types', 'DVT', 'tags'),
       link('delivery-vehicle-management-delivery-vehicles', 'DVE', 'inventory'),
+      link('delivery-vehicle-management-vehicle-types', 'DVT', 'tags'),
       {
         itemType: 'CONTAINER',
         key: 'delivery-vehicle-management-vehicle-operations',
