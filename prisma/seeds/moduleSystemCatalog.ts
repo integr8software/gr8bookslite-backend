@@ -162,6 +162,7 @@ export const AccountingAndInventorySidebarTemplate = [
       link('warehouse-management-stock-by-location', 'WSBL', 'mapPin'),
       link('warehouse-management-stock-movement-history', 'WSMH', 'activity'),
       link('warehouse-management-item-availability', 'WIA', 'search'),
+      link('warehouse-management-warehouse-stock-inquiry', 'WSI', 'search'),
       link('warehouse-management-warehouse-transfer', 'WT', 'arrowRightLeft'),
       link('warehouse-management-location-transfer', 'WLOCT', 'arrowRightLeft'),
       link('warehouse-management-receiving-putaway', 'WRP', 'inventory'),
