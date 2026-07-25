@@ -115,7 +115,9 @@ export class ServicesMaintenanceService {
 
     return {
       accountCode,
+      parentAccountId: parent.id.toString(),
       parentAccountCode: parent.accountCode,
+      parentAccountLevel: parent.accountLevel,
       parentAccountTitle: parent.accountTitle,
     };
   }
@@ -336,18 +338,24 @@ export class ServicesMaintenanceService {
   }
 
   private async getStatistics(companyId: number) {
-    const groups = await this.prisma.serviceMaintenance.groupBy({
-      by: ['status', 'accountSetupMode'],
-      where: { companyId, deletedAt: null },
-      _count: { _all: true },
-    });
+    const [statusGroups, accountTitleGroups] = await Promise.all([
+      this.prisma.serviceMaintenance.groupBy({
+        by: ['status'],
+        where: { companyId, deletedAt: null },
+        _count: { _all: true },
+      }),
+      this.prisma.serviceMaintenance.groupBy({
+        by: ['revenueCoaId'],
+        where: { companyId, deletedAt: null },
+        _count: { _all: true },
+      }),
+    ]);
 
     return {
-      totalServices: groups.reduce((total, group) => total + group._count._all, 0),
-      activeServices: groups.filter((group) => group.status === ChartAccountStatus.ACTIVE).reduce((total, group) => total + group._count._all, 0),
-      inactiveServices: groups.filter((group) => group.status === ChartAccountStatus.INACTIVE).reduce((total, group) => total + group._count._all, 0),
-      automaticServices: groups.filter((group) => group.accountSetupMode === ServiceAccountSetupMode.AUTO).reduce((total, group) => total + group._count._all, 0),
-      configuredServices: groups.filter((group) => group.accountSetupMode === ServiceAccountSetupMode.EXISTING).reduce((total, group) => total + group._count._all, 0),
+      totalServices: statusGroups.reduce((total, group) => total + group._count._all, 0),
+      activeServices: statusGroups.filter((group) => group.status === ChartAccountStatus.ACTIVE).reduce((total, group) => total + group._count._all, 0),
+      inactiveServices: statusGroups.filter((group) => group.status === ChartAccountStatus.INACTIVE).reduce((total, group) => total + group._count._all, 0),
+      accountTitles: accountTitleGroups.length,
     };
   }
 

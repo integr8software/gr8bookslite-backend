@@ -6,6 +6,7 @@ import {
   ChartAccountType,
   DefaultAccount,
   DefaultAccountTemplateType,
+  MembershipRole,
   MembershipStatus,
   Prisma,
 } from '@prisma/client';
@@ -773,11 +774,11 @@ export class DefaultAccountService {
   }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (action === PermissionAction.VIEW || user.role === AppRole.SUPER_ADMIN) {
+    if (action === PermissionAction.VIEW || this.hasReservedRoleAccess(user, companyId)) {
       return;
     }
 
-    throw new ForbiddenException('Default accounts are system-seeded and can only be maintained by a superadmin.');
+    throw new ForbiddenException('Default accounts are system-seeded and can only be maintained by an admin.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -791,7 +792,19 @@ export class DefaultAccountService {
   }
 
   private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    return action === PermissionAction.VIEW || user.role === AppRole.SUPER_ADMIN;
+    return action === PermissionAction.VIEW || this.hasReservedRoleAccess(user, companyId);
+  }
+
+  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
+    if (user.role === AppRole.SUPER_ADMIN) {
+      return true;
+    }
+
+    return (
+      user.companyId === companyId &&
+      user.membershipStatus === MembershipStatus.ACTIVE &&
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
+    );
   }
 
   private throwFriendlyPrismaError(error: unknown) {
