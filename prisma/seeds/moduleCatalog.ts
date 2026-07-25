@@ -39,6 +39,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
+    code: 'SM',
+    name: 'Services Maintenance',
+    icon: 'receipt',
+    type: Maintenance,
+  },
+  {
     code: 'PM',
     name: 'Party Management',
     icon: 'users',

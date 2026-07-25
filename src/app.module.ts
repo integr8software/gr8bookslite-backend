@@ -32,6 +32,7 @@ import { DiscountMaintenanceModule } from './modules/maintenance/discount-mainte
 import { PartyMaintenanceModule } from './modules/maintenance/party-maintenance/party-maintenance.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
 import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
+import { ServicesMaintenanceModule } from './modules/maintenance/services-maintenance/services-maintenance.module';
 import { ResponsibilityCenterModule } from './modules/maintenance/responsibility-center/responsibility-center.module';
 import { TaxModule } from './modules/tax/tax.module';
 import { WarehouseMaintenanceModule } from './modules/maintenance/warehouse-maintenance/warehouse-maintenance.module';
@@ -89,6 +90,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     PartyMaintenanceModule,
     BankMasterfileModule,
     DefaultAccountModule,
+    ServicesMaintenanceModule,
     ResponsibilityCenterModule,
     TaxModule,
     WarehouseMaintenanceModule,

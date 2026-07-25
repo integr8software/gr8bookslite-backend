@@ -228,6 +228,10 @@ function getStructuralAccountGroupTag(accountTitle: string) {
     return SystemAccountGroupTags.depreciationExpense;
   }
 
+  if (/service revenues?/i.test(accountTitle)) {
+    return SystemAccountGroupTags.serviceRevenues;
+  }
+
   if (/accumulated depreciation/i.test(accountTitle)) {
     return SystemAccountGroupTags.accumulatedDepreciation;
   }
@@ -258,6 +262,10 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
 
   if (moduleCode === 'DA' && accountRole === 'REVENUE_PARENT') {
     return [SystemAccountGroupTags.revenue, SystemAccountGroupTags.defaultAccountRevenueParent];
+  }
+
+  if (moduleCode === 'SM' && accountRole === 'SERVICE_REVENUE_PARENT') {
+    return [SystemAccountGroupTags.revenue, SystemAccountGroupTags.serviceRevenues, SystemAccountGroupTags.servicesMaintenanceRevenueParent];
   }
 
   if (moduleCode === 'DA' && accountRole === 'FIXED_ASSET_PARENT') {

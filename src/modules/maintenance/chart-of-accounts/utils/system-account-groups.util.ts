@@ -7,6 +7,8 @@ export const SystemAccountGroupTags = {
   expenses: 'Expenses',
   defaultAccountExpenseParent: 'Default Account Expense Parent',
   revenue: 'Revenue',
+  serviceRevenues: 'Service Revenues',
+  servicesMaintenanceRevenueParent: 'Services Maintenance Revenue Parent',
   defaultAccountRevenueParent: 'Default Account Revenue Parent',
   fixedAssets: 'Fixed Assets',
   defaultAccountFixedAssetParent: 'Default Account Fixed Asset Parent',
@@ -80,6 +82,14 @@ export const SystemAccountGroups = {
       requiredLevel: ChartAccountLevel.SUB3,
       accountType: ChartAccountType.EXPENSE,
       accountNature: AccountNature.DEBIT,
+    },
+  },
+  servicesMaintenance: {
+    serviceRevenueParent: {
+      accountGroupIncludes: SystemAccountGroupTags.servicesMaintenanceRevenueParent,
+      requiredLevel: ChartAccountLevel.SUB1,
+      accountType: ChartAccountType.REVENUE,
+      accountNature: AccountNature.CREDIT,
     },
   },
   discountManagement: {

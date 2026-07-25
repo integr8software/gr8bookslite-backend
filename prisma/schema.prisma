@@ -118,6 +118,7 @@ model Company {
   transactionTaxLines    TransactionTaxLine[]
   bankAccounts           BankAccount[]
   defaultAccounts        DefaultAccount[]
+  serviceMaintenances    ServiceMaintenance[]
   terms                  Term[]
   itemAttributes         ItemAttribute[]
   itemCategories         ItemCategory[]
@@ -646,6 +647,7 @@ model ChartAccount {
   defaultRevenueAccounts                 DefaultAccount[]        @relation("DefaultAccountRevenueCoa")
   defaultAssetAccounts                   DefaultAccount[]        @relation("DefaultAccountAssetCoa")
   defaultAccumulatedDepreciationAccounts DefaultAccount[]        @relation("DefaultAccountAccumulatedDepreciationCoa")
+  serviceMaintenanceRevenueAccounts      ServiceMaintenance[]    @relation("ServiceMaintenanceRevenueCoa")
   itemCategoryInventoryAccounts          ItemCategory[]          @relation("ItemCategoryInventoryAccount")
   itemCategorySalesAccounts              ItemCategory[]          @relation("ItemCategorySalesAccount")
   itemCategoryCostOfSalesAccounts        ItemCategory[]          @relation("ItemCategoryCostOfSalesAccount")
@@ -737,6 +739,30 @@ model BankAccount {
   @@index([companyId, status], map: "bank_accounts_company_status_idx")
   @@index([companyId, bankName, branch, accountNumber], map: "bank_accounts_company_bank_branch_number_idx")
   @@map("bank_accounts")
+}
+
+model ServiceMaintenance {
+  id                        BigInt                  @id @default(autoincrement())
+  companyId                 Int                     @map("company_id")
+  revenueCoaId              BigInt                  @map("revenue_coa_id")
+  serviceName               String                  @map("service_name") @db.VarChar(150)
+  description               String?                 @db.VarChar(500)
+  accountSetupMode          ServiceAccountSetupMode @default(AUTO) @map("account_setup_mode")
+  isGeneratedRevenueAccount Boolean                 @default(true) @map("is_generated_revenue_account")
+  status                    ChartAccountStatus      @default(ACTIVE)
+  createdByUserId           Int?                    @map("created_by_user_id")
+  updatedByUserId           Int?                    @map("updated_by_user_id")
+  createdAt                 DateTime                @default(now()) @map("created_at")
+  updatedAt                 DateTime                @updatedAt @map("updated_at")
+  deletedAt                 DateTime?               @map("deleted_at")
+  company                   Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  revenueCoa                ChartAccount            @relation("ServiceMaintenanceRevenueCoa", fields: [revenueCoaId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, serviceName], map: "services_maintenance_company_service_name_unique")
+  @@index([companyId], map: "services_maintenance_company_id_idx")
+  @@index([companyId, status], map: "services_maintenance_company_status_idx")
+  @@index([revenueCoaId], map: "services_maintenance_revenue_coa_id_idx")
+  @@map("services_maintenance")
 }
 
 model Term {
@@ -1894,6 +1920,11 @@ enum AccountNature {
 enum ChartAccountStatus {
   ACTIVE
   INACTIVE
+}
+
+enum ServiceAccountSetupMode {
+  AUTO
+  EXISTING
 }
 
 enum DefaultAccountUsageType {
