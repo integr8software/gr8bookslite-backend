@@ -465,7 +465,7 @@ export class ServicesMaintenanceService {
 
   private throwFriendlyPrismaError(error: unknown) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('This service maintenance record already exists.');
+      throw new ConflictException('A service with this name already exists.');
     }
   }
 }

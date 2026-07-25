@@ -5,8 +5,6 @@ import { CreateServiceMaintenanceDto } from '../dto/create-service-maintenance.d
 import { GetServiceMaintenanceListQueryDto } from '../dto/get-service-maintenance-list-query.dto';
 import { UpdateServiceMaintenanceDto } from '../dto/update-service-maintenance.dto';
 
-export const ServiceMaintenanceAccountTitlePrefix = 'Service';
-
 export function buildServiceMaintenanceListWhere(companyId: number, query: GetServiceMaintenanceListQueryDto): Prisma.ServiceMaintenanceWhereInput {
   const search = query.search?.trim();
 
@@ -54,7 +52,7 @@ export function validateServiceMaintenanceInput(dto: CreateServiceMaintenanceDto
 }
 
 export function resolveServiceRevenueAccountTitle(serviceName: string) {
-  return `${ServiceMaintenanceAccountTitlePrefix} - ${serviceName.trim()}`;
+  return serviceName.trim();
 }
 
 export function toCreateServiceMaintenanceData(dto: CreateServiceMaintenanceDto, revenueCoaId: bigint, isGeneratedRevenueAccount: boolean) {
