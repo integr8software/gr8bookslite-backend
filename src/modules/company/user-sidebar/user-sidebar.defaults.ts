@@ -27,6 +27,7 @@ export const UserSidebarIconNames = [
   'coins',
   'creditCard',
   'fileCheck',
+  'fileCog',
   'fileSignature',
   'gauge',
   'package',

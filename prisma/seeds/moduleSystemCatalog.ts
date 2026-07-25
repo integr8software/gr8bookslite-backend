@@ -35,7 +35,7 @@ export const AccountingSidebarTemplate = [
     iconName: 'accounting',
     children: [
       link('financial-maintenance-charts-of-accounts', 'COA', 'scale'),
-      link('financial-maintenance-default-accounts', 'DA', 'scale'),
+      link('financial-maintenance-default-accounts', 'DA', 'fileCog'),
       link('financial-maintenance-bank-masterfile', 'BM', 'bank'),
       link('financial-maintenance-payment-type', 'PT', 'creditCard'),
       link('financial-maintenance-discount-management', 'DSM', 'promotion'),

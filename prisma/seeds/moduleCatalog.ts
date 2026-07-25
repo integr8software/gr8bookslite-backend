@@ -29,7 +29,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   {
     code: 'DA',
     name: 'Default Accounts',
-    icon: 'scale',
+    icon: 'fileCog',
     type: Maintenance,
   },
   {
