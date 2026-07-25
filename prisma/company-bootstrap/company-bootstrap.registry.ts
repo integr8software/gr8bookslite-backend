@@ -18,7 +18,6 @@ import {
   ResponsibilityCenterSeedRecords,
   seedCompanyResponsibilityCenterDefaults,
 } from '../../src/modules/maintenance/responsibility-center/seed/responsibility-center.seed';
-import { TaxMaintenanceSeedRecords, seedCompanyTaxMaintenanceDefaults } from '../../src/modules/maintenance/tax-maintenance/seed/tax-maintenance.seed';
 import { ItemVariationSeedRecords, seedCompanyItemVariationDefaults } from '../../src/modules/maintenance/item-variations/seed/item-variations.seed';
 import {
   ItemCategorySeedRecords,
@@ -119,7 +118,6 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
     itemCategories,
     paymentTypes,
     discounts,
-    taxMaintenance,
     responsibilityCenters,
     bankAccounts,
     warehouses,
@@ -133,7 +131,6 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
     countForBackup('item_categories', tx.itemCategory.count({ where: { companyId } })),
     countForBackup('payment_types', tx.paymentType.count({ where: { companyId } })),
     countForBackup('discounts', tx.discount.count({ where: { companyId } })),
-    countForBackup('tax_maintenance', tx.taxMaintenance.count({ where: { companyId } })),
     countForBackup('responsibility_centers', tx.responsibilityCenter.count({ where: { companyId } })),
     countForBackup('bank_accounts', tx.bankAccount.count({ where: { companyId } })),
     countForBackup('warehouses', tx.warehouse.count({ where: { companyId } })),
@@ -156,7 +153,6 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
       itemCategories,
       paymentTypes,
       discounts,
-      taxMaintenance,
       responsibilityCenters,
       bankAccounts,
       warehouses,
@@ -415,35 +411,6 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     backup: (companyId, tx) => backupCounts('coa', companyId, tx),
     async apply(companyId, tx) {
       await seedCompanyChartAccountDefaults(tx, companyId);
-    },
-  },
-  {
-    key: 'tax-maintenance',
-    label: 'Tax maintenance defaults bootstrap',
-    async inspect(companyId, tx) {
-      const existingTaxes = await tx.taxMaintenance.findMany({
-        where: {
-          companyId,
-          name: {
-            in: TaxMaintenanceSeedRecords.map((tax) => tax.name),
-          },
-        },
-        select: { name: true },
-      });
-      const existingNames = new Set(existingTaxes.map((tax) => tax.name));
-      const missingTaxes = TaxMaintenanceSeedRecords.filter((tax) => !existingNames.has(tax.name));
-
-      return missingTaxes.length === 0
-        ? ok('Tax maintenance defaults exist.', { count: existingTaxes.length })
-        : missing('Tax maintenance defaults are incomplete.', [`Seed ${missingTaxes.length} missing tax maintenance records.`], {
-            count: existingTaxes.length,
-            expectedCount: TaxMaintenanceSeedRecords.length,
-            missingNames: missingTaxes.map((tax) => tax.name),
-          });
-    },
-    backup: (companyId, tx) => backupCounts('tax-maintenance', companyId, tx),
-    async apply(companyId, tx) {
-      await seedCompanyTaxMaintenanceDefaults(tx, companyId);
     },
   },
   {

@@ -16,7 +16,6 @@ import { seedCompanyDiscountMaintenanceDefaults } from '../../maintenance/discou
 import { seedCompanyItemCategoryDefaults } from '../../maintenance/item-category/seed/item-category.seed';
 import { seedCompanyBankAccountDefaults } from '../../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyResponsibilityCenterDefaults } from '../../maintenance/responsibility-center/seed/responsibility-center.seed';
-import { seedCompanyTaxMaintenanceDefaults } from '../../maintenance/tax-maintenance/seed/tax-maintenance.seed';
 import { seedCompanyWarehouseMaintenanceDefaults } from '../../maintenance/warehouse-maintenance/seed/warehouse-maintenance.seed';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
@@ -161,7 +160,6 @@ export class WorkspaceCompaniesService {
       await seedCompanyUnitOfMeasurementDefaults(tx, createdCompany.id);
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyChartAccountDefaults(tx, createdCompany.id);
-      await seedCompanyTaxMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyDefaultAccountDefaults(tx, createdCompany.id);
       await seedCompanyItemCategoryDefaults(tx, createdCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, createdCompany.id);

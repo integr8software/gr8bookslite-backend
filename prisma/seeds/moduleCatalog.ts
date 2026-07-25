@@ -29,13 +29,19 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   {
     code: 'DA',
     name: 'Default Accounts',
-    icon: 'scale',
+    icon: 'fileCog',
     type: Maintenance,
   },
   {
     code: 'BM',
     name: 'Bank Masterfile',
     icon: 'bank',
+    type: Maintenance,
+  },
+  {
+    code: 'SM',
+    name: 'Services Maintenance',
+    icon: 'receipt',
     type: Maintenance,
   },
   {
@@ -82,7 +88,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   },
   {
     code: 'PLS',
-    name: 'Price Lists',
+    name: 'Item Price List',
     icon: 'tags',
     type: Maintenance,
   },
@@ -126,12 +132,6 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     code: 'WLA',
     name: 'Location Availability',
     icon: 'activity',
-    type: Maintenance,
-  },
-  {
-    code: 'WLT',
-    name: 'Location Templates',
-    icon: 'clipboard',
     type: Maintenance,
   },
   {
@@ -195,6 +195,66 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
+    code: 'DVT',
+    name: 'Vehicle Types',
+    icon: 'tags',
+    type: Maintenance,
+  },
+  {
+    code: 'DVE',
+    name: 'Delivery Vehicles',
+    icon: 'inventory',
+    type: MaintenanceRegistry,
+  },
+  {
+    code: 'DVA',
+    name: 'Vehicle Availability',
+    icon: 'activity',
+    type: Maintenance,
+  },
+  {
+    code: 'DVLP',
+    name: 'Load Planning',
+    icon: 'weight',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'DVAS',
+    name: 'Vehicle Assignment',
+    icon: 'users',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'DVD',
+    name: 'Delivery Trips and Dispatch',
+    icon: 'arrowRightLeft',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'DVTK',
+    name: 'Trip Tracking',
+    icon: 'map',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'DVIN',
+    name: 'Vehicle Inspections',
+    icon: 'clipboard',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'DVFI',
+    name: 'Fuel and Incidents',
+    icon: 'receipt',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'DVMR',
+    name: 'Maintenance and Repairs',
+    icon: 'maintenance',
+    type: TransactionRegistry,
+  },
+  {
     code: 'WSI',
     name: 'Warehouse Stock Inquiry',
     icon: 'search',
@@ -231,12 +291,6 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
-    code: 'TXM',
-    name: 'Tax Maintenance',
-    icon: 'receipt',
-    type: Maintenance,
-  },
-  {
     code: 'OR',
     name: 'Official Receipt',
     icon: 'cashIn',
@@ -268,7 +322,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   },
   {
     code: 'PDCW',
-    name: 'Product Distribution Center Warehouse',
+    name: 'Post-Dated Check Registry',
     icon: 'cashIn',
     type: TransactionRegistry,
   },

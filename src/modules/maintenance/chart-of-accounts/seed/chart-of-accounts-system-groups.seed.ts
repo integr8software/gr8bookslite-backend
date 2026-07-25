@@ -50,6 +50,14 @@ export const StandardDefaultAccountMappings = [
     description: 'Parent for Default Account generated collection revenue accounts.',
   },
   {
+    moduleCode: 'SM',
+    accountRole: 'SERVICE_REVENUE_PARENT',
+    accountCode: '4020000000',
+    requiredLevel: ChartAccountLevel.SUB1,
+    usageType: DefaultAccountUsageType.PARENT,
+    description: 'Parent for Services Maintenance generated service revenue accounts.',
+  },
+  {
     moduleCode: 'DA',
     accountRole: 'FIXED_ASSET_PARENT',
     accountCode: '1020100000',

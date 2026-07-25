@@ -56,6 +56,7 @@ describe('UserSidebarService tree validation', () => {
       validate([
         { ...link('profile', 1), iconName: 'profile' },
         { ...link('slice', 2), iconName: 'slice' },
+        { ...link('map', 5), iconName: 'map' },
         { ...link('weight', 3), iconName: 'weight' },
         { ...link('weight-tilde', 4), iconName: 'weightTilde' },
       ]),

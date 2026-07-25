@@ -495,12 +495,6 @@ export class PartyMaintenanceService {
       await this.ensureTermBelongsToCompany(companyId, parsePositiveBigIntId(termId));
     }
 
-    const vatRegistrationTypeId = this.normalizeOptionalString(dto.vatRegistrationTypeId);
-
-    if (vatRegistrationTypeId) {
-      await this.ensureTaxMaintenanceBelongsToCompany(companyId, parsePositiveBigIntId(vatRegistrationTypeId));
-    }
-
     const normalized: CreatePartyDto = {
       ...dto,
       partyCodeNo: dto.partyCodeNo.trim(),
@@ -526,7 +520,7 @@ export class PartyMaintenanceService {
       termId,
       tin: this.normalizeOptionalString(dto.tin),
       vatRegistrationType: dto.vatRegistrationType ?? null,
-      vatRegistrationTypeId,
+      defaultPurchaseTaxClassification: dto.defaultPurchaseTaxClassification ?? null,
       atcCode: this.normalizeOptionalString(dto.atcCode),
       email: this.normalizeOptionalString(dto.email),
       contactNo: this.normalizeOptionalString(dto.contactNo),
@@ -595,7 +589,7 @@ export class PartyMaintenanceService {
       termId: dto.termId ?? current.termId?.toString() ?? '',
       tin: dto.tin ?? current.tin ?? '',
       vatRegistrationType: dto.vatRegistrationType ?? current.vatRegistrationType ?? null,
-      vatRegistrationTypeId: dto.vatRegistrationTypeId ?? current.vatRegistrationTypeId?.toString() ?? '',
+      defaultPurchaseTaxClassification: dto.defaultPurchaseTaxClassification ?? current.defaultPurchaseTaxClassification ?? null,
       atcCode: dto.atcCode ?? current.atcCode ?? '',
       email: dto.email ?? current.email ?? '',
       contactNo: dto.contactNo ?? current.contactNo ?? '',
@@ -982,17 +976,6 @@ export class PartyMaintenanceService {
     }
   }
 
-  private async ensureTaxMaintenanceBelongsToCompany(companyId: number, taxMaintenanceId: bigint) {
-    const tax = await this.prisma.taxMaintenance.findFirst({
-      where: { id: taxMaintenanceId, companyId, deletedAt: null },
-      select: { id: true },
-    });
-
-    if (!tax) {
-      throw new BadRequestException('Selected VAT registration type does not exist.');
-    }
-  }
-
   private async findPartyOrThrow(companyId: number, partyId: bigint) {
     const party = await this.prisma.party.findFirst({
       where: { id: partyId, companyId, deletedAt: null },
@@ -1032,7 +1015,7 @@ export class PartyMaintenanceService {
       employeePayableAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE) ? parseOptionalPositiveBigIntId(dto.employeePayableAccount) : null,
       tin: dto.tin,
       vatRegistrationType: dto.vatRegistrationType,
-      vatRegistrationTypeId: parseOptionalPositiveBigIntId(dto.vatRegistrationTypeId),
+      defaultPurchaseTaxClassification: dto.defaultPurchaseTaxClassification,
       atcCode: dto.atcCode,
       email: dto.email,
       contactNo: dto.contactNo,

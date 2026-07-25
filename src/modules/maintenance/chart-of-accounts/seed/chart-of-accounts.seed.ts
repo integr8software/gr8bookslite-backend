@@ -1,5 +1,6 @@
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, Prisma } from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, DefaultAccountUsageType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
+import { seedCompanyTaxConfigurationDefaults } from '../../../tax/seed/tax.seed';
 import { StandardDefaultChartAccounts } from './chart-of-accounts-defaults.seed';
 import { StandardDefaultAccountMappings } from './chart-of-accounts-system-groups.seed';
 import { mergeAccountGroupTags, normalizeAccountGroupTags, SystemAccountGroupTags } from '../utils/system-account-groups.util';
@@ -25,6 +26,7 @@ const ItemCategoryParentAccountCodeCorrections = new Map<
   ['6000001000', { accountCode: '6040000000', parentAccountCode: '6000000000' }],
 ]);
 const LegacyItemCategoryParentAccountCodes = [...ItemCategoryParentAccountCodeCorrections.keys()];
+const TaxModuleCode = 'TXM';
 
 type StandardDefaultChartAccountSeed = {
   parentAccountCode?: string | null;
@@ -128,7 +130,29 @@ export async function seedCompanyChartAccountDefaults(tx: Prisma.TransactionClie
     }
   }
 
+  await seedCompanyTaxAccountMappings(tx, companyId, chartAccountIdByCode);
+  await seedCompanyTaxConfigurationDefaults(tx, companyId);
   await clearLegacyItemCategoryParentAccountTags(tx, companyId);
+}
+
+async function seedCompanyTaxAccountMappings(
+  tx: Prisma.TransactionClient | PrismaService,
+  companyId: number,
+  chartAccountIdByCode: ReadonlyMap<string, bigint>,
+) {
+  const mappings = StandardDefaultAccountMappings.filter(
+    (mapping) => mapping.moduleCode === TaxModuleCode && mapping.usageType === DefaultAccountUsageType.POSTING,
+  ).map((mapping) => ({
+    companyId,
+    moduleCode: TaxModuleCode,
+    accountRole: mapping.accountRole,
+    chartAccountId: chartAccountIdByCode.get(getCorrectedSeedAccountCode(mapping.accountCode))!,
+  }));
+
+  await tx.companyAccountMapping.createMany({
+    data: mappings,
+    skipDuplicates: true,
+  });
 }
 
 function getCorrectedSeedAccount(account: StandardDefaultChartAccountSeed): StandardDefaultChartAccountSeed {
@@ -204,6 +228,10 @@ function getStructuralAccountGroupTag(accountTitle: string) {
     return SystemAccountGroupTags.depreciationExpense;
   }
 
+  if (/service revenues?/i.test(accountTitle)) {
+    return SystemAccountGroupTags.serviceRevenues;
+  }
+
   if (/accumulated depreciation/i.test(accountTitle)) {
     return SystemAccountGroupTags.accumulatedDepreciation;
   }
@@ -234,6 +262,10 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
 
   if (moduleCode === 'DA' && accountRole === 'REVENUE_PARENT') {
     return [SystemAccountGroupTags.revenue, SystemAccountGroupTags.defaultAccountRevenueParent];
+  }
+
+  if (moduleCode === 'SM' && accountRole === 'SERVICE_REVENUE_PARENT') {
+    return [SystemAccountGroupTags.revenue, SystemAccountGroupTags.serviceRevenues, SystemAccountGroupTags.servicesMaintenanceRevenueParent];
   }
 
   if (moduleCode === 'DA' && accountRole === 'FIXED_ASSET_PARENT') {
