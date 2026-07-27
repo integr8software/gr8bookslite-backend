@@ -23,7 +23,7 @@ export type AiAssistantAction =
       };
     }
   | {
-      type: 'term_management';
+      type: 'terms_maintenance';
       moduleCode: 'TM';
       command: 'open' | 'search' | 'filter_status' | 'prepare_add' | 'preview_edit';
       label?: string;

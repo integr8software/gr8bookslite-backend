@@ -8,7 +8,7 @@ describe('SidebarBuilder', () => {
     const builder = createSidebarBuilder();
     const modules = builder.buildUserModules(
       buildMembership({
-        planModules: [buildEnabledModule(5, 'TM', 'Term Management')],
+        planModules: [buildEnabledModule(5, 'TM', 'Terms Maintenance')],
       }),
       ['TM:view'],
     );
@@ -18,7 +18,7 @@ describe('SidebarBuilder', () => {
         branchUnitId: 10,
         items: [
           expect.objectContaining({
-            label: 'Term Management',
+            label: 'Terms Maintenance',
             key: 'module-tm',
             moduleCode: 'TM',
           }),
@@ -31,7 +31,7 @@ describe('SidebarBuilder', () => {
     const builder = createSidebarBuilder();
     const modules = builder.buildUserModules(
       buildMembership({
-        planModules: [buildEnabledModule(5, 'TM', 'Term Management')],
+        planModules: [buildEnabledModule(5, 'TM', 'Terms Maintenance')],
       }),
       ['TM:view'],
     );
@@ -55,7 +55,7 @@ describe('SidebarBuilder', () => {
                 {
                   system: {
                     code: 'ACCOUNTING',
-                    modules: [buildEnabledModule(5, 'TM', 'Term Management')],
+                    modules: [buildEnabledModule(5, 'TM', 'Terms Maintenance')],
                     sidebarItems: [
                       {
                         id: 100,
@@ -73,8 +73,8 @@ describe('SidebarBuilder', () => {
                         parentId: 100,
                         moduleId: 5,
                         itemType: 'LINK',
-                        key: 'financial-maintenance-term-management',
-                        label: 'Term Management',
+                        key: 'financial-maintenance-terms-maintenance',
+                        label: 'Terms Maintenance',
                         description: null,
                         iconName: 'calendar',
                         sortOrder: 0,
@@ -97,7 +97,7 @@ describe('SidebarBuilder', () => {
         moduleCode: null,
         children: [
           expect.objectContaining({
-            key: 'accounting-financial-maintenance-term-management',
+            key: 'accounting-financial-maintenance-terms-maintenance',
             moduleCode: 'TM',
           }),
         ],
@@ -116,7 +116,7 @@ describe('SidebarBuilder', () => {
                 {
                   system: {
                     code: 'ACCOUNTING',
-                    modules: [buildEnabledModule(5, 'TM', 'Term Management'), buildEnabledModule(6, 'COA', 'Chart of Accounts')],
+                    modules: [buildEnabledModule(5, 'TM', 'Terms Maintenance'), buildEnabledModule(6, 'COA', 'Chart of Accounts')],
                     sidebarItems: [
                       {
                         id: 100,
@@ -145,8 +145,8 @@ describe('SidebarBuilder', () => {
                         parentId: 100,
                         moduleId: 5,
                         itemType: 'LINK',
-                        key: 'financial-maintenance-term-management',
-                        label: 'Term Management',
+                        key: 'financial-maintenance-terms-maintenance',
+                        label: 'Terms Maintenance',
                         description: null,
                         iconName: 'calendar',
                         sortOrder: 1,
@@ -191,7 +191,7 @@ describe('SidebarBuilder', () => {
         isCollapsed: true,
         children: [
           expect.objectContaining({
-            key: 'accounting-financial-maintenance-term-management',
+            key: 'accounting-financial-maintenance-terms-maintenance',
             moduleCode: 'TM',
           }),
         ],
@@ -210,7 +210,7 @@ describe('SidebarBuilder', () => {
                 {
                   system: {
                     code: 'ACCOUNTING',
-                    modules: [buildEnabledModule(5, 'TM', 'Term Management'), buildEnabledModule(6, 'COA', 'Chart of Accounts')],
+                    modules: [buildEnabledModule(5, 'TM', 'Terms Maintenance'), buildEnabledModule(6, 'COA', 'Chart of Accounts')],
                     sidebarItems: [
                       {
                         id: 100,
@@ -250,8 +250,8 @@ describe('SidebarBuilder', () => {
                         parentId: 200,
                         moduleId: 5,
                         itemType: 'LINK',
-                        key: 'term-management',
-                        label: 'Term Management',
+                        key: 'terms-maintenance',
+                        label: 'Terms Maintenance',
                         description: null,
                         iconName: null,
                         sortOrder: 0,
@@ -284,7 +284,7 @@ describe('SidebarBuilder', () => {
         key: 'accounting-general-journal',
         children: [
           expect.objectContaining({
-            key: 'accounting-term-management',
+            key: 'accounting-terms-maintenance',
           }),
           expect.objectContaining({
             key: 'accounting-chart-of-accounts',

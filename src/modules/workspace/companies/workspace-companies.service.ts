@@ -7,7 +7,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
 import { seedCompanyItemVariationDefaults } from '../../maintenance/item-variations/seed/item-variations.seed';
-import { seedCompanyTermMaintenanceDefaults } from '../../maintenance/term-maintenance/seed/term-maintenance.seed';
+import { seedCompanyTermsMaintenanceDefaults } from '../../maintenance/terms-maintenance/seed/terms-maintenance.seed';
 import { seedCompanyUnitOfMeasurementDefaults } from '../../maintenance/unit-of-measurement/seed/unit-of-measurement.seed';
 import { seedCompanyPaymentTypeMaintenanceDefaults } from '../../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
 import { seedCompanyChartAccountDefaults } from '../../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
@@ -155,7 +155,7 @@ export class WorkspaceCompaniesService {
         },
       });
 
-      await seedCompanyTermMaintenanceDefaults(tx, createdCompany.id);
+      await seedCompanyTermsMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyItemVariationDefaults(tx, createdCompany.id);
       await seedCompanyUnitOfMeasurementDefaults(tx, createdCompany.id);
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, createdCompany.id);

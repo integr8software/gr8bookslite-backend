@@ -77,8 +77,8 @@ describe('UserSidebarService tree validation', () => {
           sortOrder: 0,
           children: [
             {
-              key: 'accounting-term-management',
-              label: 'Term Management',
+              key: 'accounting-terms-maintenance',
+              label: 'Terms Maintenance',
               itemType: 'LINK',
               moduleId: 7,
               sortOrder: 0,
@@ -126,7 +126,7 @@ describe('UserSidebarService tree validation', () => {
           sortOrder: 0,
         }),
         expect.objectContaining({
-          itemKey: 'accounting-term-management',
+          itemKey: 'accounting-terms-maintenance',
           isHidden: true,
         }),
       ]),

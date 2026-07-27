@@ -970,6 +970,127 @@
         ]
       }
     },
+    "/api/v1/billing/checkout-sessions": {
+      "post": {
+        "operationId": "BillingController_createManualCheckoutSession_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateManualCheckoutSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualCheckoutSessionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/v1/billing/payment-attempts/{paymentAttemptId}": {
+      "get": {
+        "operationId": "BillingController_getManualPaymentAttempt_v1",
+        "parameters": [
+          {
+            "name": "paymentAttemptId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPaymentAttemptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/v1/billing/payment-requests/{paymentRequestId}": {
+      "get": {
+        "operationId": "BillingController_getManualPaymentRequest_v1",
+        "parameters": [
+          {
+            "name": "paymentRequestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPaymentAttemptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/api/v1/billing/payment-attempts/{paymentAttemptId}/retry-application": {
+      "post": {
+        "operationId": "BillingController_retryPaymentAttemptApplication_v1",
+        "parameters": [
+          {
+            "name": "paymentAttemptId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingPaymentAttemptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
     "/api/v1/billing/subscriptions/{subscriptionId}/attach-payment-method": {
       "post": {
         "operationId": "BillingController_attachPaymentMethod_v1",
@@ -1050,9 +1171,9 @@
         ]
       }
     },
-    "/api/webhooks/paymongo": {
+    "/api/v1/webhooks/paymongo": {
       "post": {
-        "operationId": "PaymongoWebhookController_ingestWebhook",
+        "operationId": "PaymongoWebhookController_ingestWebhook_v1",
         "parameters": [],
         "responses": {
           "200": {
@@ -1562,187 +1683,6 @@
         },
         "tags": [
           "Address"
-        ]
-      }
-    },
-    "/api/v1/alphanumeric-tax-codes": {
-      "get": {
-        "operationId": "AlphanumericTaxCodesController_listTaxCodes_v1",
-        "parameters": [
-          {
-            "name": "query",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "transactionType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "taxType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "taxCode",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "officialAtcCode",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 1000,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "AlphanumericTaxCodes"
-        ]
-      }
-    },
-    "/api/v1/alphanumeric-tax-codes/autocomplete": {
-      "get": {
-        "operationId": "AlphanumericTaxCodesController_listAutocomplete_v1",
-        "parameters": [
-          {
-            "name": "query",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "transactionType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "taxType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "taxCode",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "officialAtcCode",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 1000,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "AlphanumericTaxCodes"
-        ]
-      }
-    },
-    "/api/v1/alphanumeric-tax-codes/transaction-types": {
-      "get": {
-        "operationId": "AlphanumericTaxCodesController_listTransactionTypes_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "AlphanumericTaxCodes"
-        ]
-      }
-    },
-    "/api/v1/alphanumeric-tax-codes/tax-types": {
-      "get": {
-        "operationId": "AlphanumericTaxCodesController_listTaxTypes_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "AlphanumericTaxCodes"
-        ]
-      }
-    },
-    "/api/v1/alphanumeric-tax-codes/{sourceKey}": {
-      "get": {
-        "operationId": "AlphanumericTaxCodesController_getTaxCode_v1",
-        "parameters": [
-          {
-            "name": "sourceKey",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "AlphanumericTaxCodes"
         ]
       }
     },
@@ -3358,9 +3298,9 @@
         ]
       }
     },
-    "/api/v1/maintenance/term-maintenance": {
+    "/api/v1/maintenance/terms-maintenance": {
       "get": {
-        "operationId": "TermMaintenanceController_findAll_v1",
+        "operationId": "TermsMaintenanceController_findAll_v1",
         "parameters": [
           {
             "name": "search",
@@ -3450,11 +3390,11 @@
           }
         },
         "tags": [
-          "Term Maintenance"
+          "Terms Maintenance"
         ]
       },
       "post": {
-        "operationId": "TermMaintenanceController_create_v1",
+        "operationId": "TermsMaintenanceController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3472,13 +3412,13 @@
           }
         },
         "tags": [
-          "Term Maintenance"
+          "Terms Maintenance"
         ]
       }
     },
-    "/api/v1/maintenance/term-maintenance/{id}": {
+    "/api/v1/maintenance/terms-maintenance/{id}": {
       "get": {
-        "operationId": "TermMaintenanceController_findOne_v1",
+        "operationId": "TermsMaintenanceController_findOne_v1",
         "parameters": [
           {
             "name": "id",
@@ -3495,11 +3435,11 @@
           }
         },
         "tags": [
-          "Term Maintenance"
+          "Terms Maintenance"
         ]
       },
       "patch": {
-        "operationId": "TermMaintenanceController_update_v1",
+        "operationId": "TermsMaintenanceController_update_v1",
         "parameters": [
           {
             "name": "id",
@@ -3526,13 +3466,13 @@
           }
         },
         "tags": [
-          "Term Maintenance"
+          "Terms Maintenance"
         ]
       }
     },
-    "/api/v1/maintenance/term-maintenance/import": {
+    "/api/v1/maintenance/terms-maintenance/import": {
       "post": {
-        "operationId": "TermMaintenanceController_importTerms_v1",
+        "operationId": "TermsMaintenanceController_importTerms_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3550,7 +3490,368 @@
           }
         },
         "tags": [
-          "Term Maintenance"
+          "Terms Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/item-variations": {
+      "get": {
+        "operationId": "ItemVariationsController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Item variation list retrieved."
+          }
+        },
+        "tags": [
+          "Item Variations"
+        ]
+      },
+      "post": {
+        "operationId": "ItemVariationsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemVariationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item variation created."
+          }
+        },
+        "tags": [
+          "Item Variations"
+        ]
+      }
+    },
+    "/api/v1/maintenance/item-variations/options": {
+      "get": {
+        "operationId": "ItemVariationsController_findOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Item variation options retrieved."
+          }
+        },
+        "tags": [
+          "Item Variations"
+        ]
+      }
+    },
+    "/api/v1/maintenance/item-variations/{id}": {
+      "patch": {
+        "operationId": "ItemVariationsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemVariationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item variation updated."
+          }
+        },
+        "tags": [
+          "Item Variations"
+        ]
+      }
+    },
+    "/api/v1/maintenance/item-categories": {
+      "get": {
+        "operationId": "ItemCategoryController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Item category list retrieved."
+          }
+        },
+        "tags": [
+          "Item Categories"
+        ]
+      },
+      "post": {
+        "operationId": "ItemCategoryController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item category created."
+          }
+        },
+        "tags": [
+          "Item Categories"
+        ]
+      }
+    },
+    "/api/v1/maintenance/item-categories/options": {
+      "get": {
+        "operationId": "ItemCategoryController_findOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Item category options retrieved."
+          }
+        },
+        "tags": [
+          "Item Categories"
+        ]
+      }
+    },
+    "/api/v1/maintenance/item-categories/{id}": {
+      "patch": {
+        "operationId": "ItemCategoryController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item category updated."
+          }
+        },
+        "tags": [
+          "Item Categories"
+        ]
+      }
+    },
+    "/api/v1/maintenance/unit-of-measurement": {
+      "get": {
+        "operationId": "UnitOfMeasurementController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "quantityMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INTEGER",
+                "FLOAT"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "symbol",
+                "quantityMode",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unit of measurement list retrieved."
+          }
+        },
+        "tags": [
+          "Unit of Measurement"
+        ]
+      },
+      "post": {
+        "operationId": "UnitOfMeasurementController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUnitOfMeasurementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Unit of measurement created."
+          }
+        },
+        "tags": [
+          "Unit of Measurement"
+        ]
+      }
+    },
+    "/api/v1/maintenance/unit-of-measurement/{id}": {
+      "get": {
+        "operationId": "UnitOfMeasurementController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unit of measurement retrieved."
+          }
+        },
+        "tags": [
+          "Unit of Measurement"
+        ]
+      },
+      "patch": {
+        "operationId": "UnitOfMeasurementController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUnitOfMeasurementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unit of measurement updated."
+          }
+        },
+        "tags": [
+          "Unit of Measurement"
+        ]
+      }
+    },
+    "/api/v1/maintenance/unit-of-measurement/import": {
+      "post": {
+        "operationId": "UnitOfMeasurementController_importUnits_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportUnitOfMeasurementsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Units of measurement imported."
+          }
+        },
+        "tags": [
+          "Unit of Measurement"
         ]
       }
     },
@@ -3574,12 +3875,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "DEBIT",
-                "CASH",
-                "WITH_BANK",
                 "BANK_TRANSFER",
-                "MULTIPLE_CHECK",
-                "ONLINE_PAYMENT"
+                "CASH",
+                "CHECK",
+                "DIGITAL_WALLET",
+                "NON_CASH_SETTLEMENT"
               ]
             }
           },
@@ -3623,6 +3923,7 @@
               "enum": [
                 "name",
                 "classification",
+                "sortOrder",
                 "status",
                 "createdAt",
                 "updatedAt"
@@ -3772,8 +4073,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "SALES",
-                "PURCHASE"
+                "PURCHASE",
+                "SALES"
               ]
             }
           },
@@ -3957,6 +4258,273 @@
         },
         "tags": [
           "Discount Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/party-maintenance": {
+      "get": {
+        "operationId": "PartyMaintenanceController_findAll_v1",
+        "parameters": [
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "classification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INDIVIDUAL",
+                "NON_INDIVIDUAL"
+              ]
+            }
+          },
+          {
+            "name": "partyType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "VENDOR",
+                "CUSTOMER",
+                "EMPLOYEE",
+                "MEMBER"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "partyCodeNo",
+                "name",
+                "classification",
+                "partyTypes",
+                "address",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Party list retrieved."
+          }
+        },
+        "tags": [
+          "Party Maintenance"
+        ]
+      },
+      "post": {
+        "operationId": "PartyMaintenanceController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePartyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Party created."
+          }
+        },
+        "tags": [
+          "Party Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/party-maintenance/accounting-options": {
+      "get": {
+        "operationId": "PartyMaintenanceController_findAccountingOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Party accounting account options retrieved."
+          }
+        },
+        "tags": [
+          "Party Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/party-maintenance/options/{partyType}": {
+      "get": {
+        "operationId": "PartyMaintenanceController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "partyType",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Party options retrieved."
+          }
+        },
+        "tags": [
+          "Party Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/party-maintenance/{id}": {
+      "get": {
+        "operationId": "PartyMaintenanceController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Party retrieved."
+          }
+        },
+        "tags": [
+          "Party Maintenance"
+        ]
+      },
+      "patch": {
+        "operationId": "PartyMaintenanceController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePartyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Party updated."
+          }
+        },
+        "tags": [
+          "Party Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/party-maintenance/import": {
+      "post": {
+        "operationId": "PartyMaintenanceController_importParties_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPartiesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Parties imported."
+          }
+        },
+        "tags": [
+          "Party Maintenance"
         ]
       }
     },
@@ -4407,6 +4975,1312 @@
         },
         "tags": [
           "Default Account"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/services-maintenance": {
+      "get": {
+        "operationId": "ServicesMaintenanceController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountSetupMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AUTO",
+                "EXISTING"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "serviceName",
+                "status",
+                "accountSetupMode",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Services retrieved."
+          }
+        },
+        "tags": [
+          "Services Maintenance"
+        ]
+      },
+      "post": {
+        "operationId": "ServicesMaintenanceController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceMaintenanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service created."
+          }
+        },
+        "tags": [
+          "Services Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/services-maintenance/account-options": {
+      "get": {
+        "operationId": "ServicesMaintenanceController_getAccountOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Service revenue account options retrieved."
+          }
+        },
+        "tags": [
+          "Services Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/services-maintenance/next-account-code": {
+      "get": {
+        "operationId": "ServicesMaintenanceController_getNextAccountCode_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Next service revenue account code generated."
+          }
+        },
+        "tags": [
+          "Services Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/services-maintenance/{id}": {
+      "get": {
+        "operationId": "ServicesMaintenanceController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service retrieved."
+          }
+        },
+        "tags": [
+          "Services Maintenance"
+        ]
+      },
+      "patch": {
+        "operationId": "ServicesMaintenanceController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceMaintenanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service updated."
+          }
+        },
+        "tags": [
+          "Services Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/services-maintenance/{id}/status": {
+      "patch": {
+        "operationId": "ServicesMaintenanceController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceMaintenanceStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service status updated."
+          }
+        },
+        "tags": [
+          "Services Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/responsibility-centers": {
+      "get": {
+        "operationId": "ResponsibilityCenterController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BRANCH",
+                "SECTION",
+                "CORPORATE",
+                "DIVISION",
+                "DEPARTMENT",
+                "TEAM",
+                "BUILDING",
+                "PROJECT",
+                "BUSINESS_UNIT",
+                "REGION",
+                "SALESMAN",
+                "WAREHOUSE",
+                "OUTLET",
+                "SALES_TERRITORY",
+                "FLEET"
+              ]
+            }
+          },
+          {
+            "name": "financialType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "COST_CENTER",
+                "REVENUE_CENTER",
+                "PROFIT_CENTER",
+                "INVESTMENT_CENTER"
+              ]
+            }
+          },
+          {
+            "name": "classificationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "typeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "code",
+                "name",
+                "category",
+                "financialType",
+                "manager",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Responsibility center list retrieved."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      },
+      "post": {
+        "operationId": "ResponsibilityCenterController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResponsibilityCenterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Responsibility center created."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/responsibility-centers/tree": {
+      "get": {
+        "operationId": "ResponsibilityCenterController_findTree_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BRANCH",
+                "SECTION",
+                "CORPORATE",
+                "DIVISION",
+                "DEPARTMENT",
+                "TEAM",
+                "BUILDING",
+                "PROJECT",
+                "BUSINESS_UNIT",
+                "REGION",
+                "SALESMAN",
+                "WAREHOUSE",
+                "OUTLET",
+                "SALES_TERRITORY",
+                "FLEET"
+              ]
+            }
+          },
+          {
+            "name": "financialType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "COST_CENTER",
+                "REVENUE_CENTER",
+                "PROFIT_CENTER",
+                "INVESTMENT_CENTER"
+              ]
+            }
+          },
+          {
+            "name": "classificationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "typeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "code",
+                "name",
+                "category",
+                "financialType",
+                "manager",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Responsibility center tree retrieved."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/responsibility-centers/classifications": {
+      "get": {
+        "operationId": "ResponsibilityCenterController_findClassifications_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Responsibility center classifications retrieved."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/responsibility-centers/types": {
+      "get": {
+        "operationId": "ResponsibilityCenterController_findTypes_v1",
+        "parameters": [
+          {
+            "name": "classificationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Responsibility center types retrieved."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/responsibility-centers/code-suggestion": {
+      "get": {
+        "operationId": "ResponsibilityCenterController_suggestCode_v1",
+        "parameters": [
+          {
+            "name": "typeId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Responsibility center code suggested."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/responsibility-centers/{id}": {
+      "get": {
+        "operationId": "ResponsibilityCenterController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Responsibility center retrieved."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      },
+      "patch": {
+        "operationId": "ResponsibilityCenterController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResponsibilityCenterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Responsibility center updated."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/responsibility-centers/{id}/status": {
+      "patch": {
+        "operationId": "ResponsibilityCenterController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResponsibilityCenterStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Responsibility center status updated."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/tax": {
+      "get": {
+        "operationId": "TaxController_listTaxes_v1",
+        "parameters": [
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "officialAtcCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxExempt",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Tax"
+        ]
+      }
+    },
+    "/api/v1/tax/autocomplete": {
+      "get": {
+        "operationId": "TaxController_listAutocomplete_v1",
+        "parameters": [
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "officialAtcCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taxExempt",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Tax"
+        ]
+      }
+    },
+    "/api/v1/tax/transaction-types": {
+      "get": {
+        "operationId": "TaxController_listTransactionTypes_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Tax"
+        ]
+      }
+    },
+    "/api/v1/tax/tax-types": {
+      "get": {
+        "operationId": "TaxController_listTaxTypes_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Tax"
+        ]
+      }
+    },
+    "/api/v1/tax/{sourceKey}": {
+      "get": {
+        "operationId": "TaxController_getTax_v1",
+        "parameters": [
+          {
+            "name": "sourceKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Tax"
+        ]
+      }
+    },
+    "/api/v1/maintenance/warehouse-maintenance": {
+      "get": {
+        "operationId": "WarehouseMaintenanceController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "code",
+                "name",
+                "managerName",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Warehouse list retrieved."
+          }
+        },
+        "tags": [
+          "Warehouse Maintenance"
+        ]
+      },
+      "post": {
+        "operationId": "WarehouseMaintenanceController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWarehouseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Warehouse created."
+          }
+        },
+        "tags": [
+          "Warehouse Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/warehouse-maintenance/{id}": {
+      "get": {
+        "operationId": "WarehouseMaintenanceController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Warehouse retrieved."
+          }
+        },
+        "tags": [
+          "Warehouse Maintenance"
+        ]
+      },
+      "patch": {
+        "operationId": "WarehouseMaintenanceController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWarehouseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Warehouse updated."
+          }
+        },
+        "tags": [
+          "Warehouse Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/warehouse-access": {
+      "get": {
+        "operationId": "WarehouseAccessController_findAll_v1",
+        "parameters": [
+          {
+            "name": "warehouseId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "permission",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "VIEW_STOCK",
+                "RECEIVE_STOCK",
+                "ISSUE_STOCK",
+                "TRANSFER_STOCK",
+                "ADJUST_STOCK",
+                "MANAGE_LOCATIONS",
+                "VIEW_HISTORY"
+              ]
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "warehouse",
+                "user",
+                "accessLevel",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Warehouse access list retrieved."
+          }
+        },
+        "tags": [
+          "Warehouse Access"
+        ]
+      },
+      "post": {
+        "operationId": "WarehouseAccessController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWarehouseAccessDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Warehouse access granted."
+          }
+        },
+        "tags": [
+          "Warehouse Access"
+        ]
+      }
+    },
+    "/api/v1/maintenance/warehouse-access/directory/users": {
+      "get": {
+        "operationId": "WarehouseAccessController_findDirectoryUsers_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Warehouse access user directory retrieved."
+          }
+        },
+        "tags": [
+          "Warehouse Access"
+        ]
+      }
+    },
+    "/api/v1/maintenance/warehouse-access/{id}": {
+      "get": {
+        "operationId": "WarehouseAccessController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Warehouse access record retrieved."
+          }
+        },
+        "tags": [
+          "Warehouse Access"
+        ]
+      },
+      "patch": {
+        "operationId": "WarehouseAccessController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWarehouseAccessDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Warehouse access updated."
+          }
+        },
+        "tags": [
+          "Warehouse Access"
+        ]
+      },
+      "delete": {
+        "operationId": "WarehouseAccessController_revoke_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Warehouse access revoked."
+          }
+        },
+        "tags": [
+          "Warehouse Access"
+        ]
+      }
+    },
+    "/api/v1/maintenance/warehouse-storage": {
+      "get": {
+        "operationId": "WarehouseStorageController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Warehouse storage list retrieved."
+          }
+        },
+        "tags": [
+          "Warehouse Storage"
         ]
       }
     },
@@ -5781,13 +7655,22 @@
             "type": "number"
           },
           "externalInvoiceId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "externalPaymentIntentId": {
             "type": "string",
             "nullable": true
           },
           "status": {
+            "enum": [
+              "DRAFT",
+              "OPEN",
+              "PAID",
+              "VOID",
+              "EXPIRED",
+              "UNCOLLECTIBLE"
+            ],
             "type": "string"
           },
           "billingReason": {
@@ -5881,6 +7764,16 @@
               "PAYMONGO"
             ]
           },
+          "billingMode": {
+            "enum": [
+              "MANUAL",
+              "AUTO"
+            ],
+            "type": "string"
+          },
+          "autoRenew": {
+            "type": "boolean"
+          },
           "startsAt": {
             "format": "date-time",
             "type": "string",
@@ -5955,6 +7848,8 @@
           "status",
           "billingCycle",
           "billingProvider",
+          "billingMode",
+          "autoRenew",
           "startsAt",
           "trialEndsAt",
           "currentPeriodStartAt",
@@ -6044,6 +7939,212 @@
         },
         "required": [
           "message",
+          "subscription"
+        ]
+      },
+      "CreateManualCheckoutSessionDto": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "enum": [
+              "ONBOARDING",
+              "ADDITIONAL_COMPANY",
+              "RENEWAL"
+            ],
+            "type": "string"
+          },
+          "planCode": {
+            "type": "string"
+          },
+          "billingCycle": {
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "companyId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "successUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "cancelUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "purpose",
+          "planCode",
+          "billingCycle",
+          "successUrl",
+          "cancelUrl"
+        ]
+      },
+      "ManualCheckoutSessionResponseDto": {
+        "type": "object",
+        "properties": {
+          "paymentAttemptId": {
+            "type": "number"
+          },
+          "paymentRequestId": {
+            "type": "number"
+          },
+          "checkoutSessionId": {
+            "type": "string"
+          },
+          "checkoutUrl": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "AWAITING_PAYMENT",
+              "PAID",
+              "FAILED",
+              "CANCELED",
+              "EXPIRED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "paymentAttemptId",
+          "paymentRequestId",
+          "checkoutSessionId",
+          "checkoutUrl",
+          "status"
+        ]
+      },
+      "BillingPaymentAttemptResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "paymentAttemptId": {
+            "type": "number"
+          },
+          "paymentRequestId": {
+            "type": "number"
+          },
+          "purpose": {
+            "enum": [
+              "ONBOARDING",
+              "RENEWAL",
+              "ADDITIONAL_COMPANY"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "AWAITING_PAYMENT",
+              "PAID",
+              "FAILED",
+              "CANCELED",
+              "EXPIRED"
+            ],
+            "type": "string"
+          },
+          "applicationStatus": {
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "APPLIED",
+              "FAILED"
+            ],
+            "type": "string"
+          },
+          "invoice": {
+            "$ref": "#/components/schemas/BillingInvoiceResponseDto"
+          },
+          "amountInCents": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "checkoutSessionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "paidAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "confirmedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "failedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "expiredAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "canceledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "appliedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "applicationAttempts": {
+            "type": "number"
+          },
+          "lastApplicationAttemptAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "applicationError": {
+            "type": "string",
+            "nullable": true
+          },
+          "subscription": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanySubscriptionResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "paymentAttemptId",
+          "paymentRequestId",
+          "purpose",
+          "status",
+          "applicationStatus",
+          "invoice",
+          "amountInCents",
+          "currency",
+          "checkoutSessionId",
+          "paidAt",
+          "confirmedAt",
+          "failedAt",
+          "expiredAt",
+          "canceledAt",
+          "appliedAt",
+          "applicationAttempts",
+          "lastApplicationAttemptAt",
+          "applicationError",
           "subscription"
         ]
       },
@@ -6911,6 +9012,13 @@
           "billingEmail": {
             "type": "string",
             "format": "email"
+          },
+          "billingMode": {
+            "type": "string",
+            "enum": [
+              "MANUAL",
+              "AUTO"
+            ]
           },
           "paymentMethodId": {
             "type": "string"
@@ -8614,6 +10722,328 @@
           }
         }
       },
+      "ItemVariationValueDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "isUsed": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "label",
+          "sortOrder"
+        ]
+      },
+      "CreateItemVariationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "usage": {
+            "enum": [
+              "ITEM_DETAIL",
+              "STOCK_CLASSIFICATION",
+              "VARIANT"
+            ],
+            "type": "string"
+          },
+          "values": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemVariationValueDto"
+            }
+          },
+          "requiredOnItem": {
+            "type": "boolean"
+          },
+          "affectsStock": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "values"
+        ]
+      },
+      "UpdateItemVariationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "usage": {
+            "enum": [
+              "ITEM_DETAIL",
+              "STOCK_CLASSIFICATION",
+              "VARIANT"
+            ],
+            "type": "string"
+          },
+          "values": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemVariationValueDto"
+            }
+          },
+          "requiredOnItem": {
+            "type": "boolean"
+          },
+          "affectsStock": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "CreateItemCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "accountingSetupMode": {
+            "enum": [
+              "INHERIT",
+              "AUTO_CREATE"
+            ],
+            "type": "string"
+          },
+          "requiresInventoryAccount": {
+            "type": "boolean"
+          },
+          "requiresSalesAccount": {
+            "type": "boolean"
+          },
+          "requiresCostOfSalesAccount": {
+            "type": "boolean"
+          },
+          "requiresExpenseAccount": {
+            "type": "boolean"
+          },
+          "behaviors": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "Sellable Item",
+                "Purchasable Item",
+                "Issuable Item",
+                "Returnable Item",
+                "Non-Inventory Item",
+                "Raw Material",
+                "Semi-Finished Goods/WIP",
+                "Finished Goods",
+                "Asset Item",
+                "Consumable Item"
+              ]
+            }
+          },
+          "allowSubCategory": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "accountingSetupMode",
+          "allowSubCategory"
+        ]
+      },
+      "UpdateItemCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "accountingSetupMode": {
+            "enum": [
+              "INHERIT",
+              "AUTO_CREATE"
+            ],
+            "type": "string"
+          },
+          "requiresInventoryAccount": {
+            "type": "boolean"
+          },
+          "requiresSalesAccount": {
+            "type": "boolean"
+          },
+          "requiresCostOfSalesAccount": {
+            "type": "boolean"
+          },
+          "requiresExpenseAccount": {
+            "type": "boolean"
+          },
+          "behaviors": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "Sellable Item",
+                "Purchasable Item",
+                "Issuable Item",
+                "Returnable Item",
+                "Non-Inventory Item",
+                "Raw Material",
+                "Semi-Finished Goods/WIP",
+                "Finished Goods",
+                "Asset Item",
+                "Consumable Item"
+              ]
+            }
+          },
+          "allowSubCategory": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "CreateUnitOfMeasurementDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "symbol": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "quantityMode": {
+            "enum": [
+              "INTEGER",
+              "FLOAT"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "symbol",
+          "quantityMode"
+        ]
+      },
+      "ImportUnitOfMeasurementsDto": {
+        "type": "object",
+        "properties": {
+          "units": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateUnitOfMeasurementDto"
+            }
+          }
+        },
+        "required": [
+          "units"
+        ]
+      },
+      "UpdateUnitOfMeasurementDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "symbol": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "quantityMode": {
+            "enum": [
+              "INTEGER",
+              "FLOAT"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
       "CreatePaymentTypeDto": {
         "type": "object",
         "properties": {
@@ -8627,14 +11057,17 @@
           },
           "classification": {
             "enum": [
-              "DEBIT",
-              "CASH",
-              "WITH_BANK",
               "BANK_TRANSFER",
-              "MULTIPLE_CHECK",
-              "ONLINE_PAYMENT"
+              "CASH",
+              "CHECK",
+              "DIGITAL_WALLET",
+              "NON_CASH_SETTLEMENT"
             ],
             "type": "string"
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
           },
           "status": {
             "enum": [
@@ -8678,14 +11111,17 @@
           },
           "classification": {
             "enum": [
-              "DEBIT",
-              "CASH",
-              "WITH_BANK",
               "BANK_TRANSFER",
-              "MULTIPLE_CHECK",
-              "ONLINE_PAYMENT"
+              "CASH",
+              "CHECK",
+              "DIGITAL_WALLET",
+              "NON_CASH_SETTLEMENT"
             ],
             "type": "string"
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
           },
           "status": {
             "enum": [
@@ -8709,8 +11145,8 @@
           },
           "type": {
             "enum": [
-              "SALES",
-              "PURCHASE"
+              "PURCHASE",
+              "SALES"
             ],
             "type": "string"
           },
@@ -8769,8 +11205,8 @@
           },
           "type": {
             "enum": [
-              "SALES",
-              "PURCHASE"
+              "PURCHASE",
+              "SALES"
             ],
             "type": "string"
           },
@@ -8791,6 +11227,472 @@
               "INACTIVE"
             ],
             "type": "string"
+          }
+        }
+      },
+      "CreatePartyAddressDto": {
+        "type": "object",
+        "properties": {
+          "addressName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "addressLine2": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "barangay": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "barangayCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "cityMunicipality": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "cityMunicipalityCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "province": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "provinceCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "region": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "regionCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "isBilling": {
+            "type": "boolean"
+          },
+          "isBuilding": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isDelivery": {
+            "type": "boolean"
+          },
+          "isForeign": {
+            "type": "boolean"
+          },
+          "isHome": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "addressName",
+          "addressLine1",
+          "addressLine2",
+          "isBilling",
+          "isDefault",
+          "isDelivery"
+        ]
+      },
+      "CreatePartyDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "partyCodeNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "classification": {
+            "enum": [
+              "INDIVIDUAL",
+              "NON_INDIVIDUAL"
+            ],
+            "type": "string"
+          },
+          "partyTypes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "VENDOR",
+                "CUSTOMER",
+                "EMPLOYEE",
+                "MEMBER"
+              ]
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "tradeName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "suffixName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "honorific": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "civilStatus": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "nationality": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "memberRegistrationDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "addresses": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePartyAddressDto"
+            }
+          },
+          "defaultReceivableAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "customerAdvanceAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "defaultPayableAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "vendorAdvanceAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "employeeAdvanceAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "employeePayableAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "tin": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^\\d{3}-\\d{3}-\\d{3}-\\d{3}$"
+          },
+          "vatRegistrationType": {
+            "nullable": true,
+            "enum": [
+              "VAT_REGISTERED",
+              "NON_VAT",
+              "VAT_EXEMPT"
+            ],
+            "type": "string"
+          },
+          "defaultPurchaseTaxClassification": {
+            "nullable": true,
+            "enum": [
+              "CAPITAL_GOODS",
+              "OTHER_THAN_CAPITAL_GOODS",
+              "SERVICES"
+            ],
+            "type": "string"
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "format": "email"
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^\\+63 \\d{3} \\d{3} \\d{4}$"
+          },
+          "landline": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "partyCodeNo",
+          "classification",
+          "partyTypes",
+          "addresses"
+        ]
+      },
+      "ImportPartiesDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "parties": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePartyDto"
+            }
+          }
+        },
+        "required": [
+          "parties"
+        ]
+      },
+      "UpdatePartyDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "partyCodeNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "classification": {
+            "enum": [
+              "INDIVIDUAL",
+              "NON_INDIVIDUAL"
+            ],
+            "type": "string"
+          },
+          "partyTypes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "VENDOR",
+                "CUSTOMER",
+                "EMPLOYEE",
+                "MEMBER"
+              ]
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "tradeName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "suffixName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "honorific": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "civilStatus": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "nationality": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "memberRegistrationDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "addresses": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePartyAddressDto"
+            }
+          },
+          "defaultReceivableAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "customerAdvanceAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "defaultPayableAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "vendorAdvanceAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "employeeAdvanceAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "employeePayableAccount": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "tin": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^\\d{3}-\\d{3}-\\d{3}-\\d{3}$"
+          },
+          "vatRegistrationType": {
+            "nullable": true,
+            "enum": [
+              "VAT_REGISTERED",
+              "NON_VAT",
+              "VAT_EXEMPT"
+            ],
+            "type": "string"
+          },
+          "defaultPurchaseTaxClassification": {
+            "nullable": true,
+            "enum": [
+              "CAPITAL_GOODS",
+              "OTHER_THAN_CAPITAL_GOODS",
+              "SERVICES"
+            ],
+            "type": "string"
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "format": "email"
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^\\+63 \\d{3} \\d{3} \\d{4}$"
+          },
+          "landline": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
           }
         }
       },
@@ -9029,6 +11931,446 @@
         "required": [
           "status"
         ]
+      },
+      "CreateServiceMaintenanceDto": {
+        "type": "object",
+        "properties": {
+          "serviceName": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "accountSetupMode": {
+            "enum": [
+              "AUTO",
+              "EXISTING"
+            ],
+            "type": "string"
+          },
+          "revenueCoaId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "serviceName",
+          "accountSetupMode"
+        ]
+      },
+      "UpdateServiceMaintenanceDto": {
+        "type": "object",
+        "properties": {
+          "serviceName": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "accountSetupMode": {
+            "enum": [
+              "AUTO",
+              "EXISTING"
+            ],
+            "type": "string"
+          },
+          "revenueCoaId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateServiceMaintenanceStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreateResponsibilityCenterDto": {
+        "type": "object",
+        "properties": {
+          "classificationId": {
+            "type": "string"
+          },
+          "typeId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "category": {
+            "enum": [
+              "BRANCH",
+              "SECTION",
+              "CORPORATE",
+              "DIVISION",
+              "DEPARTMENT",
+              "TEAM",
+              "BUILDING",
+              "PROJECT",
+              "BUSINESS_UNIT",
+              "REGION",
+              "SALESMAN",
+              "WAREHOUSE",
+              "OUTLET",
+              "SALES_TERRITORY",
+              "FLEET"
+            ],
+            "type": "string"
+          },
+          "financialType": {
+            "enum": [
+              "COST_CENTER",
+              "REVENUE_CENTER",
+              "PROFIT_CENTER",
+              "INVESTMENT_CENTER"
+            ],
+            "type": "string"
+          },
+          "manager": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "parentId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateResponsibilityCenterDto": {
+        "type": "object",
+        "properties": {
+          "classificationId": {
+            "type": "string"
+          },
+          "typeId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "category": {
+            "enum": [
+              "BRANCH",
+              "SECTION",
+              "CORPORATE",
+              "DIVISION",
+              "DEPARTMENT",
+              "TEAM",
+              "BUILDING",
+              "PROJECT",
+              "BUSINESS_UNIT",
+              "REGION",
+              "SALESMAN",
+              "WAREHOUSE",
+              "OUTLET",
+              "SALES_TERRITORY",
+              "FLEET"
+            ],
+            "type": "string"
+          },
+          "financialType": {
+            "enum": [
+              "COST_CENTER",
+              "REVENUE_CENTER",
+              "PROFIT_CENTER",
+              "INVESTMENT_CENTER"
+            ],
+            "type": "string"
+          },
+          "manager": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "parentId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "UpdateResponsibilityCenterStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreateWarehouseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 180,
+            "pattern": "\\S"
+          },
+          "branchUnitIds": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          "branchAvailabilityMode": {
+            "enum": [
+              "SPECIFIC",
+              "ALL",
+              "EXCEPT"
+            ],
+            "type": "string"
+          },
+          "managerName": {
+            "type": "string",
+            "maxLength": 180
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "contactNo": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateWarehouseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 180,
+            "pattern": "\\S"
+          },
+          "branchUnitIds": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          "branchAvailabilityMode": {
+            "enum": [
+              "SPECIFIC",
+              "ALL",
+              "EXCEPT"
+            ],
+            "type": "string"
+          },
+          "managerName": {
+            "type": "string",
+            "maxLength": 180
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "contactNo": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "CreateWarehouseAccessAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "warehouseId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "number"
+          },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "VIEWER",
+              "PICKER",
+              "MANAGER"
+            ]
+          },
+          "permissions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "VIEW_STOCK",
+                "RECEIVE_STOCK",
+                "ISSUE_STOCK",
+                "TRANSFER_STOCK",
+                "ADJUST_STOCK",
+                "MANAGE_LOCATIONS",
+                "VIEW_HISTORY"
+              ]
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "warehouseId",
+          "userId",
+          "permissions"
+        ]
+      },
+      "CreateWarehouseAccessDto": {
+        "type": "object",
+        "properties": {
+          "assignments": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateWarehouseAccessAssignmentDto"
+            }
+          }
+        },
+        "required": [
+          "assignments"
+        ]
+      },
+      "UpdateWarehouseAccessDto": {
+        "type": "object",
+        "properties": {
+          "accessLevel": {
+            "enum": [
+              "VIEWER",
+              "PICKER",
+              "MANAGER"
+            ],
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "VIEW_STOCK",
+                "RECEIVE_STOCK",
+                "ISSUE_STOCK",
+                "TRANSFER_STOCK",
+                "ADJUST_STOCK",
+                "MANAGE_LOCATIONS",
+                "VIEW_HISTORY"
+              ]
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
       },
       "ApprovalManagementModuleResponseDto": {
         "type": "object",

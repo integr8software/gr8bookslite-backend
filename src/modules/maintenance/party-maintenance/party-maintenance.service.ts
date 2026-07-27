@@ -520,8 +520,14 @@ export class PartyMaintenanceService {
       termId,
       tin: this.normalizeOptionalString(dto.tin),
       vatRegistrationType: dto.vatRegistrationType ?? null,
-      defaultPurchaseTaxClassification: dto.defaultPurchaseTaxClassification ?? null,
       atcCode: this.normalizeOptionalString(dto.atcCode),
+      defaultPurchaseInputVatTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseInputVatTaxSourceKey),
+      defaultPurchaseEwtTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseEwtTaxSourceKey),
+      defaultPurchaseFwtTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseFwtTaxSourceKey),
+      defaultPurchaseWvatTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseWvatTaxSourceKey),
+      defaultSalesOutputVatTaxSourceKey: this.normalizeOptionalString(dto.defaultSalesOutputVatTaxSourceKey),
+      defaultSalesCwtTaxSourceKey: this.normalizeOptionalString(dto.defaultSalesCwtTaxSourceKey),
+      defaultSalesWvatTaxSourceKey: this.normalizeOptionalString(dto.defaultSalesWvatTaxSourceKey),
       email: this.normalizeOptionalString(dto.email),
       contactNo: this.normalizeOptionalString(dto.contactNo),
       landline: this.normalizeOptionalString(dto.landline),
@@ -534,6 +540,7 @@ export class PartyMaintenanceService {
 
     this.validateParty(normalized);
     await this.ensurePartyChartAccounts(companyId, normalized);
+    await this.ensurePartyTaxDefaults(normalized);
 
     if (options.requirePartyCode && !normalized.partyCodeNo) {
       throw new BadRequestException('Party code is required.');
@@ -543,6 +550,8 @@ export class PartyMaintenanceService {
   }
 
   private mergePartyDto(current: PartyWithDetails, dto: UpdatePartyDto): CreatePartyDto {
+    const currentTaxDefaults = current as PartyWithDetails & PartyTaxDefaultSourceKeys;
+
     return {
       partyCodeNo: dto.partyCodeNo ?? current.partyCodeNo,
       classification: dto.classification ?? current.classification,
@@ -589,8 +598,14 @@ export class PartyMaintenanceService {
       termId: dto.termId ?? current.termId?.toString() ?? '',
       tin: dto.tin ?? current.tin ?? '',
       vatRegistrationType: dto.vatRegistrationType ?? current.vatRegistrationType ?? null,
-      defaultPurchaseTaxClassification: dto.defaultPurchaseTaxClassification ?? current.defaultPurchaseTaxClassification ?? null,
       atcCode: dto.atcCode ?? current.atcCode ?? '',
+      defaultPurchaseInputVatTaxSourceKey: dto.defaultPurchaseInputVatTaxSourceKey ?? currentTaxDefaults.defaultPurchaseInputVatTaxSourceKey ?? '',
+      defaultPurchaseEwtTaxSourceKey: dto.defaultPurchaseEwtTaxSourceKey ?? currentTaxDefaults.defaultPurchaseEwtTaxSourceKey ?? '',
+      defaultPurchaseFwtTaxSourceKey: dto.defaultPurchaseFwtTaxSourceKey ?? currentTaxDefaults.defaultPurchaseFwtTaxSourceKey ?? '',
+      defaultPurchaseWvatTaxSourceKey: dto.defaultPurchaseWvatTaxSourceKey ?? currentTaxDefaults.defaultPurchaseWvatTaxSourceKey ?? '',
+      defaultSalesOutputVatTaxSourceKey: dto.defaultSalesOutputVatTaxSourceKey ?? currentTaxDefaults.defaultSalesOutputVatTaxSourceKey ?? '',
+      defaultSalesCwtTaxSourceKey: dto.defaultSalesCwtTaxSourceKey ?? currentTaxDefaults.defaultSalesCwtTaxSourceKey ?? '',
+      defaultSalesWvatTaxSourceKey: dto.defaultSalesWvatTaxSourceKey ?? currentTaxDefaults.defaultSalesWvatTaxSourceKey ?? '',
       email: dto.email ?? current.email ?? '',
       contactNo: dto.contactNo ?? current.contactNo ?? '',
       landline: dto.landline ?? current.landline ?? '',
@@ -959,6 +974,87 @@ export class PartyMaintenanceService {
     }
   }
 
+  private async ensurePartyTaxDefaults(dto: CreatePartyDto) {
+    const defaultFields = [
+      {
+        sourceKey: dto.defaultPurchaseInputVatTaxSourceKey,
+        transactionType: 'Purchases',
+        taxTypes: ['INPUT VAT'],
+        label: 'Purchase Input VAT',
+      },
+      {
+        sourceKey: dto.defaultPurchaseEwtTaxSourceKey,
+        transactionType: 'Purchases',
+        taxTypes: ['EWT'],
+        label: 'Purchase Expanded Withholding Tax',
+      },
+      {
+        sourceKey: dto.defaultPurchaseFwtTaxSourceKey,
+        transactionType: 'Purchases',
+        taxTypes: ['FWT'],
+        label: 'Purchase Final Withholding Tax',
+      },
+      {
+        sourceKey: dto.defaultPurchaseWvatTaxSourceKey,
+        transactionType: 'Purchases',
+        taxTypes: ['EWT', 'WVAT'],
+        officialAtcCodePrefix: 'WV',
+        label: 'Purchase VAT Withholding',
+      },
+      {
+        sourceKey: dto.defaultSalesOutputVatTaxSourceKey,
+        transactionType: 'Sales',
+        taxTypes: ['OUTPUT VAT'],
+        label: 'Sales Output VAT',
+      },
+      {
+        sourceKey: dto.defaultSalesCwtTaxSourceKey,
+        transactionType: 'Sales',
+        taxTypes: ['CWT'],
+        label: 'Sales Creditable Withholding Tax',
+      },
+      {
+        sourceKey: dto.defaultSalesWvatTaxSourceKey,
+        transactionType: 'Sales',
+        taxTypes: ['WVAT'],
+        label: 'Sales VAT Withholding',
+      },
+    ].filter((field) => Boolean(field.sourceKey));
+
+    if (defaultFields.length === 0) {
+      return;
+    }
+
+    const taxes = await this.prisma.tax.findMany({
+      where: {
+        sourceKey: {
+          in: defaultFields.map((field) => field.sourceKey as string),
+        },
+      },
+      select: {
+        sourceKey: true,
+        officialAtcCode: true,
+        taxType: true,
+        transactionType: true,
+      },
+    });
+    const taxBySourceKey = new Map(taxes.map((tax) => [tax.sourceKey, tax]));
+
+    for (const field of defaultFields) {
+      const tax = taxBySourceKey.get(field.sourceKey as string);
+
+      if (
+        !tax ||
+        tax.transactionType !== field.transactionType ||
+        !field.taxTypes.includes(tax.taxType) ||
+        (field.officialAtcCodePrefix &&
+          !tax.officialAtcCode?.startsWith(field.officialAtcCodePrefix))
+      ) {
+        throw new BadRequestException(`Select a valid ${field.label} tax.`);
+      }
+    }
+  }
+
   private parseOptionalDate(value: string | null | undefined) {
     const normalized = value?.trim();
 
@@ -1015,8 +1111,14 @@ export class PartyMaintenanceService {
       employeePayableAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE) ? parseOptionalPositiveBigIntId(dto.employeePayableAccount) : null,
       tin: dto.tin,
       vatRegistrationType: dto.vatRegistrationType,
-      defaultPurchaseTaxClassification: dto.defaultPurchaseTaxClassification,
       atcCode: dto.atcCode,
+      defaultPurchaseInputVatTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseInputVatTaxSourceKey : null,
+      defaultPurchaseEwtTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseEwtTaxSourceKey : null,
+      defaultPurchaseFwtTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseFwtTaxSourceKey : null,
+      defaultPurchaseWvatTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseWvatTaxSourceKey : null,
+      defaultSalesOutputVatTaxSourceKey: dto.partyTypes.includes(PartyType.CUSTOMER) ? dto.defaultSalesOutputVatTaxSourceKey : null,
+      defaultSalesCwtTaxSourceKey: dto.partyTypes.includes(PartyType.CUSTOMER) ? dto.defaultSalesCwtTaxSourceKey : null,
+      defaultSalesWvatTaxSourceKey: dto.partyTypes.includes(PartyType.CUSTOMER) ? dto.defaultSalesWvatTaxSourceKey : null,
       email: dto.email,
       contactNo: dto.contactNo,
       landline: dto.landline,
@@ -1163,6 +1265,16 @@ export class PartyMaintenanceService {
     }
   }
 }
+
+type PartyTaxDefaultSourceKeys = {
+  defaultPurchaseInputVatTaxSourceKey?: string | null;
+  defaultPurchaseEwtTaxSourceKey?: string | null;
+  defaultPurchaseFwtTaxSourceKey?: string | null;
+  defaultPurchaseWvatTaxSourceKey?: string | null;
+  defaultSalesOutputVatTaxSourceKey?: string | null;
+  defaultSalesCwtTaxSourceKey?: string | null;
+  defaultSalesWvatTaxSourceKey?: string | null;
+};
 
 function hasPersonalInformationPartyType(partyTypes: PartyType[]) {
   return partyTypes.includes(PartyType.EMPLOYEE) || partyTypes.includes(PartyType.MEMBER);

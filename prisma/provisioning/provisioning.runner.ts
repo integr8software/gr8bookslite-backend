@@ -4,7 +4,8 @@ import { prisma } from '../seeds/prismaClient';
 import { seedModules } from '../seeds/seedModules';
 import { seedModuleSystems } from '../seeds/seedModuleSystems';
 import { seedSubscriptionPlans } from '../seeds/seedSubscriptionPlans';
-import { seedGlobalTaxDefaults } from '../../src/modules/tax/seed/tax.seed';
+import { seedTaxes } from '../seeds/seedTaxes';
+import { seedTaxPostingRules } from '../../src/modules/tax/seed/tax.seed';
 
 export type ProvisionResult = {
   checksum: string;
@@ -14,7 +15,7 @@ export type ProvisionResult = {
 
 export const PlatformProvisionVersion = '2026.07.08.0';
 
-const ProvisionSteps = ['platform-catalog', 'module-systems', 'subscription-plans', 'global-tax-definitions'] as const;
+const ProvisionSteps = ['platform-catalog', 'module-systems', 'subscription-plans', 'taxes', 'tax-posting-rules'] as const;
 
 export function buildProvisionChecksum() {
   return createHash('sha256')
@@ -43,8 +44,11 @@ export async function runPlatformProvision(): Promise<ProvisionResult> {
   console.log('Provisioning subscription plan system links.');
   await seedSubscriptionPlans();
 
-  console.log('Provisioning global tax definitions.');
-  await seedGlobalTaxDefaults(prisma);
+  console.log('Provisioning taxes.');
+  await seedTaxes();
+
+  console.log('Provisioning tax posting rules.');
+  await seedTaxPostingRules(prisma);
 
   await prisma.platformVersion.upsert({
     where: { id: 1 },

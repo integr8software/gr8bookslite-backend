@@ -65,7 +65,7 @@ export async function resolveDiscountChartAccount(
       accountGroup: mergeAccountGroupTags(parent.accountGroup),
       statementSection: parent.statementSection,
       reportAlias: input.accountTitle,
-      description: `Generated from Discount Management for ${input.accountTitle}.`,
+      description: `Generated from Discount Maintenance for ${input.accountTitle}.`,
       isPostingAccount: true,
       withSubsidiary: false,
       contraAccount: true,

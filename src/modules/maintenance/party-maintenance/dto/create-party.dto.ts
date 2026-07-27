@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { ArrayMinSize, IsDateString, IsArray, IsEmail, IsEnum, IsInt, IsOptional, IsString, Matches, MaxLength, Min, ValidateNested } from 'class-validator';
-import { PartyClassification, PartyPurchaseTaxClassification, PartyStatus, PartyTaxRegistrationType, PartyType } from '@prisma/client';
+import { PartyClassification, PartyStatus, PartyTaxRegistrationType, PartyType } from '@prisma/client';
 import { CreatePartyAddressDto } from './create-party-address.dto';
 
 export class CreatePartyDto {
@@ -132,13 +132,44 @@ export class CreatePartyDto {
   vatRegistrationType?: PartyTaxRegistrationType | null;
 
   @IsOptional()
-  @IsEnum(PartyPurchaseTaxClassification)
-  defaultPurchaseTaxClassification?: PartyPurchaseTaxClassification | null;
+  @IsString()
+  @MaxLength(40)
+  atcCode?: string | null;
 
   @IsOptional()
   @IsString()
   @MaxLength(40)
-  atcCode?: string | null;
+  defaultPurchaseInputVatTaxSourceKey?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  defaultPurchaseEwtTaxSourceKey?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  defaultPurchaseFwtTaxSourceKey?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  defaultPurchaseWvatTaxSourceKey?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  defaultSalesOutputVatTaxSourceKey?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  defaultSalesCwtTaxSourceKey?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  defaultSalesWvatTaxSourceKey?: string | null;
 
   @IsOptional()
   @IsEmail()

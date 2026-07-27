@@ -311,7 +311,7 @@ Permission behavior:
 - `UPDATE`: edit warehouse details and activate/deactivate.
 - `EXPORT`: allow frontend export actions.
 
-Reserved company admin access follows the same shape as `TermMaintenanceService`: `SUPER_ADMIN`, company `ADMIN`, or active admin membership can bypass module-specific permission checks.
+Reserved company admin access follows the same shape as `TermsMaintenanceService`: `SUPER_ADMIN`, company `ADMIN`, or active admin membership can bypass module-specific permission checks.
 
 ## Company Bootstrap Seed
 
