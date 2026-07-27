@@ -603,6 +603,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
+    code: 'CRPT',
+    name: 'Customize Report',
+    icon: 'fileCog',
+    type: Maintenance,
+  },
+  {
     code: 'MM',
     name: 'Mail Maintenance',
     icon: 'mail',
