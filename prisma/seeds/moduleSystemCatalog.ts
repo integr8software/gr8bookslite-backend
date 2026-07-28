@@ -152,7 +152,7 @@ export const AccountingAndInventorySidebarTemplate = [
     label: 'Warehouse Management',
     iconName: 'warehouse',
     children: [
-      link('warehouse-management-warehouses', 'WM', 'warehouse', 'Warehouse'),
+      link('warehouse-management-warehouses', 'WM', 'warehouse', 'Warehouses'),
       link('warehouse-management-warehouse-access', 'WA', 'shieldCheck'),
       link('warehouse-management-warehouse-storage', 'WS', 'mapPin', 'Warehouse Storage'),
       link('warehouse-management-inventory-stock', 'WSI', 'search', 'Warehouse Inventory Stock'),
