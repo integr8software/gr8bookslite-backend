@@ -1,6 +1,5 @@
 import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, DefaultAccountUsageType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import { seedCompanyTaxConfigurationDefaults } from '../../../tax/seed/tax.seed';
 import { StandardDefaultChartAccounts } from './chart-of-accounts-defaults.seed';
 import { StandardDefaultAccountMappings } from './chart-of-accounts-system-groups.seed';
 import { mergeAccountGroupTags, normalizeAccountGroupTags, SystemAccountGroupTags } from '../utils/system-account-groups.util';
@@ -131,7 +130,6 @@ export async function seedCompanyChartAccountDefaults(tx: Prisma.TransactionClie
   }
 
   await seedCompanyTaxAccountMappings(tx, companyId, chartAccountIdByCode);
-  await seedCompanyTaxConfigurationDefaults(tx, companyId);
   await clearLegacyItemCategoryParentAccountTags(tx, companyId);
 }
 

@@ -3,6 +3,8 @@ import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.u
 import type { PartyWithDetails } from '../types/party-with-details.type';
 
 export function mapParty(party: PartyWithDetails, userNames: Map<number, string>) {
+  const taxDefaults = party as PartyWithDetails & PartyTaxDefaultSourceKeys;
+
   return {
     id: party.id.toString(),
     partyCodeNo: party.partyCodeNo,
@@ -40,8 +42,14 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     termName: party.term?.name ?? '',
     tin: party.tin ?? '',
     vatRegistrationType: party.vatRegistrationType ?? null,
-    defaultPurchaseTaxClassification: party.defaultPurchaseTaxClassification ?? null,
     atcCode: party.atcCode ?? '',
+    defaultPurchaseInputVatTaxSourceKey: taxDefaults.defaultPurchaseInputVatTaxSourceKey ?? '',
+    defaultPurchaseEwtTaxSourceKey: taxDefaults.defaultPurchaseEwtTaxSourceKey ?? '',
+    defaultPurchaseFwtTaxSourceKey: taxDefaults.defaultPurchaseFwtTaxSourceKey ?? '',
+    defaultPurchaseWvatTaxSourceKey: taxDefaults.defaultPurchaseWvatTaxSourceKey ?? '',
+    defaultSalesOutputVatTaxSourceKey: taxDefaults.defaultSalesOutputVatTaxSourceKey ?? '',
+    defaultSalesCwtTaxSourceKey: taxDefaults.defaultSalesCwtTaxSourceKey ?? '',
+    defaultSalesWvatTaxSourceKey: taxDefaults.defaultSalesWvatTaxSourceKey ?? '',
     email: party.email ?? '',
     contactNo: party.contactNo ?? '',
     landline: party.landline ?? '',
@@ -51,6 +59,16 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     updatedAt: party.updatedAt,
   };
 }
+
+type PartyTaxDefaultSourceKeys = {
+  defaultPurchaseInputVatTaxSourceKey?: string | null;
+  defaultPurchaseEwtTaxSourceKey?: string | null;
+  defaultPurchaseFwtTaxSourceKey?: string | null;
+  defaultPurchaseWvatTaxSourceKey?: string | null;
+  defaultSalesOutputVatTaxSourceKey?: string | null;
+  defaultSalesCwtTaxSourceKey?: string | null;
+  defaultSalesWvatTaxSourceKey?: string | null;
+};
 
 function mapChartAccountSummary(account: ChartAccount | null) {
   return account

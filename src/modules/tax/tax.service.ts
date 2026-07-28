@@ -1,74 +1,174 @@
-import { Injectable } from '@nestjs/common';
-import { TaxTransactionScope } from '@prisma/client';
-import type { AuthUser } from '../../common/interfaces/auth-user.interface';
-import { CreateTaxDto } from './dto/create-tax.dto';
-import { CreateTaxPostingRuleDto } from './dto/create-tax-posting-rule.dto';
-import { CreateTaxRateVersionDto } from './dto/create-tax-rate-version.dto';
-import { GetTaxListQueryDto } from './dto/get-tax-list-query.dto';
-import { ReorderTaxesDto } from './dto/reorder-taxes.dto';
-import { UpdateCompanyTaxConfigurationDto } from './dto/update-company-tax-configuration.dto';
-import { UpdateDefaultTaxAccountsDto } from './dto/update-default-tax-accounts.dto';
-import { UpdateTaxDto } from './dto/update-tax.dto';
-import { UpsertTaxAccountMappingDto } from './dto/upsert-tax-account-mapping.dto';
-import { TaxCatalogService } from './services/tax-catalog.service';
-import { TaxCompanyConfigurationService } from './services/tax-company-configuration.service';
-import { TaxPostingRuleService } from './services/tax-posting-rule.service';
-import { TaxRateService } from './services/tax-rate.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { TaxListQueryDto } from './dto/tax-list-query.dto';
+import { mapTax, mapTaxAutocomplete } from './mappers/tax-code.mapper';
 
 @Injectable()
 export class TaxService {
-  constructor(
-    private readonly catalog: TaxCatalogService,
-    private readonly companyConfiguration: TaxCompanyConfigurationService,
-    private readonly rates: TaxRateService,
-    private readonly postingRules: TaxPostingRuleService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  findAll(user: AuthUser, query: GetTaxListQueryDto) {
-    return this.catalog.findAll(user, query);
+  async listTaxes(query: TaxListQueryDto = {}) {
+    const taxes = await this.prisma.tax.findMany({
+      where: this.buildWhereInput(query),
+      orderBy: [
+        { transactionType: 'asc' },
+        { taxType: 'asc' },
+        { sortOrder: 'asc' },
+        { taxCode: 'asc' },
+        { taxDescription: 'asc' },
+      ],
+      take: query.limit ?? 20,
+    });
+
+    const mappedTaxes = taxes.map(mapTax);
+
+    return {
+      taxCodes: mappedTaxes,
+      taxes: mappedTaxes,
+    };
   }
 
-  findOne(user: AuthUser, id: string) {
-    return this.catalog.findOne(user, id);
+  async getTax(sourceKey: string) {
+    const tax = await this.prisma.tax.findUnique({
+      where: {
+        sourceKey,
+      },
+    });
+
+    if (!tax) {
+      throw new NotFoundException('Tax not found.');
+    }
+
+    const mappedTax = mapTax(tax);
+
+    return {
+      tax: mappedTax,
+      taxCode: mappedTax,
+    };
   }
 
-  reorder(user: AuthUser, dto: ReorderTaxesDto) {
-    return this.catalog.reorder(user, dto);
+  async listAutocomplete(query: TaxListQueryDto = {}) {
+    const taxes = await this.prisma.tax.findMany({
+      where: this.buildWhereInput(query),
+      orderBy: [
+        { transactionType: 'asc' },
+        { taxType: 'asc' },
+        { sortOrder: 'asc' },
+        { taxCode: 'asc' },
+        { taxDescription: 'asc' },
+      ],
+      take: query.limit ?? 20,
+    });
+
+    const mappedTaxes = taxes.map(mapTaxAutocomplete);
+
+    return {
+      taxCodes: mappedTaxes,
+      taxes: mappedTaxes,
+    };
   }
 
-  create(user: AuthUser, dto: CreateTaxDto) {
-    return this.catalog.create(user, dto);
+  async listTransactionTypes() {
+    const taxes = await this.prisma.tax.findMany({
+      distinct: ['transactionType'],
+      orderBy: [{ transactionType: 'asc' }],
+      select: {
+        transactionType: true,
+      },
+    });
+
+    return {
+      transactionTypes: taxes.map((tax) => tax.transactionType),
+    };
   }
 
-  update(user: AuthUser, id: string, dto: UpdateTaxDto) {
-    return this.catalog.update(user, id, dto);
+  async listTaxTypes() {
+    const taxes = await this.prisma.tax.findMany({
+      distinct: ['taxType'],
+      orderBy: [{ taxType: 'asc' }],
+      select: {
+        taxType: true,
+      },
+    });
+
+    return {
+      taxTypes: taxes.map((tax) => tax.taxType),
+    };
   }
 
-  resolveTaxForTransaction(companyId: number, taxMaintenanceId: bigint, transactionScope: Exclude<TaxTransactionScope, 'BOTH'>) {
-    return this.companyConfiguration.resolveTaxForTransaction(companyId, taxMaintenanceId, transactionScope);
+  listPartyDefaultClassifications() {
+    return {
+      classifications: [
+        {
+          key: 'defaultPurchaseInputVatTaxSourceKey',
+          label: 'Purchase Input VAT',
+          transactionType: 'Purchases',
+          taxTypes: ['INPUT VAT'],
+        },
+        {
+          key: 'defaultPurchaseEwtTaxSourceKey',
+          label: 'Purchase Expanded Withholding Tax',
+          transactionType: 'Purchases',
+          taxTypes: ['EWT'],
+        },
+        {
+          key: 'defaultPurchaseFwtTaxSourceKey',
+          label: 'Purchase Final Withholding Tax',
+          transactionType: 'Purchases',
+          taxTypes: ['FWT'],
+        },
+        {
+          key: 'defaultPurchaseWvatTaxSourceKey',
+          label: 'Purchase VAT Withholding',
+          transactionType: 'Purchases',
+          taxTypes: ['EWT', 'WVAT'],
+          officialAtcCodePrefix: 'WV',
+        },
+        {
+          key: 'defaultSalesOutputVatTaxSourceKey',
+          label: 'Sales Output VAT',
+          transactionType: 'Sales',
+          taxTypes: ['OUTPUT VAT'],
+        },
+        {
+          key: 'defaultSalesCwtTaxSourceKey',
+          label: 'Sales Creditable Withholding Tax',
+          transactionType: 'Sales',
+          taxTypes: ['CWT'],
+        },
+        {
+          key: 'defaultSalesWvatTaxSourceKey',
+          label: 'Sales VAT Withholding',
+          transactionType: 'Sales',
+          taxTypes: ['WVAT'],
+        },
+      ],
+    };
   }
 
-  getDefaultAccounts(user: AuthUser) {
-    return this.companyConfiguration.getDefaultAccounts(user);
-  }
+  private buildWhereInput(query: TaxListQueryDto): Prisma.TaxWhereInput {
+    const normalizedQuery = query.query?.trim();
 
-  updateDefaultAccounts(user: AuthUser, dto: UpdateDefaultTaxAccountsDto) {
-    return this.companyConfiguration.updateDefaultAccounts(user, dto);
-  }
-
-  upsertAccountMapping(user: AuthUser, dto: UpsertTaxAccountMappingDto) {
-    return this.companyConfiguration.upsertAccountMapping(user, dto);
-  }
-
-  updateCompanyConfiguration(user: AuthUser, id: string, dto: UpdateCompanyTaxConfigurationDto) {
-    return this.companyConfiguration.updateCompanyConfiguration(user, id, dto);
-  }
-
-  createRateVersion(user: AuthUser, id: string, dto: CreateTaxRateVersionDto) {
-    return this.rates.createRateVersion(user, id, dto);
-  }
-
-  createPostingRule(user: AuthUser, id: string, dto: CreateTaxPostingRuleDto) {
-    return this.postingRules.createPostingRule(user, id, dto);
+    return {
+      transactionType: query.transactionType,
+      taxType: query.taxType,
+      taxCode: query.taxCode,
+      officialAtcCode: query.officialAtcCode,
+      taxExempt: query.taxExempt,
+      OR: normalizedQuery
+        ? [
+            { sourceKey: { contains: normalizedQuery, mode: 'insensitive' } },
+            { transactionType: { contains: normalizedQuery, mode: 'insensitive' } },
+            { taxType: { contains: normalizedQuery, mode: 'insensitive' } },
+            { taxCode: { contains: normalizedQuery, mode: 'insensitive' } },
+            { taxDescription: { contains: normalizedQuery, mode: 'insensitive' } },
+            { taxAlias: { contains: normalizedQuery, mode: 'insensitive' } },
+            { atc: { contains: normalizedQuery, mode: 'insensitive' } },
+            { officialAtcCode: { contains: normalizedQuery, mode: 'insensitive' } },
+            { natureOfIncome: { contains: normalizedQuery, mode: 'insensitive' } },
+          ]
+        : undefined,
+    };
   }
 }

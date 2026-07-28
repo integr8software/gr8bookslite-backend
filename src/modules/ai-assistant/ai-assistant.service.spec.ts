@@ -60,7 +60,7 @@ describe('AiAssistantService', () => {
     });
   });
 
-  it('normalizes generated Term Management actions', async () => {
+  it('normalizes generated Terms Maintenance actions', async () => {
     jest.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue({
@@ -72,10 +72,10 @@ describe('AiAssistantService', () => {
                   text: JSON.stringify({
                     message: 'Showing inactive terms.',
                     action: {
-                      type: 'term_management',
+                      type: 'terms_maintenance',
                       moduleCode: 'TM',
                       command: 'filter_status',
-                      label: 'Term Management',
+                      label: 'Terms Maintenance',
                       status: 'Inactive',
                     },
                   }),
@@ -94,16 +94,16 @@ describe('AiAssistantService', () => {
     expect(response).toEqual({
       message: 'Showing inactive terms.',
       action: {
-        type: 'term_management',
+        type: 'terms_maintenance',
         moduleCode: 'TM',
         command: 'filter_status',
-        label: 'Term Management',
+        label: 'Terms Maintenance',
         status: 'Inactive',
       },
     });
   });
 
-  it('blocks generated Term Management actions when the user lacks permission', async () => {
+  it('blocks generated Terms Maintenance actions when the user lacks permission', async () => {
     jest.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue({
@@ -115,7 +115,7 @@ describe('AiAssistantService', () => {
                   text: JSON.stringify({
                     message: 'Preparing a term edit preview.',
                     action: {
-                      type: 'term_management',
+                      type: 'terms_maintenance',
                       moduleCode: 'TM',
                       command: 'preview_edit',
                       targetTermName: 'Net 30',
@@ -140,7 +140,7 @@ describe('AiAssistantService', () => {
     );
 
     expect(response).toEqual({
-      message: 'You can view Term Management, but you do not have permission to edit terms.',
+      message: 'You can view Terms Maintenance, but you do not have permission to edit terms.',
       action: null,
     });
   });

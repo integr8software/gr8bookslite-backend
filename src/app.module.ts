@@ -17,13 +17,12 @@ import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.
 import { WorkspaceAuditLogsModule } from './modules/workspace/audit-logs/workspace-audit-logs.module';
 import { TablePreferencesModule } from './modules/table-preferences/table-preferences.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
-import { AlphanumericTaxCodesModule } from './modules/alphanumeric-tax-codes/alphanumeric-tax-codes.module';
 import { AddressModule } from './modules/address/address.module';
 import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.module';
 import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
-import { TermMaintenanceModule } from './modules/maintenance/term-maintenance/term-maintenance.module';
+import { TermsMaintenanceModule } from './modules/maintenance/terms-maintenance/terms-maintenance.module';
 import { ItemVariationsModule } from './modules/maintenance/item-variations/item-variations.module';
 import { ItemCategoryModule } from './modules/maintenance/item-category/item-category.module';
 import { UnitOfMeasurementModule } from './modules/maintenance/unit-of-measurement/unit-of-measurement.module';
@@ -70,7 +69,6 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     UsersModule,
     BillingModule,
     AddressModule,
-    AlphanumericTaxCodesModule,
     ModuleSystemsModule,
     MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
@@ -81,7 +79,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     BranchUsersModule,
     FormSignatoriesModule,
     ChartOfAccountsModule,
-    TermMaintenanceModule,
+    TermsMaintenanceModule,
     ItemVariationsModule,
     ItemCategoryModule,
     UnitOfMeasurementModule,

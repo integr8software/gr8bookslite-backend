@@ -26,7 +26,7 @@ import {
   flattenItemCategorySeedPaths,
   seedCompanyItemCategoryDefaults,
 } from '../../src/modules/maintenance/item-category/seed/item-category.seed';
-import { TermMaintenanceSeedRecords, seedCompanyTermMaintenanceDefaults } from '../../src/modules/maintenance/term-maintenance/seed/term-maintenance.seed';
+import { TermsMaintenanceSeedRecords, seedCompanyTermsMaintenanceDefaults } from '../../src/modules/maintenance/terms-maintenance/seed/terms-maintenance.seed';
 import {
   WarehouseMaintenanceSeedRecords,
   seedCompanyWarehouseMaintenanceDefaults,
@@ -451,24 +451,24 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
       const existingTerms = await tx.term.findMany({
         where: {
           companyId,
-          name: { in: TermMaintenanceSeedRecords.map((term) => term.name) },
+          name: { in: TermsMaintenanceSeedRecords.map((term) => term.name) },
         },
         select: { name: true },
       });
       const existingNames = new Set(existingTerms.map((term) => term.name));
-      const missingTerms = TermMaintenanceSeedRecords.filter((term) => !existingNames.has(term.name));
+      const missingTerms = TermsMaintenanceSeedRecords.filter((term) => !existingNames.has(term.name));
 
       return missingTerms.length === 0
         ? ok('Terms exist.', { count: existingTerms.length })
         : missing('Default terms are incomplete.', [`Seed ${missingTerms.length} missing default term records.`], {
             count: existingTerms.length,
-            expectedCount: TermMaintenanceSeedRecords.length,
+            expectedCount: TermsMaintenanceSeedRecords.length,
             missingNames: missingTerms.map((term) => term.name),
           });
     },
     backup: (companyId, tx) => backupCounts('terms', companyId, tx),
     async apply(companyId, tx) {
-      await seedCompanyTermMaintenanceDefaults(tx, companyId);
+      await seedCompanyTermsMaintenanceDefaults(tx, companyId);
     },
   },
   {

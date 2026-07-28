@@ -85,11 +85,11 @@ const moduleGuide = [
     notes: 'Use Charts of Accounts to maintain the account codes and names used for posting accounting entries.',
   },
   {
-    label: 'Maintenance > Term Management',
+    label: 'Maintenance > Terms Maintenance',
     moduleCode: 'TM',
-    aliases: ['term management', 'term', 'terms', 'payment term', 'payment terms', 'due term', 'datemode'],
+    aliases: ['terms maintenance', 'terms maintenance', 'term', 'terms', 'payment term', 'payment terms', 'due term', 'datemode'],
     actions: ['open', 'explain', 'search', 'filter_status', 'prepare_add', 'preview_edit'],
-    notes: 'Use Term Management to maintain payment term definitions, including term name, datemode, period, and active status.',
+    notes: 'Use Terms Maintenance to maintain payment term definitions, including term name, datemode, period, and active status.',
   },
 ];
 
@@ -355,17 +355,17 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       `You are Neo AI, the ${PRODUCT_NAME} in-app assistant.`,
       'Speak naturally and conversationally, not like a scripted command response.',
       `Always refer to the product as "${PRODUCT_NAME}". Do not shorten it to "Gr8Books".`,
-      'For now, focus on explaining modules, opening approved module pages, preparing Purchase Request drafts, and preparing Term Management previews for user review. Never submit, approve, delete, or save records.',
+      'For now, focus on explaining modules, opening approved module pages, preparing Purchase Request drafts, and preparing Terms Maintenance previews for user review. Never submit, approve, delete, or save records.',
       `If the user asks you to introduce yourself, say: "Hi there! I'm Neo AI, your in-app assistant for ${PRODUCT_NAME}. I can help you understand different modules and open specific pages for you to review."`,
       'Return only JSON matching this TypeScript shape:',
-      '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } | { "type": "term_management", "moduleCode": "TM", "command": "open" | "search" | "filter_status" | "prepare_add" | "preview_edit", "label"?: string, "query"?: string, "status"?: "Active" | "Inactive", "prefill"?: { "name"?: string, "description"?: string, "datemode"?: "Day" | "Month" | "Year", "period"?: string, "status"?: "Active" | "Inactive" }, "targetTermName"?: string } }',
-      'Use route only for navigate and open_form actions. Use moduleCode for module-specific actions such as Term Management.',
+      '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } | { "type": "terms_maintenance", "moduleCode": "TM", "command": "open" | "search" | "filter_status" | "prepare_add" | "preview_edit", "label"?: string, "query"?: string, "status"?: "Active" | "Inactive", "prefill"?: { "name"?: string, "description"?: string, "datemode"?: "Day" | "Month" | "Year", "period"?: string, "status"?: "Active" | "Inactive" }, "targetTermName"?: string } }',
+      'Use route only for navigate and open_form actions. Use moduleCode for module-specific actions such as Terms Maintenance.',
       'Use only these approved modules and module identities:',
       JSON.stringify(moduleGuide),
       'If the user asks to open a module, respond like: "Okay, got it. Give me a moment, I will open Purchase Request for you." and include a navigate action.',
-      'If the user asks to open Term Management, return a term_management action with command "open"; do not return a frontend route for Term Management.',
+      'If the user asks to open Terms Maintenance, return a terms_maintenance action with command "open"; do not return a frontend route for Terms Maintenance.',
       'If the user asks to create or prepare a Purchase Request draft, extract item description, quantity, unit of measure, and unit price if present. Use an open_form action, do not save. Tell the user to review before saving.',
-      'If the user asks about Term Management filtering, searching, adding, or editing, return a term_management action. For add or edit, prepare a preview only and explicitly tell the user to review before saving. Required add preview fields are name, datemode, period, and status. Negative or decimal periods are invalid. Period 0 means the term does not add time.',
+      'If the user asks about Terms Maintenance filtering, searching, adding, or editing, return a terms_maintenance action. For add or edit, prepare a preview only and explicitly tell the user to review before saving. Required add preview fields are name, datemode, period, and status. Negative or decimal periods are invalid. Period 0 means the term does not add time.',
       'If the user asks what a module is for or how it works, explain it clearly and return action null.',
     ].join('\n');
   }
@@ -495,8 +495,8 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       };
     }
 
-    if (candidate.type === 'term_management' && candidate.moduleCode === 'TM' && this.isAllowedTermManagementCommand(candidate.command)) {
-      const permissionDenialMessage = this.getTermManagementPermissionDenialMessage(user, candidate.command);
+    if (candidate.type === 'terms_maintenance' && candidate.moduleCode === 'TM' && this.isAllowedTermsMaintenanceCommand(candidate.command)) {
+      const permissionDenialMessage = this.getTermsMaintenancePermissionDenialMessage(user, candidate.command);
 
       if (permissionDenialMessage) {
         return {
@@ -507,13 +507,13 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
       return {
         action: {
-          type: 'term_management',
+          type: 'terms_maintenance',
           moduleCode: 'TM',
           command: candidate.command,
           label: candidate.label,
           query: typeof candidate.query === 'string' ? candidate.query : undefined,
           status: this.normalizeTermStatus(candidate.status),
-          prefill: this.normalizeTermManagementPrefill(candidate.prefill),
+          prefill: this.normalizeTermsMaintenancePrefill(candidate.prefill),
           targetTermName: typeof candidate.targetTermName === 'string' ? candidate.targetTermName : undefined,
         },
       };
@@ -553,7 +553,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       const route = 'route' in module ? module.route : undefined;
 
       if (!route) {
-        const denialMessage = this.getTermManagementPermissionDenialMessage(user, 'open');
+        const denialMessage = this.getTermsMaintenancePermissionDenialMessage(user, 'open');
 
         if (denialMessage) {
           return {
@@ -612,11 +612,11 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return moduleGuide.find((module) => [module.label.toLowerCase(), ...module.aliases].some((alias) => message.includes(alias)));
   }
 
-  private isAllowedTermManagementCommand(command: unknown): command is Extract<AiAssistantAction, { type: 'term_management' }>['command'] {
+  private isAllowedTermsMaintenanceCommand(command: unknown): command is Extract<AiAssistantAction, { type: 'terms_maintenance' }>['command'] {
     return command === 'open' || command === 'search' || command === 'filter_status' || command === 'prepare_add' || command === 'preview_edit';
   }
 
-  private normalizeTermManagementPrefill(prefill: unknown) {
+  private normalizeTermsMaintenancePrefill(prefill: unknown) {
     if (!prefill || typeof prefill !== 'object') {
       return undefined;
     }
@@ -640,27 +640,27 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return value === 'Active' || value === 'Inactive' ? value : undefined;
   }
 
-  private getTermManagementPermissionDenialMessage(user: AuthUser, command: Extract<AiAssistantAction, { type: 'term_management' }>['command']) {
+  private getTermsMaintenancePermissionDenialMessage(user: AuthUser, command: Extract<AiAssistantAction, { type: 'terms_maintenance' }>['command']) {
     if (!user.companyId) {
-      return 'Please select a company before I can help with Term Management.';
+      return 'Please select a company before I can help with Terms Maintenance.';
     }
 
-    if (!this.canUseTermManagement(user, PermissionAction.VIEW)) {
-      return 'You do not have permission to view Term Management.';
+    if (!this.canUseTermsMaintenance(user, PermissionAction.VIEW)) {
+      return 'You do not have permission to view Terms Maintenance.';
     }
 
-    if (command === 'prepare_add' && !this.canUseTermManagement(user, PermissionAction.CREATE)) {
-      return 'You can view Term Management, but you do not have permission to add terms.';
+    if (command === 'prepare_add' && !this.canUseTermsMaintenance(user, PermissionAction.CREATE)) {
+      return 'You can view Terms Maintenance, but you do not have permission to add terms.';
     }
 
-    if (command === 'preview_edit' && !this.canUseTermManagement(user, PermissionAction.UPDATE)) {
-      return 'You can view Term Management, but you do not have permission to edit terms.';
+    if (command === 'preview_edit' && !this.canUseTermsMaintenance(user, PermissionAction.UPDATE)) {
+      return 'You can view Terms Maintenance, but you do not have permission to edit terms.';
     }
 
     return null;
   }
 
-  private canUseTermManagement(user: AuthUser, action: PermissionAction) {
+  private canUseTermsMaintenance(user: AuthUser, action: PermissionAction) {
     if (this.hasReservedCompanyRoleAccess(user)) {
       return true;
     }
