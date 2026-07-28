@@ -105,6 +105,34 @@ Provisioning updates platform metadata:
 
 Provisioning does not repair old company-owned setup data.
 
+### Module Catalog Update
+
+```bash
+npm run db:update:modules
+```
+
+Equivalent local command:
+
+```bash
+npm run db:update:modules:current
+```
+
+Use this when only the platform module catalog, module systems, module-system module links, permissions, and sidebar templates need to be refreshed. Added or renamed catalog entries are upserted. Removed module/module-system entries are kept for historical references but marked inactive, and sidebar templates are rebuilt from the current module-system catalog.
+
+Shared-dev:
+
+```bash
+npm run db:update:modules:shared
+```
+
+Staging:
+
+```bash
+npm run db:update:modules:staging
+```
+
+For full platform metadata updates, prefer `db:provision:*` because it also updates subscription plans, taxes, and tax posting rules.
+
 ## Recommended Local Repair Flow
 
 Use this after pulling architecture changes or when old companies have missing sidebar/modules/company defaults.

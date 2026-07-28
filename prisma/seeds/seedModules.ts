@@ -9,12 +9,25 @@ const ExcludedModuleCodes = ['TXM'];
  * leaf catalog. Reseeding then normalizes that catalog before any dependent rows.
  */
 export async function seedModules() {
+  const activeModuleCodes = ModuleCatalog.map((module) => module.code);
+  const inactiveModuleCodes = [...new Set([...ExcludedModuleCodes])];
+
   await prisma.permission.updateMany({
-    where: { code: { in: ExcludedModuleCodes } },
+    where: {
+      OR: [
+        { code: { in: inactiveModuleCodes } },
+        { code: { notIn: activeModuleCodes } },
+      ],
+    },
     data: { isActive: false },
   });
   await prisma.module.updateMany({
-    where: { code: { in: ExcludedModuleCodes } },
+    where: {
+      OR: [
+        { code: { in: inactiveModuleCodes } },
+        { code: { notIn: activeModuleCodes } },
+      ],
+    },
     data: { isActive: false },
   });
 

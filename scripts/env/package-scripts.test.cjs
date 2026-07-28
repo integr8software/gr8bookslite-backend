@@ -121,6 +121,12 @@ test('safe provisioning scripts are available without full db seed aliases', () 
       ),
     );
     assert.match(
+      scripts[`db:update:modules:${environment}`],
+      new RegExp(
+        `${runner.replaceAll('.', '\\.')} ts-node prisma/scripts/update-modules\\.ts`,
+      ),
+    );
+    assert.match(
       scripts[`db:audit-legacy-saas-access:${environment}`],
       /audit-legacy-saas-access\.ts/,
     );
@@ -131,6 +137,11 @@ test('safe provisioning scripts are available without full db seed aliases', () 
   }
 
   assert.equal(scripts['db:provision'], 'npm run db:provision:current');
+  assert.equal(scripts['db:update:modules'], 'npm run db:update:modules:current');
+  assert.match(
+    scripts['db:update:modules:local'],
+    /run-with-env\.cjs \.env ts-node prisma\/scripts\/update-modules\.ts/,
+  );
 
   for (const scriptName of [
     'db:seed:safe:current',
