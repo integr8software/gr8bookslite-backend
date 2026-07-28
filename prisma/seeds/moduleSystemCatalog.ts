@@ -221,7 +221,7 @@ export const AccountingAndInventorySidebarTemplate = [
     iconName: 'purchasing',
     children: [
       link('purchasing-purchase-request', 'PR', 'purchasing'),
-      link('purchasing-canvass-form', 'CF', 'clipboard', 'Canvas Form'),
+      link('purchasing-canvass-form', 'CF', 'clipboard', 'Canvass Form'),
       link('purchasing-purchase-order', 'PO', 'purchasing'),
       link('purchasing-purchase-journal', 'PJ', 'journal'),
     ],
