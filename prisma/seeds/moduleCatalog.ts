@@ -526,7 +526,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   },
   {
     code: 'CF',
-    name: 'Canvass Form',
+    name: 'Canvas Form',
     icon: 'purchasing',
     type: TransactionRegistry,
   },
