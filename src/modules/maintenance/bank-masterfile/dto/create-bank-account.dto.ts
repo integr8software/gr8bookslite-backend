@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
 import { ChartAccountStatus } from '@prisma/client';
 
 export class CreateBankAccountDto {
@@ -49,12 +49,6 @@ export class CreateBankAccountDto {
   @IsString()
   @MaxLength(10)
   currencyCode?: string;
-
-  @IsOptional()
-  @Transform(({ value }) => toOptionalNumber(value))
-  @IsNumber()
-  @Min(0)
-  currencyExchangeRate?: number;
 
   @IsOptional()
   @Matches(/^\d{10}$/)

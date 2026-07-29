@@ -14,8 +14,6 @@ export async function seedCompanyDefaultAccountDefaults(tx: Prisma.TransactionCl
       StandardDefaultAccountTemplates.flatMap((template) => [
         'expenseAccountCode' in template ? template.expenseAccountCode : null,
         'revenueAccountCode' in template ? template.revenueAccountCode : null,
-        'assetAccountCode' in template ? template.assetAccountCode : null,
-        'accumulatedDepreciationAccountCode' in template ? template.accumulatedDepreciationAccountCode : null,
       ])
         .filter(Boolean)
         .map(String),
@@ -45,14 +43,7 @@ export async function seedCompanyDefaultAccountDefaults(tx: Prisma.TransactionCl
       'expenseAccountCode' in template ? getCopiedTemplateAccount(copiedChartAccountByCode, template.expenseAccountCode, template.name) : null;
     const revenueAccount =
       'revenueAccountCode' in template ? getCopiedTemplateAccount(copiedChartAccountByCode, template.revenueAccountCode, template.name) : null;
-    const assetAccount = 'assetAccountCode' in template ? getCopiedTemplateAccount(copiedChartAccountByCode, template.assetAccountCode, template.name) : null;
-    const accumulatedDepreciationAccount =
-      'accumulatedDepreciationAccountCode' in template
-        ? getCopiedTemplateAccount(copiedChartAccountByCode, template.accumulatedDepreciationAccountCode, template.name)
-        : null;
-    const linkedAccounts = [expenseAccount, revenueAccount, assetAccount, accumulatedDepreciationAccount].filter((account): account is ChartAccountReference =>
-      Boolean(account),
-    );
+    const linkedAccounts = [expenseAccount, revenueAccount].filter((account): account is ChartAccountReference => Boolean(account));
     const templateStatus = linkedAccounts.every((account) => account.status === ChartAccountStatus.ACTIVE)
       ? ChartAccountStatus.ACTIVE
       : ChartAccountStatus.INACTIVE;
@@ -71,8 +62,6 @@ export async function seedCompanyDefaultAccountDefaults(tx: Prisma.TransactionCl
         status: templateStatus,
         expenseCoaId: expenseAccount?.id ?? null,
         revenueCoaId: revenueAccount?.id ?? null,
-        assetCoaId: assetAccount?.id ?? null,
-        accumulatedDepreciationCoaId: accumulatedDepreciationAccount?.id ?? null,
         deletedAt: templateDeletedAt,
       },
       create: {
@@ -83,8 +72,6 @@ export async function seedCompanyDefaultAccountDefaults(tx: Prisma.TransactionCl
         status: templateStatus,
         expenseCoaId: expenseAccount?.id ?? null,
         revenueCoaId: revenueAccount?.id ?? null,
-        assetCoaId: assetAccount?.id ?? null,
-        accumulatedDepreciationCoaId: accumulatedDepreciationAccount?.id ?? null,
         deletedAt: templateDeletedAt,
       },
     });

@@ -18,7 +18,6 @@ export function mapBankAccount(bankAccount: BankAccountPayload, userNames: Map<n
     seriesEnd: bankAccount.seriesEnd,
     seriesDigits: bankAccount.seriesDigits,
     currencyCode: bankAccount.currencyCode,
-    currencyExchangeRate: bankAccount.currencyExchangeRate?.toString() ?? null,
     isDefault: bankAccount.isDefault,
     status: bankAccount.status,
     chartAccount: {

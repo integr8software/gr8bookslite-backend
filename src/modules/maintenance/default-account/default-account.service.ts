@@ -29,10 +29,14 @@ import { DefaultAccountInclude } from './prisma/default-account-template.include
 import type {
   DefaultAccountParentRole,
   DefaultAccountPayload,
-  GeneratedAccountKey,
   GeneratedAccountRequest,
   ParentChartAccountReference,
 } from './types/default-account.type';
+
+const SupportedDefaultAccountTemplateTypes = [
+  DefaultAccountTemplateType.EXPENSE,
+  DefaultAccountTemplateType.COLLECTION,
+] as const;
 
 @Injectable()
 export class DefaultAccountService {
@@ -42,6 +46,7 @@ export class DefaultAccountService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
+    this.ensureSupportedDefaultAccountType(query.type);
 
     const page = query.page ?? DefaultPage;
     const limit = query.limit ?? DefaultLimit;
@@ -110,6 +115,7 @@ export class DefaultAccountService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const defaultAccountName = this.validateDefaultAccountName(dto.defaultAccountName);
     const description = this.normalizeTemplateDescription(dto.description);
+    this.ensureSupportedDefaultAccountType(dto.type);
     await this.ensureDefaultAccountNameAvailable(companyId, dto.type, defaultAccountName);
 
     try {
@@ -134,8 +140,6 @@ export class DefaultAccountService {
             status: requestedStatus,
             expenseCoaId: generatedAccounts.expenseCoaId,
             revenueCoaId: generatedAccounts.revenueCoaId,
-            assetCoaId: generatedAccounts.assetCoaId,
-            accumulatedDepreciationCoaId: generatedAccounts.accumulatedDepreciationCoaId,
             createdByUserId: user.id,
           },
           include: DefaultAccountInclude,
@@ -158,6 +162,7 @@ export class DefaultAccountService {
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const templateId = parsePositiveBigIntId(id);
     const currentTemplate = await this.findTemplateOrThrow(companyId, templateId);
+    this.ensureSupportedDefaultAccountType(dto.type);
 
     if (dto.type !== undefined && dto.type !== currentTemplate.type) {
       throw new BadRequestException('Default account type cannot be changed.');
@@ -259,6 +264,7 @@ export class DefaultAccountService {
       companyId,
       deletedAt: null,
       ...(query.type ? { type: query.type } : {}),
+      ...(!query.type ? { type: { in: [...SupportedDefaultAccountTemplateTypes] } } : {}),
       ...(query.status ? { status: query.status } : {}),
       ...(search
         ? {
@@ -306,7 +312,6 @@ export class DefaultAccountService {
       inactiveDefaultAccounts: groups.filter((group) => group.status === ChartAccountStatus.INACTIVE).reduce((total, group) => total + group._count._all, 0),
       expenseDefaultAccounts: groups.find((group) => group.type === DefaultAccountTemplateType.EXPENSE)?._count._all ?? 0,
       collectionDefaultAccounts: groups.find((group) => group.type === DefaultAccountTemplateType.COLLECTION)?._count._all ?? 0,
-      fixedAssetDefaultAccounts: groups.find((group) => group.type === DefaultAccountTemplateType.FIXED_ASSET)?._count._all ?? 0,
     };
   }
 
@@ -330,34 +335,21 @@ export class DefaultAccountService {
     const result: {
       expenseCoaId?: bigint;
       revenueCoaId?: bigint;
-      assetCoaId?: bigint;
-      accumulatedDepreciationCoaId?: bigint;
     } = {};
-    const generatedAccounts = new Map<GeneratedAccountKey, Awaited<ReturnType<DefaultAccountService['createGeneratedChartAccount']>>>();
     const selectedExpenseParent =
       type === DefaultAccountTemplateType.EXPENSE && expenseParentCoaId
         ? await this.findExpenseParentOptionOrThrow(companyId, parsePositiveBigIntId(expenseParentCoaId, 'expenseParentCoaId'), tx)
         : undefined;
 
     for (const account of this.getGeneratedAccountRequests(type, description, selectedExpenseParent)) {
-      const parentAccount = account.parentGeneratedKey ? generatedAccounts.get(account.parentGeneratedKey) : account.selectedParentAccount;
-
-      if (account.parentGeneratedKey && !parentAccount) {
-        throw new BadRequestException('Cannot create default account. Required generated parent account was not found.');
-      }
-
       const chartAccount = await this.createGeneratedChartAccount({
         companyId,
         status,
         tx,
         userId,
-        parentAccount,
+        parentAccount: account.selectedParentAccount,
         ...account,
       });
-
-      if (account.generatedKey) {
-        generatedAccounts.set(account.generatedKey, chartAccount);
-      }
 
       if (account.resultKey) {
         result[account.resultKey] = chartAccount.id;
@@ -403,50 +395,7 @@ export class DefaultAccountService {
       ];
     }
 
-    return [
-      {
-        role: 'FIXED_ASSET_PARENT',
-        generatedKey: 'fixedAssetGroup',
-        title: description,
-        accountLevel: ChartAccountLevel.SUB3,
-        accountType: ChartAccountType.ASSET,
-        accountNature: AccountNature.DEBIT,
-        accountGroup: 'Fixed Assets',
-        isPostingAccount: false,
-      },
-      {
-        role: 'FIXED_ASSET_PARENT',
-        parentGeneratedKey: 'fixedAssetGroup',
-        resultKey: 'assetCoaId',
-        title: description,
-        accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.ASSET,
-        accountNature: AccountNature.DEBIT,
-        accountGroup: 'Fixed Assets',
-        isPostingAccount: true,
-      },
-      {
-        role: 'ACCUMULATED_DEPRECIATION_PARENT',
-        parentGeneratedKey: 'fixedAssetGroup',
-        resultKey: 'accumulatedDepreciationCoaId',
-        title: `Accumulated Depreciation - ${description}`,
-        accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.ASSET,
-        accountNature: AccountNature.DEBIT,
-        accountGroup: 'Accumulated Depreciation',
-        isPostingAccount: true,
-      },
-      {
-        role: 'DEPRECIATION_EXPENSE_PARENT',
-        resultKey: 'expenseCoaId',
-        title: `Depreciation Expense - ${description}`,
-        accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.EXPENSE,
-        accountNature: AccountNature.DEBIT,
-        accountGroup: 'Depreciation Expense',
-        isPostingAccount: true,
-      },
-    ];
+    throw new BadRequestException('Default Account Type must be Expense or Collection.');
   }
 
   private async createGeneratedChartAccount({
@@ -587,11 +536,7 @@ export class DefaultAccountService {
       return;
     }
 
-    const fixedAssetGroupId = await this.findGeneratedFixedAssetGroupId(template, tx);
-    await this.updateChartAccountTitle(fixedAssetGroupId, description, tx, userId);
-    await this.updateChartAccountTitle(template.assetCoaId, description, tx, userId);
-    await this.updateChartAccountTitle(template.accumulatedDepreciationCoaId, `Accumulated Depreciation - ${description}`, tx, userId);
-    await this.updateChartAccountTitle(template.expenseCoaId, `Depreciation Expense - ${description}`, tx, userId);
+    throw new BadRequestException('Default Account Type must be Expense or Collection.');
   }
 
   private async updateExpenseGeneratedAccountParent({
@@ -640,55 +585,15 @@ export class DefaultAccountService {
     });
   }
 
-  private async findGeneratedFixedAssetGroupId(template: Awaited<ReturnType<DefaultAccountService['findTemplateOrThrow']>>, tx: Prisma.TransactionClient) {
-    if (template.type !== DefaultAccountTemplateType.FIXED_ASSET || !template.assetCoaId || !template.accumulatedDepreciationCoaId) {
-      return null;
-    }
-
-    const linkedAccounts = await tx.chartAccount.findMany({
-      where: {
-        companyId: template.companyId,
-        id: {
-          in: [template.assetCoaId, template.accumulatedDepreciationCoaId],
-        },
-      },
-      select: {
-        id: true,
-        parentAccountId: true,
-      },
-    });
-    const assetAccount = linkedAccounts.find((account) => account.id === template.assetCoaId);
-    const accumulatedDepreciationAccount = linkedAccounts.find((account) => account.id === template.accumulatedDepreciationCoaId);
-
-    if (!assetAccount?.parentAccountId || assetAccount.parentAccountId !== accumulatedDepreciationAccount?.parentAccountId) {
-      return null;
-    }
-
-    const generatedParentAccount = await tx.chartAccount.findFirst({
-      where: {
-        id: assetAccount.parentAccountId,
-        companyId: template.companyId,
-        accountLevel: ChartAccountLevel.SUB3,
-      },
-      select: { id: true },
-    });
-
-    return generatedParentAccount?.id ?? null;
-  }
-
   private async updateLinkedChartAccountStatus(
     template: Awaited<ReturnType<DefaultAccountService['findTemplateOrThrow']>>,
     status: ChartAccountStatus,
     tx: Prisma.TransactionClient,
     userId: number,
   ) {
-    const fixedAssetGroupId = await this.findGeneratedFixedAssetGroupId(template, tx);
     const chartAccountIds = [
       template.expenseCoaId,
       template.revenueCoaId,
-      template.assetCoaId,
-      template.accumulatedDepreciationCoaId,
-      fixedAssetGroupId,
     ].filter((id): id is bigint => Boolean(id));
 
     if (chartAccountIds.length === 0) {
@@ -720,6 +625,12 @@ export class DefaultAccountService {
     return description ? description : null;
   }
 
+  private ensureSupportedDefaultAccountType(type: DefaultAccountTemplateType | undefined) {
+    if (type && !SupportedDefaultAccountTemplateTypes.includes(type as (typeof SupportedDefaultAccountTemplateTypes)[number])) {
+      throw new BadRequestException('Default Account Type must be Expense or Collection.');
+    }
+  }
+
   private async ensureDefaultAccountNameAvailable(companyId: number, type: DefaultAccountTemplateType, description: string, excludedTemplateId?: bigint) {
     const existingTemplate = await this.prisma.defaultAccount.findFirst({
       where: {
@@ -739,7 +650,7 @@ export class DefaultAccountService {
 
   private async findTemplateOrThrow(companyId: number, templateId: bigint) {
     const template = await this.prisma.defaultAccount.findFirst({
-      where: { id: templateId, companyId, deletedAt: null },
+      where: { id: templateId, companyId, deletedAt: null, type: { in: [...SupportedDefaultAccountTemplateTypes] } },
       include: DefaultAccountInclude,
     });
 
@@ -823,15 +734,7 @@ function getDefaultAccountParentDefinition(role: DefaultAccountParentRole) {
     return SystemAccountGroups.defaultAccount.revenueParent;
   }
 
-  if (role === 'FIXED_ASSET_PARENT') {
-    return SystemAccountGroups.defaultAccount.fixedAssetParent;
-  }
-
-  if (role === 'ACCUMULATED_DEPRECIATION_PARENT') {
-    return SystemAccountGroups.defaultAccount.accumulatedDepreciationParent;
-  }
-
-  return SystemAccountGroups.defaultAccount.depreciationExpenseParent;
+  return SystemAccountGroups.defaultAccount.revenueParent;
 }
 
 function isDescendantOrSelf(

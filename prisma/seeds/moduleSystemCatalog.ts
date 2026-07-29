@@ -156,8 +156,6 @@ export const AccountingAndInventorySidebarTemplate = [
       link('warehouse-management-warehouse-access', 'WA', 'shieldCheck'),
       link('warehouse-management-warehouse-storage', 'WS', 'mapPin', 'Warehouse Storage'),
       link('warehouse-management-inventory-stock', 'WSI', 'search', 'Warehouse Inventory Stock'),
-      link('warehouse-management-receiving-putaway', 'WRP', 'inventory', 'Receiving and Putaway'),
-      link('warehouse-management-picking-dispatch', 'WPD', 'clipboard', 'Picking and Dispatching'),
       link('warehouse-management-inventory-transfer', 'WT', 'arrowRightLeft', 'Warehouse Inventory Transfer'),
     ],
   },
@@ -169,9 +167,6 @@ export const AccountingAndInventorySidebarTemplate = [
     children: [
       link('delivery-vehicle-management-delivery-vehicles', 'DVE', 'inventory'),
       link('delivery-vehicle-management-vehicle-types', 'DVT', 'tags'),
-      link('delivery-vehicle-management-vehicle-scheduling-assignment', 'DVAS', 'users'),
-      link('delivery-vehicle-management-delivery-planning-dispatch', 'DVD', 'arrowRightLeft'),
-      link('delivery-vehicle-management-trip-monitoring', 'DVTK', 'map'),
       link('delivery-vehicle-management-vehicle-repair-maintenance', 'DVMR', 'maintenance'),
     ],
   },
