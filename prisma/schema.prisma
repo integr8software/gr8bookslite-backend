@@ -1102,7 +1102,6 @@ model Party {
   employeeAdvanceAccountId            BigInt?                   @map("employee_advance_account_id")
   employeePayableAccountId            BigInt?                   @map("employee_payable_account_id")
   tin                                 String?                   @db.VarChar(20)
-  vatRegistrationType                 PartyTaxRegistrationType? @map("vat_registration_type")
   atcCode                             String?                   @map("atc_code") @db.VarChar(40)
   defaultPurchaseInputVatTaxSourceKey String?                   @map("default_purchase_input_vat_tax_source_key") @db.VarChar(40)
   defaultPurchaseEwtTaxSourceKey      String?                   @map("default_purchase_ewt_tax_source_key") @db.VarChar(40)
@@ -1992,16 +1991,6 @@ enum PartyType {
 enum PartyStatus {
   ACTIVE
   INACTIVE
-}
-
-enum PartyTaxRegistrationType {
-  VAT_REGISTERED
-  NON_VAT
-  VAT_EXEMPT
-  ZERO_RATED
-  CAPITAL_GOODS
-  OTHER_THAN_CAPITAL_GOODS
-  SERVICES
 }
 
 enum TaxTransactionScope {

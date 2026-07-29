@@ -6,8 +6,6 @@ import { GetBankAccountListQueryDto } from '../dto/get-bank-account-list-query.d
 import { UpdateBankAccountDto } from '../dto/update-bank-account.dto';
 import type { BankAccountIdentity, BankAccountPayload } from '../types/bank-account.type';
 
-const BaseCurrencyCode = 'PHP';
-
 export function buildBankAccountListWhere(companyId: number, query: GetBankAccountListQueryDto): Prisma.BankAccountWhereInput {
   const search = query.search?.trim();
 
@@ -76,10 +74,6 @@ export function validateBankInput(dto: CreateBankAccountDto | UpdateBankAccountD
     throw new BadRequestException('Series start should not be greater than series end.');
   }
 
-  const currencyCode = cleanCurrencyCode(dto.currencyCode);
-  if (currencyCode && currencyCode !== BaseCurrencyCode && (!dto.currencyExchangeRate || dto.currencyExchangeRate <= 0)) {
-    throw new BadRequestException('Currency exchange rate must be greater than 0 for non-PHP bank accounts.');
-  }
 }
 
 export function ensureNoDuplicateImportedBankAccounts(banks: CreateBankAccountDto[]) {
@@ -137,7 +131,6 @@ export function toCreateBankAccountData(dto: CreateBankAccountDto, accountName: 
     seriesEnd: cleanOptional(dto.seriesEnd),
     seriesDigits: dto.seriesDigits,
     currencyCode: cleanCurrencyCode(dto.currencyCode),
-    currencyExchangeRate: dto.currencyExchangeRate === undefined ? undefined : new Prisma.Decimal(dto.currencyExchangeRate),
     isDefault: dto.isDefault ?? false,
   };
 }
@@ -153,7 +146,6 @@ export function toUpdateBankAccountData(dto: UpdateBankAccountDto, accountName: 
     ...(dto.seriesEnd !== undefined ? { seriesEnd: cleanOptional(dto.seriesEnd) } : {}),
     ...(dto.seriesDigits !== undefined ? { seriesDigits: dto.seriesDigits } : {}),
     ...(dto.currencyCode !== undefined ? { currencyCode: cleanCurrencyCode(dto.currencyCode) } : {}),
-    ...(dto.currencyExchangeRate !== undefined ? { currencyExchangeRate: new Prisma.Decimal(dto.currencyExchangeRate) } : {}),
     ...(dto.isDefault !== undefined ? { isDefault: dto.isDefault } : {}),
     ...(dto.status !== undefined ? { status: dto.status } : {}),
   };
@@ -170,7 +162,6 @@ export function toBankAccountDtoLike(bankAccount: BankAccountPayload) {
     seriesEnd: bankAccount.seriesEnd ?? undefined,
     seriesDigits: bankAccount.seriesDigits ?? undefined,
     currencyCode: bankAccount.currencyCode ?? undefined,
-    currencyExchangeRate: bankAccount.currencyExchangeRate ? Number(bankAccount.currencyExchangeRate) : undefined,
     isDefault: bankAccount.isDefault,
     status: bankAccount.status,
   };

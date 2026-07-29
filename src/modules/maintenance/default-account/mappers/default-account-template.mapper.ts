@@ -11,10 +11,8 @@ export function mapDefaultAccount(template: DefaultAccountPayload, userNames: Ma
     status: template.status,
     expenseParentCoaId: template.type === 'EXPENSE' ? (template.expenseCoa?.parentAccountId?.toString() ?? null) : null,
     generatedAccounts: [
-      mapGeneratedAccount(template.type === 'FIXED_ASSET' ? 'DEPRECIATION_EXPENSE' : 'EXPENSE', template.expenseCoa),
+      mapGeneratedAccount('EXPENSE', template.expenseCoa),
       mapGeneratedAccount('REVENUE', template.revenueCoa),
-      mapGeneratedAccount('FIXED_ASSET', template.assetCoa),
-      mapGeneratedAccount('ACCUMULATED_DEPRECIATION', template.accumulatedDepreciationCoa),
     ].filter(Boolean),
     createdBy: template.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(template.createdByUserId) ?? null),
     createdAt: template.createdAt.toISOString(),

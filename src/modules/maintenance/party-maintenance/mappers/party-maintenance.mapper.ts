@@ -41,7 +41,6 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     termId: party.termId?.toString() ?? '',
     termName: party.term?.name ?? '',
     tin: party.tin ?? '',
-    vatRegistrationType: party.vatRegistrationType ?? null,
     atcCode: party.atcCode ?? '',
     defaultPurchaseInputVatTaxSourceKey: taxDefaults.defaultPurchaseInputVatTaxSourceKey ?? '',
     defaultPurchaseEwtTaxSourceKey: taxDefaults.defaultPurchaseEwtTaxSourceKey ?? '',

@@ -117,18 +117,6 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
-    code: 'WRP',
-    name: 'Receiving and Putaway',
-    icon: 'inventory',
-    type: Maintenance,
-  },
-  {
-    code: 'WPD',
-    name: 'Picking and Dispatching',
-    icon: 'clipboard',
-    type: Maintenance,
-  },
-  {
     code: 'WT',
     name: 'Warehouse Inventory Transfer',
     icon: 'arrowRightLeft',
@@ -145,24 +133,6 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     name: 'Vehicle Types',
     icon: 'tags',
     type: Maintenance,
-  },
-  {
-    code: 'DVAS',
-    name: 'Vehicle Scheduling & Assignment',
-    icon: 'users',
-    type: TransactionRegistry,
-  },
-  {
-    code: 'DVD',
-    name: 'Delivery Planning & Dispatch',
-    icon: 'arrowRightLeft',
-    type: TransactionRegistry,
-  },
-  {
-    code: 'DVTK',
-    name: 'Trip Monitoring',
-    icon: 'map',
-    type: TransactionRegistry,
   },
   {
     code: 'DVMR',

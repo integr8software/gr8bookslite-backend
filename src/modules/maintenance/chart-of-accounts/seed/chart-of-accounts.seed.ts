@@ -222,20 +222,8 @@ function getStructuralAccountGroupTag(accountTitle: string) {
     return SystemAccountGroupTags.purchaseDiscount;
   }
 
-  if (/depreciation expense/i.test(accountTitle)) {
-    return SystemAccountGroupTags.depreciationExpense;
-  }
-
   if (/service revenues?/i.test(accountTitle)) {
     return SystemAccountGroupTags.serviceRevenues;
-  }
-
-  if (/accumulated depreciation/i.test(accountTitle)) {
-    return SystemAccountGroupTags.accumulatedDepreciation;
-  }
-
-  if (/fixed assets?|property and equipment/i.test(accountTitle)) {
-    return SystemAccountGroupTags.fixedAssets;
   }
 
   if (/expenses?/i.test(accountTitle)) {
@@ -264,18 +252,6 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
 
   if (moduleCode === 'SM' && accountRole === 'SERVICE_REVENUE_PARENT') {
     return [SystemAccountGroupTags.revenue, SystemAccountGroupTags.serviceRevenues, SystemAccountGroupTags.servicesMaintenanceRevenueParent];
-  }
-
-  if (moduleCode === 'DA' && accountRole === 'FIXED_ASSET_PARENT') {
-    return [SystemAccountGroupTags.fixedAssets, SystemAccountGroupTags.defaultAccountFixedAssetParent];
-  }
-
-  if (moduleCode === 'DA' && accountRole === 'ACCUMULATED_DEPRECIATION_PARENT') {
-    return [SystemAccountGroupTags.accumulatedDepreciation, SystemAccountGroupTags.defaultAccountAccumulatedDepreciationParent];
-  }
-
-  if (moduleCode === 'DA' && accountRole === 'DEPRECIATION_EXPENSE_PARENT') {
-    return [SystemAccountGroupTags.depreciationExpense, SystemAccountGroupTags.defaultAccountDepreciationExpenseParent];
   }
 
   if (moduleCode === 'DSM' && accountRole === 'SALES_DISCOUNT_PARENT') {
