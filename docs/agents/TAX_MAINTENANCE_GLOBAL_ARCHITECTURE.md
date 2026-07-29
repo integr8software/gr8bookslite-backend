@@ -302,19 +302,26 @@ Revisions link to the original `TransactionTaxLine`.
 
 ## API
 
-All routes use the versioned `/tax` controller.
+All routes use the versioned Tax controller. Tax routes are authenticated with
+`JwtAuthGuard`; do not mark Tax lookup, autocomplete, metadata, source-key, or
+default-account endpoints as `@Public()`. Tax is reference/catalog data for
+authenticated application workflows, not anonymous public content.
 
 | Method and route                       | Purpose                                                                            |
 | -------------------------------------- | ---------------------------------------------------------------------------------- |
-| `GET /tax`                             | List global Tax definitions, rate versions, and posting rules                      |
-| `GET /tax/:id`                         | Get one global Tax definition                                                      |
+| `GET /tax`                             | List global Tax definitions                                                        |
+| `GET /tax/autocomplete`                | List Tax autocomplete options                                                      |
+| `GET /tax/transaction-types`           | List distinct Tax transaction types                                                |
+| `GET /tax/tax-types`                   | List distinct Tax types                                                            |
+| `GET /tax/party-default-classifications` | List Party Management tax default buckets                                        |
+| `GET /tax/:sourceKey`                  | Get one global Tax definition                                                      |
 | `POST /tax`                            | Create a global Tax definition and initial rate                                    |
 | `PATCH /tax/:id`                       | Update definition metadata and version rate changes made through the legacy fields |
 | `POST /tax/:id/rates`                  | Create an effective-dated rate version                                             |
 | `POST /tax/:id/posting-rules`          | Create or update a posting rule                                                    |
 | `PATCH /tax/:id/company-configuration` | Enable Tax and set company defaults                                                |
-| `GET /tax/default-accounts`            | Read Philippine-compatible default mappings                                        |
-| `PATCH /tax/default-accounts`          | Update all Philippine-compatible mappings                                          |
+| `GET /tax-default-accounts`            | List tax codes with company resolved posting accounts                              |
+| `GET /tax-default-accounts/:sourceKey` | Get one tax code with company resolved posting accounts                            |
 | `PATCH /tax/account-mappings`          | Map any active posting-rule role to a company account                              |
 | `PATCH /tax/reorder`                   | Persist the complete global Tax List display order                                 |
 | `POST /tax/calculate`                  | Calculate one or more taxes and resolve posting accounts                           |
@@ -342,6 +349,14 @@ Pure normalization and arithmetic stay under `utils/`; API response shaping
 stays under `mappers/`; Prisma include contracts stay under `prisma/` and
 module-owned payload contracts stay under `types/`. UTC date-only parsing uses
 the shared `src/common/utils/date.util.ts` helper.
+
+`TaxController` must stay thin and guarded:
+
+- decorate the controller with `@UseGuards(JwtAuthGuard)`;
+- import `AuthModule` and `AccessControlModule` in `TaxModule` so guard
+  dependencies are available;
+- keep Prisma payload helper types in `src/modules/tax/types/`; and
+- keep Tax response shaping in `src/modules/tax/mappers/`.
 
 Transaction modules should use:
 
@@ -442,6 +457,7 @@ excluded with Tax.
 | `prisma/migrations/20260723110000_global_tax_catalog_and_account_mappings/migration.sql` | Globalization and adaptive Tax migration                  |
 | `src/modules/tax/tax.controller.ts`                                                      | Tax HTTP routes                                           |
 | `src/modules/tax/tax.service.ts`                                                         | Catalog, versions, rules, configurations, and mappings    |
+| `src/modules/tax/types/tax-prisma-payload.type.ts`                                       | Module-owned Prisma payload helper types                  |
 | `src/modules/tax/tax-engine.service.ts`                                                  | Calculation, posting resolution, snapshots, and revisions |
 | `src/modules/tax/seed/tax.seed.ts`                                                       | Global and company Tax defaults                           |
 | `src/modules/tax/utils/tax-accounting-account.util.ts`                                   | Philippine-compatible account-role defaults               |

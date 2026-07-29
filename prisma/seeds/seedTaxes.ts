@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Prisma } from '@prisma/client';
+import { Prisma, TaxStatus } from '@prisma/client';
 import { prisma } from './prismaClient';
 
 type TaxSeedRow = {
@@ -9,6 +9,7 @@ type TaxSeedRow = {
   officialAtcCode: string | null;
   sourceKey: string;
   sortOrder: number;
+  status: TaxStatus;
   taxAlias: string | null;
   taxCode: string;
   taxDescription: string;
@@ -31,6 +32,7 @@ export async function seedTaxes() {
         natureOfIncome: row.natureOfIncome,
         officialAtcCode: row.officialAtcCode,
         sortOrder: row.sortOrder,
+        status: row.status,
         taxAlias: row.taxAlias,
         taxCode: row.taxCode,
         taxDescription: row.taxDescription,
@@ -60,6 +62,7 @@ function readTaxRows(): TaxSeedRow[] {
     'officialAtcCode',
     'natureOfIncome',
     'sortOrder',
+    'status',
   ])
     .map((columns) => ({
       atc: optionalText(columns[8]),
@@ -67,6 +70,7 @@ function readTaxRows(): TaxSeedRow[] {
       officialAtcCode: optionalText(columns[9]),
       sourceKey: columns[0]?.trim() ?? '',
       sortOrder: parseSortOrder(columns[11]),
+      status: parseTaxStatus(columns[12]),
       taxAlias: optionalText(columns[7]),
       taxCode: columns[3]?.trim() ?? '',
       taxDescription: columns[4]?.trim() ?? '',
@@ -98,6 +102,12 @@ function parseSortOrder(value?: string) {
   const parsedValue = Number.parseInt(value?.trim() ?? '', 10);
 
   return Number.isFinite(parsedValue) ? parsedValue : 0;
+}
+
+function parseTaxStatus(value?: string) {
+  const normalized = value?.trim().toUpperCase();
+
+  return normalized === TaxStatus.INACTIVE ? TaxStatus.INACTIVE : TaxStatus.ACTIVE;
 }
 
 function readCsvRows(fileName: string, expectedHeaders: string[]): string[][] {

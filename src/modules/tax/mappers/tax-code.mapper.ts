@@ -15,6 +15,7 @@ export function mapTax(tax: Tax) {
     officialAtcCode: tax.officialAtcCode,
     natureOfIncome: tax.natureOfIncome,
     sortOrder: tax.sortOrder,
+    status: tax.status,
   };
 }
 

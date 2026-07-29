@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class TaxListQueryDto {
   @IsOptional()
@@ -21,6 +21,10 @@ export class TaxListQueryDto {
   @IsOptional()
   @IsString()
   officialAtcCode?: string;
+
+  @IsOptional()
+  @IsIn(['ACTIVE', 'INACTIVE', 'ALL'])
+  status?: 'ACTIVE' | 'INACTIVE' | 'ALL';
 
   @IsOptional()
   @Transform(({ value }) => {

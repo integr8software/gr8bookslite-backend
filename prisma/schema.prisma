@@ -538,6 +538,7 @@ model Tax {
   officialAtcCode String?          @map("official_atc_code") @db.VarChar(40)
   natureOfIncome  String?          @map("nature_of_income")
   sortOrder       Int              @default(0) @map("sort_order")
+  status          TaxStatus        @default(ACTIVE)
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
   postingRules    TaxPostingRule[]
@@ -546,9 +547,12 @@ model Tax {
   @@index([taxType])
   @@index([taxCode])
   @@index([officialAtcCode])
+  @@index([status])
   @@index([transactionType, taxType, sortOrder])
   @@map("taxes")
 }
+
+
 
 model FormSignatorySetup {
   id        Int                @id @default(autoincrement())
@@ -1080,6 +1084,7 @@ model Party {
   id                                  BigInt                    @id @default(autoincrement())
   companyId                           Int                       @map("company_id")
   termId                              BigInt?                   @map("term_id")
+  partyEntityTypeId                   BigInt?                   @map("party_entity_type_id")
   partyCodeNo                         String                    @map("party_code_no") @db.VarChar(80)
   classification                      PartyClassification
   partyTypes                          PartyType[]               @map("party_types")
@@ -1110,6 +1115,7 @@ model Party {
   defaultSalesOutputVatTaxSourceKey   String?                   @map("default_sales_output_vat_tax_source_key") @db.VarChar(40)
   defaultSalesCwtTaxSourceKey         String?                   @map("default_sales_cwt_tax_source_key") @db.VarChar(40)
   defaultSalesWvatTaxSourceKey        String?                   @map("default_sales_wvat_tax_source_key") @db.VarChar(40)
+  contactPerson                       String?                   @map("contact_person") @db.VarChar(255)
   email                               String?                   @db.VarChar(255)
   contactNo                           String?                   @map("contact_no") @db.VarChar(40)
   landline                            String?                   @db.VarChar(40)
@@ -1119,6 +1125,7 @@ model Party {
   createdAt                           DateTime                  @default(now()) @map("created_at")
   updatedAt                           DateTime                  @updatedAt @map("updated_at")
   company                             Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  partyEntityType                     PartyEntityType?          @relation(fields: [partyEntityTypeId], references: [id], onDelete: Restrict)
   term                                Term?                     @relation(fields: [termId], references: [id], onDelete: SetNull)
   defaultReceivableAccount            ChartAccount?             @relation("PartyDefaultReceivableAccount", fields: [defaultReceivableAccountId], references: [id], onDelete: Restrict)
   customerAdvanceAccount              ChartAccount?             @relation("PartyCustomerAdvanceAccount", fields: [customerAdvanceAccountId], references: [id], onDelete: Restrict)
@@ -1132,6 +1139,7 @@ model Party {
   @@index([companyId], map: "parties_company_id_idx")
   @@index([companyId, status], map: "parties_company_status_idx")
   @@index([companyId, classification], map: "parties_company_classification_idx")
+  @@index([partyEntityTypeId], map: "parties_party_entity_type_id_idx")
   @@index([termId], map: "parties_term_id_idx")
   @@index([defaultReceivableAccountId], map: "parties_default_receivable_account_id_idx")
   @@index([customerAdvanceAccountId], map: "parties_customer_advance_account_id_idx")
@@ -1140,6 +1148,22 @@ model Party {
   @@index([employeeAdvanceAccountId], map: "parties_employee_advance_account_id_idx")
   @@index([employeePayableAccountId], map: "parties_employee_payable_account_id_idx")
   @@map("parties")
+}
+
+model PartyEntityType {
+  id             BigInt              @id @default(autoincrement())
+  name           String              @unique(map: "party_entity_types_name_key") @db.VarChar(120)
+  description    String?             @db.VarChar(500)
+  classification PartyClassification
+  isGovernment   Boolean             @default(false) @map("is_government")
+  sortOrder      Int                 @default(0) @map("sort_order")
+  status         PartyStatus         @default(ACTIVE)
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  parties        Party[]
+
+  @@index([classification, status, sortOrder], map: "party_entity_types_classification_status_sort_idx")
+  @@map("party_entity_types")
 }
 
 model PartyAddress {
@@ -1979,6 +2003,11 @@ enum ResponsibilityCenterStatus {
 enum PartyClassification {
   INDIVIDUAL
   NON_INDIVIDUAL
+}
+
+enum TaxStatus {
+  ACTIVE
+  INACTIVE
 }
 
 enum PartyType {
