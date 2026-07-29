@@ -17,6 +17,11 @@ export class CreatePartyDto {
   @IsEnum(PartyClassification)
   classification!: PartyClassification;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  partyEntityType?: string | null;
+
   @IsArray()
   @ArrayMinSize(1)
   @IsEnum(PartyType, { each: true })
@@ -166,6 +171,11 @@ export class CreatePartyDto {
   @IsString()
   @MaxLength(40)
   defaultSalesWvatTaxSourceKey?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  contactPerson?: string | null;
 
   @IsOptional()
   @IsEmail()

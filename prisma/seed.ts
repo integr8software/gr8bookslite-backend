@@ -7,6 +7,7 @@ import { seedSubscriptionPlans } from './seeds/seedSubscriptionPlans';
 import { seedSuperAdmin } from './seeds/seedSuperAdmin';
 import { seedModules } from './seeds/seedModules';
 import { seedModuleSystems } from './seeds/seedModuleSystems';
+import { seedPartyEntityTypes } from './seeds/seedPartyEntityTypes';
 import { prisma } from './seeds/prismaClient';
 import { seedTaxPostingRules } from '../src/modules/tax/seed/tax.seed';
 
@@ -14,6 +15,7 @@ void runSeedTask('Local Prisma seed', async () => {
   assertLocalDatabase();
   await seedSuperAdmin();
   await seedAddressReferences();
+  await seedPartyEntityTypes();
   await seedTaxes();
   await seedModules();
   await seedModuleSystems();

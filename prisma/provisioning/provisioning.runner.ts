@@ -3,6 +3,7 @@ import { collectPermissionArchitectureMetrics, printPermissionArchitectureMetric
 import { prisma } from '../seeds/prismaClient';
 import { seedModules } from '../seeds/seedModules';
 import { seedModuleSystems } from '../seeds/seedModuleSystems';
+import { seedPartyEntityTypes } from '../seeds/seedPartyEntityTypes';
 import { seedSubscriptionPlans } from '../seeds/seedSubscriptionPlans';
 import { seedTaxes } from '../seeds/seedTaxes';
 import { seedTaxPostingRules } from '../../src/modules/tax/seed/tax.seed';
@@ -13,9 +14,9 @@ export type ProvisionResult = {
   version: string;
 };
 
-export const PlatformProvisionVersion = '2026.07.08.0';
+export const PlatformProvisionVersion = '2026.07.29.0';
 
-const ProvisionSteps = ['platform-catalog', 'module-systems', 'subscription-plans', 'taxes', 'tax-posting-rules'] as const;
+const ProvisionSteps = ['platform-catalog', 'module-systems', 'party-entity-types', 'subscription-plans', 'taxes', 'tax-posting-rules'] as const;
 
 export function buildProvisionChecksum() {
   return createHash('sha256')
@@ -40,6 +41,9 @@ export async function runPlatformProvision(): Promise<ProvisionResult> {
 
   console.log('Provisioning module systems and sidebar templates.');
   await seedModuleSystems();
+
+  console.log('Provisioning party entity types.');
+  await seedPartyEntityTypes();
 
   console.log('Provisioning subscription plan system links.');
   await seedSubscriptionPlans();

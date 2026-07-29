@@ -130,6 +130,7 @@ export class PartyMaintenanceService {
         middleName: true,
         lastName: true,
         suffixName: true,
+        contactPerson: true,
         email: true,
         contactNo: true,
         status: true,
@@ -143,6 +144,7 @@ export class PartyMaintenanceService {
         classification: party.classification,
         partyTypes: party.partyTypes,
         name: this.getPartyOptionName(party),
+        contactPerson: party.contactPerson ?? '',
         email: party.email ?? '',
         contactNo: party.contactNo ?? '',
         status: party.status,
@@ -343,6 +345,7 @@ export class PartyMaintenanceService {
               { middleName: { contains: search, mode: 'insensitive' } },
               { lastName: { contains: search, mode: 'insensitive' } },
               { tin: { contains: search, mode: 'insensitive' } },
+              { contactPerson: { contains: search, mode: 'insensitive' } },
               { email: { contains: search, mode: 'insensitive' } },
               { contactNo: { contains: search, mode: 'insensitive' } },
               { landline: { contains: search, mode: 'insensitive' } },
@@ -487,17 +490,25 @@ export class PartyMaintenanceService {
       requirePartyCode?: boolean;
       resolveAddressNames?: boolean;
     } = {},
-  ): Promise<CreatePartyDto> {
+  ): Promise<NormalizedPartyDto> {
     const partyTypes = this.normalizePartyTypes(dto.partyTypes);
     const termId = this.normalizeOptionalString(dto.termId);
+    const partyEntityType = await this.resolvePartyEntityType(
+      dto.classification,
+      dto.partyEntityType,
+    );
+    const partyEntityTypeIsGovernment = Boolean(partyEntityType?.isGovernment);
 
     if (termId) {
       await this.ensureTermBelongsToCompany(companyId, parsePositiveBigIntId(termId));
     }
 
-    const normalized: CreatePartyDto = {
+    const normalized: NormalizedPartyDto = {
       ...dto,
       partyCodeNo: dto.partyCodeNo.trim(),
+      partyEntityType: partyEntityType?.name ?? null,
+      partyEntityTypeId: partyEntityType?.id ?? null,
+      partyEntityTypeIsGovernment,
       partyTypes,
       status: options.forceActiveStatus ? PartyStatus.ACTIVE : (dto.status ?? PartyStatus.ACTIVE),
       partyName: this.normalizeOptionalString(dto.partyName),
@@ -522,11 +533,18 @@ export class PartyMaintenanceService {
       atcCode: this.normalizeOptionalString(dto.atcCode),
       defaultPurchaseInputVatTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseInputVatTaxSourceKey),
       defaultPurchaseEwtTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseEwtTaxSourceKey),
-      defaultPurchaseFwtTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseFwtTaxSourceKey),
-      defaultPurchaseWvatTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseWvatTaxSourceKey),
+      defaultPurchaseFwtTaxSourceKey: partyEntityTypeIsGovernment
+        ? this.normalizeOptionalString(dto.defaultPurchaseFwtTaxSourceKey)
+        : null,
+      defaultPurchaseWvatTaxSourceKey: partyEntityTypeIsGovernment
+        ? this.normalizeOptionalString(dto.defaultPurchaseWvatTaxSourceKey)
+        : null,
       defaultSalesOutputVatTaxSourceKey: this.normalizeOptionalString(dto.defaultSalesOutputVatTaxSourceKey),
       defaultSalesCwtTaxSourceKey: this.normalizeOptionalString(dto.defaultSalesCwtTaxSourceKey),
-      defaultSalesWvatTaxSourceKey: this.normalizeOptionalString(dto.defaultSalesWvatTaxSourceKey),
+      defaultSalesWvatTaxSourceKey: partyEntityTypeIsGovernment
+        ? this.normalizeOptionalString(dto.defaultSalesWvatTaxSourceKey)
+        : null,
+      contactPerson: this.normalizeOptionalString(dto.contactPerson),
       email: this.normalizeOptionalString(dto.email),
       contactNo: this.normalizeOptionalString(dto.contactNo),
       landline: this.normalizeOptionalString(dto.landline),
@@ -554,6 +572,7 @@ export class PartyMaintenanceService {
     return {
       partyCodeNo: dto.partyCodeNo ?? current.partyCodeNo,
       classification: dto.classification ?? current.classification,
+      partyEntityType: dto.partyEntityType ?? current.partyEntityType?.name ?? null,
       partyTypes: dto.partyTypes ?? current.partyTypes,
       status: dto.status ?? current.status,
       partyName: dto.partyName ?? current.partyName ?? '',
@@ -604,13 +623,14 @@ export class PartyMaintenanceService {
       defaultSalesOutputVatTaxSourceKey: dto.defaultSalesOutputVatTaxSourceKey ?? currentTaxDefaults.defaultSalesOutputVatTaxSourceKey ?? '',
       defaultSalesCwtTaxSourceKey: dto.defaultSalesCwtTaxSourceKey ?? currentTaxDefaults.defaultSalesCwtTaxSourceKey ?? '',
       defaultSalesWvatTaxSourceKey: dto.defaultSalesWvatTaxSourceKey ?? currentTaxDefaults.defaultSalesWvatTaxSourceKey ?? '',
+      contactPerson: dto.contactPerson ?? current.contactPerson ?? '',
       email: dto.email ?? current.email ?? '',
       contactNo: dto.contactNo ?? current.contactNo ?? '',
       landline: dto.landline ?? current.landline ?? '',
     };
   }
 
-  private validateParty(dto: CreatePartyDto) {
+  private validateParty(dto: NormalizedPartyDto) {
     if (dto.partyCodeNo && !dto.partyCodeNo.trim()) {
       throw new BadRequestException('Party code is required.');
     }
@@ -638,6 +658,10 @@ export class PartyMaintenanceService {
       (dto.partyTypes.includes(PartyType.EMPLOYEE) || dto.partyTypes.includes(PartyType.MEMBER))
     ) {
       throw new BadRequestException('Employee and Member are only available for individual parties.');
+    }
+
+    if (dto.classification === PartyClassification.NON_INDIVIDUAL && !dto.partyEntityTypeId) {
+      throw new BadRequestException('Select a party entity type.');
     }
 
     this.validateAccountingAccounts(dto);
@@ -1070,6 +1094,38 @@ export class PartyMaintenanceService {
     }
   }
 
+  private async resolvePartyEntityType(
+    classification: PartyClassification,
+    value: string | null | undefined,
+  ) {
+    if (classification === PartyClassification.INDIVIDUAL) {
+      return null;
+    }
+
+    const name = this.normalizeOptionalString(value);
+
+    if (!name) {
+      return null;
+    }
+
+    const partyEntityType = await this.prisma.partyEntityType.findFirst({
+      where: {
+        name: { equals: name, mode: 'insensitive' },
+        status: PartyStatus.ACTIVE,
+      },
+    });
+
+    if (!partyEntityType) {
+      throw new BadRequestException('Choose a valid party entity type.');
+    }
+
+    if (partyEntityType.classification !== classification) {
+      throw new BadRequestException('Choose a non-individual party entity type.');
+    }
+
+    return partyEntityType;
+  }
+
   private async findPartyOrThrow(companyId: number, partyId: bigint) {
     const party = await this.prisma.party.findFirst({
       where: { id: partyId, companyId, deletedAt: null },
@@ -1083,11 +1139,12 @@ export class PartyMaintenanceService {
     return party;
   }
 
-  private toPartyData(dto: CreatePartyDto) {
+  private toPartyData(dto: NormalizedPartyDto) {
     return {
       termId: dto.termId ? parsePositiveBigIntId(dto.termId) : null,
       partyCodeNo: dto.partyCodeNo,
       classification: dto.classification,
+      partyEntityTypeId: dto.partyEntityTypeId,
       partyTypes: dto.partyTypes,
       status: dto.status ?? PartyStatus.ACTIVE,
       partyName: dto.classification === PartyClassification.NON_INDIVIDUAL ? dto.partyName : null,
@@ -1111,11 +1168,21 @@ export class PartyMaintenanceService {
       atcCode: dto.atcCode,
       defaultPurchaseInputVatTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseInputVatTaxSourceKey : null,
       defaultPurchaseEwtTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseEwtTaxSourceKey : null,
-      defaultPurchaseFwtTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseFwtTaxSourceKey : null,
-      defaultPurchaseWvatTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseWvatTaxSourceKey : null,
+      defaultPurchaseFwtTaxSourceKey:
+        dto.partyTypes.includes(PartyType.VENDOR) && dto.partyEntityTypeIsGovernment
+          ? dto.defaultPurchaseFwtTaxSourceKey
+          : null,
+      defaultPurchaseWvatTaxSourceKey:
+        dto.partyTypes.includes(PartyType.VENDOR) && dto.partyEntityTypeIsGovernment
+          ? dto.defaultPurchaseWvatTaxSourceKey
+          : null,
       defaultSalesOutputVatTaxSourceKey: dto.partyTypes.includes(PartyType.CUSTOMER) ? dto.defaultSalesOutputVatTaxSourceKey : null,
       defaultSalesCwtTaxSourceKey: dto.partyTypes.includes(PartyType.CUSTOMER) ? dto.defaultSalesCwtTaxSourceKey : null,
-      defaultSalesWvatTaxSourceKey: dto.partyTypes.includes(PartyType.CUSTOMER) ? dto.defaultSalesWvatTaxSourceKey : null,
+      defaultSalesWvatTaxSourceKey:
+        dto.partyTypes.includes(PartyType.CUSTOMER) && dto.partyEntityTypeIsGovernment
+          ? dto.defaultSalesWvatTaxSourceKey
+          : null,
+      contactPerson: dto.contactPerson,
       email: dto.email,
       contactNo: dto.contactNo,
       landline: dto.landline,
@@ -1271,6 +1338,11 @@ type PartyTaxDefaultSourceKeys = {
   defaultSalesOutputVatTaxSourceKey?: string | null;
   defaultSalesCwtTaxSourceKey?: string | null;
   defaultSalesWvatTaxSourceKey?: string | null;
+};
+
+type NormalizedPartyDto = CreatePartyDto & {
+  partyEntityTypeId: bigint | null;
+  partyEntityTypeIsGovernment: boolean;
 };
 
 function hasPersonalInformationPartyType(partyTypes: PartyType[]) {
