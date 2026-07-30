@@ -6,7 +6,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateTermDto } from './dto/create-term.dto';
 import { GetTermListQueryDto } from './dto/get-term-list-query.dto';
 import { ImportTermsDto } from './dto/import-terms.dto';
+import { TermLookupQueryDto } from './dto/term-lookup-query.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
+import { TermsLookupService } from './lookups/terms-lookup.service';
 import { TermsMaintenanceService } from './terms-maintenance.service';
 
 @UseGuards(JwtAuthGuard)
@@ -16,7 +18,10 @@ import { TermsMaintenanceService } from './terms-maintenance.service';
   version: '1',
 })
 export class TermsMaintenanceController {
-  constructor(private readonly termsMaintenanceService: TermsMaintenanceService) {}
+  constructor(
+    private readonly termsMaintenanceService: TermsMaintenanceService,
+    private readonly termsLookupService: TermsLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Term list retrieved.' })
@@ -26,8 +31,8 @@ export class TermsMaintenanceController {
 
   @Get('options')
   @ApiOkResponse({ description: 'Term options retrieved.' })
-  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetTermListQueryDto) {
-    return this.termsMaintenanceService.findOptions(user, query);
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: TermLookupQueryDto) {
+    return this.termsLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get(':id')
