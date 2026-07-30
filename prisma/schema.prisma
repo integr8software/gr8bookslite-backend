@@ -39,8 +39,40 @@ model User {
   tablePreferences       UserTablePreference[]
   warehouseAccess        WarehouseAccess[]
   sidebarPreferences     UserSidebarPreference[]
+  approverSetups         ApproverSetupUser[]
 
   @@map("users")
+}
+
+model ApproverSetup {
+  id                String              @id @default(uuid()) @db.Uuid
+  companyId         Int                 @map("company_id")
+  approverCondition String              @map("approver_condition")
+  type              String
+  status            String              @default("Active")
+  level             Int?
+  moduleScope       String              @map("module_scope")
+  validUntil        DateTime?           @map("valid_until")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  company           Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  approvers         ApproverSetupUser[]
+
+  @@index([companyId])
+  @@index([moduleScope])
+  @@index([status])
+  @@map("approver_setups")
+}
+
+model ApproverSetupUser {
+  approverSetupId String        @map("approver_setup_id") @db.Uuid
+  userId          Int           @map("user_id")
+  approverSetup   ApproverSetup @relation(fields: [approverSetupId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([approverSetupId, userId])
+  @@index([userId])
+  @@map("approver_setup_users")
 }
 
 model UserAuthIdentity {
@@ -130,6 +162,7 @@ model Company {
   journalEntries                JournalEntry[]
   warehouses                    Warehouse[]
   warehouseAccess               WarehouseAccess[]
+  approverSetups                ApproverSetup[]
   userTablePreferences          UserTablePreference[]
   auditLogs                     AuditLog[]
   onboardingDrafts              UserOnboardingDraft[]           @relation("ProvisionedOnboardingCompany")
@@ -557,8 +590,6 @@ model Tax {
   @@index([transactionType, taxType, sortOrder])
   @@map("taxes")
 }
-
-
 
 model FormSignatorySetup {
   id        Int                @id @default(autoincrement())
@@ -1093,11 +1124,11 @@ model ResponsibilityCenterType {
 }
 
 model Party {
-  id                                  BigInt                    @id @default(autoincrement())
-  companyId                           Int                       @map("company_id")
-  termId                              BigInt?                   @map("term_id")
-  partyEntityTypeId                   BigInt?                   @map("party_entity_type_id")
-  partyCodeNo                         String                    @map("party_code_no") @db.VarChar(80)
+  id                                  BigInt              @id @default(autoincrement())
+  companyId                           Int                 @map("company_id")
+  termId                              BigInt?             @map("term_id")
+  partyEntityTypeId                   BigInt?             @map("party_entity_type_id")
+  partyCodeNo                         String              @map("party_code_no") @db.VarChar(80)
   classification                      PartyClassification
   partyTypes                          PartyType[]               @map("party_types")
   status                              PartyStatus               @default(ACTIVE)

@@ -7439,6 +7439,156 @@
         ]
       }
     },
+    "/api/v1/approver-setups/users": {
+      "get": {
+        "description": "Returns users that belong to the active company context for approver checklist controls.",
+        "operationId": "ApproverSetupsController_findCompanyUsers_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "test",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApproverSetupUserResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List company users for approver setup",
+        "tags": [
+          "Approver Setups"
+        ]
+      }
+    },
+    "/api/v1/approver-setups": {
+      "post": {
+        "operationId": "ApproverSetupsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApproverSetupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateApproverSetupResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create an approver setup",
+        "tags": [
+          "Approver Setups"
+        ]
+      },
+      "get": {
+        "operationId": "ApproverSetupsController_findAll_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproverSetupsPaginatedResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List approver setups",
+        "tags": [
+          "Approver Setups"
+        ]
+      }
+    },
     "/api/v1/system-administration/transaction-number-sequences/bootstrap": {
       "get": {
         "operationId": "TransactionNumberSequencesController_findBootstrap_v1",
@@ -14085,6 +14235,179 @@
         },
         "required": [
           "modules"
+        ]
+      },
+      "ApproverSetupUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Sinbad Admin"
+          },
+          "email": {
+            "type": "string",
+            "example": "sinbad@example.com"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
+        ]
+      },
+      "CreateApproverSetupDto": {
+        "type": "object",
+        "properties": {
+          "approverCondition": {
+            "type": "string",
+            "example": "Any one approver"
+          },
+          "type": {
+            "type": "string",
+            "example": "Level-based"
+          },
+          "status": {
+            "type": "string",
+            "example": "Active"
+          },
+          "level": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "moduleScope": {
+            "type": "string",
+            "example": "cash-disbursement.disbursement-voucher"
+          },
+          "approverUserIds": {
+            "minItems": 1,
+            "example": [
+              1,
+              2
+            ],
+            "description": "Existing User ids. The User model currently uses integer ids.",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "approverCondition",
+          "type",
+          "status",
+          "moduleScope",
+          "approverUserIds"
+        ]
+      },
+      "ApproverSetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "fe0383f2-f113-4ab4-9aca-9ee1163e3fd9"
+          },
+          "approverCondition": {
+            "type": "string",
+            "example": "Any one approver"
+          },
+          "type": {
+            "type": "string",
+            "example": "Level-based"
+          },
+          "status": {
+            "type": "string",
+            "example": "Active"
+          },
+          "level": {
+            "type": "number",
+            "nullable": true,
+            "example": 1
+          },
+          "moduleScope": {
+            "type": "string",
+            "example": "cash-disbursement.disbursement-voucher"
+          },
+          "approvers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApproverSetupUserResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-07-30T08:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-07-30T08:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "approverCondition",
+          "type",
+          "status",
+          "moduleScope",
+          "approvers",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateApproverSetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Approver setup created."
+          },
+          "setup": {
+            "$ref": "#/components/schemas/ApproverSetupResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "setup"
+        ]
+      },
+      "ApproverSetupsPaginatedResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApproverSetupResponseDto"
+            }
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "total": {
+            "type": "number",
+            "example": 4
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "limit",
+          "total",
+          "totalPages"
         ]
       },
       "TransactionNumberBranchResponseDto": {
