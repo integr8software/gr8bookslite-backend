@@ -25,13 +25,6 @@ export function buildSlugBase(value: string) {
   return normalized || 'company';
 }
 
-export function getTrialEndsAt(startDate: Date, trialDays: number) {
-  const trialEndsAt = new Date(startDate);
-  trialEndsAt.setUTCDate(trialEndsAt.getUTCDate() + trialDays);
-
-  return trialEndsAt;
-}
-
 export function buildCompanyLogoStoragePath(companyId: number, sourceStoragePath: string) {
   const fileName = sourceStoragePath.split('/').pop() || 'logo';
 

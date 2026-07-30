@@ -37,17 +37,3 @@ export function deriveSubscriptionStatusFromWebhookEvent(eventType: string) {
       return 'incomplete';
   }
 }
-
-export function mapInvoiceStatusFromWebhookEvent(eventType: string) {
-  switch (eventType) {
-    case 'subscription.invoice.paid':
-      return 'paid';
-    case 'subscription.invoice.payment_failed':
-      return 'payment_failed';
-    case 'subscription.invoice.finalized':
-      return 'open';
-    case 'subscription.invoice.created':
-    default:
-      return 'draft';
-  }
-}

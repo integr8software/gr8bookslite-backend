@@ -506,9 +506,6 @@ export class BillingPaymentAttemptResponseDto {
   subscription!: CompanySubscriptionResponseDto | null;
 }
 
-/** @deprecated Use BillingPaymentAttemptResponseDto. */
-export class BillingPaymentRequestResponseDto extends BillingPaymentAttemptResponseDto {}
-
 export class PaymentIntentResponseDto {
   @ApiProperty({ nullable: true })
   id!: string | null;
