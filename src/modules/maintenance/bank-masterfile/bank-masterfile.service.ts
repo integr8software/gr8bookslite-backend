@@ -76,6 +76,51 @@ export class BankMasterfileService {
       permissions: this.getPermissions(user, companyId),
     };
   }
+
+  async findOptions(user: AuthUser, query: GetBankAccountListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const search = query.search?.trim();
+    const currencyCode = query.currencyCode ? cleanCurrencyCode(query.currencyCode) : undefined;
+
+    const banks = await this.prisma.bankAccount.findMany({
+      where: {
+        companyId,
+        status: ChartAccountStatus.ACTIVE,
+        ...(currencyCode ? { currencyCode: { equals: currencyCode, mode: 'insensitive' } } : {}),
+        ...(search
+          ? {
+              OR: [
+                { bankName: { contains: search, mode: 'insensitive' } },
+                { branch: { contains: search, mode: 'insensitive' } },
+                { accountName: { contains: search, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        bankName: true,
+        accountName: true,
+        accountNumber: true,
+        currencyCode: true,
+        status: true,
+      },
+      orderBy: [{ bankName: 'asc' }, { accountName: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      banks: banks.map((bank) => ({
+        id: bank.id.toString(),
+        bankName: bank.bankName,
+        accountName: bank.accountName,
+        maskedAccountNumber: this.maskAccountNumber(bank.accountNumber),
+        currencyCode: bank.currencyCode,
+        status: bank.status,
+      })),
+    };
+  }
+
   async getNextAccountCode(user: AuthUser) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
@@ -419,6 +464,15 @@ export class BankMasterfileService {
     if (!membership || membership.status !== MembershipStatus.ACTIVE) {
       throw new NotFoundException('Company not found.');
     }
+  }
+
+  private maskAccountNumber(accountNumber: string) {
+    const trimmed = accountNumber.trim();
+    if (trimmed.length <= 4) {
+      return trimmed ? '*'.repeat(trimmed.length) : '';
+    }
+
+    return `${'*'.repeat(Math.max(0, trimmed.length - 4))}${trimmed.slice(-4)}`;
   }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {

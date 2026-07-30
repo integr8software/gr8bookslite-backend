@@ -66,6 +66,54 @@ export class ChartOfAccountsService {
     };
   }
 
+  async findOptions(user: AuthUser, query: GetChartAccountListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(query.parentAccountId, 'parentAccountId');
+    const search = query.search?.trim();
+
+    const accounts = await this.prisma.chartAccount.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: ChartAccountStatus.ACTIVE,
+        ...(query.accountLevel ? { accountLevel: query.accountLevel } : {}),
+        ...(query.accountType ? { accountType: query.accountType } : {}),
+        ...(query.accountNature ? { accountNature: query.accountNature } : {}),
+        ...(query.postingOnly === true ? { isPostingAccount: true } : {}),
+        ...(parentAccountId !== undefined ? { parentAccountId } : {}),
+        ...(search
+          ? {
+              OR: [
+                { accountCode: { contains: search, mode: 'insensitive' } },
+                { accountTitle: { contains: search, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        accountCode: true,
+        accountTitle: true,
+        accountType: true,
+        accountNature: true,
+        status: true,
+      },
+      orderBy: [{ accountCode: 'asc' }, { accountTitle: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      accounts: accounts.map((account) => ({
+        id: account.id.toString(),
+        accountCode: account.accountCode,
+        accountTitle: account.accountTitle,
+        accountType: account.accountType,
+        accountNature: account.accountNature,
+        status: account.status,
+      })),
+    };
+  }
+
   async findTree(user: AuthUser) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);

@@ -71,6 +71,61 @@ export class WarehouseMaintenanceService {
     };
   }
 
+  async findOptions(user: AuthUser, query: GetWarehouseListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    await this.ensureDefaultRows(companyId);
+    const search = query.search?.trim();
+    const filters: Prisma.WarehouseWhereInput[] = [];
+
+    if (query.branchUnitId) {
+      filters.push({
+        OR: [
+          { branchAvailabilityMode: WarehouseBranchAvailabilityMode.ALL },
+          {
+            branchAvailabilityMode: WarehouseBranchAvailabilityMode.SPECIFIC,
+            branches: { some: { unitId: query.branchUnitId } },
+          },
+          {
+            branchAvailabilityMode: WarehouseBranchAvailabilityMode.EXCEPT,
+            branches: { none: { unitId: query.branchUnitId } },
+          },
+        ],
+      });
+    }
+
+    if (search) {
+      filters.push({
+        OR: [{ code: { contains: search, mode: 'insensitive' } }, { name: { contains: search, mode: 'insensitive' } }],
+      });
+    }
+
+    const warehouses = await this.prisma.warehouse.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: WarehouseStatus.ACTIVE,
+        ...(filters.length > 0 ? { AND: filters } : {}),
+      },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        status: true,
+      },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      warehouses: warehouses.map((warehouse) => ({
+        id: warehouse.id.toString(),
+        code: warehouse.code,
+        name: warehouse.name,
+        status: warehouse.status,
+      })),
+    };
+  }
+
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);

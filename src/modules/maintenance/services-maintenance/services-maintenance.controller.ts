@@ -24,6 +24,12 @@ export class ServicesMaintenanceController {
     return this.servicesMaintenanceService.findAll(user, query);
   }
 
+  @Get('options')
+  @ApiOkResponse({ description: 'Service options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetServiceMaintenanceListQueryDto) {
+    return this.servicesMaintenanceService.findOptions(user, query);
+  }
+
   @Get('account-options')
   @ApiOkResponse({ description: 'Service revenue account options retrieved.' })
   getAccountOptions(@CurrentUser() user: AuthUser) {
@@ -58,5 +64,21 @@ export class ServicesMaintenanceController {
   @ApiOkResponse({ description: 'Service status updated.' })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateServiceMaintenanceStatusDto) {
     return this.servicesMaintenanceService.updateStatus(user, id, dto);
+  }
+}
+
+@UseGuards(JwtAuthGuard)
+@ApiTags('Services Maintenance')
+@Controller({
+  path: 'maintenance/services-maintenance',
+  version: '1',
+})
+export class ServicesMaintenanceLookupController {
+  constructor(private readonly servicesMaintenanceService: ServicesMaintenanceService) {}
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Service options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetServiceMaintenanceListQueryDto) {
+    return this.servicesMaintenanceService.findOptions(user, query);
   }
 }

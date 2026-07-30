@@ -54,6 +54,44 @@ export class UnitOfMeasurementService {
     };
   }
 
+  async findOptions(user: AuthUser, query: GetUnitOfMeasurementListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const search = query.search?.trim();
+
+    const units = await this.prisma.unitOfMeasurement.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: UnitOfMeasurementStatus.ACTIVE,
+        ...(query.quantityMode ? { quantityMode: query.quantityMode } : {}),
+        ...(search
+          ? {
+              OR: [{ name: { contains: search, mode: 'insensitive' } }, { symbol: { contains: search, mode: 'insensitive' } }],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        symbol: true,
+        quantityMode: true,
+        status: true,
+      },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      units: units.map((unit) => ({
+        id: unit.id.toString(),
+        name: unit.name,
+        symbol: unit.symbol,
+        quantityMode: unit.quantityMode,
+        status: unit.status,
+      })),
+    };
+  }
+
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);

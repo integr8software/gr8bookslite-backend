@@ -25,6 +25,12 @@ export class BankMasterfileController {
     return this.bankMasterfileService.findAll(user, query);
   }
 
+  @Get('options')
+  @ApiOkResponse({ description: 'Bank account options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
+    return this.bankMasterfileService.findOptions(user, query);
+  }
+
   @Get('next-account-code')
   @ApiOkResponse({ description: 'Next bank account code generated.' })
   getNextAccountCode(@CurrentUser() user: AuthUser) {
@@ -58,5 +64,21 @@ export class BankMasterfileController {
   @ApiOkResponse({ description: 'Bank account status updated.' })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateBankAccountStatusDto) {
     return this.bankMasterfileService.updateStatus(user, id, dto);
+  }
+}
+
+@UseGuards(JwtAuthGuard)
+@ApiTags('Bank Masterfile')
+@Controller({
+  path: 'maintenance/bank-masterfile',
+  version: '1',
+})
+export class BankMasterfileLookupController {
+  constructor(private readonly bankMasterfileService: BankMasterfileService) {}
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Bank account options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
+    return this.bankMasterfileService.findOptions(user, query);
   }
 }

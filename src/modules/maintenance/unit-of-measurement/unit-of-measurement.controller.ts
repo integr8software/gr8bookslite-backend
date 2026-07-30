@@ -24,6 +24,12 @@ export class UnitOfMeasurementController {
     return this.unitOfMeasurementService.findAll(user, query);
   }
 
+  @Get('options')
+  @ApiOkResponse({ description: 'Unit of measurement options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetUnitOfMeasurementListQueryDto) {
+    return this.unitOfMeasurementService.findOptions(user, query);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Unit of measurement retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {

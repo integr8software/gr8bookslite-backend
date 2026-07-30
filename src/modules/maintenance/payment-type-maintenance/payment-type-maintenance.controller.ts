@@ -24,6 +24,12 @@ export class PaymentTypeMaintenanceController {
     return this.paymentTypeMaintenanceService.findAll(user, query);
   }
 
+  @Get('options')
+  @ApiOkResponse({ description: 'Payment type options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetPaymentTypeListQueryDto) {
+    return this.paymentTypeMaintenanceService.findOptions(user, query);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Payment type retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {

@@ -52,6 +52,40 @@ export class TermsMaintenanceService {
     };
   }
 
+  async findOptions(user: AuthUser, query: GetTermListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const search = query.search?.trim();
+
+    const terms = await this.prisma.term.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: TermStatus.ACTIVE,
+        ...(query.dateMode ? { dateMode: query.dateMode } : {}),
+        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        dateMode: true,
+        period: true,
+        status: true,
+      },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      terms: terms.map((term) => ({
+        id: term.id.toString(),
+        name: term.name,
+        dateMode: term.dateMode,
+        period: term.period,
+        status: term.status,
+      })),
+    };
+  }
+
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);

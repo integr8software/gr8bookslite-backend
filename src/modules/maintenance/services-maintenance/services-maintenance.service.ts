@@ -73,6 +73,36 @@ export class ServicesMaintenanceService {
     };
   }
 
+  async findOptions(user: AuthUser, query: GetServiceMaintenanceListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const search = query.search?.trim();
+
+    const services = await this.prisma.serviceMaintenance.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: ChartAccountStatus.ACTIVE,
+        ...(search ? { serviceName: { contains: search, mode: 'insensitive' } } : {}),
+      },
+      select: {
+        id: true,
+        serviceName: true,
+        status: true,
+      },
+      orderBy: [{ serviceName: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      services: services.map((service) => ({
+        id: service.id.toString(),
+        serviceName: service.serviceName,
+        name: service.serviceName,
+        status: service.status,
+      })),
+    };
+  }
+
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);

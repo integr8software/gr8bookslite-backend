@@ -24,6 +24,12 @@ export class ResponsibilityCenterController {
     return this.responsibilityCenterService.findAll(user, query);
   }
 
+  @Get('options')
+  @ApiOkResponse({ description: 'Responsibility center options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetResponsibilityCenterListQueryDto) {
+    return this.responsibilityCenterService.findOptions(user, query);
+  }
+
   @Get('tree')
   @ApiOkResponse({ description: 'Responsibility center tree retrieved.' })
   findTree(@CurrentUser() user: AuthUser, @Query() query: GetResponsibilityCenterListQueryDto) {
@@ -72,5 +78,21 @@ export class ResponsibilityCenterController {
   @ApiOkResponse({ description: 'Responsibility center status updated.' })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateResponsibilityCenterStatusDto) {
     return this.responsibilityCenterService.updateStatus(user, id, dto);
+  }
+}
+
+@UseGuards(JwtAuthGuard)
+@ApiTags('Responsibility Center')
+@Controller({
+  path: 'maintenance/responsibility-center',
+  version: '1',
+})
+export class ResponsibilityCenterLookupController {
+  constructor(private readonly responsibilityCenterService: ResponsibilityCenterService) {}
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Responsibility center options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetResponsibilityCenterListQueryDto) {
+    return this.responsibilityCenterService.findOptions(user, query);
   }
 }

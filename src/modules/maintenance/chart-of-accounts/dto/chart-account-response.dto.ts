@@ -103,8 +103,8 @@ export class ChartAccountResponseDto {
   @ApiProperty({ nullable: true })
   updatedBy!: string | null;
 
-  @ApiProperty()
-  updatedAt!: string;
+  @ApiProperty({ nullable: true })
+  updatedAt!: string | null;
 
   @ApiProperty({ type: [ChartAccountBankAccountResponseDto] })
   bankAccounts!: ChartAccountBankAccountResponseDto[];

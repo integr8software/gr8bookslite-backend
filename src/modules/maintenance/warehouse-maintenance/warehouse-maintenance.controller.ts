@@ -23,6 +23,12 @@ export class WarehouseMaintenanceController {
     return this.warehouseMaintenanceService.findAll(user, query);
   }
 
+  @Get('options')
+  @ApiOkResponse({ description: 'Warehouse options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetWarehouseListQueryDto) {
+    return this.warehouseMaintenanceService.findOptions(user, query);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Warehouse retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {

@@ -12,6 +12,7 @@ export function buildBankAccountListWhere(companyId: number, query: GetBankAccou
   return {
     companyId,
     ...(query.status ? { status: query.status } : {}),
+    ...(query.currencyCode ? { currencyCode: { equals: cleanCurrencyCode(query.currencyCode), mode: 'insensitive' } } : {}),
     ...(search
       ? {
           OR: [

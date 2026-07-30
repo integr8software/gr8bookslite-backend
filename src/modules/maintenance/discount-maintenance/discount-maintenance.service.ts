@@ -56,6 +56,43 @@ export class DiscountMaintenanceService {
     };
   }
 
+  async findOptions(user: AuthUser, query: GetDiscountListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const search = query.search?.trim();
+
+    const discounts = await this.prisma.discount.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: DiscountStatus.ACTIVE,
+        ...(query.type ? { type: query.type } : {}),
+        ...(query.valueType ? { valueType: query.valueType } : {}),
+        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        valueType: true,
+        value: true,
+        status: true,
+      },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      discounts: discounts.map((discount) => ({
+        id: discount.id.toString(),
+        name: discount.name,
+        type: discount.type,
+        valueType: discount.valueType,
+        value: discount.value.toString(),
+        status: discount.status,
+      })),
+    };
+  }
+
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);

@@ -30,7 +30,7 @@ export function mapBankAccount(bankAccount: BankAccountPayload, userNames: Map<n
     createdBy: bankAccount.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(bankAccount.createdByUserId) ?? null),
     createdAt: bankAccount.createdAt.toISOString(),
     updatedBy: (bankAccount.updatedByUserId && userNames.get(bankAccount.updatedByUserId)) ?? null,
-    updatedAt: bankAccount.updatedAt.toISOString(),
+    updatedAt: bankAccount.updatedAt?.toISOString() ?? null,
     createdByUserId: bankAccount.createdByUserId,
     updatedByUserId: bankAccount.updatedByUserId,
   };

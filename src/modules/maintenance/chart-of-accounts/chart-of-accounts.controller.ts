@@ -32,6 +32,12 @@ export class ChartOfAccountsController {
     return this.chartOfAccountsService.findAll(user, query);
   }
 
+  @Get('options')
+  @ApiOkResponse({ description: 'Chart account options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
+    return this.chartOfAccountsService.findOptions(user, query);
+  }
+
   @Get('tree')
   @ApiOkResponse({ type: ChartAccountTreeResponseDto })
   findTree(@CurrentUser() user: AuthUser) {

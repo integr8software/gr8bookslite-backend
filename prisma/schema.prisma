@@ -546,7 +546,7 @@ model Tax {
   sortOrder       Int              @default(0) @map("sort_order")
   status          TaxStatus        @default(ACTIVE)
   createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
+  updatedAt       DateTime?        @map("updated_at")
   postingRules    TaxPostingRule[]
 
   @@index([transactionType])
@@ -566,7 +566,7 @@ model FormSignatorySetup {
   unitId    Int                @map("unit_id")
   moduleId  Int                @map("module_id")
   createdAt DateTime           @default(now()) @map("created_at")
-  updatedAt DateTime           @updatedAt @map("updated_at")
+  updatedAt DateTime?          @map("updated_at")
   company   Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   unit      CompanyUnit        @relation(fields: [unitId], references: [id], onDelete: Cascade)
   module    Module             @relation(fields: [moduleId], references: [id], onDelete: Cascade)
@@ -590,7 +590,7 @@ model FormSignatoryRow {
   signatureValidUntil DateTime?          @map("signature_valid_until")
   isThisTemporary     Boolean?           @map("is_this_temporary")
   createdAt           DateTime           @default(now()) @map("created_at")
-  updatedAt           DateTime           @updatedAt @map("updated_at")
+  updatedAt           DateTime?          @map("updated_at")
   setup               FormSignatorySetup @relation(fields: [setupId], references: [id], onDelete: Cascade)
 
   @@index([setupId])
@@ -620,33 +620,33 @@ model TransactionNumberSequence {
 }
 
 model ChartAccount {
-  id                                     BigInt                          @id @default(autoincrement())
-  companyId                              Int                             @map("company_id")
-  parentAccountId                        BigInt?                         @map("parent_account_id")
-  accountCode                            String                          @map("account_code") @db.VarChar(20)
-  accountTitle                           String                          @map("account_title") @db.VarChar(250)
-  accountLevel                           ChartAccountLevel               @map("account_level")
-  accountType                            ChartAccountType?               @map("account_type")
-  accountNature                          AccountNature?                  @map("account_nature")
-  accountGroup                           Json?                           @map("account_group")
-  statementSection                       String?                         @map("statement_section") @db.VarChar(250)
-  reportAlias                            String?                         @map("report_alias") @db.VarChar(250)
-  description                            String?                         @db.VarChar(500)
-  isPostingAccount                       Boolean                         @default(false) @map("is_posting_account")
-  withSubsidiary                         Boolean                         @default(false) @map("with_subsidiary")
-  contraAccount                          Boolean                         @default(false) @map("contra_account")
-  showTotal                              Boolean                         @default(false) @map("show_total")
-  orderNo                                Int?                            @map("order_no")
-  status                                 ChartAccountStatus              @default(ACTIVE)
-  currencyCode                           String?                         @map("currency_code") @db.VarChar(10)
-  whoCreated                             String?                         @map("who_created") @db.VarChar(50)
-  whoModified                            String?                         @map("who_modified") @db.VarChar(50)
-  deletedAt                              DateTime?                       @map("deleted_at")
-  createdAt                              DateTime                        @default(now()) @map("created_at")
-  updatedAt                              DateTime                        @updatedAt @map("updated_at")
-  company                                Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  parentAccount                          ChartAccount?                   @relation("ChartAccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Restrict)
-  childAccounts                          ChartAccount[]                  @relation("ChartAccountHierarchy")
+  id                                     BigInt                  @id @default(autoincrement())
+  companyId                              Int                     @map("company_id")
+  parentAccountId                        BigInt?                 @map("parent_account_id")
+  accountCode                            String                  @map("account_code") @db.VarChar(20)
+  accountTitle                           String                  @map("account_title") @db.VarChar(250)
+  accountLevel                           ChartAccountLevel       @map("account_level")
+  accountType                            ChartAccountType?       @map("account_type")
+  accountNature                          AccountNature?          @map("account_nature")
+  accountGroup                           Json?                   @map("account_group")
+  statementSection                       String?                 @map("statement_section") @db.VarChar(250)
+  reportAlias                            String?                 @map("report_alias") @db.VarChar(250)
+  description                            String?                 @db.VarChar(500)
+  isPostingAccount                       Boolean                 @default(false) @map("is_posting_account")
+  withSubsidiary                         Boolean                 @default(false) @map("with_subsidiary")
+  contraAccount                          Boolean                 @default(false) @map("contra_account")
+  showTotal                              Boolean                 @default(false) @map("show_total")
+  orderNo                                Int?                    @map("order_no")
+  status                                 ChartAccountStatus      @default(ACTIVE)
+  currencyCode                           String?                 @map("currency_code") @db.VarChar(10)
+  whoCreated                             String?                 @map("who_created") @db.VarChar(50)
+  whoModified                            String?                 @map("who_modified") @db.VarChar(50)
+  deletedAt                              DateTime?               @map("deleted_at")
+  createdAt                              DateTime                @default(now()) @map("created_at")
+  updatedAt                              DateTime?               @map("updated_at")
+  company                                Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parentAccount                          ChartAccount?           @relation("ChartAccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Restrict)
+  childAccounts                          ChartAccount[]          @relation("ChartAccountHierarchy")
   bankAccounts                           BankAccount[]
   discounts                              Discount[]
   partyDefaultReceivableAccounts         Party[]                         @relation("PartyDefaultReceivableAccount")
@@ -685,7 +685,7 @@ model CompanyAccountMapping {
   createdByUserId Int?         @map("created_by_user_id")
   updatedByUserId Int?         @map("updated_by_user_id")
   createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
+  updatedAt       DateTime?    @map("updated_at")
   company         Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   chartAccount    ChartAccount @relation(fields: [chartAccountId], references: [id], onDelete: Restrict)
 
@@ -708,7 +708,7 @@ model DefaultAccount {
   createdByUserId              Int?                       @map("created_by_user_id")
   updatedByUserId              Int?                       @map("updated_by_user_id")
   createdAt                    DateTime                   @default(now()) @map("created_at")
-  updatedAt                    DateTime                   @updatedAt @map("updated_at")
+  updatedAt                    DateTime?                  @map("updated_at")
   deletedAt                    DateTime?                  @map("deleted_at")
   company                      Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   expenseCoa                   ChartAccount?              @relation("DefaultAccountExpenseCoa", fields: [expenseCoaId], references: [id], onDelete: Restrict)
@@ -744,7 +744,7 @@ model BankAccount {
   createdByUserId      Int?               @map("created_by_user_id")
   updatedByUserId      Int?               @map("updated_by_user_id")
   createdAt            DateTime           @default(now()) @map("created_at")
-  updatedAt            DateTime           @updatedAt @map("updated_at")
+  updatedAt            DateTime?          @map("updated_at")
   company              Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   coa                  ChartAccount       @relation(fields: [coaId], references: [id], onDelete: Restrict)
 
@@ -767,7 +767,7 @@ model ServiceMaintenance {
   createdByUserId           Int?                    @map("created_by_user_id")
   updatedByUserId           Int?                    @map("updated_by_user_id")
   createdAt                 DateTime                @default(now()) @map("created_at")
-  updatedAt                 DateTime                @updatedAt @map("updated_at")
+  updatedAt                 DateTime?               @map("updated_at")
   deletedAt                 DateTime?               @map("deleted_at")
   company                   Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
   revenueCoa                ChartAccount            @relation("ServiceMaintenanceRevenueCoa", fields: [revenueCoaId], references: [id], onDelete: Restrict)
@@ -780,20 +780,20 @@ model ServiceMaintenance {
 }
 
 model Term {
-  id                      BigInt                   @id @default(autoincrement())
-  companyId               Int                      @map("company_id")
-  name                    String                   @db.VarChar(150)
-  description             String?                  @db.VarChar(500)
-  dateMode                TermDateMode             @map("date_mode")
-  period                  Int
-  status                  TermStatus               @default(ACTIVE)
-  createdByUserId         Int?                     @map("created_by_user_id")
-  updatedByUserId         Int?                     @map("updated_by_user_id")
-  deletedAt               DateTime?                @map("deleted_at")
-  createdAt               DateTime                 @default(now()) @map("created_at")
-  updatedAt               DateTime                 @updatedAt @map("updated_at")
-  company                 Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  parties                 Party[]
+  id              BigInt       @id @default(autoincrement())
+  companyId       Int          @map("company_id")
+  name            String       @db.VarChar(150)
+  description     String?      @db.VarChar(500)
+  dateMode        TermDateMode @map("date_mode")
+  period          Int
+  status          TermStatus   @default(ACTIVE)
+  createdByUserId Int?         @map("created_by_user_id")
+  updatedByUserId Int?         @map("updated_by_user_id")
+  deletedAt       DateTime?    @map("deleted_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime?    @map("updated_at")
+  company         Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  parties         Party[]
   accountsPayableVouchers AccountsPayableVoucher[]
 
   @@index([companyId], map: "terms_company_id_idx")
@@ -814,7 +814,7 @@ model ItemAttribute {
   updatedByUserId Int?                 @map("updated_by_user_id")
   deletedAt       DateTime?            @map("deleted_at")
   createdAt       DateTime             @default(now()) @map("created_at")
-  updatedAt       DateTime             @updatedAt @map("updated_at")
+  updatedAt       DateTime?            @map("updated_at")
   company         Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   values          ItemAttributeValue[]
 
@@ -835,7 +835,7 @@ model ItemAttributeValue {
   status      ItemAttributeValueStatus @default(ACTIVE)
   deletedAt   DateTime?                @map("deleted_at")
   createdAt   DateTime                 @default(now()) @map("created_at")
-  updatedAt   DateTime                 @updatedAt @map("updated_at")
+  updatedAt   DateTime?                @map("updated_at")
   attribute   ItemAttribute            @relation(fields: [attributeId], references: [id], onDelete: Cascade)
 
   @@index([attributeId], map: "item_attribute_values_attribute_id_idx")
@@ -869,7 +869,7 @@ model ItemCategory {
   updatedByUserId            Int?                            @map("updated_by_user_id")
   deletedAt                  DateTime?                       @map("deleted_at")
   createdAt                  DateTime                        @default(now()) @map("created_at")
-  updatedAt                  DateTime                        @updatedAt @map("updated_at")
+  updatedAt                  DateTime?                       @map("updated_at")
   company                    Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   parent                     ItemCategory?                   @relation("ItemCategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children                   ItemCategory[]                  @relation("ItemCategoryHierarchy")
@@ -902,7 +902,7 @@ model Warehouse {
   updatedByUserId        Int?                            @map("updated_by_user_id")
   deletedAt              DateTime?                       @map("deleted_at")
   createdAt              DateTime                        @default(now()) @map("created_at")
-  updatedAt              DateTime                        @updatedAt @map("updated_at")
+  updatedAt              DateTime?                       @map("updated_at")
   company                Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   branches               WarehouseBranch[]
   access                 WarehouseAccess[]
@@ -937,7 +937,7 @@ model WarehouseAccess {
   createdByUserId Int?                        @map("created_by_user_id")
   updatedByUserId Int?                        @map("updated_by_user_id")
   createdAt       DateTime                    @default(now()) @map("created_at")
-  updatedAt       DateTime                    @updatedAt @map("updated_at")
+  updatedAt       DateTime?                   @map("updated_at")
   company         Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   warehouse       Warehouse                   @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
   user            User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -960,7 +960,7 @@ model UnitOfMeasurement {
   updatedByUserId Int?                          @map("updated_by_user_id")
   deletedAt       DateTime?                     @map("deleted_at")
   createdAt       DateTime                      @default(now()) @map("created_at")
-  updatedAt       DateTime                      @updatedAt @map("updated_at")
+  updatedAt       DateTime?                     @map("updated_at")
   company         Company                       @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, name], map: "unit_of_measurements_company_name_key")
@@ -983,7 +983,7 @@ model PaymentType {
   updatedByUserId Int?                      @map("updated_by_user_id")
   deletedAt       DateTime?                 @map("deleted_at")
   createdAt       DateTime                  @default(now()) @map("created_at")
-  updatedAt       DateTime                  @updatedAt @map("updated_at")
+  updatedAt       DateTime?                 @map("updated_at")
   company         Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, name], map: "payment_types_company_name_key")
@@ -1008,7 +1008,7 @@ model Discount {
   updatedByUserId Int?              @map("updated_by_user_id")
   deletedAt       DateTime?         @map("deleted_at")
   createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
+  updatedAt       DateTime?         @map("updated_at")
   company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   chartAccount    ChartAccount      @relation(fields: [chartAccountId], references: [id], onDelete: Restrict)
 
@@ -1021,26 +1021,26 @@ model Discount {
 }
 
 model ResponsibilityCenter {
-  id                            BigInt                            @id @default(autoincrement())
-  companyId                     Int                               @map("company_id")
-  typeId                        BigInt                            @map("type_id")
-  code                          String                            @db.VarChar(50)
-  name                          String                            @db.VarChar(150)
-  category                      ResponsibilityCenterCategory
-  financialType                 ResponsibilityCenterFinancialType @map("financial_type")
-  manager                       String?                           @db.VarChar(150)
-  parentId                      BigInt?                           @map("parent_id")
-  status                        ResponsibilityCenterStatus        @default(ACTIVE)
-  description                   String?                           @db.VarChar(500)
-  createdByUserId               Int?                              @map("created_by_user_id")
-  updatedByUserId               Int?                              @map("updated_by_user_id")
-  deletedAt                     DateTime?                         @map("deleted_at")
-  createdAt                     DateTime                          @default(now()) @map("created_at")
-  updatedAt                     DateTime                          @updatedAt @map("updated_at")
-  company                       Company                           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  type                          ResponsibilityCenterType          @relation(fields: [typeId], references: [id], onDelete: Restrict)
-  parent                        ResponsibilityCenter?             @relation("ResponsibilityCenterHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children                      ResponsibilityCenter[]            @relation("ResponsibilityCenterHierarchy")
+  id              BigInt                            @id @default(autoincrement())
+  companyId       Int                               @map("company_id")
+  typeId          BigInt                            @map("type_id")
+  code            String                            @db.VarChar(50)
+  name            String                            @db.VarChar(150)
+  category        ResponsibilityCenterCategory
+  financialType   ResponsibilityCenterFinancialType @map("financial_type")
+  manager         String?                           @db.VarChar(150)
+  parentId        BigInt?                           @map("parent_id")
+  status          ResponsibilityCenterStatus        @default(ACTIVE)
+  description     String?                           @db.VarChar(500)
+  createdByUserId Int?                              @map("created_by_user_id")
+  updatedByUserId Int?                              @map("updated_by_user_id")
+  deletedAt       DateTime?                         @map("deleted_at")
+  createdAt       DateTime                          @default(now()) @map("created_at")
+  updatedAt       DateTime?                         @map("updated_at")
+  company         Company                           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  type            ResponsibilityCenterType          @relation(fields: [typeId], references: [id], onDelete: Restrict)
+  parent          ResponsibilityCenter?             @relation("ResponsibilityCenterHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children        ResponsibilityCenter[]            @relation("ResponsibilityCenterHierarchy")
   accountsPayableVoucherDetails AccountsPayableVoucherDetails[]
   journalEntries                JournalEntry[]
 
@@ -1062,7 +1062,7 @@ model ResponsibilityCenterClassification {
   isSystem         Boolean                              @default(true) @map("is_system")
   status           ResponsibilityCenterStatus           @default(ACTIVE)
   createdAt        DateTime                             @default(now()) @map("created_at")
-  updatedAt        DateTime                             @updatedAt @map("updated_at")
+  updatedAt        DateTime?                            @map("updated_at")
   types            ResponsibilityCenterType[]
 
   @@index([status], map: "responsibility_center_classifications_status_idx")
@@ -1081,7 +1081,7 @@ model ResponsibilityCenterType {
   createdByUserId  Int?                               @map("created_by_user_id")
   updatedByUserId  Int?                               @map("updated_by_user_id")
   createdAt        DateTime                           @default(now()) @map("created_at")
-  updatedAt        DateTime                           @updatedAt @map("updated_at")
+  updatedAt        DateTime?                          @map("updated_at")
   classification   ResponsibilityCenterClassification @relation(fields: [classificationId], references: [id], onDelete: Restrict)
   centers          ResponsibilityCenter[]
 
@@ -1135,7 +1135,7 @@ model Party {
   updatedByUserId                     Int?                      @map("updated_by_user_id")
   deletedAt                           DateTime?                 @map("deleted_at")
   createdAt                           DateTime                  @default(now()) @map("created_at")
-  updatedAt                           DateTime                  @updatedAt @map("updated_at")
+  updatedAt                           DateTime?                 @map("updated_at")
   company                             Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   partyEntityType                     PartyEntityType?          @relation(fields: [partyEntityTypeId], references: [id], onDelete: Restrict)
   term                                Term?                     @relation(fields: [termId], references: [id], onDelete: SetNull)
@@ -1173,7 +1173,7 @@ model PartyEntityType {
   sortOrder      Int                 @default(0) @map("sort_order")
   status         PartyStatus         @default(ACTIVE)
   createdAt      DateTime            @default(now()) @map("created_at")
-  updatedAt      DateTime            @updatedAt @map("updated_at")
+  updatedAt      DateTime?           @map("updated_at")
   parties        Party[]
 
   @@index([classification, status, sortOrder], map: "party_entity_types_classification_status_sort_idx")
@@ -1348,7 +1348,7 @@ model TaxPostingRule {
   priority         Int                 @default(100)
   isActive         Boolean             @default(true) @map("is_active")
   createdAt        DateTime            @default(now()) @map("created_at")
-  updatedAt        DateTime            @updatedAt @map("updated_at")
+  updatedAt        DateTime?           @map("updated_at")
   tax              Tax                 @relation(fields: [taxId], references: [id], onDelete: Cascade)
 
   @@unique([taxId, transactionScope, postingEvent, accountRole], map: "tax_posting_rules_tax_scope_event_role_key")

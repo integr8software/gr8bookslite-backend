@@ -24,6 +24,12 @@ export class TermsMaintenanceController {
     return this.termsMaintenanceService.findAll(user, query);
   }
 
+  @Get('options')
+  @ApiOkResponse({ description: 'Term options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetTermListQueryDto) {
+    return this.termsMaintenanceService.findOptions(user, query);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Term retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {

@@ -24,6 +24,12 @@ export class DiscountMaintenanceController {
     return this.discountMaintenanceService.findAll(user, query);
   }
 
+  @Get('options')
+  @ApiOkResponse({ description: 'Discount options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetDiscountListQueryDto) {
+    return this.discountMaintenanceService.findOptions(user, query);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Discount retrieved.' })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {

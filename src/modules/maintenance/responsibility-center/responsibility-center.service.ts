@@ -117,6 +117,55 @@ export class ResponsibilityCenterService {
     };
   }
 
+  async findOptions(user: AuthUser, query: GetResponsibilityCenterListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const search = query.search?.trim();
+
+    const responsibilityCenters = await this.prisma.responsibilityCenter.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: ResponsibilityCenterStatus.ACTIVE,
+        ...(query.typeId ? { typeId: parsePositiveBigIntId(query.typeId, 'typeId') } : {}),
+        ...(query.classificationId
+          ? {
+              type: {
+                classificationId: parsePositiveBigIntId(query.classificationId, 'classificationId'),
+              },
+            }
+          : {}),
+        ...(search
+          ? {
+              OR: [{ code: { contains: search, mode: 'insensitive' } }, { name: { contains: search, mode: 'insensitive' } }],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        status: true,
+        type: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: [{ code: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      responsibilityCenters: responsibilityCenters.map((center) => ({
+        id: center.id.toString(),
+        code: center.code,
+        name: center.name,
+        typeName: center.type.name,
+        status: center.status,
+      })),
+    };
+  }
+
   async findTree(user: AuthUser, query: GetResponsibilityCenterListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);

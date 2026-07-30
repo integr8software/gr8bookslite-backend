@@ -52,6 +52,40 @@ export class PaymentTypeMaintenanceService {
     };
   }
 
+  async findOptions(user: AuthUser, query: GetPaymentTypeListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    const search = query.search?.trim();
+
+    const paymentTypes = await this.prisma.paymentType.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: PaymentTypeStatus.ACTIVE,
+        ...(query.classification ? { classification: query.classification } : {}),
+        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        classification: true,
+        sortOrder: true,
+        status: true,
+      },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      paymentTypes: paymentTypes.map((paymentType) => ({
+        id: paymentType.id.toString(),
+        name: paymentType.name,
+        classification: paymentType.classification,
+        sortOrder: paymentType.sortOrder,
+        status: paymentType.status,
+      })),
+    };
+  }
+
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
