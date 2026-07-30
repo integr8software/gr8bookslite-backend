@@ -1,7 +1,6 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { DiscountStatus, DiscountType, DiscountValueType, MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { DiscountStatus, DiscountType, DiscountValueType, Prisma } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -16,14 +15,18 @@ import { DiscountInclude } from './prisma/discount.include';
 import type { DiscountWithAccount } from './types/discount-with-account.type';
 import { getGeneratedDiscountAccountTitle, resolveDiscountChartAccount } from './utils/discount-chart-account.util';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
+import { normalizeWhitespace } from '../../../common/utils/string-normalization.util';
 @Injectable()
 export class DiscountMaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetDiscountListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DSM', PermissionAction.VIEW, 'You do not have permission to manage discount definitions.');
 
     const page = query.page ?? DefaultPage;
     const limit = query.limit ?? DefaultLimit;
@@ -52,26 +55,63 @@ export class DiscountMaintenanceService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'DSM', { includeImport: true }),
+    };
+  }
+
+  async findOptions(user: AuthUser, query: GetDiscountListQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    const search = query.search?.trim();
+
+    const discounts = await this.prisma.discount.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: DiscountStatus.ACTIVE,
+        ...(query.type ? { type: query.type } : {}),
+        ...(query.valueType ? { valueType: query.valueType } : {}),
+        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        valueType: true,
+        value: true,
+        status: true,
+      },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      discounts: discounts.map((discount) => ({
+        id: discount.id.toString(),
+        name: discount.name,
+        type: discount.type,
+        valueType: discount.valueType,
+        value: discount.value.toString(),
+        status: discount.status,
+      })),
     };
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DSM', PermissionAction.VIEW, 'You do not have permission to manage discount definitions.');
     const discount = await this.findDiscountOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       discount: (await this.mapDiscountsWithAuditUsers([discount]))[0],
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'DSM', { includeImport: true }),
     };
   }
 
   async create(user: AuthUser, dto: CreateDiscountDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DSM', PermissionAction.CREATE, 'You do not have permission to manage discount definitions.');
     this.validateDiscountValue(dto.valueType, dto.value);
     await this.ensureNameAvailable(companyId, dto.name);
 
@@ -101,15 +141,15 @@ export class DiscountMaintenanceService {
         discount: (await this.mapDiscountsWithAuditUsers([discount]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A discount with this name already exists.');
       throw error;
     }
   }
 
   async update(user: AuthUser, id: string, dto: UpdateDiscountDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DSM', PermissionAction.UPDATE, 'You do not have permission to manage discount definitions.');
     const discountId = parsePositiveBigIntId(id);
     const current = await this.findDiscountOrThrow(companyId, discountId);
 
@@ -152,15 +192,15 @@ export class DiscountMaintenanceService {
         discount: (await this.mapDiscountsWithAuditUsers([discount]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A discount with this name already exists.');
       throw error;
     }
   }
 
   async importDiscounts(user: AuthUser, dto: ImportDiscountsDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DSM', PermissionAction.CREATE, 'You do not have permission to manage discount definitions.');
     this.ensureNoDuplicateImportNames(dto.discounts);
 
     for (const discount of dto.discounts) {
@@ -384,89 +424,13 @@ export class DiscountMaintenanceService {
     const names = new Set<string>();
 
     for (const discount of discounts) {
-      const normalizedName = discount.name.trim().replace(/\s+/g, ' ').toLowerCase();
+      const normalizedName = normalizeWhitespace(discount.name).toLowerCase();
 
       if (names.has(normalizedName)) {
         throw new BadRequestException(`Duplicate discount in upload: ${discount.name.trim()}.`);
       }
 
       names.add(normalizedName);
-    }
-  }
-
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`DSM:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage discount definitions.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-      canImport: this.can(user, companyId, PermissionAction.CREATE),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`DSM:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('A discount with this name already exists.');
     }
   }
 }

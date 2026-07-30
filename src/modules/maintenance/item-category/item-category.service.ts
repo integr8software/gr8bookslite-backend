@@ -1,7 +1,6 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ItemCategory, ItemCategoryAccountingSetupMode, ItemCategoryStatus, MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ItemCategory, ItemCategoryAccountingSetupMode, ItemCategoryStatus, Prisma } from '@prisma/client';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -17,6 +16,10 @@ import {
   resolveItemCategoryAccountingAccounts,
 } from './utils/item-category-accounting.util';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
+import { normalizeWhitespace } from '../../../common/utils/string-normalization.util';
 const ItemCategoryModuleCode = 'IC';
 
 type ItemCategoryAccountingSetup = {
@@ -36,9 +39,9 @@ export class ItemCategoryService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ItemCategoryModuleCode, PermissionAction.VIEW, 'You do not have permission to manage item categories.');
 
     const [categories, statistics] = await Promise.all([
       this.prisma.itemCategory.findMany({
@@ -54,14 +57,14 @@ export class ItemCategoryService {
 
     return {
       categories: await this.mapCategoriesWithAuditUsers(categories),
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, ItemCategoryModuleCode),
       statistics,
     };
   }
 
   async findOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
 
     const categories = await this.prisma.itemCategory.findMany({
       where: {
@@ -97,14 +100,14 @@ export class ItemCategoryService {
   }
 
   async create(user: AuthUser, dto: CreateItemCategoryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ItemCategoryModuleCode, PermissionAction.CREATE, 'You do not have permission to manage item categories.');
 
     try {
       const category = await this.prisma.$transaction<ItemCategoryWithAccounts>(async (tx) => {
         const parentId = parseOptionalPositiveBigIntId(dto.parentId, 'parentId');
-        const name = this.normalizeName(dto.name);
+        const name = normalizeWhitespace(dto.name);
         const accountingSetupMode = dto.accountingSetupMode ?? ItemCategoryAccountingSetupMode.AUTO_CREATE;
         const accountingRequirements = this.getAccountingRequirements(dto);
 
@@ -145,22 +148,22 @@ export class ItemCategoryService {
         category: (await this.mapCategoriesWithAuditUsers([category]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'An item category with this code or name already exists.');
       throw error;
     }
   }
 
   async update(user: AuthUser, id: string, dto: UpdateItemCategoryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ItemCategoryModuleCode, PermissionAction.UPDATE, 'You do not have permission to manage item categories.');
     const categoryId = parsePositiveBigIntId(id);
 
     try {
       const category = await this.prisma.$transaction<ItemCategoryWithAccounts>(async (tx) => {
         const existing = await this.findCategoryOrThrow(companyId, categoryId, tx);
         const parentId = dto.parentId === undefined ? existing.parentId : parseOptionalPositiveBigIntId(dto.parentId, 'parentId');
-        const name = dto.name === undefined ? existing.name : this.normalizeName(dto.name);
+        const name = dto.name === undefined ? existing.name : normalizeWhitespace(dto.name);
         const accountingSetupMode = dto.accountingSetupMode ?? existing.accountingSetupMode;
         const accountingRequirements = this.getAccountingRequirements(dto, existing);
         const nextStatus = dto.status ?? existing.status;
@@ -215,7 +218,7 @@ export class ItemCategoryService {
         category: (await this.mapCategoriesWithAuditUsers([category]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'An item category with this code or name already exists.');
       throw error;
     }
   }
@@ -600,10 +603,6 @@ export class ItemCategoryService {
     return statistics;
   }
 
-  private normalizeName(name: string) {
-    return name.trim().replace(/\s+/g, ' ');
-  }
-
   private normalizeDescription(description: string | null | undefined) {
     return description?.trim() ?? '';
   }
@@ -615,7 +614,7 @@ export class ItemCategoryService {
     });
     const usedCodes = new Set(existingCategories.map((category) => category.code));
     let nextNumber = existingCategories.reduce((max, category) => {
-      const match = /^IC-(\d+)$/.exec(category.code);
+      const match = category.code.match(/^IC-(\d+)$/);
       return match ? Math.max(max, Number(match[1])) : max;
     }, 0);
 
@@ -628,88 +627,5 @@ export class ItemCategoryService {
     } while (nextNumber < 999999);
 
     throw new BadRequestException('Unable to generate item category code.');
-  }
-
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`${ItemCategoryModuleCode}:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage item categories.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`${ItemCategoryModuleCode}:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      const target = Array.isArray(error.meta?.target) ? error.meta.target.join(',') : '';
-
-      if (target.includes('code')) {
-        throw new ConflictException('An item category with this code already exists.');
-      }
-
-      throw new ConflictException('A category with this name already exists under this parent.');
-    }
   }
 }

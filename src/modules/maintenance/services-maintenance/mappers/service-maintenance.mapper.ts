@@ -16,7 +16,7 @@ export function mapServiceMaintenance(service: ServiceMaintenancePayload, userNa
     createdBy: service.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(service.createdByUserId) ?? null),
     createdAt: service.createdAt.toISOString(),
     updatedBy: (service.updatedByUserId && userNames.get(service.updatedByUserId)) ?? null,
-    updatedAt: service.updatedAt.toISOString(),
+    updatedAt: service.updatedAt?.toISOString() ?? null,
     createdByUserId: service.createdByUserId,
     updatedByUserId: service.updatedByUserId,
   };

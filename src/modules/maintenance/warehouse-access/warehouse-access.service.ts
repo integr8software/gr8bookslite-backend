@@ -1,7 +1,6 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AccessScopeLevel, MembershipRole, MembershipStatus, Prisma, UserStatus, WarehouseAccessLevel, WarehouseAccessStatus } from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccessScopeLevel, MembershipStatus, Prisma, UserStatus, WarehouseAccessLevel, WarehouseAccessStatus } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -16,6 +15,9 @@ import { WarehouseAccessInclude } from './prisma/warehouse-access.include';
 import type { WarehouseAccessWithRelations } from './types/warehouse-access-with-relations.type';
 import { deriveWarehouseAccessLevel, normalizeWarehouseAccessPermissions } from './utils/warehouse-access-permission.util';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
 const WarehouseAccessModuleCode = 'WA';
 
 @Injectable()
@@ -23,9 +25,9 @@ export class WarehouseAccessService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetWarehouseAccessListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, WarehouseAccessModuleCode, PermissionAction.VIEW, 'You do not have permission to manage warehouse access.');
 
     const page = query.page ?? DefaultPage;
     const limit = query.limit ?? DefaultLimit;
@@ -54,14 +56,14 @@ export class WarehouseAccessService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, WarehouseAccessModuleCode, { includeDelete: true }),
     };
   }
 
   async findDirectoryUsers(user: AuthUser, query: GetWarehouseAccessDirectoryQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, WarehouseAccessModuleCode, PermissionAction.VIEW, 'You do not have permission to manage warehouse access.');
 
     const search = query.search?.trim();
     const [memberships, branches] = await Promise.all([
@@ -170,21 +172,21 @@ export class WarehouseAccessService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, WarehouseAccessModuleCode, PermissionAction.VIEW, 'You do not have permission to manage warehouse access.');
     const access = await this.findWarehouseAccessOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       warehouseAccess: (await this.mapWarehouseAccessWithAuditUsers([access]))[0],
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, WarehouseAccessModuleCode, { includeDelete: true }),
     };
   }
 
   async create(user: AuthUser, dto: CreateWarehouseAccessDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, WarehouseAccessModuleCode, PermissionAction.CREATE, 'You do not have permission to manage warehouse access.');
     this.ensureNoDuplicateAssignments(dto);
 
     const warehouseIds = dto.assignments.map((assignment) => parsePositiveBigIntId(assignment.warehouseId, 'warehouseId'));
@@ -228,15 +230,15 @@ export class WarehouseAccessService {
         warehouseAccess: await this.mapWarehouseAccessWithAuditUsers(warehouseAccess),
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'Warehouse access assignment already exists.');
       throw error;
     }
   }
 
   async update(user: AuthUser, id: string, dto: UpdateWarehouseAccessDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, WarehouseAccessModuleCode, PermissionAction.UPDATE, 'You do not have permission to manage warehouse access.');
     const accessId = parsePositiveBigIntId(id);
 
     await this.findWarehouseAccessOrThrow(companyId, accessId);
@@ -262,15 +264,15 @@ export class WarehouseAccessService {
         warehouseAccess: (await this.mapWarehouseAccessWithAuditUsers([access]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'Warehouse access assignment already exists.');
       throw error;
     }
   }
 
   async revoke(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CANCEL);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, WarehouseAccessModuleCode, PermissionAction.CANCEL, 'You do not have permission to manage warehouse access.');
     const accessId = parsePositiveBigIntId(id);
     const access = await this.findWarehouseAccessOrThrow(companyId, accessId);
 
@@ -475,83 +477,5 @@ export class WarehouseAccessService {
     }
 
     return access;
-  }
-
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`${WarehouseAccessModuleCode}:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage warehouse access.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canDelete: this.can(user, companyId, PermissionAction.CANCEL),
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`${WarehouseAccessModuleCode}:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('This user already has access to the selected warehouse.');
-    }
   }
 }

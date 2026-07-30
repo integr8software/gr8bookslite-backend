@@ -3070,6 +3070,41 @@
             }
           },
           {
+            "name": "accountType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASSET",
+                "EXPENSE",
+                "REVENUE",
+                "LIABILITY",
+                "EQUITY"
+              ]
+            }
+          },
+          {
+            "name": "accountNature",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBIT",
+                "CREDIT"
+              ]
+            }
+          },
+          {
+            "name": "postingOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "parentAccountId",
             "required": false,
             "in": "query",
@@ -3117,6 +3152,100 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/options": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUB3",
+                "SUB1",
+                "SUB2",
+                "MAJOR",
+                "SPECIFIC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASSET",
+                "EXPENSE",
+                "REVENUE",
+                "LIABILITY",
+                "EQUITY"
+              ]
+            }
+          },
+          {
+            "name": "accountNature",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBIT",
+                "CREDIT"
+              ]
+            }
+          },
+          {
+            "name": "postingOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chart account options retrieved."
           }
         },
         "tags": [
@@ -3409,6 +3538,43 @@
         "responses": {
           "201": {
             "description": "Term created."
+          }
+        },
+        "tags": [
+          "Terms Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/terms-maintenance/options": {
+      "get": {
+        "operationId": "TermsMaintenanceController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DAY",
+                "MONTH",
+                "YEAR"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Term options retrieved."
           }
         },
         "tags": [
@@ -3777,6 +3943,42 @@
         ]
       }
     },
+    "/api/v1/maintenance/unit-of-measurement/options": {
+      "get": {
+        "operationId": "UnitOfMeasurementController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "quantityMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INTEGER",
+                "FLOAT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unit of measurement options retrieved."
+          }
+        },
+        "tags": [
+          "Unit of Measurement"
+        ]
+      }
+    },
     "/api/v1/maintenance/unit-of-measurement/{id}": {
       "get": {
         "operationId": "UnitOfMeasurementController_findOne_v1",
@@ -3968,6 +4170,45 @@
         "responses": {
           "201": {
             "description": "Payment type created."
+          }
+        },
+        "tags": [
+          "Payment Type Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/payment-type-maintenance/options": {
+      "get": {
+        "operationId": "PaymentTypeMaintenanceController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "classification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BANK_TRANSFER",
+                "CASH",
+                "CHECK",
+                "DIGITAL_WALLET",
+                "NON_CASH_SETTLEMENT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment type options retrieved."
           }
         },
         "tags": [
@@ -4176,6 +4417,54 @@
         "responses": {
           "201": {
             "description": "Discount created."
+          }
+        },
+        "tags": [
+          "Discount Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/discount-maintenance/options": {
+      "get": {
+        "operationId": "DiscountMaintenanceController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PURCHASE",
+                "SALES"
+              ]
+            }
+          },
+          {
+            "name": "valueType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PERCENTAGE",
+                "FIXED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discount options retrieved."
           }
         },
         "tags": [
@@ -4554,6 +4843,15 @@
             }
           },
           {
+            "name": "currencyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 10,
+              "type": "string"
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -4627,6 +4925,99 @@
         "responses": {
           "201": {
             "description": "Bank account created."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/bank-masterfile/options": {
+      "get": {
+        "operationId": "BankMasterfileController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "currencyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 10,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bankName",
+                "branch",
+                "accountName",
+                "accountNumber",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank account options retrieved."
           }
         },
         "tags": [
@@ -4752,6 +5143,99 @@
         "responses": {
           "200": {
             "description": "Bank account status updated."
+          }
+        },
+        "tags": [
+          "Bank Masterfile"
+        ]
+      }
+    },
+    "/api/v1/maintenance/bank-masterfile/options": {
+      "get": {
+        "operationId": "BankMasterfileLookupController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "currencyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 10,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bankName",
+                "branch",
+                "accountName",
+                "accountNumber",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank account options retrieved."
           }
         },
         "tags": [
@@ -5094,6 +5578,100 @@
         ]
       }
     },
+    "/api/v1/maintenance/financial-management/services-maintenance/options": {
+      "get": {
+        "operationId": "ServicesMaintenanceController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountSetupMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AUTO",
+                "EXISTING"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "serviceName",
+                "status",
+                "accountSetupMode",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service options retrieved."
+          }
+        },
+        "tags": [
+          "Services Maintenance"
+        ]
+      }
+    },
     "/api/v1/maintenance/financial-management/services-maintenance/account-options": {
       "get": {
         "operationId": "ServicesMaintenanceController_getAccountOptions_v1",
@@ -5202,6 +5780,100 @@
         "responses": {
           "200": {
             "description": "Service status updated."
+          }
+        },
+        "tags": [
+          "Services Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/services-maintenance/options": {
+      "get": {
+        "operationId": "ServicesMaintenanceLookupController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountSetupMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AUTO",
+                "EXISTING"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "serviceName",
+                "status",
+                "accountSetupMode",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service options retrieved."
           }
         },
         "tags": [
@@ -5364,6 +6036,146 @@
         "responses": {
           "201": {
             "description": "Responsibility center created."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/responsibility-centers/options": {
+      "get": {
+        "operationId": "ResponsibilityCenterController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BRANCH",
+                "SECTION",
+                "CORPORATE",
+                "DIVISION",
+                "DEPARTMENT",
+                "TEAM",
+                "BUILDING",
+                "PROJECT",
+                "BUSINESS_UNIT",
+                "REGION",
+                "SALESMAN",
+                "WAREHOUSE",
+                "OUTLET",
+                "SALES_TERRITORY",
+                "FLEET"
+              ]
+            }
+          },
+          {
+            "name": "financialType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "COST_CENTER",
+                "REVENUE_CENTER",
+                "PROFIT_CENTER",
+                "INVESTMENT_CENTER"
+              ]
+            }
+          },
+          {
+            "name": "classificationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "typeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "code",
+                "name",
+                "category",
+                "financialType",
+                "manager",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Responsibility center options retrieved."
           }
         },
         "tags": [
@@ -5651,6 +6463,146 @@
         "responses": {
           "200": {
             "description": "Responsibility center status updated."
+          }
+        },
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/maintenance/responsibility-center/options": {
+      "get": {
+        "operationId": "ResponsibilityCenterLookupController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BRANCH",
+                "SECTION",
+                "CORPORATE",
+                "DIVISION",
+                "DEPARTMENT",
+                "TEAM",
+                "BUILDING",
+                "PROJECT",
+                "BUSINESS_UNIT",
+                "REGION",
+                "SALESMAN",
+                "WAREHOUSE",
+                "OUTLET",
+                "SALES_TERRITORY",
+                "FLEET"
+              ]
+            }
+          },
+          {
+            "name": "financialType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "COST_CENTER",
+                "REVENUE_CENTER",
+                "PROFIT_CENTER",
+                "INVESTMENT_CENTER"
+              ]
+            }
+          },
+          {
+            "name": "classificationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "typeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "code",
+                "name",
+                "category",
+                "financialType",
+                "manager",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Responsibility center options retrieved."
           }
         },
         "tags": [
@@ -6111,6 +7063,39 @@
         "responses": {
           "201": {
             "description": "Warehouse created."
+          }
+        },
+        "tags": [
+          "Warehouse Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/warehouse-maintenance/options": {
+      "get": {
+        "operationId": "WarehouseMaintenanceController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Warehouse options retrieved."
           }
         },
         "tags": [
@@ -6875,6 +7860,505 @@
         },
         "tags": [
           "AiAssistant"
+        ]
+      }
+    },
+    "/api/v1/accounts-payable/accounts-payable-voucher": {
+      "get": {
+        "operationId": "AccountsPayableVoucherController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "APPROVED",
+                "DISAPPROVED",
+                "CLOSED",
+                "CANCELLED",
+                "Draft",
+                "Approved",
+                "Disapproved",
+                "Closed",
+                "Cancelled"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "partyName",
+                "payableType",
+                "amount",
+                "currency",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accounts payable vouchers retrieved."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
+        ]
+      },
+      "post": {
+        "operationId": "AccountsPayableVoucherController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccountsPayableVoucherDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Accounts payable voucher created."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
+        ]
+      }
+    },
+    "/api/v1/accounts-payable/accounts-payable-voucher/number-suggestion": {
+      "get": {
+        "operationId": "AccountsPayableVoucherController_suggestTransactionNumber_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "APPROVED",
+                "DISAPPROVED",
+                "CLOSED",
+                "CANCELLED",
+                "Draft",
+                "Approved",
+                "Disapproved",
+                "Closed",
+                "Cancelled"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "partyName",
+                "payableType",
+                "amount",
+                "currency",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accounts payable voucher number suggestion retrieved."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
+        ]
+      }
+    },
+    "/api/v1/accounts-payable/accounts-payable-voucher/{id}": {
+      "get": {
+        "operationId": "AccountsPayableVoucherController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "APPROVED",
+                "DISAPPROVED",
+                "CLOSED",
+                "CANCELLED",
+                "Draft",
+                "Approved",
+                "Disapproved",
+                "Closed",
+                "Cancelled"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "partyName",
+                "payableType",
+                "amount",
+                "currency",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accounts payable voucher retrieved."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
+        ]
+      },
+      "patch": {
+        "operationId": "AccountsPayableVoucherController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccountsPayableVoucherDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accounts payable voucher updated."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
+        ]
+      }
+    },
+    "/api/v1/accounts-payable/accounts-payable-voucher/{id}/status": {
+      "patch": {
+        "operationId": "AccountsPayableVoucherController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccountsPayableVoucherStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accounts payable voucher status updated."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
         ]
       }
     }
@@ -10058,7 +11542,8 @@
             "type": "string"
           },
           "updatedAt": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -10446,7 +11931,8 @@
             "nullable": true
           },
           "updatedAt": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "bankAccounts": {
             "type": "array",
@@ -10607,7 +12093,8 @@
             "nullable": true
           },
           "updatedAt": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "bankAccounts": {
             "type": "array",
@@ -13254,6 +14741,519 @@
         },
         "required": [
           "message"
+        ]
+      },
+      "AccountsPayableVoucherDetailsDto": {
+        "type": "object",
+        "properties": {
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "expenseAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "expenseAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "expenseType": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vat": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "vatPercent": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "ewt": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "ewtPercent": {
+            "type": "number",
+            "minimum": 0
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "totalAmountDue": {
+            "type": "number"
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "lineNumber",
+          "expenseAccountCode",
+          "expenseType",
+          "currencyCode",
+          "exchangeRate",
+          "amount",
+          "netAmount",
+          "vatPercent",
+          "vatAmount",
+          "ewtPercent",
+          "ewtAmount",
+          "totalAmountDue"
+        ]
+      },
+      "JournalEntryDto": {
+        "type": "object",
+        "properties": {
+          "referenceType": {
+            "type": "string",
+            "enum": [
+              "APV"
+            ]
+          },
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "accountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "debit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "credit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "lineNumber",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "debit",
+          "credit"
+        ]
+      },
+      "CreateAccountsPayableVoucherDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "partyCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "amount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "creditAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "creditAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "creditAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "payableType": {
+            "enum": [
+              "TRADE_PAYABLE",
+              "NON_TRADE_PAYABLE",
+              "EMPLOYEE_PAYABLE",
+              "TAX_PAYABLE",
+              "ACCRUED_PAYABLE",
+              "Trade Payable",
+              "Non-Trade Payable",
+              "Employee Payable",
+              "Tax Payable",
+              "Accrued Payable"
+            ],
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherDetailsDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalEntryDto"
+            }
+          }
+        },
+        "required": [
+          "documentDate",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "amount",
+          "termId",
+          "dueDate",
+          "creditAccountCode",
+          "creditAccountTitle",
+          "payableType",
+          "details",
+          "journalEntries"
+        ]
+      },
+      "UpdateAccountsPayableVoucherDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "partyCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "amount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "creditAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "creditAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "creditAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "payableType": {
+            "enum": [
+              "TRADE_PAYABLE",
+              "NON_TRADE_PAYABLE",
+              "EMPLOYEE_PAYABLE",
+              "TAX_PAYABLE",
+              "ACCRUED_PAYABLE",
+              "Trade Payable",
+              "Non-Trade Payable",
+              "Employee Payable",
+              "Tax Payable",
+              "Accrued Payable"
+            ],
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherDetailsDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalEntryDto"
+            }
+          }
+        },
+        "required": [
+          "documentDate",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "amount",
+          "termId",
+          "dueDate",
+          "creditAccountCode",
+          "creditAccountTitle",
+          "payableType",
+          "details",
+          "journalEntries"
+        ]
+      },
+      "UpdateAccountsPayableVoucherStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "DRAFT",
+              "APPROVED",
+              "DISAPPROVED",
+              "CLOSED",
+              "CANCELLED",
+              "Draft",
+              "Approved",
+              "Disapproved",
+              "Closed",
+              "Cancelled"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "status"
         ]
       }
     }

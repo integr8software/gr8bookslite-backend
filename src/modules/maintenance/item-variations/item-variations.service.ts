@@ -1,14 +1,11 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ItemAttributeStatus as ItemVariationStatus,
   ItemAttributeUsage as ItemVariationUsage,
   ItemAttributeValue as ItemVariationValue,
   ItemAttributeValueStatus as ItemVariationValueStatus,
-  MembershipRole,
-  MembershipStatus,
   Prisma,
 } from '@prisma/client';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -20,6 +17,10 @@ import { UpdateItemVariationDto } from './dto/update-item-variation.dto';
 import { mapItemVariation } from './mappers/item-variation.mapper';
 import { ItemVariationWithValues, ItemVariationWithValuesInclude } from './types/item-variation-with-values.type';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
+import { normalizeWhitespace } from '../../../common/utils/string-normalization.util';
 const ItemVariationsModuleCode = 'IV';
 
 @Injectable()
@@ -27,9 +28,9 @@ export class ItemVariationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ItemVariationsModuleCode, PermissionAction.VIEW, 'You do not have permission to manage item variations.');
 
     const [variations, statistics] = await Promise.all([
       this.prisma.itemAttribute.findMany({
@@ -45,14 +46,14 @@ export class ItemVariationsService {
 
     return {
       variations: await this.mapVariationsWithAuditUsers(variations),
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, ItemVariationsModuleCode, { includeImport: true }),
       statistics,
     };
   }
 
   async findOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
 
     const variations = await this.prisma.itemAttribute.findMany({
       where: {
@@ -91,9 +92,9 @@ export class ItemVariationsService {
   }
 
   async create(user: AuthUser, dto: CreateItemVariationDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ItemVariationsModuleCode, PermissionAction.CREATE, 'You do not have permission to manage item variations.');
 
     const values = dto.values ?? [];
     await this.ensureNameAvailable(companyId, dto.name);
@@ -123,15 +124,15 @@ export class ItemVariationsService {
         variation: (await this.mapVariationsWithAuditUsers([variation]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'An item variation with this code or name already exists.');
       throw error;
     }
   }
 
   async update(user: AuthUser, id: string, dto: UpdateItemVariationDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ItemVariationsModuleCode, PermissionAction.UPDATE, 'You do not have permission to manage item variations.');
     const variationId = parsePositiveBigIntId(id);
     const variation = await this.findVariationOrThrow(companyId, variationId);
 
@@ -168,7 +169,7 @@ export class ItemVariationsService {
         variation: (await this.mapVariationsWithAuditUsers([updatedVariation]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'An item variation with this code or name already exists.');
       throw error;
     }
   }
@@ -185,7 +186,7 @@ export class ItemVariationsService {
         await tx.itemAttributeValue.update({
           where: { id: existingValue.id },
           data: {
-            label: this.normalizeLabel(value.label),
+            label: normalizeWhitespace(value.label),
             sortOrder: value.sortOrder ?? index + 1,
             isUsed: existingValue.isUsed || Boolean(value.isUsed),
             status: value.status ?? existingValue.status,
@@ -301,7 +302,7 @@ export class ItemVariationsService {
 
   private toCreateVariationData(dto: CreateItemVariationDto) {
     return {
-      name: this.normalizeName(dto.name),
+      name: normalizeWhitespace(dto.name),
       usage: dto.usage ?? ItemVariationUsage.ITEM_DETAIL,
       requiredOnItem: dto.requiredOnItem ?? false,
       affectsStock: dto.affectsStock ?? false,
@@ -310,7 +311,7 @@ export class ItemVariationsService {
 
   private toVariationData(dto: UpdateItemVariationDto) {
     return {
-      ...(dto.name !== undefined ? { name: this.normalizeName(dto.name) } : {}),
+      ...(dto.name !== undefined ? { name: normalizeWhitespace(dto.name) } : {}),
       ...(dto.usage !== undefined ? { usage: dto.usage } : {}),
       ...(dto.requiredOnItem !== undefined ? { requiredOnItem: dto.requiredOnItem } : {}),
       ...(dto.affectsStock !== undefined ? { affectsStock: dto.affectsStock } : {}),
@@ -320,7 +321,7 @@ export class ItemVariationsService {
 
   private toCreateValueData(value: ItemVariationValueDto, index: number) {
     return {
-      label: this.normalizeLabel(value.label),
+      label: normalizeWhitespace(value.label),
       sortOrder: value.sortOrder ?? index + 1,
       isUsed: Boolean(value.isUsed),
       status: value.status ?? ItemVariationValueStatus.ACTIVE,
@@ -328,7 +329,7 @@ export class ItemVariationsService {
   }
 
   private async ensureNameAvailable(companyId: number, name: string, excludedVariationId?: bigint) {
-    const normalizedName = this.normalizeName(name);
+    const normalizedName = normalizeWhitespace(name);
 
     if (!normalizedName) {
       throw new BadRequestException('Item variation name is required.');
@@ -358,7 +359,7 @@ export class ItemVariationsService {
     const labels = new Set<string>();
 
     for (const value of values) {
-      const normalizedLabel = this.normalizeLabel(value.label);
+      const normalizedLabel = normalizeWhitespace(value.label);
 
       if (!normalizedLabel) {
         throw new BadRequestException('Item variation values cannot be blank.');
@@ -380,14 +381,6 @@ export class ItemVariationsService {
     }
   }
 
-  private normalizeName(name: string) {
-    return name.trim().replace(/\s+/g, ' ');
-  }
-
-  private normalizeLabel(label: string) {
-    return label.trim().replace(/\s+/g, ' ');
-  }
-
   private async createNextCode(tx: Prisma.TransactionClient, companyId: number) {
     const existingVariations = await tx.itemAttribute.findMany({
       where: { companyId },
@@ -395,7 +388,7 @@ export class ItemVariationsService {
     });
     const usedCodes = new Set(existingVariations.map((variation) => variation.code));
     let nextNumber = existingVariations.reduce((max, variation) => {
-      const match = /^ATT-(\d+)$/.exec(variation.code);
+      const match = variation.code.match(/^ATT-(\d+)$/);
       return match ? Math.max(max, Number(match[1])) : max;
     }, 0);
 
@@ -408,87 +401,5 @@ export class ItemVariationsService {
     } while (nextNumber < 999999);
 
     throw new BadRequestException('Unable to generate item variation code.');
-  }
-
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`${ItemVariationsModuleCode}:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage item variations.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-      canImport: this.can(user, companyId, PermissionAction.CREATE),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`${ItemVariationsModuleCode}:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      const target = Array.isArray(error.meta?.target) ? error.meta.target.join(',') : '';
-      if (target.includes('code')) {
-        throw new ConflictException('An item variation with this code already exists.');
-      }
-      throw new ConflictException('An item variation with this name already exists.');
-    }
   }
 }

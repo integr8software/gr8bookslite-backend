@@ -6,7 +6,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateUnitOfMeasurementDto } from './dto/create-unit-of-measurement.dto';
 import { GetUnitOfMeasurementListQueryDto } from './dto/get-unit-of-measurement-list-query.dto';
 import { ImportUnitOfMeasurementsDto } from './dto/import-unit-of-measurements.dto';
+import { UnitOfMeasurementLookupQueryDto } from './dto/unit-of-measurement-lookup-query.dto';
 import { UpdateUnitOfMeasurementDto } from './dto/update-unit-of-measurement.dto';
+import { UnitOfMeasurementLookupService } from './lookups/unit-of-measurement-lookup.service';
 import { UnitOfMeasurementService } from './unit-of-measurement.service';
 
 @UseGuards(JwtAuthGuard)
@@ -16,12 +18,21 @@ import { UnitOfMeasurementService } from './unit-of-measurement.service';
   version: '1',
 })
 export class UnitOfMeasurementController {
-  constructor(private readonly unitOfMeasurementService: UnitOfMeasurementService) {}
+  constructor(
+    private readonly unitOfMeasurementService: UnitOfMeasurementService,
+    private readonly unitOfMeasurementLookupService: UnitOfMeasurementLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Unit of measurement list retrieved.' })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetUnitOfMeasurementListQueryDto) {
     return this.unitOfMeasurementService.findAll(user, query);
+  }
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Unit of measurement options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: UnitOfMeasurementLookupQueryDto) {
+    return this.unitOfMeasurementLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get(':id')

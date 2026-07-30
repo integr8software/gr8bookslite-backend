@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateItemCategoryDto } from './dto/create-item-category.dto';
 import { UpdateItemCategoryDto } from './dto/update-item-category.dto';
 import { ItemCategoryService } from './item-category.service';
+import { ItemCategoryLookupService } from './lookups/item-category-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Item Categories')
@@ -14,7 +15,10 @@ import { ItemCategoryService } from './item-category.service';
   version: '1',
 })
 export class ItemCategoryController {
-  constructor(private readonly itemCategoryService: ItemCategoryService) {}
+  constructor(
+    private readonly itemCategoryService: ItemCategoryService,
+    private readonly itemCategoryLookupService: ItemCategoryLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Item category list retrieved.' })
@@ -25,7 +29,7 @@ export class ItemCategoryController {
   @Get('options')
   @ApiOkResponse({ description: 'Item category options retrieved.' })
   findOptions(@CurrentUser() user: AuthUser) {
-    return this.itemCategoryService.findOptions(user);
+    return this.itemCategoryLookupService.findOptionsForCompanyUser(user);
   }
 
   @Post()

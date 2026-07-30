@@ -7,6 +7,7 @@ import { CreateServiceMaintenanceDto } from './dto/create-service-maintenance.dt
 import { GetServiceMaintenanceListQueryDto } from './dto/get-service-maintenance-list-query.dto';
 import { UpdateServiceMaintenanceStatusDto } from './dto/update-service-maintenance-status.dto';
 import { UpdateServiceMaintenanceDto } from './dto/update-service-maintenance.dto';
+import { ServicesLookupService } from './lookups/services-lookup.service';
 import { ServicesMaintenanceService } from './services-maintenance.service';
 
 @UseGuards(JwtAuthGuard)
@@ -16,12 +17,21 @@ import { ServicesMaintenanceService } from './services-maintenance.service';
   version: '1',
 })
 export class ServicesMaintenanceController {
-  constructor(private readonly servicesMaintenanceService: ServicesMaintenanceService) {}
+  constructor(
+    private readonly servicesMaintenanceService: ServicesMaintenanceService,
+    private readonly servicesLookupService: ServicesLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Services retrieved.' })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetServiceMaintenanceListQueryDto) {
     return this.servicesMaintenanceService.findAll(user, query);
+  }
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Service options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetServiceMaintenanceListQueryDto) {
+    return this.servicesLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get('account-options')
@@ -58,5 +68,21 @@ export class ServicesMaintenanceController {
   @ApiOkResponse({ description: 'Service status updated.' })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateServiceMaintenanceStatusDto) {
     return this.servicesMaintenanceService.updateStatus(user, id, dto);
+  }
+}
+
+@UseGuards(JwtAuthGuard)
+@ApiTags('Services Maintenance')
+@Controller({
+  path: 'maintenance/services-maintenance',
+  version: '1',
+})
+export class ServicesMaintenanceLookupController {
+  constructor(private readonly servicesLookupService: ServicesLookupService) {}
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Service options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetServiceMaintenanceListQueryDto) {
+    return this.servicesLookupService.findOptionsForCompanyUser(user, query);
   }
 }

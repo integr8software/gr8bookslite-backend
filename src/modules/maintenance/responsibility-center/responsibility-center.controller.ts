@@ -5,6 +5,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateResponsibilityCenterDto } from './dto/create-responsibility-center.dto';
 import { GetResponsibilityCenterListQueryDto } from './dto/get-responsibility-center-list-query.dto';
+import { ResponsibilityCenterLookupService } from './lookups/responsibility-center-lookup.service';
 import { UpdateResponsibilityCenterStatusDto } from './dto/update-responsibility-center-status.dto';
 import { UpdateResponsibilityCenterDto } from './dto/update-responsibility-center.dto';
 import { ResponsibilityCenterService } from './responsibility-center.service';
@@ -16,12 +17,21 @@ import { ResponsibilityCenterService } from './responsibility-center.service';
   version: '1',
 })
 export class ResponsibilityCenterController {
-  constructor(private readonly responsibilityCenterService: ResponsibilityCenterService) {}
+  constructor(
+    private readonly responsibilityCenterService: ResponsibilityCenterService,
+    private readonly responsibilityCenterLookupService: ResponsibilityCenterLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Responsibility center list retrieved.' })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetResponsibilityCenterListQueryDto) {
     return this.responsibilityCenterService.findAll(user, query);
+  }
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Responsibility center options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetResponsibilityCenterListQueryDto) {
+    return this.responsibilityCenterLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get('tree')
@@ -72,5 +82,21 @@ export class ResponsibilityCenterController {
   @ApiOkResponse({ description: 'Responsibility center status updated.' })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateResponsibilityCenterStatusDto) {
     return this.responsibilityCenterService.updateStatus(user, id, dto);
+  }
+}
+
+@UseGuards(JwtAuthGuard)
+@ApiTags('Responsibility Center')
+@Controller({
+  path: 'maintenance/responsibility-center',
+  version: '1',
+})
+export class ResponsibilityCenterLookupController {
+  constructor(private readonly responsibilityCenterLookupService: ResponsibilityCenterLookupService) {}
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Responsibility center options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetResponsibilityCenterListQueryDto) {
+    return this.responsibilityCenterLookupService.findOptionsForCompanyUser(user, query);
   }
 }

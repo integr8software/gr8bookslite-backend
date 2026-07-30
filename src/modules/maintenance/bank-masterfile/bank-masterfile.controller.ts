@@ -9,6 +9,7 @@ import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dt
 import { ImportBankAccountsDto } from './dto/import-bank-accounts.dto';
 import { UpdateBankAccountStatusDto } from './dto/update-bank-account-status.dto';
 import { UpdateBankAccountDto } from './dto/update-bank-account.dto';
+import { BankMasterfileLookupService } from './lookups/bank-masterfile-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Bank Masterfile')
@@ -17,12 +18,21 @@ import { UpdateBankAccountDto } from './dto/update-bank-account.dto';
   version: '1',
 })
 export class BankMasterfileController {
-  constructor(private readonly bankMasterfileService: BankMasterfileService) {}
+  constructor(
+    private readonly bankMasterfileService: BankMasterfileService,
+    private readonly bankMasterfileLookupService: BankMasterfileLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Bank accounts retrieved.' })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
     return this.bankMasterfileService.findAll(user, query);
+  }
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Bank account options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
+    return this.bankMasterfileLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get('next-account-code')
@@ -58,5 +68,21 @@ export class BankMasterfileController {
   @ApiOkResponse({ description: 'Bank account status updated.' })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateBankAccountStatusDto) {
     return this.bankMasterfileService.updateStatus(user, id, dto);
+  }
+}
+
+@UseGuards(JwtAuthGuard)
+@ApiTags('Bank Masterfile')
+@Controller({
+  path: 'maintenance/bank-masterfile',
+  version: '1',
+})
+export class BankMasterfileLookupController {
+  constructor(private readonly bankMasterfileLookupService: BankMasterfileLookupService) {}
+
+  @Get('options')
+  @ApiOkResponse({ description: 'Bank account options retrieved.' })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
+    return this.bankMasterfileLookupService.findOptionsForCompanyUser(user, query);
   }
 }

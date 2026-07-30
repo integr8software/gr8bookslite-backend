@@ -1,8 +1,7 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, MembershipRole, MembershipStatus, Prisma, ServiceAccountSetupMode } from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, ServiceAccountSetupMode } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
@@ -23,24 +22,30 @@ import {
   validateServiceMaintenanceInput,
 } from './utils/service-maintenance-data.util';
 import {
-  accountGroupHasTag,
   buildServiceRevenueAccountGroupTags,
   findSelectableServiceRevenueAccountOrThrow,
   findServiceRevenueParentOrThrow,
   generateNextServiceRevenueAccountCode,
-  ServiceRevenueAccountGroupTag,
 } from './utils/service-maintenance-account.util';
+import { ServicesLookupService } from './lookups/services-lookup.service';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
+import { normalizeWhitespace } from '../../../common/utils/string-normalization.util';
 const ServicesMaintenanceModuleCode = 'SM';
 
 @Injectable()
 export class ServicesMaintenanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly servicesLookupService: ServicesLookupService,
+  ) {}
 
   async findAll(user: AuthUser, query: GetServiceMaintenanceListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ServicesMaintenanceModuleCode, PermissionAction.VIEW, 'You do not have permission to manage service records.');
 
     const page = query.page ?? DefaultPage;
     const limit = query.limit ?? DefaultLimit;
@@ -69,46 +74,66 @@ export class ServicesMaintenanceService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, ServicesMaintenanceModuleCode, { includeImport: true }),
     };
   }
 
-  async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
-    const service = await this.findServiceOrThrow(companyId, parsePositiveBigIntId(id));
+  async findOptions(user: AuthUser, query: GetServiceMaintenanceListQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    const search = query.search?.trim();
+
+    const services = await this.prisma.serviceMaintenance.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: ChartAccountStatus.ACTIVE,
+        ...(search ? { serviceName: { contains: search, mode: 'insensitive' } } : {}),
+      },
+      select: {
+        id: true,
+        serviceName: true,
+        status: true,
+      },
+      orderBy: [{ serviceName: 'asc' }, { id: 'asc' }],
+    });
 
     return {
-      service: (await mapServicesMaintenanceWithAuditUsers(this.prisma, [service]))[0],
-      permissions: this.getPermissions(user, companyId),
-    };
-  }
-
-  async getAccountOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
-
-    const accounts = await this.findServiceRevenueAccountOptions(companyId, this.prisma);
-
-    return {
-      accounts: accounts.map((account) => ({
-        id: account.id.toString(),
-        accountNumber: account.accountCode,
-        accountName: account.accountTitle,
-        description: account.description ?? '',
-        accountType: account.accountType ?? '',
-        accountCategory: account.accountLevel === ChartAccountLevel.SPECIFIC ? 'Detail' : 'Header',
-        status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
+      services: services.map((service) => ({
+        id: service.id.toString(),
+        serviceName: service.serviceName,
+        name: service.serviceName,
+        status: service.status,
       })),
     };
   }
 
+  async findOne(user: AuthUser, id: string) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ServicesMaintenanceModuleCode, PermissionAction.VIEW, 'You do not have permission to manage service records.');
+    const service = await this.findServiceOrThrow(companyId, parsePositiveBigIntId(id));
+
+    return {
+      service: (await mapServicesMaintenanceWithAuditUsers(this.prisma, [service]))[0],
+      permissions: getModulePermissions(user, companyId, ServicesMaintenanceModuleCode, { includeImport: true }),
+    };
+  }
+
+  async getAccountOptions(user: AuthUser) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ServicesMaintenanceModuleCode, PermissionAction.VIEW, 'You do not have permission to manage service records.');
+
+    return {
+      accounts: await this.servicesLookupService.findAccountOptions({ companyId }),
+    };
+  }
+
   async getNextAccountCode(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ServicesMaintenanceModuleCode, PermissionAction.CREATE, 'You do not have permission to manage service records.');
 
     const parent = await findServiceRevenueParentOrThrow(companyId, this.prisma);
     const accountCode = await generateNextServiceRevenueAccountCode(companyId, parent.id, parent.accountCode, this.prisma);
@@ -123,9 +148,9 @@ export class ServicesMaintenanceService {
   }
 
   async create(user: AuthUser, dto: CreateServiceMaintenanceDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ServicesMaintenanceModuleCode, PermissionAction.CREATE, 'You do not have permission to manage service records.');
     validateServiceMaintenanceInput(dto);
     const serviceName = this.validateServiceName(dto.serviceName);
     await this.ensureServiceNameAvailable(companyId, serviceName);
@@ -155,15 +180,15 @@ export class ServicesMaintenanceService {
         service: (await mapServicesMaintenanceWithAuditUsers(this.prisma, [service]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A service with this name already exists.');
       throw error;
     }
   }
 
   async update(user: AuthUser, id: string, dto: UpdateServiceMaintenanceDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ServicesMaintenanceModuleCode, PermissionAction.UPDATE, 'You do not have permission to manage service records.');
     validateServiceMaintenanceInput(dto);
     const serviceId = parsePositiveBigIntId(id);
     const currentService = await this.findServiceOrThrow(companyId, serviceId);
@@ -254,15 +279,15 @@ export class ServicesMaintenanceService {
         service: (await mapServicesMaintenanceWithAuditUsers(this.prisma, [service]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A service with this name already exists.');
       throw error;
     }
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdateServiceMaintenanceStatusDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ServicesMaintenanceModuleCode, PermissionAction.UPDATE, 'You do not have permission to manage service records.');
     const serviceId = parsePositiveBigIntId(id);
     const currentService = await this.findServiceOrThrow(companyId, serviceId);
 
@@ -294,7 +319,13 @@ export class ServicesMaintenanceService {
     };
   }
 
-  private async createGeneratedRevenueAccount(companyId: number, serviceName: string, status: ChartAccountStatus, tx: ServicesMaintenancePrismaClient, userId: number) {
+  private async createGeneratedRevenueAccount(
+    companyId: number,
+    serviceName: string,
+    status: ChartAccountStatus,
+    tx: ServicesMaintenancePrismaClient,
+    userId: number,
+  ) {
     const parent = await findServiceRevenueParentOrThrow(companyId, tx);
     const accountCode = await generateNextServiceRevenueAccountCode(companyId, parent.id, parent.accountCode, tx);
 
@@ -316,21 +347,6 @@ export class ServicesMaintenanceService {
         whoCreated: String(userId),
       },
     });
-  }
-
-  private async findServiceRevenueAccountOptions(companyId: number, tx: ServicesMaintenancePrismaClient) {
-    return tx.chartAccount.findMany({
-      where: {
-        companyId,
-        accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.REVENUE,
-        accountNature: AccountNature.CREDIT,
-        status: ChartAccountStatus.ACTIVE,
-        deletedAt: null,
-        isPostingAccount: true,
-      },
-      orderBy: [{ accountCode: 'asc' }],
-    }).then((accounts) => accounts.filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag)));
   }
 
   private async ensureSelectedRevenueAccountIsValid(companyId: number, revenueCoaId: bigint, tx: ServicesMaintenancePrismaClient) {
@@ -373,7 +389,7 @@ export class ServicesMaintenanceService {
   }
 
   private validateServiceName(value: string) {
-    const serviceName = value.trim().replace(/\s+/g, ' ');
+    const serviceName = normalizeWhitespace(value);
 
     if (!serviceName) {
       throw new BadRequestException('Service name is required.');
@@ -394,77 +410,6 @@ export class ServicesMaintenanceService {
     });
 
     if (existingService) {
-      throw new ConflictException('A service with this name already exists.');
-    }
-  }
-
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: { userId_companyId: { userId: user.id, companyId } },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`${ServicesMaintenanceModuleCode}:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage service records.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-      canImport: this.can(user, companyId, PermissionAction.CREATE),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`${ServicesMaintenanceModuleCode}:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       throw new ConflictException('A service with this name already exists.');
     }
   }

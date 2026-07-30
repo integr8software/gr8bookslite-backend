@@ -4,10 +4,6 @@ import { PrismaService } from '../../../prisma/prisma.service';
 
 export type TransactionNumberWriteClient = PrismaService | Prisma.TransactionClient;
 
-export type TransactionNumberModuleSequence = TransactionNumberSequence & {
-  module: { code: string };
-};
-
 export async function findTransactionNumberForCompanyBranch(
   tx: TransactionNumberWriteClient,
   {

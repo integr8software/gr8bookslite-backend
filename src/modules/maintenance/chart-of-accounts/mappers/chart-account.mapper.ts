@@ -33,7 +33,7 @@ export function mapChartAccount(account: ChartAccountPayload, userNames: Map<num
     createdBy: createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(createdByUserId) ?? null),
     createdAt: account.createdAt.toISOString(),
     updatedBy: updatedByUserId === null ? null : (userNames.get(updatedByUserId) ?? null),
-    updatedAt: account.updatedAt.toISOString(),
+    updatedAt: account.updatedAt?.toISOString() ?? null,
     bankAccounts: account.bankAccounts.map((bankAccount) => ({
       id: Number(bankAccount.id),
       companyId: bankAccount.companyId,

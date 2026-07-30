@@ -14,6 +14,11 @@ export class GetBankAccountListQueryDto {
   status?: ChartAccountStatus;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  currencyCode?: string;
+
+  @IsOptional()
   @Transform(({ value }) => toOptionalInt(value))
   @IsInt()
   @Min(1)

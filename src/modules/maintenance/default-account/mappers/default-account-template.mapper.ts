@@ -17,7 +17,7 @@ export function mapDefaultAccount(template: DefaultAccountPayload, userNames: Ma
     createdBy: template.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(template.createdByUserId) ?? null),
     createdAt: template.createdAt.toISOString(),
     updatedBy: (template.updatedByUserId && userNames.get(template.updatedByUserId)) ?? null,
-    updatedAt: template.updatedAt.toISOString(),
+    updatedAt: template.updatedAt?.toISOString() ?? null,
     createdByUserId: template.createdByUserId,
     updatedByUserId: template.updatedByUserId,
   };

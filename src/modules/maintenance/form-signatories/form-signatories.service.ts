@@ -1,10 +1,9 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { CompanyUnitType, MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { CompanyUnitType, Prisma } from '@prisma/client';
 import type { Cache } from 'cache-manager';
 import { EntitlementService } from '../../../common/access/entitlements/entitlement.service';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -14,6 +13,7 @@ import { mapFormSignatorySetup } from './mappers/form-signatory.mapper';
 import { FormSignatorySetupInclude } from './prisma/form-signatory.include';
 import type { FormSignatorySetupPayload } from './types/form-signatory.type';
 
+import { ensureActiveCompanyAccess, ensureActiveCompanyAdminAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 @Injectable()
 export class FormSignatoriesService {
   constructor(
@@ -24,22 +24,22 @@ export class FormSignatoriesService {
   ) {}
 
   async findAll(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
 
     return this.findAllForCompany(companyId);
   }
 
   async findOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
 
     return this.findOptionsForCompany(companyId);
   }
 
   async findBootstrap(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const [optionsResponse, setupsResponse] = await Promise.all([this.findOptionsForCompany(companyId), this.findAllForCompany(companyId)]);
 
     return {
@@ -115,8 +115,8 @@ export class FormSignatoriesService {
   }
 
   async findOne(user: AuthUser, setupId: number) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
 
     const setup = await this.prisma.formSignatorySetup.findFirst({
       where: {
@@ -136,8 +136,8 @@ export class FormSignatoriesService {
   }
 
   async resolve(user: AuthUser, unitId: number, moduleCodes: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     await this.ensureUnitBelongsToCompany(companyId, unitId);
     const codes = moduleCodes
       .split(',')
@@ -195,8 +195,8 @@ export class FormSignatoriesService {
   }
 
   async save(user: AuthUser, dto: SaveFormSignatoryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAdminAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAdminAccess(this.prisma, user, companyId, 'Admin access is required to manage form signatories.');
     await this.ensureUnitBelongsToCompany(companyId, dto.unitId);
     const module = await this.resolveModule(dto);
     const rows = this.normalizeRows(dto);
@@ -244,8 +244,8 @@ export class FormSignatoriesService {
   }
 
   async update(user: AuthUser, setupId: number, dto: SaveFormSignatoryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAdminAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAdminAccess(this.prisma, user, companyId, 'Admin access is required to manage form signatories.');
     await this.ensureUnitBelongsToCompany(companyId, dto.unitId);
     const module = await this.resolveModule(dto);
     const rows = this.normalizeRows(dto);
@@ -501,59 +501,6 @@ export class FormSignatoriesService {
 
     if (!unit) {
       throw new BadRequestException('Select an active branch.');
-    }
-  }
-
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status === MembershipStatus.REMOVED) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
-
-  private async ensureCompanyAdminAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        role: true,
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE || membership.role !== MembershipRole.ADMIN) {
-      throw new ForbiddenException('Admin access is required to manage form signatories.');
     }
   }
 }

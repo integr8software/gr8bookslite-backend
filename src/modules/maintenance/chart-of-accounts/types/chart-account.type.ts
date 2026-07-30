@@ -49,7 +49,7 @@ export type ChartAccountResponse = {
   createdBy: string | null;
   createdAt: string;
   updatedBy: string | null;
-  updatedAt: string;
+  updatedAt: string | null;
   bankAccounts: ChartAccountBankAccountResponse[];
 };
 
