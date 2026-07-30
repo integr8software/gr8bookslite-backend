@@ -1,18 +1,7 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-  DefaultAccount,
-  DefaultAccountTemplateType,
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-} from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, DefaultAccount, DefaultAccountTemplateType, Prisma } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -27,18 +16,12 @@ import { UpdateDefaultAccountTemplateDto } from './dto/update-default-account-te
 import { DefaultAccountLookupService } from './lookups/default-account-lookup.service';
 import { mapDefaultAccount } from './mappers/default-account-template.mapper';
 import { DefaultAccountInclude } from './prisma/default-account-template.include';
-import type {
-  DefaultAccountParentRole,
-  DefaultAccountPayload,
-  GeneratedAccountRequest,
-  ParentChartAccountReference,
-} from './types/default-account.type';
+import type { DefaultAccountParentRole, DefaultAccountPayload, GeneratedAccountRequest, ParentChartAccountReference } from './types/default-account.type';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
-const SupportedDefaultAccountTemplateTypes = [
-  DefaultAccountTemplateType.EXPENSE,
-  DefaultAccountTemplateType.COLLECTION,
-] as const;
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
+const SupportedDefaultAccountTemplateTypes = [DefaultAccountTemplateType.EXPENSE, DefaultAccountTemplateType.COLLECTION] as const;
 
 @Injectable()
 export class DefaultAccountService {
@@ -50,7 +33,10 @@ export class DefaultAccountService {
   async findAll(user: AuthUser, query: GetDefaultAccountTemplateListQueryDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'Default accounts are system-seeded and can only be maintained by an admin.', {
+      reservedOnly: true,
+      viewAllowed: true,
+    });
     this.ensureSupportedDefaultAccountType(query.type);
 
     const page = query.page ?? DefaultPage;
@@ -80,26 +66,32 @@ export class DefaultAccountService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'DA', { includeDelete: false, reservedOnly: true, viewAllowed: true }),
     };
   }
 
   async findOne(user: AuthUser, id: string) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'Default accounts are system-seeded and can only be maintained by an admin.', {
+      reservedOnly: true,
+      viewAllowed: true,
+    });
     const template = await this.findTemplateOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       defaultAccount: (await this.mapDefaultAccountsWithAuditUsers([template]))[0],
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'DA', { includeDelete: false, reservedOnly: true, viewAllowed: true }),
     };
   }
 
   async findExpenseParentOptions(user: AuthUser) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'Default accounts are system-seeded and can only be maintained by an admin.', {
+      reservedOnly: true,
+      viewAllowed: true,
+    });
 
     return {
       options: await this.defaultAccountLookupService.findExpenseParentOptions({ companyId }),
@@ -109,7 +101,10 @@ export class DefaultAccountService {
   async create(user: AuthUser, dto: CreateDefaultAccountTemplateDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.CREATE, 'Default accounts are system-seeded and can only be maintained by an admin.', {
+      reservedOnly: true,
+      viewAllowed: true,
+    });
     const defaultAccountName = this.validateDefaultAccountName(dto.defaultAccountName);
     const description = this.normalizeTemplateDescription(dto.description);
     this.ensureSupportedDefaultAccountType(dto.type);
@@ -148,7 +143,7 @@ export class DefaultAccountService {
         defaultAccount: (await this.mapDefaultAccountsWithAuditUsers([template]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'Default Account Name already exists for this type.');
       throw error;
     }
   }
@@ -156,7 +151,10 @@ export class DefaultAccountService {
   async update(user: AuthUser, id: string, dto: UpdateDefaultAccountTemplateDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.UPDATE, 'Default accounts are system-seeded and can only be maintained by an admin.', {
+      reservedOnly: true,
+      viewAllowed: true,
+    });
     const templateId = parsePositiveBigIntId(id);
     const currentTemplate = await this.findTemplateOrThrow(companyId, templateId);
     this.ensureSupportedDefaultAccountType(dto.type);
@@ -214,7 +212,7 @@ export class DefaultAccountService {
         defaultAccount: (await this.mapDefaultAccountsWithAuditUsers([template]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'Default Account Name already exists for this type.');
       throw error;
     }
   }
@@ -222,7 +220,10 @@ export class DefaultAccountService {
   async updateStatus(user: AuthUser, id: string, dto: UpdateDefaultAccountTemplateStatusDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.UPDATE, 'Default accounts are system-seeded and can only be maintained by an admin.', {
+      reservedOnly: true,
+      viewAllowed: true,
+    });
     const templateId = parsePositiveBigIntId(id);
     const currentTemplate = await this.findTemplateOrThrow(companyId, templateId);
 
@@ -588,10 +589,7 @@ export class DefaultAccountService {
     tx: Prisma.TransactionClient,
     userId: number,
   ) {
-    const chartAccountIds = [
-      template.expenseCoaId,
-      template.revenueCoaId,
-    ].filter((id): id is bigint => Boolean(id));
+    const chartAccountIds = [template.expenseCoaId, template.revenueCoaId].filter((id): id is bigint => Boolean(id));
 
     if (chartAccountIds.length === 0) {
       return;
@@ -656,48 +654,6 @@ export class DefaultAccountService {
     }
 
     return template;
-  }
-
-
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (action === PermissionAction.VIEW || this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    throw new ForbiddenException('Default accounts are system-seeded and can only be maintained by an admin.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canDelete: false,
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    return action === PermissionAction.VIEW || this.hasReservedRoleAccess(user, companyId);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('Default Account Name already exists for this type.');
-    }
   }
 }
 

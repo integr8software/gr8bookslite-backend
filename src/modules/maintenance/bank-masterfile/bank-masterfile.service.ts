@@ -1,8 +1,7 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
@@ -32,6 +31,8 @@ import {
 } from './utils/bank-account-data.util';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
 const CashInBankGroup = 'Cash in Bank';
 
 @Injectable()
@@ -45,7 +46,7 @@ export class BankMasterfileService {
   async findAll(user: AuthUser, query: GetBankAccountListQueryDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    ensureModuleAction(user, companyId, 'BM', PermissionAction.VIEW, 'You do not have permission to manage bank masterfile records.');
 
     const page = query.page ?? DefaultPage;
     const limit = query.limit ?? DefaultLimit;
@@ -74,7 +75,7 @@ export class BankMasterfileService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'BM', { includeImport: true }),
     };
   }
 
@@ -125,7 +126,7 @@ export class BankMasterfileService {
   async getNextAccountCode(user: AuthUser) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    ensureModuleAction(user, companyId, 'BM', PermissionAction.CREATE, 'You do not have permission to manage bank masterfile records.');
 
     const cashInBankAccount = await this.support.findCashInBankParentOrThrow(companyId);
     const accountCode = await this.support.generateNextCashInBankAccountCode(companyId, cashInBankAccount.id, cashInBankAccount.accountCode, this.prisma);
@@ -140,19 +141,19 @@ export class BankMasterfileService {
   async findOne(user: AuthUser, id: string) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    ensureModuleAction(user, companyId, 'BM', PermissionAction.VIEW, 'You do not have permission to manage bank masterfile records.');
     const bankAccount = await this.support.findBankAccountOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       bankAccount: (await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount]))[0],
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'BM', { includeImport: true }),
     };
   }
 
   async create(user: AuthUser, dto: CreateBankAccountDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    ensureModuleAction(user, companyId, 'BM', PermissionAction.CREATE, 'You do not have permission to manage bank masterfile records.');
     validateBankInput(dto);
 
     try {
@@ -228,7 +229,7 @@ export class BankMasterfileService {
         bankAccount: (await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'This bank masterfile record already exists.');
       throw error;
     }
   }
@@ -236,7 +237,7 @@ export class BankMasterfileService {
   async importBankAccounts(user: AuthUser, dto: ImportBankAccountsDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    ensureModuleAction(user, companyId, 'BM', PermissionAction.CREATE, 'You do not have permission to manage bank masterfile records.');
 
     dto.banks.forEach(validateBankInput);
     ensureNoDuplicateImportedBankAccounts(dto.banks);
@@ -326,14 +327,14 @@ export class BankMasterfileService {
         bankAccounts: await mapBankAccountsWithAuditUsers(this.prisma, bankAccounts),
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'This bank masterfile record already exists.');
       throw error;
     }
   }
   async update(user: AuthUser, id: string, dto: UpdateBankAccountDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    ensureModuleAction(user, companyId, 'BM', PermissionAction.UPDATE, 'You do not have permission to manage bank masterfile records.');
     const bankAccountId = parsePositiveBigIntId(id);
     const currentBankAccount = await this.support.findBankAccountOrThrow(companyId, bankAccountId);
 
@@ -397,7 +398,7 @@ export class BankMasterfileService {
         bankAccount: (await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'This bank masterfile record already exists.');
       throw error;
     }
   }
@@ -405,7 +406,7 @@ export class BankMasterfileService {
   async updateStatus(user: AuthUser, id: string, dto: UpdateBankAccountStatusDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    ensureModuleAction(user, companyId, 'BM', PermissionAction.UPDATE, 'You do not have permission to manage bank masterfile records.');
     const bankAccountId = parsePositiveBigIntId(id);
     const currentBankAccount = await this.support.findBankAccountOrThrow(companyId, bankAccountId);
 
@@ -444,8 +445,6 @@ export class BankMasterfileService {
     };
   }
 
-
-
   private maskAccountNumber(accountNumber: string) {
     const trimmed = accountNumber.trim();
     if (trimmed.length <= 4) {
@@ -453,53 +452,5 @@ export class BankMasterfileService {
     }
 
     return `${'*'.repeat(Math.max(0, trimmed.length - 4))}${trimmed.slice(-4)}`;
-  }
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`BM:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage bank masterfile records.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-      canImport: this.can(user, companyId, PermissionAction.CREATE),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`BM:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('This bank masterfile record already exists.');
-    }
   }
 }

@@ -1,7 +1,6 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { MembershipRole, MembershipStatus, Prisma, UnitOfMeasurement, UnitOfMeasurementQuantityMode, UnitOfMeasurementStatus } from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, UnitOfMeasurement, UnitOfMeasurementQuantityMode, UnitOfMeasurementStatus } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -14,6 +13,9 @@ import { UpdateUnitOfMeasurementDto } from './dto/update-unit-of-measurement.dto
 import { mapUnitOfMeasurement } from './mappers/unit-of-measurement.mapper';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
+import { normalizeWhitespace } from '../../../common/utils/string-normalization.util';
 const UnitOfMeasurementModuleCode = 'UOM';
 
 @Injectable()
@@ -23,7 +25,7 @@ export class UnitOfMeasurementService {
   async findAll(user: AuthUser, query: GetUnitOfMeasurementListQueryDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    ensureModuleAction(user, companyId, UnitOfMeasurementModuleCode, PermissionAction.VIEW, 'You do not have permission to manage units of measurement.');
 
     const page = query.page ?? DefaultPage;
     const limit = query.limit ?? DefaultLimit;
@@ -51,7 +53,7 @@ export class UnitOfMeasurementService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, UnitOfMeasurementModuleCode, { includeImport: true }),
     };
   }
 
@@ -96,19 +98,19 @@ export class UnitOfMeasurementService {
   async findOne(user: AuthUser, id: string) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    ensureModuleAction(user, companyId, UnitOfMeasurementModuleCode, PermissionAction.VIEW, 'You do not have permission to manage units of measurement.');
     const unit = await this.findUnitOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       unit: (await this.mapUnitsWithAuditUsers([unit]))[0],
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, UnitOfMeasurementModuleCode, { includeImport: true }),
     };
   }
 
   async create(user: AuthUser, dto: CreateUnitOfMeasurementDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    ensureModuleAction(user, companyId, UnitOfMeasurementModuleCode, PermissionAction.CREATE, 'You do not have permission to manage units of measurement.');
 
     await this.ensureNameAvailable(companyId, dto.name);
     await this.ensureSymbolAvailable(companyId, dto.symbol);
@@ -128,7 +130,7 @@ export class UnitOfMeasurementService {
         unit: (await this.mapUnitsWithAuditUsers([unit]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A unit of measurement with this name or symbol already exists.');
       throw error;
     }
   }
@@ -136,7 +138,7 @@ export class UnitOfMeasurementService {
   async update(user: AuthUser, id: string, dto: UpdateUnitOfMeasurementDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    ensureModuleAction(user, companyId, UnitOfMeasurementModuleCode, PermissionAction.UPDATE, 'You do not have permission to manage units of measurement.');
     const unitId = parsePositiveBigIntId(id);
 
     await this.findUnitOrThrow(companyId, unitId);
@@ -164,7 +166,7 @@ export class UnitOfMeasurementService {
         unit: (await this.mapUnitsWithAuditUsers([unit]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A unit of measurement with this name or symbol already exists.');
       throw error;
     }
   }
@@ -172,7 +174,7 @@ export class UnitOfMeasurementService {
   async importUnits(user: AuthUser, dto: ImportUnitOfMeasurementsDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    ensureModuleAction(user, companyId, UnitOfMeasurementModuleCode, PermissionAction.CREATE, 'You do not have permission to manage units of measurement.');
     this.ensureNoDuplicateImportValues(dto.units);
 
     const names = dto.units.map((unit) => unit.name.trim());
@@ -290,7 +292,7 @@ export class UnitOfMeasurementService {
 
   private toCreateUnitData(dto: CreateUnitOfMeasurementDto) {
     return {
-      name: this.normalizeName(dto.name),
+      name: normalizeWhitespace(dto.name),
       symbol: this.normalizeSymbol(dto.symbol),
       quantityMode: dto.quantityMode,
     };
@@ -298,7 +300,7 @@ export class UnitOfMeasurementService {
 
   private toUnitData(dto: UpdateUnitOfMeasurementDto) {
     return {
-      ...(dto.name !== undefined ? { name: this.normalizeName(dto.name) } : {}),
+      ...(dto.name !== undefined ? { name: normalizeWhitespace(dto.name) } : {}),
       ...(dto.symbol !== undefined ? { symbol: this.normalizeSymbol(dto.symbol) } : {}),
       ...(dto.quantityMode !== undefined ? { quantityMode: dto.quantityMode } : {}),
       ...(dto.status !== undefined ? { status: dto.status } : {}),
@@ -322,7 +324,7 @@ export class UnitOfMeasurementService {
   }
 
   private async ensureNameAvailable(companyId: number, name: string, excludedUnitId?: bigint) {
-    const normalizedName = this.normalizeName(name);
+    const normalizedName = normalizeWhitespace(name);
 
     if (!normalizedName) {
       throw new BadRequestException('Unit of measurement name is required.');
@@ -380,7 +382,7 @@ export class UnitOfMeasurementService {
     const symbols = new Set<string>();
 
     for (const unit of units) {
-      const normalizedName = this.normalizeName(unit.name).toLowerCase();
+      const normalizedName = normalizeWhitespace(unit.name).toLowerCase();
       const normalizedSymbol = this.normalizeSymbol(unit.symbol).toLowerCase();
 
       if (names.has(normalizedName)) {
@@ -395,65 +397,7 @@ export class UnitOfMeasurementService {
     }
   }
 
-  private normalizeName(name: string) {
-    return name.trim().replace(/\s+/g, ' ');
-  }
-
   private normalizeSymbol(symbol: string) {
     return symbol.trim().replace(/\s+/g, '').toUpperCase();
-  }
-
-
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`${UnitOfMeasurementModuleCode}:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage units of measurement.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-      canImport: this.can(user, companyId, PermissionAction.CREATE),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`${UnitOfMeasurementModuleCode}:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      const target = Array.isArray(error.meta?.target) ? error.meta.target.join(',') : '';
-      if (target.includes('symbol')) {
-        throw new ConflictException('A unit of measurement with this symbol already exists.');
-      }
-      throw new ConflictException('A unit of measurement with this name already exists.');
-    }
   }
 }

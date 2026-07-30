@@ -13,3 +13,7 @@ export function cleanCurrencyCode(value: string | null | undefined) {
 export function normalizeIdentityValue(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? '';
 }
+
+export function normalizeWhitespace(value: string) {
+  return value.trim().replace(/\s+/g, ' ');
+}

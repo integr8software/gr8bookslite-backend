@@ -1,8 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { MembershipStatus } from '@prisma/client';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { MembershipRole, MembershipStatus } from '@prisma/client';
 import { AppRole } from '../enums/app-role.enum';
 import type { AuthUser } from '../interfaces/auth-user.interface';
-import { ensureActiveCompanyAccess, getActiveCompanyId } from './module-access.util';
+import { ensureActiveCompanyAccess, ensureActiveCompanyAdminAccess, getActiveCompanyId, hasReservedRoleAccess } from './module-access.util';
 
 describe('module access utilities', () => {
   const prisma = {
@@ -38,5 +38,30 @@ describe('module access utilities', () => {
     prisma.membership.findUnique.mockResolvedValue({ status: MembershipStatus.SUSPENDED });
 
     await expect(ensureActiveCompanyAccess(prisma as never, user, 2)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('recognizes active company admins as reserved access', () => {
+    expect(
+      hasReservedRoleAccess(
+        {
+          ...user,
+          membershipStatus: MembershipStatus.ACTIVE,
+          membershipRole: MembershipRole.ADMIN,
+        },
+        2,
+      ),
+    ).toBe(true);
+  });
+
+  it('allows active company admin membership', async () => {
+    prisma.membership.findUnique.mockResolvedValue({ status: MembershipStatus.ACTIVE, role: MembershipRole.ADMIN });
+
+    await expect(ensureActiveCompanyAdminAccess(prisma as never, user, 2, 'Admin access is required.')).resolves.toBeUndefined();
+  });
+
+  it('rejects non-admin company membership', async () => {
+    prisma.membership.findUnique.mockResolvedValue({ status: MembershipStatus.ACTIVE, role: MembershipRole.USER });
+
+    await expect(ensureActiveCompanyAdminAccess(prisma as never, user, 2, 'Admin access is required.')).rejects.toBeInstanceOf(ForbiddenException);
   });
 });

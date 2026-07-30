@@ -1,6 +1,5 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, MembershipRole, MembershipStatus, Prisma } from '@prisma/client';
-import { AppRole } from '../../../common/enums/app-role.enum';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, Prisma } from '@prisma/client';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
 import { parseOptionalPositiveBigIntIdOrUndefined, parsePositiveBigIntId } from '../../../common/utils/id.util';
@@ -19,7 +18,8 @@ import type { ChartAccountPayload, ChartAccountResponse, ChartAccountTreePayload
 import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings } from './utils/chart-account-code.util';
 import { toAccountGroupJson } from './utils/system-account-groups.util';
 
-import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureActiveCompanyAccess, ensureActiveCompanyAdminAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
 @Injectable()
 export class ChartOfAccountsService {
   constructor(
@@ -85,10 +85,7 @@ export class ChartOfAccountsService {
         ...(parentAccountId !== undefined ? { parentAccountId } : {}),
         ...(search
           ? {
-              OR: [
-                { accountCode: { contains: search, mode: 'insensitive' } },
-                { accountTitle: { contains: search, mode: 'insensitive' } },
-              ],
+              OR: [{ accountCode: { contains: search, mode: 'insensitive' } }, { accountTitle: { contains: search, mode: 'insensitive' } }],
             }
           : {}),
       },
@@ -162,7 +159,7 @@ export class ChartOfAccountsService {
 
   async create(user: AuthUser, dto: CreateChartAccountDto) {
     const companyId = getActiveCompanyId(user);
-    await this.ensureCompanyAdminAccess(user, companyId);
+    await ensureActiveCompanyAdminAccess(this.prisma, user, companyId, 'Admin access is required to manage chart accounts.');
     const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(dto.parentAccountId, 'parentAccountId');
 
     try {
@@ -255,14 +252,14 @@ export class ChartOfAccountsService {
         account: (await this.mapChartAccountsWithAuditUsers([account]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A chart account with this code already exists.');
       throw error;
     }
   }
 
   async update(user: AuthUser, id: string, dto: UpdateChartAccountDto) {
     const companyId = getActiveCompanyId(user);
-    await this.ensureCompanyAdminAccess(user, companyId);
+    await ensureActiveCompanyAdminAccess(this.prisma, user, companyId, 'Admin access is required to manage chart accounts.');
     const accountId = parsePositiveBigIntId(id);
     const existingAccount = await this.findAccountOrThrow(companyId, accountId);
     this.assertCompanyEditableAccount(existingAccount);
@@ -333,14 +330,14 @@ export class ChartOfAccountsService {
         account: (await this.mapChartAccountsWithAuditUsers([account]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A chart account with this code already exists.');
       throw error;
     }
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdateChartAccountStatusDto) {
     const companyId = getActiveCompanyId(user);
-    await this.ensureCompanyAdminAccess(user, companyId);
+    await ensureActiveCompanyAdminAccess(this.prisma, user, companyId, 'Admin access is required to manage chart accounts.');
     const accountId = parsePositiveBigIntId(id);
     const existingAccount = await this.findAccountOrThrow(companyId, accountId);
     this.assertCompanyEditableAccount(existingAccount);
@@ -615,37 +612,6 @@ export class ChartOfAccountsService {
       currencyExchangeRate: linkedDetails?.currencyExchangeRate === undefined ? undefined : new Prisma.Decimal(linkedDetails.currencyExchangeRate),
       isDefault: false,
     };
-  }
-
-
-
-  private async ensureCompanyAdminAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        role: true,
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE || membership.role !== MembershipRole.ADMIN) {
-      throw new ForbiddenException('Admin access is required to manage chart accounts.');
-    }
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('A chart account with this code already exists.');
-    }
   }
 }
 
