@@ -7,6 +7,7 @@ import { CreatePartyDto } from './dto/create-party.dto';
 import { GetPartyListQueryDto } from './dto/get-party-list-query.dto';
 import { ImportPartiesDto } from './dto/import-parties.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
+import { PartyLookupService } from './lookups/party-lookup.service';
 import { PartyMaintenanceService } from './party-maintenance.service';
 
 @UseGuards(JwtAuthGuard)
@@ -16,7 +17,10 @@ import { PartyMaintenanceService } from './party-maintenance.service';
   version: '1',
 })
 export class PartyMaintenanceController {
-  constructor(private readonly partyMaintenanceService: PartyMaintenanceService) {}
+  constructor(
+    private readonly partyMaintenanceService: PartyMaintenanceService,
+    private readonly partyLookupService: PartyLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Party list retrieved.' })
@@ -33,7 +37,7 @@ export class PartyMaintenanceController {
   @Get('options/:partyType')
   @ApiOkResponse({ description: 'Party options retrieved.' })
   findOptions(@CurrentUser() user: AuthUser, @Param('partyType') partyType: string) {
-    return this.partyMaintenanceService.findOptions(user, partyType);
+    return this.partyLookupService.findOptionsForCompanyUser(user, partyType);
   }
 
   @Get(':id')

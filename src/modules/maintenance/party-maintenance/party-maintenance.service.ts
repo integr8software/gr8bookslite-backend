@@ -29,18 +29,20 @@ import { UpdatePartyDto } from './dto/update-party.dto';
 import { mapParty } from './mappers/party-maintenance.mapper';
 import { PartyInclude } from './prisma/party.include';
 import type { PartyWithDetails } from './types/party-with-details.type';
-import { buildPartyAccountingAccountOptions } from './utils/party-accounting-account.util';
+import { PartyLookupService } from './lookups/party-lookup.service';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 @Injectable()
 export class PartyMaintenanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly addressService: AddressService,
+    private readonly partyLookupService: PartyLookupService,
   ) {}
 
   async findAll(user: AuthUser, query: GetPartyListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const page = query.page ?? DefaultPage;
@@ -76,8 +78,8 @@ export class PartyMaintenanceService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const party = await this.findPartyOrThrow(companyId, parsePositiveBigIntId(id));
 
@@ -88,25 +90,16 @@ export class PartyMaintenanceService {
   }
 
   async findAccountingOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
-    const accounts = await this.prisma.chartAccount.findMany({
-      where: {
-        companyId,
-        status: ChartAccountStatus.ACTIVE,
-        deletedAt: null,
-      },
-      orderBy: [{ accountCode: 'asc' }, { orderNo: 'asc' }, { accountTitle: 'asc' }],
-    });
-
-    return buildPartyAccountingAccountOptions(accounts);
+    return this.partyLookupService.findAccountingOptions({ companyId });
   }
 
   async findOptions(user: AuthUser, partyType: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const normalizedPartyType = this.parsePartyType(partyType);
 
     const parties = await this.prisma.party.findMany({
@@ -153,8 +146,8 @@ export class PartyMaintenanceService {
   }
 
   async create(user: AuthUser, dto: CreatePartyDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const sequence = await findTransactionNumberForCompanyBranch(this.prisma, {
@@ -203,8 +196,8 @@ export class PartyMaintenanceService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdatePartyDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
 
     const partyId = parsePositiveBigIntId(id);
@@ -248,8 +241,8 @@ export class PartyMaintenanceService {
   }
 
   async importParties(user: AuthUser, dto: ImportPartiesDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId ?? dto.parties[0]?.branchUnitId);
@@ -1256,28 +1249,7 @@ export class PartyMaintenanceService {
     return normalized || null;
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: { userId_companyId: { userId: user.id, companyId } },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {

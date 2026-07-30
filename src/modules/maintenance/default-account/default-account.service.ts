@@ -24,6 +24,7 @@ import { CreateDefaultAccountTemplateDto } from './dto/create-default-account-te
 import { GetDefaultAccountTemplateListQueryDto } from './dto/get-default-account-template-list-query.dto';
 import { UpdateDefaultAccountTemplateStatusDto } from './dto/update-default-account-template-status.dto';
 import { UpdateDefaultAccountTemplateDto } from './dto/update-default-account-template.dto';
+import { DefaultAccountLookupService } from './lookups/default-account-lookup.service';
 import { mapDefaultAccount } from './mappers/default-account-template.mapper';
 import { DefaultAccountInclude } from './prisma/default-account-template.include';
 import type {
@@ -33,6 +34,7 @@ import type {
   ParentChartAccountReference,
 } from './types/default-account.type';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 const SupportedDefaultAccountTemplateTypes = [
   DefaultAccountTemplateType.EXPENSE,
   DefaultAccountTemplateType.COLLECTION,
@@ -40,11 +42,14 @@ const SupportedDefaultAccountTemplateTypes = [
 
 @Injectable()
 export class DefaultAccountService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly defaultAccountLookupService: DefaultAccountLookupService,
+  ) {}
 
   async findAll(user: AuthUser, query: GetDefaultAccountTemplateListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     this.ensureSupportedDefaultAccountType(query.type);
 
@@ -80,8 +85,8 @@ export class DefaultAccountService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const template = await this.findTemplateOrThrow(companyId, parsePositiveBigIntId(id));
 
@@ -92,26 +97,18 @@ export class DefaultAccountService {
   }
 
   async findExpenseParentOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
-    const options = await this.getExpenseParentOptions(companyId, this.prisma);
-
     return {
-      options: options.map((account) => ({
-        id: account.id.toString(),
-        accountCode: account.accountCode,
-        accountTitle: account.accountTitle,
-        accountLevel: account.accountLevel,
-        parentAccountId: account.parentAccountId?.toString() ?? null,
-      })),
+      options: await this.defaultAccountLookupService.findExpenseParentOptions({ companyId }),
     };
   }
 
   async create(user: AuthUser, dto: CreateDefaultAccountTemplateDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const defaultAccountName = this.validateDefaultAccountName(dto.defaultAccountName);
     const description = this.normalizeTemplateDescription(dto.description);
@@ -157,8 +154,8 @@ export class DefaultAccountService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateDefaultAccountTemplateDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const templateId = parsePositiveBigIntId(id);
     const currentTemplate = await this.findTemplateOrThrow(companyId, templateId);
@@ -223,8 +220,8 @@ export class DefaultAccountService {
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdateDefaultAccountTemplateStatusDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const templateId = parsePositiveBigIntId(id);
     const currentTemplate = await this.findTemplateOrThrow(companyId, templateId);
@@ -661,28 +658,7 @@ export class DefaultAccountService {
     return template;
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: { userId_companyId: { userId: user.id, companyId } },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (action === PermissionAction.VIEW || this.hasReservedRoleAccess(user, companyId)) {

@@ -9,6 +9,7 @@ import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dt
 import { ImportBankAccountsDto } from './dto/import-bank-accounts.dto';
 import { UpdateBankAccountStatusDto } from './dto/update-bank-account-status.dto';
 import { UpdateBankAccountDto } from './dto/update-bank-account.dto';
+import { BankMasterfileLookupService } from './lookups/bank-masterfile-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Bank Masterfile')
@@ -17,7 +18,10 @@ import { UpdateBankAccountDto } from './dto/update-bank-account.dto';
   version: '1',
 })
 export class BankMasterfileController {
-  constructor(private readonly bankMasterfileService: BankMasterfileService) {}
+  constructor(
+    private readonly bankMasterfileService: BankMasterfileService,
+    private readonly bankMasterfileLookupService: BankMasterfileLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Bank accounts retrieved.' })
@@ -28,7 +32,7 @@ export class BankMasterfileController {
   @Get('options')
   @ApiOkResponse({ description: 'Bank account options retrieved.' })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
-    return this.bankMasterfileService.findOptions(user, query);
+    return this.bankMasterfileLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get('next-account-code')
@@ -74,11 +78,11 @@ export class BankMasterfileController {
   version: '1',
 })
 export class BankMasterfileLookupController {
-  constructor(private readonly bankMasterfileService: BankMasterfileService) {}
+  constructor(private readonly bankMasterfileLookupService: BankMasterfileLookupService) {}
 
   @Get('options')
   @ApiOkResponse({ description: 'Bank account options retrieved.' })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
-    return this.bankMasterfileService.findOptions(user, query);
+    return this.bankMasterfileLookupService.findOptionsForCompanyUser(user, query);
   }
 }

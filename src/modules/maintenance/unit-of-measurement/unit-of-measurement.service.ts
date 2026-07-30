@@ -13,6 +13,7 @@ import { ImportUnitOfMeasurementsDto } from './dto/import-unit-of-measurements.d
 import { UpdateUnitOfMeasurementDto } from './dto/update-unit-of-measurement.dto';
 import { mapUnitOfMeasurement } from './mappers/unit-of-measurement.mapper';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 const UnitOfMeasurementModuleCode = 'UOM';
 
 @Injectable()
@@ -20,8 +21,8 @@ export class UnitOfMeasurementService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetUnitOfMeasurementListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const page = query.page ?? DefaultPage;
@@ -55,8 +56,8 @@ export class UnitOfMeasurementService {
   }
 
   async findOptions(user: AuthUser, query: GetUnitOfMeasurementListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const search = query.search?.trim();
 
     const units = await this.prisma.unitOfMeasurement.findMany({
@@ -93,8 +94,8 @@ export class UnitOfMeasurementService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const unit = await this.findUnitOrThrow(companyId, parsePositiveBigIntId(id));
 
@@ -105,8 +106,8 @@ export class UnitOfMeasurementService {
   }
 
   async create(user: AuthUser, dto: CreateUnitOfMeasurementDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     await this.ensureNameAvailable(companyId, dto.name);
@@ -133,8 +134,8 @@ export class UnitOfMeasurementService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateUnitOfMeasurementDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const unitId = parsePositiveBigIntId(id);
 
@@ -169,8 +170,8 @@ export class UnitOfMeasurementService {
   }
 
   async importUnits(user: AuthUser, dto: ImportUnitOfMeasurementsDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     this.ensureNoDuplicateImportValues(dto.units);
 
@@ -402,35 +403,7 @@ export class UnitOfMeasurementService {
     return symbol.trim().replace(/\s+/g, '').toUpperCase();
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {

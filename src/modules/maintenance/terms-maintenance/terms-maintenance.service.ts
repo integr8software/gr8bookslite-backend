@@ -13,13 +13,14 @@ import { ImportTermsDto } from './dto/import-terms.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
 import { mapTerm } from './mappers/terms-maintenance.mapper';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 @Injectable()
 export class TermsMaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetTermListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const page = query.page ?? DefaultPage;
@@ -53,8 +54,8 @@ export class TermsMaintenanceService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const term = await this.findTermOrThrow(companyId, parsePositiveBigIntId(id));
 
@@ -65,8 +66,8 @@ export class TermsMaintenanceService {
   }
 
   async create(user: AuthUser, dto: CreateTermDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     await this.ensureNameAvailable(companyId, dto.name);
@@ -92,8 +93,8 @@ export class TermsMaintenanceService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateTermDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const termId = parsePositiveBigIntId(id);
 
@@ -125,8 +126,8 @@ export class TermsMaintenanceService {
   }
 
   async importTerms(user: AuthUser, dto: ImportTermsDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     this.ensureNoDuplicateImportNames(dto.terms);
 
@@ -323,35 +324,7 @@ export class TermsMaintenanceService {
     }
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {

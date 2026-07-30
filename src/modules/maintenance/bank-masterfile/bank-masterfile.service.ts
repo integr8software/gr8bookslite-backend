@@ -31,6 +31,7 @@ import {
   validateBankInput,
 } from './utils/bank-account-data.util';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 const CashInBankGroup = 'Cash in Bank';
 
 @Injectable()
@@ -42,8 +43,8 @@ export class BankMasterfileService {
   ) {}
 
   async findAll(user: AuthUser, query: GetBankAccountListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const page = query.page ?? DefaultPage;
@@ -78,8 +79,8 @@ export class BankMasterfileService {
   }
 
   async findOptions(user: AuthUser, query: GetBankAccountListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const search = query.search?.trim();
     const currencyCode = query.currencyCode ? cleanCurrencyCode(query.currencyCode) : undefined;
 
@@ -122,8 +123,8 @@ export class BankMasterfileService {
   }
 
   async getNextAccountCode(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     const cashInBankAccount = await this.support.findCashInBankParentOrThrow(companyId);
@@ -137,8 +138,8 @@ export class BankMasterfileService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const bankAccount = await this.support.findBankAccountOrThrow(companyId, parsePositiveBigIntId(id));
 
@@ -149,8 +150,8 @@ export class BankMasterfileService {
   }
 
   async create(user: AuthUser, dto: CreateBankAccountDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     validateBankInput(dto);
 
@@ -233,8 +234,8 @@ export class BankMasterfileService {
   }
 
   async importBankAccounts(user: AuthUser, dto: ImportBankAccountsDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     dto.banks.forEach(validateBankInput);
@@ -330,8 +331,8 @@ export class BankMasterfileService {
     }
   }
   async update(user: AuthUser, id: string, dto: UpdateBankAccountDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const bankAccountId = parsePositiveBigIntId(id);
     const currentBankAccount = await this.support.findBankAccountOrThrow(companyId, bankAccountId);
@@ -402,8 +403,8 @@ export class BankMasterfileService {
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdateBankAccountStatusDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const bankAccountId = parsePositiveBigIntId(id);
     const currentBankAccount = await this.support.findBankAccountOrThrow(companyId, bankAccountId);
@@ -443,28 +444,7 @@ export class BankMasterfileService {
     };
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: { userId_companyId: { userId: user.id, companyId } },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private maskAccountNumber(accountNumber: string) {
     const trimmed = accountNumber.trim();

@@ -20,6 +20,7 @@ import { UpdateItemVariationDto } from './dto/update-item-variation.dto';
 import { mapItemVariation } from './mappers/item-variation.mapper';
 import { ItemVariationWithValues, ItemVariationWithValuesInclude } from './types/item-variation-with-values.type';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 const ItemVariationsModuleCode = 'IV';
 
 @Injectable()
@@ -27,8 +28,8 @@ export class ItemVariationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const [variations, statistics] = await Promise.all([
@@ -51,8 +52,8 @@ export class ItemVariationsService {
   }
 
   async findOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
 
     const variations = await this.prisma.itemAttribute.findMany({
       where: {
@@ -91,8 +92,8 @@ export class ItemVariationsService {
   }
 
   async create(user: AuthUser, dto: CreateItemVariationDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     const values = dto.values ?? [];
@@ -129,8 +130,8 @@ export class ItemVariationsService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateItemVariationDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const variationId = parsePositiveBigIntId(id);
     const variation = await this.findVariationOrThrow(companyId, variationId);
@@ -410,35 +411,7 @@ export class ItemVariationsService {
     throw new BadRequestException('Unable to generate item variation code.');
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {

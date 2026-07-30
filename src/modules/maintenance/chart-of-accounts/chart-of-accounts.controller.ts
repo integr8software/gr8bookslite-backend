@@ -4,6 +4,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ChartOfAccountsService } from './chart-of-accounts.service';
+import { ChartOfAccountsLookupService } from './lookups/chart-of-accounts-lookup.service';
 import {
   ChartAccountContainerResponseDto,
   ChartAccountListResponseDto,
@@ -24,7 +25,10 @@ import { UpdateChartAccountDto } from './dto/update-chart-account.dto';
   version: '1',
 })
 export class ChartOfAccountsController {
-  constructor(private readonly chartOfAccountsService: ChartOfAccountsService) {}
+  constructor(
+    private readonly chartOfAccountsService: ChartOfAccountsService,
+    private readonly chartOfAccountsLookupService: ChartOfAccountsLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ type: ChartAccountListResponseDto })
@@ -35,7 +39,7 @@ export class ChartOfAccountsController {
   @Get('options')
   @ApiOkResponse({ description: 'Chart account options retrieved.' })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
-    return this.chartOfAccountsService.findOptions(user, query);
+    return this.chartOfAccountsLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get('tree')

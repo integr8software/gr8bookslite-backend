@@ -6,7 +6,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreatePaymentTypeDto } from './dto/create-payment-type.dto';
 import { GetPaymentTypeListQueryDto } from './dto/get-payment-type-list-query.dto';
 import { ImportPaymentTypesDto } from './dto/import-payment-types.dto';
+import { PaymentTypeLookupQueryDto } from './dto/payment-type-lookup-query.dto';
 import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
+import { PaymentTypeLookupService } from './lookups/payment-type-lookup.service';
 import { PaymentTypeMaintenanceService } from './payment-type-maintenance.service';
 
 @UseGuards(JwtAuthGuard)
@@ -16,7 +18,10 @@ import { PaymentTypeMaintenanceService } from './payment-type-maintenance.servic
   version: '1',
 })
 export class PaymentTypeMaintenanceController {
-  constructor(private readonly paymentTypeMaintenanceService: PaymentTypeMaintenanceService) {}
+  constructor(
+    private readonly paymentTypeMaintenanceService: PaymentTypeMaintenanceService,
+    private readonly paymentTypeLookupService: PaymentTypeLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Payment type list retrieved.' })
@@ -26,8 +31,8 @@ export class PaymentTypeMaintenanceController {
 
   @Get('options')
   @ApiOkResponse({ description: 'Payment type options retrieved.' })
-  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetPaymentTypeListQueryDto) {
-    return this.paymentTypeMaintenanceService.findOptions(user, query);
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: PaymentTypeLookupQueryDto) {
+    return this.paymentTypeLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get(':id')

@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateItemVariationDto } from './dto/create-item-variation.dto';
 import { UpdateItemVariationDto } from './dto/update-item-variation.dto';
 import { ItemVariationsService } from './item-variations.service';
+import { ItemVariationsLookupService } from './lookups/item-variations-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Item Variations')
@@ -14,7 +15,10 @@ import { ItemVariationsService } from './item-variations.service';
   version: '1',
 })
 export class ItemVariationsController {
-  constructor(private readonly itemVariationsService: ItemVariationsService) {}
+  constructor(
+    private readonly itemVariationsService: ItemVariationsService,
+    private readonly itemVariationsLookupService: ItemVariationsLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Item variation list retrieved.' })
@@ -25,7 +29,7 @@ export class ItemVariationsController {
   @Get('options')
   @ApiOkResponse({ description: 'Item variation options retrieved.' })
   findOptions(@CurrentUser() user: AuthUser) {
-    return this.itemVariationsService.findOptions(user);
+    return this.itemVariationsLookupService.findOptionsForCompanyUser(user);
   }
 
   @Post()

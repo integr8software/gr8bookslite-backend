@@ -19,6 +19,7 @@ import type { ChartAccountPayload, ChartAccountResponse, ChartAccountTreePayload
 import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings } from './utils/chart-account-code.util';
 import { toAccountGroupJson } from './utils/system-account-groups.util';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 @Injectable()
 export class ChartOfAccountsService {
   constructor(
@@ -27,8 +28,8 @@ export class ChartOfAccountsService {
   ) {}
 
   async findAll(user: AuthUser, query: GetChartAccountListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(query.parentAccountId, 'parentAccountId');
     const search = query.search?.trim();
 
@@ -67,8 +68,8 @@ export class ChartOfAccountsService {
   }
 
   async findOptions(user: AuthUser, query: GetChartAccountListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(query.parentAccountId, 'parentAccountId');
     const search = query.search?.trim();
 
@@ -115,8 +116,8 @@ export class ChartOfAccountsService {
   }
 
   async findTree(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const accounts = await this.prisma.chartAccount.findMany({
       where: {
         companyId,
@@ -131,8 +132,8 @@ export class ChartOfAccountsService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const account = await this.findAccountOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
@@ -141,8 +142,8 @@ export class ChartOfAccountsService {
   }
 
   async findNextCode(user: AuthUser, query: GetNextChartAccountCodeQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(query.parentAccountId, 'parentAccountId');
     const parentAccount = parentAccountId ? await this.findActiveParentAccount(companyId, parentAccountId) : null;
 
@@ -160,7 +161,7 @@ export class ChartOfAccountsService {
   }
 
   async create(user: AuthUser, dto: CreateChartAccountDto) {
-    const companyId = this.getActiveCompanyId(user);
+    const companyId = getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
     const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(dto.parentAccountId, 'parentAccountId');
 
@@ -260,7 +261,7 @@ export class ChartOfAccountsService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateChartAccountDto) {
-    const companyId = this.getActiveCompanyId(user);
+    const companyId = getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
     const accountId = parsePositiveBigIntId(id);
     const existingAccount = await this.findAccountOrThrow(companyId, accountId);
@@ -338,7 +339,7 @@ export class ChartOfAccountsService {
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdateChartAccountStatusDto) {
-    const companyId = this.getActiveCompanyId(user);
+    const companyId = getActiveCompanyId(user);
     await this.ensureCompanyAdminAccess(user, companyId);
     const accountId = parsePositiveBigIntId(id);
     const existingAccount = await this.findAccountOrThrow(companyId, accountId);
@@ -616,35 +617,7 @@ export class ChartOfAccountsService {
     };
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status === MembershipStatus.REMOVED) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private async ensureCompanyAdminAccess(user: AuthUser, companyId: number) {
     if (user.role === AppRole.SUPER_ADMIN) {

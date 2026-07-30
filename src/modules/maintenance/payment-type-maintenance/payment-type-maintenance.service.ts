@@ -13,13 +13,14 @@ import { ImportPaymentTypesDto } from './dto/import-payment-types.dto';
 import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
 import { mapPaymentType } from './mappers/payment-type-maintenance.mapper';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 @Injectable()
 export class PaymentTypeMaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetPaymentTypeListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const page = query.page ?? DefaultPage;
@@ -53,8 +54,8 @@ export class PaymentTypeMaintenanceService {
   }
 
   async findOptions(user: AuthUser, query: GetPaymentTypeListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const search = query.search?.trim();
 
     const paymentTypes = await this.prisma.paymentType.findMany({
@@ -87,8 +88,8 @@ export class PaymentTypeMaintenanceService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const paymentType = await this.findPaymentTypeOrThrow(companyId, parsePositiveBigIntId(id));
 
@@ -99,8 +100,8 @@ export class PaymentTypeMaintenanceService {
   }
 
   async create(user: AuthUser, dto: CreatePaymentTypeDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     await this.ensureNameAvailable(companyId, dto.name);
@@ -128,8 +129,8 @@ export class PaymentTypeMaintenanceService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdatePaymentTypeDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const paymentTypeId = parsePositiveBigIntId(id);
 
@@ -161,8 +162,8 @@ export class PaymentTypeMaintenanceService {
   }
 
   async importPaymentTypes(user: AuthUser, dto: ImportPaymentTypesDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     this.ensureNoDuplicateImportNames(dto.paymentTypes);
 
@@ -386,35 +387,7 @@ export class PaymentTypeMaintenanceService {
     }
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {

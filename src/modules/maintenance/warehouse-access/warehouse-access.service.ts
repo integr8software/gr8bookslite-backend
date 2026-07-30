@@ -16,6 +16,7 @@ import { WarehouseAccessInclude } from './prisma/warehouse-access.include';
 import type { WarehouseAccessWithRelations } from './types/warehouse-access-with-relations.type';
 import { deriveWarehouseAccessLevel, normalizeWarehouseAccessPermissions } from './utils/warehouse-access-permission.util';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 const WarehouseAccessModuleCode = 'WA';
 
 @Injectable()
@@ -23,8 +24,8 @@ export class WarehouseAccessService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetWarehouseAccessListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const page = query.page ?? DefaultPage;
@@ -59,8 +60,8 @@ export class WarehouseAccessService {
   }
 
   async findDirectoryUsers(user: AuthUser, query: GetWarehouseAccessDirectoryQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const search = query.search?.trim();
@@ -170,8 +171,8 @@ export class WarehouseAccessService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const access = await this.findWarehouseAccessOrThrow(companyId, parsePositiveBigIntId(id));
 
@@ -182,8 +183,8 @@ export class WarehouseAccessService {
   }
 
   async create(user: AuthUser, dto: CreateWarehouseAccessDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     this.ensureNoDuplicateAssignments(dto);
 
@@ -234,8 +235,8 @@ export class WarehouseAccessService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateWarehouseAccessDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const accessId = parsePositiveBigIntId(id);
 
@@ -268,8 +269,8 @@ export class WarehouseAccessService {
   }
 
   async revoke(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CANCEL);
     const accessId = parsePositiveBigIntId(id);
     const access = await this.findWarehouseAccessOrThrow(companyId, accessId);
@@ -477,35 +478,7 @@ export class WarehouseAccessService {
     return access;
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {

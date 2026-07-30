@@ -23,23 +23,26 @@ import {
   validateServiceMaintenanceInput,
 } from './utils/service-maintenance-data.util';
 import {
-  accountGroupHasTag,
   buildServiceRevenueAccountGroupTags,
   findSelectableServiceRevenueAccountOrThrow,
   findServiceRevenueParentOrThrow,
   generateNextServiceRevenueAccountCode,
-  ServiceRevenueAccountGroupTag,
 } from './utils/service-maintenance-account.util';
+import { ServicesLookupService } from './lookups/services-lookup.service';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 const ServicesMaintenanceModuleCode = 'SM';
 
 @Injectable()
 export class ServicesMaintenanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly servicesLookupService: ServicesLookupService,
+  ) {}
 
   async findAll(user: AuthUser, query: GetServiceMaintenanceListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const page = query.page ?? DefaultPage;
@@ -74,8 +77,8 @@ export class ServicesMaintenanceService {
   }
 
   async findOptions(user: AuthUser, query: GetServiceMaintenanceListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const search = query.search?.trim();
 
     const services = await this.prisma.serviceMaintenance.findMany({
@@ -104,8 +107,8 @@ export class ServicesMaintenanceService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const service = await this.findServiceOrThrow(companyId, parsePositiveBigIntId(id));
 
@@ -116,28 +119,18 @@ export class ServicesMaintenanceService {
   }
 
   async getAccountOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
-    const accounts = await this.findServiceRevenueAccountOptions(companyId, this.prisma);
-
     return {
-      accounts: accounts.map((account) => ({
-        id: account.id.toString(),
-        accountNumber: account.accountCode,
-        accountName: account.accountTitle,
-        description: account.description ?? '',
-        accountType: account.accountType ?? '',
-        accountCategory: account.accountLevel === ChartAccountLevel.SPECIFIC ? 'Detail' : 'Header',
-        status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
-      })),
+      accounts: await this.servicesLookupService.findAccountOptions({ companyId }),
     };
   }
 
   async getNextAccountCode(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     const parent = await findServiceRevenueParentOrThrow(companyId, this.prisma);
@@ -153,8 +146,8 @@ export class ServicesMaintenanceService {
   }
 
   async create(user: AuthUser, dto: CreateServiceMaintenanceDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     validateServiceMaintenanceInput(dto);
     const serviceName = this.validateServiceName(dto.serviceName);
@@ -191,8 +184,8 @@ export class ServicesMaintenanceService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateServiceMaintenanceDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     validateServiceMaintenanceInput(dto);
     const serviceId = parsePositiveBigIntId(id);
@@ -290,8 +283,8 @@ export class ServicesMaintenanceService {
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdateServiceMaintenanceStatusDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const serviceId = parsePositiveBigIntId(id);
     const currentService = await this.findServiceOrThrow(companyId, serviceId);
@@ -346,21 +339,6 @@ export class ServicesMaintenanceService {
         whoCreated: String(userId),
       },
     });
-  }
-
-  private async findServiceRevenueAccountOptions(companyId: number, tx: ServicesMaintenancePrismaClient) {
-    return tx.chartAccount.findMany({
-      where: {
-        companyId,
-        accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.REVENUE,
-        accountNature: AccountNature.CREDIT,
-        status: ChartAccountStatus.ACTIVE,
-        deletedAt: null,
-        isPostingAccount: true,
-      },
-      orderBy: [{ accountCode: 'asc' }],
-    }).then((accounts) => accounts.filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag)));
   }
 
   private async ensureSelectedRevenueAccountIsValid(companyId: number, revenueCoaId: bigint, tx: ServicesMaintenancePrismaClient) {
@@ -428,28 +406,7 @@ export class ServicesMaintenanceService {
     }
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: { userId_companyId: { userId: user.id, companyId } },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {

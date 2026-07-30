@@ -1,17 +1,17 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { MembershipStatus, TermStatus } from '@prisma/client';
-import { AppRole } from '../../../../common/enums/app-role.enum';
+import { Injectable } from '@nestjs/common';
+import { TermStatus } from '@prisma/client';
 import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { TermLookupQueryDto } from '../dto/term-lookup-query.dto';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../../common/utils/module-access.util';
 @Injectable()
 export class TermsLookupService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findOptionsForCompanyUser(user: AuthUser, query: TermLookupQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
 
     return {
       terms: await this.findOptions({
@@ -59,33 +59,4 @@ export class TermsLookupService {
     }));
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 }

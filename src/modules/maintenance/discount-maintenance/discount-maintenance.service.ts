@@ -16,13 +16,14 @@ import { DiscountInclude } from './prisma/discount.include';
 import type { DiscountWithAccount } from './types/discount-with-account.type';
 import { getGeneratedDiscountAccountTitle, resolveDiscountChartAccount } from './utils/discount-chart-account.util';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 @Injectable()
 export class DiscountMaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetDiscountListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const page = query.page ?? DefaultPage;
@@ -57,8 +58,8 @@ export class DiscountMaintenanceService {
   }
 
   async findOptions(user: AuthUser, query: GetDiscountListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const search = query.search?.trim();
 
     const discounts = await this.prisma.discount.findMany({
@@ -94,8 +95,8 @@ export class DiscountMaintenanceService {
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const discount = await this.findDiscountOrThrow(companyId, parsePositiveBigIntId(id));
 
@@ -106,8 +107,8 @@ export class DiscountMaintenanceService {
   }
 
   async create(user: AuthUser, dto: CreateDiscountDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     this.validateDiscountValue(dto.valueType, dto.value);
     await this.ensureNameAvailable(companyId, dto.name);
@@ -144,8 +145,8 @@ export class DiscountMaintenanceService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateDiscountDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const discountId = parsePositiveBigIntId(id);
     const current = await this.findDiscountOrThrow(companyId, discountId);
@@ -195,8 +196,8 @@ export class DiscountMaintenanceService {
   }
 
   async importDiscounts(user: AuthUser, dto: ImportDiscountsDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     this.ensureNoDuplicateImportNames(dto.discounts);
 
@@ -431,33 +432,7 @@ export class DiscountMaintenanceService {
     }
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {

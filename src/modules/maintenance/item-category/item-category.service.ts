@@ -17,6 +17,7 @@ import {
   resolveItemCategoryAccountingAccounts,
 } from './utils/item-category-accounting.util';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 const ItemCategoryModuleCode = 'IC';
 
 type ItemCategoryAccountingSetup = {
@@ -36,8 +37,8 @@ export class ItemCategoryService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
 
     const [categories, statistics] = await Promise.all([
@@ -60,8 +61,8 @@ export class ItemCategoryService {
   }
 
   async findOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
 
     const categories = await this.prisma.itemCategory.findMany({
       where: {
@@ -97,8 +98,8 @@ export class ItemCategoryService {
   }
 
   async create(user: AuthUser, dto: CreateItemCategoryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
 
     try {
@@ -151,8 +152,8 @@ export class ItemCategoryService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateItemCategoryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const categoryId = parsePositiveBigIntId(id);
 
@@ -630,35 +631,7 @@ export class ItemCategoryService {
     throw new BadRequestException('Unable to generate item category code.');
   }
 
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
 
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: {
-        userId_companyId: {
-          userId: user.id,
-          companyId,
-        },
-      },
-      select: {
-        status: true,
-      },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
 
   private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
     if (this.hasReservedRoleAccess(user, companyId)) {

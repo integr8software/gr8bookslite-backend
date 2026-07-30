@@ -5,9 +5,11 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { DiscountMaintenanceService } from './discount-maintenance.service';
 import { CreateDiscountDto } from './dto/create-discount.dto';
+import { DiscountLookupQueryDto } from './dto/discount-lookup-query.dto';
 import { GetDiscountListQueryDto } from './dto/get-discount-list-query.dto';
 import { ImportDiscountsDto } from './dto/import-discounts.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
+import { DiscountLookupService } from './lookups/discount-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Discount Maintenance')
@@ -16,7 +18,10 @@ import { UpdateDiscountDto } from './dto/update-discount.dto';
   version: '1',
 })
 export class DiscountMaintenanceController {
-  constructor(private readonly discountMaintenanceService: DiscountMaintenanceService) {}
+  constructor(
+    private readonly discountMaintenanceService: DiscountMaintenanceService,
+    private readonly discountLookupService: DiscountLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Discount list retrieved.' })
@@ -26,8 +31,8 @@ export class DiscountMaintenanceController {
 
   @Get('options')
   @ApiOkResponse({ description: 'Discount options retrieved.' })
-  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetDiscountListQueryDto) {
-    return this.discountMaintenanceService.findOptions(user, query);
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: DiscountLookupQueryDto) {
+    return this.discountLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get(':id')
