@@ -39,8 +39,40 @@ model User {
   tablePreferences       UserTablePreference[]
   warehouseAccess        WarehouseAccess[]
   sidebarPreferences     UserSidebarPreference[]
+  approverSetups         ApproverSetupUser[]
 
   @@map("users")
+}
+
+model ApproverSetup {
+  id                String              @id @default(uuid()) @db.Uuid
+  companyId         Int                 @map("company_id")
+  approverCondition String              @map("approver_condition")
+  type              String
+  status            String              @default("Active")
+  level             Int?
+  moduleScope       String              @map("module_scope")
+  validUntil        DateTime?           @map("valid_until")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  company           Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  approvers         ApproverSetupUser[]
+
+  @@index([companyId])
+  @@index([moduleScope])
+  @@index([status])
+  @@map("approver_setups")
+}
+
+model ApproverSetupUser {
+  approverSetupId String        @map("approver_setup_id") @db.Uuid
+  userId          Int           @map("user_id")
+  approverSetup   ApproverSetup @relation(fields: [approverSetupId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([approverSetupId, userId])
+  @@index([userId])
+  @@map("approver_setup_users")
 }
 
 model UserAuthIdentity {
@@ -130,6 +162,7 @@ model Company {
   journalEntries                JournalEntry[]
   warehouses                    Warehouse[]
   warehouseAccess               WarehouseAccess[]
+  approverSetups                ApproverSetup[]
   userTablePreferences          UserTablePreference[]
   auditLogs                     AuditLog[]
   onboardingDrafts              UserOnboardingDraft[]           @relation("ProvisionedOnboardingCompany")
@@ -557,8 +590,6 @@ model Tax {
   @@index([transactionType, taxType, sortOrder])
   @@map("taxes")
 }
-
-
 
 model FormSignatorySetup {
   id        Int                @id @default(autoincrement())
@@ -1093,58 +1124,58 @@ model ResponsibilityCenterType {
 }
 
 model Party {
-  id                                  BigInt                    @id @default(autoincrement())
-  companyId                           Int                       @map("company_id")
-  termId                              BigInt?                   @map("term_id")
-  partyEntityTypeId                   BigInt?                   @map("party_entity_type_id")
-  partyCodeNo                         String                    @map("party_code_no") @db.VarChar(80)
+  id                                  BigInt              @id @default(autoincrement())
+  companyId                           Int                 @map("company_id")
+  termId                              BigInt?             @map("term_id")
+  partyEntityTypeId                   BigInt?             @map("party_entity_type_id")
+  partyCodeNo                         String              @map("party_code_no") @db.VarChar(80)
   classification                      PartyClassification
-  partyTypes                          PartyType[]               @map("party_types")
-  status                              PartyStatus               @default(ACTIVE)
-  partyName                           String?                   @map("party_name") @db.VarChar(255)
-  tradeName                           String?                   @map("trade_name") @db.VarChar(255)
-  firstName                           String?                   @map("first_name") @db.VarChar(120)
-  middleName                          String?                   @map("middle_name") @db.VarChar(120)
-  lastName                            String?                   @map("last_name") @db.VarChar(120)
-  suffixName                          String?                   @map("suffix_name") @db.VarChar(40)
-  honorific                           String?                   @db.VarChar(80)
-  gender                              String?                   @db.VarChar(40)
-  civilStatus                         String?                   @map("civil_status") @db.VarChar(40)
-  nationality                         String?                   @db.VarChar(80)
-  memberRegistrationDate              DateTime?                 @map("member_registration_date")
-  defaultReceivableAccountId          BigInt?                   @map("default_receivable_account_id")
-  customerAdvanceAccountId            BigInt?                   @map("customer_advance_account_id")
-  defaultPayableAccountId             BigInt?                   @map("default_payable_account_id")
-  vendorAdvanceAccountId              BigInt?                   @map("vendor_advance_account_id")
-  employeeAdvanceAccountId            BigInt?                   @map("employee_advance_account_id")
-  employeePayableAccountId            BigInt?                   @map("employee_payable_account_id")
-  tin                                 String?                   @db.VarChar(20)
-  atcCode                             String?                   @map("atc_code") @db.VarChar(40)
-  defaultPurchaseInputVatTaxSourceKey String?                   @map("default_purchase_input_vat_tax_source_key") @db.VarChar(40)
-  defaultPurchaseEwtTaxSourceKey      String?                   @map("default_purchase_ewt_tax_source_key") @db.VarChar(40)
-  defaultPurchaseFwtTaxSourceKey      String?                   @map("default_purchase_fwt_tax_source_key") @db.VarChar(40)
-  defaultPurchaseWvatTaxSourceKey     String?                   @map("default_purchase_wvat_tax_source_key") @db.VarChar(40)
-  defaultSalesOutputVatTaxSourceKey   String?                   @map("default_sales_output_vat_tax_source_key") @db.VarChar(40)
-  defaultSalesCwtTaxSourceKey         String?                   @map("default_sales_cwt_tax_source_key") @db.VarChar(40)
-  defaultSalesWvatTaxSourceKey        String?                   @map("default_sales_wvat_tax_source_key") @db.VarChar(40)
-  contactPerson                       String?                   @map("contact_person") @db.VarChar(255)
-  email                               String?                   @db.VarChar(255)
-  contactNo                           String?                   @map("contact_no") @db.VarChar(40)
-  landline                            String?                   @db.VarChar(40)
-  createdByUserId                     Int?                      @map("created_by_user_id")
-  updatedByUserId                     Int?                      @map("updated_by_user_id")
-  deletedAt                           DateTime?                 @map("deleted_at")
-  createdAt                           DateTime                  @default(now()) @map("created_at")
-  updatedAt                           DateTime                  @updatedAt @map("updated_at")
-  company                             Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  partyEntityType                     PartyEntityType?          @relation(fields: [partyEntityTypeId], references: [id], onDelete: Restrict)
-  term                                Term?                     @relation(fields: [termId], references: [id], onDelete: SetNull)
-  defaultReceivableAccount            ChartAccount?             @relation("PartyDefaultReceivableAccount", fields: [defaultReceivableAccountId], references: [id], onDelete: Restrict)
-  customerAdvanceAccount              ChartAccount?             @relation("PartyCustomerAdvanceAccount", fields: [customerAdvanceAccountId], references: [id], onDelete: Restrict)
-  defaultPayableAccount               ChartAccount?             @relation("PartyDefaultPayableAccount", fields: [defaultPayableAccountId], references: [id], onDelete: Restrict)
-  vendorAdvanceAccount                ChartAccount?             @relation("PartyVendorAdvanceAccount", fields: [vendorAdvanceAccountId], references: [id], onDelete: Restrict)
-  employeeAdvanceAccount              ChartAccount?             @relation("PartyEmployeeAdvanceAccount", fields: [employeeAdvanceAccountId], references: [id], onDelete: Restrict)
-  employeePayableAccount              ChartAccount?             @relation("PartyEmployeePayableAccount", fields: [employeePayableAccountId], references: [id], onDelete: Restrict)
+  partyTypes                          PartyType[]         @map("party_types")
+  status                              PartyStatus         @default(ACTIVE)
+  partyName                           String?             @map("party_name") @db.VarChar(255)
+  tradeName                           String?             @map("trade_name") @db.VarChar(255)
+  firstName                           String?             @map("first_name") @db.VarChar(120)
+  middleName                          String?             @map("middle_name") @db.VarChar(120)
+  lastName                            String?             @map("last_name") @db.VarChar(120)
+  suffixName                          String?             @map("suffix_name") @db.VarChar(40)
+  honorific                           String?             @db.VarChar(80)
+  gender                              String?             @db.VarChar(40)
+  civilStatus                         String?             @map("civil_status") @db.VarChar(40)
+  nationality                         String?             @db.VarChar(80)
+  memberRegistrationDate              DateTime?           @map("member_registration_date")
+  defaultReceivableAccountId          BigInt?             @map("default_receivable_account_id")
+  customerAdvanceAccountId            BigInt?             @map("customer_advance_account_id")
+  defaultPayableAccountId             BigInt?             @map("default_payable_account_id")
+  vendorAdvanceAccountId              BigInt?             @map("vendor_advance_account_id")
+  employeeAdvanceAccountId            BigInt?             @map("employee_advance_account_id")
+  employeePayableAccountId            BigInt?             @map("employee_payable_account_id")
+  tin                                 String?             @db.VarChar(20)
+  atcCode                             String?             @map("atc_code") @db.VarChar(40)
+  defaultPurchaseInputVatTaxSourceKey String?             @map("default_purchase_input_vat_tax_source_key") @db.VarChar(40)
+  defaultPurchaseEwtTaxSourceKey      String?             @map("default_purchase_ewt_tax_source_key") @db.VarChar(40)
+  defaultPurchaseFwtTaxSourceKey      String?             @map("default_purchase_fwt_tax_source_key") @db.VarChar(40)
+  defaultPurchaseWvatTaxSourceKey     String?             @map("default_purchase_wvat_tax_source_key") @db.VarChar(40)
+  defaultSalesOutputVatTaxSourceKey   String?             @map("default_sales_output_vat_tax_source_key") @db.VarChar(40)
+  defaultSalesCwtTaxSourceKey         String?             @map("default_sales_cwt_tax_source_key") @db.VarChar(40)
+  defaultSalesWvatTaxSourceKey        String?             @map("default_sales_wvat_tax_source_key") @db.VarChar(40)
+  contactPerson                       String?             @map("contact_person") @db.VarChar(255)
+  email                               String?             @db.VarChar(255)
+  contactNo                           String?             @map("contact_no") @db.VarChar(40)
+  landline                            String?             @db.VarChar(40)
+  createdByUserId                     Int?                @map("created_by_user_id")
+  updatedByUserId                     Int?                @map("updated_by_user_id")
+  deletedAt                           DateTime?           @map("deleted_at")
+  createdAt                           DateTime            @default(now()) @map("created_at")
+  updatedAt                           DateTime            @updatedAt @map("updated_at")
+  company                             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  partyEntityType                     PartyEntityType?    @relation(fields: [partyEntityTypeId], references: [id], onDelete: Restrict)
+  term                                Term?               @relation(fields: [termId], references: [id], onDelete: SetNull)
+  defaultReceivableAccount            ChartAccount?       @relation("PartyDefaultReceivableAccount", fields: [defaultReceivableAccountId], references: [id], onDelete: Restrict)
+  customerAdvanceAccount              ChartAccount?       @relation("PartyCustomerAdvanceAccount", fields: [customerAdvanceAccountId], references: [id], onDelete: Restrict)
+  defaultPayableAccount               ChartAccount?       @relation("PartyDefaultPayableAccount", fields: [defaultPayableAccountId], references: [id], onDelete: Restrict)
+  vendorAdvanceAccount                ChartAccount?       @relation("PartyVendorAdvanceAccount", fields: [vendorAdvanceAccountId], references: [id], onDelete: Restrict)
+  employeeAdvanceAccount              ChartAccount?       @relation("PartyEmployeeAdvanceAccount", fields: [employeeAdvanceAccountId], references: [id], onDelete: Restrict)
+  employeePayableAccount              ChartAccount?       @relation("PartyEmployeePayableAccount", fields: [employeePayableAccountId], references: [id], onDelete: Restrict)
   addresses                           PartyAddress[]
   accountsPayableVouchers             AccountsPayableVoucher[]
   accountsPayableVoucherDetails       AccountsPayableVoucherDetails[]

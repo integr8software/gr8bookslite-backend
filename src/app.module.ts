@@ -39,6 +39,7 @@ import { WarehouseAccessModule } from './modules/maintenance/warehouse-access/wa
 import { WarehouseStorageModule } from './modules/maintenance/warehouse-storage/warehouse-storage.module';
 import { validateEnvironment } from './config/environment';
 import { ApprovalManagementModule } from './modules/system-administration/approval-management/approval-management.module';
+import { ApproverSetupsModule } from './modules/system-administration/approver-setups/approver-setups.module';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
 import { StorageModule } from './storage/storage.module';
 import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.module';
@@ -96,6 +97,7 @@ import { AccountsPayableModule } from './modules/accounts-payable/accounts-payab
     WarehouseAccessModule,
     WarehouseStorageModule,
     ApprovalManagementModule,
+    ApproverSetupsModule,
     TransactionNumberSequencesModule,
     UserSidebarModule,
     AccountsPayableModule,
