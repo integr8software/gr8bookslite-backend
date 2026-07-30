@@ -42,6 +42,7 @@ import { ApprovalManagementModule } from './modules/system-administration/approv
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
 import { StorageModule } from './storage/storage.module';
 import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.module';
+import { AccountsPayableModule } from './modules/accounts-payable/accounts-payable.module';
 
 @Module({
   imports: [
@@ -97,6 +98,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     ApprovalManagementModule,
     TransactionNumberSequencesModule,
     UserSidebarModule,
+    AccountsPayableModule,
     AiAssistantModule,
   ],
   providers: [
