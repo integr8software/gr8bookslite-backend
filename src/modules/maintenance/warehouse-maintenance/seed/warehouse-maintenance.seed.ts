@@ -5,7 +5,7 @@ type WarehouseWriteClient = Pick<PrismaService, 'warehouse' | 'warehouseBranch' 
 
 export const WarehouseMaintenanceSeedRecords = [
   {
-    code: 'WH-MAIN',
+    code: 'WH-000001',
     name: 'Main Warehouse',
     description: 'Primary company warehouse.',
   },

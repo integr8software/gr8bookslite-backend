@@ -6,10 +6,11 @@ import { TransactionNumberSequencesModule } from '../../system-administration/tr
 import { AccountsPayableVoucherController } from './accounts-payable-voucher.controller';
 import { AccountsPayableVoucherService } from './accounts-payable-voucher.service';
 import { AccountsPayableVoucherAccountingService } from './services/accounts-payable-voucher-accounting.service';
+import { AccountsPayableVoucherLookupService } from './services/accounts-payable-voucher-lookup.service';
 
 @Module({
   imports: [PrismaModule, AccessControlModule, AuthModule, TransactionNumberSequencesModule],
   controllers: [AccountsPayableVoucherController],
-  providers: [AccountsPayableVoucherService, AccountsPayableVoucherAccountingService],
+  providers: [AccountsPayableVoucherService, AccountsPayableVoucherAccountingService, AccountsPayableVoucherLookupService],
 })
 export class AccountsPayableVoucherModule {}

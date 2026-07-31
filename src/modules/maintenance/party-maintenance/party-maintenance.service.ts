@@ -9,7 +9,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { AddressService } from '../../address/address.service';
 import {
   findTransactionNumberForCompanyBranch,
-  generateTransactionNumberForCompanyBranch,
+  resolveTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
 import { CreatePartyAddressDto } from './dto/create-party-address.dto';
 import { CreatePartyDto } from './dto/create-party.dto';
@@ -271,15 +271,12 @@ export class PartyMaintenanceService {
       for (const input of parties) {
         const partyCodeNo = isManual
           ? input.partyCodeNo
-          : (
-              await generateTransactionNumberForCompanyBranch(tx, {
-                branchUnitId,
-                createDefaultIfMissing: true,
-                companyId,
-                moduleCode: PartyTransactionModuleCode,
-                isIssued: (transactionNumber) => this.isPartyCodeIssued(tx, companyId, transactionNumber),
-              })
-            ).transactionNumber;
+          : await this.resolvePartyCodeForCreate(tx, {
+              branchUnitId,
+              companyId,
+              dto: input,
+              isAuto: true,
+            });
         const nextInput = { ...input, partyCodeNo };
 
         await this.ensureIdentityAvailable(companyId, nextInput, undefined, tx);
@@ -898,15 +895,13 @@ export class PartyMaintenanceService {
       return dto.partyCodeNo;
     }
 
-    return (
-      await generateTransactionNumberForCompanyBranch(tx, {
-        branchUnitId,
-        createDefaultIfMissing: true,
-        companyId,
-        moduleCode: PartyTransactionModuleCode,
-        isIssued: (transactionNumber) => this.isPartyCodeIssued(tx, companyId, transactionNumber),
-      })
-    ).transactionNumber;
+    return resolveTransactionNumberForCompanyBranch(tx, {
+      branchUnitId,
+      companyId,
+      moduleCode: PartyTransactionModuleCode,
+      requestedTransactionNumber: dto.partyCodeNo,
+      isIssued: (transactionNumber) => this.isPartyCodeIssued(tx, companyId, transactionNumber),
+    });
   }
 
   private async resolveBranchUnitId(companyId: number, branchUnitId: number | null | undefined) {
