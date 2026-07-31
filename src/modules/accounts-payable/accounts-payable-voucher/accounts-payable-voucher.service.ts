@@ -29,8 +29,9 @@ import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-n
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   findTransactionNumberForCompanyBranch,
-  formatTransactionNumber,
-  generateTransactionNumberForCompanyBranch,
+  resolveTransactionNumberScopeForCompanyBranch,
+  resolveTransactionNumberForCompanyBranch,
+  suggestTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
 import { AccountsPayableVoucherDetailsDto } from './dto/accounts-payable-voucher-details.dto';
 import { CreateAccountsPayableVoucherDto } from './dto/create-accounts-payable-voucher.dto';
@@ -134,36 +135,17 @@ export class AccountsPayableVoucherService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, requestedBranchUnitId);
-    const sequence = await findTransactionNumberForCompanyBranch(this.prisma, {
+    const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
       branchUnitId,
       companyId,
       moduleCode: AccountsPayableVoucherModuleCode,
+      isIssued: (transactionNo, context) => this.isTransactionNoIssued(this.prisma, companyId, branchUnitId, transactionNo, context.scope),
     });
-
-    if (!sequence) {
-      throw new NotFoundException('Transaction number setup for APV was not found for this branch.');
-    }
-
-    if (sequence.inputMode === TransactionNumberInputMode.MANUAL) {
-      return {
-        branchUnitId,
-        inputMode: sequence.inputMode,
-        transactionNo: '',
-      };
-    }
-
-    let runningNumber = sequence.currentNumber;
-    let transactionNo = formatTransactionNumber(sequence, runningNumber);
-
-    while (await this.isTransactionNoIssued(this.prisma, companyId, branchUnitId, transactionNo)) {
-      runningNumber += 1;
-      transactionNo = formatTransactionNumber(sequence, runningNumber);
-    }
 
     return {
       branchUnitId,
-      inputMode: sequence.inputMode,
-      transactionNo,
+      inputMode: suggestion.inputMode,
+      transactionNo: suggestion.transactionNumber,
     };
   }
 
@@ -712,31 +694,13 @@ export class AccountsPayableVoucherService {
       requestedTransactionNo?: string | null;
     },
   ) {
-    const sequence = await findTransactionNumberForCompanyBranch(tx, {
+    return resolveTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
       moduleCode: AccountsPayableVoucherModuleCode,
+      requestedTransactionNumber: requestedTransactionNo,
+      isIssued: (transactionNo, context) => this.isTransactionNoIssued(tx, companyId, branchUnitId, transactionNo, context.scope),
     });
-
-    if (sequence?.inputMode === TransactionNumberInputMode.MANUAL) {
-      const transactionNo = cleanOptional(requestedTransactionNo);
-
-      if (!transactionNo) {
-        throw new BadRequestException('Transaction number is required for manual APV numbering.');
-      }
-
-      await this.ensureTransactionNoAvailable(tx, companyId, branchUnitId, transactionNo);
-      return transactionNo;
-    }
-
-    return (
-      await generateTransactionNumberForCompanyBranch(tx, {
-        branchUnitId,
-        companyId,
-        moduleCode: AccountsPayableVoucherModuleCode,
-        isIssued: (transactionNo) => this.isTransactionNoIssued(tx, companyId, branchUnitId, transactionNo),
-      })
-    ).transactionNumber;
   }
 
   private async resolveTransactionNumberForUpdate(
@@ -771,7 +735,13 @@ export class AccountsPayableVoucherService {
       throw new BadRequestException('APV transaction number is auto-generated for this branch and cannot be changed manually.');
     }
 
-    await this.ensureTransactionNoAvailable(tx, companyId, branchUnitId, nextTransactionNo, excludedVoucherId);
+    const sequenceScope = await resolveTransactionNumberScopeForCompanyBranch(tx, {
+      branchUnitId,
+      companyId,
+      moduleCode: AccountsPayableVoucherModuleCode,
+    });
+
+    await this.ensureTransactionNoAvailable(tx, companyId, branchUnitId, nextTransactionNo, excludedVoucherId, sequenceScope.scope);
     return nextTransactionNo;
   }
 
@@ -928,10 +898,11 @@ export class AccountsPayableVoucherService {
     branchUnitId: number,
     transactionNo: string,
     excludedVoucherId?: bigint,
+    scope: 'all' | 'branch' = 'branch',
   ) {
     const existing = await tx.accountsPayableVoucher.findFirst({
       where: {
-        branchUnitId,
+        ...(scope === 'branch' ? { branchUnitId } : {}),
         companyId,
         deletedAt: null,
         id: excludedVoucherId ? { not: excludedVoucherId } : undefined,
@@ -945,11 +916,17 @@ export class AccountsPayableVoucherService {
     }
   }
 
-  private isTransactionNoIssued(tx: PrismaWriteClient, companyId: number, branchUnitId: number, transactionNo: string) {
+  private isTransactionNoIssued(
+    tx: PrismaWriteClient,
+    companyId: number,
+    branchUnitId: number,
+    transactionNo: string,
+    scope: 'all' | 'branch' = 'branch',
+  ) {
     return tx.accountsPayableVoucher
       .findFirst({
         where: {
-          branchUnitId,
+          ...(scope === 'branch' ? { branchUnitId } : {}),
           companyId,
           transactionNo: { equals: transactionNo, mode: 'insensitive' },
         },

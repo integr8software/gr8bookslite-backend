@@ -327,7 +327,7 @@ Default warehouse per company:
 
 | Field | Value |
 | --- | --- |
-| `code` | `WH-MAIN` |
+| `code` | `WH-000001` |
 | `name` | `Main Warehouse` |
 | `status` | `ACTIVE` |
 | `branchAvailabilityMode` | `ALL` |

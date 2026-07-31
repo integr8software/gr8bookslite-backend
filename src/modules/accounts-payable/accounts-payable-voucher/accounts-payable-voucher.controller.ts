@@ -8,6 +8,7 @@ import { CreateAccountsPayableVoucherDto } from './dto/create-accounts-payable-v
 import { GetAccountsPayableVoucherListQueryDto } from './dto/get-accounts-payable-voucher-list-query.dto';
 import { UpdateAccountsPayableVoucherDto } from './dto/update-accounts-payable-voucher.dto';
 import { UpdateAccountsPayableVoucherStatusDto } from './dto/update-accounts-payable-voucher-status.dto';
+import { AccountsPayableVoucherLookupService } from './services/accounts-payable-voucher-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Accounts Payable Voucher')
@@ -16,7 +17,10 @@ import { UpdateAccountsPayableVoucherStatusDto } from './dto/update-accounts-pay
   version: '1',
 })
 export class AccountsPayableVoucherController {
-  constructor(private readonly accountsPayableVoucherService: AccountsPayableVoucherService) {}
+  constructor(
+    private readonly accountsPayableVoucherService: AccountsPayableVoucherService,
+    private readonly accountsPayableVoucherLookupService: AccountsPayableVoucherLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ description: 'Accounts payable vouchers retrieved.' })
@@ -28,6 +32,30 @@ export class AccountsPayableVoucherController {
   @ApiOkResponse({ description: 'Accounts payable voucher number suggestion retrieved.' })
   suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query() query: GetAccountsPayableVoucherListQueryDto) {
     return this.accountsPayableVoucherService.suggestTransactionNumber(user, query.branchUnitId);
+  }
+
+  @Get('lookups/parties')
+  @ApiOkResponse({ description: 'Accounts payable voucher party options retrieved.' })
+  findPartyOptions(@CurrentUser() user: AuthUser) {
+    return this.accountsPayableVoucherLookupService.findParties(user);
+  }
+
+  @Get('lookups/terms')
+  @ApiOkResponse({ description: 'Accounts payable voucher term options retrieved.' })
+  findTermOptions(@CurrentUser() user: AuthUser) {
+    return this.accountsPayableVoucherLookupService.findTerms(user);
+  }
+
+  @Get('lookups/responsibility-centers')
+  @ApiOkResponse({ description: 'Accounts payable voucher responsibility center options retrieved.' })
+  findResponsibilityCenterOptions(@CurrentUser() user: AuthUser) {
+    return this.accountsPayableVoucherLookupService.findResponsibilityCenters(user);
+  }
+
+  @Get('lookups/payable-accounts')
+  @ApiOkResponse({ description: 'Accounts payable voucher payable account options retrieved.' })
+  findPayableAccountOptions(@CurrentUser() user: AuthUser) {
+    return this.accountsPayableVoucherLookupService.findPayableAccounts(user);
   }
 
   @Get(':id')

@@ -4,6 +4,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { DefaultAccountService } from './default-account.service';
+import { CreateChartAccountDto } from '../chart-of-accounts/dto/create-chart-account.dto';
 import { CreateDefaultAccountTemplateDto } from './dto/create-default-account-template.dto';
 import { GetDefaultAccountTemplateListQueryDto } from './dto/get-default-account-template-list-query.dto';
 import { UpdateDefaultAccountTemplateStatusDto } from './dto/update-default-account-template-status.dto';
@@ -28,6 +29,12 @@ export class DefaultAccountController {
   @ApiOkResponse({ description: 'Expense parent account options retrieved.' })
   findExpenseParentOptions(@CurrentUser() user: AuthUser) {
     return this.defaultAccountService.findExpenseParentOptions(user);
+  }
+
+  @Post('expense-sub-accounts')
+  @ApiCreatedResponse({ description: 'Expense sub account created.' })
+  createExpenseSubAccount(@CurrentUser() user: AuthUser, @Body() dto: CreateChartAccountDto) {
+    return this.defaultAccountService.createExpenseSubAccount(user, dto);
   }
 
   @Get(':id')

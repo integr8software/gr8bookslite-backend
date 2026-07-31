@@ -1,10 +1,12 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { CompanyUnitType, MembershipRole, MembershipStatus, Prisma, TransactionNumberInputMode, TransactionNumberStatus } from '@prisma/client';
+import { MembershipRole, MembershipStatus, Prisma, TransactionNumberInputMode } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { RegistryModuleTypeWhere, TransactionNumberBranchUnitTypes } from './constants/transaction-number-sequence.constants';
 import { UpdateTransactionNumberSequenceDto } from './dto/update-transaction-number-sequence.dto';
 import { mapModuleTransactionNumberSetup } from './mappers/transaction-number-sequence.mapper';
+import { groupSequencesByModuleId, mapTransactionNumberInputMode, mapTransactionNumberStatus } from './utils/transaction-number-sequence-group.util';
 export {
   findTransactionNumberForCompanyBranch,
   formatTransactionNumber,
@@ -70,11 +72,11 @@ export class TransactionNumberSequencesService {
     const currentNumber = Math.max(dto.currentNumber, dto.startingNumber);
     const data = {
       currentNumber,
-      inputMode: mapInputMode(dto.inputMode),
+      inputMode: mapTransactionNumberInputMode(dto.inputMode),
       padding: dto.padding,
       prefix: dto.prefix.trim(),
       startingNumber: dto.startingNumber,
-      status: mapStatus(dto.status),
+      status: mapTransactionNumberStatus(dto.status),
       suffix: dto.suffix?.trim() ?? '',
     } satisfies Omit<Prisma.TransactionNumberSequenceUncheckedCreateInput, 'branchUnitId' | 'moduleId'>;
 
@@ -140,7 +142,7 @@ export class TransactionNumberSequencesService {
         companyId,
         isActive: true,
         type: {
-          in: [CompanyUnitType.HEAD_OFFICE, CompanyUnitType.BRANCH, CompanyUnitType.SATELLITE],
+          in: TransactionNumberBranchUnitTypes,
         },
       },
       orderBy: [{ type: 'asc' }, { name: 'asc' }],
@@ -192,7 +194,7 @@ export class TransactionNumberSequencesService {
         companyId,
         isActive: true,
         type: {
-          in: [CompanyUnitType.HEAD_OFFICE, CompanyUnitType.BRANCH, CompanyUnitType.SATELLITE],
+          in: TransactionNumberBranchUnitTypes,
         },
       },
       select: {
@@ -261,23 +263,3 @@ export class TransactionNumberSequencesService {
   }
 }
 
-const RegistryModuleTypeWhere = [{ type: { array_contains: ['registry'] } }, { type: { array_contains: ['Registry'] } }] satisfies Prisma.ModuleWhereInput[];
-
-function mapInputMode(inputMode: 'Auto' | 'Manual') {
-  return inputMode === 'Auto' ? TransactionNumberInputMode.AUTO : TransactionNumberInputMode.MANUAL;
-}
-
-function mapStatus(status: 'Active' | 'Inactive') {
-  return status === 'Active' ? TransactionNumberStatus.ACTIVE : TransactionNumberStatus.INACTIVE;
-}
-
-function groupSequencesByModuleId<TSequence extends { moduleId: number }>(sequences: TSequence[]) {
-  return sequences.reduce((groups, sequence) => {
-    const current = groups.get(sequence.moduleId) ?? [];
-
-    current.push(sequence);
-    groups.set(sequence.moduleId, current);
-
-    return groups;
-  }, new Map<number, TSequence[]>());
-}

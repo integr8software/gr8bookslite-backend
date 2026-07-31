@@ -14,16 +14,13 @@ export class TaxService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listTaxes(query: TaxListQueryDto = {}) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
     const taxes = await this.prisma.tax.findMany({
       where: this.buildWhereInput(query),
-      orderBy: [
-        { transactionType: 'asc' },
-        { taxType: 'asc' },
-        { sortOrder: 'asc' },
-        { taxCode: 'asc' },
-        { taxDescription: 'asc' },
-      ],
-      take: query.limit ?? 20,
+      orderBy: this.buildOrderBy(query),
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     const mappedTaxes = taxes.map(mapTax);
@@ -56,6 +53,8 @@ export class TaxService {
   async listTaxesWithDefaultAccounts(user: AuthUser, query: TaxListQueryDto = {}) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
 
     const taxes = await this.prisma.tax.findMany({
       where: this.buildWhereInput(query),
@@ -68,14 +67,9 @@ export class TaxService {
           orderBy: [{ transactionScope: 'asc' }, { priority: 'asc' }, { accountRole: 'asc' }],
         },
       },
-      orderBy: [
-        { transactionType: 'asc' },
-        { taxType: 'asc' },
-        { sortOrder: 'asc' },
-        { taxCode: 'asc' },
-        { taxDescription: 'asc' },
-      ],
-      take: query.limit ?? 20,
+      orderBy: this.buildOrderBy(query),
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     const accountRoles = [...new Set(taxes.flatMap((tax) => tax.postingRules.map((rule) => rule.accountRole)))];
@@ -126,16 +120,13 @@ export class TaxService {
   }
 
   async listAutocomplete(query: TaxListQueryDto = {}) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
     const taxes = await this.prisma.tax.findMany({
       where: this.buildWhereInput(query),
-      orderBy: [
-        { transactionType: 'asc' },
-        { taxType: 'asc' },
-        { sortOrder: 'asc' },
-        { taxCode: 'asc' },
-        { taxDescription: 'asc' },
-      ],
-      take: query.limit ?? 20,
+      orderBy: this.buildOrderBy(query),
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     const mappedTaxes = taxes.map(mapTaxAutocomplete);
@@ -334,5 +325,13 @@ export class TaxService {
           ]
         : undefined,
     };
+  }
+
+  private buildOrderBy(query: TaxListQueryDto): Prisma.TaxOrderByWithRelationInput[] {
+    if (query.sortBy) {
+      return [{ [query.sortBy]: query.sortDirection ?? 'asc' }, { id: 'asc' }];
+    }
+
+    return [{ transactionType: 'asc' }, { taxType: 'asc' }, { sortOrder: 'asc' }, { taxCode: 'asc' }, { taxDescription: 'asc' }];
   }
 }

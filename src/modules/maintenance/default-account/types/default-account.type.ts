@@ -18,6 +18,7 @@ export type GeneratedAccountResultKey = 'expenseCoaId' | 'revenueCoaId';
 export type ParentChartAccountReference = {
   id: bigint;
   accountCode: string;
+  accountLevel: ChartAccountLevel;
 };
 
 export type GeneratedAccountRequest = {

@@ -3,6 +3,12 @@ import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-va
 
 export class TaxListQueryDto {
   @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
   @IsString()
   query?: string;
 
@@ -43,4 +49,12 @@ export class TaxListQueryDto {
   @Min(1)
   @Max(1000)
   limit?: number;
+
+  @IsOptional()
+  @IsIn(['sourceKey', 'transactionType', 'taxType', 'taxCode', 'taxDescription', 'taxRate', 'sortOrder', 'status', 'createdAt', 'updatedAt'])
+  sortBy?: 'sourceKey' | 'transactionType' | 'taxType' | 'taxCode' | 'taxDescription' | 'taxRate' | 'sortOrder' | 'status' | 'createdAt' | 'updatedAt';
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortDirection?: 'asc' | 'desc';
 }

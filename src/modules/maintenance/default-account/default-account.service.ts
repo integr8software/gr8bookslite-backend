@@ -7,7 +7,8 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
+import { CreateChartAccountDto } from '../chart-of-accounts/dto/create-chart-account.dto';
+import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
 import { findSystemAccountGroupOrThrow, mergeAccountGroupTags, SystemAccountGroups } from '../chart-of-accounts/utils/system-account-groups.util';
 import { CreateDefaultAccountTemplateDto } from './dto/create-default-account-template.dto';
 import { GetDefaultAccountTemplateListQueryDto } from './dto/get-default-account-template-list-query.dto';
@@ -33,10 +34,7 @@ export class DefaultAccountService {
   async findAll(user: AuthUser, query: GetDefaultAccountTemplateListQueryDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'Default accounts are system-seeded and can only be maintained by an admin.', {
-      reservedOnly: true,
-      viewAllowed: true,
-    });
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
     this.ensureSupportedDefaultAccountType(query.type);
 
     const page = query.page ?? DefaultPage;
@@ -66,45 +64,86 @@ export class DefaultAccountService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: getModulePermissions(user, companyId, 'DA', { includeDelete: false, reservedOnly: true, viewAllowed: true }),
+      permissions: getModulePermissions(user, companyId, 'DA', { includeCancel: true }),
     };
   }
 
   async findOne(user: AuthUser, id: string) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'Default accounts are system-seeded and can only be maintained by an admin.', {
-      reservedOnly: true,
-      viewAllowed: true,
-    });
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
     const template = await this.findTemplateOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       defaultAccount: (await this.mapDefaultAccountsWithAuditUsers([template]))[0],
-      permissions: getModulePermissions(user, companyId, 'DA', { includeDelete: false, reservedOnly: true, viewAllowed: true }),
+      permissions: getModulePermissions(user, companyId, 'DA', { includeCancel: true }),
     };
   }
 
   async findExpenseParentOptions(user: AuthUser) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'Default accounts are system-seeded and can only be maintained by an admin.', {
-      reservedOnly: true,
-      viewAllowed: true,
-    });
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
 
     return {
       options: await this.defaultAccountLookupService.findExpenseParentOptions({ companyId }),
     };
   }
 
+  async createExpenseSubAccount(user: AuthUser, dto: CreateChartAccountDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.CREATE, 'You do not have permission to add default account expense types.');
+
+    if (!dto.parentAccountId) {
+      throw new BadRequestException('Select an expense parent before adding a sub account.');
+    }
+
+    const parentAccountId = parsePositiveBigIntId(dto.parentAccountId, 'parentAccountId');
+    const parentAccount = await this.findExpenseParentOptionOrThrow(companyId, parentAccountId, this.prisma);
+    assertCanCreateAccountLevel(parentAccount.accountLevel, dto.accountLevel);
+
+    const accountTitle = this.validateDefaultAccountName(dto.accountTitle);
+    await this.ensureChartAccountTitleAvailable(companyId, parentAccount.id, accountTitle);
+
+    try {
+      const account = await this.prisma.chartAccount.create({
+        data: {
+          accountCode: await this.generateNextAccountCode(companyId, parentAccount.id, parentAccount.accountCode, dto.accountLevel, this.prisma),
+          accountGroup: mergeAccountGroupTags(dto.accountGroup ?? 'Expenses'),
+          accountLevel: dto.accountLevel,
+          accountNature: dto.accountNature ?? AccountNature.DEBIT,
+          accountTitle,
+          accountType: dto.accountType ?? ChartAccountType.EXPENSE,
+          companyId,
+          deletedAt: dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
+          description: this.normalizeTemplateDescription(dto.description),
+          isPostingAccount: dto.isPostingAccount ?? false,
+          parentAccountId: parentAccount.id,
+          reportAlias: dto.reportAlias?.trim() || null,
+          showTotal: dto.showTotal ?? false,
+          statementSection: dto.statementSection?.trim() || null,
+          status: dto.status ?? ChartAccountStatus.ACTIVE,
+          whoCreated: String(user.id),
+        },
+      });
+
+      return {
+        message: 'Expense sub account created successfully.',
+        account: {
+          id: account.id.toString(),
+        },
+      };
+    } catch (error) {
+      throwConflictOnPrismaUniqueError(error, 'An expense sub account with this code already exists.');
+      throw error;
+    }
+  }
+
   async create(user: AuthUser, dto: CreateDefaultAccountTemplateDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, 'DA', PermissionAction.CREATE, 'Default accounts are system-seeded and can only be maintained by an admin.', {
-      reservedOnly: true,
-      viewAllowed: true,
-    });
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.CREATE, 'You do not have permission to add default accounts.');
     const defaultAccountName = this.validateDefaultAccountName(dto.defaultAccountName);
     const description = this.normalizeTemplateDescription(dto.description);
     this.ensureSupportedDefaultAccountType(dto.type);
@@ -151,10 +190,7 @@ export class DefaultAccountService {
   async update(user: AuthUser, id: string, dto: UpdateDefaultAccountTemplateDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, 'DA', PermissionAction.UPDATE, 'Default accounts are system-seeded and can only be maintained by an admin.', {
-      reservedOnly: true,
-      viewAllowed: true,
-    });
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.UPDATE, 'You do not have permission to edit default accounts.');
     const templateId = parsePositiveBigIntId(id);
     const currentTemplate = await this.findTemplateOrThrow(companyId, templateId);
     this.ensureSupportedDefaultAccountType(dto.type);
@@ -168,6 +204,10 @@ export class DefaultAccountService {
 
     if (defaultAccountName !== currentTemplate.name) {
       await this.ensureDefaultAccountNameAvailable(companyId, currentTemplate.type, defaultAccountName, templateId);
+    }
+
+    if (dto.status !== undefined && dto.status !== currentTemplate.status) {
+      ensureModuleAction(user, companyId, 'DA', PermissionAction.CANCEL, 'You do not have permission to inactivate default accounts.');
     }
 
     try {
@@ -220,10 +260,7 @@ export class DefaultAccountService {
   async updateStatus(user: AuthUser, id: string, dto: UpdateDefaultAccountTemplateStatusDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, 'DA', PermissionAction.UPDATE, 'Default accounts are system-seeded and can only be maintained by an admin.', {
-      reservedOnly: true,
-      viewAllowed: true,
-    });
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.CANCEL, 'You do not have permission to inactivate default accounts.');
     const templateId = parsePositiveBigIntId(id);
     const currentTemplate = await this.findTemplateOrThrow(companyId, templateId);
 
@@ -486,6 +523,7 @@ export class DefaultAccountService {
     return {
       id: account.id,
       accountCode: account.accountCode,
+      accountLevel: account.accountLevel,
     };
   }
 
@@ -494,7 +532,7 @@ export class DefaultAccountService {
     parentAccountId: bigint,
     parentAccountCode: string,
     accountLevel: ChartAccountLevel,
-    tx: Prisma.TransactionClient,
+    tx: Prisma.TransactionClient | PrismaService,
   ) {
     const siblings = await tx.chartAccount.findMany({
       where: {
@@ -640,6 +678,22 @@ export class DefaultAccountService {
 
     if (existingTemplate) {
       throw new ConflictException('Default Account Name already exists for this type.');
+    }
+  }
+
+  private async ensureChartAccountTitleAvailable(companyId: number, parentAccountId: bigint, accountTitle: string) {
+    const existingAccount = await this.prisma.chartAccount.findFirst({
+      where: {
+        companyId,
+        deletedAt: null,
+        parentAccountId,
+        accountTitle: { equals: accountTitle, mode: 'insensitive' },
+      },
+      select: { id: true },
+    });
+
+    if (existingAccount) {
+      throw new ConflictException('Expense Type Name already exists under the selected parent.');
     }
   }
 
