@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AccountNature, ChartAccountLevel, ChartAccountType, Prisma } from '@prisma/client';
-import { cleanCurrencyCode } from '../../../common/utils/string-normalization.util';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { findSystemAccountGroupOrThrow, SystemAccountGroups } from '../chart-of-accounts/utils/system-account-groups.util';
+import { cleanCurrencyCode } from '../../../../common/utils/string-normalization.util';
+import { PrismaService } from '../../../../prisma/prisma.service';
+import { findSystemAccountGroupOrThrow, SystemAccountGroups } from '../utils/system-account-groups.util';
 
 const BaseCurrencyCode = 'PHP';
 
@@ -36,7 +36,7 @@ type BankAccountForSync = {
 };
 
 @Injectable()
-export class CoaBankSyncService {
+export class ChartAccountBankSyncService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findCashInBankParent(companyId: number, tx: PrismaClientLike = this.prisma) {

@@ -9,7 +9,7 @@ import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateChartAccountDto } from '../chart-of-accounts/dto/create-chart-account.dto';
 import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
-import { findSystemAccountGroupOrThrow, mergeAccountGroupTags, SystemAccountGroups } from '../chart-of-accounts/utils/system-account-groups.util';
+import { findSystemAccountGroupOrThrow, mergeAccountGroupTags, SystemAccountGroups, SystemAccountGroupTags } from '../chart-of-accounts/utils/system-account-groups.util';
 import { CreateDefaultAccountTemplateDto } from './dto/create-default-account-template.dto';
 import { GetDefaultAccountTemplateListQueryDto } from './dto/get-default-account-template-list-query.dto';
 import { UpdateDefaultAccountTemplateStatusDto } from './dto/update-default-account-template-status.dto';
@@ -424,7 +424,7 @@ export class DefaultAccountService {
           accountLevel: ChartAccountLevel.SPECIFIC,
           accountType: ChartAccountType.REVENUE,
           accountNature: AccountNature.CREDIT,
-          accountGroup: 'Revenue',
+          accountGroup: [SystemAccountGroupTags.revenue, SystemAccountGroupTags.defaultAccountRevenueParent],
           isPostingAccount: true,
         },
       ];

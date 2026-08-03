@@ -5,7 +5,6 @@ import { MaintenanceTransactionOptions } from '../../../common/constants/transac
 import { parseOptionalPositiveBigIntIdOrUndefined, parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { CoaBankSyncService } from '../coa-bank-sync/coa-bank-sync.service';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { CreateChartAccountDto } from './dto/create-chart-account.dto';
 import { GetChartAccountListQueryDto } from './dto/get-chart-account-list-query.dto';
@@ -17,6 +16,7 @@ import { ChartAccountInclude } from './prisma/chart-account.include';
 import type { ChartAccountPayload, ChartAccountResponse, ChartAccountTreePayload, ChartAccountTreeResponse } from './types/chart-account.type';
 import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings } from './utils/chart-account-code.util';
 import { toAccountGroupJson } from './utils/system-account-groups.util';
+import { ChartAccountBankSyncService } from './services/chart-account-bank-sync.service';
 
 import { ensureActiveCompanyAccess, ensureActiveCompanyAdminAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
@@ -24,7 +24,7 @@ import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-e
 export class ChartOfAccountsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly coaBankSyncService: CoaBankSyncService,
+    private readonly chartAccountBankSyncService: ChartAccountBankSyncService,
   ) {}
 
   async findAll(user: AuthUser, query: GetChartAccountListQueryDto) {
@@ -223,7 +223,7 @@ export class ChartOfAccountsService {
         });
 
         if (requestedStatus === ChartAccountStatus.ACTIVE) {
-          await this.coaBankSyncService.validateLinkedPairOrThrow({
+          await this.chartAccountBankSyncService.validateLinkedPairOrThrow({
             companyId,
             bankAccount,
             chartAccount: savedAccount,
@@ -359,12 +359,12 @@ export class ChartOfAccountsService {
 
     const account = await this.prisma.$transaction(async (tx) => {
       const currentAccount = await this.findAccountOrThrow(companyId, accountId, tx);
-      const isBankSyncedAccount = await this.coaBankSyncService.isCashInBankPostingAccount(companyId, currentAccount, tx);
+      const isBankSyncedAccount = await this.chartAccountBankSyncService.isCashInBankPostingAccount(companyId, currentAccount, tx);
 
       if (isBankSyncedAccount && dto.status === ChartAccountStatus.ACTIVE) {
         const linkedBankAccount = currentAccount.bankAccounts[0];
 
-        await this.coaBankSyncService.validateLinkedPairOrThrow({
+        await this.chartAccountBankSyncService.validateLinkedPairOrThrow({
           companyId,
           bankAccount: linkedBankAccount,
           chartAccount: currentAccount,
@@ -567,7 +567,7 @@ export class ChartOfAccountsService {
   }
 
   private async isCashInBankParent(companyId: number, parentAccountId: bigint, tx: Prisma.TransactionClient | PrismaService) {
-    const cashInBankParent = await this.coaBankSyncService.findCashInBankParent(companyId, tx);
+    const cashInBankParent = await this.chartAccountBankSyncService.findCashInBankParent(companyId, tx);
 
     return cashInBankParent?.id === parentAccountId;
   }

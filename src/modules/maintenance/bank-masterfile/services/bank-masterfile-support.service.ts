@@ -3,7 +3,7 @@ import { ChartAccountLevel, ChartAccountStatus } from '@prisma/client';
 import { parsePositiveBigIntId } from '../../../../common/utils/id.util';
 import { cleanOptional } from '../../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import { CoaBankSyncService } from '../../coa-bank-sync/coa-bank-sync.service';
+import { ChartAccountBankSyncService } from '../../chart-of-accounts/services/chart-account-bank-sync.service';
 import { generateNextAccountCodeFromSiblings } from '../../chart-of-accounts/utils/chart-account-code.util';
 import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
 import { UpdateBankAccountDto } from '../dto/update-bank-account.dto';
@@ -15,7 +15,7 @@ import { getBankAccountIdentityKey } from '../utils/bank-account-data.util';
 export class BankMasterfileSupportService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly coaBankSyncService: CoaBankSyncService,
+    private readonly chartAccountBankSyncService: ChartAccountBankSyncService,
   ) {}
 
   async getStatistics(companyId: number) {
@@ -37,7 +37,7 @@ export class BankMasterfileSupportService {
   }
 
   findCashInBankParentOrThrow(companyId: number, tx: BankMasterfilePrismaClient = this.prisma) {
-    return this.coaBankSyncService.findCashInBankParentOrThrow(companyId, tx);
+    return this.chartAccountBankSyncService.findCashInBankParentOrThrow(companyId, tx);
   }
 
   async generateNextCashInBankAccountCode(companyId: number, parentAccountId: bigint, parentAccountCode: string, tx: BankMasterfilePrismaClient) {

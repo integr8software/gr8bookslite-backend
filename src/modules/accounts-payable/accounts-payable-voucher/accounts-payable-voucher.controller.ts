@@ -28,8 +28,8 @@ export class AccountsPayableVoucherController {
     return this.accountsPayableVoucherService.findAll(user, query);
   }
 
-  @Get('number-suggestion')
-  @ApiOkResponse({ description: 'Accounts payable voucher number suggestion retrieved.' })
+  @Get('transaction-number')
+  @ApiOkResponse({ description: 'Accounts payable voucher transaction number retrieved.' })
   suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query() query: GetAccountsPayableVoucherListQueryDto) {
     return this.accountsPayableVoucherService.suggestTransactionNumber(user, query.branchUnitId);
   }
