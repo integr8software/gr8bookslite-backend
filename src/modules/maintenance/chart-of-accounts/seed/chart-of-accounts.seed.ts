@@ -47,12 +47,7 @@ type StandardDefaultChartAccountSeed = {
   currencyCode?: string | null;
 };
 
-const AccountGroupTagsByAccountCode = new Map<string, string[]>(
-  StandardDefaultAccountMappings.map((mapping) => [
-    getCorrectedSeedAccountCode(mapping.accountCode),
-    getSystemTagsForMapping(mapping.moduleCode, mapping.accountRole),
-  ]),
-);
+const AccountGroupTagsByAccountCode = buildAccountGroupTagsByAccountCode();
 
 export async function seedCompanyChartAccountDefaults(tx: Prisma.TransactionClient | PrismaService, companyId: number) {
   const chartAccountIdByCode = new Map<string, bigint>();
@@ -169,6 +164,20 @@ function getCorrectedSeedAccount(account: StandardDefaultChartAccountSeed): Stan
 
 function getCorrectedSeedAccountCode(accountCode: string) {
   return ItemCategoryParentAccountCodeCorrections.get(accountCode)?.accountCode ?? accountCode;
+}
+
+function buildAccountGroupTagsByAccountCode() {
+  const tagsByAccountCode = new Map<string, string[]>();
+
+  for (const mapping of StandardDefaultAccountMappings) {
+    const accountCode = getCorrectedSeedAccountCode(mapping.accountCode);
+    const currentTags = tagsByAccountCode.get(accountCode);
+    const mappingTags = getSystemTagsForMapping(mapping.moduleCode, mapping.accountRole);
+
+    tagsByAccountCode.set(accountCode, mergeAccountGroupTags(currentTags, mappingTags) ?? []);
+  }
+
+  return tagsByAccountCode;
 }
 
 function getSeededAccountGroupTags(account: StandardDefaultChartAccountSeed) {

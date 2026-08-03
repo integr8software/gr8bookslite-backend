@@ -7,7 +7,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { CoaBankSyncService } from '../coa-bank-sync/coa-bank-sync.service';
+import { ChartAccountBankSyncService } from '../chart-of-accounts/services/chart-account-bank-sync.service';
 import { mergeAccountGroupTags } from '../chart-of-accounts/utils/system-account-groups.util';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dto';
@@ -39,7 +39,7 @@ const CashInBankGroup = 'Cash in Bank';
 export class BankMasterfileService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly coaBankSyncService: CoaBankSyncService,
+    private readonly chartAccountBankSyncService: ChartAccountBankSyncService,
     private readonly support: BankMasterfileSupportService,
   ) {}
 
@@ -205,7 +205,7 @@ export class BankMasterfileService {
           return bankAccount;
         }
 
-        await this.coaBankSyncService.validateLinkedPairOrThrow({
+        await this.chartAccountBankSyncService.validateLinkedPairOrThrow({
           companyId,
           bankAccount,
           chartAccount,
@@ -294,7 +294,7 @@ export class BankMasterfileService {
           });
 
           if (requestedStatus === ChartAccountStatus.ACTIVE) {
-            await this.coaBankSyncService.validateLinkedPairOrThrow({
+            await this.chartAccountBankSyncService.validateLinkedPairOrThrow({
               companyId,
               bankAccount,
               chartAccount,
@@ -382,7 +382,7 @@ export class BankMasterfileService {
         });
 
         if (refreshedBankAccount.status === ChartAccountStatus.ACTIVE) {
-          await this.coaBankSyncService.validateLinkedPairOrThrow({
+          await this.chartAccountBankSyncService.validateLinkedPairOrThrow({
             companyId,
             bankAccount: refreshedBankAccount,
             chartAccount: refreshedBankAccount.coa,
@@ -412,7 +412,7 @@ export class BankMasterfileService {
 
     const bankAccount = await this.prisma.$transaction(async (tx) => {
       if (dto.status === ChartAccountStatus.ACTIVE) {
-        await this.coaBankSyncService.validateLinkedPairOrThrow({
+        await this.chartAccountBankSyncService.validateLinkedPairOrThrow({
           companyId,
           bankAccount: currentBankAccount,
           chartAccount: currentBankAccount.coa,

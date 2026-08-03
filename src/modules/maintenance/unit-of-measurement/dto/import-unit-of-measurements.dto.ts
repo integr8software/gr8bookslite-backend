@@ -1,8 +1,10 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, ValidateNested } from 'class-validator';
 import { CreateUnitOfMeasurementDto } from './create-unit-of-measurement.dto';
 
 export class ImportUnitOfMeasurementsDto {
+  @ApiProperty({ type: [CreateUnitOfMeasurementDto], minItems: 1, maxItems: 500 })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(500)

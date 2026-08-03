@@ -3125,6 +3125,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Chart of Accounts"
         ]
@@ -3154,6 +3159,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Chart of Accounts"
         ]
@@ -3245,9 +3255,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Chart account options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Chart of Accounts"
         ]
@@ -3269,6 +3291,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Chart of Accounts"
         ]
@@ -3314,6 +3341,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Chart of Accounts"
         ]
@@ -3344,6 +3376,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Chart of Accounts"
         ]
@@ -3382,6 +3419,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Chart of Accounts"
         ]
@@ -3422,6 +3464,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Chart of Accounts"
         ]
@@ -3515,9 +3562,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Term list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Terms Maintenance"
         ]
@@ -3537,9 +3596,21 @@
         },
         "responses": {
           "201": {
-            "description": "Term created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveTermResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Terms Maintenance"
         ]
@@ -3574,9 +3645,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Term options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermLookupResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Terms Maintenance"
         ]
@@ -3597,9 +3680,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Term retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Terms Maintenance"
         ]
@@ -3628,9 +3723,21 @@
         },
         "responses": {
           "200": {
-            "description": "Term updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveTermResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Terms Maintenance"
         ]
@@ -3652,9 +3759,21 @@
         },
         "responses": {
           "201": {
-            "description": "Terms imported."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTermsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Terms Maintenance"
         ]
@@ -3749,9 +3868,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Item category list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemCategoryListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Item Categories"
         ]
@@ -3771,9 +3902,21 @@
         },
         "responses": {
           "201": {
-            "description": "Item category created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveItemCategoryResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Item Categories"
         ]
@@ -3785,9 +3928,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Item category options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemCategoryOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Item Categories"
         ]
@@ -3818,9 +3973,21 @@
         },
         "responses": {
           "200": {
-            "description": "Item category updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveItemCategoryResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Item Categories"
         ]
@@ -3913,9 +4080,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Unit of measurement list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitOfMeasurementListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Unit of Measurement"
         ]
@@ -3935,9 +4114,21 @@
         },
         "responses": {
           "201": {
-            "description": "Unit of measurement created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveUnitOfMeasurementResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Unit of Measurement"
         ]
@@ -3971,9 +4162,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Unit of measurement options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitOfMeasurementOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Unit of Measurement"
         ]
@@ -3994,9 +4197,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Unit of measurement retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitOfMeasurementContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Unit of Measurement"
         ]
@@ -4025,9 +4240,21 @@
         },
         "responses": {
           "200": {
-            "description": "Unit of measurement updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveUnitOfMeasurementResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Unit of Measurement"
         ]
@@ -4049,9 +4276,21 @@
         },
         "responses": {
           "201": {
-            "description": "Units of measurement imported."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportUnitOfMeasurementsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Unit of Measurement"
         ]
@@ -4147,9 +4386,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Payment type list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTypeListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4169,9 +4420,21 @@
         },
         "responses": {
           "201": {
-            "description": "Payment type created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavePaymentTypeResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4208,9 +4471,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Payment type options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTypeOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4231,9 +4506,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Payment type retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTypeContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4262,9 +4549,21 @@
         },
         "responses": {
           "200": {
-            "description": "Payment type updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavePaymentTypeResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4286,9 +4585,21 @@
         },
         "responses": {
           "201": {
-            "description": "Payment types imported."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPaymentTypesResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4394,9 +4705,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Discount list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Discount Maintenance"
         ]
@@ -4416,9 +4739,21 @@
         },
         "responses": {
           "201": {
-            "description": "Discount created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveDiscountResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Discount Maintenance"
         ]
@@ -4464,9 +4799,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Discount options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Discount Maintenance"
         ]
@@ -4487,9 +4834,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Discount retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Discount Maintenance"
         ]
@@ -4518,9 +4877,21 @@
         },
         "responses": {
           "200": {
-            "description": "Discount updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveDiscountResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Discount Maintenance"
         ]
@@ -4542,9 +4913,21 @@
         },
         "responses": {
           "201": {
-            "description": "Discounts imported."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDiscountsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Discount Maintenance"
         ]
@@ -4672,9 +5055,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Party list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Party Maintenance"
         ]
@@ -4694,9 +5089,21 @@
         },
         "responses": {
           "201": {
-            "description": "Party created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavePartyResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Party Maintenance"
         ]
@@ -4708,9 +5115,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Party accounting account options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyAccountingOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Party Maintenance"
         ]
@@ -4731,9 +5150,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Party options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Party Maintenance"
         ]
@@ -4754,9 +5185,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Party retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Party Maintenance"
         ]
@@ -4785,9 +5228,21 @@
         },
         "responses": {
           "200": {
-            "description": "Party updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavePartyResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Party Maintenance"
         ]
@@ -4809,9 +5264,21 @@
         },
         "responses": {
           "201": {
-            "description": "Parties imported."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPartiesResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Party Maintenance"
         ]
@@ -4902,9 +5369,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Bank accounts retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Bank Masterfile"
         ]
@@ -4924,9 +5403,21 @@
         },
         "responses": {
           "201": {
-            "description": "Bank account created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveBankAccountResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Bank Masterfile"
         ]
@@ -5017,9 +5508,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Bank account options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Bank Masterfile"
         ]
@@ -5031,9 +5534,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Next bank account code generated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankNextAccountCodeResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Bank Masterfile"
         ]
@@ -5054,9 +5569,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Bank account retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Bank Masterfile"
         ]
@@ -5085,9 +5612,21 @@
         },
         "responses": {
           "200": {
-            "description": "Bank account updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveBankAccountResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Bank Masterfile"
         ]
@@ -5109,9 +5648,21 @@
         },
         "responses": {
           "201": {
-            "description": "Bank accounts imported."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBankAccountsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Bank Masterfile"
         ]
@@ -5142,9 +5693,21 @@
         },
         "responses": {
           "200": {
-            "description": "Bank account status updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveBankAccountResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Bank Masterfile"
         ]
@@ -5235,9 +5798,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Bank account options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Bank Masterfile"
         ]
@@ -5331,9 +5906,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Default accounts retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultAccountListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Default Account"
         ]
@@ -5353,9 +5940,21 @@
         },
         "responses": {
           "201": {
-            "description": "Default account created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveDefaultAccountResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Default Account"
         ]
@@ -5367,9 +5966,57 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Expense parent account options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultAccountExpenseParentOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Default Account"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/default-accounts/expense-sub-accounts": {
+      "post": {
+        "operationId": "DefaultAccountController_createExpenseSubAccount_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChartAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveDefaultAccountExpenseSubAccountResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Default Account"
         ]
@@ -5390,9 +6037,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Default account retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultAccountContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Default Account"
         ]
@@ -5421,9 +6080,21 @@
         },
         "responses": {
           "200": {
-            "description": "Default account updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveDefaultAccountResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Default Account"
         ]
@@ -5454,9 +6125,21 @@
         },
         "responses": {
           "200": {
-            "description": "Default account status updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveDefaultAccountResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Default Account"
         ]
@@ -5548,9 +6231,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Services retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceMaintenanceListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Services Maintenance"
         ]
@@ -5570,9 +6265,21 @@
         },
         "responses": {
           "201": {
-            "description": "Service created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveServiceMaintenanceResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Services Maintenance"
         ]
@@ -5664,9 +6371,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Service options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceMaintenanceOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Services Maintenance"
         ]
@@ -5678,9 +6397,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Service revenue account options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceMaintenanceAccountOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Services Maintenance"
         ]
@@ -5692,9 +6423,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Next service revenue account code generated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceMaintenanceNextAccountCodeResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Services Maintenance"
         ]
@@ -5715,9 +6458,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Service retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceMaintenanceContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Services Maintenance"
         ]
@@ -5746,9 +6501,21 @@
         },
         "responses": {
           "200": {
-            "description": "Service updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveServiceMaintenanceResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Services Maintenance"
         ]
@@ -5779,9 +6546,21 @@
         },
         "responses": {
           "200": {
-            "description": "Service status updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveServiceMaintenanceResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Services Maintenance"
         ]
@@ -5873,9 +6652,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Service options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceMaintenanceOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Services Maintenance"
         ]
@@ -6013,9 +6804,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Responsibility center list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsibilityCenterListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6035,9 +6838,21 @@
         },
         "responses": {
           "201": {
-            "description": "Responsibility center created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveResponsibilityCenterResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6175,9 +6990,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Responsibility center options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsibilityCenterOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6315,9 +7142,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Responsibility center tree retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsibilityCenterTreeResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6329,9 +7168,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Responsibility center classifications retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsibilityCenterClassificationsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6352,9 +7203,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Responsibility center types retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsibilityCenterTypesResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6375,9 +7238,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Responsibility center code suggested."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsibilityCenterCodeSuggestionResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6398,9 +7273,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Responsibility center retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsibilityCenterContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6429,9 +7316,21 @@
         },
         "responses": {
           "200": {
-            "description": "Responsibility center updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveResponsibilityCenterResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6462,9 +7361,21 @@
         },
         "responses": {
           "200": {
-            "description": "Responsibility center status updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveResponsibilityCenterResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6602,9 +7513,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Responsibility center options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsibilityCenterOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Responsibility Center"
         ]
@@ -6614,6 +7537,15 @@
       "get": {
         "operationId": "TaxController_listTaxes_v1",
         "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
           {
             "name": "query",
             "required": false,
@@ -6683,6 +7615,38 @@
               "minimum": 1,
               "maximum": 1000,
               "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sourceKey",
+                "transactionType",
+                "taxType",
+                "taxCode",
+                "taxDescription",
+                "taxRate",
+                "sortOrder",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           }
         ],
@@ -6701,6 +7665,15 @@
         "operationId": "TaxController_listAutocomplete_v1",
         "parameters": [
           {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
             "name": "query",
             "required": false,
             "in": "query",
@@ -6769,6 +7742,38 @@
               "minimum": 1,
               "maximum": 1000,
               "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sourceKey",
+                "transactionType",
+                "taxType",
+                "taxCode",
+                "taxDescription",
+                "taxRate",
+                "sortOrder",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           }
         ],
@@ -6829,6 +7834,15 @@
         "operationId": "TaxController_listTaxesWithDefaultAccounts_v1",
         "parameters": [
           {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
             "name": "query",
             "required": false,
             "in": "query",
@@ -6897,6 +7911,38 @@
               "minimum": 1,
               "maximum": 1000,
               "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sourceKey",
+                "transactionType",
+                "taxType",
+                "taxCode",
+                "taxDescription",
+                "taxRate",
+                "sortOrder",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           }
         ],
@@ -7040,9 +8086,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Warehouse list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -7062,9 +8120,21 @@
         },
         "responses": {
           "201": {
-            "description": "Warehouse created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveWarehouseResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -7095,9 +8165,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Warehouse options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -7118,9 +8200,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Warehouse retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -7149,9 +8243,21 @@
         },
         "responses": {
           "200": {
-            "description": "Warehouse updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveWarehouseResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -7266,9 +8372,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Warehouse access list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseAccessListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Access"
         ]
@@ -7288,9 +8406,21 @@
         },
         "responses": {
           "201": {
-            "description": "Warehouse access granted."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateWarehouseAccessResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Access"
         ]
@@ -7321,9 +8451,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Warehouse access user directory retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseAccessDirectoryResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Access"
         ]
@@ -7344,9 +8486,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Warehouse access record retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseAccessContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Access"
         ]
@@ -7375,9 +8529,21 @@
         },
         "responses": {
           "200": {
-            "description": "Warehouse access updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveWarehouseAccessResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Access"
         ]
@@ -7396,9 +8562,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Warehouse access revoked."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveWarehouseAccessResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Warehouse Access"
         ]
@@ -7436,6 +8614,27 @@
         },
         "tags": [
           "Approval Management"
+        ]
+      }
+    },
+    "/api/v1/approver-setups/modules": {
+      "get": {
+        "description": "Returns active transaction modules available for approver assignment scope controls.",
+        "operationId": "ApproverSetupsController_findModules_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Approver setup modules returned."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List modules for approver setup",
+        "tags": [
+          "Approver Setups"
         ]
       }
     },
@@ -7479,17 +8678,7 @@
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ApproverSetupUserResponseDto"
-                  }
-                }
-              }
-            }
+            "description": "Company users returned."
           }
         },
         "security": [
@@ -7519,14 +8708,7 @@
         },
         "responses": {
           "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateApproverSetupResponseDto"
-                }
-              }
-            }
+            "description": "Approver setup created."
           }
         },
         "security": [
@@ -7568,14 +8750,7 @@
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApproverSetupsPaginatedResponseDto"
-                }
-              }
-            }
+            "description": "Approver setups returned."
           }
         },
         "security": [
@@ -8020,7 +9195,7 @@
         ]
       }
     },
-    "/api/v1/accounts-payable/accounts-payable-voucher/number-suggestion": {
+    "/api/v1/accounts-payable/accounts-payable-voucher/transaction-number": {
       "get": {
         "operationId": "AccountsPayableVoucherController_suggestTransactionNumber_v1",
         "parameters": [
@@ -8147,7 +9322,63 @@
         ],
         "responses": {
           "200": {
-            "description": "Accounts payable voucher number suggestion retrieved."
+            "description": "Accounts payable voucher transaction number retrieved."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
+        ]
+      }
+    },
+    "/api/v1/accounts-payable/accounts-payable-voucher/lookups/parties": {
+      "get": {
+        "operationId": "AccountsPayableVoucherController_findPartyOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Accounts payable voucher party options retrieved."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
+        ]
+      }
+    },
+    "/api/v1/accounts-payable/accounts-payable-voucher/lookups/terms": {
+      "get": {
+        "operationId": "AccountsPayableVoucherController_findTermOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Accounts payable voucher term options retrieved."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
+        ]
+      }
+    },
+    "/api/v1/accounts-payable/accounts-payable-voucher/lookups/responsibility-centers": {
+      "get": {
+        "operationId": "AccountsPayableVoucherController_findResponsibilityCenterOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Accounts payable voucher responsibility center options retrieved."
+          }
+        },
+        "tags": [
+          "Accounts Payable Voucher"
+        ]
+      }
+    },
+    "/api/v1/accounts-payable/accounts-payable-voucher/lookups/payable-accounts": {
+      "get": {
+        "operationId": "AccountsPayableVoucherController_findPayableAccountOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Accounts payable voucher payable account options retrieved."
           }
         },
         "tags": [
@@ -11915,6 +13146,15 @@
             "type": "string",
             "nullable": true
           },
+          "isSystemDefault": {
+            "type": "boolean"
+          },
+          "isUserCreated": {
+            "type": "boolean"
+          },
+          "isBankLinked": {
+            "type": "boolean"
+          },
           "deletedAt": {
             "type": "string",
             "nullable": true
@@ -11961,6 +13201,9 @@
           "orderNo",
           "status",
           "currencyCode",
+          "isSystemDefault",
+          "isUserCreated",
+          "isBankLinked",
           "deletedAt",
           "createdBy",
           "createdAt",
@@ -11976,6 +13219,68 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ChartAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "accounts"
+        ]
+      },
+      "ChartAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountType": {
+            "nullable": true,
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "nullable": true,
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountCode",
+          "accountTitle",
+          "accountType",
+          "accountNature",
+          "status"
+        ]
+      },
+      "ChartAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartAccountOptionResponseDto"
             }
           }
         },
@@ -12077,6 +13382,15 @@
             "type": "string",
             "nullable": true
           },
+          "isSystemDefault": {
+            "type": "boolean"
+          },
+          "isUserCreated": {
+            "type": "boolean"
+          },
+          "isBankLinked": {
+            "type": "boolean"
+          },
           "deletedAt": {
             "type": "string",
             "nullable": true
@@ -12129,6 +13443,9 @@
           "orderNo",
           "status",
           "currencyCode",
+          "isSystemDefault",
+          "isUserCreated",
+          "isBankLinked",
           "deletedAt",
           "createdBy",
           "createdAt",
@@ -12229,10 +13546,10 @@
           },
           "accountLevel": {
             "enum": [
-              "SUB3",
+              "MAJOR",
               "SUB1",
               "SUB2",
-              "MAJOR",
+              "SUB3",
               "SPECIFIC"
             ],
             "type": "string"
@@ -12244,10 +13561,10 @@
           "accountType": {
             "enum": [
               "ASSET",
-              "EXPENSE",
-              "REVENUE",
               "LIABILITY",
-              "EQUITY"
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
             ],
             "type": "string"
           },
@@ -12259,7 +13576,17 @@
             "type": "string"
           },
           "accountGroup": {
-            "type": "object"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "statementSection": {
             "type": "string",
@@ -12332,10 +13659,10 @@
           },
           "accountLevel": {
             "enum": [
-              "SUB3",
+              "MAJOR",
               "SUB1",
               "SUB2",
-              "MAJOR",
+              "SUB3",
               "SPECIFIC"
             ],
             "type": "string"
@@ -12347,10 +13674,10 @@
           "accountType": {
             "enum": [
               "ASSET",
-              "EXPENSE",
-              "REVENUE",
               "LIABILITY",
-              "EQUITY"
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
             ],
             "type": "string"
           },
@@ -12362,7 +13689,17 @@
             "type": "string"
           },
           "accountGroup": {
-            "type": "object"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
           },
           "statementSection": {
             "type": "string",
@@ -12423,6 +13760,238 @@
           "status"
         ]
       },
+      "TermResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "dateMode": {
+            "enum": [
+              "DAY",
+              "MONTH",
+              "YEAR"
+            ],
+            "type": "string"
+          },
+          "period": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "dateMode",
+          "period",
+          "status",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "TermsMaintenanceStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalTerms": {
+            "type": "number"
+          },
+          "activeTerms": {
+            "type": "number"
+          },
+          "inactiveTerms": {
+            "type": "number"
+          },
+          "dayTerms": {
+            "type": "number"
+          },
+          "monthTerms": {
+            "type": "number"
+          },
+          "yearTerms": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalTerms",
+          "activeTerms",
+          "inactiveTerms",
+          "dayTerms",
+          "monthTerms",
+          "yearTerms"
+        ]
+      },
+      "TermsMaintenancePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "TermsMaintenancePermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "TermListResponseDto": {
+        "type": "object",
+        "properties": {
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/TermsMaintenanceStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/TermsMaintenancePaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/TermsMaintenancePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "terms",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "TermLookupOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dateMode": {
+            "enum": [
+              "DAY",
+              "MONTH",
+              "YEAR"
+            ],
+            "type": "string"
+          },
+          "period": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "dateMode",
+          "period",
+          "status"
+        ]
+      },
+      "TermLookupResponseDto": {
+        "type": "object",
+        "properties": {
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermLookupOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "terms"
+        ]
+      },
+      "TermContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "$ref": "#/components/schemas/TermResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/TermsMaintenancePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "term",
+          "permissions"
+        ]
+      },
       "CreateTermDto": {
         "type": "object",
         "properties": {
@@ -12460,6 +14029,21 @@
           "period"
         ]
       },
+      "SaveTermResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "term": {
+            "$ref": "#/components/schemas/TermResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "term"
+        ]
+      },
       "ImportTermsDto": {
         "type": "object",
         "properties": {
@@ -12473,6 +14057,24 @@
           }
         },
         "required": [
+          "terms"
+        ]
+      },
+      "ImportTermsResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermResponseDto"
+            }
+          }
+        },
+        "required": [
+          "message",
           "terms"
         ]
       },
@@ -12618,6 +14220,284 @@
           }
         }
       },
+      "ItemCategoryAccountingSetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "inventoryAccount": {
+            "type": "string"
+          },
+          "salesAccount": {
+            "type": "string"
+          },
+          "costOfSalesAccount": {
+            "type": "string"
+          },
+          "expenseAccount": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "inventoryAccount",
+          "salesAccount",
+          "costOfSalesAccount",
+          "expenseAccount"
+        ]
+      },
+      "ItemCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountingSetupMode": {
+            "enum": [
+              "INHERIT",
+              "AUTO_CREATE"
+            ],
+            "type": "string"
+          },
+          "accountingSetup": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemCategoryAccountingSetupResponseDto"
+              }
+            ]
+          },
+          "effectiveAccountingSetup": {
+            "$ref": "#/components/schemas/ItemCategoryAccountingSetupResponseDto"
+          },
+          "requiresInventoryAccount": {
+            "type": "boolean"
+          },
+          "requiresSalesAccount": {
+            "type": "boolean"
+          },
+          "requiresCostOfSalesAccount": {
+            "type": "boolean"
+          },
+          "requiresExpenseAccount": {
+            "type": "boolean"
+          },
+          "behaviors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inheritedAccountingSourceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "allowSubCategory": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "usedByItemCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "description",
+          "parentId",
+          "accountingSetupMode",
+          "accountingSetup",
+          "effectiveAccountingSetup",
+          "requiresInventoryAccount",
+          "requiresSalesAccount",
+          "requiresCostOfSalesAccount",
+          "requiresExpenseAccount",
+          "behaviors",
+          "inheritedAccountingSourceName",
+          "allowSubCategory",
+          "status",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt",
+          "usedByItemCount"
+        ]
+      },
+      "ItemCategoryStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "number"
+          },
+          "activeCount": {
+            "type": "number"
+          },
+          "inactiveCount": {
+            "type": "number"
+          },
+          "configuredCount": {
+            "type": "number"
+          },
+          "inheritedCount": {
+            "type": "number"
+          },
+          "subcategoryLockedCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalCount",
+          "activeCount",
+          "inactiveCount",
+          "configuredCount",
+          "inheritedCount",
+          "subcategoryLockedCount"
+        ]
+      },
+      "ItemCategoryPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "ItemCategoryListResponseDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemCategoryResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/ItemCategoryStatisticsResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ItemCategoryPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "categories",
+          "statistics",
+          "permissions"
+        ]
+      },
+      "ItemCategoryOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "behaviors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowSubCategory": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "description",
+          "parentId",
+          "behaviors",
+          "allowSubCategory",
+          "status"
+        ]
+      },
+      "ItemCategoryOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemCategoryOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "categories"
+        ]
+      },
       "CreateItemCategoryDto": {
         "type": "object",
         "properties": {
@@ -12689,6 +14569,21 @@
           "allowSubCategory"
         ]
       },
+      "SaveItemCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ItemCategoryResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "category"
+        ]
+      },
       "UpdateItemCategoryDto": {
         "type": "object",
         "properties": {
@@ -12755,6 +14650,222 @@
           }
         }
       },
+      "UnitOfMeasurementResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "quantityMode": {
+            "enum": [
+              "INTEGER",
+              "FLOAT"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "symbol",
+          "quantityMode",
+          "status",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "UnitOfMeasurementStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalUnits": {
+            "type": "number"
+          },
+          "activeUnits": {
+            "type": "number"
+          },
+          "inactiveUnits": {
+            "type": "number"
+          },
+          "decimalUnits": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalUnits",
+          "activeUnits",
+          "inactiveUnits",
+          "decimalUnits"
+        ]
+      },
+      "UnitOfMeasurementPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "UnitOfMeasurementPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "UnitOfMeasurementListResponseDto": {
+        "type": "object",
+        "properties": {
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitOfMeasurementResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/UnitOfMeasurementStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/UnitOfMeasurementPaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/UnitOfMeasurementPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "units",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "UnitOfMeasurementOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "quantityMode": {
+            "enum": [
+              "INTEGER",
+              "FLOAT"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "symbol",
+          "quantityMode",
+          "status"
+        ]
+      },
+      "UnitOfMeasurementOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitOfMeasurementOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "units"
+        ]
+      },
+      "UnitOfMeasurementContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "unit": {
+            "$ref": "#/components/schemas/UnitOfMeasurementResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/UnitOfMeasurementPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "unit",
+          "permissions"
+        ]
+      },
       "CreateUnitOfMeasurementDto": {
         "type": "object",
         "properties": {
@@ -12787,6 +14898,21 @@
           "quantityMode"
         ]
       },
+      "SaveUnitOfMeasurementResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/UnitOfMeasurementResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "unit"
+        ]
+      },
       "ImportUnitOfMeasurementsDto": {
         "type": "object",
         "properties": {
@@ -12800,6 +14926,24 @@
           }
         },
         "required": [
+          "units"
+        ]
+      },
+      "ImportUnitOfMeasurementsResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitOfMeasurementResponseDto"
+            }
+          }
+        },
+        "required": [
+          "message",
           "units"
         ]
       },
@@ -12830,6 +14974,250 @@
           }
         }
       },
+      "PaymentTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "classification": {
+            "enum": [
+              "CASH",
+              "CHECK",
+              "BANK_TRANSFER",
+              "DIGITAL_WALLET",
+              "NON_CASH_SETTLEMENT"
+            ],
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "classification",
+          "sortOrder",
+          "status",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "PaymentTypeStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalPaymentTypes": {
+            "type": "number"
+          },
+          "activePaymentTypes": {
+            "type": "number"
+          },
+          "inactivePaymentTypes": {
+            "type": "number"
+          },
+          "cashPaymentTypes": {
+            "type": "number"
+          },
+          "bankTransferPaymentTypes": {
+            "type": "number"
+          },
+          "checkPaymentTypes": {
+            "type": "number"
+          },
+          "digitalWalletPaymentTypes": {
+            "type": "number"
+          },
+          "nonCashSettlementPaymentTypes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalPaymentTypes",
+          "activePaymentTypes",
+          "inactivePaymentTypes",
+          "cashPaymentTypes",
+          "bankTransferPaymentTypes",
+          "checkPaymentTypes",
+          "digitalWalletPaymentTypes",
+          "nonCashSettlementPaymentTypes"
+        ]
+      },
+      "PaymentTypePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "PaymentTypePermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "PaymentTypeListResponseDto": {
+        "type": "object",
+        "properties": {
+          "paymentTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentTypeResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/PaymentTypeStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaymentTypePaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/PaymentTypePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "paymentTypes",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "PaymentTypeOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "classification": {
+            "enum": [
+              "CASH",
+              "CHECK",
+              "BANK_TRANSFER",
+              "DIGITAL_WALLET",
+              "NON_CASH_SETTLEMENT"
+            ],
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "classification",
+          "sortOrder",
+          "status"
+        ]
+      },
+      "PaymentTypeOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "paymentTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentTypeOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "paymentTypes"
+        ]
+      },
+      "PaymentTypeContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "paymentType": {
+            "$ref": "#/components/schemas/PaymentTypeResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/PaymentTypePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "paymentType",
+          "permissions"
+        ]
+      },
       "CreatePaymentTypeDto": {
         "type": "object",
         "properties": {
@@ -12843,9 +15231,9 @@
           },
           "classification": {
             "enum": [
-              "BANK_TRANSFER",
               "CASH",
               "CHECK",
+              "BANK_TRANSFER",
               "DIGITAL_WALLET",
               "NON_CASH_SETTLEMENT"
             ],
@@ -12868,6 +15256,21 @@
           "classification"
         ]
       },
+      "SavePaymentTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "paymentType": {
+            "$ref": "#/components/schemas/PaymentTypeResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "paymentType"
+        ]
+      },
       "ImportPaymentTypesDto": {
         "type": "object",
         "properties": {
@@ -12884,6 +15287,24 @@
           "paymentTypes"
         ]
       },
+      "ImportPaymentTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "paymentTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentTypeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "message",
+          "paymentTypes"
+        ]
+      },
       "UpdatePaymentTypeDto": {
         "type": "object",
         "properties": {
@@ -12897,9 +15318,9 @@
           },
           "classification": {
             "enum": [
-              "BANK_TRANSFER",
               "CASH",
               "CHECK",
+              "BANK_TRANSFER",
               "DIGITAL_WALLET",
               "NON_CASH_SETTLEMENT"
             ],
@@ -12918,6 +15339,268 @@
           }
         }
       },
+      "DiscountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "enum": [
+              "SALES",
+              "PURCHASE"
+            ],
+            "type": "string"
+          },
+          "valueType": {
+            "enum": [
+              "PERCENTAGE",
+              "FIXED"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "chartAccountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountGroupPath": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "type",
+          "valueType",
+          "value",
+          "status",
+          "chartAccountId",
+          "accountCode",
+          "accountTitle",
+          "accountGroupPath",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "DiscountMaintenanceStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalDiscounts": {
+            "type": "number"
+          },
+          "activeDiscounts": {
+            "type": "number"
+          },
+          "inactiveDiscounts": {
+            "type": "number"
+          },
+          "purchaseDiscounts": {
+            "type": "number"
+          },
+          "salesDiscounts": {
+            "type": "number"
+          },
+          "percentageDiscounts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalDiscounts",
+          "activeDiscounts",
+          "inactiveDiscounts",
+          "purchaseDiscounts",
+          "salesDiscounts",
+          "percentageDiscounts"
+        ]
+      },
+      "DiscountMaintenancePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "DiscountMaintenancePermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "DiscountListResponseDto": {
+        "type": "object",
+        "properties": {
+          "discounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscountResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/DiscountMaintenanceStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/DiscountMaintenancePaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/DiscountMaintenancePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "discounts",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "DiscountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "SALES",
+              "PURCHASE"
+            ],
+            "type": "string"
+          },
+          "valueType": {
+            "enum": [
+              "PERCENTAGE",
+              "FIXED"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "valueType",
+          "value",
+          "status"
+        ]
+      },
+      "DiscountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "discounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "discounts"
+        ]
+      },
+      "DiscountContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "discount": {
+            "$ref": "#/components/schemas/DiscountResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/DiscountMaintenancePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "discount",
+          "permissions"
+        ]
+      },
       "CreateDiscountDto": {
         "type": "object",
         "properties": {
@@ -12931,8 +15614,8 @@
           },
           "type": {
             "enum": [
-              "PURCHASE",
-              "SALES"
+              "SALES",
+              "PURCHASE"
             ],
             "type": "string"
           },
@@ -12962,6 +15645,21 @@
           "value"
         ]
       },
+      "SaveDiscountResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "discount": {
+            "$ref": "#/components/schemas/DiscountResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "discount"
+        ]
+      },
       "ImportDiscountsDto": {
         "type": "object",
         "properties": {
@@ -12978,6 +15676,24 @@
           "discounts"
         ]
       },
+      "ImportDiscountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "discounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "message",
+          "discounts"
+        ]
+      },
       "UpdateDiscountDto": {
         "type": "object",
         "properties": {
@@ -12991,8 +15707,8 @@
           },
           "type": {
             "enum": [
-              "PURCHASE",
-              "SALES"
+              "SALES",
+              "PURCHASE"
             ],
             "type": "string"
           },
@@ -13015,6 +15731,739 @@
             "type": "string"
           }
         }
+      },
+      "PartyAddressResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "addressName": {
+            "type": "string"
+          },
+          "addressLine1": {
+            "type": "string"
+          },
+          "addressLine2": {
+            "type": "string"
+          },
+          "barangay": {
+            "type": "string"
+          },
+          "barangayCode": {
+            "type": "string"
+          },
+          "cityMunicipality": {
+            "type": "string"
+          },
+          "cityMunicipalityCode": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "provinceCode": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "regionCode": {
+            "type": "string"
+          },
+          "isBilling": {
+            "type": "boolean"
+          },
+          "isBuilding": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isDelivery": {
+            "type": "boolean"
+          },
+          "isForeign": {
+            "type": "boolean"
+          },
+          "isHome": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "addressName",
+          "addressLine1",
+          "addressLine2",
+          "barangay",
+          "barangayCode",
+          "cityMunicipality",
+          "cityMunicipalityCode",
+          "province",
+          "provinceCode",
+          "region",
+          "regionCode",
+          "isBilling",
+          "isBuilding",
+          "isDefault",
+          "isDelivery",
+          "isForeign",
+          "isHome"
+        ]
+      },
+      "PartyAccountingAccountSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountCode",
+          "accountTitle"
+        ]
+      },
+      "PartyAccountingAccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultReceivableAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartyAccountingAccountSummaryResponseDto"
+              }
+            ]
+          },
+          "customerAdvanceAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartyAccountingAccountSummaryResponseDto"
+              }
+            ]
+          },
+          "defaultPayableAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartyAccountingAccountSummaryResponseDto"
+              }
+            ]
+          },
+          "vendorAdvanceAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartyAccountingAccountSummaryResponseDto"
+              }
+            ]
+          },
+          "employeeAdvanceAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartyAccountingAccountSummaryResponseDto"
+              }
+            ]
+          },
+          "employeePayableAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartyAccountingAccountSummaryResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "defaultReceivableAccount",
+          "customerAdvanceAccount",
+          "defaultPayableAccount",
+          "vendorAdvanceAccount",
+          "employeeAdvanceAccount",
+          "employeePayableAccount"
+        ]
+      },
+      "PartyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "partyCodeNo": {
+            "type": "string"
+          },
+          "classification": {
+            "enum": [
+              "INDIVIDUAL",
+              "NON_INDIVIDUAL"
+            ],
+            "type": "string"
+          },
+          "partyEntityType": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "VENDOR",
+                "CUSTOMER",
+                "EMPLOYEE",
+                "MEMBER"
+              ]
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "partyName": {
+            "type": "string"
+          },
+          "tradeName": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "middleName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "suffixName": {
+            "type": "string"
+          },
+          "honorific": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "civilStatus": {
+            "type": "string"
+          },
+          "nationality": {
+            "type": "string"
+          },
+          "memberRegistrationDate": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/PartyAddressResponseDto"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyAddressResponseDto"
+            }
+          },
+          "defaultReceivableAccount": {
+            "type": "string"
+          },
+          "customerAdvanceAccount": {
+            "type": "string"
+          },
+          "defaultPayableAccount": {
+            "type": "string"
+          },
+          "vendorAdvanceAccount": {
+            "type": "string"
+          },
+          "employeeAdvanceAccount": {
+            "type": "string"
+          },
+          "employeePayableAccount": {
+            "type": "string"
+          },
+          "accountingAccounts": {
+            "$ref": "#/components/schemas/PartyAccountingAccountsResponseDto"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "termName": {
+            "type": "string"
+          },
+          "tin": {
+            "type": "string"
+          },
+          "atcCode": {
+            "type": "string"
+          },
+          "defaultPurchaseInputVatTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultPurchaseEwtTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultPurchaseFwtTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultPurchaseWvatTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultSalesOutputVatTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultSalesCwtTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultSalesWvatTaxSourceKey": {
+            "type": "string"
+          },
+          "contactPerson": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "contactNo": {
+            "type": "string"
+          },
+          "landline": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "partyCodeNo",
+          "classification",
+          "partyEntityType",
+          "partyTypes",
+          "status",
+          "partyName",
+          "tradeName",
+          "firstName",
+          "middleName",
+          "lastName",
+          "suffixName",
+          "honorific",
+          "gender",
+          "civilStatus",
+          "nationality",
+          "memberRegistrationDate",
+          "address",
+          "addresses",
+          "defaultReceivableAccount",
+          "customerAdvanceAccount",
+          "defaultPayableAccount",
+          "vendorAdvanceAccount",
+          "employeeAdvanceAccount",
+          "employeePayableAccount",
+          "accountingAccounts",
+          "termId",
+          "termName",
+          "tin",
+          "atcCode",
+          "defaultPurchaseInputVatTaxSourceKey",
+          "defaultPurchaseEwtTaxSourceKey",
+          "defaultPurchaseFwtTaxSourceKey",
+          "defaultPurchaseWvatTaxSourceKey",
+          "defaultSalesOutputVatTaxSourceKey",
+          "defaultSalesCwtTaxSourceKey",
+          "defaultSalesWvatTaxSourceKey",
+          "contactPerson",
+          "email",
+          "contactNo",
+          "landline",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "PartyStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "activeParties": {
+            "type": "number"
+          },
+          "inactiveParties": {
+            "type": "number"
+          },
+          "individualParties": {
+            "type": "number"
+          },
+          "multiTypeParties": {
+            "type": "number"
+          },
+          "nonIndividualParties": {
+            "type": "number"
+          },
+          "totalParties": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "activeParties",
+          "inactiveParties",
+          "individualParties",
+          "multiTypeParties",
+          "nonIndividualParties",
+          "totalParties"
+        ]
+      },
+      "PartyPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "PartyPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canUncancel": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canCancel",
+          "canUncancel",
+          "canExport"
+        ]
+      },
+      "PartyListResponseDto": {
+        "type": "object",
+        "properties": {
+          "parties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyResponseDto"
+            }
+          },
+          "totalRows": {
+            "type": "number"
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/PartyStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PartyPaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/PartyPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "parties",
+          "totalRows",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "PartyAccountingAccountIdsResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultReceivableAccount": {
+            "type": "string"
+          },
+          "customerAdvanceAccount": {
+            "type": "string"
+          },
+          "defaultPayableAccount": {
+            "type": "string"
+          },
+          "vendorAdvanceAccount": {
+            "type": "string"
+          },
+          "employeeAdvanceAccount": {
+            "type": "string"
+          },
+          "employeePayableAccount": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "defaultReceivableAccount",
+          "customerAdvanceAccount",
+          "defaultPayableAccount",
+          "vendorAdvanceAccount",
+          "employeeAdvanceAccount",
+          "employeePayableAccount"
+        ]
+      },
+      "PartyAccountingAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "statementGroup": {
+            "type": "string"
+          },
+          "statementSection": {
+            "type": "string"
+          },
+          "normalBalance": {
+            "enum": [
+              "Debit",
+              "Credit"
+            ],
+            "type": "string"
+          },
+          "accountCategory": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountNumber",
+          "accountName",
+          "accountType",
+          "statementGroup",
+          "statementSection",
+          "normalBalance",
+          "accountCategory",
+          "description",
+          "status"
+        ]
+      },
+      "PartyAccountingAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultReceivableAccount": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyAccountingAccountOptionResponseDto"
+            }
+          },
+          "customerAdvanceAccount": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyAccountingAccountOptionResponseDto"
+            }
+          },
+          "defaultPayableAccount": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyAccountingAccountOptionResponseDto"
+            }
+          },
+          "vendorAdvanceAccount": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyAccountingAccountOptionResponseDto"
+            }
+          },
+          "employeeAdvanceAccount": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyAccountingAccountOptionResponseDto"
+            }
+          },
+          "employeePayableAccount": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyAccountingAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "defaultReceivableAccount",
+          "customerAdvanceAccount",
+          "defaultPayableAccount",
+          "vendorAdvanceAccount",
+          "employeeAdvanceAccount",
+          "employeePayableAccount"
+        ]
+      },
+      "PartyAccountingOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultAccounts": {
+            "$ref": "#/components/schemas/PartyAccountingAccountIdsResponseDto"
+          },
+          "accountOptions": {
+            "$ref": "#/components/schemas/PartyAccountingAccountOptionsResponseDto"
+          }
+        },
+        "required": [
+          "defaultAccounts",
+          "accountOptions"
+        ]
+      },
+      "PartyOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "partyCodeNo": {
+            "type": "string"
+          },
+          "classification": {
+            "enum": [
+              "INDIVIDUAL",
+              "NON_INDIVIDUAL"
+            ],
+            "type": "string"
+          },
+          "partyTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "VENDOR",
+                "CUSTOMER",
+                "EMPLOYEE",
+                "MEMBER"
+              ]
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "contactPerson": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "contactNo": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "partyCodeNo",
+          "classification",
+          "partyTypes",
+          "name",
+          "contactPerson",
+          "email",
+          "contactNo",
+          "status"
+        ]
+      },
+      "PartyOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "parties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "parties"
+        ]
+      },
+      "PartyContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "party": {
+            "$ref": "#/components/schemas/PartyResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/PartyPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "party",
+          "permissions"
+        ]
       },
       "CreatePartyAddressDto": {
         "type": "object",
@@ -13311,6 +16760,21 @@
           "addresses"
         ]
       },
+      "SavePartyResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "party": {
+            "$ref": "#/components/schemas/PartyResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "party"
+        ]
+      },
       "ImportPartiesDto": {
         "type": "object",
         "properties": {
@@ -13327,6 +16791,24 @@
           }
         },
         "required": [
+          "parties"
+        ]
+      },
+      "ImportPartiesResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "parties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyResponseDto"
+            }
+          }
+        },
+        "required": [
+          "message",
           "parties"
         ]
       },
@@ -13536,18 +17018,334 @@
           }
         }
       },
+      "BankChartAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountGroup": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountCode",
+          "accountTitle",
+          "accountGroup",
+          "status"
+        ]
+      },
+      "BankAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "coaId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string",
+            "nullable": true
+          },
+          "seriesStart": {
+            "type": "string",
+            "nullable": true
+          },
+          "seriesEnd": {
+            "type": "string",
+            "nullable": true
+          },
+          "seriesDigits": {
+            "type": "number",
+            "nullable": true
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "chartAccount": {
+            "$ref": "#/components/schemas/BankChartAccountResponseDto"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "coaId",
+          "accountCode",
+          "bankName",
+          "branch",
+          "accountNumber",
+          "accountName",
+          "accountType",
+          "seriesStart",
+          "seriesEnd",
+          "seriesDigits",
+          "currencyCode",
+          "isDefault",
+          "status",
+          "chartAccount",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "BankMasterfileStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalBanks": {
+            "type": "number"
+          },
+          "activeBanks": {
+            "type": "number"
+          },
+          "inactiveBanks": {
+            "type": "number"
+          },
+          "defaultBanks": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalBanks",
+          "activeBanks",
+          "inactiveBanks",
+          "defaultBanks"
+        ]
+      },
+      "BankMasterfilePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "BankMasterfilePermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "BankAccountListResponseDto": {
+        "type": "object",
+        "properties": {
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankAccountResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/BankMasterfileStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/BankMasterfilePaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/BankMasterfilePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "bankAccounts",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "BankAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "maskedAccountNumber": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "bankName",
+          "accountName",
+          "maskedAccountNumber",
+          "currencyCode",
+          "status"
+        ]
+      },
+      "BankAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "banks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "banks"
+        ]
+      },
+      "BankNextAccountCodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountCode": {
+            "type": "string"
+          },
+          "parentAccountCode": {
+            "type": "string"
+          },
+          "parentAccountTitle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountCode",
+          "parentAccountCode",
+          "parentAccountTitle"
+        ]
+      },
+      "BankAccountContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "bankAccount": {
+            "$ref": "#/components/schemas/BankAccountResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/BankMasterfilePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "bankAccount",
+          "permissions"
+        ]
+      },
       "CreateBankAccountDto": {
         "type": "object",
         "properties": {
-          "accountNumber": {
-            "type": "string",
-            "maxLength": 100
-          },
           "bankName": {
             "type": "string",
             "maxLength": 100
           },
           "branch": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountNumber": {
             "type": "string",
             "maxLength": 100
           },
@@ -13597,6 +17395,21 @@
           "seriesDigits"
         ]
       },
+      "SaveBankAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "bankAccount": {
+            "$ref": "#/components/schemas/BankAccountResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "bankAccount"
+        ]
+      },
       "ImportBankAccountsDto": {
         "type": "object",
         "properties": {
@@ -13613,18 +17426,36 @@
           "banks"
         ]
       },
+      "ImportBankAccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "message",
+          "bankAccounts"
+        ]
+      },
       "UpdateBankAccountDto": {
         "type": "object",
         "properties": {
-          "accountNumber": {
-            "type": "string",
-            "maxLength": 100
-          },
           "bankName": {
             "type": "string",
             "maxLength": 100
           },
           "branch": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "accountNumber": {
             "type": "string",
             "maxLength": 100
           },
@@ -13683,6 +17514,334 @@
           "status"
         ]
       },
+      "GeneratedDefaultAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": [
+              "EXPENSE",
+              "REVENUE"
+            ],
+            "type": "string"
+          },
+          "chartAccountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountType": {
+            "nullable": true,
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "nullable": true,
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "parentAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "chartAccountId",
+          "accountCode",
+          "accountTitle",
+          "accountType",
+          "accountNature",
+          "parentAccountId",
+          "status"
+        ]
+      },
+      "DefaultAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "type": {
+            "enum": [
+              "EXPENSE",
+              "COLLECTION",
+              "FIXED_ASSET"
+            ],
+            "type": "string"
+          },
+          "defaultAccountName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "expenseParentCoaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "generatedAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeneratedDefaultAccountResponseDto"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "type",
+          "defaultAccountName",
+          "description",
+          "status",
+          "expenseParentCoaId",
+          "generatedAccounts",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "DefaultAccountStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalDefaultAccounts": {
+            "type": "number"
+          },
+          "activeDefaultAccounts": {
+            "type": "number"
+          },
+          "inactiveDefaultAccounts": {
+            "type": "number"
+          },
+          "expenseDefaultAccounts": {
+            "type": "number"
+          },
+          "collectionDefaultAccounts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalDefaultAccounts",
+          "activeDefaultAccounts",
+          "inactiveDefaultAccounts",
+          "expenseDefaultAccounts",
+          "collectionDefaultAccounts"
+        ]
+      },
+      "DefaultAccountPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "DefaultAccountPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canCancel",
+          "canExport"
+        ]
+      },
+      "DefaultAccountListResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DefaultAccountResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/DefaultAccountStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/DefaultAccountPaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/DefaultAccountPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "defaultAccounts",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "DefaultAccountExpenseParentOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountLevel": {
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ],
+            "type": "string"
+          },
+          "parentAccountId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "accountCode",
+          "accountTitle",
+          "accountLevel",
+          "parentAccountId"
+        ]
+      },
+      "DefaultAccountExpenseParentOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DefaultAccountExpenseParentOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "options"
+        ]
+      },
+      "CreateDefaultAccountExpenseSubAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "SaveDefaultAccountExpenseSubAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "account": {
+            "$ref": "#/components/schemas/CreateDefaultAccountExpenseSubAccountResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "account"
+        ]
+      },
+      "DefaultAccountContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultAccount": {
+            "$ref": "#/components/schemas/DefaultAccountResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/DefaultAccountPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "defaultAccount",
+          "permissions"
+        ]
+      },
       "CreateDefaultAccountTemplateDto": {
         "type": "object",
         "properties": {
@@ -13716,6 +17875,21 @@
         "required": [
           "type",
           "defaultAccountName"
+        ]
+      },
+      "SaveDefaultAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "defaultAccount": {
+            "$ref": "#/components/schemas/DefaultAccountResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "defaultAccount"
         ]
       },
       "UpdateDefaultAccountTemplateDto": {
@@ -13764,6 +17938,333 @@
           "status"
         ]
       },
+      "ServiceMaintenanceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "serviceName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "accountSetupMode": {
+            "enum": [
+              "AUTO",
+              "EXISTING"
+            ],
+            "type": "string"
+          },
+          "revenueCoaId": {
+            "type": "string"
+          },
+          "revenueAccountCode": {
+            "type": "string"
+          },
+          "revenueAccountTitle": {
+            "type": "string"
+          },
+          "isGeneratedRevenueAccount": {
+            "type": "boolean"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "serviceName",
+          "description",
+          "status",
+          "accountSetupMode",
+          "revenueCoaId",
+          "revenueAccountCode",
+          "revenueAccountTitle",
+          "isGeneratedRevenueAccount",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "ServiceMaintenanceStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalServices": {
+            "type": "number"
+          },
+          "activeServices": {
+            "type": "number"
+          },
+          "inactiveServices": {
+            "type": "number"
+          },
+          "accountTitles": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalServices",
+          "activeServices",
+          "inactiveServices",
+          "accountTitles"
+        ]
+      },
+      "ServiceMaintenancePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "ServiceMaintenancePermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "ServiceMaintenanceListResponseDto": {
+        "type": "object",
+        "properties": {
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceMaintenanceResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/ServiceMaintenanceStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/ServiceMaintenancePaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ServiceMaintenancePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "services",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "ServiceMaintenanceOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "serviceName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "serviceName",
+          "name",
+          "status"
+        ]
+      },
+      "ServiceMaintenanceOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceMaintenanceOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "services"
+        ]
+      },
+      "ServiceMaintenanceAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountType": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountCategory": {
+            "type": "string",
+            "nullable": true
+          },
+          "statementGroup": {
+            "type": "string",
+            "nullable": true
+          },
+          "statementSection": {
+            "type": "string",
+            "nullable": true
+          },
+          "normalBalance": {
+            "nullable": true,
+            "enum": [
+              "Credit",
+              "Debit"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountNumber",
+          "accountName"
+        ]
+      },
+      "ServiceMaintenanceAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceMaintenanceAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "accounts"
+        ]
+      },
+      "ServiceMaintenanceNextAccountCodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountCode": {
+            "type": "string"
+          },
+          "parentAccountId": {
+            "type": "string"
+          },
+          "parentAccountCode": {
+            "type": "string"
+          },
+          "parentAccountLevel": {
+            "enum": [
+              "MAJOR",
+              "SUB1",
+              "SUB2",
+              "SUB3",
+              "SPECIFIC"
+            ],
+            "type": "string"
+          },
+          "parentAccountTitle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountCode",
+          "parentAccountId",
+          "parentAccountCode",
+          "parentAccountLevel",
+          "parentAccountTitle"
+        ]
+      },
+      "ServiceMaintenanceContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "service": {
+            "$ref": "#/components/schemas/ServiceMaintenanceResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ServiceMaintenancePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "service",
+          "permissions"
+        ]
+      },
       "CreateServiceMaintenanceDto": {
         "type": "object",
         "properties": {
@@ -13798,6 +18299,21 @@
         "required": [
           "serviceName",
           "accountSetupMode"
+        ]
+      },
+      "SaveServiceMaintenanceResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "service": {
+            "$ref": "#/components/schemas/ServiceMaintenanceResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "service"
         ]
       },
       "UpdateServiceMaintenanceDto": {
@@ -13847,6 +18363,568 @@
           "status"
         ]
       },
+      "ResponsibilityCenterResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "classificationId": {
+            "type": "string"
+          },
+          "classificationCode": {
+            "type": "string"
+          },
+          "classificationName": {
+            "type": "string"
+          },
+          "typeId": {
+            "type": "string"
+          },
+          "typeName": {
+            "type": "string"
+          },
+          "typeCodePrefix": {
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "CORPORATE",
+              "DIVISION",
+              "DEPARTMENT",
+              "SECTION",
+              "TEAM",
+              "BRANCH",
+              "BUILDING",
+              "PROJECT",
+              "BUSINESS_UNIT",
+              "REGION",
+              "SALESMAN",
+              "WAREHOUSE",
+              "OUTLET",
+              "SALES_TERRITORY",
+              "FLEET"
+            ],
+            "type": "string"
+          },
+          "financialType": {
+            "enum": [
+              "COST_CENTER",
+              "PROFIT_CENTER",
+              "REVENUE_CENTER",
+              "INVESTMENT_CENTER"
+            ],
+            "type": "string"
+          },
+          "manager": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "classificationId",
+          "classificationCode",
+          "classificationName",
+          "typeId",
+          "typeName",
+          "typeCodePrefix",
+          "category",
+          "financialType",
+          "manager",
+          "parentId",
+          "parentName",
+          "status",
+          "description",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "ResponsibilityCenterStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalCenters": {
+            "type": "number"
+          },
+          "activeCenters": {
+            "type": "number"
+          },
+          "inactiveCenters": {
+            "type": "number"
+          },
+          "departmentCenters": {
+            "type": "number"
+          },
+          "branchCenters": {
+            "type": "number"
+          },
+          "projectCenters": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalCenters",
+          "activeCenters",
+          "inactiveCenters",
+          "departmentCenters",
+          "branchCenters",
+          "projectCenters"
+        ]
+      },
+      "ResponsibilityCenterPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "ResponsibilityCenterPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "ResponsibilityCenterListResponseDto": {
+        "type": "object",
+        "properties": {
+          "centers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsibilityCenterResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/ResponsibilityCenterStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/ResponsibilityCenterPaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ResponsibilityCenterPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "centers",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "ResponsibilityCenterOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "typeName": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "typeName",
+          "status"
+        ]
+      },
+      "ResponsibilityCenterOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "responsibilityCenters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsibilityCenterOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "responsibilityCenters"
+        ]
+      },
+      "ResponsibilityCenterTreeNodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "classificationId": {
+            "type": "string"
+          },
+          "classificationCode": {
+            "type": "string"
+          },
+          "classificationName": {
+            "type": "string"
+          },
+          "typeId": {
+            "type": "string"
+          },
+          "typeName": {
+            "type": "string"
+          },
+          "typeCodePrefix": {
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "CORPORATE",
+              "DIVISION",
+              "DEPARTMENT",
+              "SECTION",
+              "TEAM",
+              "BRANCH",
+              "BUILDING",
+              "PROJECT",
+              "BUSINESS_UNIT",
+              "REGION",
+              "SALESMAN",
+              "WAREHOUSE",
+              "OUTLET",
+              "SALES_TERRITORY",
+              "FLEET"
+            ],
+            "type": "string"
+          },
+          "financialType": {
+            "enum": [
+              "COST_CENTER",
+              "PROFIT_CENTER",
+              "REVENUE_CENTER",
+              "INVESTMENT_CENTER"
+            ],
+            "type": "string"
+          },
+          "manager": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsibilityCenterTreeNodeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "classificationId",
+          "classificationCode",
+          "classificationName",
+          "typeId",
+          "typeName",
+          "typeCodePrefix",
+          "category",
+          "financialType",
+          "manager",
+          "parentId",
+          "parentName",
+          "status",
+          "description",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt",
+          "children"
+        ]
+      },
+      "ResponsibilityCenterTreeResponseDto": {
+        "type": "object",
+        "properties": {
+          "centers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsibilityCenterTreeNodeResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/ResponsibilityCenterStatisticsResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ResponsibilityCenterPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "centers",
+          "statistics",
+          "permissions"
+        ]
+      },
+      "ResponsibilityCenterClassificationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "trackingBehavior": {
+            "type": "string"
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "trackingBehavior",
+          "isSystem",
+          "status"
+        ]
+      },
+      "ResponsibilityCenterClassificationsResponseDto": {
+        "type": "object",
+        "properties": {
+          "classifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsibilityCenterClassificationResponseDto"
+            }
+          }
+        },
+        "required": [
+          "classifications"
+        ]
+      },
+      "ResponsibilityCenterTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "classificationId": {
+            "type": "string"
+          },
+          "classificationCode": {
+            "type": "string"
+          },
+          "classificationName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "codePrefix": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "classificationId",
+          "classificationCode",
+          "classificationName",
+          "name",
+          "codePrefix",
+          "description",
+          "sortOrder",
+          "isRequired",
+          "status"
+        ]
+      },
+      "ResponsibilityCenterTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsibilityCenterTypeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "types"
+        ]
+      },
+      "ResponsibilityCenterCodeSuggestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "ResponsibilityCenterContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "center": {
+            "$ref": "#/components/schemas/ResponsibilityCenterResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ResponsibilityCenterPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "center",
+          "permissions"
+        ]
+      },
       "CreateResponsibilityCenterDto": {
         "type": "object",
         "properties": {
@@ -13866,12 +18944,12 @@
           },
           "category": {
             "enum": [
-              "BRANCH",
-              "SECTION",
               "CORPORATE",
               "DIVISION",
               "DEPARTMENT",
+              "SECTION",
               "TEAM",
+              "BRANCH",
               "BUILDING",
               "PROJECT",
               "BUSINESS_UNIT",
@@ -13887,8 +18965,8 @@
           "financialType": {
             "enum": [
               "COST_CENTER",
-              "REVENUE_CENTER",
               "PROFIT_CENTER",
+              "REVENUE_CENTER",
               "INVESTMENT_CENTER"
             ],
             "type": "string"
@@ -13916,6 +18994,21 @@
           "name"
         ]
       },
+      "SaveResponsibilityCenterResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "center": {
+            "$ref": "#/components/schemas/ResponsibilityCenterResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "center"
+        ]
+      },
       "UpdateResponsibilityCenterDto": {
         "type": "object",
         "properties": {
@@ -13935,12 +19028,12 @@
           },
           "category": {
             "enum": [
-              "BRANCH",
-              "SECTION",
               "CORPORATE",
               "DIVISION",
               "DEPARTMENT",
+              "SECTION",
               "TEAM",
+              "BRANCH",
               "BUILDING",
               "PROJECT",
               "BUSINESS_UNIT",
@@ -13956,8 +19049,8 @@
           "financialType": {
             "enum": [
               "COST_CENTER",
-              "REVENUE_CENTER",
               "PROFIT_CENTER",
+              "REVENUE_CENTER",
               "INVESTMENT_CENTER"
             ],
             "type": "string"
@@ -13997,6 +19090,261 @@
           "status"
         ]
       },
+      "WarehouseBranchResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "WarehouseResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "branchUnitIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "branchAvailabilityMode": {
+            "enum": [
+              "ALL",
+              "SPECIFIC",
+              "EXCEPT"
+            ],
+            "type": "string"
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseBranchResponseDto"
+            }
+          },
+          "managerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "branchUnitIds",
+          "branchAvailabilityMode",
+          "branches",
+          "managerName",
+          "status",
+          "address",
+          "contactNo",
+          "description",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "WarehouseStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalWarehouses": {
+            "type": "number"
+          },
+          "activeWarehouses": {
+            "type": "number"
+          },
+          "inactiveWarehouses": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalWarehouses",
+          "activeWarehouses",
+          "inactiveWarehouses"
+        ]
+      },
+      "WarehousePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "WarehousePermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "WarehouseListResponseDto": {
+        "type": "object",
+        "properties": {
+          "warehouses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/WarehouseStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/WarehousePaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/WarehousePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "warehouses",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "WarehouseOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "status"
+        ]
+      },
+      "WarehouseOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "warehouses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "warehouses"
+        ]
+      },
+      "WarehouseContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "warehouse": {
+            "$ref": "#/components/schemas/WarehouseResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/WarehousePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "warehouse",
+          "permissions"
+        ]
+      },
       "CreateWarehouseDto": {
         "type": "object",
         "properties": {
@@ -14019,8 +19367,8 @@
           },
           "branchAvailabilityMode": {
             "enum": [
-              "SPECIFIC",
               "ALL",
+              "SPECIFIC",
               "EXCEPT"
             ],
             "type": "string"
@@ -14053,6 +19401,21 @@
           "name"
         ]
       },
+      "SaveWarehouseResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "warehouse": {
+            "$ref": "#/components/schemas/WarehouseResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "warehouse"
+        ]
+      },
       "UpdateWarehouseDto": {
         "type": "object",
         "properties": {
@@ -14075,8 +19438,8 @@
           },
           "branchAvailabilityMode": {
             "enum": [
-              "SPECIFIC",
               "ALL",
+              "SPECIFIC",
               "EXCEPT"
             ],
             "type": "string"
@@ -14106,6 +19469,308 @@
           }
         }
       },
+      "WarehouseAccessResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "warehouseId": {
+            "type": "string"
+          },
+          "warehouseCode": {
+            "type": "string"
+          },
+          "warehouseName": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "number"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "userEmail": {
+            "type": "string"
+          },
+          "accessLevel": {
+            "enum": [
+              "VIEWER",
+              "PICKER",
+              "MANAGER"
+            ],
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "VIEW_STOCK",
+                "RECEIVE_STOCK",
+                "ISSUE_STOCK",
+                "TRANSFER_STOCK",
+                "ADJUST_STOCK",
+                "MANAGE_LOCATIONS",
+                "VIEW_HISTORY"
+              ]
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "warehouseId",
+          "warehouseCode",
+          "warehouseName",
+          "userId",
+          "userName",
+          "userEmail",
+          "accessLevel",
+          "permissions",
+          "status",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "WarehouseAccessStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalAssignments": {
+            "type": "number"
+          },
+          "activeAssignments": {
+            "type": "number"
+          },
+          "inactiveAssignments": {
+            "type": "number"
+          },
+          "managerAssignments": {
+            "type": "number"
+          },
+          "pickerAssignments": {
+            "type": "number"
+          },
+          "viewerAssignments": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalAssignments",
+          "activeAssignments",
+          "inactiveAssignments",
+          "managerAssignments",
+          "pickerAssignments",
+          "viewerAssignments"
+        ]
+      },
+      "WarehouseAccessPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "WarehouseAccessPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canDelete",
+          "canExport"
+        ]
+      },
+      "WarehouseAccessListResponseDto": {
+        "type": "object",
+        "properties": {
+          "warehouseAccess": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseAccessResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/WarehouseAccessStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/WarehouseAccessPaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/WarehouseAccessPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "warehouseAccess",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "WarehouseAccessDirectoryUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "contactNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "PENDING_VERIFICATION",
+              "ACTIVE",
+              "SUSPENDED"
+            ],
+            "type": "string"
+          },
+          "branchUnitIds": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "branchNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "companyRoleId": {
+            "type": "number",
+            "nullable": true
+          },
+          "companyRoleName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "contactNumber",
+          "status",
+          "branchUnitIds",
+          "branchNames",
+          "companyRoleId",
+          "companyRoleName"
+        ]
+      },
+      "WarehouseAccessDirectoryBranchResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "WarehouseAccessDirectoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseAccessDirectoryUserResponseDto"
+            }
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseAccessDirectoryBranchResponseDto"
+            }
+          }
+        },
+        "required": [
+          "users",
+          "branches"
+        ]
+      },
+      "WarehouseAccessContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "warehouseAccess": {
+            "$ref": "#/components/schemas/WarehouseAccessResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/WarehouseAccessPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "warehouseAccess",
+          "permissions"
+        ]
+      },
       "CreateWarehouseAccessAssignmentDto": {
         "type": "object",
         "properties": {
@@ -14116,12 +19781,12 @@
             "type": "number"
           },
           "accessLevel": {
-            "type": "string",
             "enum": [
               "VIEWER",
               "PICKER",
               "MANAGER"
-            ]
+            ],
+            "type": "string"
           },
           "permissions": {
             "type": "array",
@@ -14140,11 +19805,11 @@
             }
           },
           "status": {
-            "type": "string",
             "enum": [
               "ACTIVE",
               "INACTIVE"
-            ]
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -14166,6 +19831,24 @@
         },
         "required": [
           "assignments"
+        ]
+      },
+      "CreateWarehouseAccessResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "warehouseAccess": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseAccessResponseDto"
+            }
+          }
+        },
+        "required": [
+          "message",
+          "warehouseAccess"
         ]
       },
       "UpdateWarehouseAccessDto": {
@@ -14204,6 +19887,21 @@
           }
         }
       },
+      "SaveWarehouseAccessResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "warehouseAccess": {
+            "$ref": "#/components/schemas/WarehouseAccessResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "warehouseAccess"
+        ]
+      },
       "ApprovalManagementModuleResponseDto": {
         "type": "object",
         "properties": {
@@ -14237,28 +19935,6 @@
           "modules"
         ]
       },
-      "ApproverSetupUserResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "example": 1
-          },
-          "name": {
-            "type": "string",
-            "example": "Sinbad Admin"
-          },
-          "email": {
-            "type": "string",
-            "example": "sinbad@example.com"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "email"
-        ]
-      },
       "CreateApproverSetupDto": {
         "type": "object",
         "properties": {
@@ -14283,6 +19959,11 @@
             "type": "string",
             "example": "cash-disbursement.disbursement-voucher"
           },
+          "validUntil": {
+            "type": "string",
+            "example": "2026-08-30",
+            "description": "Required when type is Temporary."
+          },
           "approverUserIds": {
             "minItems": 1,
             "example": [
@@ -14302,112 +19983,6 @@
           "status",
           "moduleScope",
           "approverUserIds"
-        ]
-      },
-      "ApproverSetupResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "fe0383f2-f113-4ab4-9aca-9ee1163e3fd9"
-          },
-          "approverCondition": {
-            "type": "string",
-            "example": "Any one approver"
-          },
-          "type": {
-            "type": "string",
-            "example": "Level-based"
-          },
-          "status": {
-            "type": "string",
-            "example": "Active"
-          },
-          "level": {
-            "type": "number",
-            "nullable": true,
-            "example": 1
-          },
-          "moduleScope": {
-            "type": "string",
-            "example": "cash-disbursement.disbursement-voucher"
-          },
-          "approvers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ApproverSetupUserResponseDto"
-            }
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2026-07-30T08:00:00.000Z"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2026-07-30T08:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "approverCondition",
-          "type",
-          "status",
-          "moduleScope",
-          "approvers",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "CreateApproverSetupResponseDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "example": "Approver setup created."
-          },
-          "setup": {
-            "$ref": "#/components/schemas/ApproverSetupResponseDto"
-          }
-        },
-        "required": [
-          "message",
-          "setup"
-        ]
-      },
-      "ApproverSetupsPaginatedResponseDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ApproverSetupResponseDto"
-            }
-          },
-          "page": {
-            "type": "number",
-            "example": 1
-          },
-          "limit": {
-            "type": "number",
-            "example": 20
-          },
-          "total": {
-            "type": "number",
-            "example": 4
-          },
-          "totalPages": {
-            "type": "number",
-            "example": 1
-          }
-        },
-        "required": [
-          "items",
-          "page",
-          "limit",
-          "total",
-          "totalPages"
         ]
       },
       "TransactionNumberBranchResponseDto": {

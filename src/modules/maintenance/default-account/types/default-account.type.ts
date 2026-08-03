@@ -31,6 +31,6 @@ export type GeneratedAccountRequest = {
   accountLevel: ChartAccountLevel;
   accountType: ChartAccountType;
   accountNature: AccountNature;
-  accountGroup: string;
+  accountGroup: string | string[];
   isPostingAccount: boolean;
 };
