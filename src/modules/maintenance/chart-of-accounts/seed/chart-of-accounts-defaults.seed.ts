@@ -1355,7 +1355,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010003000',
     parentAccountCode: '2010000000',
-    accountTitle: 'Shor-Term Loans Payable',
+    accountTitle: 'Short-Term Loans Payable',
     accountLevel: ChartAccountLevel.SUB3,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
