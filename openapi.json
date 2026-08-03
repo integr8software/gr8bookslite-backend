@@ -3868,9 +3868,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Item category list retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemCategoryListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Item Categories"
         ]
@@ -3890,9 +3902,21 @@
         },
         "responses": {
           "201": {
-            "description": "Item category created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveItemCategoryResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Item Categories"
         ]
@@ -3904,9 +3928,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Item category options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemCategoryOptionsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Item Categories"
         ]
@@ -3937,9 +3973,21 @@
         },
         "responses": {
           "200": {
-            "description": "Item category updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveItemCategoryResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Item Categories"
         ]
@@ -14172,6 +14220,284 @@
           }
         }
       },
+      "ItemCategoryAccountingSetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "inventoryAccount": {
+            "type": "string"
+          },
+          "salesAccount": {
+            "type": "string"
+          },
+          "costOfSalesAccount": {
+            "type": "string"
+          },
+          "expenseAccount": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "inventoryAccount",
+          "salesAccount",
+          "costOfSalesAccount",
+          "expenseAccount"
+        ]
+      },
+      "ItemCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountingSetupMode": {
+            "enum": [
+              "INHERIT",
+              "AUTO_CREATE"
+            ],
+            "type": "string"
+          },
+          "accountingSetup": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemCategoryAccountingSetupResponseDto"
+              }
+            ]
+          },
+          "effectiveAccountingSetup": {
+            "$ref": "#/components/schemas/ItemCategoryAccountingSetupResponseDto"
+          },
+          "requiresInventoryAccount": {
+            "type": "boolean"
+          },
+          "requiresSalesAccount": {
+            "type": "boolean"
+          },
+          "requiresCostOfSalesAccount": {
+            "type": "boolean"
+          },
+          "requiresExpenseAccount": {
+            "type": "boolean"
+          },
+          "behaviors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inheritedAccountingSourceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "allowSubCategory": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "usedByItemCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "description",
+          "parentId",
+          "accountingSetupMode",
+          "accountingSetup",
+          "effectiveAccountingSetup",
+          "requiresInventoryAccount",
+          "requiresSalesAccount",
+          "requiresCostOfSalesAccount",
+          "requiresExpenseAccount",
+          "behaviors",
+          "inheritedAccountingSourceName",
+          "allowSubCategory",
+          "status",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt",
+          "usedByItemCount"
+        ]
+      },
+      "ItemCategoryStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "number"
+          },
+          "activeCount": {
+            "type": "number"
+          },
+          "inactiveCount": {
+            "type": "number"
+          },
+          "configuredCount": {
+            "type": "number"
+          },
+          "inheritedCount": {
+            "type": "number"
+          },
+          "subcategoryLockedCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalCount",
+          "activeCount",
+          "inactiveCount",
+          "configuredCount",
+          "inheritedCount",
+          "subcategoryLockedCount"
+        ]
+      },
+      "ItemCategoryPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "ItemCategoryListResponseDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemCategoryResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/ItemCategoryStatisticsResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ItemCategoryPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "categories",
+          "statistics",
+          "permissions"
+        ]
+      },
+      "ItemCategoryOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "behaviors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowSubCategory": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "description",
+          "parentId",
+          "behaviors",
+          "allowSubCategory",
+          "status"
+        ]
+      },
+      "ItemCategoryOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemCategoryOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "categories"
+        ]
+      },
       "CreateItemCategoryDto": {
         "type": "object",
         "properties": {
@@ -14241,6 +14567,21 @@
           "name",
           "accountingSetupMode",
           "allowSubCategory"
+        ]
+      },
+      "SaveItemCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ItemCategoryResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "category"
         ]
       },
       "UpdateItemCategoryDto": {
