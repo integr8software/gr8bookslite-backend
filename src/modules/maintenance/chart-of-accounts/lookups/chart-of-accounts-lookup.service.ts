@@ -22,6 +22,50 @@ export class ChartOfAccountsLookupService {
     };
   }
 
+  async findPostingOptionsForCompanyUser(user: AuthUser, query: GetChartAccountListQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+
+    return {
+      accounts: await this.findPostingOptions({
+        companyId,
+        query,
+      }),
+    };
+  }
+
+  async findAllOptionsForCompanyUser(user: AuthUser, query: GetChartAccountListQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+
+    return {
+      accounts: await this.findAllOptions({
+        companyId,
+        query,
+      }),
+    };
+  }
+
+  async findPostingOptions({ companyId, query }: { companyId: number; query: GetChartAccountListQueryDto }) {
+    return this.findOptions({
+      companyId,
+      query: {
+        ...query,
+        postingOnly: true,
+      },
+    });
+  }
+
+  async findAllOptions({ companyId, query }: { companyId: number; query: GetChartAccountListQueryDto }) {
+    return this.findOptions({
+      companyId,
+      query: {
+        ...query,
+        postingOnly: undefined,
+      },
+    });
+  }
+
   async findOptions({ companyId, query }: { companyId: number; query: GetChartAccountListQueryDto }) {
     const parentAccountId = parseOptionalPositiveBigIntIdOrUndefined(query.parentAccountId, 'parentAccountId');
     const search = query.search?.trim();
