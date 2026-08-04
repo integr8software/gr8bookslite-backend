@@ -10,6 +10,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateChartAccountDto } from '../chart-of-accounts/dto/create-chart-account.dto';
 import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
 import { findSystemAccountGroupOrThrow, mergeAccountGroupTags, SystemAccountGroups, SystemAccountGroupTags } from '../chart-of-accounts/utils/system-account-groups.util';
+import { DefaultAccountOptionQueryDto } from './dto/default-account-option-query.dto';
 import { CreateDefaultAccountTemplateDto } from './dto/create-default-account-template.dto';
 import { GetDefaultAccountTemplateListQueryDto } from './dto/get-default-account-template-list-query.dto';
 import { UpdateDefaultAccountTemplateStatusDto } from './dto/update-default-account-template-status.dto';
@@ -87,6 +88,38 @@ export class DefaultAccountService {
 
     return {
       options: await this.defaultAccountLookupService.findExpenseParentOptions({ companyId }),
+    };
+  }
+
+  async findOptions(user: AuthUser, query: DefaultAccountOptionQueryDto) {
+    const companyId = await this.ensureDefaultAccountOptionAccess(user);
+
+    return {
+      options: await this.defaultAccountLookupService.findDefaultAccountOptions({ companyId, query }),
+    };
+  }
+
+  async findExpenseOptions(user: AuthUser, query: DefaultAccountOptionQueryDto) {
+    const companyId = await this.ensureDefaultAccountOptionAccess(user);
+
+    return {
+      options: await this.defaultAccountLookupService.findDefaultAccountOptions({
+        companyId,
+        query,
+        type: DefaultAccountTemplateType.EXPENSE,
+      }),
+    };
+  }
+
+  async findCollectionOptions(user: AuthUser, query: DefaultAccountOptionQueryDto) {
+    const companyId = await this.ensureDefaultAccountOptionAccess(user);
+
+    return {
+      options: await this.defaultAccountLookupService.findDefaultAccountOptions({
+        companyId,
+        query,
+        type: DefaultAccountTemplateType.COLLECTION,
+      }),
     };
   }
 
@@ -290,6 +323,14 @@ export class DefaultAccountService {
     );
 
     return defaultAccounts.map((defaultAccount) => mapDefaultAccount(defaultAccount as DefaultAccountPayload, userNames));
+  }
+
+  private async ensureDefaultAccountOptionAccess(user: AuthUser) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
+
+    return companyId;
   }
 
   private buildListWhere(companyId: number, query: GetDefaultAccountTemplateListQueryDto): Prisma.DefaultAccountWhereInput {

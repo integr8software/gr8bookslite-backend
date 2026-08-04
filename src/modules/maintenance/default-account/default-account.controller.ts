@@ -5,6 +5,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { DefaultAccountService } from './default-account.service';
 import { CreateChartAccountDto } from '../chart-of-accounts/dto/create-chart-account.dto';
+import { DefaultAccountOptionQueryDto } from './dto/default-account-option-query.dto';
 import { CreateDefaultAccountTemplateDto } from './dto/create-default-account-template.dto';
 import { GetDefaultAccountTemplateListQueryDto } from './dto/get-default-account-template-list-query.dto';
 import { UpdateDefaultAccountTemplateStatusDto } from './dto/update-default-account-template-status.dto';
@@ -13,6 +14,7 @@ import {
   DefaultAccountContainerResponseDto,
   DefaultAccountExpenseParentOptionsResponseDto,
   DefaultAccountListResponseDto,
+  DefaultAccountOptionsResponseDto,
   SaveDefaultAccountExpenseSubAccountResponseDto,
   SaveDefaultAccountResponseDto,
 } from './dto/default-account-response.dto';
@@ -31,6 +33,24 @@ export class DefaultAccountController {
   @ApiOkResponse({ type: DefaultAccountListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetDefaultAccountTemplateListQueryDto) {
     return this.defaultAccountService.findAll(user, query);
+  }
+
+  @Get('options')
+  @ApiOkResponse({ type: DefaultAccountOptionsResponseDto })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: DefaultAccountOptionQueryDto) {
+    return this.defaultAccountService.findOptions(user, query);
+  }
+
+  @Get('expense-options')
+  @ApiOkResponse({ type: DefaultAccountOptionsResponseDto })
+  findExpenseOptions(@CurrentUser() user: AuthUser, @Query() query: DefaultAccountOptionQueryDto) {
+    return this.defaultAccountService.findExpenseOptions(user, query);
+  }
+
+  @Get('collection-options')
+  @ApiOkResponse({ type: DefaultAccountOptionsResponseDto })
+  findCollectionOptions(@CurrentUser() user: AuthUser, @Query() query: DefaultAccountOptionQueryDto) {
+    return this.defaultAccountService.findCollectionOptions(user, query);
   }
 
   @Get('expense-parent-options')

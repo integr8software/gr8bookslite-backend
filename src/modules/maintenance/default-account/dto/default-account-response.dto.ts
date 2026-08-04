@@ -160,6 +160,43 @@ export class DefaultAccountExpenseParentOptionsResponseDto {
   options!: DefaultAccountExpenseParentOptionResponseDto[];
 }
 
+export class DefaultAccountOptionResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty({ enum: DefaultAccountTemplateType })
+  type!: DefaultAccountTemplateType;
+
+  @ApiProperty()
+  defaultAccountName!: string;
+
+  @ApiProperty()
+  description!: string;
+
+  @ApiProperty({ enum: ChartAccountStatus })
+  status!: ChartAccountStatus;
+
+  @ApiProperty({ nullable: true })
+  chartAccountId!: string | null;
+
+  @ApiProperty({ nullable: true })
+  accountCode!: string | null;
+
+  @ApiProperty({ nullable: true })
+  accountTitle!: string | null;
+
+  @ApiProperty({ enum: ChartAccountType, nullable: true })
+  accountType!: ChartAccountType | null;
+
+  @ApiProperty({ enum: AccountNature, nullable: true })
+  accountNature!: AccountNature | null;
+}
+
+export class DefaultAccountOptionsResponseDto {
+  @ApiProperty({ type: [DefaultAccountOptionResponseDto] })
+  options!: DefaultAccountOptionResponseDto[];
+}
+
 export class CreateDefaultAccountExpenseSubAccountResponseDto {
   @ApiProperty()
   id!: string;

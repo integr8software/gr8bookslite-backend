@@ -3169,6 +3169,218 @@
         ]
       }
     },
+    "/api/v1/maintenance/chart-of-accounts/posting-accounts": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findPostingAccounts_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUB3",
+                "SUB1",
+                "SUB2",
+                "MAJOR",
+                "SPECIFIC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASSET",
+                "EXPENSE",
+                "REVENUE",
+                "LIABILITY",
+                "EQUITY"
+              ]
+            }
+          },
+          {
+            "name": "accountNature",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBIT",
+                "CREDIT"
+              ]
+            }
+          },
+          {
+            "name": "postingOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/all-accounts": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findAllAccounts_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUB3",
+                "SUB1",
+                "SUB2",
+                "MAJOR",
+                "SPECIFIC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASSET",
+                "EXPENSE",
+                "REVENUE",
+                "LIABILITY",
+                "EQUITY"
+              ]
+            }
+          },
+          {
+            "name": "accountNature",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBIT",
+                "CREDIT"
+              ]
+            }
+          },
+          {
+            "name": "postingOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
     "/api/v1/maintenance/chart-of-accounts/options": {
       "get": {
         "operationId": "ChartOfAccountsController_findOptions_v1",
@@ -5945,6 +6157,150 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SaveDefaultAccountResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Default Account"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/default-accounts/options": {
+      "get": {
+        "operationId": "DefaultAccountController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Default Account"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/default-accounts/expense-options": {
+      "get": {
+        "operationId": "DefaultAccountController_findExpenseOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Default Account"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/default-accounts/collection-options": {
+      "get": {
+        "operationId": "DefaultAccountController_findCollectionOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultAccountOptionsResponseDto"
                 }
               }
             }
@@ -17750,6 +18106,92 @@
           "statistics",
           "pagination",
           "permissions"
+        ]
+      },
+      "DefaultAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "EXPENSE",
+              "COLLECTION",
+              "FIXED_ASSET"
+            ],
+            "type": "string"
+          },
+          "defaultAccountName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "chartAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountType": {
+            "nullable": true,
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "nullable": true,
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "defaultAccountName",
+          "description",
+          "status",
+          "chartAccountId",
+          "accountCode",
+          "accountTitle",
+          "accountType",
+          "accountNature"
+        ]
+      },
+      "DefaultAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DefaultAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "options"
         ]
       },
       "DefaultAccountExpenseParentOptionResponseDto": {
