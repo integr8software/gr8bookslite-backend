@@ -1,4 +1,4 @@
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, Prisma } from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, DefaultAccountUsageType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { StandardDefaultChartAccounts } from './chart-of-accounts-defaults.seed';
 import { StandardDefaultAccountMappings } from './chart-of-accounts-system-groups.seed';
@@ -25,6 +25,7 @@ const ItemCategoryParentAccountCodeCorrections = new Map<
   ['6000001000', { accountCode: '6040000000', parentAccountCode: '6000000000' }],
 ]);
 const LegacyItemCategoryParentAccountCodes = [...ItemCategoryParentAccountCodeCorrections.keys()];
+const TaxModuleCode = 'TXM';
 
 type StandardDefaultChartAccountSeed = {
   parentAccountCode?: string | null;
@@ -46,12 +47,7 @@ type StandardDefaultChartAccountSeed = {
   currencyCode?: string | null;
 };
 
-const AccountGroupTagsByAccountCode = new Map<string, string[]>(
-  StandardDefaultAccountMappings.map((mapping) => [
-    getCorrectedSeedAccountCode(mapping.accountCode),
-    getSystemTagsForMapping(mapping.moduleCode, mapping.accountRole),
-  ]),
-);
+const AccountGroupTagsByAccountCode = buildAccountGroupTagsByAccountCode();
 
 export async function seedCompanyChartAccountDefaults(tx: Prisma.TransactionClient | PrismaService, companyId: number) {
   const chartAccountIdByCode = new Map<string, bigint>();
@@ -128,7 +124,28 @@ export async function seedCompanyChartAccountDefaults(tx: Prisma.TransactionClie
     }
   }
 
+  await seedCompanyTaxAccountMappings(tx, companyId, chartAccountIdByCode);
   await clearLegacyItemCategoryParentAccountTags(tx, companyId);
+}
+
+async function seedCompanyTaxAccountMappings(
+  tx: Prisma.TransactionClient | PrismaService,
+  companyId: number,
+  chartAccountIdByCode: ReadonlyMap<string, bigint>,
+) {
+  const mappings = StandardDefaultAccountMappings.filter(
+    (mapping) => mapping.moduleCode === TaxModuleCode && mapping.usageType === DefaultAccountUsageType.POSTING,
+  ).map((mapping) => ({
+    companyId,
+    moduleCode: TaxModuleCode,
+    accountRole: mapping.accountRole,
+    chartAccountId: chartAccountIdByCode.get(getCorrectedSeedAccountCode(mapping.accountCode))!,
+  }));
+
+  await tx.companyAccountMapping.createMany({
+    data: mappings,
+    skipDuplicates: true,
+  });
 }
 
 function getCorrectedSeedAccount(account: StandardDefaultChartAccountSeed): StandardDefaultChartAccountSeed {
@@ -147,6 +164,20 @@ function getCorrectedSeedAccount(account: StandardDefaultChartAccountSeed): Stan
 
 function getCorrectedSeedAccountCode(accountCode: string) {
   return ItemCategoryParentAccountCodeCorrections.get(accountCode)?.accountCode ?? accountCode;
+}
+
+function buildAccountGroupTagsByAccountCode() {
+  const tagsByAccountCode = new Map<string, string[]>();
+
+  for (const mapping of StandardDefaultAccountMappings) {
+    const accountCode = getCorrectedSeedAccountCode(mapping.accountCode);
+    const currentTags = tagsByAccountCode.get(accountCode);
+    const mappingTags = getSystemTagsForMapping(mapping.moduleCode, mapping.accountRole);
+
+    tagsByAccountCode.set(accountCode, mergeAccountGroupTags(currentTags, mappingTags) ?? []);
+  }
+
+  return tagsByAccountCode;
 }
 
 function getSeededAccountGroupTags(account: StandardDefaultChartAccountSeed) {
@@ -200,16 +231,8 @@ function getStructuralAccountGroupTag(accountTitle: string) {
     return SystemAccountGroupTags.purchaseDiscount;
   }
 
-  if (/depreciation expense/i.test(accountTitle)) {
-    return SystemAccountGroupTags.depreciationExpense;
-  }
-
-  if (/accumulated depreciation/i.test(accountTitle)) {
-    return SystemAccountGroupTags.accumulatedDepreciation;
-  }
-
-  if (/fixed assets?|property and equipment/i.test(accountTitle)) {
-    return SystemAccountGroupTags.fixedAssets;
+  if (/service revenues?/i.test(accountTitle)) {
+    return SystemAccountGroupTags.serviceRevenues;
   }
 
   if (/expenses?/i.test(accountTitle)) {
@@ -236,16 +259,8 @@ function getSystemTagsForMapping(moduleCode: string, accountRole: string) {
     return [SystemAccountGroupTags.revenue, SystemAccountGroupTags.defaultAccountRevenueParent];
   }
 
-  if (moduleCode === 'DA' && accountRole === 'FIXED_ASSET_PARENT') {
-    return [SystemAccountGroupTags.fixedAssets, SystemAccountGroupTags.defaultAccountFixedAssetParent];
-  }
-
-  if (moduleCode === 'DA' && accountRole === 'ACCUMULATED_DEPRECIATION_PARENT') {
-    return [SystemAccountGroupTags.accumulatedDepreciation, SystemAccountGroupTags.defaultAccountAccumulatedDepreciationParent];
-  }
-
-  if (moduleCode === 'DA' && accountRole === 'DEPRECIATION_EXPENSE_PARENT') {
-    return [SystemAccountGroupTags.depreciationExpense, SystemAccountGroupTags.defaultAccountDepreciationExpenseParent];
+  if (moduleCode === 'SM' && accountRole === 'SERVICE_REVENUE_PARENT') {
+    return [SystemAccountGroupTags.revenue, SystemAccountGroupTags.serviceRevenues, SystemAccountGroupTags.servicesMaintenanceRevenueParent];
   }
 
   if (moduleCode === 'DSM' && accountRole === 'SALES_DISCOUNT_PARENT') {

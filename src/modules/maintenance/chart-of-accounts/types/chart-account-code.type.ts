@@ -1,5 +1,3 @@
-import { ChartAccountLevel } from '@prisma/client';
-
 export type ParsedChartAccountCode = {
   major: number;
   sub1: number;
@@ -7,5 +5,3 @@ export type ParsedChartAccountCode = {
   sub3: number;
   specific: number;
 };
-
-export type ChartAccountCodeLevel = ChartAccountLevel;

@@ -21,6 +21,9 @@ describe('BranchRolesService permission architecture', () => {
           isActive: true,
         }),
       },
+      companyRole: {
+        findMany: jest.fn(),
+      },
       module: {
         findMany: jest.fn(),
       },
@@ -79,7 +82,7 @@ describe('BranchRolesService permission architecture', () => {
         findMany: jest.fn().mockResolvedValue([]),
       },
     });
-    const companyRoleFindMany = jest.mocked((prisma as { companyRole: { findMany: jest.Mock } }).companyRole.findMany);
+    const companyRoleFindMany = jest.mocked(prisma.companyRole.findMany);
 
     await service.findAll(superAdmin, 10);
 

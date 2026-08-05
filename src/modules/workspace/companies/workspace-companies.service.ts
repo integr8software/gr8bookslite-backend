@@ -6,17 +6,17 @@ import { MaintenanceTransactionOptions } from '../../../common/constants/transac
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
-import { seedCompanyItemAttributeDefaults } from '../../maintenance/item-attributes/seed/item-attributes.seed';
-import { seedCompanyTermMaintenanceDefaults } from '../../maintenance/term-maintenance/seed/term-maintenance.seed';
+import { seedCompanyItemVariationDefaults } from '../../maintenance/item-variations/seed/item-variations.seed';
+import { seedCompanyTermsMaintenanceDefaults } from '../../maintenance/terms-maintenance/seed/terms-maintenance.seed';
 import { seedCompanyUnitOfMeasurementDefaults } from '../../maintenance/unit-of-measurement/seed/unit-of-measurement.seed';
 import { seedCompanyPaymentTypeMaintenanceDefaults } from '../../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
 import { seedCompanyChartAccountDefaults } from '../../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
 import { seedCompanyDefaultAccountDefaults } from '../../maintenance/default-account/seed/default-accounts.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../../maintenance/discount-maintenance/seed/discount-maintenance.seed';
+import { seedCompanyServicesMaintenanceDefaults } from '../../maintenance/services-maintenance/seed/services-maintenance.seed';
 import { seedCompanyItemCategoryDefaults } from '../../maintenance/item-category/seed/item-category.seed';
 import { seedCompanyBankAccountDefaults } from '../../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyResponsibilityCenterDefaults } from '../../maintenance/responsibility-center/seed/responsibility-center.seed';
-import { seedCompanyTaxMaintenanceDefaults } from '../../maintenance/tax-maintenance/seed/tax-maintenance.seed';
 import { seedCompanyWarehouseMaintenanceDefaults } from '../../maintenance/warehouse-maintenance/seed/warehouse-maintenance.seed';
 import { WorkspaceAuditLogsService } from '../audit-logs/workspace-audit-logs.service';
 import { WorkspaceUsersService } from '../users/workspace-users.service';
@@ -156,12 +156,12 @@ export class WorkspaceCompaniesService {
         },
       });
 
-      await seedCompanyTermMaintenanceDefaults(tx, createdCompany.id);
-      await seedCompanyItemAttributeDefaults(tx, createdCompany.id);
+      await seedCompanyTermsMaintenanceDefaults(tx, createdCompany.id);
+      await seedCompanyItemVariationDefaults(tx, createdCompany.id);
       await seedCompanyUnitOfMeasurementDefaults(tx, createdCompany.id);
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyChartAccountDefaults(tx, createdCompany.id);
-      await seedCompanyTaxMaintenanceDefaults(tx, createdCompany.id);
+      await seedCompanyServicesMaintenanceDefaults(tx, createdCompany.id);
       await seedCompanyDefaultAccountDefaults(tx, createdCompany.id);
       await seedCompanyItemCategoryDefaults(tx, createdCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, createdCompany.id);

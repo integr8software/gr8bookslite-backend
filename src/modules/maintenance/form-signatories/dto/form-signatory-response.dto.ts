@@ -76,8 +76,8 @@ export class FormSignatorySetupResponseDto {
   @ApiProperty()
   createdAt!: string;
 
-  @ApiProperty()
-  updatedAt!: string;
+  @ApiProperty({ nullable: true })
+  updatedAt!: string | null;
 }
 
 export class FormSignatorySetupsResponseDto {

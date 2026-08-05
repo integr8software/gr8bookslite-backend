@@ -20,7 +20,7 @@ gr8bookslite-frontend/FRONTEND_MAP.md
 The closest existing implementation pattern is Term Management:
 
 ```text
-gr8bookslite-backend/src/modules/maintenance/term-maintenance/
+gr8bookslite-backend/src/modules/maintenance/terms-maintenance/
 gr8bookslite-frontend/app/src/services/modules/maintenance/term-management/
 ```
 

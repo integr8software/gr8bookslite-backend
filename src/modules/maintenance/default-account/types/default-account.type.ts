@@ -9,18 +9,16 @@ export type GeneratedDefaultAccount = NonNullable<DefaultAccountPayload['expense
 
 export type DefaultAccountParentRole =
   | 'EXPENSE_PARENT'
-  | 'REVENUE_PARENT'
-  | 'FIXED_ASSET_PARENT'
-  | 'ACCUMULATED_DEPRECIATION_PARENT'
-  | 'DEPRECIATION_EXPENSE_PARENT';
+  | 'REVENUE_PARENT';
 
-export type GeneratedAccountKey = 'fixedAssetGroup';
+export type GeneratedAccountKey = never;
 
-export type GeneratedAccountResultKey = 'expenseCoaId' | 'revenueCoaId' | 'assetCoaId' | 'accumulatedDepreciationCoaId';
+export type GeneratedAccountResultKey = 'expenseCoaId' | 'revenueCoaId';
 
 export type ParentChartAccountReference = {
   id: bigint;
   accountCode: string;
+  accountLevel: ChartAccountLevel;
 };
 
 export type GeneratedAccountRequest = {
@@ -33,6 +31,6 @@ export type GeneratedAccountRequest = {
   accountLevel: ChartAccountLevel;
   accountType: ChartAccountType;
   accountNature: AccountNature;
-  accountGroup: string;
+  accountGroup: string | string[];
   isPostingAccount: boolean;
 };

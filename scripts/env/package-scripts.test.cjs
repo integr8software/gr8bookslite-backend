@@ -133,6 +133,12 @@ test('safe provisioning scripts are available without full db seed aliases', () 
   assert.equal(scripts['db:provision'], 'npm run db:provision:current');
 
   for (const scriptName of [
+    'db:update:modules',
+    'db:update:modules:current',
+    'db:update:modules:local',
+    'db:update:modules:shared',
+    'db:update:modules:staging',
+    'db:update:modules:production',
     'db:seed:safe:current',
     'db:seed:safe:shared',
     'db:seed:safe:staging',

@@ -1,184 +1,21 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { CompanyUnitType, Prisma, TransactionNumberInputMode, TransactionNumberSequence, TransactionNumberStatus } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+export {
+  findTransactionNumberForCompanyBranch,
+  generateTransactionNumberForCompanyBranch,
+  resolveTransactionNumberForCompanyBranch,
+  resolveTransactionNumberScopeForCompanyBranch,
+  resolveTransactionNumberSequenceForCompanyBranch,
+  suggestTransactionNumberForCompanyBranch,
+} from './services/transaction-number-sequence-generator.service';
+export { formatTransactionNumber } from './utils/transaction-number-format.util';
+export type {
+  ResolveTransactionNumberOptions,
+  SuggestTransactionNumberOptions,
+  TransactionNumberContext,
+  TransactionNumberFallbackOptions,
+  TransactionNumberIssueCheck,
+  TransactionNumberIssueContext,
+  TransactionNumberScope,
+  TransactionNumberSequenceWithModule,
+  TransactionNumberWriteClient,
+} from './types/transaction-number-sequence-runtime.types';
 
-export type TransactionNumberWriteClient = PrismaService | Prisma.TransactionClient;
-
-export type TransactionNumberModuleSequence = TransactionNumberSequence & {
-  module: { code: string };
-};
-
-export async function findTransactionNumberForCompanyBranch(
-  tx: TransactionNumberWriteClient,
-  {
-    branchUnitId,
-    companyId,
-    moduleCode,
-    requireActive = true,
-  }: {
-    branchUnitId: number;
-    companyId: number;
-    moduleCode: string;
-    requireActive?: boolean;
-  },
-) {
-  await ensureBranchBelongsToCompany(tx, { branchUnitId, companyId });
-
-  const sequence = await tx.transactionNumberSequence.findFirst({
-    where: {
-      branchUnitId,
-      module: { code: moduleCode, isActive: true },
-      ...(requireActive ? { status: TransactionNumberStatus.ACTIVE } : {}),
-    },
-    include: {
-      module: {
-        select: { code: true },
-      },
-    },
-  });
-
-  return sequence;
-}
-
-export async function generateTransactionNumberForCompanyBranch(
-  tx: Prisma.TransactionClient,
-  {
-    branchUnitId,
-    companyId,
-    createDefaultIfMissing = false,
-    isIssued,
-    moduleCode,
-  }: {
-    branchUnitId: number;
-    companyId: number;
-    createDefaultIfMissing?: boolean;
-    isIssued?: (transactionNumber: string) => Promise<boolean>;
-    moduleCode: string;
-  },
-) {
-  const sequence =
-    (await findTransactionNumberForCompanyBranch(tx, {
-      branchUnitId,
-      companyId,
-      moduleCode,
-    })) ??
-    (createDefaultIfMissing
-      ? await createDefaultAutoTransactionNumberForCompanyBranch(tx, {
-          branchUnitId,
-          companyId,
-          moduleCode,
-        })
-      : null);
-
-  if (!sequence) {
-    throw new NotFoundException(`Transaction number setup for ${moduleCode} was not found for this branch.`);
-  }
-
-  if (sequence.inputMode === TransactionNumberInputMode.MANUAL) {
-    throw new BadRequestException(`Transaction number setup for ${moduleCode} is manual for this branch.`);
-  }
-
-  let runningNumber = sequence.currentNumber;
-  let transactionNumber = formatTransactionNumber(sequence, runningNumber);
-
-  while (isIssued && (await isIssued(transactionNumber))) {
-    runningNumber += 1;
-    transactionNumber = formatTransactionNumber(sequence, runningNumber);
-  }
-
-  await tx.transactionNumberSequence.update({
-    where: { id: sequence.id },
-    data: { currentNumber: runningNumber + 1 },
-  });
-
-  return {
-    branchUnitId,
-    currentNumber: runningNumber + 1,
-    inputMode: sequence.inputMode,
-    moduleCode: sequence.module.code,
-    sequenceId: sequence.id,
-    transactionNumber,
-  };
-}
-
-async function createDefaultAutoTransactionNumberForCompanyBranch(
-  tx: Prisma.TransactionClient,
-  {
-    branchUnitId,
-    companyId,
-    moduleCode,
-  }: {
-    branchUnitId: number;
-    companyId: number;
-    moduleCode: string;
-  },
-) {
-  const module = await tx.module.findFirst({
-    where: {
-      code: moduleCode,
-      isActive: true,
-    },
-    select: { id: true },
-  });
-
-  if (!module) {
-    throw new NotFoundException(`Transaction module ${moduleCode} was not found.`);
-  }
-
-  return tx.transactionNumberSequence.upsert({
-    where: {
-      moduleId_branchUnitId: {
-        branchUnitId,
-        moduleId: module.id,
-      },
-    },
-    create: {
-      branchUnitId,
-      currentNumber: 1,
-      inputMode: TransactionNumberInputMode.AUTO,
-      moduleId: module.id,
-      padding: 6,
-      prefix: `${moduleCode}-`,
-      startingNumber: 1,
-      status: TransactionNumberStatus.ACTIVE,
-      suffix: '',
-    },
-    update: {},
-    include: {
-      module: {
-        select: { code: true },
-      },
-    },
-  });
-}
-
-export function formatTransactionNumber(sequence: Pick<TransactionNumberSequence, 'padding' | 'prefix' | 'suffix'>, runningNumber: number) {
-  return `${sequence.prefix}${String(runningNumber).padStart(sequence.padding, '0')}${sequence.suffix}`;
-}
-
-async function ensureBranchBelongsToCompany(
-  tx: TransactionNumberWriteClient,
-  {
-    branchUnitId,
-    companyId,
-  }: {
-    branchUnitId: number;
-    companyId: number;
-  },
-) {
-  const branch = await tx.companyUnit.findFirst({
-    where: {
-      id: branchUnitId,
-      companyId,
-      isActive: true,
-      type: {
-        in: [CompanyUnitType.HEAD_OFFICE, CompanyUnitType.BRANCH, CompanyUnitType.SATELLITE],
-      },
-    },
-    select: { id: true },
-  });
-
-  if (!branch) {
-    throw new BadRequestException('Select an active branch.');
-  }
-}

@@ -1,13 +1,15 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ChartOfAccountsService } from './chart-of-accounts.service';
+import { ChartOfAccountsLookupService } from './lookups/chart-of-accounts-lookup.service';
 import {
   ChartAccountContainerResponseDto,
   ChartAccountListResponseDto,
   ChartAccountNextCodeResponseDto,
+  ChartAccountOptionsResponseDto,
   ChartAccountSaveResponseDto,
   ChartAccountTreeResponseDto,
 } from './dto/chart-account-response.dto';
@@ -18,18 +20,40 @@ import { UpdateChartAccountStatusDto } from './dto/update-chart-account-status.d
 import { UpdateChartAccountDto } from './dto/update-chart-account.dto';
 
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @ApiTags('Chart of Accounts')
 @Controller({
   path: 'maintenance/chart-of-accounts',
   version: '1',
 })
 export class ChartOfAccountsController {
-  constructor(private readonly chartOfAccountsService: ChartOfAccountsService) {}
+  constructor(
+    private readonly chartOfAccountsService: ChartOfAccountsService,
+    private readonly chartOfAccountsLookupService: ChartOfAccountsLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ type: ChartAccountListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
     return this.chartOfAccountsService.findAll(user, query);
+  }
+
+  @Get('posting-accounts')
+  @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
+  findPostingAccounts(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
+    return this.chartOfAccountsLookupService.findPostingOptionsForCompanyUser(user, query);
+  }
+
+  @Get('all-accounts')
+  @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
+  findAllAccounts(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
+    return this.chartOfAccountsLookupService.findAllOptionsForCompanyUser(user, query);
+  }
+
+  @Get('options')
+  @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
+    return this.chartOfAccountsLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get('tree')

@@ -9,17 +9,17 @@ import { normalizeEmail } from '../../common/utils/email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BillingService } from '../billing/billing.service';
 import { AuthMailService } from '../auth/services/auth-mail.service';
-import { seedCompanyItemAttributeDefaults } from '../maintenance/item-attributes/seed/item-attributes.seed';
-import { seedCompanyTermMaintenanceDefaults } from '../maintenance/term-maintenance/seed/term-maintenance.seed';
+import { seedCompanyItemVariationDefaults } from '../maintenance/item-variations/seed/item-variations.seed';
+import { seedCompanyTermsMaintenanceDefaults } from '../maintenance/terms-maintenance/seed/terms-maintenance.seed';
 import { seedCompanyUnitOfMeasurementDefaults } from '../maintenance/unit-of-measurement/seed/unit-of-measurement.seed';
 import { seedCompanyPaymentTypeMaintenanceDefaults } from '../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
 import { seedCompanyChartAccountDefaults } from '../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
 import { seedCompanyDefaultAccountDefaults } from '../maintenance/default-account/seed/default-accounts.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../maintenance/discount-maintenance/seed/discount-maintenance.seed';
+import { seedCompanyServicesMaintenanceDefaults } from '../maintenance/services-maintenance/seed/services-maintenance.seed';
 import { seedCompanyItemCategoryDefaults } from '../maintenance/item-category/seed/item-category.seed';
 import { seedCompanyBankAccountDefaults } from '../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyResponsibilityCenterDefaults } from '../maintenance/responsibility-center/seed/responsibility-center.seed';
-import { seedCompanyTaxMaintenanceDefaults } from '../maintenance/tax-maintenance/seed/tax-maintenance.seed';
 import { seedCompanyWarehouseMaintenanceDefaults } from '../maintenance/warehouse-maintenance/seed/warehouse-maintenance.seed';
 import { SaveOnboardingBillingDto } from './dto/save-onboarding-billing.dto';
 import { SaveOnboardingCompanyDetailsDto } from './dto/save-onboarding-company-details.dto';
@@ -460,12 +460,12 @@ export class OnboardingService {
         },
       });
 
-      await seedCompanyTermMaintenanceDefaults(tx, provisionedCompany.id);
-      await seedCompanyItemAttributeDefaults(tx, provisionedCompany.id);
+      await seedCompanyTermsMaintenanceDefaults(tx, provisionedCompany.id);
+      await seedCompanyItemVariationDefaults(tx, provisionedCompany.id);
       await seedCompanyUnitOfMeasurementDefaults(tx, provisionedCompany.id);
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyChartAccountDefaults(tx, provisionedCompany.id);
-      await seedCompanyTaxMaintenanceDefaults(tx, provisionedCompany.id);
+      await seedCompanyServicesMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyDefaultAccountDefaults(tx, provisionedCompany.id);
       await seedCompanyItemCategoryDefaults(tx, provisionedCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, provisionedCompany.id);

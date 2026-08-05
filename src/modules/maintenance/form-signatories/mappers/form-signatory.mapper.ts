@@ -35,6 +35,6 @@ export function mapFormSignatorySetup(setup: FormSignatorySetupPayload) {
       };
     }),
     createdAt: setup.createdAt.toISOString(),
-    updatedAt: setup.updatedAt.toISOString(),
+    updatedAt: setup.updatedAt?.toISOString() ?? null,
   };
 }

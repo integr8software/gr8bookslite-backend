@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
-import {
-  collectPermissionArchitectureMetrics,
-  printPermissionArchitectureMetrics,
-} from '../scripts/permissionArchitectureMetrics';
+import { collectPermissionArchitectureMetrics, printPermissionArchitectureMetrics } from '../scripts/permissionArchitectureMetrics';
 import { prisma } from '../seeds/prismaClient';
 import { seedModules } from '../seeds/seedModules';
 import { seedModuleSystems } from '../seeds/seedModuleSystems';
+import { seedPartyEntityTypes } from '../seeds/seedPartyEntityTypes';
 import { seedSubscriptionPlans } from '../seeds/seedSubscriptionPlans';
+import { seedTaxes } from '../seeds/seedTaxes';
+import { seedTaxPostingRules } from '../../src/modules/tax/seed/tax.seed';
 
 export type ProvisionResult = {
   checksum: string;
@@ -14,13 +14,9 @@ export type ProvisionResult = {
   version: string;
 };
 
-export const PlatformProvisionVersion = '2026.07.08.0';
+export const PlatformProvisionVersion = '2026.07.29.0';
 
-const ProvisionSteps = [
-  'platform-catalog',
-  'module-systems',
-  'subscription-plans',
-] as const;
+const ProvisionSteps = ['platform-catalog', 'module-systems', 'party-entity-types', 'subscription-plans', 'taxes', 'tax-posting-rules'] as const;
 
 export function buildProvisionChecksum() {
   return createHash('sha256')
@@ -35,10 +31,7 @@ export function buildProvisionChecksum() {
 
 export async function runPlatformProvision(): Promise<ProvisionResult> {
   const checksum = buildProvisionChecksum();
-  const appliedBy =
-    process.env.PLATFORM_PROVISION_APPLIED_BY ||
-    process.env.APP_ENV ||
-    'manual';
+  const appliedBy = process.env.PLATFORM_PROVISION_APPLIED_BY || process.env.APP_ENV || 'manual';
 
   const before = await collectPermissionArchitectureMetrics(prisma);
   printPermissionArchitectureMetrics('Before platform provision:', before);
@@ -49,8 +42,17 @@ export async function runPlatformProvision(): Promise<ProvisionResult> {
   console.log('Provisioning module systems and sidebar templates.');
   await seedModuleSystems();
 
+  console.log('Provisioning party entity types.');
+  await seedPartyEntityTypes();
+
   console.log('Provisioning subscription plan system links.');
   await seedSubscriptionPlans();
+
+  console.log('Provisioning taxes.');
+  await seedTaxes();
+
+  console.log('Provisioning tax posting rules.');
+  await seedTaxPostingRules(prisma);
 
   await prisma.platformVersion.upsert({
     where: { id: 1 },
@@ -73,9 +75,7 @@ export async function runPlatformProvision(): Promise<ProvisionResult> {
   const after = await collectPermissionArchitectureMetrics(prisma);
   printPermissionArchitectureMetrics('After platform provision:', after);
 
-  console.log(
-    `Platform provision complete: version=${PlatformProvisionVersion} checksum=${checksum}`,
-  );
+  console.log(`Platform provision complete: version=${PlatformProvisionVersion} checksum=${checksum}`);
 
   return {
     checksum,

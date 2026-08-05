@@ -1,47 +1,42 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  AccountNature,
-  ChartAccountLevel,
-  ChartAccountStatus,
-  ChartAccountType,
-  DefaultAccount,
-  DefaultAccountTemplateType,
-  MembershipRole,
-  MembershipStatus,
-  Prisma,
-} from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, DefaultAccount, DefaultAccountTemplateType, Prisma } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
-import { findSystemAccountGroupOrThrow, mergeAccountGroupTags, SystemAccountGroups } from '../chart-of-accounts/utils/system-account-groups.util';
+import { CreateChartAccountDto } from '../chart-of-accounts/dto/create-chart-account.dto';
+import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
+import { findSystemAccountGroupOrThrow, mergeAccountGroupTags, SystemAccountGroups, SystemAccountGroupTags } from '../chart-of-accounts/utils/system-account-groups.util';
+import { DefaultAccountOptionQueryDto } from './dto/default-account-option-query.dto';
 import { CreateDefaultAccountTemplateDto } from './dto/create-default-account-template.dto';
 import { GetDefaultAccountTemplateListQueryDto } from './dto/get-default-account-template-list-query.dto';
 import { UpdateDefaultAccountTemplateStatusDto } from './dto/update-default-account-template-status.dto';
 import { UpdateDefaultAccountTemplateDto } from './dto/update-default-account-template.dto';
+import { DefaultAccountLookupService } from './lookups/default-account-lookup.service';
 import { mapDefaultAccount } from './mappers/default-account-template.mapper';
 import { DefaultAccountInclude } from './prisma/default-account-template.include';
-import type {
-  DefaultAccountParentRole,
-  DefaultAccountPayload,
-  GeneratedAccountKey,
-  GeneratedAccountRequest,
-  ParentChartAccountReference,
-} from './types/default-account.type';
+import type { DefaultAccountParentRole, DefaultAccountPayload, GeneratedAccountRequest, ParentChartAccountReference } from './types/default-account.type';
+
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
+const SupportedDefaultAccountTemplateTypes = [DefaultAccountTemplateType.EXPENSE, DefaultAccountTemplateType.COLLECTION] as const;
 
 @Injectable()
 export class DefaultAccountService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly defaultAccountLookupService: DefaultAccountLookupService,
+  ) {}
 
   async findAll(user: AuthUser, query: GetDefaultAccountTemplateListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
+    this.ensureSupportedDefaultAccountType(query.type);
 
     const page = query.page ?? DefaultPage;
     const limit = query.limit ?? DefaultLimit;
@@ -70,46 +65,121 @@ export class DefaultAccountService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'DA', { includeCancel: true }),
     };
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
     const template = await this.findTemplateOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       defaultAccount: (await this.mapDefaultAccountsWithAuditUsers([template]))[0],
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'DA', { includeCancel: true }),
     };
   }
 
   async findExpenseParentOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
-
-    const options = await this.getExpenseParentOptions(companyId, this.prisma);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
 
     return {
-      options: options.map((account) => ({
-        id: account.id.toString(),
-        accountCode: account.accountCode,
-        accountTitle: account.accountTitle,
-        accountLevel: account.accountLevel,
-        parentAccountId: account.parentAccountId?.toString() ?? null,
-      })),
+      options: await this.defaultAccountLookupService.findExpenseParentOptions({ companyId }),
     };
   }
 
+  async findOptions(user: AuthUser, query: DefaultAccountOptionQueryDto) {
+    const companyId = await this.ensureDefaultAccountOptionAccess(user);
+
+    return {
+      options: await this.defaultAccountLookupService.findDefaultAccountOptions({ companyId, query }),
+    };
+  }
+
+  async findExpenseOptions(user: AuthUser, query: DefaultAccountOptionQueryDto) {
+    const companyId = await this.ensureDefaultAccountOptionAccess(user);
+
+    return {
+      options: await this.defaultAccountLookupService.findDefaultAccountOptions({
+        companyId,
+        query,
+        type: DefaultAccountTemplateType.EXPENSE,
+      }),
+    };
+  }
+
+  async findCollectionOptions(user: AuthUser, query: DefaultAccountOptionQueryDto) {
+    const companyId = await this.ensureDefaultAccountOptionAccess(user);
+
+    return {
+      options: await this.defaultAccountLookupService.findDefaultAccountOptions({
+        companyId,
+        query,
+        type: DefaultAccountTemplateType.COLLECTION,
+      }),
+    };
+  }
+
+  async createExpenseSubAccount(user: AuthUser, dto: CreateChartAccountDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.CREATE, 'You do not have permission to add default account expense types.');
+
+    if (!dto.parentAccountId) {
+      throw new BadRequestException('Select an expense parent before adding a sub account.');
+    }
+
+    const parentAccountId = parsePositiveBigIntId(dto.parentAccountId, 'parentAccountId');
+    const parentAccount = await this.findExpenseParentOptionOrThrow(companyId, parentAccountId, this.prisma);
+    assertCanCreateAccountLevel(parentAccount.accountLevel, dto.accountLevel);
+
+    const accountTitle = this.validateDefaultAccountName(dto.accountTitle);
+    await this.ensureChartAccountTitleAvailable(companyId, parentAccount.id, accountTitle);
+
+    try {
+      const account = await this.prisma.chartAccount.create({
+        data: {
+          accountCode: await this.generateNextAccountCode(companyId, parentAccount.id, parentAccount.accountCode, dto.accountLevel, this.prisma),
+          accountGroup: mergeAccountGroupTags(dto.accountGroup ?? 'Expenses'),
+          accountLevel: dto.accountLevel,
+          accountNature: dto.accountNature ?? AccountNature.DEBIT,
+          accountTitle,
+          accountType: dto.accountType ?? ChartAccountType.EXPENSE,
+          companyId,
+          deletedAt: dto.status === ChartAccountStatus.INACTIVE ? new Date() : null,
+          description: this.normalizeTemplateDescription(dto.description),
+          isPostingAccount: dto.isPostingAccount ?? false,
+          parentAccountId: parentAccount.id,
+          reportAlias: dto.reportAlias?.trim() || null,
+          showTotal: dto.showTotal ?? false,
+          statementSection: dto.statementSection?.trim() || null,
+          status: dto.status ?? ChartAccountStatus.ACTIVE,
+          whoCreated: String(user.id),
+        },
+      });
+
+      return {
+        message: 'Expense sub account created successfully.',
+        account: {
+          id: account.id.toString(),
+        },
+      };
+    } catch (error) {
+      throwConflictOnPrismaUniqueError(error, 'An expense sub account with this code already exists.');
+      throw error;
+    }
+  }
+
   async create(user: AuthUser, dto: CreateDefaultAccountTemplateDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.CREATE, 'You do not have permission to add default accounts.');
     const defaultAccountName = this.validateDefaultAccountName(dto.defaultAccountName);
     const description = this.normalizeTemplateDescription(dto.description);
+    this.ensureSupportedDefaultAccountType(dto.type);
     await this.ensureDefaultAccountNameAvailable(companyId, dto.type, defaultAccountName);
 
     try {
@@ -134,8 +204,6 @@ export class DefaultAccountService {
             status: requestedStatus,
             expenseCoaId: generatedAccounts.expenseCoaId,
             revenueCoaId: generatedAccounts.revenueCoaId,
-            assetCoaId: generatedAccounts.assetCoaId,
-            accumulatedDepreciationCoaId: generatedAccounts.accumulatedDepreciationCoaId,
             createdByUserId: user.id,
           },
           include: DefaultAccountInclude,
@@ -147,17 +215,18 @@ export class DefaultAccountService {
         defaultAccount: (await this.mapDefaultAccountsWithAuditUsers([template]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'Default Account Name already exists for this type.');
       throw error;
     }
   }
 
   async update(user: AuthUser, id: string, dto: UpdateDefaultAccountTemplateDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.UPDATE, 'You do not have permission to edit default accounts.');
     const templateId = parsePositiveBigIntId(id);
     const currentTemplate = await this.findTemplateOrThrow(companyId, templateId);
+    this.ensureSupportedDefaultAccountType(dto.type);
 
     if (dto.type !== undefined && dto.type !== currentTemplate.type) {
       throw new BadRequestException('Default account type cannot be changed.');
@@ -168,6 +237,10 @@ export class DefaultAccountService {
 
     if (defaultAccountName !== currentTemplate.name) {
       await this.ensureDefaultAccountNameAvailable(companyId, currentTemplate.type, defaultAccountName, templateId);
+    }
+
+    if (dto.status !== undefined && dto.status !== currentTemplate.status) {
+      ensureModuleAction(user, companyId, 'DA', PermissionAction.CANCEL, 'You do not have permission to inactivate default accounts.');
     }
 
     try {
@@ -212,15 +285,15 @@ export class DefaultAccountService {
         defaultAccount: (await this.mapDefaultAccountsWithAuditUsers([template]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'Default Account Name already exists for this type.');
       throw error;
     }
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdateDefaultAccountTemplateStatusDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.CANCEL, 'You do not have permission to inactivate default accounts.');
     const templateId = parsePositiveBigIntId(id);
     const currentTemplate = await this.findTemplateOrThrow(companyId, templateId);
 
@@ -252,6 +325,14 @@ export class DefaultAccountService {
     return defaultAccounts.map((defaultAccount) => mapDefaultAccount(defaultAccount as DefaultAccountPayload, userNames));
   }
 
+  private async ensureDefaultAccountOptionAccess(user: AuthUser) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
+
+    return companyId;
+  }
+
   private buildListWhere(companyId: number, query: GetDefaultAccountTemplateListQueryDto): Prisma.DefaultAccountWhereInput {
     const search = query.search?.trim();
 
@@ -259,6 +340,7 @@ export class DefaultAccountService {
       companyId,
       deletedAt: null,
       ...(query.type ? { type: query.type } : {}),
+      ...(!query.type ? { type: { in: [...SupportedDefaultAccountTemplateTypes] } } : {}),
       ...(query.status ? { status: query.status } : {}),
       ...(search
         ? {
@@ -306,7 +388,6 @@ export class DefaultAccountService {
       inactiveDefaultAccounts: groups.filter((group) => group.status === ChartAccountStatus.INACTIVE).reduce((total, group) => total + group._count._all, 0),
       expenseDefaultAccounts: groups.find((group) => group.type === DefaultAccountTemplateType.EXPENSE)?._count._all ?? 0,
       collectionDefaultAccounts: groups.find((group) => group.type === DefaultAccountTemplateType.COLLECTION)?._count._all ?? 0,
-      fixedAssetDefaultAccounts: groups.find((group) => group.type === DefaultAccountTemplateType.FIXED_ASSET)?._count._all ?? 0,
     };
   }
 
@@ -330,34 +411,21 @@ export class DefaultAccountService {
     const result: {
       expenseCoaId?: bigint;
       revenueCoaId?: bigint;
-      assetCoaId?: bigint;
-      accumulatedDepreciationCoaId?: bigint;
     } = {};
-    const generatedAccounts = new Map<GeneratedAccountKey, Awaited<ReturnType<DefaultAccountService['createGeneratedChartAccount']>>>();
     const selectedExpenseParent =
       type === DefaultAccountTemplateType.EXPENSE && expenseParentCoaId
         ? await this.findExpenseParentOptionOrThrow(companyId, parsePositiveBigIntId(expenseParentCoaId, 'expenseParentCoaId'), tx)
         : undefined;
 
     for (const account of this.getGeneratedAccountRequests(type, description, selectedExpenseParent)) {
-      const parentAccount = account.parentGeneratedKey ? generatedAccounts.get(account.parentGeneratedKey) : account.selectedParentAccount;
-
-      if (account.parentGeneratedKey && !parentAccount) {
-        throw new BadRequestException('Cannot create default account. Required generated parent account was not found.');
-      }
-
       const chartAccount = await this.createGeneratedChartAccount({
         companyId,
         status,
         tx,
         userId,
-        parentAccount,
+        parentAccount: account.selectedParentAccount,
         ...account,
       });
-
-      if (account.generatedKey) {
-        generatedAccounts.set(account.generatedKey, chartAccount);
-      }
 
       if (account.resultKey) {
         result[account.resultKey] = chartAccount.id;
@@ -397,56 +465,13 @@ export class DefaultAccountService {
           accountLevel: ChartAccountLevel.SPECIFIC,
           accountType: ChartAccountType.REVENUE,
           accountNature: AccountNature.CREDIT,
-          accountGroup: 'Revenue',
+          accountGroup: [SystemAccountGroupTags.revenue, SystemAccountGroupTags.defaultAccountRevenueParent],
           isPostingAccount: true,
         },
       ];
     }
 
-    return [
-      {
-        role: 'FIXED_ASSET_PARENT',
-        generatedKey: 'fixedAssetGroup',
-        title: description,
-        accountLevel: ChartAccountLevel.SUB3,
-        accountType: ChartAccountType.ASSET,
-        accountNature: AccountNature.DEBIT,
-        accountGroup: 'Fixed Assets',
-        isPostingAccount: false,
-      },
-      {
-        role: 'FIXED_ASSET_PARENT',
-        parentGeneratedKey: 'fixedAssetGroup',
-        resultKey: 'assetCoaId',
-        title: description,
-        accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.ASSET,
-        accountNature: AccountNature.DEBIT,
-        accountGroup: 'Fixed Assets',
-        isPostingAccount: true,
-      },
-      {
-        role: 'ACCUMULATED_DEPRECIATION_PARENT',
-        parentGeneratedKey: 'fixedAssetGroup',
-        resultKey: 'accumulatedDepreciationCoaId',
-        title: `Accumulated Depreciation - ${description}`,
-        accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.ASSET,
-        accountNature: AccountNature.DEBIT,
-        accountGroup: 'Accumulated Depreciation',
-        isPostingAccount: true,
-      },
-      {
-        role: 'DEPRECIATION_EXPENSE_PARENT',
-        resultKey: 'expenseCoaId',
-        title: `Depreciation Expense - ${description}`,
-        accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.EXPENSE,
-        accountNature: AccountNature.DEBIT,
-        accountGroup: 'Depreciation Expense',
-        isPostingAccount: true,
-      },
-    ];
+    throw new BadRequestException('Default Account Type must be Expense or Collection.');
   }
 
   private async createGeneratedChartAccount({
@@ -539,6 +564,7 @@ export class DefaultAccountService {
     return {
       id: account.id,
       accountCode: account.accountCode,
+      accountLevel: account.accountLevel,
     };
   }
 
@@ -547,7 +573,7 @@ export class DefaultAccountService {
     parentAccountId: bigint,
     parentAccountCode: string,
     accountLevel: ChartAccountLevel,
-    tx: Prisma.TransactionClient,
+    tx: Prisma.TransactionClient | PrismaService,
   ) {
     const siblings = await tx.chartAccount.findMany({
       where: {
@@ -587,11 +613,7 @@ export class DefaultAccountService {
       return;
     }
 
-    const fixedAssetGroupId = await this.findGeneratedFixedAssetGroupId(template, tx);
-    await this.updateChartAccountTitle(fixedAssetGroupId, description, tx, userId);
-    await this.updateChartAccountTitle(template.assetCoaId, description, tx, userId);
-    await this.updateChartAccountTitle(template.accumulatedDepreciationCoaId, `Accumulated Depreciation - ${description}`, tx, userId);
-    await this.updateChartAccountTitle(template.expenseCoaId, `Depreciation Expense - ${description}`, tx, userId);
+    throw new BadRequestException('Default Account Type must be Expense or Collection.');
   }
 
   private async updateExpenseGeneratedAccountParent({
@@ -611,23 +633,13 @@ export class DefaultAccountService {
       return;
     }
 
-    const parentAccount = await this.findExpenseParentOptionOrThrow(
-      companyId,
-      parsePositiveBigIntId(expenseParentCoaId, 'expenseParentCoaId'),
-      tx,
-    );
+    const parentAccount = await this.findExpenseParentOptionOrThrow(companyId, parsePositiveBigIntId(expenseParentCoaId, 'expenseParentCoaId'), tx);
 
     if (template.expenseCoa?.parentAccountId === parentAccount.id) {
       return;
     }
 
-    const accountCode = await this.generateNextAccountCode(
-      companyId,
-      parentAccount.id,
-      parentAccount.accountCode,
-      ChartAccountLevel.SPECIFIC,
-      tx,
-    );
+    const accountCode = await this.generateNextAccountCode(companyId, parentAccount.id, parentAccount.accountCode, ChartAccountLevel.SPECIFIC, tx);
 
     await tx.chartAccount.update({
       where: { id: template.expenseCoaId },
@@ -650,56 +662,13 @@ export class DefaultAccountService {
     });
   }
 
-  private async findGeneratedFixedAssetGroupId(template: Awaited<ReturnType<DefaultAccountService['findTemplateOrThrow']>>, tx: Prisma.TransactionClient) {
-    if (template.type !== DefaultAccountTemplateType.FIXED_ASSET || !template.assetCoaId || !template.accumulatedDepreciationCoaId) {
-      return null;
-    }
-
-    const linkedAccounts = await tx.chartAccount.findMany({
-      where: {
-        companyId: template.companyId,
-        id: {
-          in: [template.assetCoaId, template.accumulatedDepreciationCoaId],
-        },
-      },
-      select: {
-        id: true,
-        parentAccountId: true,
-      },
-    });
-    const assetAccount = linkedAccounts.find((account) => account.id === template.assetCoaId);
-    const accumulatedDepreciationAccount = linkedAccounts.find((account) => account.id === template.accumulatedDepreciationCoaId);
-
-    if (!assetAccount?.parentAccountId || assetAccount.parentAccountId !== accumulatedDepreciationAccount?.parentAccountId) {
-      return null;
-    }
-
-    const generatedParentAccount = await tx.chartAccount.findFirst({
-      where: {
-        id: assetAccount.parentAccountId,
-        companyId: template.companyId,
-        accountLevel: ChartAccountLevel.SUB3,
-      },
-      select: { id: true },
-    });
-
-    return generatedParentAccount?.id ?? null;
-  }
-
   private async updateLinkedChartAccountStatus(
     template: Awaited<ReturnType<DefaultAccountService['findTemplateOrThrow']>>,
     status: ChartAccountStatus,
     tx: Prisma.TransactionClient,
     userId: number,
   ) {
-    const fixedAssetGroupId = await this.findGeneratedFixedAssetGroupId(template, tx);
-    const chartAccountIds = [
-      template.expenseCoaId,
-      template.revenueCoaId,
-      template.assetCoaId,
-      template.accumulatedDepreciationCoaId,
-      fixedAssetGroupId,
-    ].filter((id): id is bigint => Boolean(id));
+    const chartAccountIds = [template.expenseCoaId, template.revenueCoaId].filter((id): id is bigint => Boolean(id));
 
     if (chartAccountIds.length === 0) {
       return;
@@ -730,6 +699,12 @@ export class DefaultAccountService {
     return description ? description : null;
   }
 
+  private ensureSupportedDefaultAccountType(type: DefaultAccountTemplateType | undefined) {
+    if (type && !SupportedDefaultAccountTemplateTypes.includes(type as (typeof SupportedDefaultAccountTemplateTypes)[number])) {
+      throw new BadRequestException('Default Account Type must be Expense or Collection.');
+    }
+  }
+
   private async ensureDefaultAccountNameAvailable(companyId: number, type: DefaultAccountTemplateType, description: string, excludedTemplateId?: bigint) {
     const existingTemplate = await this.prisma.defaultAccount.findFirst({
       where: {
@@ -747,9 +722,25 @@ export class DefaultAccountService {
     }
   }
 
+  private async ensureChartAccountTitleAvailable(companyId: number, parentAccountId: bigint, accountTitle: string) {
+    const existingAccount = await this.prisma.chartAccount.findFirst({
+      where: {
+        companyId,
+        deletedAt: null,
+        parentAccountId,
+        accountTitle: { equals: accountTitle, mode: 'insensitive' },
+      },
+      select: { id: true },
+    });
+
+    if (existingAccount) {
+      throw new ConflictException('Expense Type Name already exists under the selected parent.');
+    }
+  }
+
   private async findTemplateOrThrow(companyId: number, templateId: bigint) {
     const template = await this.prisma.defaultAccount.findFirst({
-      where: { id: templateId, companyId, deletedAt: null },
+      where: { id: templateId, companyId, deletedAt: null, type: { in: [...SupportedDefaultAccountTemplateTypes] } },
       include: DefaultAccountInclude,
     });
 
@@ -758,77 +749,6 @@ export class DefaultAccountService {
     }
 
     return template;
-  }
-
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: { userId_companyId: { userId: user.id, companyId } },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`DA:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage default account records.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canDelete: false,
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`DA:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('Default Account Name already exists for this type.');
-    }
   }
 }
 
@@ -841,15 +761,7 @@ function getDefaultAccountParentDefinition(role: DefaultAccountParentRole) {
     return SystemAccountGroups.defaultAccount.revenueParent;
   }
 
-  if (role === 'FIXED_ASSET_PARENT') {
-    return SystemAccountGroups.defaultAccount.fixedAssetParent;
-  }
-
-  if (role === 'ACCUMULATED_DEPRECIATION_PARENT') {
-    return SystemAccountGroups.defaultAccount.accumulatedDepreciationParent;
-  }
-
-  return SystemAccountGroups.defaultAccount.depreciationExpenseParent;
+  return SystemAccountGroups.defaultAccount.revenueParent;
 }
 
 function isDescendantOrSelf(

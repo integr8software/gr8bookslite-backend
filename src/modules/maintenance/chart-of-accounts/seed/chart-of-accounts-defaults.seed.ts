@@ -1,4 +1,4 @@
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountType } from '@prisma/client';
 
 export const StandardDefaultChartAccounts = [
   {
@@ -1212,7 +1212,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002001',
     parentAccountCode: '2010002000',
-    accountTitle: 'CWT - Witholding Tax Payable',
+    accountTitle: 'Creditable Withholding Tax',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1225,7 +1225,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002002',
     parentAccountCode: '2010002000',
-    accountTitle: 'EWT - Witholding Tax Payable',
+    accountTitle: 'Expanded Withholding Tax',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1238,7 +1238,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002003',
     parentAccountCode: '2010002000',
-    accountTitle: 'Final - Withholding Tax Payable',
+    accountTitle: 'Final Withholding Tax',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1316,7 +1316,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002009',
     parentAccountCode: '2010002000',
-    accountTitle: 'Output Tax',
+    accountTitle: 'Withholding VAT',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1342,7 +1342,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010002011',
     parentAccountCode: '2010002000',
-    accountTitle: 'Input Tax',
+    accountTitle: 'Input VAT',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1355,7 +1355,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '2010003000',
     parentAccountCode: '2010000000',
-    accountTitle: 'Shor-Term Loans Payable',
+    accountTitle: 'Short-Term Loans Payable',
     accountLevel: ChartAccountLevel.SUB3,
     accountType: ChartAccountType.LIABILITY,
     accountNature: AccountNature.CREDIT,
@@ -1767,7 +1767,7 @@ export const StandardDefaultChartAccounts = [
   {
     accountCode: '4020000001',
     parentAccountCode: '4020000000',
-    accountTitle: 'Service Fees',
+    accountTitle: 'Service Revenue',
     accountLevel: ChartAccountLevel.SPECIFIC,
     accountType: ChartAccountType.REVENUE,
     accountNature: AccountNature.CREDIT,
@@ -1778,11 +1778,36 @@ export const StandardDefaultChartAccounts = [
     orderNo: 129,
   },
   {
+    accountCode: '4030000000',
+    parentAccountCode: '4000000000',
+    accountTitle: 'Collection Revenues',
+    accountLevel: ChartAccountLevel.SUB1,
+    accountType: ChartAccountType.REVENUE,
+    accountNature: AccountNature.CREDIT,
+    accountGroup: null,
+    statementSection: 'Income Statement',
+    reportAlias: null,
+    orderNo: 129,
+  },
+  {
+    accountCode: '4010000003',
+    parentAccountCode: '4010000000',
+    accountTitle: 'Service Fees',
+    accountLevel: ChartAccountLevel.SPECIFIC,
+    accountType: ChartAccountType.REVENUE,
+    accountNature: AccountNature.CREDIT,
+    accountGroup: null,
+    statementSection: 'Income Statement',
+    reportAlias: null,
+    isPostingAccount: true,
+    orderNo: 130,
+  },
+  {
     accountCode: '5000000000',
     accountTitle: 'Cost of Sales/Services',
     accountLevel: ChartAccountLevel.MAJOR,
-    accountType: ChartAccountType.REVENUE,
-    accountNature: AccountNature.CREDIT,
+    accountType: ChartAccountType.EXPENSE,
+    accountNature: AccountNature.DEBIT,
     accountGroup: null,
     statementSection: 'Income Statement',
     reportAlias: null,
@@ -1793,8 +1818,8 @@ export const StandardDefaultChartAccounts = [
     parentAccountCode: '5000000000',
     accountTitle: 'Cost of Sales',
     accountLevel: ChartAccountLevel.SUB3,
-    accountType: ChartAccountType.REVENUE,
-    accountNature: AccountNature.CREDIT,
+    accountType: ChartAccountType.EXPENSE,
+    accountNature: AccountNature.DEBIT,
     accountGroup: null,
     statementSection: 'Income Statement',
     reportAlias: null,
@@ -1805,8 +1830,8 @@ export const StandardDefaultChartAccounts = [
     parentAccountCode: '5000000000',
     accountTitle: 'Cost of Services',
     accountLevel: ChartAccountLevel.SUB3,
-    accountType: ChartAccountType.REVENUE,
-    accountNature: AccountNature.CREDIT,
+    accountType: ChartAccountType.EXPENSE,
+    accountNature: AccountNature.DEBIT,
     accountGroup: null,
     statementSection: 'Income Statement',
     reportAlias: null,
@@ -1817,8 +1842,8 @@ export const StandardDefaultChartAccounts = [
     parentAccountCode: '5000001000',
     accountTitle: 'Item Cost of Sales',
     accountLevel: ChartAccountLevel.SUB3,
-    accountType: ChartAccountType.REVENUE,
-    accountNature: AccountNature.CREDIT,
+    accountType: ChartAccountType.EXPENSE,
+    accountNature: AccountNature.DEBIT,
     accountGroup: null,
     statementSection: 'Income Statement',
     reportAlias: null,
@@ -2648,5 +2673,3 @@ export const StandardDefaultChartAccounts = [
     orderNo: 194,
   },
 ] as const;
-
-export const ActiveDefaultCoaStatus = ChartAccountStatus.ACTIVE;

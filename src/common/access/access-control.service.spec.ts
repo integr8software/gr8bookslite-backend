@@ -52,7 +52,7 @@ describe('AccessControlService', () => {
 
   it('resolves active company access from plan defaults and user preference deltas', async () => {
     const membership = buildMembership({
-      planModules: [buildEnabledModule(5, 'TM', 'Term Management')],
+      planModules: [buildEnabledModule(5, 'TM', 'Terms Maintenance')],
       sidebarPreferences: [
         {
           branchUnitId: 10,
@@ -114,7 +114,7 @@ describe('AccessControlService', () => {
                 {
                   system: {
                     code: 'ACCOUNTING',
-                    modules: [buildEnabledModule(5, 'TM', 'Term Management')],
+                    modules: [buildEnabledModule(5, 'TM', 'Terms Maintenance')],
                     sidebarItems: [
                       {
                         id: 100,
@@ -132,8 +132,8 @@ describe('AccessControlService', () => {
                         parentId: 100,
                         moduleId: 5,
                         itemType: 'LINK',
-                        key: 'financial-maintenance-term-management',
-                        label: 'Term Management',
+                        key: 'financial-maintenance-terms-maintenance',
+                        label: 'Terms Maintenance',
                         description: null,
                         iconName: 'calendar',
                         sortOrder: 0,
@@ -157,7 +157,7 @@ describe('AccessControlService', () => {
         moduleCode: null,
         children: [
           expect.objectContaining({
-            key: 'accounting-financial-maintenance-term-management',
+            key: 'accounting-financial-maintenance-terms-maintenance',
             moduleCode: 'TM',
           }),
         ],
@@ -176,7 +176,7 @@ describe('AccessControlService', () => {
                 {
                   system: {
                     code: 'ACCOUNTING_AND_INVENTORY',
-                    modules: [buildEnabledModule(5, 'TM', 'Term Management'), buildEnabledModule(6, 'COA', 'Chart of Accounts')],
+                    modules: [buildEnabledModule(5, 'TM', 'Terms Maintenance'), buildEnabledModule(6, 'COA', 'Chart of Accounts')],
                     sidebarItems: [
                       {
                         id: 100,
@@ -205,8 +205,8 @@ describe('AccessControlService', () => {
                         parentId: 100,
                         moduleId: 5,
                         itemType: 'LINK',
-                        key: 'financial-maintenance-term-management',
-                        label: 'Term Management',
+                        key: 'financial-maintenance-terms-maintenance',
+                        label: 'Terms Maintenance',
                         description: null,
                         iconName: 'calendar',
                         sortOrder: 1,

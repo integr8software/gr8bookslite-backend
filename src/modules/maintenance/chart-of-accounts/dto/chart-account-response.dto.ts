@@ -91,6 +91,15 @@ export class ChartAccountResponseDto {
   @ApiProperty({ nullable: true })
   currencyCode!: string | null;
 
+  @ApiProperty()
+  isSystemDefault!: boolean;
+
+  @ApiProperty()
+  isUserCreated!: boolean;
+
+  @ApiProperty()
+  isBankLinked!: boolean;
+
   @ApiProperty({ nullable: true })
   deletedAt!: string | null;
 
@@ -103,8 +112,8 @@ export class ChartAccountResponseDto {
   @ApiProperty({ nullable: true })
   updatedBy!: string | null;
 
-  @ApiProperty()
-  updatedAt!: string;
+  @ApiProperty({ nullable: true })
+  updatedAt!: string | null;
 
   @ApiProperty({ type: [ChartAccountBankAccountResponseDto] })
   bankAccounts!: ChartAccountBankAccountResponseDto[];
@@ -118,6 +127,31 @@ export class ChartAccountTreeNodeResponseDto extends ChartAccountResponseDto {
 export class ChartAccountListResponseDto {
   @ApiProperty({ type: [ChartAccountResponseDto] })
   accounts!: ChartAccountResponseDto[];
+}
+
+export class ChartAccountOptionResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  accountCode!: string;
+
+  @ApiProperty()
+  accountTitle!: string;
+
+  @ApiProperty({ enum: ChartAccountType, nullable: true })
+  accountType!: ChartAccountType | null;
+
+  @ApiProperty({ enum: AccountNature, nullable: true })
+  accountNature!: AccountNature | null;
+
+  @ApiProperty({ enum: ChartAccountStatus })
+  status!: ChartAccountStatus;
+}
+
+export class ChartAccountOptionsResponseDto {
+  @ApiProperty({ type: [ChartAccountOptionResponseDto] })
+  accounts!: ChartAccountOptionResponseDto[];
 }
 
 export class ChartAccountTreeResponseDto {

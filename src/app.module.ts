@@ -17,14 +17,13 @@ import { WorkspaceUsersModule } from './modules/workspace/users/workspace-users.
 import { WorkspaceAuditLogsModule } from './modules/workspace/audit-logs/workspace-audit-logs.module';
 import { TablePreferencesModule } from './modules/table-preferences/table-preferences.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
-import { AlphanumericTaxCodesModule } from './modules/alphanumeric-tax-codes/alphanumeric-tax-codes.module';
 import { AddressModule } from './modules/address/address.module';
 import { BranchRolesModule } from './modules/company/branch-roles/branch-roles.module';
 import { BranchUsersModule } from './modules/company/branch-users/branch-users.module';
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
-import { TermMaintenanceModule } from './modules/maintenance/term-maintenance/term-maintenance.module';
-import { ItemAttributesModule } from './modules/maintenance/item-attributes/item-attributes.module';
+import { TermsMaintenanceModule } from './modules/maintenance/terms-maintenance/terms-maintenance.module';
+import { ItemVariationsModule } from './modules/maintenance/item-variations/item-variations.module';
 import { ItemCategoryModule } from './modules/maintenance/item-category/item-category.module';
 import { UnitOfMeasurementModule } from './modules/maintenance/unit-of-measurement/unit-of-measurement.module';
 import { PaymentTypeMaintenanceModule } from './modules/maintenance/payment-type-maintenance/payment-type-maintenance.module';
@@ -32,16 +31,19 @@ import { DiscountMaintenanceModule } from './modules/maintenance/discount-mainte
 import { PartyMaintenanceModule } from './modules/maintenance/party-maintenance/party-maintenance.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
 import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
+import { ServicesMaintenanceModule } from './modules/maintenance/services-maintenance/services-maintenance.module';
 import { ResponsibilityCenterModule } from './modules/maintenance/responsibility-center/responsibility-center.module';
-import { TaxMaintenanceModule } from './modules/maintenance/tax-maintenance/tax-maintenance.module';
+import { TaxModule } from './modules/tax/tax.module';
 import { WarehouseMaintenanceModule } from './modules/maintenance/warehouse-maintenance/warehouse-maintenance.module';
 import { WarehouseAccessModule } from './modules/maintenance/warehouse-access/warehouse-access.module';
 import { WarehouseStorageModule } from './modules/maintenance/warehouse-storage/warehouse-storage.module';
 import { validateEnvironment } from './config/environment';
 import { ApprovalManagementModule } from './modules/system-administration/approval-management/approval-management.module';
+import { ApproverSetupsModule } from './modules/system-administration/approver-setups/approver-setups.module';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
 import { StorageModule } from './storage/storage.module';
 import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.module';
+import { AccountsPayableModule } from './modules/accounts-payable/accounts-payable.module';
 
 @Module({
   imports: [
@@ -69,7 +71,6 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     UsersModule,
     BillingModule,
     AddressModule,
-    AlphanumericTaxCodesModule,
     ModuleSystemsModule,
     MasterPlanAndPackagesModule,
     WorkspaceCompaniesModule,
@@ -80,8 +81,8 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     BranchUsersModule,
     FormSignatoriesModule,
     ChartOfAccountsModule,
-    TermMaintenanceModule,
-    ItemAttributesModule,
+    TermsMaintenanceModule,
+    ItemVariationsModule,
     ItemCategoryModule,
     UnitOfMeasurementModule,
     PaymentTypeMaintenanceModule,
@@ -89,14 +90,17 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
     PartyMaintenanceModule,
     BankMasterfileModule,
     DefaultAccountModule,
+    ServicesMaintenanceModule,
     ResponsibilityCenterModule,
-    TaxMaintenanceModule,
+    TaxModule,
     WarehouseMaintenanceModule,
     WarehouseAccessModule,
     WarehouseStorageModule,
     ApprovalManagementModule,
+    ApproverSetupsModule,
     TransactionNumberSequencesModule,
     UserSidebarModule,
+    AccountsPayableModule,
     AiAssistantModule,
   ],
   providers: [

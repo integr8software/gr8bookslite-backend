@@ -2,11 +2,35 @@ import { ModuleCategory } from '@prisma/client';
 import { prisma } from './prismaClient';
 import { ModuleCatalog } from './moduleCatalog';
 
+const ExcludedModuleCodes = ['TXM'];
+
 /**
  * The migration preserves every former submodule ID and establishes the canonical
  * leaf catalog. Reseeding then normalizes that catalog before any dependent rows.
  */
 export async function seedModules() {
+  const activeModuleCodes = ModuleCatalog.map((module) => module.code);
+  const inactiveModuleCodes = [...new Set([...ExcludedModuleCodes])];
+
+  await prisma.permission.updateMany({
+    where: {
+      OR: [
+        { code: { in: inactiveModuleCodes } },
+        { code: { notIn: activeModuleCodes } },
+      ],
+    },
+    data: { isActive: false },
+  });
+  await prisma.module.updateMany({
+    where: {
+      OR: [
+        { code: { in: inactiveModuleCodes } },
+        { code: { notIn: activeModuleCodes } },
+      ],
+    },
+    data: { isActive: false },
+  });
+
   for (const catalogModule of ModuleCatalog) {
     const module = await prisma.module.upsert({
       where: { code: catalogModule.code },

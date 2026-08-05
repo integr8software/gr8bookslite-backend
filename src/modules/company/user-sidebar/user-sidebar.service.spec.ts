@@ -56,6 +56,7 @@ describe('UserSidebarService tree validation', () => {
       validate([
         { ...link('profile', 1), iconName: 'profile' },
         { ...link('slice', 2), iconName: 'slice' },
+        { ...link('map', 5), iconName: 'map' },
         { ...link('weight', 3), iconName: 'weight' },
         { ...link('weight-tilde', 4), iconName: 'weightTilde' },
       ]),
@@ -76,8 +77,8 @@ describe('UserSidebarService tree validation', () => {
           sortOrder: 0,
           children: [
             {
-              key: 'accounting-term-management',
-              label: 'Term Management',
+              key: 'accounting-terms-maintenance',
+              label: 'Terms Maintenance',
               itemType: 'LINK',
               moduleId: 7,
               sortOrder: 0,
@@ -125,7 +126,7 @@ describe('UserSidebarService tree validation', () => {
           sortOrder: 0,
         }),
         expect.objectContaining({
-          itemKey: 'accounting-term-management',
+          itemKey: 'accounting-terms-maintenance',
           isHidden: true,
         }),
       ]),

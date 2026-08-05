@@ -1,16 +1,6 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  ChartAccountStatus,
-  MembershipRole,
-  MembershipStatus,
-  PartyClassification,
-  PartyStatus,
-  PartyType,
-  TransactionNumberInputMode,
-  Prisma,
-} from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ChartAccountStatus, PartyClassification, PartyStatus, PartyType, TransactionNumberInputMode, Prisma } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -19,7 +9,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { AddressService } from '../../address/address.service';
 import {
   findTransactionNumberForCompanyBranch,
-  generateTransactionNumberForCompanyBranch,
+  resolveTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
 import { CreatePartyAddressDto } from './dto/create-party-address.dto';
 import { CreatePartyDto } from './dto/create-party.dto';
@@ -29,19 +19,24 @@ import { UpdatePartyDto } from './dto/update-party.dto';
 import { mapParty } from './mappers/party-maintenance.mapper';
 import { PartyInclude } from './prisma/party.include';
 import type { PartyWithDetails } from './types/party-with-details.type';
-import { buildPartyAccountingAccountOptions } from './utils/party-accounting-account.util';
+import { PartyLookupService } from './lookups/party-lookup.service';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
+import { normalizeWhitespace } from '../../../common/utils/string-normalization.util';
 @Injectable()
 export class PartyMaintenanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly addressService: AddressService,
+    private readonly partyLookupService: PartyLookupService,
   ) {}
 
   async findAll(user: AuthUser, query: GetPartyListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'PM', PermissionAction.VIEW, 'You do not have permission to manage party records.');
 
     const page = query.page ?? DefaultPage;
     const limit = query.pageSize ?? query.limit ?? DefaultLimit;
@@ -71,42 +66,33 @@ export class PartyMaintenanceService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'PM', { includeImport: true, includeCancel: true, includeUncancel: true }),
     };
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'PM', PermissionAction.VIEW, 'You do not have permission to manage party records.');
     const party = await this.findPartyOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       party: (await this.mapPartiesWithAuditUsers([party]))[0],
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, 'PM', { includeImport: true, includeCancel: true, includeUncancel: true }),
     };
   }
 
   async findAccountingOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'PM', PermissionAction.VIEW, 'You do not have permission to manage party records.');
 
-    const accounts = await this.prisma.chartAccount.findMany({
-      where: {
-        companyId,
-        status: ChartAccountStatus.ACTIVE,
-        deletedAt: null,
-      },
-      orderBy: [{ accountCode: 'asc' }, { orderNo: 'asc' }, { accountTitle: 'asc' }],
-    });
-
-    return buildPartyAccountingAccountOptions(accounts);
+    return this.partyLookupService.findAccountingOptions({ companyId });
   }
 
   async findOptions(user: AuthUser, partyType: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const normalizedPartyType = this.parsePartyType(partyType);
 
     const parties = await this.prisma.party.findMany({
@@ -130,6 +116,7 @@ export class PartyMaintenanceService {
         middleName: true,
         lastName: true,
         suffixName: true,
+        contactPerson: true,
         email: true,
         contactNo: true,
         status: true,
@@ -143,6 +130,7 @@ export class PartyMaintenanceService {
         classification: party.classification,
         partyTypes: party.partyTypes,
         name: this.getPartyOptionName(party),
+        contactPerson: party.contactPerson ?? '',
         email: party.email ?? '',
         contactNo: party.contactNo ?? '',
         status: party.status,
@@ -151,9 +139,9 @@ export class PartyMaintenanceService {
   }
 
   async create(user: AuthUser, dto: CreatePartyDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'PM', PermissionAction.CREATE, 'You do not have permission to manage party records.');
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const sequence = await findTransactionNumberForCompanyBranch(this.prisma, {
       branchUnitId,
@@ -195,15 +183,15 @@ export class PartyMaintenanceService {
         party: (await this.mapPartiesWithAuditUsers([party]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A party with this code already exists.');
       throw error;
     }
   }
 
   async update(user: AuthUser, id: string, dto: UpdatePartyDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'PM', PermissionAction.UPDATE, 'You do not have permission to manage party records.');
 
     const partyId = parsePositiveBigIntId(id);
     const current = await this.findPartyOrThrow(companyId, partyId);
@@ -240,15 +228,15 @@ export class PartyMaintenanceService {
         party: (await this.mapPartiesWithAuditUsers([party]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A party with this code already exists.');
       throw error;
     }
   }
 
   async importParties(user: AuthUser, dto: ImportPartiesDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, 'PM', PermissionAction.CREATE, 'You do not have permission to manage party records.');
 
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId ?? dto.parties[0]?.branchUnitId);
     const sequence = await findTransactionNumberForCompanyBranch(this.prisma, {
@@ -283,15 +271,12 @@ export class PartyMaintenanceService {
       for (const input of parties) {
         const partyCodeNo = isManual
           ? input.partyCodeNo
-          : (
-              await generateTransactionNumberForCompanyBranch(tx, {
-                branchUnitId,
-                createDefaultIfMissing: true,
-                companyId,
-                moduleCode: PartyTransactionModuleCode,
-                isIssued: (transactionNumber) => this.isPartyCodeIssued(tx, companyId, transactionNumber),
-              })
-            ).transactionNumber;
+          : await this.resolvePartyCodeForCreate(tx, {
+              branchUnitId,
+              companyId,
+              dto: input,
+              isAuto: true,
+            });
         const nextInput = { ...input, partyCodeNo };
 
         await this.ensureIdentityAvailable(companyId, nextInput, undefined, tx);
@@ -343,6 +328,7 @@ export class PartyMaintenanceService {
               { middleName: { contains: search, mode: 'insensitive' } },
               { lastName: { contains: search, mode: 'insensitive' } },
               { tin: { contains: search, mode: 'insensitive' } },
+              { contactPerson: { contains: search, mode: 'insensitive' } },
               { email: { contains: search, mode: 'insensitive' } },
               { contactNo: { contains: search, mode: 'insensitive' } },
               { landline: { contains: search, mode: 'insensitive' } },
@@ -487,23 +473,22 @@ export class PartyMaintenanceService {
       requirePartyCode?: boolean;
       resolveAddressNames?: boolean;
     } = {},
-  ): Promise<CreatePartyDto> {
+  ): Promise<NormalizedPartyDto> {
     const partyTypes = this.normalizePartyTypes(dto.partyTypes);
     const termId = this.normalizeOptionalString(dto.termId);
+    const partyEntityType = await this.resolvePartyEntityType(dto.classification, dto.partyEntityType);
+    const partyEntityTypeIsGovernment = Boolean(partyEntityType?.isGovernment);
 
     if (termId) {
       await this.ensureTermBelongsToCompany(companyId, parsePositiveBigIntId(termId));
     }
 
-    const vatRegistrationTypeId = this.normalizeOptionalString(dto.vatRegistrationTypeId);
-
-    if (vatRegistrationTypeId) {
-      await this.ensureTaxMaintenanceBelongsToCompany(companyId, parsePositiveBigIntId(vatRegistrationTypeId));
-    }
-
-    const normalized: CreatePartyDto = {
+    const normalized: NormalizedPartyDto = {
       ...dto,
       partyCodeNo: dto.partyCodeNo.trim(),
+      partyEntityType: partyEntityType?.name ?? null,
+      partyEntityTypeId: partyEntityType?.id ?? null,
+      partyEntityTypeIsGovernment,
       partyTypes,
       status: options.forceActiveStatus ? PartyStatus.ACTIVE : (dto.status ?? PartyStatus.ACTIVE),
       partyName: this.normalizeOptionalString(dto.partyName),
@@ -525,9 +510,15 @@ export class PartyMaintenanceService {
       employeePayableAccount: this.normalizeOptionalString(dto.employeePayableAccount),
       termId,
       tin: this.normalizeOptionalString(dto.tin),
-      vatRegistrationType: dto.vatRegistrationType ?? null,
-      vatRegistrationTypeId,
       atcCode: this.normalizeOptionalString(dto.atcCode),
+      defaultPurchaseInputVatTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseInputVatTaxSourceKey),
+      defaultPurchaseEwtTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseEwtTaxSourceKey),
+      defaultPurchaseFwtTaxSourceKey: partyEntityTypeIsGovernment ? this.normalizeOptionalString(dto.defaultPurchaseFwtTaxSourceKey) : null,
+      defaultPurchaseWvatTaxSourceKey: partyEntityTypeIsGovernment ? this.normalizeOptionalString(dto.defaultPurchaseWvatTaxSourceKey) : null,
+      defaultSalesOutputVatTaxSourceKey: this.normalizeOptionalString(dto.defaultSalesOutputVatTaxSourceKey),
+      defaultSalesCwtTaxSourceKey: this.normalizeOptionalString(dto.defaultSalesCwtTaxSourceKey),
+      defaultSalesWvatTaxSourceKey: partyEntityTypeIsGovernment ? this.normalizeOptionalString(dto.defaultSalesWvatTaxSourceKey) : null,
+      contactPerson: this.normalizeOptionalString(dto.contactPerson),
       email: this.normalizeOptionalString(dto.email),
       contactNo: this.normalizeOptionalString(dto.contactNo),
       landline: this.normalizeOptionalString(dto.landline),
@@ -540,6 +531,7 @@ export class PartyMaintenanceService {
 
     this.validateParty(normalized);
     await this.ensurePartyChartAccounts(companyId, normalized);
+    await this.ensurePartyTaxDefaults(normalized);
 
     if (options.requirePartyCode && !normalized.partyCodeNo) {
       throw new BadRequestException('Party code is required.');
@@ -549,9 +541,12 @@ export class PartyMaintenanceService {
   }
 
   private mergePartyDto(current: PartyWithDetails, dto: UpdatePartyDto): CreatePartyDto {
+    const currentTaxDefaults = current;
+
     return {
       partyCodeNo: dto.partyCodeNo ?? current.partyCodeNo,
       classification: dto.classification ?? current.classification,
+      partyEntityType: dto.partyEntityType ?? current.partyEntityType?.name ?? null,
       partyTypes: dto.partyTypes ?? current.partyTypes,
       status: dto.status ?? current.status,
       partyName: dto.partyName ?? current.partyName ?? '',
@@ -594,16 +589,22 @@ export class PartyMaintenanceService {
       employeePayableAccount: dto.employeePayableAccount ?? current.employeePayableAccountId?.toString() ?? '',
       termId: dto.termId ?? current.termId?.toString() ?? '',
       tin: dto.tin ?? current.tin ?? '',
-      vatRegistrationType: dto.vatRegistrationType ?? current.vatRegistrationType ?? null,
-      vatRegistrationTypeId: dto.vatRegistrationTypeId ?? current.vatRegistrationTypeId?.toString() ?? '',
       atcCode: dto.atcCode ?? current.atcCode ?? '',
+      defaultPurchaseInputVatTaxSourceKey: dto.defaultPurchaseInputVatTaxSourceKey ?? currentTaxDefaults.defaultPurchaseInputVatTaxSourceKey ?? '',
+      defaultPurchaseEwtTaxSourceKey: dto.defaultPurchaseEwtTaxSourceKey ?? currentTaxDefaults.defaultPurchaseEwtTaxSourceKey ?? '',
+      defaultPurchaseFwtTaxSourceKey: dto.defaultPurchaseFwtTaxSourceKey ?? currentTaxDefaults.defaultPurchaseFwtTaxSourceKey ?? '',
+      defaultPurchaseWvatTaxSourceKey: dto.defaultPurchaseWvatTaxSourceKey ?? currentTaxDefaults.defaultPurchaseWvatTaxSourceKey ?? '',
+      defaultSalesOutputVatTaxSourceKey: dto.defaultSalesOutputVatTaxSourceKey ?? currentTaxDefaults.defaultSalesOutputVatTaxSourceKey ?? '',
+      defaultSalesCwtTaxSourceKey: dto.defaultSalesCwtTaxSourceKey ?? currentTaxDefaults.defaultSalesCwtTaxSourceKey ?? '',
+      defaultSalesWvatTaxSourceKey: dto.defaultSalesWvatTaxSourceKey ?? currentTaxDefaults.defaultSalesWvatTaxSourceKey ?? '',
+      contactPerson: dto.contactPerson ?? current.contactPerson ?? '',
       email: dto.email ?? current.email ?? '',
       contactNo: dto.contactNo ?? current.contactNo ?? '',
       landline: dto.landline ?? current.landline ?? '',
     };
   }
 
-  private validateParty(dto: CreatePartyDto) {
+  private validateParty(dto: NormalizedPartyDto) {
     if (dto.partyCodeNo && !dto.partyCodeNo.trim()) {
       throw new BadRequestException('Party code is required.');
     }
@@ -631,6 +632,10 @@ export class PartyMaintenanceService {
       (dto.partyTypes.includes(PartyType.EMPLOYEE) || dto.partyTypes.includes(PartyType.MEMBER))
     ) {
       throw new BadRequestException('Employee and Member are only available for individual parties.');
+    }
+
+    if (dto.classification === PartyClassification.NON_INDIVIDUAL && !dto.partyEntityTypeId) {
+      throw new BadRequestException('Select a party entity type.');
     }
 
     this.validateAccountingAccounts(dto);
@@ -890,15 +895,13 @@ export class PartyMaintenanceService {
       return dto.partyCodeNo;
     }
 
-    return (
-      await generateTransactionNumberForCompanyBranch(tx, {
-        branchUnitId,
-        createDefaultIfMissing: true,
-        companyId,
-        moduleCode: PartyTransactionModuleCode,
-        isIssued: (transactionNumber) => this.isPartyCodeIssued(tx, companyId, transactionNumber),
-      })
-    ).transactionNumber;
+    return resolveTransactionNumberForCompanyBranch(tx, {
+      branchUnitId,
+      companyId,
+      moduleCode: PartyTransactionModuleCode,
+      requestedTransactionNumber: dto.partyCodeNo,
+      isIssued: (transactionNumber) => this.isPartyCodeIssued(tx, companyId, transactionNumber),
+    });
   }
 
   private async resolveBranchUnitId(companyId: number, branchUnitId: number | null | undefined) {
@@ -965,6 +968,86 @@ export class PartyMaintenanceService {
     }
   }
 
+  private async ensurePartyTaxDefaults(dto: CreatePartyDto) {
+    const defaultFields = [
+      {
+        sourceKey: dto.defaultPurchaseInputVatTaxSourceKey,
+        transactionType: 'Purchases',
+        taxTypes: ['INPUT VAT'],
+        label: 'Purchase Input VAT',
+      },
+      {
+        sourceKey: dto.defaultPurchaseEwtTaxSourceKey,
+        transactionType: 'Purchases',
+        taxTypes: ['EWT'],
+        label: 'Purchase Expanded Withholding Tax',
+      },
+      {
+        sourceKey: dto.defaultPurchaseFwtTaxSourceKey,
+        transactionType: 'Purchases',
+        taxTypes: ['FWT'],
+        label: 'Purchase Final Withholding Tax',
+      },
+      {
+        sourceKey: dto.defaultPurchaseWvatTaxSourceKey,
+        transactionType: 'Purchases',
+        taxTypes: ['EWT', 'WVAT'],
+        officialAtcCodePrefix: 'WV',
+        label: 'Purchase VAT Withholding',
+      },
+      {
+        sourceKey: dto.defaultSalesOutputVatTaxSourceKey,
+        transactionType: 'Sales',
+        taxTypes: ['OUTPUT VAT'],
+        label: 'Sales Output VAT',
+      },
+      {
+        sourceKey: dto.defaultSalesCwtTaxSourceKey,
+        transactionType: 'Sales',
+        taxTypes: ['CWT'],
+        label: 'Sales Creditable Withholding Tax',
+      },
+      {
+        sourceKey: dto.defaultSalesWvatTaxSourceKey,
+        transactionType: 'Sales',
+        taxTypes: ['WVAT'],
+        label: 'Sales VAT Withholding',
+      },
+    ].filter((field) => Boolean(field.sourceKey));
+
+    if (defaultFields.length === 0) {
+      return;
+    }
+
+    const taxes = await this.prisma.tax.findMany({
+      where: {
+        sourceKey: {
+          in: defaultFields.map((field) => field.sourceKey as string),
+        },
+      },
+      select: {
+        sourceKey: true,
+        officialAtcCode: true,
+        taxType: true,
+        transactionType: true,
+      },
+    });
+    const taxBySourceKey = new Map(taxes.map((tax) => [tax.sourceKey, tax]));
+
+    for (const field of defaultFields) {
+      const tax = taxBySourceKey.get(field.sourceKey as string);
+
+      if (
+        !tax ||
+        tax.transactionType !== field.transactionType ||
+        !field.taxTypes.includes(tax.taxType) ||
+        (field.officialAtcCodePrefix && !tax.officialAtcCode?.startsWith(field.officialAtcCodePrefix))
+      ) {
+        throw new BadRequestException(`Select a valid ${field.label} tax.`);
+      }
+    }
+  }
+
   private parseOptionalDate(value: string | null | undefined) {
     const normalized = value?.trim();
 
@@ -982,15 +1065,33 @@ export class PartyMaintenanceService {
     }
   }
 
-  private async ensureTaxMaintenanceBelongsToCompany(companyId: number, taxMaintenanceId: bigint) {
-    const tax = await this.prisma.taxMaintenance.findFirst({
-      where: { id: taxMaintenanceId, companyId, deletedAt: null },
-      select: { id: true },
+  private async resolvePartyEntityType(classification: PartyClassification, value: string | null | undefined) {
+    if (classification === PartyClassification.INDIVIDUAL) {
+      return null;
+    }
+
+    const name = this.normalizeOptionalString(value);
+
+    if (!name) {
+      return null;
+    }
+
+    const partyEntityType = await this.prisma.partyEntityType.findFirst({
+      where: {
+        name: { equals: name, mode: 'insensitive' },
+        status: PartyStatus.ACTIVE,
+      },
     });
 
-    if (!tax) {
-      throw new BadRequestException('Selected VAT registration type does not exist.');
+    if (!partyEntityType) {
+      throw new BadRequestException('Choose a valid party entity type.');
     }
+
+    if (partyEntityType.classification !== classification) {
+      throw new BadRequestException('Choose a non-individual party entity type.');
+    }
+
+    return partyEntityType;
   }
 
   private async findPartyOrThrow(companyId: number, partyId: bigint) {
@@ -1006,11 +1107,12 @@ export class PartyMaintenanceService {
     return party;
   }
 
-  private toPartyData(dto: CreatePartyDto) {
+  private toPartyData(dto: NormalizedPartyDto) {
     return {
       termId: dto.termId ? parsePositiveBigIntId(dto.termId) : null,
       partyCodeNo: dto.partyCodeNo,
       classification: dto.classification,
+      partyEntityTypeId: dto.partyEntityTypeId,
       partyTypes: dto.partyTypes,
       status: dto.status ?? PartyStatus.ACTIVE,
       partyName: dto.classification === PartyClassification.NON_INDIVIDUAL ? dto.partyName : null,
@@ -1031,9 +1133,16 @@ export class PartyMaintenanceService {
       employeeAdvanceAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE) ? parseOptionalPositiveBigIntId(dto.employeeAdvanceAccount) : null,
       employeePayableAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE) ? parseOptionalPositiveBigIntId(dto.employeePayableAccount) : null,
       tin: dto.tin,
-      vatRegistrationType: dto.vatRegistrationType,
-      vatRegistrationTypeId: parseOptionalPositiveBigIntId(dto.vatRegistrationTypeId),
       atcCode: dto.atcCode,
+      defaultPurchaseInputVatTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseInputVatTaxSourceKey : null,
+      defaultPurchaseEwtTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseEwtTaxSourceKey : null,
+      defaultPurchaseFwtTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) && dto.partyEntityTypeIsGovernment ? dto.defaultPurchaseFwtTaxSourceKey : null,
+      defaultPurchaseWvatTaxSourceKey:
+        dto.partyTypes.includes(PartyType.VENDOR) && dto.partyEntityTypeIsGovernment ? dto.defaultPurchaseWvatTaxSourceKey : null,
+      defaultSalesOutputVatTaxSourceKey: dto.partyTypes.includes(PartyType.CUSTOMER) ? dto.defaultSalesOutputVatTaxSourceKey : null,
+      defaultSalesCwtTaxSourceKey: dto.partyTypes.includes(PartyType.CUSTOMER) ? dto.defaultSalesCwtTaxSourceKey : null,
+      defaultSalesWvatTaxSourceKey: dto.partyTypes.includes(PartyType.CUSTOMER) && dto.partyEntityTypeIsGovernment ? dto.defaultSalesWvatTaxSourceKey : null,
+      contactPerson: dto.contactPerson,
       email: dto.email,
       contactNo: dto.contactNo,
       landline: dto.landline,
@@ -1098,7 +1207,7 @@ export class PartyMaintenanceService {
   }
 
   private normalizeIdentity(value: string) {
-    return value.trim().replace(/\s+/g, ' ').toLowerCase();
+    return normalizeWhitespace(value).toLowerCase();
   }
 
   private normalizeOptionalString(value: string | null | undefined) {
@@ -1106,80 +1215,12 @@ export class PartyMaintenanceService {
 
     return normalized || null;
   }
-
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: { userId_companyId: { userId: user.id, companyId } },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`PM:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage party records.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canCancel: this.can(user, companyId, PermissionAction.CANCEL),
-      canUncancel: this.can(user, companyId, PermissionAction.UNCANCEL),
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-      canImport: this.can(user, companyId, PermissionAction.CREATE),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`PM:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('A party with this code already exists.');
-    }
-  }
 }
+
+type NormalizedPartyDto = CreatePartyDto & {
+  partyEntityTypeId: bigint | null;
+  partyEntityTypeIsGovernment: boolean;
+};
 
 function hasPersonalInformationPartyType(partyTypes: PartyType[]) {
   return partyTypes.includes(PartyType.EMPLOYEE) || partyTypes.includes(PartyType.MEMBER);

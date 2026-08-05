@@ -15,11 +15,14 @@ import {
   seedCompanyDiscountMaintenanceDefaults,
 } from '../../src/modules/maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import {
+  ServicesMaintenanceSeedRecords,
+  seedCompanyServicesMaintenanceDefaults,
+} from '../../src/modules/maintenance/services-maintenance/seed/services-maintenance.seed';
+import {
   ResponsibilityCenterSeedRecords,
   seedCompanyResponsibilityCenterDefaults,
 } from '../../src/modules/maintenance/responsibility-center/seed/responsibility-center.seed';
-import { TaxMaintenanceSeedRecords, seedCompanyTaxMaintenanceDefaults } from '../../src/modules/maintenance/tax-maintenance/seed/tax-maintenance.seed';
-import { ItemAttributeSeedRecords, seedCompanyItemAttributeDefaults } from '../../src/modules/maintenance/item-attributes/seed/item-attributes.seed';
+import { ItemVariationSeedRecords, seedCompanyItemVariationDefaults } from '../../src/modules/maintenance/item-variations/seed/item-variations.seed';
 import {
   ItemCategorySeedRecords,
   createItemCategorySeedPathName,
@@ -27,7 +30,7 @@ import {
   flattenItemCategorySeedPaths,
   seedCompanyItemCategoryDefaults,
 } from '../../src/modules/maintenance/item-category/seed/item-category.seed';
-import { TermMaintenanceSeedRecords, seedCompanyTermMaintenanceDefaults } from '../../src/modules/maintenance/term-maintenance/seed/term-maintenance.seed';
+import { TermsMaintenanceSeedRecords, seedCompanyTermsMaintenanceDefaults } from '../../src/modules/maintenance/terms-maintenance/seed/terms-maintenance.seed';
 import {
   WarehouseMaintenanceSeedRecords,
   seedCompanyWarehouseMaintenanceDefaults,
@@ -115,11 +118,11 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
     chartAccounts,
     defaultAccounts,
     terms,
-    itemAttributes,
+    itemVariations,
     itemCategories,
     paymentTypes,
     discounts,
-    taxMaintenance,
+    services,
     responsibilityCenters,
     bankAccounts,
     warehouses,
@@ -133,7 +136,7 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
     countForBackup('item_categories', tx.itemCategory.count({ where: { companyId } })),
     countForBackup('payment_types', tx.paymentType.count({ where: { companyId } })),
     countForBackup('discounts', tx.discount.count({ where: { companyId } })),
-    countForBackup('tax_maintenance', tx.taxMaintenance.count({ where: { companyId } })),
+    countForBackup('services_maintenance', tx.serviceMaintenance.count({ where: { companyId } })),
     countForBackup('responsibility_centers', tx.responsibilityCenter.count({ where: { companyId } })),
     countForBackup('bank_accounts', tx.bankAccount.count({ where: { companyId } })),
     countForBackup('warehouses', tx.warehouse.count({ where: { companyId } })),
@@ -152,11 +155,11 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
       chartAccounts,
       defaultAccounts,
       terms,
-      itemAttributes,
+      itemVariations,
       itemCategories,
       paymentTypes,
       discounts,
-      taxMaintenance,
+      services,
       responsibilityCenters,
       bankAccounts,
       warehouses,
@@ -418,35 +421,6 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     },
   },
   {
-    key: 'tax-maintenance',
-    label: 'Tax maintenance defaults bootstrap',
-    async inspect(companyId, tx) {
-      const existingTaxes = await tx.taxMaintenance.findMany({
-        where: {
-          companyId,
-          name: {
-            in: TaxMaintenanceSeedRecords.map((tax) => tax.name),
-          },
-        },
-        select: { name: true },
-      });
-      const existingNames = new Set(existingTaxes.map((tax) => tax.name));
-      const missingTaxes = TaxMaintenanceSeedRecords.filter((tax) => !existingNames.has(tax.name));
-
-      return missingTaxes.length === 0
-        ? ok('Tax maintenance defaults exist.', { count: existingTaxes.length })
-        : missing('Tax maintenance defaults are incomplete.', [`Seed ${missingTaxes.length} missing tax maintenance records.`], {
-            count: existingTaxes.length,
-            expectedCount: TaxMaintenanceSeedRecords.length,
-            missingNames: missingTaxes.map((tax) => tax.name),
-          });
-    },
-    backup: (companyId, tx) => backupCounts('tax-maintenance', companyId, tx),
-    async apply(companyId, tx) {
-      await seedCompanyTaxMaintenanceDefaults(tx, companyId);
-    },
-  },
-  {
     key: 'default-accounts',
     label: 'Default account records bootstrap',
     async inspect(companyId, tx) {
@@ -478,60 +452,113 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     },
   },
   {
+    key: 'services-maintenance',
+    label: 'Services Maintenance defaults bootstrap',
+    async inspect(companyId, tx) {
+      const existingServices = await tx.serviceMaintenance.findMany({
+        where: {
+          companyId,
+          serviceName: {
+            in: ServicesMaintenanceSeedRecords.map((service) => service.serviceName),
+          },
+          deletedAt: null,
+        },
+        select: {
+          serviceName: true,
+          revenueCoa: {
+            select: {
+              accountCode: true,
+            },
+          },
+        },
+      });
+      const existingServiceNames = new Set(existingServices.map((service) => service.serviceName));
+      const missingServices = ServicesMaintenanceSeedRecords.filter((service) => !existingServiceNames.has(service.serviceName));
+      const servicesWithWrongAccount = existingServices.filter((service) => {
+        const seedRecord = ServicesMaintenanceSeedRecords.find((record) => record.serviceName === service.serviceName);
+
+        return seedRecord && service.revenueCoa.accountCode !== seedRecord.revenueAccountCode;
+      });
+
+      return missingServices.length === 0 && servicesWithWrongAccount.length === 0
+        ? ok('Services Maintenance defaults exist.', {
+            count: existingServices.length,
+          })
+        : missing(
+            'Services Maintenance defaults are incomplete.',
+            [
+              missingServices.length > 0
+                ? `Seed ${missingServices.length} missing service records.`
+                : `Repair ${servicesWithWrongAccount.length} service revenue account links.`,
+            ],
+            {
+              count: existingServices.length,
+              expectedCount: ServicesMaintenanceSeedRecords.length,
+              missingNames: missingServices.map((service) => service.serviceName),
+              wrongAccountNames: servicesWithWrongAccount.map((service) => service.serviceName),
+            },
+          );
+    },
+    backup: (companyId, tx) => backupCounts('services-maintenance', companyId, tx),
+    async apply(companyId, tx) {
+      await seedCompanyServicesMaintenanceDefaults(tx, companyId);
+    },
+  },
+  {
     key: 'terms',
     label: 'Terms bootstrap',
     async inspect(companyId, tx) {
       const existingTerms = await tx.term.findMany({
         where: {
           companyId,
-          name: { in: TermMaintenanceSeedRecords.map((term) => term.name) },
+          name: { in: TermsMaintenanceSeedRecords.map((term) => term.name) },
         },
         select: { name: true },
       });
       const existingNames = new Set(existingTerms.map((term) => term.name));
-      const missingTerms = TermMaintenanceSeedRecords.filter((term) => !existingNames.has(term.name));
+      const missingTerms = TermsMaintenanceSeedRecords.filter((term) => !existingNames.has(term.name));
 
       return missingTerms.length === 0
         ? ok('Terms exist.', { count: existingTerms.length })
         : missing('Default terms are incomplete.', [`Seed ${missingTerms.length} missing default term records.`], {
             count: existingTerms.length,
-            expectedCount: TermMaintenanceSeedRecords.length,
+            expectedCount: TermsMaintenanceSeedRecords.length,
             missingNames: missingTerms.map((term) => term.name),
           });
     },
     backup: (companyId, tx) => backupCounts('terms', companyId, tx),
     async apply(companyId, tx) {
-      await seedCompanyTermMaintenanceDefaults(tx, companyId);
+      await seedCompanyTermsMaintenanceDefaults(tx, companyId);
     },
   },
   {
-    key: 'item-attributes',
-    label: 'Item attribute defaults bootstrap',
+    key: 'item-variations',
+    label: 'Item variation defaults bootstrap',
     async inspect(companyId, tx) {
       const existingAttributes = await tx.itemAttribute.findMany({
         where: {
           companyId,
           deletedAt: null,
           name: {
-            in: ItemAttributeSeedRecords.map((attribute) => attribute.name),
+            in: ItemVariationSeedRecords.map((attribute) => attribute.name),
           },
         },
         select: { name: true },
       });
       const existingNames = new Set(existingAttributes.map((attribute) => attribute.name));
-      const missingAttributes = ItemAttributeSeedRecords.filter((attribute) => !existingNames.has(attribute.name));
+      const missingAttributes = ItemVariationSeedRecords.filter((attribute) => !existingNames.has(attribute.name));
 
       return missingAttributes.length === 0
-        ? ok('Item attribute defaults exist.', { count: existingAttributes.length })
-        : missing('Default item attributes are incomplete.', [`Seed ${missingAttributes.length} missing default item attribute records.`], {
+        ? ok('Item variation defaults exist.', { count: existingAttributes.length })
+        : missing('Default item variations are incomplete.', [`Seed ${missingAttributes.length} missing default item variation records.`], {
             count: existingAttributes.length,
-            expectedCount: ItemAttributeSeedRecords.length,
+            expectedCount: ItemVariationSeedRecords.length,
             missingNames: missingAttributes.map((attribute) => attribute.name),
           });
     },
-    backup: (companyId, tx) => backupCounts('item-attributes', companyId, tx),
+    backup: (companyId, tx) => backupCounts('item-variations', companyId, tx),
     async apply(companyId, tx) {
-      await seedCompanyItemAttributeDefaults(tx, companyId);
+      await seedCompanyItemVariationDefaults(tx, companyId);
     },
   },
   {

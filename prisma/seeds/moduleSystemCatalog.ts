@@ -16,12 +16,7 @@ type ModuleSystemSidebarSeedItem =
       children: readonly ModuleSystemSidebarSeedItem[];
     };
 
-function link(
-  key: string,
-  code: string,
-  iconName: string,
-  label?: string,
-): ModuleSystemSidebarSeedItem {
+function link(key: string, code: string, iconName: string, label?: string): ModuleSystemSidebarSeedItem {
   return {
     itemType: 'LINK',
     key,
@@ -40,12 +35,12 @@ export const AccountingSidebarTemplate = [
     iconName: 'accounting',
     children: [
       link('financial-maintenance-charts-of-accounts', 'COA', 'scale'),
-      link('financial-maintenance-default-accounts', 'DA', 'scale'),
+      link('financial-maintenance-default-accounts', 'DA', 'fileCog'),
       link('financial-maintenance-bank-masterfile', 'BM', 'bank'),
+      link('financial-maintenance-services-maintenance', 'SM', 'receipt'),
       link('financial-maintenance-payment-type', 'PT', 'creditCard'),
-      link('financial-maintenance-discount-management', 'DSM', 'promotion'),
-      link('financial-maintenance-term-management', 'TM', 'calendar'),
-      link('financial-maintenance-tax-maintenance', 'TXM', 'receipt'),
+      link('financial-maintenance-discount-maintenance', 'DSM', 'promotion'),
+      link('financial-maintenance-terms-maintenance', 'TM', 'calendar'),
       link('financial-maintenance-responsibility-center', 'RC', 'target'),
     ],
   },
@@ -60,11 +55,7 @@ export const AccountingSidebarTemplate = [
       link('cash-receipt-acknowledgement-receipt', 'AR', 'cashIn'),
       link('cash-receipt-provisional-receipt', 'PVR', 'cashIn'),
       link('cash-receipt-bank-reconciliation', 'BR', 'bank'),
-      link(
-        'cash-receipt-product-distribution-center-warehouse',
-        'PDCW',
-        'warehouse',
-      ),
+      link('cash-receipt-post-dated-check-registry', 'PDCW', 'calendar'),
     ],
   },
   {
@@ -78,17 +69,9 @@ export const AccountingSidebarTemplate = [
       link('cash-disbursement-cash-advance-multiple-entry', 'CAME', 'cashOut'),
       link('cash-disbursement-petty-cash-voucher', 'PCV', 'cashOut'),
       link('cash-disbursement-petty-cash-fund', 'PCF', 'cashOut'),
-      link(
-        'cash-disbursement-petty-cash-fund-replenishment',
-        'PCFR',
-        'cashOut',
-      ),
+      link('cash-disbursement-petty-cash-fund-replenishment', 'PCFR', 'cashOut'),
       link('cash-disbursement-petty-cash-advance', 'PCA', 'cashOut'),
-      link(
-        'cash-disbursement-petty-cash-advance-replenishment',
-        'PCAR',
-        'cashOut',
-      ),
+      link('cash-disbursement-petty-cash-advance-replenishment', 'PCAR', 'cashOut'),
       link('cash-disbursement-revolving-fund', 'RF', 'cashOut'),
       link('cash-disbursement-request-for-payment', 'RFP', 'fileCheck'),
       link('cash-disbursement-advances-to-supplier', 'ATS', 'cashOut'),
@@ -99,9 +82,7 @@ export const AccountingSidebarTemplate = [
     key: 'accounts-payable',
     label: 'Accounts Payable',
     iconName: 'payable',
-    children: [
-      link('accounts-payable-accounts-payable-voucher', 'APV', 'payable'),
-    ],
+    children: [link('accounts-payable-accounts-payable-voucher', 'APV', 'payable')],
   },
   {
     itemType: 'SECTION',
@@ -115,10 +96,7 @@ export const AccountingSidebarTemplate = [
     key: 'others',
     label: 'Others',
     iconName: 'asset',
-    children: [
-      link('others-fixed-asset', 'FA', 'asset'),
-      link('others-beginning-balance-uploader', 'BBU', 'journal'),
-    ],
+    children: [link('others-fixed-asset', 'FA', 'asset'), link('others-beginning-balance-uploader', 'BBU', 'journal')],
   },
   {
     itemType: 'SECTION',
@@ -133,12 +111,7 @@ export const AccountingSidebarTemplate = [
         iconName: 'users',
         children: [
           link('system-administration-users', 'U', 'users'),
-          link(
-            'system-administration-user-role',
-            'UR',
-            'security',
-            'User Role',
-          ),
+          link('system-administration-user-role', 'UR', 'security', 'User Role'),
           link('system-administration-approver-setup', 'AS', 'shieldCheck'),
         ],
       },
@@ -147,6 +120,7 @@ export const AccountingSidebarTemplate = [
       link('system-administration-transaction-number-setup', 'TNS', 'receipt'),
       link('system-administration-multi-currency-setup', 'MCS', 'coins'),
       link('system-administration-form-signatory', 'FS', 'fileSignature'),
+      link('system-administration-customized-reports', 'CRPT', 'fileCog', 'Customize Report'),
       link('system-administration-mail-maintenance', 'MM', 'mail'),
     ],
   },
@@ -165,7 +139,7 @@ export const AccountingAndInventorySidebarTemplate = [
       link('item-management-items', 'I', 'package'),
       link('item-management-item-bundles', 'IB', 'packageCheck'),
       link('item-management-item-category', 'IC', 'tags'),
-      link('item-management-item-attributes', 'IA', 'clipboard'),
+      link('item-management-item-variations', 'IV', 'clipboard'),
       link('item-management-unit-of-measurement', 'UOM', 'ruler'),
       link('item-management-item-promotions', 'IPR', 'promotion'),
       link('item-management-price-lists', 'PLS', 'tags'),
@@ -180,46 +154,20 @@ export const AccountingAndInventorySidebarTemplate = [
     children: [
       link('warehouse-management-warehouses', 'WM', 'warehouse', 'Warehouses'),
       link('warehouse-management-warehouse-access', 'WA', 'shieldCheck'),
-      {
-        itemType: 'CONTAINER',
-        key: 'warehouse-management-warehouse-storage',
-        label: 'Warehouse Storage',
-        iconName: 'mapPin',
-        children: [
-          link('warehouse-management-storage-locations', 'WS', 'mapPin'),
-          link('warehouse-management-storage-layout', 'WLY', 'map'),
-          link('warehouse-management-item-location-setup', 'WILS', 'packageCheck'),
-          link('warehouse-management-capacity-storage-rules', 'WCSR', 'ruler'),
-          link('warehouse-management-location-availability', 'WLA', 'activity'),
-          link('warehouse-management-location-templates', 'WLT', 'clipboard'),
-        ],
-      },
-      {
-        itemType: 'CONTAINER',
-        key: 'warehouse-management-warehouse-inventory',
-        label: 'Warehouse Inventory',
-        iconName: 'inventory',
-        children: [
-          link('warehouse-management-stock-by-warehouse', 'WSBW', 'warehouse'),
-          link('warehouse-management-stock-by-location', 'WSBL', 'mapPin'),
-          link('warehouse-management-stock-movement-history', 'WSMH', 'activity'),
-          link('warehouse-management-item-availability', 'WIA', 'search'),
-        ],
-      },
-      {
-        itemType: 'CONTAINER',
-        key: 'warehouse-management-warehouse-operations',
-        label: 'Warehouse Operations',
-        iconName: 'arrowRightLeft',
-        children: [
-          link('warehouse-management-warehouse-transfer', 'WT', 'arrowRightLeft'),
-          link('warehouse-management-location-transfer', 'WLOCT', 'arrowRightLeft'),
-          link('warehouse-management-receiving-putaway', 'WRP', 'inventory'),
-          link('warehouse-management-picking-dispatch', 'WPD', 'clipboard'),
-          link('warehouse-management-stock-count', 'WSC', 'inventory'),
-          link('warehouse-management-stock-adjustment', 'WSA', 'receipt'),
-        ],
-      },
+      link('warehouse-management-warehouse-storage', 'WS', 'mapPin', 'Warehouse Storage'),
+      link('warehouse-management-inventory-stock', 'WSI', 'search', 'Warehouse Inventory Stock'),
+      link('warehouse-management-inventory-transfer', 'WT', 'arrowRightLeft', 'Warehouse Inventory Transfer'),
+    ],
+  },
+  {
+    itemType: 'SECTION',
+    key: 'delivery-vehicle-management',
+    label: 'Delivery Vehicle Management',
+    iconName: 'inventory',
+    children: [
+      link('delivery-vehicle-management-delivery-vehicles', 'DVE', 'inventory'),
+      link('delivery-vehicle-management-vehicle-types', 'DVT', 'tags'),
+      link('delivery-vehicle-management-vehicle-repair-maintenance', 'DVMR', 'maintenance'),
     ],
   },
   AccountingSidebarTemplate[2],
@@ -268,9 +216,9 @@ export const AccountingAndInventorySidebarTemplate = [
     iconName: 'purchasing',
     children: [
       link('purchasing-purchase-request', 'PR', 'purchasing'),
+      link('purchasing-canvass-form', 'CF', 'clipboard', 'Canvass Form'),
       link('purchasing-purchase-order', 'PO', 'purchasing'),
       link('purchasing-purchase-journal', 'PJ', 'journal'),
-      link('purchasing-canvass-form', 'CF', 'clipboard'),
     ],
   },
   AccountingSidebarTemplate[6],
@@ -289,17 +237,14 @@ export const ModuleSystemCatalog = [
   {
     code: 'ACCOUNTING_AND_INVENTORY',
     name: 'Accounting and Inventory',
-    description:
-      'Accounting with trading, inventory, sales, and purchasing workflows.',
+    description: 'Accounting with trading, inventory, sales, and purchasing workflows.',
     sortOrder: 20,
     moduleCodes: ModuleCatalog.map((module) => module.code),
     sidebar: AccountingAndInventorySidebarTemplate,
   },
 ] as const;
 
-export function collectModuleCodes(
-  items: readonly ModuleSystemSidebarSeedItem[],
-) {
+export function collectModuleCodes(items: readonly ModuleSystemSidebarSeedItem[]) {
   const moduleCodes = new Set<string>();
   const visit = (item: ModuleSystemSidebarSeedItem) => {
     if (item.itemType === 'LINK') {

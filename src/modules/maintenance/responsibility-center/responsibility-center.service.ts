@@ -1,7 +1,6 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { MembershipRole, MembershipStatus, Prisma, ResponsibilityCenterCategory, ResponsibilityCenterStatus } from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, ResponsibilityCenterCategory, ResponsibilityCenterStatus } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
-import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -20,6 +19,9 @@ import {
   ResponsibilityCenterTypeNameByCategory,
 } from './utils/responsibility-center-defaults.util';
 
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
+import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
+import { throwConflictOnPrismaUniqueError } from '../../../common/utils/prisma-error.util';
 const ResponsibilityCenterPermissionModuleCode = 'RC';
 
 @Injectable()
@@ -27,9 +29,15 @@ export class ResponsibilityCenterService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findClassifications(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(
+      user,
+      companyId,
+      ResponsibilityCenterPermissionModuleCode,
+      PermissionAction.VIEW,
+      'You do not have permission to manage responsibility centers.',
+    );
 
     const classifications = await this.prisma.responsibilityCenterClassification.findMany({
       where: { status: ResponsibilityCenterStatus.ACTIVE },
@@ -49,9 +57,15 @@ export class ResponsibilityCenterService {
   }
 
   async findTypes(user: AuthUser, classificationId?: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(
+      user,
+      companyId,
+      ResponsibilityCenterPermissionModuleCode,
+      PermissionAction.VIEW,
+      'You do not have permission to manage responsibility centers.',
+    );
 
     const parsedClassificationId = classificationId ? parsePositiveBigIntId(classificationId, 'classificationId') : undefined;
     const types = await this.prisma.responsibilityCenterType.findMany({
@@ -70,9 +84,15 @@ export class ResponsibilityCenterService {
   }
 
   async suggestCode(user: AuthUser, typeId: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(
+      user,
+      companyId,
+      ResponsibilityCenterPermissionModuleCode,
+      PermissionAction.CREATE,
+      'You do not have permission to manage responsibility centers.',
+    );
 
     const type = await this.findActiveTypeOrThrow(parsePositiveBigIntId(typeId, 'typeId'));
 
@@ -82,9 +102,15 @@ export class ResponsibilityCenterService {
   }
 
   async findAll(user: AuthUser, query: GetResponsibilityCenterListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(
+      user,
+      companyId,
+      ResponsibilityCenterPermissionModuleCode,
+      PermissionAction.VIEW,
+      'You do not have permission to manage responsibility centers.',
+    );
 
     const page = query.page ?? DefaultPage;
     const limit = query.limit ?? DefaultLimit;
@@ -113,14 +139,69 @@ export class ResponsibilityCenterService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, ResponsibilityCenterPermissionModuleCode),
+    };
+  }
+
+  async findOptions(user: AuthUser, query: GetResponsibilityCenterListQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    const search = query.search?.trim();
+
+    const responsibilityCenters = await this.prisma.responsibilityCenter.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: ResponsibilityCenterStatus.ACTIVE,
+        ...(query.typeId ? { typeId: parsePositiveBigIntId(query.typeId, 'typeId') } : {}),
+        ...(query.classificationId
+          ? {
+              type: {
+                classificationId: parsePositiveBigIntId(query.classificationId, 'classificationId'),
+              },
+            }
+          : {}),
+        ...(search
+          ? {
+              OR: [{ code: { contains: search, mode: 'insensitive' } }, { name: { contains: search, mode: 'insensitive' } }],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        status: true,
+        type: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: [{ code: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      responsibilityCenters: responsibilityCenters.map((center) => ({
+        id: center.id.toString(),
+        code: center.code,
+        name: center.name,
+        typeName: center.type.name,
+        status: center.status,
+      })),
     };
   }
 
   async findTree(user: AuthUser, query: GetResponsibilityCenterListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(
+      user,
+      companyId,
+      ResponsibilityCenterPermissionModuleCode,
+      PermissionAction.VIEW,
+      'You do not have permission to manage responsibility centers.',
+    );
 
     const centers = await this.prisma.responsibilityCenter.findMany({
       where: this.buildListWhere(companyId, query),
@@ -132,27 +213,39 @@ export class ResponsibilityCenterService {
     return {
       centers: this.buildTree(mappedCenters),
       statistics: await this.getStatistics(companyId),
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, ResponsibilityCenterPermissionModuleCode),
     };
   }
 
   async findOne(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(
+      user,
+      companyId,
+      ResponsibilityCenterPermissionModuleCode,
+      PermissionAction.VIEW,
+      'You do not have permission to manage responsibility centers.',
+    );
 
     const center = await this.findCenterOrThrow(companyId, parsePositiveBigIntId(id));
 
     return {
       center: (await this.mapCentersWithAuditUsers([center]))[0],
-      permissions: this.getPermissions(user, companyId),
+      permissions: getModulePermissions(user, companyId, ResponsibilityCenterPermissionModuleCode),
     };
   }
 
   async create(user: AuthUser, dto: CreateResponsibilityCenterDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.CREATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(
+      user,
+      companyId,
+      ResponsibilityCenterPermissionModuleCode,
+      PermissionAction.CREATE,
+      'You do not have permission to manage responsibility centers.',
+    );
     this.ensureRequiredText(dto.name, 'Name');
     await this.ensureNameAvailable(companyId, dto.name);
     const type = await this.resolveTypeForWrite(dto, true);
@@ -187,15 +280,21 @@ export class ResponsibilityCenterService {
         center: (await this.mapCentersWithAuditUsers([center]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A responsibility center with this code or name already exists.');
       throw error;
     }
   }
 
   async update(user: AuthUser, id: string, dto: UpdateResponsibilityCenterDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(
+      user,
+      companyId,
+      ResponsibilityCenterPermissionModuleCode,
+      PermissionAction.UPDATE,
+      'You do not have permission to manage responsibility centers.',
+    );
 
     const centerId = parsePositiveBigIntId(id);
     const existingCenter = await this.findCenterOrThrow(companyId, centerId);
@@ -248,15 +347,21 @@ export class ResponsibilityCenterService {
         center: (await this.mapCentersWithAuditUsers([center]))[0],
       };
     } catch (error) {
-      this.throwFriendlyPrismaError(error);
+      throwConflictOnPrismaUniqueError(error, 'A responsibility center with this code or name already exists.');
       throw error;
     }
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdateResponsibilityCenterStatusDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.UPDATE);
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(
+      user,
+      companyId,
+      ResponsibilityCenterPermissionModuleCode,
+      PermissionAction.UPDATE,
+      'You do not have permission to manage responsibility centers.',
+    );
 
     const centerId = parsePositiveBigIntId(id);
     const existingCenter = await this.findCenterOrThrow(companyId, centerId);
@@ -476,76 +581,6 @@ export class ResponsibilityCenterService {
   private ensureRequiredText(value: string, label: string) {
     if (!value.trim()) {
       throw new BadRequestException(`${label} is required.`);
-    }
-  }
-
-  private getActiveCompanyId(user: AuthUser) {
-    if (!user.companyId) {
-      throw new BadRequestException('Select an active company first.');
-    }
-
-    return user.companyId;
-  }
-
-  private async ensureCompanyAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return;
-    }
-
-    const membership = await this.prisma.membership.findUnique({
-      where: { userId_companyId: { userId: user.id, companyId } },
-      select: { status: true },
-    });
-
-    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
-      throw new NotFoundException('Company not found.');
-    }
-  }
-
-  private ensureCan(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return;
-    }
-
-    if (user.companyId === companyId && user.permissions.includes(`${ResponsibilityCenterPermissionModuleCode}:${action}`)) {
-      return;
-    }
-
-    throw new ForbiddenException('You do not have permission to manage responsibility centers.');
-  }
-
-  private getPermissions(user: AuthUser, companyId: number) {
-    return {
-      canView: this.can(user, companyId, PermissionAction.VIEW),
-      canCreate: this.can(user, companyId, PermissionAction.CREATE),
-      canUpdate: this.can(user, companyId, PermissionAction.UPDATE),
-      canExport: this.can(user, companyId, PermissionAction.EXPORT),
-    };
-  }
-
-  private can(user: AuthUser, companyId: number, action: PermissionAction) {
-    if (this.hasReservedRoleAccess(user, companyId)) {
-      return true;
-    }
-
-    return user.companyId === companyId && user.permissions.includes(`${ResponsibilityCenterPermissionModuleCode}:${action}`);
-  }
-
-  private hasReservedRoleAccess(user: AuthUser, companyId: number) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
-
-    return (
-      user.companyId === companyId &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
-    );
-  }
-
-  private throwFriendlyPrismaError(error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('A responsibility center with this code or name already exists.');
     }
   }
 
