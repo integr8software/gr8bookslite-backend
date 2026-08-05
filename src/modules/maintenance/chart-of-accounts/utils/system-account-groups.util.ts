@@ -98,8 +98,8 @@ export const SystemAccountGroups = {
     costOfSalesParent: {
       accountGroupIncludes: SystemAccountGroupTags.itemCategoryCostOfSalesParent,
       requiredLevel: ChartAccountLevel.SUB3,
-      accountType: ChartAccountType.REVENUE,
-      accountNature: AccountNature.CREDIT,
+      accountType: ChartAccountType.EXPENSE,
+      accountNature: AccountNature.DEBIT,
     },
     expenseParent: {
       accountGroupIncludes: SystemAccountGroupTags.itemCategoryExpenseParent,
