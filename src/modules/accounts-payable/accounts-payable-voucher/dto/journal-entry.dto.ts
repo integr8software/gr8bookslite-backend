@@ -1,28 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { ArrayMinSize, IsArray, IsDefined, IsIn, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
+import { JournalEntryDetailsDto } from './journal-entry-details.dto';
+import { JournalEntryHeaderDto } from './journal-entry-header.dto';
 
-export class JournalEntryDto {
+export class JournalEntryDto extends JournalEntryDetailsDto {
   @IsOptional()
   @IsIn(['APV'])
   referenceType?: 'APV';
-
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  lineNumber!: number;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(40)
-  accountId?: string | null;
-
-  @IsString()
-  @MaxLength(20)
-  accountCode!: string;
-
-  @IsString()
-  @MaxLength(250)
-  accountTitle!: string;
 
   @IsString()
   @MaxLength(10)
@@ -37,49 +21,17 @@ export class JournalEntryDto {
   @IsString()
   @MaxLength(500)
   particulars?: string | null;
+}
 
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  debit!: number;
+export class JournalEntrySeparatedDto {
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => JournalEntryHeaderDto)
+  header!: JournalEntryHeaderDto;
 
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  credit!: number;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  vatType?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  atcCode?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  partyCode?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  partyName?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(40)
-  responsibilityCenterId?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  responsibilityCenter?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  refNo?: string | null;
+  @IsArray()
+  @ArrayMinSize(2)
+  @ValidateNested({ each: true })
+  @Type(() => JournalEntryDetailsDto)
+  details!: JournalEntryDetailsDto[];
 }

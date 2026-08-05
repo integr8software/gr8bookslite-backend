@@ -5,7 +5,6 @@ import {
   ChartAccount,
   ChartAccountStatus,
   CompanyUnitType,
-  JournalEntry,
   MembershipRole,
   MembershipStatus,
   Party,
@@ -42,7 +41,11 @@ import { UpdateAccountsPayableVoucherStatusDto } from './dto/update-accounts-pay
 import { mapAccountsPayableVoucher } from './mappers/accounts-payable-voucher.mapper';
 import { AccountsPayableVoucherInclude } from './prisma/accounts-payable-voucher.include';
 import { AccountsPayableVoucherAccountingService } from './services/accounts-payable-voucher-accounting.service';
-import type { AccountsPayableVoucherWithDetails } from './types/accounts-payable-voucher-with-details.type';
+import type {
+  AccountsPayableVoucherJournalEntry,
+  AccountsPayableVoucherWithDetails,
+  JournalEntryHeaderWithDetails,
+} from './types/accounts-payable-voucher-with-details.type';
 
 const AccountsPayableVoucherModuleCode = 'APV';
 const AccountsPayableVoucherReferenceType = 'APV';
@@ -70,6 +73,19 @@ type ResolvedJournalEntry = {
   account: ChartAccount;
   input: JournalEntryDto;
   responsibilityCenter: ResponsibilityCenter | null;
+};
+
+type ReplaceJournalEntriesInput = {
+  branchUnitId: number;
+  companyId: number;
+  currencyCode: string;
+  exchangeRate: number;
+  journalEntries: ResolvedJournalEntry[];
+  particulars?: string | null;
+  referenceNo?: string | null;
+  status: AccountsPayableVoucherStatus;
+  transactionDate: Date;
+  voucherId: bigint;
 };
 
 @Injectable()
@@ -155,17 +171,20 @@ export class AccountsPayableVoucherService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = this.normalizeVoucherInput(dto);
+    const journalEntries = this.normalizeJournalEntryInput(dto);
+    const journalEntryReferenceNo = dto.journalEntry?.header?.referenceNo ?? dto.referenceNo;
+    const journalEntryParticulars = this.getJournalEntryParticulars(dto, journalEntries);
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       details: dto.details,
       exchangeRate: normalized.exchangeRate,
-      journalEntries: dto.journalEntries,
+      journalEntries,
       voucherAmount: normalized.amount,
     });
 
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveVoucherReferences(tx, companyId, dto);
+        const references = await this.resolveVoucherReferences(tx, companyId, dto, journalEntries);
         const transactionNo = await this.resolveTransactionNumberForCreate(tx, {
           branchUnitId,
           companyId,
@@ -190,10 +209,11 @@ export class AccountsPayableVoucherService {
             partyNameSnapshot: this.getPartyName(references.party, dto.partyName),
             addressSnapshot: this.getPartyAddress(references.party) ?? cleanOptional(dto.address),
             payableType: normalized.payableType,
+            projectCode: cleanOptional(dto.projectCode),
             projectName: cleanOptional(dto.projectName),
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
-            status: AccountsPayableVoucherStatus.DRAFT,
+            status: AccountsPayableVoucherStatus.APPROVED,
             termId: references.term.id,
             transactionNo,
           },
@@ -201,7 +221,18 @@ export class AccountsPayableVoucherService {
         });
 
         await this.replaceDetails(tx, created.id, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.details);
-        await this.replaceJournalEntries(tx, created.id, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
+        await this.replaceJournalEntries(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          exchangeRate: normalized.exchangeRate,
+          journalEntries: references.journalEntries,
+          particulars: journalEntryParticulars,
+          referenceNo: journalEntryReferenceNo,
+          status: AccountsPayableVoucherStatus.APPROVED,
+          transactionDate: normalized.documentDate,
+          voucherId: created.id,
+        });
 
         const saved = await tx.accountsPayableVoucher.findUniqueOrThrow({
           where: { id: created.id },
@@ -229,8 +260,10 @@ export class AccountsPayableVoucherService {
     const voucherId = parsePositiveBigIntId(id);
     const current = await this.findVoucherOrThrow(companyId, voucherId);
 
-    if (current.status !== AccountsPayableVoucherStatus.DRAFT) {
-      throw new BadRequestException('Only draft AP vouchers can be edited.');
+    const editableStatuses: AccountsPayableVoucherStatus[] = [AccountsPayableVoucherStatus.DRAFT, AccountsPayableVoucherStatus.APPROVED];
+
+    if (!editableStatuses.includes(current.status)) {
+      throw new BadRequestException('Only draft or for approval AP vouchers can be edited.');
     }
 
     if (dto.branchUnitId !== undefined && dto.branchUnitId !== current.branchUnitId) {
@@ -239,17 +272,20 @@ export class AccountsPayableVoucherService {
 
     const branchUnitId = current.branchUnitId;
     const normalized = this.normalizeVoucherInput(dto);
+    const journalEntries = this.normalizeJournalEntryInput(dto);
+    const journalEntryReferenceNo = dto.journalEntry?.header?.referenceNo ?? dto.referenceNo;
+    const journalEntryParticulars = this.getJournalEntryParticulars(dto, journalEntries);
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       details: dto.details,
       exchangeRate: normalized.exchangeRate,
-      journalEntries: dto.journalEntries,
+      journalEntries,
       voucherAmount: normalized.amount,
     });
 
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveVoucherReferences(tx, companyId, dto);
+        const references = await this.resolveVoucherReferences(tx, companyId, dto, journalEntries);
         const transactionNo = await this.resolveTransactionNumberForUpdate(tx, {
           branchUnitId,
           companyId,
@@ -274,9 +310,11 @@ export class AccountsPayableVoucherService {
             partyNameSnapshot: this.getPartyName(references.party, dto.partyName),
             addressSnapshot: this.getPartyAddress(references.party) ?? cleanOptional(dto.address),
             payableType: normalized.payableType,
+            projectCode: cleanOptional(dto.projectCode),
             projectName: cleanOptional(dto.projectName),
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
+            status: AccountsPayableVoucherStatus.APPROVED,
             termId: references.term.id,
             transactionNo,
             updatedByUserId: user.id,
@@ -284,7 +322,18 @@ export class AccountsPayableVoucherService {
         });
 
         await this.replaceDetails(tx, voucherId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.details);
-        await this.replaceJournalEntries(tx, voucherId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
+        await this.replaceJournalEntries(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          exchangeRate: normalized.exchangeRate,
+          journalEntries: references.journalEntries,
+          particulars: journalEntryParticulars,
+          referenceNo: journalEntryReferenceNo,
+          status: AccountsPayableVoucherStatus.APPROVED,
+          transactionDate: normalized.documentDate,
+          voucherId,
+        });
 
         const saved = await tx.accountsPayableVoucher.findUniqueOrThrow({
           where: { id: voucherId },
@@ -325,7 +374,7 @@ export class AccountsPayableVoucherService {
 
     this.ensureStatusTransitionAllowed(current.status, targetStatus);
 
-    if (targetStatus === AccountsPayableVoucherStatus.APPROVED) {
+    if (targetStatus === AccountsPayableVoucherStatus.CLOSED) {
       this.accountingService.validatePersistedPayload({
         amount: Number(current.amount),
         details: current.details,
@@ -333,16 +382,29 @@ export class AccountsPayableVoucherService {
       });
     }
 
-    const voucher = await this.prisma.accountsPayableVoucher.update({
-      where: { id: voucherId },
-      data: {
-        ...this.getStatusAuditData(targetStatus, user.id),
-        status: targetStatus,
-        updatedByUserId: user.id,
-      },
-      include: AccountsPayableVoucherInclude,
+    const saved = await this.prisma.$transaction(async (tx) => {
+      const voucher = await tx.accountsPayableVoucher.update({
+        where: { id: voucherId },
+        data: {
+          ...this.getStatusAuditData(targetStatus, user.id),
+          status: targetStatus,
+          updatedByUserId: user.id,
+        },
+        include: AccountsPayableVoucherInclude,
+      });
+
+      await tx.journalEntryHeader.updateMany({
+        where: {
+          referenceId: voucherId,
+          referenceType: AccountsPayableVoucherReferenceType,
+        },
+        data: {
+          status: this.getJournalEntryStatus(targetStatus),
+        },
+      });
+
+      return (await this.attachJournalEntries([voucher], tx))[0];
     });
-    const saved = (await this.attachJournalEntries([voucher]))[0];
 
     return {
       message: 'Accounts payable voucher status updated successfully.',
@@ -425,11 +487,11 @@ export class AccountsPayableVoucherService {
       })
       .then((groups) => {
         const statistics = {
-          approvedVouchers: 0,
           cancelledVouchers: 0,
-          closedVouchers: 0,
           disapprovedVouchers: 0,
           draftVouchers: 0,
+          forApprovalVouchers: 0,
+          postedVouchers: 0,
           totalVouchers: 0,
         };
 
@@ -437,9 +499,9 @@ export class AccountsPayableVoucherService {
           const count = group._count._all;
 
           statistics.totalVouchers += count;
-          if (group.status === AccountsPayableVoucherStatus.APPROVED) statistics.approvedVouchers += count;
+          if (group.status === AccountsPayableVoucherStatus.APPROVED) statistics.forApprovalVouchers += count;
           if (group.status === AccountsPayableVoucherStatus.CANCELLED) statistics.cancelledVouchers += count;
-          if (group.status === AccountsPayableVoucherStatus.CLOSED) statistics.closedVouchers += count;
+          if (group.status === AccountsPayableVoucherStatus.CLOSED) statistics.postedVouchers += count;
           if (group.status === AccountsPayableVoucherStatus.DISAPPROVED) statistics.disapprovedVouchers += count;
           if (group.status === AccountsPayableVoucherStatus.DRAFT) statistics.draftVouchers += count;
         }
@@ -478,33 +540,66 @@ export class AccountsPayableVoucherService {
   private async attachJournalEntries<T extends Prisma.AccountsPayableVoucherGetPayload<{ include: typeof AccountsPayableVoucherInclude }>>(
     vouchers: T[],
     tx: PrismaWriteClient = this.prisma,
-  ): Promise<Array<T & { journalEntries: JournalEntry[] }>> {
+  ): Promise<Array<T & { journalEntryHeader: JournalEntryHeaderWithDetails | null; journalEntries: AccountsPayableVoucherJournalEntry[] }>> {
     if (vouchers.length === 0) {
       return [];
     }
 
-    const journalEntries = await tx.journalEntry.findMany({
+    const journalEntryHeaders = await tx.journalEntryHeader.findMany({
       where: {
         referenceId: {
           in: vouchers.map((voucher) => voucher.id),
         },
         referenceType: AccountsPayableVoucherReferenceType,
       },
-      orderBy: [{ referenceId: 'asc' }, { lineNumber: 'asc' }],
+      include: {
+        details: {
+          orderBy: {
+            lineNumber: 'asc',
+          },
+        },
+      },
+      orderBy: [{ referenceId: 'asc' }],
     });
-    const journalEntriesByReferenceId = new Map<string, typeof journalEntries>();
+    const journalEntryHeadersByReferenceId = new Map<string, JournalEntryHeaderWithDetails>();
 
-    for (const entry of journalEntries) {
-      const key = entry.referenceId.toString();
-      const entries = journalEntriesByReferenceId.get(key) ?? [];
-
-      entries.push(entry);
-      journalEntriesByReferenceId.set(key, entries);
+    for (const header of journalEntryHeaders) {
+      journalEntryHeadersByReferenceId.set(header.referenceId.toString(), header);
     }
 
-    return vouchers.map((voucher) => ({
-      ...voucher,
-      journalEntries: journalEntriesByReferenceId.get(voucher.id.toString()) ?? [],
+    return vouchers.map((voucher) => {
+      const journalEntryHeader = journalEntryHeadersByReferenceId.get(voucher.id.toString()) ?? null;
+
+      return {
+        ...voucher,
+        journalEntryHeader,
+        journalEntries: journalEntryHeader ? this.mapJournalEntryDetails(journalEntryHeader) : [],
+      };
+    });
+  }
+
+  private mapJournalEntryDetails(header: JournalEntryHeaderWithDetails): AccountsPayableVoucherJournalEntry[] {
+    return header.details.map((detail) => ({
+      accountCodeSnapshot: detail.accountCodeSnapshot,
+      accountId: detail.accountId,
+      accountTitleSnapshot: detail.accountTitleSnapshot,
+      atcCode: detail.atcCode,
+      credit: detail.credit,
+      currencyCode: header.currencyCode,
+      debit: detail.debit,
+      exchangeRate: header.exchangeRate,
+      id: detail.id,
+      lineNumber: detail.lineNumber,
+      particulars: header.particulars,
+      partyCodeSnapshot: detail.partyCodeSnapshot,
+      partyNameSnapshot: detail.partyNameSnapshot,
+      referenceId: header.referenceId,
+      referenceNoSnapshot: header.referenceNo,
+      referenceType: header.referenceType,
+      refNo: detail.refNo,
+      responsibilityCenterId: detail.responsibilityCenterId,
+      responsibilityCenterSnapshot: detail.responsibilityCenterSnapshot,
+      vatType: detail.vatType,
     }));
   }
 
@@ -525,7 +620,42 @@ export class AccountsPayableVoucherService {
     };
   }
 
-  private async resolveVoucherReferences(tx: PrismaWriteClient, companyId: number, dto: CreateAccountsPayableVoucherDto): Promise<ResolvedVoucherReferences> {
+  private normalizeJournalEntryInput(dto: CreateAccountsPayableVoucherDto): JournalEntryDto[] {
+    if (!dto.journalEntry) {
+      return dto.journalEntries ?? [];
+    }
+
+    if (!dto.journalEntry.header) {
+      throw new BadRequestException('Journal entry header is required.');
+    }
+
+    const { header } = dto.journalEntry;
+
+    return (dto.journalEntry.details ?? []).map((detail) => ({
+      ...detail,
+      currencyCode: header.currencyCode,
+      exchangeRate: header.exchangeRate,
+      particulars: header.particulars,
+      referenceType: header.referenceType ?? AccountsPayableVoucherReferenceType,
+    }));
+  }
+
+  private getJournalEntryParticulars(dto: CreateAccountsPayableVoucherDto, journalEntries: JournalEntryDto[]) {
+    const headerParticulars = cleanOptional(dto.journalEntry?.header?.particulars);
+
+    if (headerParticulars) {
+      return headerParticulars;
+    }
+
+    return journalEntries.map((entry) => cleanOptional(entry.particulars)).find((particulars): particulars is string => Boolean(particulars)) ?? null;
+  }
+
+  private async resolveVoucherReferences(
+    tx: PrismaWriteClient,
+    companyId: number,
+    dto: CreateAccountsPayableVoucherDto,
+    journalEntryInputs: JournalEntryDto[],
+  ): Promise<ResolvedVoucherReferences> {
     const [party, term, creditAccount] = await Promise.all([
       this.resolveParty(tx, companyId, { partyCode: dto.partyCode, partyId: dto.partyId, required: true }),
       this.resolveTerm(tx, companyId, dto.termId),
@@ -569,7 +699,7 @@ export class AccountsPayableVoucherService {
       });
     }
 
-    for (const input of dto.journalEntries) {
+    for (const input of journalEntryInputs) {
       if (journalLineNumbers.has(input.lineNumber)) {
         throw new BadRequestException(`Duplicate APV journal line number: ${input.lineNumber}.`);
       }
@@ -642,43 +772,67 @@ export class AccountsPayableVoucherService {
 
   private async replaceJournalEntries(
     tx: Prisma.TransactionClient,
-    voucherId: bigint,
-    companyId: number,
-    branchUnitId: number,
-    currencyCode: string,
-    exchangeRate: number,
-    journalEntries: ResolvedJournalEntry[],
+    {
+      branchUnitId,
+      companyId,
+      currencyCode,
+      exchangeRate,
+      journalEntries,
+      particulars,
+      referenceNo,
+      status,
+      transactionDate,
+      voucherId,
+    }: ReplaceJournalEntriesInput,
   ) {
-    await tx.journalEntry.deleteMany({
+    const totalDebit = roundToDecimal(
+      journalEntries.reduce((sum, { input }) => sum + Number(input.debit || 0), 0),
+      2,
+    );
+    const totalCredit = roundToDecimal(
+      journalEntries.reduce((sum, { input }) => sum + Number(input.credit || 0), 0),
+      2,
+    );
+
+    await tx.journalEntryHeader.deleteMany({
       where: {
         referenceId: voucherId,
         referenceType: AccountsPayableVoucherReferenceType,
       },
     });
-    await tx.journalEntry.createMany({
-      data: journalEntries.map(({ account, input, responsibilityCenter }) => ({
-        accountCodeSnapshot: account.accountCode,
-        accountId: account.id,
-        accountTitleSnapshot: account.accountTitle,
-        atcCode: cleanOptional(input.atcCode),
+
+    await tx.journalEntryHeader.create({
+      data: {
         branchUnitId,
         companyId,
-        credit: roundToDecimal(input.credit, 2),
         currencyCode,
-        debit: roundToDecimal(input.debit, 2),
+        details: {
+          create: journalEntries.map(({ account, input, responsibilityCenter }) => ({
+            accountCodeSnapshot: account.accountCode,
+            accountId: account.id,
+            accountTitleSnapshot: account.accountTitle,
+            atcCode: cleanOptional(input.atcCode),
+            credit: roundToDecimal(input.credit, 2),
+            debit: roundToDecimal(input.debit, 2),
+            lineNumber: input.lineNumber,
+            partyCodeSnapshot: cleanOptional(input.partyCode),
+            partyNameSnapshot: cleanOptional(input.partyName),
+            refNo: cleanOptional(input.refNo),
+            responsibilityCenterId: responsibilityCenter?.id ?? null,
+            responsibilityCenterSnapshot: responsibilityCenter?.name ?? cleanOptional(input.responsibilityCenter),
+            vatType: cleanOptional(input.vatType),
+          })),
+        },
         exchangeRate,
-        lineNumber: input.lineNumber,
-        particulars: cleanOptional(input.particulars),
-        partyCodeSnapshot: cleanOptional(input.partyCode),
-        partyNameSnapshot: cleanOptional(input.partyName),
+        particulars: cleanOptional(particulars),
         referenceId: voucherId,
-        referenceNoSnapshot: null,
+        referenceNo: cleanOptional(referenceNo),
         referenceType: AccountsPayableVoucherReferenceType,
-        refNo: cleanOptional(input.refNo),
-        responsibilityCenterId: responsibilityCenter?.id ?? null,
-        responsibilityCenterSnapshot: responsibilityCenter?.name ?? cleanOptional(input.responsibilityCenter),
-        vatType: cleanOptional(input.vatType),
-      })),
+        status: this.getJournalEntryStatus(status),
+        totalCredit,
+        totalDebit,
+        transactionDate,
+      },
     });
   }
 
@@ -916,13 +1070,7 @@ export class AccountsPayableVoucherService {
     }
   }
 
-  private isTransactionNoIssued(
-    tx: PrismaWriteClient,
-    companyId: number,
-    branchUnitId: number,
-    transactionNo: string,
-    scope: 'all' | 'branch' = 'branch',
-  ) {
+  private isTransactionNoIssued(tx: PrismaWriteClient, companyId: number, branchUnitId: number, transactionNo: string, scope: 'all' | 'branch' = 'branch') {
     return tx.accountsPayableVoucher
       .findFirst({
         where: {
@@ -960,10 +1108,14 @@ export class AccountsPayableVoucherService {
 
   private ensureStatusTransitionAllowed(currentStatus: AccountsPayableVoucherStatus, targetStatus: AccountsPayableVoucherStatus) {
     const allowedStatuses: Record<AccountsPayableVoucherStatus, AccountsPayableVoucherStatus[]> = {
-      [AccountsPayableVoucherStatus.APPROVED]: [AccountsPayableVoucherStatus.DRAFT, AccountsPayableVoucherStatus.CLOSED],
-      [AccountsPayableVoucherStatus.CANCELLED]: [AccountsPayableVoucherStatus.DRAFT],
-      [AccountsPayableVoucherStatus.CLOSED]: [],
-      [AccountsPayableVoucherStatus.DISAPPROVED]: [AccountsPayableVoucherStatus.DRAFT],
+      [AccountsPayableVoucherStatus.APPROVED]: [
+        AccountsPayableVoucherStatus.CANCELLED,
+        AccountsPayableVoucherStatus.CLOSED,
+        AccountsPayableVoucherStatus.DISAPPROVED,
+      ],
+      [AccountsPayableVoucherStatus.CANCELLED]: [AccountsPayableVoucherStatus.APPROVED],
+      [AccountsPayableVoucherStatus.CLOSED]: [AccountsPayableVoucherStatus.APPROVED],
+      [AccountsPayableVoucherStatus.DISAPPROVED]: [AccountsPayableVoucherStatus.APPROVED],
       [AccountsPayableVoucherStatus.DRAFT]: [
         AccountsPayableVoucherStatus.APPROVED,
         AccountsPayableVoucherStatus.CANCELLED,
@@ -976,17 +1128,29 @@ export class AccountsPayableVoucherService {
     }
   }
 
+  private getJournalEntryStatus(status: AccountsPayableVoucherStatus) {
+    const statusLabels: Record<AccountsPayableVoucherStatus, string> = {
+      [AccountsPayableVoucherStatus.APPROVED]: 'For Approval',
+      [AccountsPayableVoucherStatus.CANCELLED]: 'Cancelled',
+      [AccountsPayableVoucherStatus.CLOSED]: 'Posted',
+      [AccountsPayableVoucherStatus.DISAPPROVED]: 'Disapproved',
+      [AccountsPayableVoucherStatus.DRAFT]: 'Draft',
+    };
+
+    return statusLabels[status];
+  }
+
   private getStatusAuditData(targetStatus: AccountsPayableVoucherStatus, userId: number): Prisma.AccountsPayableVoucherUncheckedUpdateInput {
     const now = new Date();
 
-    if (targetStatus === AccountsPayableVoucherStatus.APPROVED) {
+    if (targetStatus === AccountsPayableVoucherStatus.CLOSED) {
       return {
         approvedAt: now,
         approvedByUserId: userId,
         cancelledAt: null,
         cancelledByUserId: null,
-        closedAt: null,
-        closedByUserId: null,
+        closedAt: now,
+        closedByUserId: userId,
         disapprovedAt: null,
         disapprovedByUserId: null,
       };
@@ -1018,13 +1182,6 @@ export class AccountsPayableVoucherService {
       };
     }
 
-    if (targetStatus === AccountsPayableVoucherStatus.CLOSED) {
-      return {
-        closedAt: now,
-        closedByUserId: userId,
-      };
-    }
-
     return {
       approvedAt: null,
       approvedByUserId: null,
@@ -1042,6 +1199,15 @@ export class AccountsPayableVoucherService {
       .trim()
       .toUpperCase()
       .replace(/[\s-]+/g, '_');
+    const statusAliases: Partial<Record<string, AccountsPayableVoucherStatus>> = {
+      FOR_APPROVAL: AccountsPayableVoucherStatus.APPROVED,
+      POSTED: AccountsPayableVoucherStatus.CLOSED,
+    };
+    const aliasedStatus = statusAliases[normalized];
+
+    if (aliasedStatus) {
+      return aliasedStatus;
+    }
 
     if (!Object.values(AccountsPayableVoucherStatus).includes(normalized as AccountsPayableVoucherStatus)) {
       throw new BadRequestException('Invalid APV status.');

@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { ArrayMinSize, IsArray, IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
 import { AccountsPayableVoucherDetailsDto } from './accounts-payable-voucher-details.dto';
-import { JournalEntryDto } from './journal-entry.dto';
+import { JournalEntryDto, JournalEntrySeparatedDto } from './journal-entry.dto';
 
 export const AccountsPayableVoucherPayableTypeInputValues = [
   'TRADE_PAYABLE',
@@ -58,6 +58,11 @@ export class CreateAccountsPayableVoucherDto {
   @IsString()
   @MaxLength(40)
   contactNo?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  projectCode?: string | null;
 
   @IsOptional()
   @IsString()
@@ -121,9 +126,15 @@ export class CreateAccountsPayableVoucherDto {
   @Type(() => AccountsPayableVoucherDetailsDto)
   details!: AccountsPayableVoucherDetailsDto[];
 
+  @IsOptional()
   @IsArray()
   @ArrayMinSize(2)
   @ValidateNested({ each: true })
   @Type(() => JournalEntryDto)
-  journalEntries!: JournalEntryDto[];
+  journalEntries?: JournalEntryDto[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => JournalEntrySeparatedDto)
+  journalEntry?: JournalEntrySeparatedDto | null;
 }

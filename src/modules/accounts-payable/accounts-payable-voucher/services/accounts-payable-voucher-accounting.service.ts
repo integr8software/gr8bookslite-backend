@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import type { AccountsPayableVoucherDetails, JournalEntry } from '@prisma/client';
+import type { AccountsPayableVoucherDetails, Prisma } from '@prisma/client';
 import type { AccountsPayableVoucherDetailsDto } from '../dto/accounts-payable-voucher-details.dto';
 import type { JournalEntryDto } from '../dto/journal-entry.dto';
+import type { AccountsPayableVoucherJournalEntry } from '../types/accounts-payable-voucher-with-details.type';
 import { amountsMatch, getAccountsPayableVoucherDetailTotals, getJournalEntryTotals, roundCurrency } from '../utils/accounts-payable-voucher-totals.util';
 
 const AccountsPayableVoucherReferenceType = 'APV';
+type PersistedJournalEntry =
+  | AccountsPayableVoucherJournalEntry
+  | { referenceType: string; lineNumber: number; debit: Prisma.Decimal | number | string; credit: Prisma.Decimal | number | string };
 
 @Injectable()
 export class AccountsPayableVoucherAccountingService {
@@ -28,7 +32,7 @@ export class AccountsPayableVoucherAccountingService {
     const journalTotals = getJournalEntryTotals(journalEntries);
 
     if (!amountsMatch(detailTotals.totalAmountDue, voucherAmount)) {
-      throw new BadRequestException('Detail total due must match voucher amount.');
+      throw new BadRequestException('Detail total payable must match voucher amount.');
     }
 
     if (!amountsMatch(journalTotals.debit, journalTotals.credit)) {
@@ -47,7 +51,15 @@ export class AccountsPayableVoucherAccountingService {
     };
   }
 
-  validatePersistedPayload({ amount, details, journalEntries }: { amount: number; details: AccountsPayableVoucherDetails[]; journalEntries: JournalEntry[] }) {
+  validatePersistedPayload({
+    amount,
+    details,
+    journalEntries,
+  }: {
+    amount: number;
+    details: AccountsPayableVoucherDetails[];
+    journalEntries: PersistedJournalEntry[];
+  }) {
     if (details.length === 0) {
       throw new BadRequestException('Add at least one APV detail row before approval.');
     }
@@ -85,7 +97,7 @@ export class AccountsPayableVoucherAccountingService {
     }
 
     if (!amountsMatch(detailTotalAmountDue, amount)) {
-      throw new BadRequestException('Detail total due must match voucher amount before approval.');
+      throw new BadRequestException('Detail total payable must match voucher amount before approval.');
     }
 
     if (!amountsMatch(totalDebit, totalCredit)) {
