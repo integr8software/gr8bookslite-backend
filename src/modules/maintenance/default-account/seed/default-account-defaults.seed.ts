@@ -4,7 +4,7 @@ export const StandardDefaultAccountTemplates = [
   {
     type: DefaultAccountTemplateType.COLLECTION,
     name: 'Service Fees',
-    revenueAccountCode: '4030000001',
+    revenueAccountCode: '4010000003',
   },
   {
     type: DefaultAccountTemplateType.EXPENSE,

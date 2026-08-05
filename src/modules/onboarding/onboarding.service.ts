@@ -16,6 +16,7 @@ import { seedCompanyPaymentTypeMaintenanceDefaults } from '../maintenance/paymen
 import { seedCompanyChartAccountDefaults } from '../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
 import { seedCompanyDefaultAccountDefaults } from '../maintenance/default-account/seed/default-accounts.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../maintenance/discount-maintenance/seed/discount-maintenance.seed';
+import { seedCompanyServicesMaintenanceDefaults } from '../maintenance/services-maintenance/seed/services-maintenance.seed';
 import { seedCompanyItemCategoryDefaults } from '../maintenance/item-category/seed/item-category.seed';
 import { seedCompanyBankAccountDefaults } from '../maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyResponsibilityCenterDefaults } from '../maintenance/responsibility-center/seed/responsibility-center.seed';
@@ -464,6 +465,7 @@ export class OnboardingService {
       await seedCompanyUnitOfMeasurementDefaults(tx, provisionedCompany.id);
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyChartAccountDefaults(tx, provisionedCompany.id);
+      await seedCompanyServicesMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyDefaultAccountDefaults(tx, provisionedCompany.id);
       await seedCompanyItemCategoryDefaults(tx, provisionedCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, provisionedCompany.id);

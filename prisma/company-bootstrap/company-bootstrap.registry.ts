@@ -15,6 +15,10 @@ import {
   seedCompanyDiscountMaintenanceDefaults,
 } from '../../src/modules/maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import {
+  ServicesMaintenanceSeedRecords,
+  seedCompanyServicesMaintenanceDefaults,
+} from '../../src/modules/maintenance/services-maintenance/seed/services-maintenance.seed';
+import {
   ResponsibilityCenterSeedRecords,
   seedCompanyResponsibilityCenterDefaults,
 } from '../../src/modules/maintenance/responsibility-center/seed/responsibility-center.seed';
@@ -118,6 +122,7 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
     itemCategories,
     paymentTypes,
     discounts,
+    services,
     responsibilityCenters,
     bankAccounts,
     warehouses,
@@ -131,6 +136,7 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
     countForBackup('item_categories', tx.itemCategory.count({ where: { companyId } })),
     countForBackup('payment_types', tx.paymentType.count({ where: { companyId } })),
     countForBackup('discounts', tx.discount.count({ where: { companyId } })),
+    countForBackup('services_maintenance', tx.serviceMaintenance.count({ where: { companyId } })),
     countForBackup('responsibility_centers', tx.responsibilityCenter.count({ where: { companyId } })),
     countForBackup('bank_accounts', tx.bankAccount.count({ where: { companyId } })),
     countForBackup('warehouses', tx.warehouse.count({ where: { companyId } })),
@@ -153,6 +159,7 @@ async function backupCounts(key: string, companyId: number, tx: Prisma.Transacti
       itemCategories,
       paymentTypes,
       discounts,
+      services,
       responsibilityCenters,
       bankAccounts,
       warehouses,
@@ -442,6 +449,59 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     backup: (companyId, tx) => backupCounts('default-accounts', companyId, tx),
     async apply(companyId, tx) {
       await seedCompanyDefaultAccountDefaults(tx, companyId);
+    },
+  },
+  {
+    key: 'services-maintenance',
+    label: 'Services Maintenance defaults bootstrap',
+    async inspect(companyId, tx) {
+      const existingServices = await tx.serviceMaintenance.findMany({
+        where: {
+          companyId,
+          serviceName: {
+            in: ServicesMaintenanceSeedRecords.map((service) => service.serviceName),
+          },
+          deletedAt: null,
+        },
+        select: {
+          serviceName: true,
+          revenueCoa: {
+            select: {
+              accountCode: true,
+            },
+          },
+        },
+      });
+      const existingServiceNames = new Set(existingServices.map((service) => service.serviceName));
+      const missingServices = ServicesMaintenanceSeedRecords.filter((service) => !existingServiceNames.has(service.serviceName));
+      const servicesWithWrongAccount = existingServices.filter((service) => {
+        const seedRecord = ServicesMaintenanceSeedRecords.find((record) => record.serviceName === service.serviceName);
+
+        return seedRecord && service.revenueCoa.accountCode !== seedRecord.revenueAccountCode;
+      });
+
+      return missingServices.length === 0 && servicesWithWrongAccount.length === 0
+        ? ok('Services Maintenance defaults exist.', {
+            count: existingServices.length,
+          })
+        : missing(
+            'Services Maintenance defaults are incomplete.',
+            [
+              missingServices.length > 0
+                ? `Seed ${missingServices.length} missing service records.`
+                : `Repair ${servicesWithWrongAccount.length} service revenue account links.`,
+            ],
+            {
+              count: existingServices.length,
+              expectedCount: ServicesMaintenanceSeedRecords.length,
+              missingNames: missingServices.map((service) => service.serviceName),
+              wrongAccountNames: servicesWithWrongAccount.map((service) => service.serviceName),
+            },
+          );
+    },
+    backup: (companyId, tx) => backupCounts('services-maintenance', companyId, tx),
+    async apply(companyId, tx) {
+      await seedCompanyServicesMaintenanceDefaults(tx, companyId);
     },
   },
   {
