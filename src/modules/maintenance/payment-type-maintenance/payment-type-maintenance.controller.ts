@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { PaymentTypeClassification } from '@prisma/client';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -41,6 +42,21 @@ export class PaymentTypeMaintenanceController {
   @ApiOkResponse({ type: PaymentTypeOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: PaymentTypeLookupQueryDto) {
     return this.paymentTypeLookupService.findOptionsForCompanyUser(user, query);
+  }
+
+  @Get('options/:type')
+  @ApiOkResponse({ type: PaymentTypeOptionsResponseDto })
+  findOptionsByType(@CurrentUser() user: AuthUser, @Param('type') type: string, @Query() query: PaymentTypeLookupQueryDto) {
+    const classification = type.trim().toUpperCase().replace(/-/g, '_') as PaymentTypeClassification;
+
+    if (!Object.values(PaymentTypeClassification).includes(classification)) {
+      throw new BadRequestException('Payment Type option type must be cash, check, bank-transfer, digital-wallet, or non-cash-settlement.');
+    }
+
+    return this.paymentTypeLookupService.findOptionsForCompanyUser(user, {
+      ...query,
+      classification,
+    });
   }
 
   @Get(':id')

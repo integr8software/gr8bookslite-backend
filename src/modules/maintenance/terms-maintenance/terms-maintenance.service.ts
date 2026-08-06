@@ -9,6 +9,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateTermDto } from './dto/create-term.dto';
 import { GetTermListQueryDto } from './dto/get-term-list-query.dto';
 import { ImportTermsDto } from './dto/import-terms.dto';
+import { TermLookupQueryDto } from './dto/term-lookup-query.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
 import { mapTerm } from './mappers/terms-maintenance.mapper';
 
@@ -52,6 +53,40 @@ export class TermsMaintenanceService {
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
       permissions: getModulePermissions(user, companyId, 'TM', { includeImport: true }),
+    };
+  }
+
+  async findOptions(user: AuthUser, query: TermLookupQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    const search = query.search?.trim();
+
+    const terms = await this.prisma.term.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: TermStatus.ACTIVE,
+        ...(query.dateMode ? { dateMode: query.dateMode } : {}),
+        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        dateMode: true,
+        period: true,
+        status: true,
+      },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    });
+
+    return {
+      terms: terms.map((term) => ({
+        id: term.id.toString(),
+        name: term.name,
+        dateMode: term.dateMode,
+        period: term.period,
+        status: term.status,
+      })),
     };
   }
 
