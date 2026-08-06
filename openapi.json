@@ -9461,12 +9461,16 @@
               "type": "string",
               "enum": [
                 "DRAFT",
+                "FOR_APPROVAL",
                 "APPROVED",
+                "POSTED",
                 "DISAPPROVED",
                 "CLOSED",
                 "CANCELLED",
                 "Draft",
+                "For Approval",
                 "Approved",
+                "Posted",
                 "Disapproved",
                 "Closed",
                 "Cancelled"
@@ -9558,9 +9562,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Accounts payable vouchers retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsPayableVoucherListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -9580,9 +9596,21 @@
         },
         "responses": {
           "201": {
-            "description": "Accounts payable voucher created."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveAccountsPayableVoucherResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -9618,12 +9646,16 @@
               "type": "string",
               "enum": [
                 "DRAFT",
+                "FOR_APPROVAL",
                 "APPROVED",
+                "POSTED",
                 "DISAPPROVED",
                 "CLOSED",
                 "CANCELLED",
                 "Draft",
+                "For Approval",
                 "Approved",
+                "Posted",
                 "Disapproved",
                 "Closed",
                 "Cancelled"
@@ -9715,9 +9747,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Accounts payable voucher transaction number retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsPayableVoucherNumberSuggestionResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -9729,9 +9773,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Accounts payable voucher party options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsPayableVoucherPartyLookupResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -9743,9 +9799,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Accounts payable voucher term options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsPayableVoucherTermLookupResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -9757,9 +9825,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Accounts payable voucher responsibility center options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsPayableVoucherResponsibilityCenterLookupResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -9771,9 +9851,21 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Accounts payable voucher payable account options retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsPayableVoucherPayableAccountLookupResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -9817,12 +9909,16 @@
               "type": "string",
               "enum": [
                 "DRAFT",
+                "FOR_APPROVAL",
                 "APPROVED",
+                "POSTED",
                 "DISAPPROVED",
                 "CLOSED",
                 "CANCELLED",
                 "Draft",
+                "For Approval",
                 "Approved",
+                "Posted",
                 "Disapproved",
                 "Closed",
                 "Cancelled"
@@ -9914,9 +10010,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Accounts payable voucher retrieved."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsPayableVoucherContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -9945,9 +10053,21 @@
         },
         "responses": {
           "200": {
-            "description": "Accounts payable voucher updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveAccountsPayableVoucherResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -9978,9 +10098,21 @@
         },
         "responses": {
           "200": {
-            "description": "Accounts payable voucher status updated."
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveAccountsPayableVoucherResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -20906,6 +21038,1068 @@
           "message"
         ]
       },
+      "AccountsPayableVoucherDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "branchUnitId": {
+            "type": "number"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "expenseAccountId": {
+            "type": "string"
+          },
+          "expenseAccountCode": {
+            "type": "string"
+          },
+          "expenseType": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vat": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatPercent": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "ewt": {
+            "type": "string",
+            "nullable": true
+          },
+          "ewtPercent": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "totalAmountDue": {
+            "type": "number"
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "branchUnitId",
+          "partyId",
+          "lineNumber",
+          "expenseAccountId",
+          "expenseAccountCode",
+          "expenseType",
+          "currencyCode",
+          "exchangeRate",
+          "amount",
+          "netAmount",
+          "vat",
+          "vatPercent",
+          "vatAmount",
+          "ewt",
+          "ewtPercent",
+          "ewtAmount",
+          "totalAmountDue",
+          "partyCode",
+          "partyName",
+          "particulars",
+          "responsibilityCenterId",
+          "responsibilityCenter",
+          "referenceNo"
+        ]
+      },
+      "AccountsPayableVoucherJournalEntryHeaderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceType": {
+            "type": "string"
+          },
+          "referenceId": {
+            "type": "string"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "transactionDate": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalDebit": {
+            "type": "number"
+          },
+          "totalCredit": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "referenceType",
+          "referenceId",
+          "referenceNo",
+          "transactionDate",
+          "currencyCode",
+          "exchangeRate",
+          "particulars",
+          "totalDebit",
+          "totalCredit",
+          "status"
+        ]
+      },
+      "AccountsPayableVoucherJournalEntryDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "debit": {
+            "type": "number"
+          },
+          "credit": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "accountId",
+          "accountCode",
+          "accountTitle",
+          "debit",
+          "credit",
+          "vatType",
+          "atcCode",
+          "partyCode",
+          "partyName",
+          "responsibilityCenterId",
+          "responsibilityCenter",
+          "refNo"
+        ]
+      },
+      "AccountsPayableVoucherJournalEntrySeparatedResponseDto": {
+        "type": "object",
+        "properties": {
+          "header": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherJournalEntryHeaderResponseDto"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherJournalEntryDetailResponseDto"
+            }
+          }
+        },
+        "required": [
+          "header",
+          "details"
+        ]
+      },
+      "AccountsPayableVoucherJournalEntryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "referenceType": {
+            "type": "string"
+          },
+          "referenceId": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "debit": {
+            "type": "number"
+          },
+          "credit": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "referenceType",
+          "referenceId",
+          "lineNumber",
+          "accountId",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "particulars",
+          "debit",
+          "credit",
+          "vatType",
+          "atcCode",
+          "partyCode",
+          "partyName",
+          "responsibilityCenterId",
+          "responsibilityCenter",
+          "refNo"
+        ]
+      },
+      "AccountsPayableVoucherResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "branchUnitId": {
+            "type": "number"
+          },
+          "transactionNo": {
+            "type": "string"
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string"
+          },
+          "partyName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "creditAccountId": {
+            "type": "string"
+          },
+          "creditAccountCode": {
+            "type": "string"
+          },
+          "creditAccountTitle": {
+            "type": "string"
+          },
+          "payableType": {
+            "enum": [
+              "TRADE_PAYABLE",
+              "NON_TRADE_PAYABLE",
+              "EMPLOYEE_PAYABLE",
+              "TAX_PAYABLE",
+              "ACCRUED_PAYABLE"
+            ],
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "APPROVED",
+              "DISAPPROVED",
+              "CLOSED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherDetailResponseDto"
+            }
+          },
+          "journalEntry": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherJournalEntrySeparatedResponseDto"
+          },
+          "journalEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherJournalEntryResponseDto"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "partyId",
+          "partyCode",
+          "partyName",
+          "address",
+          "contactPerson",
+          "contactNo",
+          "projectCode",
+          "projectName",
+          "currency",
+          "exchangeRate",
+          "amount",
+          "termId",
+          "terms",
+          "dueDate",
+          "referenceNo",
+          "creditAccountId",
+          "creditAccountCode",
+          "creditAccountTitle",
+          "payableType",
+          "remarks",
+          "status",
+          "details",
+          "journalEntry",
+          "journalEntries",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "AccountsPayableVoucherStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "cancelledVouchers": {
+            "type": "number"
+          },
+          "disapprovedVouchers": {
+            "type": "number"
+          },
+          "draftVouchers": {
+            "type": "number"
+          },
+          "forApprovalVouchers": {
+            "type": "number"
+          },
+          "postedVouchers": {
+            "type": "number"
+          },
+          "totalVouchers": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cancelledVouchers",
+          "disapprovedVouchers",
+          "draftVouchers",
+          "forApprovalVouchers",
+          "postedVouchers",
+          "totalVouchers"
+        ]
+      },
+      "AccountsPayableVoucherPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "AccountsPayableVoucherPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canApprove": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canClose": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canDisapprove": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canView": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canApprove",
+          "canCancel",
+          "canClose",
+          "canCreate",
+          "canDisapprove",
+          "canExport",
+          "canUpdate",
+          "canView"
+        ]
+      },
+      "AccountsPayableVoucherListResponseDto": {
+        "type": "object",
+        "properties": {
+          "vouchers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherPaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "vouchers",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "AccountsPayableVoucherNumberSuggestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number"
+          },
+          "inputMode": {
+            "enum": [
+              "AUTO",
+              "MANUAL"
+            ],
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchUnitId",
+          "inputMode",
+          "transactionNo"
+        ]
+      },
+      "AccountsPayableVoucherLookupAddressResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "addressName": {
+            "type": "string"
+          },
+          "addressLine1": {
+            "type": "string"
+          },
+          "addressLine2": {
+            "type": "string"
+          },
+          "barangay": {
+            "type": "string"
+          },
+          "barangayCode": {
+            "type": "string"
+          },
+          "cityMunicipality": {
+            "type": "string"
+          },
+          "cityMunicipalityCode": {
+            "type": "string"
+          },
+          "isBilling": {
+            "type": "boolean"
+          },
+          "isBuilding": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isDelivery": {
+            "type": "boolean"
+          },
+          "isForeign": {
+            "type": "boolean"
+          },
+          "isHome": {
+            "type": "boolean"
+          },
+          "province": {
+            "type": "string"
+          },
+          "provinceCode": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "regionCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "addressName",
+          "addressLine1",
+          "addressLine2",
+          "barangay",
+          "barangayCode",
+          "cityMunicipality",
+          "cityMunicipalityCode",
+          "isBilling",
+          "isBuilding",
+          "isDefault",
+          "isDelivery",
+          "isForeign",
+          "isHome",
+          "province",
+          "provinceCode",
+          "region",
+          "regionCode"
+        ]
+      },
+      "AccountsPayableVoucherPartyLookupOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "partyCodeNo": {
+            "type": "string"
+          },
+          "classification": {
+            "enum": [
+              "INDIVIDUAL",
+              "NON_INDIVIDUAL"
+            ],
+            "type": "string"
+          },
+          "partyTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "VENDOR",
+                "CUSTOMER",
+                "EMPLOYEE",
+                "MEMBER"
+              ]
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherLookupAddressResponseDto"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherLookupAddressResponseDto"
+            }
+          },
+          "defaultPayableAccount": {
+            "type": "string"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "termName": {
+            "type": "string"
+          },
+          "defaultPurchaseInputVatTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultPurchaseEwtTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultPurchaseFwtTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultPurchaseWvatTaxSourceKey": {
+            "type": "string"
+          },
+          "contactPerson": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "contactNo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "partyCodeNo",
+          "classification",
+          "partyTypes",
+          "status",
+          "name",
+          "address",
+          "addresses",
+          "defaultPayableAccount",
+          "termId",
+          "termName",
+          "defaultPurchaseInputVatTaxSourceKey",
+          "defaultPurchaseEwtTaxSourceKey",
+          "defaultPurchaseFwtTaxSourceKey",
+          "defaultPurchaseWvatTaxSourceKey",
+          "contactPerson",
+          "email",
+          "contactNo"
+        ]
+      },
+      "AccountsPayableVoucherPartyLookupResponseDto": {
+        "type": "object",
+        "properties": {
+          "parties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherPartyLookupOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "parties"
+        ]
+      },
+      "AccountsPayableVoucherTermLookupOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dateMode": {
+            "enum": [
+              "DAY",
+              "MONTH",
+              "YEAR"
+            ],
+            "type": "string"
+          },
+          "period": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "dateMode",
+          "period",
+          "status"
+        ]
+      },
+      "AccountsPayableVoucherTermLookupResponseDto": {
+        "type": "object",
+        "properties": {
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherTermLookupOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "terms"
+        ]
+      },
+      "AccountsPayableVoucherResponsibilityCenterLookupOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "typeName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "typeName",
+          "status"
+        ]
+      },
+      "AccountsPayableVoucherResponsibilityCenterLookupResponseDto": {
+        "type": "object",
+        "properties": {
+          "responsibilityCenters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherResponsibilityCenterLookupOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "responsibilityCenters"
+        ]
+      },
+      "AccountsPayableVoucherLookupDefaultAccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultPayableAccount": {
+            "type": "string"
+          },
+          "employeePayableAccount": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "defaultPayableAccount",
+          "employeePayableAccount"
+        ]
+      },
+      "AccountsPayableVoucherPayableAccountLookupOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "statementGroup": {
+            "type": "string"
+          },
+          "statementSection": {
+            "type": "string"
+          },
+          "normalBalance": {
+            "enum": [
+              "Debit",
+              "Credit"
+            ],
+            "type": "string"
+          },
+          "accountCategory": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountNumber",
+          "accountName",
+          "accountType",
+          "statementGroup",
+          "statementSection",
+          "normalBalance",
+          "accountCategory",
+          "description",
+          "status"
+        ]
+      },
+      "AccountsPayableVoucherLookupAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultPayableAccount": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherPayableAccountLookupOptionResponseDto"
+            }
+          },
+          "employeePayableAccount": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountsPayableVoucherPayableAccountLookupOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "defaultPayableAccount",
+          "employeePayableAccount"
+        ]
+      },
+      "AccountsPayableVoucherPayableAccountLookupResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultAccounts": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherLookupDefaultAccountsResponseDto"
+          },
+          "accountOptions": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherLookupAccountOptionsResponseDto"
+          }
+        },
+        "required": [
+          "defaultAccounts",
+          "accountOptions"
+        ]
+      },
+      "AccountsPayableVoucherContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "voucher": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "voucher",
+          "permissions"
+        ]
+      },
       "AccountsPayableVoucherDetailsDto": {
         "type": "object",
         "properties": {
@@ -21021,12 +22215,6 @@
       "JournalEntryDto": {
         "type": "object",
         "properties": {
-          "referenceType": {
-            "type": "string",
-            "enum": [
-              "APV"
-            ]
-          },
           "lineNumber": {
             "type": "number",
             "minimum": 1
@@ -21044,6 +22232,55 @@
             "type": "string",
             "maxLength": 250
           },
+          "debit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "credit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "referenceType": {
+            "type": "string",
+            "enum": [
+              "APV"
+            ]
+          },
           "currencyCode": {
             "type": "string",
             "maxLength": 10
@@ -21056,6 +22293,70 @@
             "type": "string",
             "nullable": true,
             "maxLength": 500
+          }
+        },
+        "required": [
+          "lineNumber",
+          "accountCode",
+          "accountTitle",
+          "debit",
+          "credit",
+          "currencyCode",
+          "exchangeRate"
+        ]
+      },
+      "JournalEntryHeaderDto": {
+        "type": "object",
+        "properties": {
+          "referenceType": {
+            "type": "string",
+            "enum": [
+              "APV"
+            ]
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "currencyCode",
+          "exchangeRate"
+        ]
+      },
+      "JournalEntryDetailsDto": {
+        "type": "object",
+        "properties": {
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "accountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
           },
           "debit": {
             "type": "number",
@@ -21105,10 +22406,27 @@
           "lineNumber",
           "accountCode",
           "accountTitle",
-          "currencyCode",
-          "exchangeRate",
           "debit",
           "credit"
+        ]
+      },
+      "JournalEntrySeparatedDto": {
+        "type": "object",
+        "properties": {
+          "header": {
+            "$ref": "#/components/schemas/JournalEntryHeaderDto"
+          },
+          "details": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalEntryDetailsDto"
+            }
+          }
+        },
+        "required": [
+          "header",
+          "details"
         ]
       },
       "CreateAccountsPayableVoucherDto": {
@@ -21154,6 +22472,11 @@
             "nullable": true,
             "maxLength": 40
           },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
           "projectName": {
             "type": "string",
             "nullable": true,
@@ -21233,6 +22556,15 @@
             "items": {
               "$ref": "#/components/schemas/JournalEntryDto"
             }
+          },
+          "journalEntry": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JournalEntrySeparatedDto"
+              }
+            ]
           }
         },
         "required": [
@@ -21247,8 +22579,26 @@
           "creditAccountCode",
           "creditAccountTitle",
           "payableType",
-          "details",
-          "journalEntries"
+          "details"
+        ]
+      },
+      "SaveAccountsPayableVoucherResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "voucher": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/AccountsPayableVoucherPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "voucher",
+          "permissions"
         ]
       },
       "UpdateAccountsPayableVoucherDto": {
@@ -21294,6 +22644,11 @@
             "nullable": true,
             "maxLength": 40
           },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
           "projectName": {
             "type": "string",
             "nullable": true,
@@ -21373,6 +22728,15 @@
             "items": {
               "$ref": "#/components/schemas/JournalEntryDto"
             }
+          },
+          "journalEntry": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JournalEntrySeparatedDto"
+              }
+            ]
           }
         },
         "required": [
@@ -21387,8 +22751,7 @@
           "creditAccountCode",
           "creditAccountTitle",
           "payableType",
-          "details",
-          "journalEntries"
+          "details"
         ]
       },
       "UpdateAccountsPayableVoucherStatusDto": {
@@ -21397,12 +22760,16 @@
           "status": {
             "enum": [
               "DRAFT",
+              "FOR_APPROVAL",
               "APPROVED",
+              "POSTED",
               "DISAPPROVED",
               "CLOSED",
               "CANCELLED",
               "Draft",
+              "For Approval",
               "Approved",
+              "Posted",
               "Disapproved",
               "Closed",
               "Cancelled"
