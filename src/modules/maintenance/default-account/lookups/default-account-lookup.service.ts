@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AccountNature, ChartAccountStatus, ChartAccountType, DefaultAccountTemplateType, Prisma } from '@prisma/client';
+import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
+import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../../common/utils/module-access.util';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { findSystemAccountGroupOrThrow, SystemAccountGroups } from '../../chart-of-accounts/utils/system-account-groups.util';
 import { DefaultAccountOptionQueryDto } from '../dto/default-account-option-query.dto';
@@ -7,6 +9,28 @@ import { DefaultAccountOptionQueryDto } from '../dto/default-account-option-quer
 @Injectable()
 export class DefaultAccountLookupService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findOptionsForCompanyUser(user: AuthUser, query: DefaultAccountOptionQueryDto, type?: DefaultAccountTemplateType) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+
+    return {
+      options: await this.findDefaultAccountOptions({
+        companyId,
+        query,
+        type,
+      }),
+    };
+  }
+
+  async findExpenseParentOptionsForCompanyUser(user: AuthUser) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+
+    return {
+      options: await this.findExpenseParentOptions({ companyId }),
+    };
+  }
 
   async findDefaultAccountOptions({
     companyId,
@@ -148,3 +172,4 @@ function isDescendantOrSelf(
 
   return false;
 }
+

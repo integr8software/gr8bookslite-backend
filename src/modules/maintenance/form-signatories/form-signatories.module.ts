@@ -6,10 +6,12 @@ import { AuthModule } from '../../auth/auth.module';
 import { WorkspaceAuditLogsModule } from '../../workspace/audit-logs/workspace-audit-logs.module';
 import { FormSignatoriesController } from './form-signatories.controller';
 import { FormSignatoriesService } from './form-signatories.service';
+import { FormSignatoriesLookupService } from './lookups/form-signatories-lookup.service';
 
 @Module({
   imports: [PrismaModule, AccessControlModule, EntitlementModule, AuthModule, WorkspaceAuditLogsModule],
   controllers: [FormSignatoriesController],
-  providers: [FormSignatoriesService],
+  providers: [FormSignatoriesService, FormSignatoriesLookupService],
+  exports: [FormSignatoriesService, FormSignatoriesLookupService],
 })
 export class FormSignatoriesModule {}

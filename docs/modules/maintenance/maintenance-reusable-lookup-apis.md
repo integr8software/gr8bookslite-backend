@@ -219,7 +219,8 @@ These routes already exist and are intended or commonly used as reusable data so
 
 | Data | Route | Parameters | Authz | Response |
 | --- | --- | --- | --- | --- |
-| Party names by type | `GET /api/v1/maintenance/party-maintenance/options/:partyType` | `partyType`: `CUSTOMER`, `VENDOR`, `EMPLOYEE`, `MEMBER`, or another valid `PartyType` enum value | Authenticated active company | `{ parties }` |
+| Party options | `GET /api/v1/maintenance/party-maintenance/options` | `partyType`/`partyTypes`: optional `CUSTOMER`, `VENDOR`, comma-separated values, or `ALL`; `match`: `any` or `all`; `detail`: `basic` or `complete` | Authenticated active company | `{ parties }` |
+| Party names by type (legacy) | `GET /api/v1/maintenance/party-maintenance/options/:partyType` | `partyType`: `CUSTOMER`, `VENDOR`, `EMPLOYEE`, `MEMBER`, or another valid `PartyType` enum value | Authenticated active company | `{ parties }` |
 | Item categories | `GET /api/v1/maintenance/item-category/options` | None | Authenticated active company | `{ categories }` |
 | Item variations and values | `GET /api/v1/maintenance/item-variations/options` | None | Authenticated active company | `{ variations }` |
 | Form signatory branches/modules | `GET /api/v1/maintenance/form-signatories/options` | None | Authenticated active company | `{ branches, modules }` |
@@ -236,10 +237,28 @@ These routes already exist and are intended or commonly used as reusable data so
 Route:
 
 ```text
-GET /api/v1/maintenance/party-maintenance/options/:partyType
+GET /api/v1/maintenance/party-maintenance/options
 ```
 
-Returns active parties for the selected company and party type.
+Returns active parties for the selected company. Omit party filters to list all active parties.
+
+Examples:
+
+```text
+GET /api/v1/maintenance/party-maintenance/options
+GET /api/v1/maintenance/party-maintenance/options?partyType=CUSTOMER
+GET /api/v1/maintenance/party-maintenance/options?partyTypes=CUSTOMER,VENDOR
+GET /api/v1/maintenance/party-maintenance/options?partyTypes=CUSTOMER,VENDOR&match=all
+GET /api/v1/maintenance/party-maintenance/options?partyTypes=CUSTOMER,VENDOR&detail=complete
+```
+
+Use `match=any` or omit `match` to return parties that are Customer or Vendor. Use `match=all` to return only parties that are both Customer and Vendor.
+
+The legacy typed route still works:
+
+```text
+GET /api/v1/maintenance/party-maintenance/options/:partyType
+```
 
 ```ts
 {
@@ -257,9 +276,15 @@ Returns active parties for the selected company and party type.
 }
 ```
 
-Use this for customer/vendor/employee/member dropdowns. Do not use `GET /maintenance/party-maintenance` for dropdowns because the full route requires `PM:VIEW` and includes broader party information.
+Use this basic shape for customer/vendor/employee/member dropdowns. Do not use `GET /maintenance/party-maintenance` for dropdowns because the full route requires `PM:VIEW` and includes broader party information.
 
-Sensitive fields that should not be added to this lookup response: TIN, ATC code, tax defaults, addresses, receivable/payable account IDs, audit fields, statistics, and permission flags.
+When a workflow truly needs accounting defaults, terms, addresses, and tax defaults, request:
+
+```text
+GET /api/v1/maintenance/party-maintenance/options?detail=complete
+```
+
+The complete response includes the basic fields plus address, addresses, receivable/payable account IDs and account summaries, term ID/name, TIN, ATC code, tax defaults, and landline. It still does not include audit fields, statistics, or permission flags.
 
 ### Item Category Options
 

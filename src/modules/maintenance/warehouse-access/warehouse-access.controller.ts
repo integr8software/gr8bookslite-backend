@@ -7,6 +7,7 @@ import { CreateWarehouseAccessDto } from './dto/create-warehouse-access.dto';
 import { GetWarehouseAccessDirectoryQueryDto } from './dto/get-warehouse-access-directory-query.dto';
 import { GetWarehouseAccessListQueryDto } from './dto/get-warehouse-access-list-query.dto';
 import { UpdateWarehouseAccessDto } from './dto/update-warehouse-access.dto';
+import { WarehouseAccessLookupService } from './lookups/warehouse-access-lookup.service';
 import { WarehouseAccessService } from './warehouse-access.service';
 import {
   CreateWarehouseAccessResponseDto,
@@ -24,7 +25,10 @@ import {
   version: '1',
 })
 export class WarehouseAccessController {
-  constructor(private readonly warehouseAccessService: WarehouseAccessService) {}
+  constructor(
+    private readonly warehouseAccessService: WarehouseAccessService,
+    private readonly warehouseAccessLookupService: WarehouseAccessLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ type: WarehouseAccessListResponseDto })
@@ -35,7 +39,7 @@ export class WarehouseAccessController {
   @Get('directory/users')
   @ApiOkResponse({ type: WarehouseAccessDirectoryResponseDto })
   findDirectoryUsers(@CurrentUser() user: AuthUser, @Query() query: GetWarehouseAccessDirectoryQueryDto) {
-    return this.warehouseAccessService.findDirectoryUsers(user, query);
+    return this.warehouseAccessLookupService.findDirectoryUsersForCompanyUser(user, query);
   }
 
   @Get(':id')

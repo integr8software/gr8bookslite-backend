@@ -4,6 +4,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { BankMasterfileService } from './bank-masterfile.service';
+import { BankMasterfileLookupService } from './lookups/bank-masterfile-lookup.service';
 import {
   BankAccountContainerResponseDto,
   BankAccountListResponseDto,
@@ -17,7 +18,6 @@ import { GetBankAccountListQueryDto } from './dto/get-bank-account-list-query.dt
 import { ImportBankAccountsDto } from './dto/import-bank-accounts.dto';
 import { UpdateBankAccountStatusDto } from './dto/update-bank-account-status.dto';
 import { UpdateBankAccountDto } from './dto/update-bank-account.dto';
-import { BankMasterfileLookupService } from './lookups/bank-masterfile-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -77,22 +77,5 @@ export class BankMasterfileController {
   @ApiOkResponse({ type: SaveBankAccountResponseDto })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateBankAccountStatusDto) {
     return this.bankMasterfileService.updateStatus(user, id, dto);
-  }
-}
-
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
-@ApiTags('Bank Masterfile')
-@Controller({
-  path: 'maintenance/bank-masterfile',
-  version: '1',
-})
-export class BankMasterfileLookupController {
-  constructor(private readonly bankMasterfileLookupService: BankMasterfileLookupService) {}
-
-  @Get('options')
-  @ApiOkResponse({ type: BankAccountOptionsResponseDto })
-  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
-    return this.bankMasterfileLookupService.findOptionsForCompanyUser(user, query);
   }
 }

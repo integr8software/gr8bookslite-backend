@@ -15,7 +15,6 @@ import { CreateDefaultAccountTemplateDto } from './dto/create-default-account-te
 import { GetDefaultAccountTemplateListQueryDto } from './dto/get-default-account-template-list-query.dto';
 import { UpdateDefaultAccountTemplateStatusDto } from './dto/update-default-account-template-status.dto';
 import { UpdateDefaultAccountTemplateDto } from './dto/update-default-account-template.dto';
-import { DefaultAccountLookupService } from './lookups/default-account-lookup.service';
 import { mapDefaultAccount } from './mappers/default-account-template.mapper';
 import { DefaultAccountInclude } from './prisma/default-account-template.include';
 import type { DefaultAccountParentRole, DefaultAccountPayload, GeneratedAccountRequest, ParentChartAccountReference } from './types/default-account.type';
@@ -27,10 +26,7 @@ const SupportedDefaultAccountTemplateTypes = [DefaultAccountTemplateType.EXPENSE
 
 @Injectable()
 export class DefaultAccountService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly defaultAccountLookupService: DefaultAccountLookupService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetDefaultAccountTemplateListQueryDto) {
     const companyId = getActiveCompanyId(user);
@@ -87,7 +83,13 @@ export class DefaultAccountService {
     ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
 
     return {
-      options: await this.defaultAccountLookupService.findExpenseParentOptions({ companyId }),
+      options: (await this.getExpenseParentOptions(companyId, this.prisma)).map((account) => ({
+        id: account.id.toString(),
+        accountCode: account.accountCode,
+        accountTitle: account.accountTitle,
+        accountLevel: account.accountLevel,
+        parentAccountId: account.parentAccountId?.toString() ?? null,
+      })),
     };
   }
 
@@ -95,7 +97,7 @@ export class DefaultAccountService {
     const companyId = await this.ensureDefaultAccountOptionAccess(user);
 
     return {
-      options: await this.defaultAccountLookupService.findDefaultAccountOptions({ companyId, query }),
+      options: await this.findDefaultAccountOptions(companyId, query),
     };
   }
 
@@ -103,11 +105,7 @@ export class DefaultAccountService {
     const companyId = await this.ensureDefaultAccountOptionAccess(user);
 
     return {
-      options: await this.defaultAccountLookupService.findDefaultAccountOptions({
-        companyId,
-        query,
-        type: DefaultAccountTemplateType.EXPENSE,
-      }),
+      options: await this.findDefaultAccountOptions(companyId, query, DefaultAccountTemplateType.EXPENSE),
     };
   }
 
@@ -115,11 +113,7 @@ export class DefaultAccountService {
     const companyId = await this.ensureDefaultAccountOptionAccess(user);
 
     return {
-      options: await this.defaultAccountLookupService.findDefaultAccountOptions({
-        companyId,
-        query,
-        type: DefaultAccountTemplateType.COLLECTION,
-      }),
+      options: await this.findDefaultAccountOptions(companyId, query, DefaultAccountTemplateType.COLLECTION),
     };
   }
 
@@ -328,9 +322,85 @@ export class DefaultAccountService {
   private async ensureDefaultAccountOptionAccess(user: AuthUser) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, 'DA', PermissionAction.VIEW, 'You do not have permission to view default accounts.');
 
     return companyId;
+  }
+
+  private async findDefaultAccountOptions(companyId: number, query: DefaultAccountOptionQueryDto, type?: DefaultAccountTemplateType) {
+    const where = this.buildDefaultAccountOptionWhere(companyId, query, type);
+    const defaultAccounts = await this.prisma.defaultAccount.findMany({
+      where,
+      select: {
+        id: true,
+        type: true,
+        name: true,
+        description: true,
+        status: true,
+        expenseCoa: {
+          select: {
+            id: true,
+            accountCode: true,
+            accountTitle: true,
+            accountType: true,
+            accountNature: true,
+          },
+        },
+        revenueCoa: {
+          select: {
+            id: true,
+            accountCode: true,
+            accountTitle: true,
+            accountType: true,
+            accountNature: true,
+          },
+        },
+      },
+      orderBy: [{ type: 'asc' }, { name: 'asc' }, { id: 'asc' }],
+    });
+
+    return defaultAccounts.map((defaultAccount) => {
+      const chartAccount = defaultAccount.type === DefaultAccountTemplateType.EXPENSE ? defaultAccount.expenseCoa : defaultAccount.revenueCoa;
+
+      return {
+        id: defaultAccount.id.toString(),
+        type: defaultAccount.type,
+        defaultAccountName: defaultAccount.name,
+        description: defaultAccount.description ?? '',
+        status: defaultAccount.status,
+        chartAccountId: chartAccount?.id.toString() ?? null,
+        accountCode: chartAccount?.accountCode ?? null,
+        accountTitle: chartAccount?.accountTitle ?? null,
+        accountType: chartAccount?.accountType ?? null,
+        accountNature: chartAccount?.accountNature ?? null,
+      };
+    });
+  }
+
+  private buildDefaultAccountOptionWhere(
+    companyId: number,
+    query: DefaultAccountOptionQueryDto,
+    type?: DefaultAccountTemplateType,
+  ): Prisma.DefaultAccountWhereInput {
+    const search = query.search?.trim();
+
+    return {
+      companyId,
+      deletedAt: null,
+      type: type ?? { in: [DefaultAccountTemplateType.EXPENSE, DefaultAccountTemplateType.COLLECTION] },
+      status: query.status ?? ChartAccountStatus.ACTIVE,
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' } },
+              { description: { contains: search, mode: 'insensitive' } },
+              { expenseCoa: { accountCode: { contains: search, mode: 'insensitive' } } },
+              { expenseCoa: { accountTitle: { contains: search, mode: 'insensitive' } } },
+              { revenueCoa: { accountCode: { contains: search, mode: 'insensitive' } } },
+              { revenueCoa: { accountTitle: { contains: search, mode: 'insensitive' } } },
+            ],
+          }
+        : {}),
+    };
   }
 
   private buildListWhere(companyId: number, query: GetDefaultAccountTemplateListQueryDto): Prisma.DefaultAccountWhereInput {
