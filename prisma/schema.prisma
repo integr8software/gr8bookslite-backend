@@ -159,7 +159,7 @@ model Company {
   parties                       Party[]
   accountsPayableVouchers       AccountsPayableVoucher[]
   accountsPayableVoucherDetails AccountsPayableVoucherDetails[]
-  journalEntries                JournalEntry[]
+  journalEntryHeaders           JournalEntryHeader[]
   warehouses                    Warehouse[]
   warehouseAccess               WarehouseAccess[]
   approverSetups                ApproverSetup[]
@@ -200,7 +200,7 @@ model CompanyUnit {
   warehouseBranches             WarehouseBranch[]
   accountsPayableVouchers       AccountsPayableVoucher[]
   accountsPayableVoucherDetails AccountsPayableVoucherDetails[]
-  journalEntries                JournalEntry[]
+  journalEntryHeaders           JournalEntryHeader[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -698,7 +698,7 @@ model ChartAccount {
   companyAccountMappings                 CompanyAccountMapping[]
   accountsPayableVouchers                AccountsPayableVoucher[]
   accountsPayableVoucherDetails          AccountsPayableVoucherDetails[]
-  journalEntries                         JournalEntry[]
+  journalEntryDetails                    JournalEntryDetail[]
 
   @@unique([companyId, accountCode], map: "chart_accounts_company_account_code_key")
   @@index([parentAccountId], map: "chart_accounts_parent_account_id_idx")
@@ -1073,7 +1073,7 @@ model ResponsibilityCenter {
   parent          ResponsibilityCenter?             @relation("ResponsibilityCenterHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children        ResponsibilityCenter[]            @relation("ResponsibilityCenterHierarchy")
   accountsPayableVoucherDetails AccountsPayableVoucherDetails[]
-  journalEntries                JournalEntry[]
+  journalEntryDetails           JournalEntryDetail[]
 
   @@unique([companyId, code], map: "responsibility_centers_company_code_key")
   @@unique([companyId, name], map: "responsibility_centers_company_name_key")
@@ -1253,6 +1253,7 @@ model AccountsPayableVoucher {
   addressSnapshot       String?                           @map("address_snapshot") @db.VarChar(500)
   contactPersonSnapshot String?                           @map("contact_person_snapshot") @db.VarChar(255)
   contactNoSnapshot     String?                           @map("contact_no_snapshot") @db.VarChar(40)
+  projectCode           String?                           @map("project_code") @db.VarChar(80)
   projectName           String?                           @map("project_name") @db.VarChar(255)
   currencyCode          String                            @map("currency_code") @db.VarChar(10)
   exchangeRate          Decimal                           @map("exchange_rate") @db.Decimal(18, 6)
@@ -1330,20 +1331,39 @@ model AccountsPayableVoucherDetails {
   @@map("accounts_payable_voucher_details")
 }
 
-model JournalEntry {
+model JournalEntryHeader {
+  id                  BigInt               @id @default(autoincrement())
+  companyId           Int                  @map("company_id")
+  branchUnitId        Int                  @map("branch_unit_id")
+  referenceType       String               @map("reference_type") @db.VarChar(20)
+  referenceId         BigInt               @map("reference_id")
+  referenceNo         String?              @map("reference_no") @db.VarChar(120)
+  transactionDate     DateTime             @map("transaction_date")
+  currencyCode        String               @map("currency_code") @db.VarChar(10)
+  exchangeRate        Decimal              @default(1) @map("exchange_rate") @db.Decimal(18, 6)
+  particulars         String?              @db.VarChar(500)
+  totalDebit          Decimal              @default(0) @map("total_debit") @db.Decimal(18, 2)
+  totalCredit         Decimal              @default(0) @map("total_credit") @db.Decimal(18, 2)
+  status              String               @default("Draft") @db.VarChar(20)
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit          CompanyUnit          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  details             JournalEntryDetail[]
+
+  @@unique([companyId, branchUnitId, referenceType, referenceId], map: "journal_entry_header_reference_key")
+  @@index([companyId, branchUnitId])
+  @@index([referenceType, referenceId])
+  @@map("journal_entry_header")
+}
+
+model JournalEntryDetail {
   id                           BigInt                @id @default(autoincrement())
-  companyId                    Int                   @map("company_id")
-  branchUnitId                 Int                   @map("branch_unit_id")
-  referenceType                String                @map("reference_type") @db.VarChar(20)
-  referenceId                  BigInt                @map("reference_id")
-  referenceNoSnapshot          String?               @map("reference_no_snapshot") @db.VarChar(120)
+  journalEntryHeaderId         BigInt                @map("journal_entry_header_id")
   lineNumber                   Int                   @map("line_number")
   accountId                    BigInt                @map("account_id")
   accountCodeSnapshot          String                @map("account_code_snapshot") @db.VarChar(20)
   accountTitleSnapshot         String                @map("account_title_snapshot") @db.VarChar(250)
-  currencyCode                 String                @map("currency_code") @db.VarChar(10)
-  exchangeRate                 Decimal               @map("exchange_rate") @db.Decimal(18, 6)
-  particulars                  String?               @db.VarChar(500)
   debit                        Decimal               @default(0) @db.Decimal(18, 2)
   credit                       Decimal               @default(0) @db.Decimal(18, 2)
   vatType                      String?               @map("vat_type") @db.VarChar(80)
@@ -1355,17 +1375,15 @@ model JournalEntry {
   refNo                        String?               @map("ref_no") @db.VarChar(120)
   createdAt                    DateTime              @default(now()) @map("created_at")
   updatedAt                    DateTime              @updatedAt @map("updated_at")
-  company                      Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit                   CompanyUnit           @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  journalEntryHeader           JournalEntryHeader    @relation(fields: [journalEntryHeaderId], references: [id], onDelete: Cascade)
   account                      ChartAccount          @relation(fields: [accountId], references: [id], onDelete: Restrict)
   responsibilityCenter         ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
 
-  @@unique([companyId, branchUnitId, referenceType, referenceId, lineNumber], map: "journal_entries_reference_line_key")
-  @@index([companyId, branchUnitId, referenceType, referenceId], map: "journal_entries_reference_idx")
-  @@index([companyId, branchUnitId, referenceType], map: "journal_entries_reference_type_idx")
-  @@index([accountId], map: "journal_entries_account_idx")
-  @@index([responsibilityCenterId], map: "journal_entries_rc_idx")
-  @@map("journal_entries")
+  @@unique([journalEntryHeaderId, lineNumber])
+  @@index([journalEntryHeaderId])
+  @@index([accountId])
+  @@index([responsibilityCenterId])
+  @@map("journal_entry_detail")
 }
 
 model TaxPostingRule {
