@@ -276,7 +276,7 @@ Use Prisma migrations carefully:
 - Every migration folder must contain `migration.sql`.
 - Commit migration folders with schema changes.
 - If a migration was discarded locally but recorded in the database, either restore it or remove the database migration record intentionally in development.
-- Read `docs/PRISMA_WORKFLOW.md` before changing schema.
+- Read `docs/guides/database/PRISMA_WORKFLOW.md` before changing schema.
 
 ### Backend Seeder and Provisioning Rules
 
@@ -345,8 +345,8 @@ and produce working metadata and tenant defaults.
 When adding or changing seed/provision behavior, update docs if operator commands changed:
 
 ```text
-docs/backend-script-guide.md
-docs/architecture/company-bootstrap-repair.md
+docs/guides/operations/backend-script-guide.md
+docs/architecture/tenant-bootstrap/company-bootstrap-repair.md
 ```
 
 Validation checklist for seed/provision changes:

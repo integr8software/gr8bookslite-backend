@@ -811,7 +811,7 @@ Phase 1: Analysis
 
 Inspect the current implementation and produce:
 
-docs/responsibility-center-refactor-analysis.md
+docs/modules/responsibility-center/responsibility-center-refactor-analysis.md
 
 The analysis must contain:
 
@@ -839,7 +839,7 @@ Phase 2: Implementation Plan
 
 Create:
 
-docs/responsibility-center-refactor-implementation-plan.md
+docs/modules/responsibility-center/responsibility-center-refactor-implementation-plan.md
 
 The plan must contain:
 
@@ -893,7 +893,7 @@ Phase 4: Verification Report
 
 Create:
 
-docs/responsibility-center-refactor-verification.md
+docs/modules/responsibility-center/responsibility-center-refactor-verification.md
 
 Include:
 

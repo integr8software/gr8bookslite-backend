@@ -208,7 +208,7 @@ npm run dev
 
 For the beginner-friendly Prisma command flow used in this repo, read:
 
-- [docs/PRISMA_WORKFLOW.md](docs/PRISMA_WORKFLOW.md)
+- [docs/guides/database/PRISMA_WORKFLOW.md](docs/guides/database/PRISMA_WORKFLOW.md)
 
 ## Useful Commands
 
@@ -281,7 +281,7 @@ createdb -U postgres gr8bookslite_dev
 psql -U postgres -d gr8bookslite_dev < neon_backup.sql
 ```
 
-Backups can contain sensitive staging data. Store them only temporarily and never commit them. See [docs/agents/LOCAL_DATABASE_SETUP.md](docs/agents/LOCAL_DATABASE_SETUP.md) for the detailed workflow.
+Backups can contain sensitive staging data. Store them only temporarily and never commit them. See [docs/agents/platform/database/LOCAL_DATABASE_SETUP.md](docs/agents/platform/database/LOCAL_DATABASE_SETUP.md) for the detailed workflow.
 
 ## Progress Checklist
 

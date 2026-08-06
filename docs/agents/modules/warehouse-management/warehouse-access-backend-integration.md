@@ -14,8 +14,8 @@ Warehouse Access controls which active company users can work with each company 
 - Frontend services: `gr8bookslite-frontend/app/src/services/modules/maintenance/warehouse-access`
 - Frontend constants/types/validation: `gr8bookslite-frontend/app/src/constants/modules/maintenance/warehouse-access`, `gr8bookslite-frontend/app/src/types/modules/maintenance/warehouse-access`, `gr8bookslite-frontend/app/src/validations/modules/maintenance/warehouse-access`
 - Warehouse backend module: `gr8bookslite-backend/src/modules/maintenance/warehouse-maintenance`
-- Warehouse backend integration note: `gr8bookslite-backend/docs/agents/WarehouseManagement/warehouse-management-backend-integration.md`
-- Required rules: `gr8bookslite-frontend/AGENTS.md`, `gr8bookslite-frontend/FRONTEND_MAP.md`, `gr8bookslite-backend/docs/agents/ARCHITECTURE_MODULARITY_GUIDE.md`, `gr8bookslite-backend/docs/agents/BACKEND_INTEGRATION_GUIDE.md`
+- Warehouse backend integration note: `gr8bookslite-backend/docs/agents/modules/warehouse-management/warehouse-management-backend-integration.md`
+- Required rules: `gr8bookslite-frontend/AGENTS.md`, `gr8bookslite-frontend/FRONTEND_MAP.md`, `gr8bookslite-backend/docs/agents/guides/ARCHITECTURE_MODULARITY_GUIDE.md`, `gr8bookslite-backend/docs/agents/guides/BACKEND_INTEGRATION_GUIDE.md`
 
 ## Current State
 

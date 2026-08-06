@@ -296,7 +296,7 @@ Do not let a wired module silently fall back to stale mock data.
 If backend integration requires schema changes, read:
 
 ```text
-docs/PRISMA_WORKFLOW.md
+docs/guides/database/PRISMA_WORKFLOW.md
 ```
 
 Migration rules:

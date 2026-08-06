@@ -4,7 +4,7 @@ This note documents how to wire `item-category` to the backend while following:
 
 - `gr8bookslite-frontend/AGENTS.md`
 - `gr8bookslite-frontend/FRONTEND_MAP.md`
-- `gr8bookslite-backend/docs/agents/ARCHITECTURE_MODULARITY_GUIDE.md`
+- `gr8bookslite-backend/docs/agents/guides/ARCHITECTURE_MODULARITY_GUIDE.md`
 - the existing `term-management` frontend API/query/store pattern
 
 The current item-category UI is mostly feature-complete, but it still uses the item-management mock/setup store. Backend wiring should replace that mock boundary with a dedicated item-category API service and authoritative backend rules.

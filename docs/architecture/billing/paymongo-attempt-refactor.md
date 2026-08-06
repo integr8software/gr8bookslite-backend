@@ -1,6 +1,6 @@
 We have approved the architectural direction in:
 
-docs/architecture/paymongo-payment-attempt-refactor-proposal.md
+docs/architecture/billing/paymongo-payment-attempt-refactor-proposal.md
 
 Now implement the refactor.
 
