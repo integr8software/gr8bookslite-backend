@@ -30,9 +30,9 @@ Frontend:
 
 Documentation:
 
-- `docs/responsibility-center-refactor-analysis.md`
-- `docs/responsibility-center-refactor-implementation-plan.md`
-- `docs/responsibility-center-refactor-verification.md`
+- `docs/modules/responsibility-center/responsibility-center-refactor-analysis.md`
+- `docs/modules/responsibility-center/responsibility-center-refactor-implementation-plan.md`
+- `docs/modules/responsibility-center/responsibility-center-refactor-verification.md`
 
 ## Migration Created
 

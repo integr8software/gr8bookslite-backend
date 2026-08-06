@@ -98,10 +98,10 @@ Backend:
 
 ```text
 src/modules/billing/paymongo-webhook.controller.ts
-docs/paymongo-current-state-and-straight-payment-plan.md
-docs/agents/billing.agent.md
-docs/paymongo-manual-payment-vps-staging-readiness-audit.md
-docs/paymongo-v1-route-standardization.md
+docs/integrations/paymongo/paymongo-current-state-and-straight-payment-plan.md
+docs/agents/domains/billing.agent.md
+docs/integrations/paymongo/paymongo-manual-payment-vps-staging-readiness-audit.md
+docs/integrations/paymongo/paymongo-v1-route-standardization.md
 ```
 
 Frontend generated API reference:

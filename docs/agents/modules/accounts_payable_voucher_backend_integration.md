@@ -11,8 +11,8 @@ gr8bookslite-frontend/app/src/ui/modules/accounts-payable/accounts-payable-vouch
 Use this together with:
 
 ```text
-gr8bookslite-backend/docs/agents/BACKEND_INTEGRATION_GUIDE.md
-gr8bookslite-backend/docs/agents/ARCHITECTURE_MODULARITY_GUIDE.md
+gr8bookslite-backend/docs/agents/guides/BACKEND_INTEGRATION_GUIDE.md
+gr8bookslite-backend/docs/agents/guides/ARCHITECTURE_MODULARITY_GUIDE.md
 gr8bookslite-frontend/AGENTS.md
 gr8bookslite-frontend/FRONTEND_MAP.md
 gr8bookslite-frontend/app/src/agents/modules/accounts-payable/AccountsPayableVoucherAgent.md
@@ -925,7 +925,7 @@ against active company/branch scope.
 Schema changes require:
 
 ```text
-gr8bookslite-backend/docs/PRISMA_WORKFLOW.md
+gr8bookslite-backend/docs/guides/database/PRISMA_WORKFLOW.md
 ```
 
 If APV adds only transaction tables, no platform seed change is required because

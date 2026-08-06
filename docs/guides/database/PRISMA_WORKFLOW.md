@@ -91,7 +91,7 @@ npm run db:migrate:shared
 npm run db:verify:shared
 ```
 
-See `docs/DAILY_DATABASE_WORKFLOW.md` for the complete developer and teammate
+See `docs/agents/platform/database/DAILY_DATABASE_WORKFLOW.md` for the complete developer and teammate
 workflow.
 
 ## Staging And Production

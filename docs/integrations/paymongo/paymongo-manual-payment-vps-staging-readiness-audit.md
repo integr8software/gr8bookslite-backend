@@ -4,7 +4,7 @@
 > standardizing the PayMongo webhook controller under `/api/v1`. The current
 > staging webhook URL should be
 > `https://api.staging.gr8booksneo.integr8.com.ph/api/v1/webhooks/paymongo`.
-> See `docs/paymongo-v1-route-standardization.md`.
+> See `docs/integrations/paymongo/paymongo-v1-route-standardization.md`.
 
 ## Executive Summary
 

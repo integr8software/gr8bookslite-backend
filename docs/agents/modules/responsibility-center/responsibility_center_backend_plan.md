@@ -4,7 +4,7 @@
 
 Responsibility Center is currently a frontend-backed maintenance module. The backend implementation should make it a company-scoped module for maintaining organizational accountability dimensions used by transactions and reports.
 
-The module must follow `docs/agents/ARCHITECTURE_MODULARITY_GUIDE.md`:
+The module must follow `docs/agents/guides/ARCHITECTURE_MODULARITY_GUIDE.md`:
 
 - Keep backend code in the maintenance domain.
 - Keep controllers thin.
@@ -425,7 +425,7 @@ If company bootstrap repair is used for existing companies, add a handler or ext
 
 ```text
 prisma/company-bootstrap/company-bootstrap.registry.ts
-docs/architecture/company-bootstrap-repair.md
+docs/architecture/tenant-bootstrap/company-bootstrap-repair.md
 ```
 
 ## Permissions

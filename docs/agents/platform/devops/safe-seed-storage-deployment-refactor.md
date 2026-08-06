@@ -348,7 +348,7 @@ If there are valid reasons for zero active memberships in a brand-new environmen
 Create docs:
 
 ```txt
-docs/deployment/staging-seed-workflow.md
+docs/deployment/database/staging-seed-workflow.md
 ```
 
 Document recommended VPS/backend deployment flow:

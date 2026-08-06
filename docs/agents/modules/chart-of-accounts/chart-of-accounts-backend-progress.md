@@ -20,7 +20,7 @@ The backend does not yet have a Chart of Accounts module or Prisma model. The im
 
 Reference prompt:
 
-- `gr8bookslite-backend/docs/agents/COA/chart-of-accounts-codex-prompt.md`
+- `gr8bookslite-backend/docs/agents/modules/chart-of-accounts/chart-of-accounts-codex-prompt.md`
 
 Core required function:
 
@@ -380,4 +380,3 @@ Add service tests for:
 - [ ] Implement backend module.
 - [ ] Add backend tests.
 - [ ] Wire frontend to backend API.
-
