@@ -108,7 +108,7 @@ function getDefaultPartyAddress(addresses: PartyAddress[]) {
   );
 }
 
-function mapPartyAddress(address: PartyAddress) {
+export function mapPartyAddress(address: PartyAddress) {
   return {
     id: address.id.toString(),
     addressName: address.addressName,

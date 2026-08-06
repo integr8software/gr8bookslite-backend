@@ -12,6 +12,7 @@ import { ImportDiscountsDto } from './dto/import-discounts.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { mapDiscount } from './mappers/discount-maintenance.mapper';
 import { DiscountInclude } from './prisma/discount.include';
+import { DiscountLookupQueryDto } from './dto/discount-lookup-query.dto';
 import type { DiscountWithAccount } from './types/discount-with-account.type';
 import { getGeneratedDiscountAccountTitle, resolveDiscountChartAccount } from './utils/discount-chart-account.util';
 
@@ -59,7 +60,7 @@ export class DiscountMaintenanceService {
     };
   }
 
-  async findOptions(user: AuthUser, query: GetDiscountListQueryDto) {
+  async findOptions(user: AuthUser, query: DiscountLookupQueryDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const search = query.search?.trim();

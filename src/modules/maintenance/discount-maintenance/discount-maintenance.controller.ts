@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { DiscountType } from '@prisma/client';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -41,6 +42,21 @@ export class DiscountMaintenanceController {
   @ApiOkResponse({ type: DiscountOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: DiscountLookupQueryDto) {
     return this.discountLookupService.findOptionsForCompanyUser(user, query);
+  }
+
+  @Get('options/:type')
+  @ApiOkResponse({ type: DiscountOptionsResponseDto })
+  findOptionsByType(@CurrentUser() user: AuthUser, @Param('type') type: string, @Query() query: DiscountLookupQueryDto) {
+    const discountType = type.trim().toUpperCase().replace(/-/g, '_') as DiscountType;
+
+    if (!Object.values(DiscountType).includes(discountType)) {
+      throw new BadRequestException('Discount option type must be sales or purchase.');
+    }
+
+    return this.discountLookupService.findOptionsForCompanyUser(user, {
+      ...query,
+      type: discountType,
+    });
   }
 
   @Get(':id')

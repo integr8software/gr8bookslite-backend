@@ -38,22 +38,22 @@ export class ChartOfAccountsController {
     return this.chartOfAccountsService.findAll(user, query);
   }
 
-  @Get('posting-accounts')
+  @Get('options')
+  @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
+    return this.chartOfAccountsLookupService.findAllOptionsForCompanyUser(user, query);
+  }
+
+  @Get('options/posting-accounts')
   @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
   findPostingAccounts(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
     return this.chartOfAccountsLookupService.findPostingOptionsForCompanyUser(user, query);
   }
 
-  @Get('all-accounts')
+  @Get('options/all-accounts')
   @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
   findAllAccounts(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
     return this.chartOfAccountsLookupService.findAllOptionsForCompanyUser(user, query);
-  }
-
-  @Get('options')
-  @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
-  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
-    return this.chartOfAccountsLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get('tree')

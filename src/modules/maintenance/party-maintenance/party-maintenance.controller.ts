@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreatePartyDto } from './dto/create-party.dto';
 import { GetPartyListQueryDto } from './dto/get-party-list-query.dto';
 import { ImportPartiesDto } from './dto/import-parties.dto';
+import { PartyOptionsQueryDto, PartyTypedOptionsQueryDto } from './dto/party-options-query.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
 import { PartyLookupService } from './lookups/party-lookup.service';
 import { PartyMaintenanceService } from './party-maintenance.service';
@@ -40,13 +41,19 @@ export class PartyMaintenanceController {
   @Get('accounting-options')
   @ApiOkResponse({ type: PartyAccountingOptionsResponseDto })
   findAccountingOptions(@CurrentUser() user: AuthUser) {
-    return this.partyMaintenanceService.findAccountingOptions(user);
+    return this.partyLookupService.findAccountingOptionsForCompanyUser(user);
+  }
+
+  @Get('options')
+  @ApiOkResponse({ type: PartyOptionsResponseDto })
+  findOptionList(@CurrentUser() user: AuthUser, @Query() query: PartyOptionsQueryDto) {
+    return this.partyLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get('options/:partyType')
   @ApiOkResponse({ type: PartyOptionsResponseDto })
-  findOptions(@CurrentUser() user: AuthUser, @Param('partyType') partyType: string) {
-    return this.partyLookupService.findOptionsForCompanyUser(user, partyType);
+  findOptions(@CurrentUser() user: AuthUser, @Param('partyType') partyType: string, @Query() query: PartyTypedOptionsQueryDto) {
+    return this.partyLookupService.findOptionsForCompanyUser(user, { ...query, partyType });
   }
 
   @Get(':id')

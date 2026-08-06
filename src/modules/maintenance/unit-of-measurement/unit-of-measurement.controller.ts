@@ -8,8 +8,8 @@ import { GetUnitOfMeasurementListQueryDto } from './dto/get-unit-of-measurement-
 import { ImportUnitOfMeasurementsDto } from './dto/import-unit-of-measurements.dto';
 import { UnitOfMeasurementLookupQueryDto } from './dto/unit-of-measurement-lookup-query.dto';
 import { UpdateUnitOfMeasurementDto } from './dto/update-unit-of-measurement.dto';
-import { UnitOfMeasurementLookupService } from './lookups/unit-of-measurement-lookup.service';
 import { UnitOfMeasurementService } from './unit-of-measurement.service';
+import { UnitOfMeasurementLookupService } from './lookups/unit-of-measurement-lookup.service';
 import {
   ImportUnitOfMeasurementsResponseDto,
   SaveUnitOfMeasurementResponseDto,

@@ -8,8 +8,8 @@ import { GetTermListQueryDto } from './dto/get-term-list-query.dto';
 import { ImportTermsDto } from './dto/import-terms.dto';
 import { ImportTermsResponseDto, SaveTermResponseDto, TermContainerResponseDto, TermListResponseDto, TermLookupResponseDto } from './dto/term-response.dto';
 import { TermLookupQueryDto } from './dto/term-lookup-query.dto';
-import { UpdateTermDto } from './dto/update-term.dto';
 import { TermsLookupService } from './lookups/terms-lookup.service';
+import { UpdateTermDto } from './dto/update-term.dto';
 import { TermsMaintenanceService } from './terms-maintenance.service';
 
 @UseGuards(JwtAuthGuard)

@@ -3169,7 +3169,113 @@
         ]
       }
     },
-    "/api/v1/maintenance/chart-of-accounts/posting-accounts": {
+    "/api/v1/maintenance/chart-of-accounts/options": {
+      "get": {
+        "operationId": "ChartOfAccountsController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUB3",
+                "SUB1",
+                "SUB2",
+                "MAJOR",
+                "SPECIFIC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASSET",
+                "EXPENSE",
+                "REVENUE",
+                "LIABILITY",
+                "EQUITY"
+              ]
+            }
+          },
+          {
+            "name": "accountNature",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBIT",
+                "CREDIT"
+              ]
+            }
+          },
+          {
+            "name": "postingOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Chart of Accounts"
+        ]
+      }
+    },
+    "/api/v1/maintenance/chart-of-accounts/options/posting-accounts": {
       "get": {
         "operationId": "ChartOfAccountsController_findPostingAccounts_v1",
         "parameters": [
@@ -3275,115 +3381,9 @@
         ]
       }
     },
-    "/api/v1/maintenance/chart-of-accounts/all-accounts": {
+    "/api/v1/maintenance/chart-of-accounts/options/all-accounts": {
       "get": {
         "operationId": "ChartOfAccountsController_findAllAccounts_v1",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 120,
-              "type": "string"
-            }
-          },
-          {
-            "name": "accountLevel",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "SUB3",
-                "SUB1",
-                "SUB2",
-                "MAJOR",
-                "SPECIFIC"
-              ]
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "INACTIVE"
-              ]
-            }
-          },
-          {
-            "name": "accountType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ASSET",
-                "EXPENSE",
-                "REVENUE",
-                "LIABILITY",
-                "EQUITY"
-              ]
-            }
-          },
-          {
-            "name": "accountNature",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "DEBIT",
-                "CREDIT"
-              ]
-            }
-          },
-          {
-            "name": "postingOnly",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "parentAccountId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChartAccountOptionsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Chart of Accounts"
-        ]
-      }
-    },
-    "/api/v1/maintenance/chart-of-accounts/options": {
-      "get": {
-        "operationId": "ChartOfAccountsController_findOptions_v1",
         "parameters": [
           {
             "name": "search",
@@ -4703,6 +4703,65 @@
         ]
       }
     },
+    "/api/v1/maintenance/payment-type-maintenance/options/{type}": {
+      "get": {
+        "operationId": "PaymentTypeMaintenanceController_findOptionsByType_v1",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "classification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BANK_TRANSFER",
+                "CASH",
+                "CHECK",
+                "DIGITAL_WALLET",
+                "NON_CASH_SETTLEMENT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTypeOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Payment Type Maintenance"
+        ]
+      }
+    },
     "/api/v1/maintenance/payment-type-maintenance/{id}": {
       "get": {
         "operationId": "PaymentTypeMaintenanceController_findOne_v1",
@@ -4975,6 +5034,74 @@
       "get": {
         "operationId": "DiscountMaintenanceController_findOptions_v1",
         "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PURCHASE",
+                "SALES"
+              ]
+            }
+          },
+          {
+            "name": "valueType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PERCENTAGE",
+                "FIXED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Discount Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/discount-maintenance/options/{type}": {
+      "get": {
+        "operationId": "DiscountMaintenanceController_findOptionsByType_v1",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "search",
             "required": false,
@@ -5347,6 +5474,101 @@
         ]
       }
     },
+    "/api/v1/maintenance/party-maintenance/options": {
+      "get": {
+        "operationId": "PartyMaintenanceController_findOptionList_v1",
+        "parameters": [
+          {
+            "name": "partyType",
+            "required": false,
+            "in": "query",
+            "description": "Single party type, ALL, or a comma-separated list such as CUSTOMER,VENDOR.",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyTypes",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated party types. Takes precedence over partyType when provided.",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "match",
+            "required": false,
+            "in": "query",
+            "description": "any returns parties with at least one requested type; all returns parties with every requested type.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "any",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "detail",
+            "required": false,
+            "in": "query",
+            "description": "basic returns identifying fields only; complete includes address, terms, accounting IDs, and tax defaults.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "basic",
+                "complete"
+              ]
+            }
+          },
+          {
+            "name": "includeDetails",
+            "required": false,
+            "in": "query",
+            "description": "Legacy-friendly alias for detail=complete.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Party Maintenance"
+        ]
+      }
+    },
     "/api/v1/maintenance/party-maintenance/options/{partyType}": {
       "get": {
         "operationId": "PartyMaintenanceController_findOptions_v1",
@@ -5356,6 +5578,64 @@
             "required": true,
             "in": "path",
             "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyTypes",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated party types. Takes precedence over partyType when provided.",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "match",
+            "required": false,
+            "in": "query",
+            "description": "any returns parties with at least one requested type; all returns parties with every requested type.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "any",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "detail",
+            "required": false,
+            "in": "query",
+            "description": "basic returns identifying fields only; complete includes address, terms, accounting IDs, and tax defaults.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "basic",
+                "complete"
+              ]
+            }
+          },
+          {
+            "name": "includeDetails",
+            "required": false,
+            "in": "query",
+            "description": "Legacy-friendly alias for detail=complete.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
               "type": "string"
             }
           }
@@ -5925,111 +6205,6 @@
         ]
       }
     },
-    "/api/v1/maintenance/bank-masterfile/options": {
-      "get": {
-        "operationId": "BankMasterfileLookupController_findOptions_v1",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 120,
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "INACTIVE"
-              ]
-            }
-          },
-          {
-            "name": "currencyCode",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 10,
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 500,
-              "type": "number"
-            }
-          },
-          {
-            "name": "sortBy",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "bankName",
-                "branch",
-                "accountName",
-                "accountNumber",
-                "status",
-                "createdAt",
-                "updatedAt"
-              ]
-            }
-          },
-          {
-            "name": "sortDirection",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BankAccountOptionsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Bank Masterfile"
-        ]
-      }
-    },
     "/api/v1/maintenance/financial-management/default-accounts": {
       "get": {
         "operationId": "DefaultAccountController_findAll_v1",
@@ -6220,58 +6395,18 @@
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/default-accounts/expense-options": {
+    "/api/v1/maintenance/financial-management/default-accounts/options/{type}": {
       "get": {
-        "operationId": "DefaultAccountController_findExpenseOptions_v1",
+        "operationId": "DefaultAccountController_findOptionsByType_v1",
         "parameters": [
           {
-            "name": "search",
-            "required": false,
-            "in": "query",
+            "name": "type",
+            "required": true,
+            "in": "path",
             "schema": {
-              "maxLength": 120,
               "type": "string"
             }
           },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "INACTIVE"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DefaultAccountOptionsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Default Account"
-        ]
-      }
-    },
-    "/api/v1/maintenance/financial-management/default-accounts/collection-options": {
-      "get": {
-        "operationId": "DefaultAccountController_findCollectionOptions_v1",
-        "parameters": [
           {
             "name": "search",
             "required": false,
@@ -6922,112 +7057,6 @@
         ]
       }
     },
-    "/api/v1/maintenance/services-maintenance/options": {
-      "get": {
-        "operationId": "ServicesMaintenanceLookupController_findOptions_v1",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 120,
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "INACTIVE"
-              ]
-            }
-          },
-          {
-            "name": "accountSetupMode",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "AUTO",
-                "EXISTING"
-              ]
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 500,
-              "type": "number"
-            }
-          },
-          {
-            "name": "sortBy",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "serviceName",
-                "status",
-                "accountSetupMode",
-                "createdAt",
-                "updatedAt"
-              ]
-            }
-          },
-          {
-            "name": "sortDirection",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceMaintenanceOptionsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Services Maintenance"
-        ]
-      }
-    },
     "/api/v1/maintenance/financial-management/responsibility-centers": {
       "get": {
         "operationId": "ResponsibilityCenterController_findAll_v1",
@@ -7218,6 +7247,166 @@
       "get": {
         "operationId": "ResponsibilityCenterController_findOptions_v1",
         "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BRANCH",
+                "SECTION",
+                "CORPORATE",
+                "DIVISION",
+                "DEPARTMENT",
+                "TEAM",
+                "BUILDING",
+                "PROJECT",
+                "BUSINESS_UNIT",
+                "REGION",
+                "SALESMAN",
+                "WAREHOUSE",
+                "OUTLET",
+                "SALES_TERRITORY",
+                "FLEET"
+              ]
+            }
+          },
+          {
+            "name": "financialType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "COST_CENTER",
+                "REVENUE_CENTER",
+                "PROFIT_CENTER",
+                "INVESTMENT_CENTER"
+              ]
+            }
+          },
+          {
+            "name": "classificationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "typeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "code",
+                "name",
+                "category",
+                "financialType",
+                "manager",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsibilityCenterOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Responsibility Center"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/responsibility-centers/options/{type}": {
+      "get": {
+        "operationId": "ResponsibilityCenterController_findOptionsByType_v1",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "search",
             "required": false,
@@ -7722,158 +7911,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SaveResponsibilityCenterResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Responsibility Center"
-        ]
-      }
-    },
-    "/api/v1/maintenance/responsibility-center/options": {
-      "get": {
-        "operationId": "ResponsibilityCenterLookupController_findOptions_v1",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 120,
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "INACTIVE"
-              ]
-            }
-          },
-          {
-            "name": "category",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "BRANCH",
-                "SECTION",
-                "CORPORATE",
-                "DIVISION",
-                "DEPARTMENT",
-                "TEAM",
-                "BUILDING",
-                "PROJECT",
-                "BUSINESS_UNIT",
-                "REGION",
-                "SALESMAN",
-                "WAREHOUSE",
-                "OUTLET",
-                "SALES_TERRITORY",
-                "FLEET"
-              ]
-            }
-          },
-          {
-            "name": "financialType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "COST_CENTER",
-                "REVENUE_CENTER",
-                "PROFIT_CENTER",
-                "INVESTMENT_CENTER"
-              ]
-            }
-          },
-          {
-            "name": "classificationId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "typeId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 500,
-              "type": "number"
-            }
-          },
-          {
-            "name": "sortBy",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "code",
-                "name",
-                "category",
-                "financialType",
-                "manager",
-                "status",
-                "createdAt",
-                "updatedAt"
-              ]
-            }
-          },
-          {
-            "name": "sortDirection",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponsibilityCenterOptionsResponseDto"
                 }
               }
             }
@@ -16777,6 +16814,115 @@
               "ACTIVE",
               "INACTIVE"
             ],
+            "type": "string"
+          },
+          "partyEntityType": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string"
+          },
+          "tradeName": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "middleName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "suffixName": {
+            "type": "string"
+          },
+          "honorific": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "civilStatus": {
+            "type": "string"
+          },
+          "nationality": {
+            "type": "string"
+          },
+          "memberRegistrationDate": {
+            "type": "string"
+          },
+          "address": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartyAddressResponseDto"
+              }
+            ]
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyAddressResponseDto"
+            }
+          },
+          "defaultReceivableAccount": {
+            "type": "string"
+          },
+          "customerAdvanceAccount": {
+            "type": "string"
+          },
+          "defaultPayableAccount": {
+            "type": "string"
+          },
+          "vendorAdvanceAccount": {
+            "type": "string"
+          },
+          "employeeAdvanceAccount": {
+            "type": "string"
+          },
+          "employeePayableAccount": {
+            "type": "string"
+          },
+          "accountingAccounts": {
+            "$ref": "#/components/schemas/PartyAccountingAccountsResponseDto"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "termName": {
+            "type": "string"
+          },
+          "tin": {
+            "type": "string"
+          },
+          "atcCode": {
+            "type": "string"
+          },
+          "defaultPurchaseInputVatTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultPurchaseEwtTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultPurchaseFwtTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultPurchaseWvatTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultSalesOutputVatTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultSalesCwtTaxSourceKey": {
+            "type": "string"
+          },
+          "defaultSalesWvatTaxSourceKey": {
+            "type": "string"
+          },
+          "landline": {
             "type": "string"
           }
         },

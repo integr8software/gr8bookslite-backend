@@ -22,12 +22,13 @@ import {
   validateServiceMaintenanceInput,
 } from './utils/service-maintenance-data.util';
 import {
+  accountGroupHasTag,
   buildServiceRevenueAccountGroupTags,
   findSelectableServiceRevenueAccountOrThrow,
   findServiceRevenueParentOrThrow,
   generateNextServiceRevenueAccountCode,
+  ServiceRevenueAccountGroupTag,
 } from './utils/service-maintenance-account.util';
-import { ServicesLookupService } from './lookups/services-lookup.service';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
@@ -37,10 +38,7 @@ const ServicesMaintenanceModuleCode = 'SM';
 
 @Injectable()
 export class ServicesMaintenanceService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly servicesLookupService: ServicesLookupService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetServiceMaintenanceListQueryDto) {
     const companyId = getActiveCompanyId(user);
@@ -126,7 +124,7 @@ export class ServicesMaintenanceService {
     ensureModuleAction(user, companyId, ServicesMaintenanceModuleCode, PermissionAction.VIEW, 'You do not have permission to manage service records.');
 
     return {
-      accounts: await this.servicesLookupService.findAccountOptions({ companyId }),
+      accounts: await this.findAccountOptions(companyId),
     };
   }
 
@@ -347,6 +345,31 @@ export class ServicesMaintenanceService {
         whoCreated: String(userId),
       },
     });
+  }
+
+  private async findAccountOptions(companyId: number) {
+    const accounts = await this.prisma.chartAccount.findMany({
+      where: {
+        companyId,
+        accountLevel: ChartAccountLevel.SPECIFIC,
+        accountType: ChartAccountType.REVENUE,
+        accountNature: AccountNature.CREDIT,
+        status: ChartAccountStatus.ACTIVE,
+        deletedAt: null,
+        isPostingAccount: true,
+      },
+      orderBy: [{ accountCode: 'asc' }],
+    });
+
+    return accounts.filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag)).map((account) => ({
+      id: account.id.toString(),
+      accountNumber: account.accountCode,
+      accountName: account.accountTitle,
+      description: account.description ?? '',
+      accountType: account.accountType ?? '',
+      accountCategory: account.accountLevel === ChartAccountLevel.SPECIFIC ? 'Detail' : 'Header',
+      status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
+    }));
   }
 
   private async ensureSelectedRevenueAccountIsValid(companyId: number, revenueCoaId: bigint, tx: ServicesMaintenancePrismaClient) {
