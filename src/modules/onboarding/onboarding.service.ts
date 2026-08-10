@@ -30,6 +30,7 @@ import type { UploadedLogoFile } from './types/uploaded-logo-file.type';
 import { getOnboardingDateParts, getSyncedReportEndDate, isValidOnboardingDateValue } from './utils/OnboardingDate.util';
 import { buildCompanyLogoStoragePath, buildCompanyDisplayName, buildSlugBase } from './utils/OnboardingFinalize.util';
 import { validateOnboardingLogoFile } from './utils/OnboardingLogoUpload.util';
+import { ReferenceService } from '../reference/reference.service';
 
 const subscriptionPlanInclude = Prisma.validator<Prisma.SubscriptionPlanInclude>()({
   prices: {
@@ -81,6 +82,7 @@ export class OnboardingService {
     private readonly onboardingLogoStorageService: OnboardingLogoStorageService,
     private readonly jwtService: JwtService,
     private readonly authMailService: AuthMailService,
+    private readonly referenceService: ReferenceService,
   ) {}
 
   async getPlans() {
@@ -135,6 +137,12 @@ export class OnboardingService {
         subscriptionPlan: {
           include: subscriptionPlanInclude,
         },
+        provisionedCompany: {
+          select: {
+            countryCode: true,
+            baseCurrencyCode: true,
+          },
+        },
       },
     });
 
@@ -173,6 +181,8 @@ export class OnboardingService {
               contactNumber: draft.contactNumber,
               reportStartDate: draft.reportStartDate ? draft.reportStartDate.toISOString().slice(0, 10) : null,
               reportEndDate: draft.reportEndDate ? draft.reportEndDate.toISOString().slice(0, 10) : null,
+              countryCode: draft.provisionedCompany?.countryCode ?? null,
+              baseCurrencyCode: draft.provisionedCompany?.baseCurrencyCode ?? null,
             },
           }
         : null,
@@ -352,6 +362,10 @@ export class OnboardingService {
     }
 
     this.validateCompanyDetailsInput(dto);
+    const companyCurrency = this.referenceService.validateCompanyCurrency(
+      dto.countryCode,
+      dto.baseCurrencyCode,
+    );
 
     const reportStartDate = new Date(`${dto.reportStartDate}T00:00:00.000Z`);
     const reportEndDate = new Date(`${dto.reportEndDate}T00:00:00.000Z`);
@@ -392,6 +406,8 @@ export class OnboardingService {
               email: normalizeEmail(dto.companyEmail) as string,
               website: dto.website?.trim() || null,
               contactNumber: dto.contactNumber.trim(),
+              countryCode: companyCurrency.countryCode,
+              baseCurrencyCode: companyCurrency.baseCurrencyCode,
               reportStartDate,
               reportEndDate,
               isActive: false,
@@ -419,6 +435,8 @@ export class OnboardingService {
               email: normalizeEmail(dto.companyEmail) as string,
               website: dto.website?.trim() || null,
               contactNumber: dto.contactNumber.trim(),
+              countryCode: companyCurrency.countryCode,
+              baseCurrencyCode: companyCurrency.baseCurrencyCode,
               reportStartDate,
               reportEndDate,
               isActive: false,
@@ -523,6 +541,8 @@ export class OnboardingService {
         companyEmail: updatedDraft.companyEmail,
         website: updatedDraft.website,
         contactNumber: updatedDraft.contactNumber,
+        countryCode: companyCurrency.countryCode,
+        baseCurrencyCode: companyCurrency.baseCurrencyCode,
         reportStartDate: dto.reportStartDate,
         reportEndDate: dto.reportEndDate,
       },
