@@ -1238,7 +1238,7 @@ model PartyAddress {
 }
 
 model AccountsPayableVoucher {
-  id                    BigInt                            @id @default(autoincrement())
+  apvId                 BigInt                            @id @default(autoincrement()) @map("apv_id")
   companyId             Int                               @map("company_id")
   branchUnitId          Int                               @map("branch_unit_id")
   partyId               BigInt?                           @map("party_id")
@@ -1291,7 +1291,7 @@ model AccountsPayableVoucher {
 
 model AccountsPayableVoucherDetails {
   id                           BigInt                 @id @default(autoincrement())
-  voucherId                    BigInt                 @map("voucher_id")
+  apvId                        BigInt                 @map("apv_id")
   companyId                    Int                    @map("company_id")
   branchUnitId                 Int                    @map("branch_unit_id")
   partyId                      BigInt?                @map("party_id")
@@ -1316,14 +1316,14 @@ model AccountsPayableVoucherDetails {
   responsibilityCenterId       BigInt?                @map("responsibility_center_id")
   responsibilityCenterSnapshot String?                @map("responsibility_center_snapshot") @db.VarChar(150)
   referenceNo                  String?                @map("reference_no") @db.VarChar(120)
-  voucher                      AccountsPayableVoucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  voucher                      AccountsPayableVoucher @relation(fields: [apvId], references: [apvId], onDelete: Cascade)
   company                      Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
   branchUnit                   CompanyUnit            @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
   party                        Party?                 @relation(fields: [partyId], references: [id], onDelete: SetNull)
   expenseAccount               ChartAccount           @relation(fields: [expenseAccountId], references: [id], onDelete: Restrict)
   responsibilityCenter         ResponsibilityCenter?  @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
 
-  @@unique([voucherId, lineNumber], map: "ap_voucher_details_voucher_line_key")
+  @@unique([apvId, lineNumber], map: "ap_voucher_details_apv_line_key")
   @@index([companyId, branchUnitId], map: "ap_voucher_details_company_branch_idx")
   @@index([partyId], map: "ap_voucher_details_party_id_idx")
   @@index([expenseAccountId], map: "ap_voucher_details_expense_account_idx")
@@ -1332,25 +1332,27 @@ model AccountsPayableVoucherDetails {
 }
 
 model JournalEntryHeader {
-  id                  BigInt               @id @default(autoincrement())
-  companyId           Int                  @map("company_id")
-  branchUnitId        Int                  @map("branch_unit_id")
-  referenceType       String               @map("reference_type") @db.VarChar(20)
-  referenceId         BigInt               @map("reference_id")
-  referenceNo         String?              @map("reference_no") @db.VarChar(120)
-  transactionDate     DateTime             @map("transaction_date")
-  currencyCode        String               @map("currency_code") @db.VarChar(10)
-  exchangeRate        Decimal              @default(1) @map("exchange_rate") @db.Decimal(18, 6)
-  particulars         String?              @db.VarChar(500)
-  totalDebit          Decimal              @default(0) @map("total_debit") @db.Decimal(18, 2)
-  totalCredit         Decimal              @default(0) @map("total_credit") @db.Decimal(18, 2)
-  status              String               @default("Draft") @db.VarChar(20)
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @updatedAt @map("updated_at")
-  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit          CompanyUnit          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
-  details             JournalEntryDetail[]
+  id              BigInt               @id @default(autoincrement())
+  jeno            BigInt
+  companyId       Int                  @map("company_id")
+  branchUnitId    Int                  @map("branch_unit_id")
+  referenceType   String               @map("reference_type") @db.VarChar(20)
+  referenceId     BigInt               @map("reference_id")
+  referenceNo     String?              @map("reference_no") @db.VarChar(120)
+  transactionDate DateTime             @map("transaction_date")
+  currencyCode    String               @map("currency_code") @db.VarChar(10)
+  exchangeRate    Decimal              @default(1) @map("exchange_rate") @db.Decimal(18, 6)
+  particulars     String?              @db.VarChar(500)
+  totalDebit      Decimal              @default(0) @map("total_debit") @db.Decimal(18, 2)
+  totalCredit     Decimal              @default(0) @map("total_credit") @db.Decimal(18, 2)
+  status          String               @default("Draft") @db.VarChar(20)
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  company         Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit      CompanyUnit          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  details         JournalEntryDetail[]
 
+  @@unique([companyId, jeno], map: "journal_entry_header_company_jeno_key")
   @@unique([companyId, branchUnitId, referenceType, referenceId], map: "journal_entry_header_reference_key")
   @@index([companyId, branchUnitId])
   @@index([referenceType, referenceId])
@@ -1359,7 +1361,8 @@ model JournalEntryHeader {
 
 model JournalEntryDetail {
   id                           BigInt                @id @default(autoincrement())
-  journalEntryHeaderId         BigInt                @map("journal_entry_header_id")
+  companyId                    Int                   @map("company_id")
+  jeno                         BigInt
   lineNumber                   Int                   @map("line_number")
   accountId                    BigInt                @map("account_id")
   accountCodeSnapshot          String                @map("account_code_snapshot") @db.VarChar(20)
@@ -1375,12 +1378,12 @@ model JournalEntryDetail {
   refNo                        String?               @map("ref_no") @db.VarChar(120)
   createdAt                    DateTime              @default(now()) @map("created_at")
   updatedAt                    DateTime              @updatedAt @map("updated_at")
-  journalEntryHeader           JournalEntryHeader    @relation(fields: [journalEntryHeaderId], references: [id], onDelete: Cascade)
+  journalEntryHeader           JournalEntryHeader    @relation(fields: [companyId, jeno], references: [companyId, jeno], onDelete: Cascade)
   account                      ChartAccount          @relation(fields: [accountId], references: [id], onDelete: Restrict)
   responsibilityCenter         ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
 
-  @@unique([journalEntryHeaderId, lineNumber])
-  @@index([journalEntryHeaderId])
+  @@unique([companyId, jeno, lineNumber], map: "journal_entry_detail_company_jeno_line_key")
+  @@index([companyId, jeno], map: "journal_entry_detail_company_jeno_idx")
   @@index([accountId])
   @@index([responsibilityCenterId])
   @@map("journal_entry_detail")
