@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import type { AccountsPayableVoucherDetails, JournalEntry } from '@prisma/client';
+import type { AccountsPayableVoucherDetails } from '@prisma/client';
 import type { AccountsPayableVoucherDetailsDto } from '../dto/accounts-payable-voucher-details.dto';
 import type { JournalEntryDto } from '../dto/journal-entry.dto';
+import type { AccountsPayableVoucherJournalEntry } from '../types/accounts-payable-voucher-with-details.type';
 import { amountsMatch, getAccountsPayableVoucherDetailTotals, getJournalEntryTotals, roundCurrency } from '../utils/accounts-payable-voucher-totals.util';
 
 const AccountsPayableVoucherReferenceType = 'APV';
@@ -47,7 +48,7 @@ export class AccountsPayableVoucherAccountingService {
     };
   }
 
-  validatePersistedPayload({ amount, details, journalEntries }: { amount: number; details: AccountsPayableVoucherDetails[]; journalEntries: JournalEntry[] }) {
+  validatePersistedPayload({ amount, details, journalEntries }: { amount: number; details: AccountsPayableVoucherDetails[]; journalEntries: AccountsPayableVoucherJournalEntry[] }) {
     if (details.length === 0) {
       throw new BadRequestException('Add at least one APV detail row before approval.');
     }

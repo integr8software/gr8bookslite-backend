@@ -5,7 +5,6 @@ import {
   ChartAccount,
   ChartAccountStatus,
   CompanyUnitType,
-  JournalEntry,
   MembershipRole,
   MembershipStatus,
   Party,
@@ -42,7 +41,7 @@ import { UpdateAccountsPayableVoucherStatusDto } from './dto/update-accounts-pay
 import { mapAccountsPayableVoucher } from './mappers/accounts-payable-voucher.mapper';
 import { AccountsPayableVoucherInclude } from './prisma/accounts-payable-voucher.include';
 import { AccountsPayableVoucherAccountingService } from './services/accounts-payable-voucher-accounting.service';
-import type { AccountsPayableVoucherWithDetails } from './types/accounts-payable-voucher-with-details.type';
+import type { AccountsPayableVoucherJournalEntry, AccountsPayableVoucherWithDetails } from './types/accounts-payable-voucher-with-details.type';
 
 const AccountsPayableVoucherModuleCode = 'APV';
 const AccountsPayableVoucherReferenceType = 'APV';
@@ -190,6 +189,7 @@ export class AccountsPayableVoucherService {
             partyNameSnapshot: this.getPartyName(references.party, dto.partyName),
             addressSnapshot: this.getPartyAddress(references.party) ?? cleanOptional(dto.address),
             payableType: normalized.payableType,
+            projectCode: cleanOptional(dto.projectCode),
             projectName: cleanOptional(dto.projectName),
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
@@ -274,6 +274,7 @@ export class AccountsPayableVoucherService {
             partyNameSnapshot: this.getPartyName(references.party, dto.partyName),
             addressSnapshot: this.getPartyAddress(references.party) ?? cleanOptional(dto.address),
             payableType: normalized.payableType,
+            projectCode: cleanOptional(dto.projectCode),
             projectName: cleanOptional(dto.projectName),
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
@@ -478,28 +479,41 @@ export class AccountsPayableVoucherService {
   private async attachJournalEntries<T extends Prisma.AccountsPayableVoucherGetPayload<{ include: typeof AccountsPayableVoucherInclude }>>(
     vouchers: T[],
     tx: PrismaWriteClient = this.prisma,
-  ): Promise<Array<T & { journalEntries: JournalEntry[] }>> {
+  ): Promise<Array<T & { journalEntries: AccountsPayableVoucherJournalEntry[] }>> {
     if (vouchers.length === 0) {
       return [];
     }
 
-    const journalEntries = await tx.journalEntry.findMany({
+    const journalEntryHeaders = await tx.journalEntryHeader.findMany({
       where: {
         referenceId: {
           in: vouchers.map((voucher) => voucher.id),
         },
         referenceType: AccountsPayableVoucherReferenceType,
       },
-      orderBy: [{ referenceId: 'asc' }, { lineNumber: 'asc' }],
+      include: {
+        details: {
+          orderBy: {
+            lineNumber: 'asc',
+          },
+        },
+      },
+      orderBy: [{ referenceId: 'asc' }],
     });
-    const journalEntriesByReferenceId = new Map<string, typeof journalEntries>();
+    const journalEntriesByReferenceId = new Map<string, AccountsPayableVoucherJournalEntry[]>();
 
-    for (const entry of journalEntries) {
-      const key = entry.referenceId.toString();
-      const entries = journalEntriesByReferenceId.get(key) ?? [];
+    for (const header of journalEntryHeaders) {
+      const entries = header.details.map((entry) => ({
+        ...entry,
+        currencyCode: header.currencyCode,
+        exchangeRate: header.exchangeRate,
+        particulars: header.particulars,
+        referenceId: header.referenceId,
+        referenceNo: header.referenceNo,
+        referenceType: header.referenceType,
+      }));
 
-      entries.push(entry);
-      journalEntriesByReferenceId.set(key, entries);
+      journalEntriesByReferenceId.set(header.referenceId.toString(), entries);
     }
 
     return vouchers.map((voucher) => ({
@@ -649,36 +663,53 @@ export class AccountsPayableVoucherService {
     exchangeRate: number,
     journalEntries: ResolvedJournalEntry[],
   ) {
-    await tx.journalEntry.deleteMany({
+    await tx.journalEntryHeader.deleteMany({
       where: {
         referenceId: voucherId,
         referenceType: AccountsPayableVoucherReferenceType,
       },
     });
-    await tx.journalEntry.createMany({
-      data: journalEntries.map(({ account, input, responsibilityCenter }) => ({
-        accountCodeSnapshot: account.accountCode,
-        accountId: account.id,
-        accountTitleSnapshot: account.accountTitle,
-        atcCode: cleanOptional(input.atcCode),
+
+    const totals = journalEntries.reduce(
+      (current, { input }) => ({
+        credit: roundToDecimal(current.credit + Number(input.credit), 2),
+        debit: roundToDecimal(current.debit + Number(input.debit), 2),
+      }),
+      { credit: 0, debit: 0 },
+    );
+
+    await tx.journalEntryHeader.create({
+      data: {
         branchUnitId,
         companyId,
-        credit: roundToDecimal(input.credit, 2),
         currencyCode,
-        debit: roundToDecimal(input.debit, 2),
         exchangeRate,
-        lineNumber: input.lineNumber,
-        particulars: cleanOptional(input.particulars),
-        partyCodeSnapshot: cleanOptional(input.partyCode),
-        partyNameSnapshot: cleanOptional(input.partyName),
+        particulars: cleanOptional(journalEntries[0]?.input.particulars),
         referenceId: voucherId,
-        referenceNoSnapshot: null,
+        referenceNo: cleanOptional(journalEntries[0]?.input.refNo),
         referenceType: AccountsPayableVoucherReferenceType,
-        refNo: cleanOptional(input.refNo),
-        responsibilityCenterId: responsibilityCenter?.id ?? null,
-        responsibilityCenterSnapshot: responsibilityCenter?.name ?? cleanOptional(input.responsibilityCenter),
-        vatType: cleanOptional(input.vatType),
-      })),
+        status: 'Draft',
+        totalCredit: totals.credit,
+        totalDebit: totals.debit,
+        transactionDate: new Date(),
+        details: {
+          create: journalEntries.map(({ account, input, responsibilityCenter }) => ({
+            accountCodeSnapshot: account.accountCode,
+            accountId: account.id,
+            accountTitleSnapshot: account.accountTitle,
+            atcCode: cleanOptional(input.atcCode),
+            credit: roundToDecimal(input.credit, 2),
+            debit: roundToDecimal(input.debit, 2),
+            lineNumber: input.lineNumber,
+            partyCodeSnapshot: cleanOptional(input.partyCode),
+            partyNameSnapshot: cleanOptional(input.partyName),
+            refNo: cleanOptional(input.refNo),
+            responsibilityCenterId: responsibilityCenter?.id ?? null,
+            responsibilityCenterSnapshot: responsibilityCenter?.name ?? cleanOptional(input.responsibilityCenter),
+            vatType: cleanOptional(input.vatType),
+          })),
+        },
+      },
     });
   }
 
