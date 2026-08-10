@@ -61,11 +61,6 @@ export class AuthService {
     }
 
     const normalizedEmail = normalizeEmail(dto.email) as string;
-    const existingUser = await this.usersService.findByEmail(normalizedEmail);
-
-    if (existingUser) {
-      throw new ConflictException('An account already uses this email. Sign in or reset your password.');
-    }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const contactNumber = dto.contactNumber?.trim() || null;
@@ -73,30 +68,49 @@ export class AuthService {
     const codeHash = await this.otpService.hashCode(verificationCode);
     const expiresAt = this.buildVerificationExpiry();
 
-    const user = await this.prisma.$transaction(async (tx) => {
-      const createdUser = await tx.user.create({
-        data: {
-          email: normalizedEmail,
-          name: dto.fullName,
-          contactNumber,
-          passwordHash: hashedPassword,
-          systemRole: SystemRole.STANDARD,
-          status: UserStatus.PENDING_VERIFICATION,
-        },
-      });
+    let user: Awaited<ReturnType<typeof this.prisma.user.create>>;
 
-      await tx.emailVerificationCode.create({
-        data: {
-          userId: createdUser.id,
-          email: createdUser.email,
-          purpose: VerificationPurpose.SIGNUP,
-          codeHash,
-          expiresAt,
-        },
-      });
+    try {
+      user = await this.prisma.$transaction(async (tx) => {
+        const existingUser = await tx.user.findUnique({
+          where: { email: normalizedEmail },
+          select: { id: true },
+        });
 
-      return createdUser;
-    });
+        if (existingUser) {
+          throw new ConflictException('An account already uses this email. Sign in or reset your password.');
+        }
+
+        const createdUser = await tx.user.create({
+          data: {
+            email: normalizedEmail,
+            name: dto.fullName,
+            contactNumber,
+            passwordHash: hashedPassword,
+            systemRole: SystemRole.STANDARD,
+            status: UserStatus.PENDING_VERIFICATION,
+          },
+        });
+
+        await tx.emailVerificationCode.create({
+          data: {
+            userId: createdUser.id,
+            email: createdUser.email,
+            purpose: VerificationPurpose.SIGNUP,
+            codeHash,
+            expiresAt,
+          },
+        });
+
+        return createdUser;
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException('An account already uses this email. Sign in or reset your password.');
+      }
+
+      throw error;
+    }
 
     await this.authMailService.sendVerificationCode(user.email, verificationCode);
 
