@@ -502,7 +502,14 @@
         "parameters": [],
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadOnboardingCompanyLogoResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -516,7 +523,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingPlansResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -530,7 +544,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOnboardingDraftResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -554,7 +575,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectOnboardingPlanResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -578,7 +606,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveOnboardingBillingResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -602,7 +637,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveOnboardingCompanyDetailsResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -616,7 +658,14 @@
         "parameters": [],
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteOnboardingResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -9349,6 +9398,34 @@
         ]
       }
     },
+    "/api/v1/reference/countries": {
+      "get": {
+        "operationId": "ReferenceController_listCountries_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Reference"
+        ]
+      }
+    },
+    "/api/v1/reference/currencies": {
+      "get": {
+        "operationId": "ReferenceController_listCurrencies_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Reference"
+        ]
+      }
+    },
     "/api/v1/ai-assistant/chat": {
       "post": {
         "operationId": "AiAssistantController_chat_v1",
@@ -10241,6 +10318,516 @@
           "confirmNewPassword"
         ]
       },
+      "OnboardingLogoResponseDto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "storagePath": {
+            "type": "string"
+          },
+          "publicUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileName",
+          "mimeType",
+          "storagePath",
+          "publicUrl"
+        ]
+      },
+      "UploadOnboardingCompanyLogoResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "logo": {
+            "$ref": "#/components/schemas/OnboardingLogoResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "logo"
+        ]
+      },
+      "OnboardingPlanPriceSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "amountInCents": {
+            "type": "number"
+          },
+          "display": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amountInCents",
+          "display"
+        ]
+      },
+      "OnboardingPlanPricingResponseDto": {
+        "type": "object",
+        "properties": {
+          "monthly": {
+            "$ref": "#/components/schemas/OnboardingPlanPriceSummaryResponseDto"
+          },
+          "yearly": {
+            "$ref": "#/components/schemas/OnboardingPlanPriceSummaryResponseDto"
+          },
+          "monthlyCompareAt": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPlanPriceSummaryResponseDto"
+              }
+            ]
+          },
+          "yearlyCompareAt": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPlanPriceSummaryResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "monthly",
+          "yearly",
+          "monthlyCompareAt",
+          "yearlyCompareAt"
+        ]
+      },
+      "OnboardingPlanPriceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "billingCycle": {
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "intervalCount": {
+            "type": "number"
+          },
+          "intervalUnit": {
+            "type": "string"
+          },
+          "amountInCents": {
+            "type": "number"
+          },
+          "display": {
+            "type": "string"
+          },
+          "compareAtInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "compareAtDisplay": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "billingCycle",
+          "intervalCount",
+          "intervalUnit",
+          "amountInCents",
+          "display",
+          "compareAtInCents",
+          "compareAtDisplay",
+          "isActive"
+        ]
+      },
+      "OnboardingPlanUsageRuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "freeCount": {
+            "type": "number"
+          },
+          "unitPriceInCents": {
+            "type": "number"
+          },
+          "unitPriceDisplay": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "metric",
+          "freeCount",
+          "unitPriceInCents",
+          "unitPriceDisplay",
+          "isActive"
+        ]
+      },
+      "OnboardingPlanDiscountTierResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "thresholdCount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "metric",
+          "thresholdCount",
+          "discountPercent",
+          "isActive"
+        ]
+      },
+      "OnboardingPlanModuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "moduleKey": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "moduleKey",
+          "name",
+          "isEnabled"
+        ]
+      },
+      "OnboardingPlanResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "trialDays": {
+            "type": "number"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/OnboardingPlanPricingResponseDto"
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanPriceResponseDto"
+            }
+          },
+          "usageRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanUsageRuleResponseDto"
+            }
+          },
+          "discountTiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanDiscountTierResponseDto"
+            }
+          },
+          "moduleKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanModuleResponseDto"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "description",
+          "trialDays",
+          "pricing",
+          "prices",
+          "usageRules",
+          "discountTiers",
+          "moduleKeys",
+          "modules"
+        ]
+      },
+      "OnboardingPlansResponseDto": {
+        "type": "object",
+        "properties": {
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanResponseDto"
+            }
+          }
+        },
+        "required": [
+          "plans"
+        ]
+      },
+      "OnboardingDraftCompanyDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxpayerType": {
+            "nullable": true,
+            "enum": [
+              "individual",
+              "non-individual"
+            ],
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "nonIndividualType": {
+            "type": "string",
+            "nullable": true
+          },
+          "nonIndividualTypeOther": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoName": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoMimeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoStoragePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoPublicUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "tin": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "website": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportStartDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportEndDate": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "taxpayerType",
+          "lastName",
+          "firstName",
+          "middleName",
+          "companyName",
+          "nonIndividualType",
+          "nonIndividualTypeOther",
+          "logoName",
+          "logoMimeType",
+          "logoStoragePath",
+          "logoPublicUrl",
+          "address",
+          "countryCode",
+          "baseCurrencyCode",
+          "tin",
+          "companyEmail",
+          "website",
+          "contactNumber",
+          "reportStartDate",
+          "reportEndDate"
+        ]
+      },
+      "OnboardingDraftResponseDto": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPlanResponseDto"
+              }
+            ]
+          },
+          "billingCycle": {
+            "nullable": true,
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "cardholderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardLast4": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardBrand": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardExpiryMonth": {
+            "type": "number",
+            "nullable": true
+          },
+          "cardExpiryYear": {
+            "type": "number",
+            "nullable": true
+          },
+          "hasBillingSetup": {
+            "type": "boolean"
+          },
+          "hasCompanyDetails": {
+            "type": "boolean"
+          },
+          "planSelectedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "billingCompletedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "companyDetails": {
+            "$ref": "#/components/schemas/OnboardingDraftCompanyDetailsResponseDto"
+          }
+        },
+        "required": [
+          "plan",
+          "billingCycle",
+          "cardholderName",
+          "billingEmail",
+          "billingAddress",
+          "cardLast4",
+          "cardBrand",
+          "cardExpiryMonth",
+          "cardExpiryYear",
+          "hasBillingSetup",
+          "hasCompanyDetails",
+          "planSelectedAt",
+          "billingCompletedAt",
+          "companyDetails"
+        ]
+      },
+      "GetOnboardingDraftResponseDto": {
+        "type": "object",
+        "properties": {
+          "draft": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingDraftResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "draft"
+        ]
+      },
       "SelectOnboardingPlanDto": {
         "type": "object",
         "properties": {
@@ -10260,6 +10847,21 @@
         "required": [
           "planCode",
           "billingCycle"
+        ]
+      },
+      "SelectOnboardingPlanResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/OnboardingDraftResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "draft"
         ]
       },
       "SaveOnboardingBillingDto": {
@@ -10311,9 +10913,148 @@
           "paymentMethodId"
         ]
       },
+      "OnboardingBillingResponseDto": {
+        "type": "object",
+        "properties": {
+          "planCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingCycle": {
+            "nullable": true,
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "cardholderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardBrand": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardLast4": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardExpiryMonth": {
+            "type": "number",
+            "nullable": true
+          },
+          "cardExpiryYear": {
+            "type": "number",
+            "nullable": true
+          },
+          "plan": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPlanResponseDto"
+              }
+            ]
+          },
+          "trialDays": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "planCode",
+          "billingCycle",
+          "cardholderName",
+          "billingEmail",
+          "billingAddress",
+          "cardBrand",
+          "cardLast4",
+          "cardExpiryMonth",
+          "cardExpiryYear",
+          "plan",
+          "trialDays"
+        ]
+      },
+      "OnboardingPaymentIntentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "redirectUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "redirectUrl"
+        ]
+      },
+      "SaveOnboardingBillingResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "billing": {
+            "$ref": "#/components/schemas/OnboardingBillingResponseDto"
+          },
+          "pendingProviderActivation": {
+            "type": "boolean"
+          },
+          "paymentSetupState": {
+            "enum": [
+              "pending_provider_activation",
+              "ready_for_confirmation"
+            ],
+            "type": "string"
+          },
+          "paymentIntent": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPaymentIntentResponseDto"
+              }
+            ]
+          },
+          "nextStep": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "billing",
+          "nextStep"
+        ]
+      },
       "SaveOnboardingCompanyDetailsDto": {
         "type": "object",
         "properties": {
+          "countryCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
           "taxpayerType": {
             "enum": [
               "individual",
@@ -10386,6 +11127,8 @@
           }
         },
         "required": [
+          "countryCode",
+          "baseCurrencyCode",
           "taxpayerType",
           "logoName",
           "address",
@@ -10394,6 +11137,229 @@
           "contactNumber",
           "reportStartDate",
           "reportEndDate"
+        ]
+      },
+      "OnboardingCompanyDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxpayerType": {
+            "enum": [
+              "individual",
+              "non-individual"
+            ],
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "nonIndividualType": {
+            "type": "string",
+            "nullable": true
+          },
+          "nonIndividualTypeOther": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoName": {
+            "type": "string"
+          },
+          "logoMimeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoStoragePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoPublicUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string"
+          },
+          "tin": {
+            "type": "string"
+          },
+          "companyEmail": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "baseCurrencyCode": {
+            "type": "string"
+          },
+          "reportStartDate": {
+            "type": "string"
+          },
+          "reportEndDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "taxpayerType",
+          "lastName",
+          "firstName",
+          "middleName",
+          "companyName",
+          "nonIndividualType",
+          "nonIndividualTypeOther",
+          "logoName",
+          "logoMimeType",
+          "logoStoragePath",
+          "logoPublicUrl",
+          "address",
+          "tin",
+          "companyEmail",
+          "website",
+          "contactNumber",
+          "countryCode",
+          "baseCurrencyCode",
+          "reportStartDate",
+          "reportEndDate"
+        ]
+      },
+      "SaveOnboardingCompanyDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "companyDetails": {
+            "$ref": "#/components/schemas/OnboardingCompanyDetailsResponseDto"
+          },
+          "nextStep": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "companyDetails",
+          "nextStep"
+        ]
+      },
+      "OnboardingCompanyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "status"
+        ]
+      },
+      "OnboardingSubscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/OnboardingPlanResponseDto"
+          },
+          "billingCycle": {
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "INCOMPLETE",
+              "TRIALING",
+              "ACTIVE",
+              "PAST_DUE",
+              "UNPAID",
+              "INCOMPLETE_CANCELED",
+              "EXPIRED",
+              "CANCELED"
+            ],
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "trialEndsAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "plan",
+          "billingCycle",
+          "status",
+          "startsAt",
+          "trialEndsAt"
+        ]
+      },
+      "CompleteOnboardingResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "company": {
+            "$ref": "#/components/schemas/OnboardingCompanyResponseDto"
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/OnboardingSubscriptionResponseDto"
+          },
+          "nextStep": {
+            "type": "string"
+          },
+          "requiresReauthentication": {
+            "type": "boolean"
+          },
+          "accessToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "company",
+          "subscription",
+          "nextStep",
+          "requiresReauthentication"
         ]
       },
       "CreateUserDto": {
@@ -21154,6 +22120,11 @@
             "nullable": true,
             "maxLength": 40
           },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
           "projectName": {
             "type": "string",
             "nullable": true,
@@ -21161,6 +22132,7 @@
           },
           "currency": {
             "type": "string",
+            "nullable": true,
             "maxLength": 10
           },
           "exchangeRate": {
@@ -21239,7 +22211,6 @@
           "documentDate",
           "partyCode",
           "partyName",
-          "currency",
           "exchangeRate",
           "amount",
           "termId",
@@ -21294,6 +22265,11 @@
             "nullable": true,
             "maxLength": 40
           },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
           "projectName": {
             "type": "string",
             "nullable": true,
@@ -21301,6 +22277,7 @@
           },
           "currency": {
             "type": "string",
+            "nullable": true,
             "maxLength": 10
           },
           "exchangeRate": {
@@ -21379,7 +22356,6 @@
           "documentDate",
           "partyCode",
           "partyName",
-          "currency",
           "exchangeRate",
           "amount",
           "termId",

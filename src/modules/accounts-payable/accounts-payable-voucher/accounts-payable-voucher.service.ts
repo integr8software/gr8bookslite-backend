@@ -22,6 +22,7 @@ import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
@@ -75,6 +76,7 @@ type ResolvedJournalEntry = {
 export class AccountsPayableVoucherService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly companyCurrencyService: CompanyCurrencyService,
     private readonly accountingService: AccountsPayableVoucherAccountingService,
   ) {}
 
@@ -153,7 +155,7 @@ export class AccountsPayableVoucherService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
-    const normalized = this.normalizeVoucherInput(dto);
+    const normalized = await this.normalizeVoucherInput(companyId, dto);
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       details: dto.details,
@@ -238,7 +240,7 @@ export class AccountsPayableVoucherService {
     }
 
     const branchUnitId = current.branchUnitId;
-    const normalized = this.normalizeVoucherInput(dto);
+    const normalized = await this.normalizeVoucherInput(companyId, dto);
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       details: dto.details,
@@ -522,8 +524,8 @@ export class AccountsPayableVoucherService {
     }));
   }
 
-  private normalizeVoucherInput(dto: CreateAccountsPayableVoucherDto) {
-    const currencyCode = cleanCurrencyCode(dto.currency);
+  private async normalizeVoucherInput(companyId: number, dto: CreateAccountsPayableVoucherDto) {
+    const currencyCode = cleanCurrencyCode(dto.currency) ?? (await this.companyCurrencyService.getBaseCurrencyCode(companyId));
 
     if (!currencyCode) {
       throw new BadRequestException('Currency is required.');

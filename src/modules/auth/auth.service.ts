@@ -1382,6 +1382,8 @@ export class AuthService {
       companyName: membership.company.name,
       companyStatus: membership.company.status,
       isCompanyActive: membership.company.isActive && membership.company.status === CompanyStatus.ACTIVE,
+      countryCode: membership.company.countryCode,
+      baseCurrencyCode: membership.company.baseCurrencyCode,
       logoPublicUrl: membership.company.logoPublicUrl,
       role: this.mapMembershipRole(membership.role),
       membershipStatus: membership.status,
