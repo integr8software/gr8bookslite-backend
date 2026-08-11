@@ -3,7 +3,7 @@ import type { AccountsPayableVoucherWithDetails } from '../types/accounts-payabl
 
 export function mapAccountsPayableVoucher(voucher: AccountsPayableVoucherWithDetails, userNames: Map<number, string>) {
   return {
-    id: voucher.id.toString(),
+    id: voucher.apvId.toString(),
     transactionNo: voucher.transactionNo,
     documentDate: toDateValue(voucher.documentDate),
     partyId: voucher.partyId?.toString() ?? null,
