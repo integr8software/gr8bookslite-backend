@@ -112,16 +112,24 @@ export const AccountingSidebarTemplate = [
         children: [
           link('system-administration-users', 'U', 'users'),
           link('system-administration-user-role', 'UR', 'security', 'User Role'),
-          link('system-administration-approver-setup', 'AS', 'shieldCheck'),
         ],
       },
-      link('system-administration-approval-management', 'AM', 'shieldCheck'),
       link('system-administration-audit-trail', 'AT', 'activity'),
       link('system-administration-transaction-number-setup', 'TNS', 'receipt'),
       link('system-administration-multi-currency-setup', 'MCS', 'coins'),
       link('system-administration-form-signatory', 'FS', 'fileSignature'),
       link('system-administration-customized-reports', 'CRPT', 'fileCog', 'Customize Report'),
       link('system-administration-mail-maintenance', 'MM', 'mail'),
+    ],
+  },
+  {
+    itemType: 'SECTION',
+    key: 'approval-management',
+    label: 'Approval Management',
+    iconName: 'shieldCheck',
+    children: [
+      link('system-administration-approval-setup', 'AM', 'shieldCheck', 'Approver Setup'),
+      link('system-administration-approval-transactions', 'AM', 'clipboardCheck', 'Approval Transactions'),
     ],
   },
 ] as const satisfies readonly ModuleSystemSidebarSeedItem[];
