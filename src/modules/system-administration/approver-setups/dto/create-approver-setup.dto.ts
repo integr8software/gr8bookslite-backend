@@ -1,11 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsDateString, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { ArrayMinSize, IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateApproverSetupDto {
   @ApiProperty({ example: 'Any one approver' })
   @IsString()
   approverCondition!: string;
+
+  @ApiProperty({ example: 'Finance Review' })
+  @IsString()
+  @IsNotEmpty()
+  levelName!: string;
 
   @ApiProperty({ example: 'Level-based' })
   @IsString()

@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -71,6 +71,57 @@ export class ApproverSetupsController {
   @ApiCreatedResponse({ description: 'Approver setup created.' })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateApproverSetupDto): Promise<CreateApproverSetupResponse> {
     return this.approverSetupsService.create(user, dto);
+  }
+
+  @Put(':setupId')
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60_000,
+    },
+  })
+  @ApiOperation({ summary: 'Update an approver setup' })
+  @ApiParam({ name: 'setupId', type: String })
+  @ApiBody({ type: CreateApproverSetupDto })
+  @ApiOkResponse({ description: 'Approver setup updated.' })
+  update(
+    @CurrentUser() user: AuthUser,
+    @Param('setupId') setupId: string,
+    @Body() dto: CreateApproverSetupDto,
+  ): Promise<CreateApproverSetupResponse> {
+    return this.approverSetupsService.update(user, setupId, dto);
+  }
+
+  @Patch(':setupId/status')
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60_000,
+    },
+  })
+  @ApiOperation({ summary: 'Update approver setup status' })
+  @ApiParam({ name: 'setupId', type: String })
+  @ApiOkResponse({ description: 'Approver setup status updated.' })
+  updateStatus(
+    @CurrentUser() user: AuthUser,
+    @Param('setupId') setupId: string,
+    @Body() body: { status: string },
+  ): Promise<CreateApproverSetupResponse> {
+    return this.approverSetupsService.updateStatus(user, setupId, body.status);
+  }
+
+  @Delete(':setupId')
+  @Throttle({
+    default: {
+      limit: 30,
+      ttl: 60_000,
+    },
+  })
+  @ApiOperation({ summary: 'Delete an approver setup' })
+  @ApiParam({ name: 'setupId', type: String })
+  @ApiOkResponse({ description: 'Approver setup deleted.' })
+  remove(@CurrentUser() user: AuthUser, @Param('setupId') setupId: string) {
+    return this.approverSetupsService.remove(user, setupId);
   }
 
   @Get()

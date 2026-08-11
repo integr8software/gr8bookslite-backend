@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -22,6 +22,9 @@ const ApproverSetupInclude = {
           email: true,
         },
       },
+    },
+    orderBy: {
+      sequence: 'asc',
     },
   },
 } satisfies Prisma.ApproverSetupInclude;
@@ -51,41 +54,25 @@ export class ApproverSetupsService {
 
   async create(user: AuthUser, dto: CreateApproverSetupDto): Promise<CreateApproverSetupResponse> {
     const companyId = this.getCompanyContext(user);
-    const approverUserIds = [...new Set(dto.approverUserIds)];
-    const existingUsers = await this.prisma.user.findMany({
-      where: {
-        id: {
-          in: approverUserIds,
-        },
-        memberships: {
-          some: {
-            companyId,
-          },
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (existingUsers.length !== approverUserIds.length) {
-      const existingUserIds = new Set(existingUsers.map((user) => user.id));
-      const missingIds = approverUserIds.filter((userId) => !existingUserIds.has(userId));
-      throw new BadRequestException(`Approver user ids do not belong to this company: ${missingIds.join(', ')}`);
-    }
+    const approverUserIds = await this.getValidApproverUserIds(companyId, dto.approverUserIds);
 
     const setup = await this.prisma.$transaction(async (tx) =>
       tx.approverSetup.create({
         data: {
           companyId,
           approverCondition: dto.approverCondition.trim(),
+          levelName: dto.levelName.trim(),
           type: dto.type.trim(),
           status: dto.status.trim(),
           level: dto.level ?? null,
           moduleScope: dto.moduleScope.trim(),
           validUntil: getApproverSetupValidUntil(dto),
           approvers: {
-            create: approverUserIds.map((userId) => ({ userId })),
+            create: approverUserIds.map((userId, index) => ({
+              userId,
+              sequence: index + 1,
+              moduleScope: dto.moduleScope.trim(),
+            })),
           },
         },
         include: ApproverSetupInclude,
@@ -95,6 +82,84 @@ export class ApproverSetupsService {
     return {
       message: 'Approver setup created.',
       setup: mapApproverSetup(setup),
+    };
+  }
+
+  async update(user: AuthUser, setupId: string, dto: CreateApproverSetupDto): Promise<CreateApproverSetupResponse> {
+    const companyId = this.getCompanyContext(user);
+    const approverUserIds = await this.getValidApproverUserIds(companyId, dto.approverUserIds);
+    await this.assertSetupBelongsToCompany(companyId, setupId);
+
+    const setup = await this.prisma.$transaction(async (tx) => {
+      await tx.approverSetupUser.deleteMany({
+        where: {
+          approverSetupId: setupId,
+        },
+      });
+
+      return tx.approverSetup.update({
+        where: {
+          id: setupId,
+        },
+        data: {
+          approverCondition: dto.approverCondition.trim(),
+          levelName: dto.levelName.trim(),
+          type: dto.type.trim(),
+          status: dto.status.trim(),
+          level: dto.level ?? null,
+          moduleScope: dto.moduleScope.trim(),
+          validUntil: getApproverSetupValidUntil(dto),
+          approvers: {
+            create: approverUserIds.map((userId, index) => ({
+              userId,
+              sequence: index + 1,
+              moduleScope: dto.moduleScope.trim(),
+            })),
+          },
+        },
+        include: ApproverSetupInclude,
+      });
+    });
+
+    return {
+      message: 'Approver setup updated.',
+      setup: mapApproverSetup(setup),
+    };
+  }
+
+  async updateStatus(user: AuthUser, setupId: string, status: string): Promise<CreateApproverSetupResponse> {
+    const companyId = this.getCompanyContext(user);
+    await this.assertSetupBelongsToCompany(companyId, setupId);
+
+    const setup = await this.prisma.approverSetup.update({
+      where: {
+        id: setupId,
+      },
+      data: {
+        status: status.trim(),
+      },
+      include: ApproverSetupInclude,
+    });
+
+    return {
+      message: 'Approver setup status updated.',
+      setup: mapApproverSetup(setup),
+    };
+  }
+
+  async remove(user: AuthUser, setupId: string) {
+    const companyId = this.getCompanyContext(user);
+    await this.assertSetupBelongsToCompany(companyId, setupId);
+
+    await this.prisma.approverSetup.delete({
+      where: {
+        id: setupId,
+      },
+    });
+
+    return {
+      message: 'Approver setup deleted.',
+      id: setupId,
     };
   }
 
@@ -182,6 +247,49 @@ export class ApproverSetupsService {
     }
 
     return user.companyId;
+  }
+
+  private async assertSetupBelongsToCompany(companyId: number, setupId: string) {
+    const setup = await this.prisma.approverSetup.findFirst({
+      where: {
+        id: setupId,
+        companyId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!setup) {
+      throw new NotFoundException('Approver setup not found.');
+    }
+  }
+
+  private async getValidApproverUserIds(companyId: number, userIds: number[]) {
+    const approverUserIds = [...new Set(userIds)];
+    const existingUsers = await this.prisma.user.findMany({
+      where: {
+        id: {
+          in: approverUserIds,
+        },
+        memberships: {
+          some: {
+            companyId,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (existingUsers.length !== approverUserIds.length) {
+      const existingUserIds = new Set(existingUsers.map((user) => user.id));
+      const missingIds = approverUserIds.filter((userId) => !existingUserIds.has(userId));
+      throw new BadRequestException(`Approver user ids do not belong to this company: ${missingIds.join(', ')}`);
+    }
+
+    return approverUserIds;
   }
 }
 

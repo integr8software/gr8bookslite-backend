@@ -46,6 +46,7 @@ import type { AccountsPayableVoucherJournalEntry, AccountsPayableVoucherWithDeta
 
 const AccountsPayableVoucherModuleCode = 'APV';
 const AccountsPayableVoucherReferenceType = 'APV';
+const JournalEntryNumberAdvisoryLockNamespace = 7081;
 const PayablePartyTypes = new Set<PartyType>([PartyType.VENDOR, PartyType.EMPLOYEE]);
 
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
@@ -202,11 +203,11 @@ export class AccountsPayableVoucherService {
           include: AccountsPayableVoucherInclude,
         });
 
-        await this.replaceDetails(tx, created.id, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.details);
-        await this.replaceJournalEntries(tx, created.id, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
+        await this.replaceDetails(tx, created.apvId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.details);
+        await this.replaceJournalEntries(tx, created.apvId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
 
         const saved = await tx.accountsPayableVoucher.findUniqueOrThrow({
-          where: { id: created.id },
+          where: { apvId: created.apvId },
           include: AccountsPayableVoucherInclude,
         });
 
@@ -228,8 +229,8 @@ export class AccountsPayableVoucherService {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const voucherId = parsePositiveBigIntId(id);
-    const current = await this.findVoucherOrThrow(companyId, voucherId);
+    const apvId = parsePositiveBigIntId(id);
+    const current = await this.findVoucherOrThrow(companyId, apvId);
 
     if (current.status !== AccountsPayableVoucherStatus.DRAFT) {
       throw new BadRequestException('Only draft AP vouchers can be edited.');
@@ -256,12 +257,12 @@ export class AccountsPayableVoucherService {
           branchUnitId,
           companyId,
           currentTransactionNo: current.transactionNo,
-          excludedVoucherId: voucherId,
+          excludedVoucherId: apvId,
           requestedTransactionNo: dto.transactionNo,
         });
 
         await tx.accountsPayableVoucher.update({
-          where: { id: voucherId },
+          where: { apvId },
           data: {
             amount: normalized.amount,
             contactNoSnapshot: cleanOptional(dto.contactNo),
@@ -286,11 +287,11 @@ export class AccountsPayableVoucherService {
           },
         });
 
-        await this.replaceDetails(tx, voucherId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.details);
-        await this.replaceJournalEntries(tx, voucherId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
+        await this.replaceDetails(tx, apvId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.details);
+        await this.replaceJournalEntries(tx, apvId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
 
         const saved = await tx.accountsPayableVoucher.findUniqueOrThrow({
-          where: { id: voucherId },
+          where: { apvId },
           include: AccountsPayableVoucherInclude,
         });
 
@@ -315,8 +316,8 @@ export class AccountsPayableVoucherService {
     const requiredAction = targetStatus === AccountsPayableVoucherStatus.CANCELLED ? PermissionAction.CANCEL : PermissionAction.UPDATE;
 
     this.ensureCan(user, companyId, requiredAction);
-    const voucherId = parsePositiveBigIntId(id);
-    const current = await this.findVoucherOrThrow(companyId, voucherId);
+    const apvId = parsePositiveBigIntId(id);
+    const current = await this.findVoucherOrThrow(companyId, apvId);
 
     if (current.status === targetStatus) {
       return {
@@ -337,7 +338,7 @@ export class AccountsPayableVoucherService {
     }
 
     const voucher = await this.prisma.accountsPayableVoucher.update({
-      where: { id: voucherId },
+      where: { apvId },
       data: {
         ...this.getStatusAuditData(targetStatus, user.id),
         status: targetStatus,
@@ -410,7 +411,7 @@ export class AccountsPayableVoucherService {
     const sortDirection = query.sortDirection ?? 'desc';
     const field = sortBy === 'partyName' ? 'partyNameSnapshot' : sortBy === 'currency' ? 'currencyCode' : sortBy === 'transactionNo' ? 'transactionNo' : sortBy;
 
-    return [{ [field]: sortDirection }, { id: 'desc' }];
+    return [{ [field]: sortDirection }, { apvId: 'desc' }];
   }
 
   private getStatistics(companyId: number, branchUnitId: number) {
@@ -428,11 +429,11 @@ export class AccountsPayableVoucherService {
       })
       .then((groups) => {
         const statistics = {
-          approvedVouchers: 0,
           cancelledVouchers: 0,
-          closedVouchers: 0,
           disapprovedVouchers: 0,
           draftVouchers: 0,
+          forApprovalVouchers: 0,
+          postedVouchers: 0,
           totalVouchers: 0,
         };
 
@@ -440,9 +441,9 @@ export class AccountsPayableVoucherService {
           const count = group._count._all;
 
           statistics.totalVouchers += count;
-          if (group.status === AccountsPayableVoucherStatus.APPROVED) statistics.approvedVouchers += count;
+          if (group.status === AccountsPayableVoucherStatus.APPROVED) statistics.forApprovalVouchers += count;
           if (group.status === AccountsPayableVoucherStatus.CANCELLED) statistics.cancelledVouchers += count;
-          if (group.status === AccountsPayableVoucherStatus.CLOSED) statistics.closedVouchers += count;
+          if (group.status === AccountsPayableVoucherStatus.CLOSED) statistics.postedVouchers += count;
           if (group.status === AccountsPayableVoucherStatus.DISAPPROVED) statistics.disapprovedVouchers += count;
           if (group.status === AccountsPayableVoucherStatus.DRAFT) statistics.draftVouchers += count;
         }
@@ -460,13 +461,13 @@ export class AccountsPayableVoucherService {
     return vouchers.map((voucher) => mapAccountsPayableVoucher(voucher, userNames));
   }
 
-  private async findVoucherOrThrow(companyId: number, voucherId: bigint, branchUnitId?: number) {
+  private async findVoucherOrThrow(companyId: number, apvId: bigint, branchUnitId?: number) {
     const voucher = await this.prisma.accountsPayableVoucher.findFirst({
       where: {
         ...(branchUnitId ? { branchUnitId } : {}),
+        apvId,
         companyId,
         deletedAt: null,
-        id: voucherId,
       },
       include: AccountsPayableVoucherInclude,
     });
@@ -489,7 +490,7 @@ export class AccountsPayableVoucherService {
     const journalEntryHeaders = await tx.journalEntryHeader.findMany({
       where: {
         referenceId: {
-          in: vouchers.map((voucher) => voucher.id),
+          in: vouchers.map((voucher) => voucher.apvId),
         },
         referenceType: AccountsPayableVoucherReferenceType,
       },
@@ -520,7 +521,7 @@ export class AccountsPayableVoucherService {
 
     return vouchers.map((voucher) => ({
       ...voucher,
-      journalEntries: journalEntriesByReferenceId.get(voucher.id.toString()) ?? [],
+      journalEntries: journalEntriesByReferenceId.get(voucher.apvId.toString()) ?? [],
     }));
   }
 
@@ -617,14 +618,14 @@ export class AccountsPayableVoucherService {
 
   private async replaceDetails(
     tx: Prisma.TransactionClient,
-    voucherId: bigint,
+    apvId: bigint,
     companyId: number,
     branchUnitId: number,
     currencyCode: string,
     exchangeRate: number,
     details: ResolvedDetailLine[],
   ) {
-    await tx.accountsPayableVoucherDetails.deleteMany({ where: { voucherId } });
+    await tx.accountsPayableVoucherDetails.deleteMany({ where: { apvId } });
     await tx.accountsPayableVoucherDetails.createMany({
       data: details.map(({ expenseAccount, input, party, responsibilityCenter }) => ({
         amount: roundToDecimal(input.amount, 2),
@@ -651,14 +652,14 @@ export class AccountsPayableVoucherService {
         vat: cleanOptional(input.vat),
         vatAmount: roundToDecimal(input.vatAmount, 2),
         vatPercent: roundToDecimal(input.vatPercent, 4),
-        voucherId,
+        apvId,
       })),
     });
   }
 
   private async replaceJournalEntries(
     tx: Prisma.TransactionClient,
-    voucherId: bigint,
+    apvId: bigint,
     companyId: number,
     branchUnitId: number,
     currencyCode: string,
@@ -667,7 +668,7 @@ export class AccountsPayableVoucherService {
   ) {
     await tx.journalEntryHeader.deleteMany({
       where: {
-        referenceId: voucherId,
+        referenceId: apvId,
         referenceType: AccountsPayableVoucherReferenceType,
       },
     });
@@ -680,14 +681,17 @@ export class AccountsPayableVoucherService {
       { credit: 0, debit: 0 },
     );
 
+    const jeno = await this.resolveNextJournalEntryNo(tx, companyId);
+
     await tx.journalEntryHeader.create({
       data: {
         branchUnitId,
         companyId,
         currencyCode,
         exchangeRate,
+        jeno,
         particulars: cleanOptional(journalEntries[0]?.input.particulars),
-        referenceId: voucherId,
+        referenceId: apvId,
         referenceNo: cleanOptional(journalEntries[0]?.input.refNo),
         referenceType: AccountsPayableVoucherReferenceType,
         status: 'Draft',
@@ -713,6 +717,19 @@ export class AccountsPayableVoucherService {
         },
       },
     });
+  }
+
+  private async resolveNextJournalEntryNo(tx: Prisma.TransactionClient, companyId: number) {
+    const lockKey = (BigInt(JournalEntryNumberAdvisoryLockNamespace) << 32n) + BigInt(companyId);
+
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockKey})`;
+
+    const latest = await tx.journalEntryHeader.aggregate({
+      where: { companyId },
+      _max: { jeno: true },
+    });
+
+    return (latest._max.jeno ?? 0n) + 1n;
   }
 
   private async resolveTransactionNumberForCreate(
@@ -936,12 +953,12 @@ export class AccountsPayableVoucherService {
     const existing = await tx.accountsPayableVoucher.findFirst({
       where: {
         ...(scope === 'branch' ? { branchUnitId } : {}),
+        apvId: excludedVoucherId ? { not: excludedVoucherId } : undefined,
         companyId,
         deletedAt: null,
-        id: excludedVoucherId ? { not: excludedVoucherId } : undefined,
         transactionNo: { equals: transactionNo, mode: 'insensitive' },
       },
-      select: { id: true },
+      select: { apvId: true },
     });
 
     if (existing) {
@@ -963,7 +980,7 @@ export class AccountsPayableVoucherService {
           companyId,
           transactionNo: { equals: transactionNo, mode: 'insensitive' },
         },
-        select: { id: true },
+        select: { apvId: true },
       })
       .then(Boolean);
   }
