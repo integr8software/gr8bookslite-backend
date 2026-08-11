@@ -40,6 +40,7 @@ model User {
   warehouseAccess        WarehouseAccess[]
   sidebarPreferences     UserSidebarPreference[]
   approverSetups         ApproverSetupUser[]
+  approvalTransactionApprovers ApprovalTransactionApprover[]
 
   @@map("users")
 }
@@ -48,6 +49,7 @@ model ApproverSetup {
   id                String              @id @default(uuid()) @db.Uuid
   companyId         Int                 @map("company_id")
   approverCondition String              @map("approver_condition")
+  levelName         String              @map("level_name")
   type              String
   status            String              @default("Active")
   level             Int?
@@ -57,6 +59,7 @@ model ApproverSetup {
   updatedAt         DateTime            @updatedAt @map("updated_at")
   company           Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   approvers         ApproverSetupUser[]
+  approvalRules     ApprovalRule[]
 
   @@index([companyId])
   @@index([moduleScope])
@@ -67,12 +70,77 @@ model ApproverSetup {
 model ApproverSetupUser {
   approverSetupId String        @map("approver_setup_id") @db.Uuid
   userId          Int           @map("user_id")
+  sequence        Int           @default(1)
+  moduleScope     String        @default("") @map("module_scope")
   approverSetup   ApproverSetup @relation(fields: [approverSetupId], references: [id], onDelete: Cascade)
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([approverSetupId, userId])
   @@index([userId])
   @@map("approver_setup_users")
+}
+
+model ApprovalRule {
+  id              String        @id @default(uuid()) @db.Uuid
+  companyId       Int           @map("company_id")
+  approverSetupId String        @map("approver_setup_id") @db.Uuid
+  ruleType        String        @map("rule_type")
+  routeName       String        @map("route_name")
+  amountRule      String        @map("amount_rule")
+  amount          String        @default("")
+  moduleScope     String        @map("module_scope")
+  moduleName      String        @default("") @map("module_name")
+  status          String        @default("Active")
+  description     String        @default("")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  company         Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  approverSetup   ApproverSetup @relation(fields: [approverSetupId], references: [id], onDelete: Cascade)
+  approvalTransactions ApprovalTransaction[]
+
+  @@index([approverSetupId])
+  @@index([companyId])
+  @@index([moduleScope])
+  @@index([status])
+  @@map("approval_rules")
+}
+
+model ApprovalTransaction {
+  id          String                        @id @default(uuid()) @db.Uuid
+  companyId   Int                           @map("company_id")
+  moduleScope String                        @map("module_scope")
+  referenceNo String                        @map("reference_no")
+  ruleId      String                        @map("rule_id") @db.Uuid
+  amount      Decimal                       @db.Decimal(18, 2)
+  status      String                        @default("For Approval")
+  createdAt   DateTime                      @default(now()) @map("created_at")
+  updatedAt   DateTime                      @updatedAt @map("updated_at")
+  company     Company                       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  rule        ApprovalRule                  @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  approvers   ApprovalTransactionApprover[]
+
+  @@unique([companyId, moduleScope, referenceNo])
+  @@index([companyId])
+  @@index([moduleScope])
+  @@index([ruleId])
+  @@index([status])
+  @@map("approval_transactions")
+}
+
+model ApprovalTransactionApprover {
+  transactionId String              @map("transaction_id") @db.Uuid
+  userId        Int                 @map("user_id")
+  sequence      Int
+  status        String              @default("Pending")
+  approvedAt    DateTime?           @map("approved_at")
+  transaction   ApprovalTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, userId])
+  @@index([userId])
+  @@index([sequence])
+  @@index([status])
+  @@map("approval_transaction_approvers")
 }
 
 model UserAuthIdentity {
@@ -163,6 +231,8 @@ model Company {
   warehouses                    Warehouse[]
   warehouseAccess               WarehouseAccess[]
   approverSetups                ApproverSetup[]
+  approvalRules                 ApprovalRule[]
+  approvalTransactions          ApprovalTransaction[]
   userTablePreferences          UserTablePreference[]
   auditLogs                     AuditLog[]
   onboardingDrafts              UserOnboardingDraft[]           @relation("ProvisionedOnboardingCompany")

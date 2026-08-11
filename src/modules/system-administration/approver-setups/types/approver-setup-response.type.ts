@@ -17,6 +17,7 @@ export type ApproverSetupModulesResponse = {
 export type ApproverSetupResponse = {
   id: string;
   approverCondition: string;
+  levelName: string;
   type: string;
   status: string;
   level: number | null;
