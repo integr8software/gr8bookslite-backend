@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccessControlModule } from '../../../common/access/access-control.module';
+import { CompanyCurrencyModule } from '../../../common/currency/company-currency.module';
 import { PrismaModule } from '../../../prisma/prisma.module';
 import { AuthModule } from '../../auth/auth.module';
 import { ChartAccountBankSyncService } from '../chart-of-accounts/services/chart-account-bank-sync.service';
@@ -9,7 +10,7 @@ import { BankMasterfileLookupService } from './lookups/bank-masterfile-lookup.se
 import { BankMasterfileSupportService } from './services/bank-masterfile-support.service';
 
 @Module({
-  imports: [PrismaModule, AccessControlModule, AuthModule],
+  imports: [PrismaModule, AccessControlModule, AuthModule, CompanyCurrencyModule],
   controllers: [BankMasterfileController],
   providers: [BankMasterfileService, BankMasterfileLookupService, BankMasterfileSupportService, ChartAccountBankSyncService],
   exports: [BankMasterfileService, BankMasterfileLookupService],

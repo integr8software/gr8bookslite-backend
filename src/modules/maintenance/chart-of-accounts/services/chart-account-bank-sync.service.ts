@@ -1,10 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AccountNature, ChartAccountLevel, ChartAccountType, Prisma } from '@prisma/client';
+import { CompanyCurrencyService } from '../../../../common/currency/company-currency.service';
 import { cleanCurrencyCode } from '../../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { findSystemAccountGroupOrThrow, SystemAccountGroups } from '../utils/system-account-groups.util';
-
-const BaseCurrencyCode = 'PHP';
 
 type PrismaClientLike = Prisma.TransactionClient | PrismaService;
 
@@ -37,7 +36,10 @@ type BankAccountForSync = {
 
 @Injectable()
 export class ChartAccountBankSyncService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly companyCurrencyService: CompanyCurrencyService,
+  ) {}
 
   async findCashInBankParent(companyId: number, tx: PrismaClientLike = this.prisma) {
     return findSystemAccountGroupOrThrow(tx, companyId, SystemAccountGroups.bankMasterfile.cashInBankParent);
@@ -78,12 +80,14 @@ export class ChartAccountBankSyncService {
       throw new BadRequestException('Cannot activate bank account. Bank Masterfile and Chart of Accounts are not linked.');
     }
 
-    this.validateBankMasterfileOrThrow(bankAccount);
+    const baseCurrencyCode = await this.companyCurrencyService.getBaseCurrencyCode(companyId, tx);
+
+    this.validateBankMasterfileOrThrow(bankAccount, baseCurrencyCode);
     await this.validateChartAccountOrThrow(companyId, chartAccount, tx);
     this.validateCurrencyMatchOrThrow(bankAccount, chartAccount);
   }
 
-  private validateBankMasterfileOrThrow(bankAccount: BankAccountForSync) {
+  private validateBankMasterfileOrThrow(bankAccount: BankAccountForSync, baseCurrencyCode: string) {
     const bankCurrencyCode = cleanCurrencyCode(bankAccount.currencyCode);
 
     if (
@@ -96,7 +100,7 @@ export class ChartAccountBankSyncService {
       throw new BadRequestException('Cannot activate bank account. Bank Masterfile information is incomplete.');
     }
 
-    if (bankCurrencyCode !== BaseCurrencyCode && (!bankAccount.currencyExchangeRate || Number(bankAccount.currencyExchangeRate) <= 0)) {
+    if (bankCurrencyCode !== baseCurrencyCode && (!bankAccount.currencyExchangeRate || Number(bankAccount.currencyExchangeRate) <= 0)) {
       throw new BadRequestException('Cannot activate bank account. Bank Masterfile information is incomplete.');
     }
   }

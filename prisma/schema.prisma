@@ -196,6 +196,8 @@ model Company {
   email                         String?
   website                       String?
   contactNumber                 String?                         @map("contact_number")
+  countryCode                   String                          @default("PH") @map("country_code") @db.VarChar(2)
+  baseCurrencyCode              String                          @default("PHP") @map("base_currency_code") @db.VarChar(3)
   reportStartDate               DateTime?                       @map("report_start_date")
   reportEndDate                 DateTime?                       @map("report_end_date")
   createdByUserId               Int?                            @map("created_by_user_id")

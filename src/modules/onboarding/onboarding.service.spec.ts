@@ -108,6 +108,12 @@ function createService({
     {
       sendOnboardingCongratulations: jest.fn().mockResolvedValue(undefined),
     } as never,
+    {
+      validateCompanyCurrency: jest.fn().mockReturnValue({
+        countryCode: 'PH',
+        baseCurrencyCode: 'PHP',
+      }),
+    } as never,
   );
 
   return { service, tx, prisma };

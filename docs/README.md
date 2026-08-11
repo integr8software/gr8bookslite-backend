@@ -26,7 +26,7 @@ Day-to-day developer and operational guides.
 - `guides/database/` - Prisma workflow
 - `guides/development/` - Git and development workflow
 - `guides/operations/` - backend script reference
-- `guides/quality/` - QA and quality guidelines
+- `guides/quality/` - QA, Swagger, and Jest quality guidelines
 
 ## Integrations
 
@@ -50,4 +50,3 @@ Implementation instructions and working specifications intended for coding agent
 - `agents/domains/` - auth, billing, onboarding, address, and tax domain instructions
 - `agents/platform/` - database, DevOps, permissions, and tenant platform instructions
 - `agents/modules/` - module-specific implementation instructions
-
