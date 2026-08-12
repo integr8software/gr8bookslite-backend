@@ -11,8 +11,8 @@ gr8bookslite-frontend/app/src/ui/modules/maintenance/unit-of-measurement/
 Use this together with:
 
 ```text
-gr8bookslite-backend/docs/agents/BACKEND_INTEGRATION_GUIDE.md
-gr8bookslite-backend/docs/agents/ARCHITECTURE_MODULARITY_GUIDE.md
+gr8bookslite-backend/docs/agents/guides/BACKEND_INTEGRATION_GUIDE.md
+gr8bookslite-backend/docs/agents/guides/ARCHITECTURE_MODULARITY_GUIDE.md
 gr8bookslite-frontend/AGENTS.md
 gr8bookslite-frontend/FRONTEND_MAP.md
 ```

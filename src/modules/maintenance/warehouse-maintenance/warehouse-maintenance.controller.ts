@@ -6,8 +6,8 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { GetWarehouseListQueryDto } from './dto/get-warehouse-list-query.dto';
 import { WarehouseLookupQueryDto } from './dto/warehouse-lookup-query.dto';
-import { WarehouseLookupService } from './lookups/warehouse-lookup.service';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
+import { WarehouseLookupService } from './lookups/warehouse-lookup.service';
 import { WarehouseMaintenanceService } from './warehouse-maintenance.service';
 import { SaveWarehouseResponseDto, WarehouseContainerResponseDto, WarehouseListResponseDto, WarehouseOptionsResponseDto } from './dto/warehouse-response.dto';
 

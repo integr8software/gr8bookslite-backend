@@ -3,6 +3,7 @@ import { ApproverSetupResponse } from '../types/approver-setup-response.type';
 type ApproverSetupPayload = {
   id: string;
   approverCondition: ApproverSetupResponse['approverCondition'];
+  levelName: string;
   type: ApproverSetupResponse['type'];
   status: ApproverSetupResponse['status'];
   level: number | null;
@@ -23,6 +24,7 @@ export function mapApproverSetup(payload: ApproverSetupPayload): ApproverSetupRe
   return {
     id: payload.id,
     approverCondition: payload.approverCondition,
+    levelName: payload.levelName,
     type: payload.type,
     status: payload.status,
     level: payload.level,

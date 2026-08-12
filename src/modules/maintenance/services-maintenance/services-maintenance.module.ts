@@ -3,12 +3,12 @@ import { AccessControlModule } from '../../../common/access/access-control.modul
 import { PrismaModule } from '../../../prisma/prisma.module';
 import { AuthModule } from '../../auth/auth.module';
 import { ServicesLookupService } from './lookups/services-lookup.service';
-import { ServicesMaintenanceController, ServicesMaintenanceLookupController } from './services-maintenance.controller';
+import { ServicesMaintenanceController } from './services-maintenance.controller';
 import { ServicesMaintenanceService } from './services-maintenance.service';
 
 @Module({
   imports: [PrismaModule, AccessControlModule, AuthModule],
-  controllers: [ServicesMaintenanceController, ServicesMaintenanceLookupController],
+  controllers: [ServicesMaintenanceController],
   providers: [ServicesMaintenanceService, ServicesLookupService],
   exports: [ServicesMaintenanceService, ServicesLookupService],
 })

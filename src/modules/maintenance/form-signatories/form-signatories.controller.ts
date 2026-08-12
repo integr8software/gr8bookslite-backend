@@ -12,6 +12,7 @@ import {
 } from './dto/form-signatory-response.dto';
 import { SaveFormSignatoryDto } from './dto/save-form-signatory.dto';
 import { FormSignatoriesService } from './form-signatories.service';
+import { FormSignatoriesLookupService } from './lookups/form-signatories-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Form Signatories')
@@ -20,7 +21,10 @@ import { FormSignatoriesService } from './form-signatories.service';
   version: '1',
 })
 export class FormSignatoriesController {
-  constructor(private readonly formSignatoriesService: FormSignatoriesService) {}
+  constructor(
+    private readonly formSignatoriesService: FormSignatoriesService,
+    private readonly formSignatoriesLookupService: FormSignatoriesLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ type: FormSignatorySetupsResponseDto })
@@ -31,7 +35,7 @@ export class FormSignatoriesController {
   @Get('options')
   @ApiOkResponse({ type: FormSignatoryOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser) {
-    return this.formSignatoriesService.findOptions(user);
+    return this.formSignatoriesLookupService.findOptionsForCompanyUser(user);
   }
 
   @Get('bootstrap')

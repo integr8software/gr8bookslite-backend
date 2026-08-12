@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { DefaultAccountTemplateType } from '@prisma/client';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -18,6 +19,7 @@ import {
   SaveDefaultAccountExpenseSubAccountResponseDto,
   SaveDefaultAccountResponseDto,
 } from './dto/default-account-response.dto';
+import { DefaultAccountLookupService } from './lookups/default-account-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -27,7 +29,10 @@ import {
   version: '1',
 })
 export class DefaultAccountController {
-  constructor(private readonly defaultAccountService: DefaultAccountService) {}
+  constructor(
+    private readonly defaultAccountService: DefaultAccountService,
+    private readonly defaultAccountLookupService: DefaultAccountLookupService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ type: DefaultAccountListResponseDto })
@@ -38,25 +43,29 @@ export class DefaultAccountController {
   @Get('options')
   @ApiOkResponse({ type: DefaultAccountOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: DefaultAccountOptionQueryDto) {
-    return this.defaultAccountService.findOptions(user, query);
+    return this.defaultAccountLookupService.findOptionsForCompanyUser(user, query);
   }
 
-  @Get('expense-options')
+  @Get('options/:type')
   @ApiOkResponse({ type: DefaultAccountOptionsResponseDto })
-  findExpenseOptions(@CurrentUser() user: AuthUser, @Query() query: DefaultAccountOptionQueryDto) {
-    return this.defaultAccountService.findExpenseOptions(user, query);
-  }
+  findOptionsByType(@CurrentUser() user: AuthUser, @Param('type') type: string, @Query() query: DefaultAccountOptionQueryDto) {
+    const normalizedType = type.trim().toUpperCase().replace(/-/g, '_');
 
-  @Get('collection-options')
-  @ApiOkResponse({ type: DefaultAccountOptionsResponseDto })
-  findCollectionOptions(@CurrentUser() user: AuthUser, @Query() query: DefaultAccountOptionQueryDto) {
-    return this.defaultAccountService.findCollectionOptions(user, query);
+    if (normalizedType === DefaultAccountTemplateType.EXPENSE) {
+      return this.defaultAccountLookupService.findOptionsForCompanyUser(user, query, DefaultAccountTemplateType.EXPENSE);
+    }
+
+    if (normalizedType === DefaultAccountTemplateType.COLLECTION) {
+      return this.defaultAccountLookupService.findOptionsForCompanyUser(user, query, DefaultAccountTemplateType.COLLECTION);
+    }
+
+    throw new BadRequestException('Default Account option type must be expense or collection.');
   }
 
   @Get('expense-parent-options')
   @ApiOkResponse({ type: DefaultAccountExpenseParentOptionsResponseDto })
   findExpenseParentOptions(@CurrentUser() user: AuthUser) {
-    return this.defaultAccountService.findExpenseParentOptions(user);
+    return this.defaultAccountLookupService.findExpenseParentOptionsForCompanyUser(user);
   }
 
   @Post('expense-sub-accounts')

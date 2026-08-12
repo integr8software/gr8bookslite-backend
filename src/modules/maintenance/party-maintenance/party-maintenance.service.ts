@@ -19,7 +19,6 @@ import { UpdatePartyDto } from './dto/update-party.dto';
 import { mapParty } from './mappers/party-maintenance.mapper';
 import { PartyInclude } from './prisma/party.include';
 import type { PartyWithDetails } from './types/party-with-details.type';
-import { PartyLookupService } from './lookups/party-lookup.service';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 import { ensureModuleAction, getModulePermissions } from '../../../common/utils/module-permissions.util';
@@ -30,7 +29,6 @@ export class PartyMaintenanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly addressService: AddressService,
-    private readonly partyLookupService: PartyLookupService,
   ) {}
 
   async findAll(user: AuthUser, query: GetPartyListQueryDto) {
@@ -79,62 +77,6 @@ export class PartyMaintenanceService {
     return {
       party: (await this.mapPartiesWithAuditUsers([party]))[0],
       permissions: getModulePermissions(user, companyId, 'PM', { includeImport: true, includeCancel: true, includeUncancel: true }),
-    };
-  }
-
-  async findAccountingOptions(user: AuthUser) {
-    const companyId = getActiveCompanyId(user);
-    await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, 'PM', PermissionAction.VIEW, 'You do not have permission to manage party records.');
-
-    return this.partyLookupService.findAccountingOptions({ companyId });
-  }
-
-  async findOptions(user: AuthUser, partyType: string) {
-    const companyId = getActiveCompanyId(user);
-    await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    const normalizedPartyType = this.parsePartyType(partyType);
-
-    const parties = await this.prisma.party.findMany({
-      where: {
-        companyId,
-        deletedAt: null,
-        status: PartyStatus.ACTIVE,
-        partyTypes: {
-          has: normalizedPartyType,
-        },
-      },
-      orderBy: [{ partyName: 'asc' }, { lastName: 'asc' }, { firstName: 'asc' }, { partyCodeNo: 'asc' }],
-      select: {
-        id: true,
-        partyCodeNo: true,
-        classification: true,
-        partyTypes: true,
-        partyName: true,
-        tradeName: true,
-        firstName: true,
-        middleName: true,
-        lastName: true,
-        suffixName: true,
-        contactPerson: true,
-        email: true,
-        contactNo: true,
-        status: true,
-      },
-    });
-
-    return {
-      parties: parties.map((party) => ({
-        id: party.id.toString(),
-        partyCodeNo: party.partyCodeNo,
-        classification: party.classification,
-        partyTypes: party.partyTypes,
-        name: this.getPartyOptionName(party),
-        contactPerson: party.contactPerson ?? '',
-        email: party.email ?? '',
-        contactNo: party.contactNo ?? '',
-        status: party.status,
-      })),
     };
   }
 
@@ -365,37 +307,6 @@ export class PartyMaintenanceService {
           }
         : {}),
     };
-  }
-
-  private parsePartyType(value: string) {
-    const normalizedValue = value.trim().toUpperCase();
-
-    if (normalizedValue in PartyType) {
-      return PartyType[normalizedValue as keyof typeof PartyType];
-    }
-
-    throw new BadRequestException('Choose a valid party type.');
-  }
-
-  private getPartyOptionName(party: {
-    classification: PartyClassification;
-    firstName: string | null;
-    lastName: string | null;
-    middleName: string | null;
-    partyName: string | null;
-    suffixName: string | null;
-    tradeName: string | null;
-  }) {
-    if (party.classification === PartyClassification.NON_INDIVIDUAL) {
-      return party.tradeName?.trim() || party.partyName?.trim() || 'Unnamed Party';
-    }
-
-    const fullName = [party.firstName, party.middleName, party.lastName, party.suffixName]
-      .map((namePart) => namePart?.trim())
-      .filter(Boolean)
-      .join(' ');
-
-    return fullName || party.partyName?.trim() || 'Unnamed Party';
   }
 
   private buildOrderBy(query: GetPartyListQueryDto): Prisma.PartyOrderByWithRelationInput[] {
@@ -1231,3 +1142,4 @@ function getTodayDateValue() {
 }
 
 const PartyTransactionModuleCode = 'PM';
+

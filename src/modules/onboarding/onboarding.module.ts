@@ -9,6 +9,7 @@ import { getJwtExpiresInSeconds, getJwtSecret } from '../auth/utils/jwt-config.u
 import { OnboardingController } from './onboarding.controller';
 import { OnboardingLogoStorageService } from './services/onboarding-logo-storage.service';
 import { OnboardingService } from './onboarding.service';
+import { ReferenceModule } from '../reference/reference.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { OnboardingService } from './onboarding.service';
     StorageModule,
     BillingModule,
     AuthModule,
+    ReferenceModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -9,6 +9,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { CreatePaymentTypeDto } from './dto/create-payment-type.dto';
 import { GetPaymentTypeListQueryDto } from './dto/get-payment-type-list-query.dto';
 import { ImportPaymentTypesDto } from './dto/import-payment-types.dto';
+import { PaymentTypeLookupQueryDto } from './dto/payment-type-lookup-query.dto';
 import { UpdatePaymentTypeDto } from './dto/update-payment-type.dto';
 import { mapPaymentType } from './mappers/payment-type-maintenance.mapper';
 
@@ -55,7 +56,7 @@ export class PaymentTypeMaintenanceService {
     };
   }
 
-  async findOptions(user: AuthUser, query: GetPaymentTypeListQueryDto) {
+  async findOptions(user: AuthUser, query: PaymentTypeLookupQueryDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const search = query.search?.trim();

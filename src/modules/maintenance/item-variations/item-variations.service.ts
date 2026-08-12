@@ -64,6 +64,7 @@ export class ItemVariationsService {
       include: {
         values: {
           where: {
+            deletedAt: null,
             status: ItemVariationValueStatus.ACTIVE,
           },
           orderBy: [{ sortOrder: 'asc' }, { label: 'asc' }, { id: 'asc' }],

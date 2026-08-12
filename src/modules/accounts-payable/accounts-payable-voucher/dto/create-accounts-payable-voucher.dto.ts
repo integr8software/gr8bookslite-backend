@@ -61,12 +61,18 @@ export class CreateAccountsPayableVoucherDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(120)
+  projectCode?: string | null;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(255)
   projectName?: string | null;
 
+  @IsOptional()
   @IsString()
   @MaxLength(10)
-  currency!: string;
+  currency?: string | null;
 
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 6 })

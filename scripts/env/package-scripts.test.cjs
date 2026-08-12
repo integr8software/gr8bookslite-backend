@@ -9,7 +9,9 @@ const scripts = packageJson.scripts;
 test('database scripts use explicit environment names and guarded runners', () => {
   assert.equal(scripts['db:migrate:deploy'], undefined);
   assert.equal(scripts['start:prod'], undefined);
+  assert.match(scripts['dev:local'], /generate-prisma-if-needed\.cjs \.env/);
   assert.match(scripts['dev:local'], /run-with-env\.cjs \.env /);
+  assert.match(scripts['dev:shared'], /generate-prisma-if-needed\.cjs \.env\.shared-dev/);
   assert.match(scripts['dev:shared'], /run-with-env\.cjs \.env\.shared-dev /);
   assert.match(
     scripts['db:migrate:shared'],

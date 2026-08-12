@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
+import { PermissionAction } from '../../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { GetServiceMaintenanceListQueryDto } from '../dto/get-service-maintenance-list-query.dto';
@@ -9,6 +10,9 @@ import {
 } from '../utils/service-maintenance-account.util';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../../common/utils/module-access.util';
+import { ensureModuleAction } from '../../../../common/utils/module-permissions.util';
+const ServicesMaintenanceModuleCode = 'SM';
+
 @Injectable()
 export class ServicesLookupService {
   constructor(private readonly prisma: PrismaService) {}
@@ -22,6 +26,16 @@ export class ServicesLookupService {
         companyId,
         search: query.search,
       }),
+    };
+  }
+
+  async findAccountOptionsForCompanyUser(user: AuthUser) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ServicesMaintenanceModuleCode, PermissionAction.VIEW, 'You do not have permission to manage service records.');
+
+    return {
+      accounts: await this.findAccountOptions({ companyId }),
     };
   }
 

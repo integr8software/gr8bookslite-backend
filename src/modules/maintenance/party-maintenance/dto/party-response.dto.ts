@@ -350,6 +350,105 @@ export class PartyOptionResponseDto {
 
   @ApiProperty({ enum: PartyStatus })
   status!: PartyStatus;
+
+  @ApiPropertyOptional({ nullable: true })
+  partyEntityType?: string | null;
+
+  @ApiPropertyOptional()
+  partyName?: string;
+
+  @ApiPropertyOptional()
+  tradeName?: string;
+
+  @ApiPropertyOptional()
+  firstName?: string;
+
+  @ApiPropertyOptional()
+  middleName?: string;
+
+  @ApiPropertyOptional()
+  lastName?: string;
+
+  @ApiPropertyOptional()
+  suffixName?: string;
+
+  @ApiPropertyOptional()
+  honorific?: string;
+
+  @ApiPropertyOptional()
+  gender?: string;
+
+  @ApiPropertyOptional()
+  civilStatus?: string;
+
+  @ApiPropertyOptional()
+  nationality?: string;
+
+  @ApiPropertyOptional()
+  memberRegistrationDate?: string;
+
+  @ApiPropertyOptional({ type: PartyAddressResponseDto, nullable: true })
+  address?: PartyAddressResponseDto | null;
+
+  @ApiPropertyOptional({ type: [PartyAddressResponseDto] })
+  addresses?: PartyAddressResponseDto[];
+
+  @ApiPropertyOptional()
+  defaultReceivableAccount?: string;
+
+  @ApiPropertyOptional()
+  customerAdvanceAccount?: string;
+
+  @ApiPropertyOptional()
+  defaultPayableAccount?: string;
+
+  @ApiPropertyOptional()
+  vendorAdvanceAccount?: string;
+
+  @ApiPropertyOptional()
+  employeeAdvanceAccount?: string;
+
+  @ApiPropertyOptional()
+  employeePayableAccount?: string;
+
+  @ApiPropertyOptional({ type: PartyAccountingAccountsResponseDto })
+  accountingAccounts?: PartyAccountingAccountsResponseDto;
+
+  @ApiPropertyOptional()
+  termId?: string;
+
+  @ApiPropertyOptional()
+  termName?: string;
+
+  @ApiPropertyOptional()
+  tin?: string;
+
+  @ApiPropertyOptional()
+  atcCode?: string;
+
+  @ApiPropertyOptional()
+  defaultPurchaseInputVatTaxSourceKey?: string;
+
+  @ApiPropertyOptional()
+  defaultPurchaseEwtTaxSourceKey?: string;
+
+  @ApiPropertyOptional()
+  defaultPurchaseFwtTaxSourceKey?: string;
+
+  @ApiPropertyOptional()
+  defaultPurchaseWvatTaxSourceKey?: string;
+
+  @ApiPropertyOptional()
+  defaultSalesOutputVatTaxSourceKey?: string;
+
+  @ApiPropertyOptional()
+  defaultSalesCwtTaxSourceKey?: string;
+
+  @ApiPropertyOptional()
+  defaultSalesWvatTaxSourceKey?: string;
+
+  @ApiPropertyOptional()
+  landline?: string;
 }
 
 export class PartyOptionsResponseDto {

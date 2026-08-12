@@ -46,7 +46,7 @@ export class ServicesMaintenanceController {
   @Get('account-options')
   @ApiOkResponse({ type: ServiceMaintenanceAccountOptionsResponseDto })
   getAccountOptions(@CurrentUser() user: AuthUser) {
-    return this.servicesMaintenanceService.getAccountOptions(user);
+    return this.servicesLookupService.findAccountOptionsForCompanyUser(user);
   }
 
   @Get('next-account-code')
@@ -77,22 +77,5 @@ export class ServicesMaintenanceController {
   @ApiOkResponse({ type: SaveServiceMaintenanceResponseDto })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateServiceMaintenanceStatusDto) {
     return this.servicesMaintenanceService.updateStatus(user, id, dto);
-  }
-}
-
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
-@ApiTags('Services Maintenance')
-@Controller({
-  path: 'maintenance/services-maintenance',
-  version: '1',
-})
-export class ServicesMaintenanceLookupController {
-  constructor(private readonly servicesLookupService: ServicesLookupService) {}
-
-  @Get('options')
-  @ApiOkResponse({ type: ServiceMaintenanceOptionsResponseDto })
-  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetServiceMaintenanceListQueryDto) {
-    return this.servicesLookupService.findOptionsForCompanyUser(user, query);
   }
 }
