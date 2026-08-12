@@ -59,7 +59,7 @@ export function mapAccountsPayableVoucher(voucher: AccountsPayableVoucherWithDet
       referenceType: entry.referenceType,
       referenceId: entry.referenceId.toString(),
       lineNumber: entry.lineNumber,
-      accountId: entry.accountId.toString(),
+      accountId: entry.accountId?.toString() ?? '',
       accountCode: entry.accountCodeSnapshot,
       accountTitle: entry.accountTitleSnapshot,
       currencyCode: entry.currencyCode,
