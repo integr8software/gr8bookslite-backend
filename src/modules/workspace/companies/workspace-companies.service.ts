@@ -735,33 +735,20 @@ export class WorkspaceCompaniesService {
     if (!billing.paymentMethodId?.trim()) {
       return {
         subscription: preparedSubscription.subscription,
-        pendingProviderActivation: preparedSubscription.pendingProviderActivation ?? false,
         paymentSetup: preparedSubscription.paymentSetup,
       };
     }
 
-    const paymentResult = preparedSubscription.pendingProviderActivation
-      ? await this.billingService.recordPendingPaymentSetup({
-          companyId: input.companyId,
-          ownerUserId: input.user.id,
-          subscriptionId: preparedSubscription.subscription.id,
-          paymentMethodId: billing.paymentMethodId,
-          brand: billing.cardBrand,
-          last4: billing.cardLast4,
-          expMonth: billing.cardExpiryMonth,
-          expYear: billing.cardExpiryYear,
-        })
-      : await this.billingService.attachPaymentMethodForCompany({
-          companyId: input.companyId,
-          ownerUserId: input.user.id,
-          subscriptionId: preparedSubscription.subscription.id,
-          paymentMethodId: billing.paymentMethodId,
-        });
+    const paymentResult = await this.billingService.attachPaymentMethodForCompany({
+      companyId: input.companyId,
+      ownerUserId: input.user.id,
+      subscriptionId: preparedSubscription.subscription.id,
+      paymentMethodId: billing.paymentMethodId,
+    });
 
     return {
       subscription: paymentResult.subscription,
-      paymentIntent: 'paymentIntent' in paymentResult ? paymentResult.paymentIntent : undefined,
-      pendingProviderActivation: paymentResult.pendingProviderActivation ?? preparedSubscription.pendingProviderActivation ?? false,
+      paymentIntent: paymentResult.paymentIntent,
       paymentSetup: preparedSubscription.paymentSetup,
     };
   }

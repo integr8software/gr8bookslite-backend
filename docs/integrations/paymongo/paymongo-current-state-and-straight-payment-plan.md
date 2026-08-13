@@ -69,13 +69,6 @@ PAYMONGO_PUBLIC_KEY=""
 PAYMONGO_WEBHOOK_SECRET=""
 PAYMONGO_API_BASE_URL="https://api.paymongo.com/v1"
 PAYMONGO_WEBHOOK_TOLERANCE_SECONDS=300
-PAYMONGO_ALLOW_PROVIDER_FALLBACK=false
-```
-
-Staging example currently sets:
-
-```env
-PAYMONGO_ALLOW_PROVIDER_FALLBACK=true
 ```
 
 Frontend examples define:
@@ -155,26 +148,13 @@ PayMongo metadata currently includes:
 }
 ```
 
-### Provider Activation Fallback
+### AUTO Billing Provider Requirement
 
-There is existing fallback logic for accounts where PayMongo subscription billing is not fully enabled.
+AUTO billing uses the real PayMongo subscription flow only. The backend must create a real PayMongo customer, plan, subscription, and payment intent/payment method setup before storing a successful AUTO billing setup.
 
-Key config:
+If PayMongo customer, plan, subscription, or payment setup fails, return the billing error from that step. Do not create local placeholder customers, fake subscription references, or local pending provider-activation records.
 
-```env
-PAYMONGO_ALLOW_PROVIDER_FALLBACK=true
-```
-
-Fallback behavior:
-
-- Creates a local `BillingCustomer` with an artificial external id like `pending_provider_activation_company_<companyId>`.
-- Creates a local `CompanySubscription` with status `INCOMPLETE`.
-- Sets:
-  - `failureCode = pending_provider_activation`
-  - `failureMessage = Billing setup is pending while PayMongo subscription billing is being activated.`
-- Allows recording a pending card payment method locally.
-
-This fallback is for subscription-provider activation only. It is not a manual one-time payment system.
+Legitimate PayMongo subscription states such as `INCOMPLETE`, `PAST_DUE`, and `UNPAID` remain valid when they come from a real PayMongo subscription.
 
 ### Webhook Handling
 
