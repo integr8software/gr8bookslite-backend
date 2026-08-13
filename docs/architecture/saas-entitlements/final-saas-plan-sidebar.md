@@ -169,3 +169,21 @@ ORDER BY preference_count DESC;
 ## Notes
 
 Historical migrations may still contain old table names because earlier migration history created and later dropped those objects. Do not edit already-applied historical migrations just to remove strings; that causes checksum drift and Prisma reset prompts.
+
+## Approval Management Sidebar Verification
+
+Approval Management is platform metadata and must be present in every plan-backed system template that includes the `AM` module.
+
+The canonical seed keys are:
+
+- Section: `approval-management`
+- Setup link: `system-administration-approval-setup`
+- Transactions link: `system-administration-approval-transactions`
+
+The `ACCOUNTING` and `ACCOUNTING_AND_INVENTORY` sidebar templates both include this section. The platform provisioner recreates the system sidebar rows from these templates, so a missing Approval Management section is repaired by provisioning the platform catalog after deploying the corrected seed:
+
+```bash
+npm run db:provision:current
+```
+
+Do not insert `module_system_sidebar` rows manually and do not restore company-specific module or sidebar materialization. If the section is still absent after provisioning, verify that the company subscription resolves to an active plan system and that the `AM` module is active.

@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsIn, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 const NamePattern = /^[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*$/u;
@@ -7,6 +8,22 @@ const ContactNumberPattern = /^\+63 [\d ]{7,14}$/;
 const DatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
 export class UpdateWorkspaceCompanyDto {
+  @ApiPropertyOptional({ example: 'PH' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Z]{2}$/, {
+    message: 'Select a valid company country.',
+  })
+  countryCode?: string;
+
+  @ApiPropertyOptional({ example: 'PHP' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Z]{3}$/, {
+    message: 'Select a valid base currency.',
+  })
+  baseCurrencyCode?: string;
+
   @IsOptional()
   @IsIn(['individual', 'non-individual'])
   taxpayerType?: 'individual' | 'non-individual';

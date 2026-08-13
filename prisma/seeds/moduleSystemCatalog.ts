@@ -231,6 +231,7 @@ export const AccountingAndInventorySidebarTemplate = [
   },
   AccountingSidebarTemplate[6],
   AccountingSidebarTemplate[7],
+  AccountingSidebarTemplate[8],
 ] as const satisfies readonly ModuleSystemSidebarSeedItem[];
 
 export const ModuleSystemCatalog = [

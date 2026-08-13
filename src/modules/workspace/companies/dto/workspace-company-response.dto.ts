@@ -102,6 +102,12 @@ export class WorkspaceCompanyResponseDto {
   @ApiProperty({ nullable: true })
   companyCode!: string | null;
 
+  @ApiProperty({ example: 'PH' })
+  countryCode!: string;
+
+  @ApiProperty({ example: 'PHP' })
+  baseCurrencyCode!: string;
+
   @ApiProperty({ enum: TaxpayerType, nullable: true })
   taxpayerType!: TaxpayerType | null;
 

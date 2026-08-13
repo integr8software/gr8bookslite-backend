@@ -1,8 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  COUNTRY_REFERENCES,
-  CURRENCY_REFERENCES,
-} from './reference.catalog';
+import { COUNTRY_REFERENCES, CURRENCY_REFERENCES } from './reference.catalog';
 
 @Injectable()
 export class ReferenceService {
@@ -17,12 +14,8 @@ export class ReferenceService {
   validateCompanyCurrency(countryCode: string, baseCurrencyCode: string) {
     const normalizedCountryCode = countryCode.trim().toUpperCase();
     const normalizedCurrencyCode = baseCurrencyCode.trim().toUpperCase();
-    const country = COUNTRY_REFERENCES.find(
-      (reference) => reference.code === normalizedCountryCode,
-    );
-    const currency = CURRENCY_REFERENCES.find(
-      (reference) => reference.code === normalizedCurrencyCode,
-    );
+    const country = COUNTRY_REFERENCES.find((reference) => reference.code === normalizedCountryCode);
+    const currency = CURRENCY_REFERENCES.find((reference) => reference.code === normalizedCurrencyCode);
 
     if (!country) {
       throw new BadRequestException('Select a valid company country.');

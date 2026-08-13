@@ -6,6 +6,7 @@ import { MaintenanceTransactionOptions } from '../../../common/constants/transac
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthMailService } from '../../auth/services/auth-mail.service';
 import { BillingService } from '../../billing/billing.service';
+import { ReferenceService } from '../../reference/reference.service';
 import { seedCompanyItemVariationDefaults } from '../../maintenance/item-variations/seed/item-variations.seed';
 import { seedCompanyTermsMaintenanceDefaults } from '../../maintenance/terms-maintenance/seed/terms-maintenance.seed';
 import { seedCompanyUnitOfMeasurementDefaults } from '../../maintenance/unit-of-measurement/seed/unit-of-measurement.seed';
@@ -42,6 +43,7 @@ export class WorkspaceCompaniesService {
     private readonly prisma: PrismaService,
     private readonly authMailService: AuthMailService,
     private readonly billingService: BillingService,
+    private readonly referenceService: ReferenceService,
     private readonly workspaceUsersService: WorkspaceUsersService,
     private readonly logoStorageService: WorkspaceCompanyLogoStorageService,
     private readonly auditLogsService: WorkspaceAuditLogsService,
@@ -289,12 +291,18 @@ export class WorkspaceCompaniesService {
 
     const nextName = getUpdatedCompanyName(current.name, dto);
     await this.ensureCompanyNameAvailable(nextName, companyId);
+    const companyCurrency =
+      dto.countryCode !== undefined || dto.baseCurrencyCode !== undefined
+        ? this.referenceService.validateCompanyCurrency(dto.countryCode ?? current.countryCode, dto.baseCurrencyCode ?? current.baseCurrencyCode)
+        : null;
 
     const company = await this.prisma.company.update({
       where: { id: companyId },
       data: {
         name: nextName,
         legalName: nextName,
+        countryCode: companyCurrency?.countryCode,
+        baseCurrencyCode: companyCurrency?.baseCurrencyCode,
         taxpayerType: dto.taxpayerType ? mapTaxpayerType(dto.taxpayerType) : undefined,
         ownerLastName: cleanOptional(dto.lastName),
         ownerFirstName: cleanOptional(dto.firstName),
