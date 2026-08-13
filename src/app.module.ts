@@ -44,6 +44,8 @@ import { TransactionNumberSequencesModule } from './modules/system-administratio
 import { StorageModule } from './storage/storage.module';
 import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.module';
 import { AccountsPayableModule } from './modules/accounts-payable/accounts-payable.module';
+import { SalesModule } from './modules/sales/sales.module';
+import { ReferenceModule } from './modules/reference/reference.module';
 
 @Module({
   imports: [
@@ -101,6 +103,8 @@ import { AccountsPayableModule } from './modules/accounts-payable/accounts-payab
     TransactionNumberSequencesModule,
     UserSidebarModule,
     AccountsPayableModule,
+    SalesModule,
+    ReferenceModule,
     AiAssistantModule,
   ],
   providers: [

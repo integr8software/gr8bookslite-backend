@@ -502,7 +502,14 @@
         "parameters": [],
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadOnboardingCompanyLogoResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -516,7 +523,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingPlansResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -530,7 +544,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOnboardingDraftResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -554,7 +575,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectOnboardingPlanResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -578,7 +606,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveOnboardingBillingResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -602,7 +637,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveOnboardingCompanyDetailsResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -616,7 +658,14 @@
         "parameters": [],
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteOnboardingResponseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -9005,6 +9054,219 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Approval Management"
+        ]
+      }
+    },
+    "/api/v1/system-administration/approval-management/workflows": {
+      "get": {
+        "operationId": "ApprovalManagementController_findWorkflows_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalWorkflowsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List approval workflows",
+        "tags": [
+          "Approval Management"
+        ]
+      }
+    },
+    "/api/v1/system-administration/approval-management/workflows/{moduleCode}": {
+      "put": {
+        "operationId": "ApprovalManagementController_upsertWorkflow_v1",
+        "parameters": [
+          {
+            "name": "moduleCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertApprovalWorkflowDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsertApprovalWorkflowResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create or update an approval workflow",
+        "tags": [
+          "Approval Management"
+        ]
+      }
+    },
+    "/api/v1/system-administration/approval-management/workflows/{workflowId}/inactivate": {
+      "patch": {
+        "operationId": "ApprovalManagementController_inactivateWorkflow_v1",
+        "parameters": [
+          {
+            "name": "workflowId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalWorkflowResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set an approval workflow as inactive",
+        "tags": [
+          "Approval Management"
+        ]
+      }
+    },
+    "/api/v1/system-administration/approval-management/transactions": {
+      "get": {
+        "operationId": "ApprovalManagementController_findTransactions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalTransactionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List approval transactions",
+        "tags": [
+          "Approval Management"
+        ]
+      }
+    },
+    "/api/v1/system-administration/approval-management/transactions/{transactionId}/approve": {
+      "post": {
+        "operationId": "ApprovalManagementController_approveTransaction_v1",
+        "parameters": [
+          {
+            "name": "transactionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalTransactionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve an approval transaction",
+        "tags": [
+          "Approval Management"
+        ]
+      }
+    },
+    "/api/v1/system-administration/approval-management/transactions/{transactionId}/disapprove": {
+      "post": {
+        "operationId": "ApprovalManagementController_disapproveTransaction_v1",
+        "parameters": [
+          {
+            "name": "transactionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalTransactionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Disapprove an approval transaction",
         "tags": [
           "Approval Management"
         ]
@@ -9152,6 +9414,101 @@
           }
         ],
         "summary": "List approver setups",
+        "tags": [
+          "Approver Setups"
+        ]
+      }
+    },
+    "/api/v1/approver-setups/{setupId}": {
+      "put": {
+        "operationId": "ApproverSetupsController_update_v1",
+        "parameters": [
+          {
+            "name": "setupId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApproverSetupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approver setup updated."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an approver setup",
+        "tags": [
+          "Approver Setups"
+        ]
+      },
+      "delete": {
+        "operationId": "ApproverSetupsController_remove_v1",
+        "parameters": [
+          {
+            "name": "setupId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approver setup deleted."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an approver setup",
+        "tags": [
+          "Approver Setups"
+        ]
+      }
+    },
+    "/api/v1/approver-setups/{setupId}/status": {
+      "patch": {
+        "operationId": "ApproverSetupsController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "setupId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approver setup status updated."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update approver setup status",
         "tags": [
           "Approver Setups"
         ]
@@ -9346,6 +9703,34 @@
         },
         "tags": [
           "UserSidebar"
+        ]
+      }
+    },
+    "/api/v1/reference/countries": {
+      "get": {
+        "operationId": "ReferenceController_listCountries_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Reference"
+        ]
+      }
+    },
+    "/api/v1/reference/currencies": {
+      "get": {
+        "operationId": "ReferenceController_listCurrencies_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Reference"
         ]
       }
     },
@@ -9985,6 +10370,526 @@
           "Accounts Payable Voucher"
         ]
       }
+    },
+    "/api/v1/sales/service-invoice": {
+      "get": {
+        "operationId": "ServiceInvoiceController_findAll_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "invoiceNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service invoices retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceInvoiceListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Service Invoice"
+        ]
+      },
+      "post": {
+        "operationId": "ServiceInvoiceController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service invoice created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveServiceInvoiceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Service Invoice"
+        ]
+      }
+    },
+    "/api/v1/sales/service-invoice/transaction-number": {
+      "get": {
+        "operationId": "ServiceInvoiceController_suggestTransactionNumber_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "invoiceNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service invoice transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceInvoiceNumberSuggestionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Service Invoice"
+        ]
+      }
+    },
+    "/api/v1/sales/service-invoice/{id}": {
+      "get": {
+        "operationId": "ServiceInvoiceController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "invoiceNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service invoice retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceInvoiceContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Service Invoice"
+        ]
+      },
+      "patch": {
+        "operationId": "ServiceInvoiceController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service invoice updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveServiceInvoiceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Service Invoice"
+        ]
+      }
+    },
+    "/api/v1/sales/service-invoice/{id}/status": {
+      "patch": {
+        "operationId": "ServiceInvoiceController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceInvoiceStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service invoice status updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveServiceInvoiceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Service Invoice"
+        ]
+      }
     }
   },
   "info": {
@@ -10241,6 +11146,516 @@
           "confirmNewPassword"
         ]
       },
+      "OnboardingLogoResponseDto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "storagePath": {
+            "type": "string"
+          },
+          "publicUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileName",
+          "mimeType",
+          "storagePath",
+          "publicUrl"
+        ]
+      },
+      "UploadOnboardingCompanyLogoResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "logo": {
+            "$ref": "#/components/schemas/OnboardingLogoResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "logo"
+        ]
+      },
+      "OnboardingPlanPriceSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "amountInCents": {
+            "type": "number"
+          },
+          "display": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amountInCents",
+          "display"
+        ]
+      },
+      "OnboardingPlanPricingResponseDto": {
+        "type": "object",
+        "properties": {
+          "monthly": {
+            "$ref": "#/components/schemas/OnboardingPlanPriceSummaryResponseDto"
+          },
+          "yearly": {
+            "$ref": "#/components/schemas/OnboardingPlanPriceSummaryResponseDto"
+          },
+          "monthlyCompareAt": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPlanPriceSummaryResponseDto"
+              }
+            ]
+          },
+          "yearlyCompareAt": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPlanPriceSummaryResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "monthly",
+          "yearly",
+          "monthlyCompareAt",
+          "yearlyCompareAt"
+        ]
+      },
+      "OnboardingPlanPriceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "billingCycle": {
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "intervalCount": {
+            "type": "number"
+          },
+          "intervalUnit": {
+            "type": "string"
+          },
+          "amountInCents": {
+            "type": "number"
+          },
+          "display": {
+            "type": "string"
+          },
+          "compareAtInCents": {
+            "type": "number",
+            "nullable": true
+          },
+          "compareAtDisplay": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "billingCycle",
+          "intervalCount",
+          "intervalUnit",
+          "amountInCents",
+          "display",
+          "compareAtInCents",
+          "compareAtDisplay",
+          "isActive"
+        ]
+      },
+      "OnboardingPlanUsageRuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "freeCount": {
+            "type": "number"
+          },
+          "unitPriceInCents": {
+            "type": "number"
+          },
+          "unitPriceDisplay": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "metric",
+          "freeCount",
+          "unitPriceInCents",
+          "unitPriceDisplay",
+          "isActive"
+        ]
+      },
+      "OnboardingPlanDiscountTierResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "metric": {
+            "type": "string"
+          },
+          "thresholdCount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "metric",
+          "thresholdCount",
+          "discountPercent",
+          "isActive"
+        ]
+      },
+      "OnboardingPlanModuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "moduleKey": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "moduleKey",
+          "name",
+          "isEnabled"
+        ]
+      },
+      "OnboardingPlanResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "trialDays": {
+            "type": "number"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/OnboardingPlanPricingResponseDto"
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanPriceResponseDto"
+            }
+          },
+          "usageRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanUsageRuleResponseDto"
+            }
+          },
+          "discountTiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanDiscountTierResponseDto"
+            }
+          },
+          "moduleKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanModuleResponseDto"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "description",
+          "trialDays",
+          "pricing",
+          "prices",
+          "usageRules",
+          "discountTiers",
+          "moduleKeys",
+          "modules"
+        ]
+      },
+      "OnboardingPlansResponseDto": {
+        "type": "object",
+        "properties": {
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingPlanResponseDto"
+            }
+          }
+        },
+        "required": [
+          "plans"
+        ]
+      },
+      "OnboardingDraftCompanyDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxpayerType": {
+            "nullable": true,
+            "enum": [
+              "individual",
+              "non-individual"
+            ],
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "nonIndividualType": {
+            "type": "string",
+            "nullable": true
+          },
+          "nonIndividualTypeOther": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoName": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoMimeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoStoragePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoPublicUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "tin": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "website": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportStartDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportEndDate": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "taxpayerType",
+          "lastName",
+          "firstName",
+          "middleName",
+          "companyName",
+          "nonIndividualType",
+          "nonIndividualTypeOther",
+          "logoName",
+          "logoMimeType",
+          "logoStoragePath",
+          "logoPublicUrl",
+          "address",
+          "countryCode",
+          "baseCurrencyCode",
+          "tin",
+          "companyEmail",
+          "website",
+          "contactNumber",
+          "reportStartDate",
+          "reportEndDate"
+        ]
+      },
+      "OnboardingDraftResponseDto": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPlanResponseDto"
+              }
+            ]
+          },
+          "billingCycle": {
+            "nullable": true,
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "cardholderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardLast4": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardBrand": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardExpiryMonth": {
+            "type": "number",
+            "nullable": true
+          },
+          "cardExpiryYear": {
+            "type": "number",
+            "nullable": true
+          },
+          "hasBillingSetup": {
+            "type": "boolean"
+          },
+          "hasCompanyDetails": {
+            "type": "boolean"
+          },
+          "planSelectedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "billingCompletedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "companyDetails": {
+            "$ref": "#/components/schemas/OnboardingDraftCompanyDetailsResponseDto"
+          }
+        },
+        "required": [
+          "plan",
+          "billingCycle",
+          "cardholderName",
+          "billingEmail",
+          "billingAddress",
+          "cardLast4",
+          "cardBrand",
+          "cardExpiryMonth",
+          "cardExpiryYear",
+          "hasBillingSetup",
+          "hasCompanyDetails",
+          "planSelectedAt",
+          "billingCompletedAt",
+          "companyDetails"
+        ]
+      },
+      "GetOnboardingDraftResponseDto": {
+        "type": "object",
+        "properties": {
+          "draft": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingDraftResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "draft"
+        ]
+      },
       "SelectOnboardingPlanDto": {
         "type": "object",
         "properties": {
@@ -10260,6 +11675,21 @@
         "required": [
           "planCode",
           "billingCycle"
+        ]
+      },
+      "SelectOnboardingPlanResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/OnboardingDraftResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "draft"
         ]
       },
       "SaveOnboardingBillingDto": {
@@ -10311,9 +11741,148 @@
           "paymentMethodId"
         ]
       },
+      "OnboardingBillingResponseDto": {
+        "type": "object",
+        "properties": {
+          "planCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingCycle": {
+            "nullable": true,
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "cardholderName": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "billingAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardBrand": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardLast4": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardExpiryMonth": {
+            "type": "number",
+            "nullable": true
+          },
+          "cardExpiryYear": {
+            "type": "number",
+            "nullable": true
+          },
+          "plan": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPlanResponseDto"
+              }
+            ]
+          },
+          "trialDays": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "planCode",
+          "billingCycle",
+          "cardholderName",
+          "billingEmail",
+          "billingAddress",
+          "cardBrand",
+          "cardLast4",
+          "cardExpiryMonth",
+          "cardExpiryYear",
+          "plan",
+          "trialDays"
+        ]
+      },
+      "OnboardingPaymentIntentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "redirectUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "redirectUrl"
+        ]
+      },
+      "SaveOnboardingBillingResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "billing": {
+            "$ref": "#/components/schemas/OnboardingBillingResponseDto"
+          },
+          "pendingProviderActivation": {
+            "type": "boolean"
+          },
+          "paymentSetupState": {
+            "enum": [
+              "pending_provider_activation",
+              "ready_for_confirmation"
+            ],
+            "type": "string"
+          },
+          "paymentIntent": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingPaymentIntentResponseDto"
+              }
+            ]
+          },
+          "nextStep": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "billing",
+          "nextStep"
+        ]
+      },
       "SaveOnboardingCompanyDetailsDto": {
         "type": "object",
         "properties": {
+          "countryCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
           "taxpayerType": {
             "enum": [
               "individual",
@@ -10386,6 +11955,8 @@
           }
         },
         "required": [
+          "countryCode",
+          "baseCurrencyCode",
           "taxpayerType",
           "logoName",
           "address",
@@ -10394,6 +11965,229 @@
           "contactNumber",
           "reportStartDate",
           "reportEndDate"
+        ]
+      },
+      "OnboardingCompanyDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxpayerType": {
+            "enum": [
+              "individual",
+              "non-individual"
+            ],
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "nonIndividualType": {
+            "type": "string",
+            "nullable": true
+          },
+          "nonIndividualTypeOther": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoName": {
+            "type": "string"
+          },
+          "logoMimeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoStoragePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoPublicUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string"
+          },
+          "tin": {
+            "type": "string"
+          },
+          "companyEmail": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNumber": {
+            "type": "string"
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "baseCurrencyCode": {
+            "type": "string"
+          },
+          "reportStartDate": {
+            "type": "string"
+          },
+          "reportEndDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "taxpayerType",
+          "lastName",
+          "firstName",
+          "middleName",
+          "companyName",
+          "nonIndividualType",
+          "nonIndividualTypeOther",
+          "logoName",
+          "logoMimeType",
+          "logoStoragePath",
+          "logoPublicUrl",
+          "address",
+          "tin",
+          "companyEmail",
+          "website",
+          "contactNumber",
+          "countryCode",
+          "baseCurrencyCode",
+          "reportStartDate",
+          "reportEndDate"
+        ]
+      },
+      "SaveOnboardingCompanyDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "companyDetails": {
+            "$ref": "#/components/schemas/OnboardingCompanyDetailsResponseDto"
+          },
+          "nextStep": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "companyDetails",
+          "nextStep"
+        ]
+      },
+      "OnboardingCompanyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "status"
+        ]
+      },
+      "OnboardingSubscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/OnboardingPlanResponseDto"
+          },
+          "billingCycle": {
+            "enum": [
+              "MONTHLY",
+              "QUARTERLY",
+              "YEARLY"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "INCOMPLETE",
+              "TRIALING",
+              "ACTIVE",
+              "PAST_DUE",
+              "UNPAID",
+              "INCOMPLETE_CANCELED",
+              "EXPIRED",
+              "CANCELED"
+            ],
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "trialEndsAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "plan",
+          "billingCycle",
+          "status",
+          "startsAt",
+          "trialEndsAt"
+        ]
+      },
+      "CompleteOnboardingResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "company": {
+            "$ref": "#/components/schemas/OnboardingCompanyResponseDto"
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/OnboardingSubscriptionResponseDto"
+          },
+          "nextStep": {
+            "type": "string"
+          },
+          "requiresReauthentication": {
+            "type": "boolean"
+          },
+          "accessToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "company",
+          "subscription",
+          "nextStep",
+          "requiresReauthentication"
         ]
       },
       "CreateUserDto": {
@@ -20523,12 +22317,408 @@
           "modules"
         ]
       },
+      "ApprovalWorkflowStageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "approverIds": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "requirement": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sequence",
+          "name",
+          "approverIds",
+          "requirement"
+        ]
+      },
+      "ApprovalRoutingRuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "amountOperator": {
+            "type": "string"
+          },
+          "amountValue": {
+            "type": "string"
+          },
+          "stageIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "sequence",
+          "name",
+          "basis",
+          "amountOperator",
+          "amountValue",
+          "stageIds"
+        ]
+      },
+      "ApprovalWorkflowResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "moduleCode": {
+            "type": "string"
+          },
+          "moduleName": {
+            "type": "string"
+          },
+          "stageCount": {
+            "type": "number"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalWorkflowStageResponseDto"
+            }
+          },
+          "routingRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalRoutingRuleResponseDto"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "moduleCode",
+          "moduleName",
+          "stageCount",
+          "stages",
+          "routingRules",
+          "status",
+          "description",
+          "updatedAt"
+        ]
+      },
+      "ApprovalWorkflowsResponseDto": {
+        "type": "object",
+        "properties": {
+          "workflows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalWorkflowResponseDto"
+            }
+          }
+        },
+        "required": [
+          "workflows"
+        ]
+      },
+      "UpsertApprovalWorkflowStageDto": {
+        "type": "object",
+        "properties": {
+          "sourceApproverSetupId": {
+            "type": "string",
+            "example": "39580d5f-27ae-47d0-a211-32da76557de6"
+          },
+          "sequence": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Level 1: Maria Santos"
+          },
+          "requirement": {
+            "enum": [
+              "any",
+              "all"
+            ],
+            "type": "string"
+          },
+          "approverIds": {
+            "minItems": 1,
+            "example": [
+              1,
+              2
+            ],
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "sequence",
+          "name",
+          "requirement",
+          "approverIds"
+        ]
+      },
+      "UpsertApprovalRoutingRuleDto": {
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Condition 1"
+          },
+          "basis": {
+            "enum": [
+              "default",
+              "amount"
+            ],
+            "type": "string"
+          },
+          "amountOperator": {
+            "type": "string",
+            "enum": [
+              "greaterThan",
+              "greaterThanOrEqual",
+              "lessThan",
+              "lessThanOrEqual"
+            ]
+          },
+          "amountValue": {
+            "type": "string",
+            "example": "10000"
+          },
+          "stageSequences": {
+            "minItems": 1,
+            "example": [
+              1,
+              2
+            ],
+            "description": "Approval stage sequence numbers included in this route.",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "sequence",
+          "name",
+          "basis",
+          "amountOperator",
+          "stageSequences"
+        ]
+      },
+      "UpsertApprovalWorkflowDto": {
+        "type": "object",
+        "properties": {
+          "moduleCode": {
+            "type": "string",
+            "example": "DV"
+          },
+          "moduleName": {
+            "type": "string",
+            "example": "Disbursement Voucher"
+          },
+          "status": {
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "example": "Disbursement vouchers use finance review by default."
+          },
+          "stages": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpsertApprovalWorkflowStageDto"
+            }
+          },
+          "routingRules": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpsertApprovalRoutingRuleDto"
+            }
+          }
+        },
+        "required": [
+          "moduleCode",
+          "moduleName",
+          "status",
+          "stages",
+          "routingRules"
+        ]
+      },
+      "UpsertApprovalWorkflowResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/ApprovalWorkflowResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "workflow"
+        ]
+      },
+      "ApprovalTransactionApproverResponseDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          },
+          "approvedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "userId",
+          "name",
+          "sequence",
+          "status"
+        ]
+      },
+      "ApprovalTransactionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "moduleScope": {
+            "type": "string"
+          },
+          "moduleName": {
+            "type": "string"
+          },
+          "referenceNo": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": "string"
+          },
+          "ruleName": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "canUpdateStatus": {
+            "type": "boolean"
+          },
+          "blockerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentApproverId": {
+            "type": "number",
+            "nullable": true
+          },
+          "approvers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalTransactionApproverResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "moduleScope",
+          "moduleName",
+          "referenceNo",
+          "ruleId",
+          "ruleName",
+          "amount",
+          "status",
+          "requestedAt",
+          "canUpdateStatus",
+          "approvers"
+        ]
+      },
+      "ApprovalTransactionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalTransactionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "transactions"
+        ]
+      },
       "CreateApproverSetupDto": {
         "type": "object",
         "properties": {
           "approverCondition": {
             "type": "string",
             "example": "Any one approver"
+          },
+          "levelName": {
+            "type": "string",
+            "example": "Finance Review"
           },
           "type": {
             "type": "string",
@@ -20567,6 +22757,7 @@
         },
         "required": [
           "approverCondition",
+          "levelName",
           "type",
           "status",
           "moduleScope",
@@ -21154,6 +23345,11 @@
             "nullable": true,
             "maxLength": 40
           },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
           "projectName": {
             "type": "string",
             "nullable": true,
@@ -21161,6 +23357,7 @@
           },
           "currency": {
             "type": "string",
+            "nullable": true,
             "maxLength": 10
           },
           "exchangeRate": {
@@ -21239,7 +23436,6 @@
           "documentDate",
           "partyCode",
           "partyName",
-          "currency",
           "exchangeRate",
           "amount",
           "termId",
@@ -21294,6 +23490,11 @@
             "nullable": true,
             "maxLength": 40
           },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
           "projectName": {
             "type": "string",
             "nullable": true,
@@ -21301,6 +23502,7 @@
           },
           "currency": {
             "type": "string",
+            "nullable": true,
             "maxLength": 10
           },
           "exchangeRate": {
@@ -21379,7 +23581,6 @@
           "documentDate",
           "partyCode",
           "partyName",
-          "currency",
           "exchangeRate",
           "amount",
           "termId",
@@ -21413,6 +23614,1093 @@
             "type": "string",
             "nullable": true,
             "maxLength": 500
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ServiceInvoiceDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "withWvat": {
+            "type": "boolean"
+          },
+          "wvatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "withEwt": {
+            "type": "boolean"
+          },
+          "ewtType": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "description",
+          "quantity",
+          "amount",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountPercent",
+          "discountAmount",
+          "grossAmount",
+          "vatable",
+          "vatInclusive",
+          "withWvat",
+          "withEwt"
+        ]
+      },
+      "ServiceInvoiceJournalEntryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "referenceType": {
+            "type": "string"
+          },
+          "referenceId": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "debit": {
+            "type": "number"
+          },
+          "credit": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "referenceType",
+          "referenceId",
+          "lineNumber",
+          "accountId",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "debit",
+          "credit"
+        ]
+      },
+      "ServiceInvoiceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "invoiceNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerCode": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true
+          },
+          "receivableAccountId": {
+            "type": "string"
+          },
+          "receivableAccountCode": {
+            "type": "string"
+          },
+          "receivableAccountTitle": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "DISAPPROVED",
+              "POSTED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceInvoiceDetailResponseDto"
+            }
+          },
+          "journalEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceInvoiceJournalEntryResponseDto"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "dueDate",
+          "customerCode",
+          "customerName",
+          "currency",
+          "exchangeRate",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountAmount",
+          "grossAmount",
+          "receivableAccountId",
+          "receivableAccountCode",
+          "receivableAccountTitle",
+          "status",
+          "details",
+          "journalEntries",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ServiceInvoiceStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "cancelledInvoices": {
+            "type": "number"
+          },
+          "disapprovedInvoices": {
+            "type": "number"
+          },
+          "draftInvoices": {
+            "type": "number"
+          },
+          "forApprovalInvoices": {
+            "type": "number"
+          },
+          "postedInvoices": {
+            "type": "number"
+          },
+          "totalInvoices": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cancelledInvoices",
+          "disapprovedInvoices",
+          "draftInvoices",
+          "forApprovalInvoices",
+          "postedInvoices",
+          "totalInvoices"
+        ]
+      },
+      "ServiceInvoicePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "ServiceInvoicePermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canApprove": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canDisapprove": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canPost": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canView": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canApprove",
+          "canCancel",
+          "canCreate",
+          "canDisapprove",
+          "canExport",
+          "canPost",
+          "canUpdate",
+          "canView"
+        ]
+      },
+      "ServiceInvoiceListResponseDto": {
+        "type": "object",
+        "properties": {
+          "invoices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceInvoiceResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/ServiceInvoiceStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/ServiceInvoicePaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ServiceInvoicePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "invoices",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "ServiceInvoiceNumberSuggestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number"
+          },
+          "inputMode": {
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchUnitId",
+          "inputMode",
+          "transactionNo"
+        ]
+      },
+      "ServiceInvoiceContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "invoice": {
+            "$ref": "#/components/schemas/ServiceInvoiceResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ServiceInvoicePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "invoice",
+          "permissions"
+        ]
+      },
+      "ServiceInvoiceDetailDto": {
+        "type": "object",
+        "properties": {
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "withWvat": {
+            "type": "boolean"
+          },
+          "wvatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "withEwt": {
+            "type": "boolean"
+          },
+          "ewtType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          }
+        },
+        "required": [
+          "lineNumber",
+          "description",
+          "quantity",
+          "amount",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountPercent",
+          "discountAmount",
+          "grossAmount",
+          "vatable",
+          "vatInclusive",
+          "withWvat",
+          "withEwt"
+        ]
+      },
+      "ServiceInvoiceJournalEntryDto": {
+        "type": "object",
+        "properties": {
+          "referenceType": {
+            "type": "string",
+            "enum": [
+              "SI"
+            ]
+          },
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "accountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "debit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "credit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "lineNumber",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "debit",
+          "credit"
+        ]
+      },
+      "CreateServiceInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "invoiceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "receivableAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "receivableAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "receivableAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceInvoiceDetailDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceInvoiceJournalEntryDto"
+            }
+          }
+        },
+        "required": [
+          "documentDate",
+          "dueDate",
+          "customerCode",
+          "customerName",
+          "currency",
+          "exchangeRate",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountAmount",
+          "grossAmount",
+          "receivableAccountCode",
+          "receivableAccountTitle",
+          "details",
+          "journalEntries"
+        ]
+      },
+      "SaveServiceInvoiceResponseDto": {
+        "type": "object",
+        "properties": {
+          "invoice": {
+            "$ref": "#/components/schemas/ServiceInvoiceResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ServiceInvoicePermissionsResponseDto"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoice",
+          "permissions",
+          "message"
+        ]
+      },
+      "UpdateServiceInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "invoiceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "receivableAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "receivableAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "receivableAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceInvoiceDetailDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceInvoiceJournalEntryDto"
+            }
+          }
+        }
+      },
+      "UpdateServiceInvoiceStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "DISAPPROVED",
+              "POSTED",
+              "CANCELLED",
+              "Draft",
+              "For Approval",
+              "Disapproved",
+              "Posted",
+              "Cancelled"
+            ]
           }
         },
         "required": [

@@ -244,7 +244,10 @@ export class BillingService {
     const reusableAttempt = await this.findReusableManualCheckoutAttempt(invoice.id);
 
     if (reusableAttempt?.externalCheckoutSessionId) {
-      const checkoutUrl = this.getCheckoutUrlFromProviderPayload(reusableAttempt.rawProviderPayload);
+      const canReuseAttempt = await this.ensureReusableCheckoutAttemptStillExists(reusableAttempt);
+      const checkoutUrl = canReuseAttempt
+        ? this.getCheckoutUrlFromProviderPayload(reusableAttempt.rawProviderPayload)
+        : null;
 
       if (checkoutUrl) {
         return {
@@ -919,6 +922,48 @@ export class BillingService {
       },
       orderBy: [{ createdAt: 'desc' }],
     });
+  }
+
+  private async ensureReusableCheckoutAttemptStillExists(attempt: {
+    id: number;
+    externalCheckoutSessionId: string | null;
+  }) {
+    if (!attempt.externalCheckoutSessionId) {
+      return false;
+    }
+
+    try {
+      await this.paymongoService.retrieveCheckoutSession(attempt.externalCheckoutSessionId);
+      return true;
+    } catch (error) {
+      if (this.isPaymongoNotFound(error)) {
+        await this.prisma.billingPaymentAttempt.update({
+          where: { id: attempt.id },
+          data: {
+            status: BillingPaymentAttemptStatus.EXPIRED,
+            expiredAt: new Date(),
+            applicationError:
+              'PayMongo checkout session was not found for the current provider key; a new checkout can be created.',
+          },
+        });
+        this.logger.warn(
+          `Manual checkout attempt ${attempt.id} references missing PayMongo session ${attempt.externalCheckoutSessionId}; marked expired.`,
+        );
+
+        return false;
+      }
+
+      this.logger.warn(
+        `Could not verify reusable manual checkout attempt ${attempt.id}; keeping existing checkout session. ${
+          error instanceof Error ? error.message : 'Unknown provider error.'
+        }`,
+      );
+      return true;
+    }
+  }
+
+  private isPaymongoNotFound(error: unknown) {
+    return error instanceof PaymongoRequestException && (error.context.status === 404 || error.context.code === 'not_found');
   }
 
   private async createManualPaymentAttempt(input: {

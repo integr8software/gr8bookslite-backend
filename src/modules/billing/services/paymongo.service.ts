@@ -136,6 +136,10 @@ export class PaymongoService {
     });
   }
 
+  async retrieveCheckoutSession(checkoutSessionId: string) {
+    return this.request('GET', `/checkout_sessions/${encodeURIComponent(checkoutSessionId)}`);
+  }
+
   async retrieveSubscription(subscriptionId: string) {
     return this.request('GET', `/subscriptions/${subscriptionId}`);
   }

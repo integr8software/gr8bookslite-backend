@@ -7,6 +7,18 @@ const ContactNumberPattern = /^\+63 \d{3} \d{3} \d{4}$/;
 const DatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
 export class SaveOnboardingCompanyDetailsDto {
+  @IsString()
+  @Matches(/^[A-Z]{2}$/, {
+    message: 'Select a valid company country.',
+  })
+  countryCode!: string;
+
+  @IsString()
+  @Matches(/^[A-Z]{3}$/, {
+    message: 'Select a valid base currency.',
+  })
+  baseCurrencyCode!: string;
+
   @IsIn(['individual', 'non-individual'])
   taxpayerType!: 'individual' | 'non-individual';
 
