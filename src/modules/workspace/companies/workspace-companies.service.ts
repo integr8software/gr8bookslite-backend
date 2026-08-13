@@ -123,6 +123,7 @@ export class WorkspaceCompaniesService {
     const name = getCompanyName(dto);
     await this.ensureCompanyNameAvailable(name);
     const slug = await this.createUniqueSlug(name);
+    const companyCurrency = this.referenceService.validateCompanyCurrency(dto.countryCode, dto.baseCurrencyCode);
     const isManualBilling = dto.billing?.billingMode === BillingMode.MANUAL;
     const hasConfirmedManualPayment = isManualBilling ? await this.hasConfirmedAdditionalCompanyPayment(user, dto) : false;
 
@@ -143,6 +144,8 @@ export class WorkspaceCompaniesService {
           logoStoragePath: dto.logoStoragePath?.trim() || null,
           logoPublicUrl: dto.logoPublicUrl?.trim() || null,
           address: dto.address.trim(),
+          countryCode: companyCurrency.countryCode,
+          baseCurrencyCode: companyCurrency.baseCurrencyCode,
           tin: dto.tin.trim(),
           email: dto.email.trim().toLowerCase(),
           website: dto.website?.trim() || null,
