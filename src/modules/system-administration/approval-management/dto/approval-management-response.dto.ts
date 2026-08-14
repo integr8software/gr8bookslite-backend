@@ -146,6 +146,11 @@ export class ApprovalTransactionResponseDto {
   @ApiProperty()
   canUpdateStatus!: boolean;
 
+  @ApiProperty({
+    description: 'Whether approvers must act in sequence for this transaction.',
+  })
+  isSequential!: boolean;
+
   @ApiProperty({ required: false, nullable: true })
   blockerName!: string | null;
 
