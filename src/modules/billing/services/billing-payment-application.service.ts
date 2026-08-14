@@ -135,7 +135,14 @@ export class BillingPaymentApplicationService {
               paymentMethodReference: lockedAttempt.externalCheckoutSessionId ?? lockedAttempt.externalPaymentIntentId,
             },
           });
+        } else if (lockedAttempt.purpose === BillingPaymentPurpose.ADDITIONAL_COMPANY && !lockedAttempt.companySubscriptionId) {
+          // Additional-company checkout is paid before the company exists.
+          // Company creation will attach the paid attempt to the new company.
         } else {
+          if (!lockedAttempt.companyId) {
+            throw new Error('Paid payment attempt is not linked to a company.');
+          }
+
           await tx.company.update({
             where: {
               id: lockedAttempt.companyId,

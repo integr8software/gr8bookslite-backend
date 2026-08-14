@@ -213,13 +213,16 @@ export class BillingService {
   async createManualCheckoutSession(user: AuthUser, dto: CreateManualCheckoutSessionDto) {
     const context = await this.resolveManualCheckoutContext(user, dto);
     const { company, plan, planPrice } = context;
-    const subscription = await this.ensureManualCompanySubscription({
-      companyId: company.id,
-      ownerUserId: user.id,
-      planId: plan.id,
-      planPriceId: planPrice.id,
-      billingCycle: dto.billingCycle,
-    });
+    const shouldDeferAdditionalCompanySubscription = dto.purpose === BillingPaymentPurpose.ADDITIONAL_COMPANY && !dto.companyId;
+    const subscription = shouldDeferAdditionalCompanySubscription
+      ? null
+      : await this.ensureManualCompanySubscription({
+          companyId: company.id,
+          ownerUserId: user.id,
+          planId: plan.id,
+          planPriceId: planPrice.id,
+          billingCycle: dto.billingCycle,
+        });
     const periodStart = new Date();
     const periodEnd = this.addBillingInterval(periodStart, {
       intervalCount: planPrice.intervalCount,
@@ -228,7 +231,7 @@ export class BillingService {
     const invoice = await this.ensureManualSubscriptionInvoice({
       companyId: company.id,
       ownerUserId: user.id,
-      companySubscriptionId: subscription.id,
+      companySubscriptionId: subscription?.id ?? null,
       subscriptionPlanId: plan.id,
       subscriptionPlanPriceId: planPrice.id,
       purpose: dto.purpose,
@@ -245,9 +248,7 @@ export class BillingService {
 
     if (reusableAttempt?.externalCheckoutSessionId) {
       const canReuseAttempt = await this.ensureReusableCheckoutAttemptStillExists(reusableAttempt);
-      const checkoutUrl = canReuseAttempt
-        ? this.getCheckoutUrlFromProviderPayload(reusableAttempt.rawProviderPayload)
-        : null;
+      const checkoutUrl = canReuseAttempt ? this.getCheckoutUrlFromProviderPayload(reusableAttempt.rawProviderPayload) : null;
 
       if (checkoutUrl) {
         return {
@@ -264,7 +265,7 @@ export class BillingService {
       invoiceId: invoice.id,
       companyId: company.id,
       ownerUserId: user.id,
-      companySubscriptionId: subscription.id,
+      companySubscriptionId: subscription?.id ?? null,
       subscriptionPlanId: plan.id,
       subscriptionPlanPriceId: planPrice.id,
       purpose: dto.purpose,
@@ -295,7 +296,7 @@ export class BillingService {
       subscription_plan_code: plan.code,
       subscription_plan_price_id: planPrice.id,
       billing_cycle: dto.billingCycle,
-      company_subscription_id: subscription.id,
+      company_subscription_id: subscription?.id ?? null,
       local_payment_attempt_id: paymentAttempt.id,
       local_payment_request_id: paymentAttempt.id,
       local_invoice_id: invoice.id,
@@ -376,6 +377,10 @@ export class BillingService {
     }
 
     if (paymentAttempt.ownerUserId !== user.id && user.role !== AppRole.SUPER_ADMIN) {
+      if (!paymentAttempt.companyId) {
+        throw new ForbiddenException('You cannot view this payment attempt.');
+      }
+
       const membership = await this.prisma.membership.findUnique({
         where: {
           userId_companyId: {
@@ -837,7 +842,7 @@ export class BillingService {
   private async ensureManualSubscriptionInvoice(input: {
     companyId: number;
     ownerUserId: number;
-    companySubscriptionId: number;
+    companySubscriptionId: number | null;
     subscriptionPlanId: number;
     subscriptionPlanPriceId: number;
     purpose: BillingPaymentPurpose;
@@ -924,10 +929,7 @@ export class BillingService {
     });
   }
 
-  private async ensureReusableCheckoutAttemptStillExists(attempt: {
-    id: number;
-    externalCheckoutSessionId: string | null;
-  }) {
+  private async ensureReusableCheckoutAttemptStillExists(attempt: { id: number; externalCheckoutSessionId: string | null }) {
     if (!attempt.externalCheckoutSessionId) {
       return false;
     }
@@ -942,13 +944,10 @@ export class BillingService {
           data: {
             status: BillingPaymentAttemptStatus.EXPIRED,
             expiredAt: new Date(),
-            applicationError:
-              'PayMongo checkout session was not found for the current provider key; a new checkout can be created.',
+            applicationError: 'PayMongo checkout session was not found for the current provider key; a new checkout can be created.',
           },
         });
-        this.logger.warn(
-          `Manual checkout attempt ${attempt.id} references missing PayMongo session ${attempt.externalCheckoutSessionId}; marked expired.`,
-        );
+        this.logger.warn(`Manual checkout attempt ${attempt.id} references missing PayMongo session ${attempt.externalCheckoutSessionId}; marked expired.`);
 
         return false;
       }
@@ -970,7 +969,7 @@ export class BillingService {
     invoiceId: number;
     companyId: number;
     ownerUserId: number;
-    companySubscriptionId: number;
+    companySubscriptionId: number | null;
     subscriptionPlanId: number;
     subscriptionPlanPriceId: number;
     purpose: BillingPaymentPurpose;

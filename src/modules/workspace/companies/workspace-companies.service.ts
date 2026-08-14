@@ -1,5 +1,18 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { BillingCycle, BillingMode, CompanyStatus, CompanyUnitType, AccessScopeLevel, MembershipRole, MembershipStatus, TaxpayerType } from '@prisma/client';
+import {
+  AccessScopeLevel,
+  BillingApplicationStatus,
+  BillingCycle,
+  BillingMode,
+  BillingPaymentAttemptStatus,
+  BillingPaymentPurpose,
+  CompanyStatus,
+  CompanyUnitType,
+  MembershipRole,
+  MembershipStatus,
+  SubscriptionStatus,
+  TaxpayerType,
+} from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
@@ -109,6 +122,7 @@ export class WorkspaceCompaniesService {
     await this.ensureCompanyNameAvailable(name);
     const slug = await this.createUniqueSlug(name);
     const isManualBilling = dto.billing?.billingMode === BillingMode.MANUAL;
+    const hasConfirmedManualPayment = isManualBilling ? await this.hasConfirmedAdditionalCompanyPayment(user, dto) : false;
 
     const company = await this.prisma.$transaction(async (tx) => {
       const createdCompany = await tx.company.create({
@@ -134,8 +148,8 @@ export class WorkspaceCompaniesService {
           reportStartDate: parseDate(dto.reportStartDate),
           reportEndDate: parseDate(dto.reportEndDate),
           createdByUserId: user.id,
-          status: isManualBilling ? CompanyStatus.PROVISIONING : CompanyStatus.ACTIVE,
-          isActive: !isManualBilling,
+          status: isManualBilling && !hasConfirmedManualPayment ? CompanyStatus.PROVISIONING : CompanyStatus.ACTIVE,
+          isActive: !isManualBilling || hasConfirmedManualPayment,
         },
       });
 
@@ -199,11 +213,13 @@ export class WorkspaceCompaniesService {
     let billingSetup: Awaited<ReturnType<typeof this.setupCompanyBilling>>;
 
     try {
-      billingSetup = await this.setupCompanyBilling({
-        companyId: company.id,
-        dto,
-        user,
-      });
+      billingSetup = hasConfirmedManualPayment
+        ? undefined
+        : await this.setupCompanyBilling({
+            companyId: company.id,
+            dto,
+            user,
+          });
     } catch (error) {
       await this.cleanupProvisionedCompany(company.id, error);
       throw error;
@@ -221,6 +237,11 @@ export class WorkspaceCompaniesService {
         module: 'Company Management',
       },
     });
+
+    if (hasConfirmedManualPayment && dto.billing?.paymentAttemptId) {
+      await this.markAdditionalCompanyPaymentAttemptUsed(dto.billing.paymentAttemptId, company.id);
+    }
+
     const updatedCompany = await this.prisma.company.findUniqueOrThrow({
       where: { id: company.id },
       include: WorkspaceCompanyDetailsInclude,
@@ -766,6 +787,146 @@ export class WorkspaceCompaniesService {
     };
   }
 
+  private async hasConfirmedAdditionalCompanyPayment(user: AuthUser, dto: CreateWorkspaceCompanyDto) {
+    const paymentAttemptId = dto.billing?.paymentAttemptId;
+
+    if (!paymentAttemptId) {
+      return false;
+    }
+
+    const attempt = await this.prisma.billingPaymentAttempt.findUnique({
+      where: {
+        id: paymentAttemptId,
+      },
+      select: {
+        ownerUserId: true,
+        purpose: true,
+        status: true,
+        applicationStatus: true,
+        metadata: true,
+        subscriptionPlan: {
+          select: {
+            code: true,
+          },
+        },
+      },
+    });
+
+    if (
+      !attempt ||
+      attempt.ownerUserId !== user.id ||
+      attempt.purpose !== BillingPaymentPurpose.ADDITIONAL_COMPANY ||
+      attempt.status !== BillingPaymentAttemptStatus.PAID
+    ) {
+      throw new BadRequestException('Additional company payment must be confirmed before creating the company.');
+    }
+
+    const metadata = readRecord(attempt.metadata);
+
+    if (metadata?.additional_company_created_id) {
+      throw new BadRequestException('Additional company payment has already been used to create a company.');
+    }
+
+    if (attempt.applicationStatus === BillingApplicationStatus.FAILED) {
+      throw new BadRequestException('Additional company payment could not be applied. Contact support before creating the company.');
+    }
+
+    const expectedPlanCode = dto.billing?.planCode?.trim().toUpperCase();
+
+    if (expectedPlanCode && attempt.subscriptionPlan.code !== expectedPlanCode) {
+      throw new BadRequestException('Additional company payment does not match the selected plan.');
+    }
+
+    return true;
+  }
+
+  private async markAdditionalCompanyPaymentAttemptUsed(paymentAttemptId: number, companyId: number) {
+    const attempt = await this.prisma.billingPaymentAttempt.findUnique({
+      where: {
+        id: paymentAttemptId,
+      },
+      select: {
+        companySubscriptionId: true,
+        subscriptionPlanId: true,
+        subscriptionPlanPriceId: true,
+        subscriptionInvoiceId: true,
+        metadata: true,
+        subscriptionInvoice: {
+          select: {
+            billingCycle: true,
+            periodStartAt: true,
+            periodEndAt: true,
+          },
+        },
+      },
+    });
+    const metadata = readRecord(attempt?.metadata) ?? {};
+
+    await this.prisma.$transaction(async (tx) => {
+      let companySubscriptionId = attempt?.companySubscriptionId ?? null;
+
+      if (companySubscriptionId) {
+        await tx.companySubscription.update({
+          where: {
+            id: companySubscriptionId,
+          },
+          data: {
+            companyId,
+          },
+        });
+      } else if (attempt) {
+        const subscription = await tx.companySubscription.create({
+          data: {
+            companyId,
+            subscriptionPlanId: attempt.subscriptionPlanId,
+            subscriptionPlanPriceId: attempt.subscriptionPlanPriceId,
+            billingCycle: attempt.subscriptionInvoice.billingCycle ?? BillingCycle.MONTHLY,
+            billingMode: BillingMode.MANUAL,
+            autoRenew: false,
+            status: SubscriptionStatus.ACTIVE,
+            startsAt: attempt.subscriptionInvoice.periodStartAt ?? new Date(),
+            currentPeriodStartAt: attempt.subscriptionInvoice.periodStartAt ?? null,
+            nextBillingAt: attempt.subscriptionInvoice.periodEndAt ?? null,
+            endsAt: attempt.subscriptionInvoice.periodEndAt ?? null,
+            rawProviderPayload: {
+              billingMode: BillingMode.MANUAL,
+              createdBy: 'paid_additional_company_checkout',
+              paymentAttemptId,
+            },
+          },
+        });
+        companySubscriptionId = subscription.id;
+      }
+
+      if (attempt?.subscriptionInvoiceId) {
+        await tx.subscriptionInvoice.update({
+          where: {
+            id: attempt.subscriptionInvoiceId,
+          },
+          data: {
+            companyId,
+            companySubscriptionId,
+          },
+        });
+      }
+
+      await tx.billingPaymentAttempt.update({
+        where: {
+          id: paymentAttemptId,
+        },
+        data: {
+          companyId,
+          companySubscriptionId,
+          metadata: {
+            ...metadata,
+            additional_company_created_id: companyId,
+            additional_company_created_at: new Date().toISOString(),
+          },
+        },
+      });
+    });
+  }
+
   private async cleanupProvisionedCompany(companyId: number, error: unknown) {
     try {
       await this.prisma.company.delete({
@@ -841,6 +1002,10 @@ export class WorkspaceCompaniesService {
 
 function mapTaxpayerType(type: 'individual' | 'non-individual') {
   return type === 'individual' ? TaxpayerType.INDIVIDUAL : TaxpayerType.NON_INDIVIDUAL;
+}
+
+function readRecord(value: unknown) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 }
 
 function getCompanyName(dto: CreateWorkspaceCompanyDto) {

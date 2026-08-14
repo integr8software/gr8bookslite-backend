@@ -53,6 +53,11 @@ export class CreateWorkspaceCompanyBillingDto {
   @Min(2000)
   @Max(9999)
   cardExpiryYear?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  paymentAttemptId?: number;
 }
 
 export class CreateWorkspaceCompanyDto {

@@ -14240,6 +14240,10 @@
             "type": "number",
             "minimum": 2000,
             "maximum": 9999
+          },
+          "paymentAttemptId": {
+            "type": "number",
+            "minimum": 1
           }
         }
       },
