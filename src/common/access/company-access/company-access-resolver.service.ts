@@ -16,10 +16,7 @@ export class CompanyAccessResolver {
     SubscriptionStatus.UNPAID,
   ];
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async resolve(payload: JwtPayload): Promise<CompanyAccessContext> {
     const user = await this.getActiveUser(payload.sub);
@@ -235,16 +232,10 @@ export class CompanyAccessResolver {
       return;
     }
 
-    const denialReason = getSubscriptionAccessDenialReason(latestSubscription, new Date(), {
-      allowProviderActivationFallback: this.isProviderFallbackAllowed(),
-    });
+    const denialReason = getSubscriptionAccessDenialReason(latestSubscription, new Date());
 
     if (denialReason) {
       throw new UnauthorizedException(denialReason);
     }
-  }
-
-  private isProviderFallbackAllowed() {
-    return this.configService.get<string>('PAYMONGO_ALLOW_PROVIDER_FALLBACK', 'false').toLowerCase() === 'true';
   }
 }
