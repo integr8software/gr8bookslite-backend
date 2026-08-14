@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateApproverSetupDto {
   @ApiProperty({ example: 'Any one approver' })
@@ -43,6 +43,7 @@ export class CreateApproverSetupDto {
   })
   @IsArray()
   @ArrayMinSize(1)
+  @ArrayMaxSize(5)
   @Type(() => Number)
   @IsInt({ each: true })
   approverUserIds!: number[];
