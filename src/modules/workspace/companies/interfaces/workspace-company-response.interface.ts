@@ -26,6 +26,8 @@ export interface WorkspaceCompanyResponse {
   slug: string;
   legalName: string | null;
   companyCode: string | null;
+  countryCode: string;
+  baseCurrencyCode: string;
   taxpayerType: TaxpayerType | null;
   ownerLastName: string | null;
   ownerFirstName: string | null;

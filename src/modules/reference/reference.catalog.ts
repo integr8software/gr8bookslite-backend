@@ -15,6 +15,7 @@ export type CountryReference = {
 export const CURRENCY_REFERENCES: readonly CurrencyReference[] = [
   { code: 'AED', name: 'United Arab Emirates Dirham', symbol: 'د.إ' },
   { code: 'AUD', name: 'Australian Dollar', symbol: '$' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
   { code: 'CAD', name: 'Canadian Dollar', symbol: '$' },
   { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
   { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
@@ -37,6 +38,7 @@ export const CURRENCY_REFERENCES: readonly CurrencyReference[] = [
 export const COUNTRY_REFERENCES: readonly CountryReference[] = [
   { code: 'AE', name: 'United Arab Emirates', defaultCurrencyCode: 'AED' },
   { code: 'AU', name: 'Australia', defaultCurrencyCode: 'AUD' },
+  { code: 'BR', name: 'Brazil', defaultCurrencyCode: 'BRL' },
   { code: 'CA', name: 'Canada', defaultCurrencyCode: 'CAD' },
   { code: 'CH', name: 'Switzerland', defaultCurrencyCode: 'CHF' },
   { code: 'CN', name: 'China', defaultCurrencyCode: 'CNY' },

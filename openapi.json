@@ -13895,6 +13895,14 @@
             "type": "string",
             "nullable": true
           },
+          "countryCode": {
+            "type": "string",
+            "example": "PH"
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "example": "PHP"
+          },
           "taxpayerType": {
             "nullable": true,
             "enum": [
@@ -14031,6 +14039,8 @@
           "slug",
           "legalName",
           "companyCode",
+          "countryCode",
+          "baseCurrencyCode",
           "taxpayerType",
           "ownerLastName",
           "ownerFirstName",
@@ -14332,6 +14342,16 @@
       "UpdateWorkspaceCompanyDto": {
         "type": "object",
         "properties": {
+          "countryCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "example": "PH"
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "example": "PHP"
+          },
           "taxpayerType": {
             "enum": [
               "individual",
