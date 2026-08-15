@@ -286,25 +286,12 @@ export class OnboardingService {
       billingEmail: normalizedEmail,
     });
 
-    const paymentSetupState = preparedSubscription.pendingProviderActivation ? 'pending_provider_activation' : 'ready_for_confirmation';
-
-    const paymentResult = preparedSubscription.pendingProviderActivation
-      ? await this.billingService.recordPendingPaymentSetup({
-          companyId: existingDraft.provisionedCompanyId,
-          ownerUserId: user.id,
-          subscriptionId: preparedSubscription.subscription.id,
-          paymentMethodId: dto.paymentMethodId.trim(),
-          brand: dto.cardBrand.trim(),
-          last4: dto.cardLast4,
-          expMonth: dto.expiryMonth,
-          expYear: dto.expiryYear,
-        })
-      : await this.billingService.attachPaymentMethodForCompany({
-          companyId: existingDraft.provisionedCompanyId,
-          ownerUserId: user.id,
-          subscriptionId: preparedSubscription.subscription.id,
-          paymentMethodId: dto.paymentMethodId.trim(),
-        });
+    const paymentResult = await this.billingService.attachPaymentMethodForCompany({
+      companyId: existingDraft.provisionedCompanyId,
+      ownerUserId: user.id,
+      subscriptionId: preparedSubscription.subscription.id,
+      paymentMethodId: dto.paymentMethodId.trim(),
+    });
 
     const updatedDraft = await this.prisma.userOnboardingDraft.update({
       where: {
@@ -343,9 +330,8 @@ export class OnboardingService {
         plan: updatedDraft.subscriptionPlan ? mapSubscriptionPlan(updatedDraft.subscriptionPlan) : null,
         trialDays: updatedDraft.subscriptionPlan?.trialDays ?? 15,
       },
-      paymentIntent: 'paymentIntent' in paymentResult ? paymentResult.paymentIntent : undefined,
-      pendingProviderActivation: preparedSubscription.pendingProviderActivation ?? false,
-      paymentSetupState,
+      paymentIntent: paymentResult.paymentIntent,
+      paymentSetupState: 'ready_for_confirmation',
       nextStep: 'REVIEW_DETAILS',
     };
   }
@@ -362,10 +348,7 @@ export class OnboardingService {
     }
 
     this.validateCompanyDetailsInput(dto);
-    const companyCurrency = this.referenceService.validateCompanyCurrency(
-      dto.countryCode,
-      dto.baseCurrencyCode,
-    );
+    const companyCurrency = this.referenceService.validateCompanyCurrency(dto.countryCode, dto.baseCurrencyCode);
 
     const reportStartDate = new Date(`${dto.reportStartDate}T00:00:00.000Z`);
     const reportEndDate = new Date(`${dto.reportEndDate}T00:00:00.000Z`);

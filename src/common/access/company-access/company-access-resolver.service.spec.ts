@@ -144,14 +144,9 @@ function createResolver({
       findUnique: jest.fn().mockResolvedValue(membership),
     },
   };
-  const configService = {
-    get: jest.fn().mockReturnValue('false'),
-  };
-
   return {
-    resolver: new CompanyAccessResolver(prisma as never, configService as never),
+    resolver: new CompanyAccessResolver(prisma as never),
     prisma,
-    configService,
   };
 }
 

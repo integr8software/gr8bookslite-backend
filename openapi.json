@@ -11843,15 +11843,11 @@
           "billing": {
             "$ref": "#/components/schemas/OnboardingBillingResponseDto"
           },
-          "pendingProviderActivation": {
-            "type": "boolean"
-          },
           "paymentSetupState": {
+            "type": "string",
             "enum": [
-              "pending_provider_activation",
               "ready_for_confirmation"
-            ],
-            "type": "string"
+            ]
           },
           "paymentIntent": {
             "nullable": true,
@@ -13393,9 +13389,6 @@
           },
           "paymentIntent": {
             "$ref": "#/components/schemas/PaymentIntentResponseDto"
-          },
-          "pendingProviderActivation": {
-            "type": "boolean"
           }
         },
         "required": [
@@ -13895,6 +13888,14 @@
             "type": "string",
             "nullable": true
           },
+          "countryCode": {
+            "type": "string",
+            "example": "PH"
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "example": "PHP"
+          },
           "taxpayerType": {
             "nullable": true,
             "enum": [
@@ -14031,6 +14032,8 @@
           "slug",
           "legalName",
           "companyCode",
+          "countryCode",
+          "baseCurrencyCode",
           "taxpayerType",
           "ownerLastName",
           "ownerFirstName",
@@ -14240,6 +14243,10 @@
             "type": "number",
             "minimum": 2000,
             "maximum": 9999
+          },
+          "paymentAttemptId": {
+            "type": "number",
+            "minimum": 1
           }
         }
       },
@@ -14292,6 +14299,16 @@
             "type": "string",
             "minLength": 5
           },
+          "countryCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "example": "PH"
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "example": "PHP"
+          },
           "tin": {
             "type": "string"
           },
@@ -14318,6 +14335,8 @@
         "required": [
           "taxpayerType",
           "address",
+          "countryCode",
+          "baseCurrencyCode",
           "tin",
           "email",
           "contactNumber",
@@ -14328,6 +14347,16 @@
       "UpdateWorkspaceCompanyDto": {
         "type": "object",
         "properties": {
+          "countryCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "example": "PH"
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "example": "PHP"
+          },
           "taxpayerType": {
             "enum": [
               "individual",
