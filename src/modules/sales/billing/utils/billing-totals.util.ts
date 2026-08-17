@@ -1,4 +1,3 @@
-import type { BillingDetails } from '@prisma/client';
 import type { BillingDetailDto } from '../dto/billing-detail.dto';
 import type { BillingJournalEntryDto } from '../dto/billing-journal-entry.dto';
 import type { BillingJournalEntry } from '../types/billing-with-details.type';
@@ -21,10 +20,6 @@ export function getBillingDetailTotals(details: BillingDetailDto[]) {
     }),
     { discountAmount: 0, grossAmount: 0, netAmount: 0, vatAmount: 0 },
   );
-}
-
-export function getPersistedBillingDetailGross(details: BillingDetails[]) {
-  return roundCurrency(details.reduce((sum, detail) => sum + Number(detail.grossAmount), 0));
 }
 
 export function getJournalEntryTotals(journalEntries: Array<BillingJournalEntryDto | BillingJournalEntry>) {
