@@ -88,7 +88,14 @@ export class UsersService {
       include: {
         memberships: {
           include: {
-            company: true,
+            company: {
+              include: {
+                subscriptions: {
+                  orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+                  take: 1,
+                },
+              },
+            },
             companyRole: true,
             unitAccess: {
               include: {
@@ -107,7 +114,14 @@ export class UsersService {
       include: {
         memberships: {
           include: {
-            company: true,
+            company: {
+              include: {
+                subscriptions: {
+                  orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+                  take: 1,
+                },
+              },
+            },
             companyRole: true,
             unitAccess: {
               include: {
