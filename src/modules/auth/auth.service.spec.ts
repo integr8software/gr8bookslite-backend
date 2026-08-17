@@ -1,5 +1,5 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import { CompanyStatus, MembershipRole, MembershipStatus, Prisma, SystemRole, UserStatus } from '@prisma/client';
+import { CompanyStatus, MembershipRole, MembershipStatus, Prisma, SubscriptionStatus, SystemRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 
@@ -176,6 +176,8 @@ describe('AuthService registration atomicity', () => {
 describe('AuthService company context resolution', () => {
   const service = Object.create(AuthService.prototype) as {
     resolveDefaultCompanyContext: (user: { systemRole: string; memberships: unknown[] }, requestedCompanyId: number | null) => number | null;
+    isMembershipCompanyUsable: (membership: unknown) => boolean;
+    getUsableMemberships: (user: { systemRole: string; memberships: unknown[] }) => unknown[];
   };
 
   it('skips inactive companies when choosing the default login company', () => {
@@ -201,6 +203,82 @@ describe('AuthService company context resolution', () => {
     expect(companyId).toBe(2);
   });
 
+  it('skips companies with expired subscriptions when choosing the default login company', () => {
+    const companyId = service.resolveDefaultCompanyContext(
+      {
+        systemRole: 'STANDARD',
+        memberships: [
+          createMembership({
+            companyId: 1,
+            isCompanyActive: true,
+            subscriptionStatus: SubscriptionStatus.EXPIRED,
+            lastAccessedAt: new Date('2026-06-17T08:00:00.000Z'),
+          }),
+          createMembership({
+            companyId: 2,
+            isCompanyActive: true,
+            subscriptionStatus: SubscriptionStatus.ACTIVE,
+            endsAt: new Date(Date.now() + 86400000),
+            lastAccessedAt: new Date('2026-06-16T08:00:00.000Z'),
+          }),
+        ],
+      },
+      null,
+    );
+
+    expect(companyId).toBe(2);
+  });
+
+  it('skips companies whose active subscription endsAt is in the past', () => {
+    const companyId = service.resolveDefaultCompanyContext(
+      {
+        systemRole: 'STANDARD',
+        memberships: [
+          createMembership({
+            companyId: 1,
+            isCompanyActive: true,
+            subscriptionStatus: SubscriptionStatus.ACTIVE,
+            endsAt: new Date('2026-01-01T00:00:00.000Z'), // in past
+            lastAccessedAt: new Date('2026-06-17T08:00:00.000Z'),
+          }),
+          createMembership({
+            companyId: 2,
+            isCompanyActive: true,
+            subscriptionStatus: SubscriptionStatus.ACTIVE,
+            endsAt: new Date(Date.now() + 86400000), // in future
+            lastAccessedAt: new Date('2026-06-16T08:00:00.000Z'),
+          }),
+        ],
+      },
+      null,
+    );
+
+    expect(companyId).toBe(2);
+  });
+
+  it('returns null if all companies have expired subscriptions', () => {
+    const companyId = service.resolveDefaultCompanyContext(
+      {
+        systemRole: 'STANDARD',
+        memberships: [
+          createMembership({
+            companyId: 1,
+            isCompanyActive: true,
+            subscriptionStatus: SubscriptionStatus.EXPIRED,
+          }),
+          createMembership({
+            companyId: 2,
+            isCompanyActive: true,
+            subscriptionStatus: SubscriptionStatus.CANCELED,
+          }),
+        ],
+      },
+      null,
+    );
+
+    expect(companyId).toBeNull();
+  });
+
   it('rejects an explicitly requested inactive company', () => {
     expect(() =>
       service.resolveDefaultCompanyContext(
@@ -221,16 +299,46 @@ describe('AuthService company context resolution', () => {
       ),
     ).toThrow(UnauthorizedException);
   });
+
+  it('rejects an explicitly requested expired company with specific subscription message', () => {
+    expect(() =>
+      service.resolveDefaultCompanyContext(
+        {
+          systemRole: 'STANDARD',
+          memberships: [
+            createMembership({
+              companyId: 1,
+              isCompanyActive: true,
+              subscriptionStatus: SubscriptionStatus.EXPIRED,
+            }),
+            createMembership({
+              companyId: 2,
+              isCompanyActive: true,
+              subscriptionStatus: SubscriptionStatus.ACTIVE,
+              endsAt: new Date(Date.now() + 86400000),
+            }),
+          ],
+        },
+        1,
+      ),
+    ).toThrow('This company subscription is no longer active.');
+  });
 });
 
 function createMembership({
   companyId,
-  isCompanyActive,
+  isCompanyActive = true,
   lastAccessedAt = null,
+  subscriptionStatus,
+  endsAt = null,
+  trialEndsAt = null,
 }: {
   companyId: number;
-  isCompanyActive: boolean;
+  isCompanyActive?: boolean;
   lastAccessedAt?: Date | null;
+  subscriptionStatus?: SubscriptionStatus;
+  endsAt?: Date | null;
+  trialEndsAt?: Date | null;
 }) {
   return {
     companyId,
@@ -241,6 +349,15 @@ function createMembership({
     company: {
       isActive: isCompanyActive,
       status: isCompanyActive ? CompanyStatus.ACTIVE : CompanyStatus.SUSPENDED,
+      subscriptions: subscriptionStatus
+        ? [
+            {
+              status: subscriptionStatus,
+              trialEndsAt,
+              endsAt,
+            },
+          ]
+        : [],
     },
   };
 }
