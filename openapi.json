@@ -14253,6 +14253,16 @@
       "CreateWorkspaceCompanyDto": {
         "type": "object",
         "properties": {
+          "countryCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "example": "PH"
+          },
+          "baseCurrencyCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "example": "PHP"
+          },
           "taxpayerType": {
             "enum": [
               "individual",
@@ -14299,16 +14309,6 @@
             "type": "string",
             "minLength": 5
           },
-          "countryCode": {
-            "type": "string",
-            "pattern": "^[A-Z]{2}$",
-            "example": "PH"
-          },
-          "baseCurrencyCode": {
-            "type": "string",
-            "pattern": "^[A-Z]{3}$",
-            "example": "PHP"
-          },
           "tin": {
             "type": "string"
           },
@@ -14333,10 +14333,10 @@
           }
         },
         "required": [
-          "taxpayerType",
-          "address",
           "countryCode",
           "baseCurrencyCode",
+          "taxpayerType",
+          "address",
           "tin",
           "email",
           "contactNumber",
@@ -22695,6 +22695,10 @@
           "canUpdateStatus": {
             "type": "boolean"
           },
+          "isSequential": {
+            "type": "boolean",
+            "description": "Whether approvers must act in sequence for this transaction."
+          },
           "blockerName": {
             "type": "string",
             "nullable": true
@@ -22721,6 +22725,7 @@
           "status",
           "requestedAt",
           "canUpdateStatus",
+          "isSequential",
           "approvers"
         ]
       },
@@ -22773,6 +22778,7 @@
           },
           "approverUserIds": {
             "minItems": 1,
+            "maxItems": 5,
             "example": [
               1,
               2
