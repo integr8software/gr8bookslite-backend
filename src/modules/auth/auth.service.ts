@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AuthProvider, CompanyStatus, MembershipStatus, MembershipRole, Prisma, SystemRole, UserStatus, VerificationPurpose } from '@prisma/client';
+import { AuthProvider, CompanyStatus, MembershipStatus, MembershipRole, Prisma, SubscriptionStatus, SystemRole, UserStatus, VerificationPurpose } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
 import { AccessControlService } from '../../common/access/access-control.service';
@@ -18,6 +18,7 @@ import { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { sanitizeUser } from '../../common/mappers/user.mapper';
 import { normalizeEmail } from '../../common/utils/email.util';
+import { getSubscriptionAccessDenialReason } from '../../common/utils/subscription-access.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { UserWithMemberships } from '../users/types/user-with-memberships.type';
 import { UsersService } from '../users/users.service';
@@ -829,7 +830,14 @@ export class AuthService {
     const memberships = await this.prisma.membership.findMany({
       where: { userId: user.id },
       include: {
-        company: true,
+        company: {
+          include: {
+            subscriptions: {
+              orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+              take: 1,
+            },
+          },
+        },
         companyRole: true,
         unitAccess: {
           include: {
@@ -1142,6 +1150,13 @@ export class AuthService {
       }
 
       if (!this.isMembershipCompanyUsable(membership)) {
+        const latestSubscription = membership.company.subscriptions?.[0];
+        if (latestSubscription) {
+          const denialReason = getSubscriptionAccessDenialReason(latestSubscription, new Date());
+          if (denialReason) {
+            throw new UnauthorizedException(denialReason);
+          }
+        }
         throw new UnauthorizedException('This company is inactive.');
       }
 
@@ -1169,8 +1184,38 @@ export class AuthService {
     return membership.status === MembershipStatus.ACTIVE && this.isMembershipCompanyUsable(membership);
   }
 
-  private isMembershipCompanyUsable(membership: UserWithMemberships['memberships'][number]) {
-    return membership.company.isActive && membership.company.status !== CompanyStatus.SUSPENDED && membership.company.status !== CompanyStatus.FAILED;
+  private isMembershipCompanyUsable(
+    membership:
+      | UserWithMemberships['memberships'][number]
+      | {
+          company: {
+            isActive: boolean;
+            status: CompanyStatus;
+            subscriptions?: Array<{
+              status: SubscriptionStatus;
+              trialEndsAt: Date | null;
+              endsAt: Date | null;
+            }>;
+          };
+        },
+  ) {
+    if (
+      !membership.company.isActive ||
+      membership.company.status === CompanyStatus.SUSPENDED ||
+      membership.company.status === CompanyStatus.FAILED
+    ) {
+      return false;
+    }
+
+    const latestSubscription = membership.company.subscriptions?.[0];
+    if (latestSubscription) {
+      const denialReason = getSubscriptionAccessDenialReason(latestSubscription, new Date());
+      if (denialReason !== null) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private async issuePasswordResetCode(dto: ForgotPasswordDto, isResend: boolean) {
@@ -1377,11 +1422,16 @@ export class AuthService {
   }
 
   private mapProfileCompany(membership: UserWithMemberships['memberships'][number]) {
+    const isCompanyUsable = this.isMembershipCompanyUsable(membership);
+    const latestSubscription = membership.company.subscriptions?.[0] ?? null;
+
     return {
       companyId: membership.companyId,
       companyName: membership.company.name,
       companyStatus: membership.company.status,
-      isCompanyActive: membership.company.isActive && membership.company.status === CompanyStatus.ACTIVE,
+      isCompanyActive: isCompanyUsable && membership.company.status === CompanyStatus.ACTIVE,
+      subscriptionStatus: latestSubscription?.status ?? null,
+      isSubscriptionActive: isCompanyUsable,
       countryCode: membership.company.countryCode,
       baseCurrencyCode: membership.company.baseCurrencyCode,
       logoPublicUrl: membership.company.logoPublicUrl,
@@ -1456,6 +1506,11 @@ export class AuthService {
       company: {
         isActive: boolean;
         status: CompanyStatus;
+        subscriptions?: Array<{
+          status: SubscriptionStatus;
+          trialEndsAt: Date | null;
+          endsAt: Date | null;
+        }>;
       };
     }>,
     activeCompanyId: number | null,
@@ -1463,9 +1518,7 @@ export class AuthService {
     const usableMemberships = memberships.filter(
       (membership) =>
         membership.status === MembershipStatus.ACTIVE &&
-        membership.company.isActive &&
-        membership.company.status !== CompanyStatus.SUSPENDED &&
-        membership.company.status !== CompanyStatus.FAILED,
+        this.isMembershipCompanyUsable(membership as UserWithMemberships['memberships'][number]),
     );
     const activeMembership = activeCompanyId == null ? null : (usableMemberships.find((membership) => membership.companyId === activeCompanyId) ?? null);
 
