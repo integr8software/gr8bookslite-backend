@@ -1228,6 +1228,7 @@ model Party {
   vendorAdvanceAccountId              BigInt?                   @map("vendor_advance_account_id")
   employeeAdvanceAccountId            BigInt?                   @map("employee_advance_account_id")
   employeePayableAccountId            BigInt?                   @map("employee_payable_account_id")
+  cashAdvanceLimit                    Decimal?                  @map("cash_advance_limit") @db.Decimal(18, 2)
   tin                                 String?                   @db.VarChar(20)
   atcCode                             String?                   @map("atc_code") @db.VarChar(40)
   defaultPurchaseInputVatTaxSourceKey String?                   @map("default_purchase_input_vat_tax_source_key") @db.VarChar(40)

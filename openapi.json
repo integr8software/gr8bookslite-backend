@@ -18212,6 +18212,9 @@
           "employeePayableAccount": {
             "type": "string"
           },
+          "cashAdvanceLimit": {
+            "type": "string"
+          },
           "accountingAccounts": {
             "$ref": "#/components/schemas/PartyAccountingAccountsResponseDto"
           },
@@ -18302,6 +18305,7 @@
           "vendorAdvanceAccount",
           "employeeAdvanceAccount",
           "employeePayableAccount",
+          "cashAdvanceLimit",
           "accountingAccounts",
           "termId",
           "termName",
@@ -18638,6 +18642,13 @@
               "INACTIVE"
             ],
             "type": "string"
+          },
+          "cashAdvanceLimit": {
+            "type": "string"
+          },
+          "cashAdvanceBalance": {
+            "type": "string",
+            "description": "Available cash advance balance for the employee."
           },
           "partyEntityType": {
             "type": "string",
@@ -19007,6 +19018,11 @@
             "nullable": true,
             "maxLength": 80
           },
+          "cashAdvanceLimit": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
           "termId": {
             "type": "string",
             "nullable": true
@@ -19270,6 +19286,11 @@
             "type": "string",
             "nullable": true,
             "maxLength": 80
+          },
+          "cashAdvanceLimit": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
           },
           "termId": {
             "type": "string",

@@ -31,6 +31,7 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     vendorAdvanceAccount: party.vendorAdvanceAccountId?.toString() ?? '',
     employeeAdvanceAccount: party.employeeAdvanceAccountId?.toString() ?? '',
     employeePayableAccount: party.employeePayableAccountId?.toString() ?? '',
+    cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
     accountingAccounts: {
       defaultReceivableAccount: mapChartAccountSummary(party.defaultReceivableAccount),
       customerAdvanceAccount: mapChartAccountSummary(party.customerAdvanceAccount),

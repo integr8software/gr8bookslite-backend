@@ -67,6 +67,7 @@ export class PartyLookupService {
         email: true,
         contactNo: true,
         status: true,
+        cashAdvanceLimit: true,
       },
     });
 
@@ -160,6 +161,7 @@ export class PartyLookupService {
     partyName: string | null;
     partyTypes: PartyType[];
     status: PartyStatus;
+    cashAdvanceLimit: Prisma.Decimal | null;
     suffixName: string | null;
     tradeName: string | null;
   }) {
@@ -173,6 +175,8 @@ export class PartyLookupService {
       email: party.email ?? '',
       contactNo: party.contactNo ?? '',
       status: party.status,
+      cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
+      cashAdvanceBalance: party.cashAdvanceLimit?.toString() ?? '',
     };
   }
 
@@ -210,6 +214,8 @@ export class PartyLookupService {
       vendorAdvanceAccount: party.vendorAdvanceAccountId?.toString() ?? '',
       employeeAdvanceAccount: party.employeeAdvanceAccountId?.toString() ?? '',
       employeePayableAccount: party.employeePayableAccountId?.toString() ?? '',
+      cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
+      cashAdvanceBalance: party.cashAdvanceLimit?.toString() ?? '',
       accountingAccounts: {
         defaultReceivableAccount: this.mapChartAccountSummary(party.defaultReceivableAccount),
         customerAdvanceAccount: this.mapChartAccountSummary(party.customerAdvanceAccount),

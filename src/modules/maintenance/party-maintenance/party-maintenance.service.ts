@@ -419,6 +419,7 @@ export class PartyMaintenanceService {
       vendorAdvanceAccount: this.normalizeOptionalString(dto.vendorAdvanceAccount),
       employeeAdvanceAccount: this.normalizeOptionalString(dto.employeeAdvanceAccount),
       employeePayableAccount: this.normalizeOptionalString(dto.employeePayableAccount),
+      cashAdvanceLimit: partyTypes.includes(PartyType.EMPLOYEE) ? (dto.cashAdvanceLimit ?? null) : null,
       termId,
       tin: this.normalizeOptionalString(dto.tin),
       atcCode: this.normalizeOptionalString(dto.atcCode),
@@ -498,6 +499,7 @@ export class PartyMaintenanceService {
       vendorAdvanceAccount: dto.vendorAdvanceAccount ?? current.vendorAdvanceAccountId?.toString() ?? '',
       employeeAdvanceAccount: dto.employeeAdvanceAccount ?? current.employeeAdvanceAccountId?.toString() ?? '',
       employeePayableAccount: dto.employeePayableAccount ?? current.employeePayableAccountId?.toString() ?? '',
+      cashAdvanceLimit: dto.cashAdvanceLimit ?? current.cashAdvanceLimit?.toNumber() ?? null,
       termId: dto.termId ?? current.termId?.toString() ?? '',
       tin: dto.tin ?? current.tin ?? '',
       atcCode: dto.atcCode ?? current.atcCode ?? '',
@@ -1043,6 +1045,7 @@ export class PartyMaintenanceService {
       vendorAdvanceAccountId: dto.partyTypes.includes(PartyType.VENDOR) ? parseOptionalPositiveBigIntId(dto.vendorAdvanceAccount) : null,
       employeeAdvanceAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE) ? parseOptionalPositiveBigIntId(dto.employeeAdvanceAccount) : null,
       employeePayableAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE) ? parseOptionalPositiveBigIntId(dto.employeePayableAccount) : null,
+      cashAdvanceLimit: dto.partyTypes.includes(PartyType.EMPLOYEE) ? dto.cashAdvanceLimit : null,
       tin: dto.tin,
       atcCode: dto.atcCode,
       defaultPurchaseInputVatTaxSourceKey: dto.partyTypes.includes(PartyType.VENDOR) ? dto.defaultPurchaseInputVatTaxSourceKey : null,
@@ -1142,4 +1145,3 @@ function getTodayDateValue() {
 }
 
 const PartyTransactionModuleCode = 'PM';
-
