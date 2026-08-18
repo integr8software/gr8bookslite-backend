@@ -7,6 +7,7 @@ Use this directory map to find backend documentation by purpose.
 Long-term system design and architecture decisions.
 
 - `architecture/billing/` - billing and payment-attempt architecture
+- `architecture/currency-and-exchange-rate-standard.md` - currency options, company base currency, and exchange-rate rules for new modules
 - `architecture/saas-entitlements/` - subscription-plan and entitlement architecture
 - `architecture/sidebar/` - runtime sidebar and preference-delta architecture
 - `architecture/tenant-bootstrap/` - company bootstrap and legacy tenant repair architecture

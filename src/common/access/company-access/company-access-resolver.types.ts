@@ -9,6 +9,15 @@ export type MembershipAccessRecord = Prisma.MembershipGetPayload<{
             status: {
               in: ['INCOMPLETE', 'TRIALING', 'ACTIVE', 'PAST_DUE', 'UNPAID'];
             };
+            NOT: {
+              status: 'INCOMPLETE';
+              invoices: {
+                some: {
+                  purpose: 'ADDITIONAL_COMPANY';
+                  status: 'OPEN';
+                };
+              };
+            };
           };
           include: {
             plan: {

@@ -67,6 +67,7 @@ export class PartyLookupService {
         email: true,
         contactNo: true,
         status: true,
+        cashAdvanceLimit: true,
       },
     });
 
@@ -160,6 +161,7 @@ export class PartyLookupService {
     partyName: string | null;
     partyTypes: PartyType[];
     status: PartyStatus;
+    cashAdvanceLimit: Prisma.Decimal | null;
     suffixName: string | null;
     tradeName: string | null;
   }) {
@@ -173,19 +175,12 @@ export class PartyLookupService {
       email: party.email ?? '',
       contactNo: party.contactNo ?? '',
       status: party.status,
+      cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
+      cashAdvanceBalance: party.cashAdvanceLimit?.toString() ?? '',
     };
   }
 
   private mapCompletePartyOption(party: PartyWithDetails) {
-    const taxDefaults = party as PartyWithDetails & {
-      defaultPurchaseEwtTaxSourceKey?: string | null;
-      defaultPurchaseFwtTaxSourceKey?: string | null;
-      defaultPurchaseInputVatTaxSourceKey?: string | null;
-      defaultPurchaseWvatTaxSourceKey?: string | null;
-      defaultSalesCwtTaxSourceKey?: string | null;
-      defaultSalesOutputVatTaxSourceKey?: string | null;
-      defaultSalesWvatTaxSourceKey?: string | null;
-    };
     const basicOption = this.mapBasicPartyOption(party);
 
     return {
@@ -210,6 +205,8 @@ export class PartyLookupService {
       vendorAdvanceAccount: party.vendorAdvanceAccountId?.toString() ?? '',
       employeeAdvanceAccount: party.employeeAdvanceAccountId?.toString() ?? '',
       employeePayableAccount: party.employeePayableAccountId?.toString() ?? '',
+      cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
+      cashAdvanceBalance: party.cashAdvanceLimit?.toString() ?? '',
       accountingAccounts: {
         defaultReceivableAccount: this.mapChartAccountSummary(party.defaultReceivableAccount),
         customerAdvanceAccount: this.mapChartAccountSummary(party.customerAdvanceAccount),
@@ -222,13 +219,13 @@ export class PartyLookupService {
       termName: party.term?.name ?? '',
       tin: party.tin ?? '',
       atcCode: party.atcCode ?? '',
-      defaultPurchaseInputVatTaxSourceKey: taxDefaults.defaultPurchaseInputVatTaxSourceKey ?? '',
-      defaultPurchaseEwtTaxSourceKey: taxDefaults.defaultPurchaseEwtTaxSourceKey ?? '',
-      defaultPurchaseFwtTaxSourceKey: taxDefaults.defaultPurchaseFwtTaxSourceKey ?? '',
-      defaultPurchaseWvatTaxSourceKey: taxDefaults.defaultPurchaseWvatTaxSourceKey ?? '',
-      defaultSalesOutputVatTaxSourceKey: taxDefaults.defaultSalesOutputVatTaxSourceKey ?? '',
-      defaultSalesCwtTaxSourceKey: taxDefaults.defaultSalesCwtTaxSourceKey ?? '',
-      defaultSalesWvatTaxSourceKey: taxDefaults.defaultSalesWvatTaxSourceKey ?? '',
+      defaultPurchaseInputVatTaxSourceKey: party.defaultPurchaseInputVatTaxSourceKey ?? '',
+      defaultPurchaseEwtTaxSourceKey: party.defaultPurchaseEwtTaxSourceKey ?? '',
+      defaultPurchaseFwtTaxSourceKey: party.defaultPurchaseFwtTaxSourceKey ?? '',
+      defaultPurchaseWvatTaxSourceKey: party.defaultPurchaseWvatTaxSourceKey ?? '',
+      defaultSalesOutputVatTaxSourceKey: party.defaultSalesOutputVatTaxSourceKey ?? '',
+      defaultSalesCwtTaxSourceKey: party.defaultSalesCwtTaxSourceKey ?? '',
+      defaultSalesWvatTaxSourceKey: party.defaultSalesWvatTaxSourceKey ?? '',
       landline: party.landline ?? '',
     };
   }

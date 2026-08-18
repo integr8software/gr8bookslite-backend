@@ -1,6 +1,7 @@
 import { IsEnum, IsEmail, IsIn, IsInt, IsOptional, IsString, Matches, Max, Min, MinLength, ValidateNested, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 import { BillingCycle, BillingMode } from '@prisma/client';
+import { ApiProperty } from '@nestjs/swagger';
 
 const NamePattern = /^[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*$/u;
 const OptionalNamePattern = /^(?:$|[\p{L}\p{M}]+(?:[ .'-]+[\p{L}\p{M}]+)*)$/u;
@@ -53,6 +54,11 @@ export class CreateWorkspaceCompanyBillingDto {
   @Min(2000)
   @Max(9999)
   cardExpiryYear?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  paymentAttemptId?: number;
 }
 
 export class CreateWorkspaceCompanyDto {
@@ -110,6 +116,20 @@ export class CreateWorkspaceCompanyDto {
   @IsString()
   @MinLength(5)
   address!: string;
+
+  @ApiProperty({ example: 'PH' })
+  @IsString()
+  @Matches(/^[A-Z]{2}$/, {
+    message: 'Select a valid company country.',
+  })
+  countryCode!: string;
+
+  @ApiProperty({ example: 'PHP' })
+  @IsString()
+  @Matches(/^[A-Z]{3}$/, {
+    message: 'Select a valid base currency.',
+  })
+  baseCurrencyCode!: string;
 
   @IsString()
   @Matches(TinPattern)

@@ -1,6 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsDateString, IsArray, IsEmail, IsEnum, IsInt, IsOptional, IsString, Matches, MaxLength, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsDateString,
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { PartyClassification, PartyStatus, PartyType } from '@prisma/client';
 import { CreatePartyAddressDto } from './create-party-address.dto';
 
@@ -145,6 +159,13 @@ export class CreatePartyDto {
   @IsString()
   @MaxLength(80)
   employeePayableAccount?: string | null;
+
+  @ApiPropertyOptional({ minimum: 0, nullable: true })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  cashAdvanceLimit?: number | null;
 
   @ApiPropertyOptional({ nullable: true })
   @IsOptional()

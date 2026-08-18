@@ -243,20 +243,14 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: TransactionRegistry,
   },
   {
-    code: 'PCA',
-    name: 'Petty Cash Advance',
-    icon: 'cashOut',
-    type: TransactionRegistry,
-  },
-  {
-    code: 'PCAR',
-    name: 'Petty Cash Advance Replenishment',
-    icon: 'cashOut',
-    type: TransactionRegistry,
-  },
-  {
     code: 'RF',
     name: 'Revolving Fund',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'RFR',
+    name: 'Revolving Fund Replenishment',
     icon: 'cashOut',
     type: TransactionRegistry,
   },
@@ -268,7 +262,13 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   },
   {
     code: 'ATS',
-    name: 'Advances To Supplier',
+    name: 'Advances To Suppliers',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'RT',
+    name: 'Recurring Transactions',
     icon: 'cashOut',
     type: TransactionRegistry,
   },

@@ -230,9 +230,9 @@ describe('BranchRolesService permission architecture', () => {
 
   it.each([
     {
-      legacyCode: 'cash-disbursement-petty-cash-advance',
-      canonicalCode: 'PCA',
-      permissionName: 'Petty Cash Advance',
+      legacyCode: 'PCAR',
+      canonicalCode: 'RFR',
+      permissionName: 'Revolving Fund Replenishment',
       moduleCode: 'cash-disbursement',
       moduleName: 'Cash Disbursement',
     },

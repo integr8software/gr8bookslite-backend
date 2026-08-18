@@ -12,6 +12,11 @@ describe('ReferenceService', () => {
       name: 'Philippines',
       defaultCurrencyCode: 'PHP',
     });
+    expect(countries.find((country) => country.code === 'BR')).toMatchObject({
+      name: 'Brazil',
+      defaultCurrencyCode: 'BRL',
+    });
+    expect(currencies.some((currency) => currency.code === 'BRL')).toBe(true);
     expect(currencies.some((currency) => currency.code === 'USD')).toBe(true);
   });
 
@@ -23,11 +28,7 @@ describe('ReferenceService', () => {
   });
 
   it('rejects unknown country or currency codes', () => {
-    expect(() => service.validateCompanyCurrency('XX', 'PHP')).toThrow(
-      BadRequestException,
-    );
-    expect(() => service.validateCompanyCurrency('PH', 'XXX')).toThrow(
-      BadRequestException,
-    );
+    expect(() => service.validateCompanyCurrency('XX', 'PHP')).toThrow(BadRequestException);
+    expect(() => service.validateCompanyCurrency('PH', 'XXX')).toThrow(BadRequestException);
   });
 });

@@ -520,9 +520,6 @@ export class PaymentIntentResponseDto {
 export class AttachPaymentMethodResponseDto extends SubscribeCompanyResponseDto {
   @ApiProperty({ type: PaymentIntentResponseDto })
   paymentIntent!: PaymentIntentResponseDto;
-
-  @ApiPropertyOptional()
-  pendingProviderActivation?: boolean;
 }
 
 export class CancelSubscriptionResponseDto extends SubscribeCompanyResponseDto {}

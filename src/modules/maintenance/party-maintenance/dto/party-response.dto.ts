@@ -164,6 +164,9 @@ export class PartyResponseDto {
   @ApiProperty()
   employeePayableAccount!: string;
 
+  @ApiProperty()
+  cashAdvanceLimit!: string;
+
   @ApiProperty({ type: PartyAccountingAccountsResponseDto })
   accountingAccounts!: PartyAccountingAccountsResponseDto;
 
@@ -350,6 +353,12 @@ export class PartyOptionResponseDto {
 
   @ApiProperty({ enum: PartyStatus })
   status!: PartyStatus;
+
+  @ApiPropertyOptional()
+  cashAdvanceLimit?: string;
+
+  @ApiPropertyOptional({ description: 'Available cash advance balance for the employee.' })
+  cashAdvanceBalance?: string;
 
   @ApiPropertyOptional({ nullable: true })
   partyEntityType?: string | null;
