@@ -40,34 +40,6 @@ model User {
   warehouseAccess              WarehouseAccess[]
   sidebarPreferences           UserSidebarPreference[]
   approverSetups               ApproverSetupUser[]
-  id                           Int                           @id @default(autoincrement())
-  email                        String                        @unique
-  passwordHash                 String?                       @map("password_hash")
-  name                         String
-  contactNumber                String?                       @map("contact_number")
-  avatarFileName               String?                       @map("avatar_file_name")
-  avatarMimeType               String?                       @map("avatar_mime_type")
-  avatarStoragePath            String?                       @map("avatar_storage_path")
-  avatarPublicUrl              String?                       @map("avatar_public_url")
-  systemRole                   SystemRole                    @default(STANDARD) @map("system_role")
-  status                       UserStatus                    @default(PENDING_VERIFICATION)
-  emailVerifiedAt              DateTime?                     @map("email_verified_at")
-  createdAt                    DateTime                      @default(now()) @map("created_at")
-  updatedAt                    DateTime?                     @updatedAt @map("updated_at")
-  verificationCodes            EmailVerificationCode[]
-  memberships                  Membership[]
-  invitedMemberships           Membership[]                  @relation("MembershipInvitedBy")
-  createdAuditLogs             AuditLog[]                    @relation("AuditActor")
-  onboardingDraft              UserOnboardingDraft?
-  authIdentities               UserAuthIdentity[]
-  billingCustomers             BillingCustomer[]
-  billingPaymentMethods        BillingPaymentMethod[]
-  billingPaymentAttempts       BillingPaymentAttempt[]
-  createdCompanies             Company[]                     @relation("CompanyCreatedBy")
-  tablePreferences             UserTablePreference[]
-  warehouseAccess              WarehouseAccess[]
-  sidebarPreferences           UserSidebarPreference[]
-  approverSetups               ApproverSetupUser[]
   approvalTransactionApprovers ApprovalTransactionApprover[]
 
   @@map("users")
@@ -109,21 +81,6 @@ model ApproverSetupUser {
 }
 
 model ApprovalRule {
-  id                   String                @id @default(uuid()) @db.Uuid
-  companyId            Int                   @map("company_id")
-  approverSetupId      String                @map("approver_setup_id") @db.Uuid
-  ruleType             String                @map("rule_type")
-  routeName            String                @map("route_name")
-  amountRule           String                @map("amount_rule")
-  amount               String                @default("")
-  moduleScope          String                @map("module_scope")
-  moduleName           String                @default("") @map("module_name")
-  status               String                @default("Active")
-  description          String                @default("")
-  createdAt            DateTime              @default(now()) @map("created_at")
-  updatedAt            DateTime              @updatedAt @map("updated_at")
-  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  approverSetup        ApproverSetup         @relation(fields: [approverSetupId], references: [id], onDelete: Cascade)
   id                   String                @id @default(uuid()) @db.Uuid
   companyId            Int                   @map("company_id")
   approverSetupId      String                @map("approver_setup_id") @db.Uuid
@@ -807,33 +764,6 @@ model ChartAccount {
   company                                Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   parentAccount                          ChartAccount?                   @relation("ChartAccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Restrict)
   childAccounts                          ChartAccount[]                  @relation("ChartAccountHierarchy")
-  id                                     BigInt                          @id @default(autoincrement())
-  companyId                              Int                             @map("company_id")
-  parentAccountId                        BigInt?                         @map("parent_account_id")
-  accountCode                            String                          @map("account_code") @db.VarChar(20)
-  accountTitle                           String                          @map("account_title") @db.VarChar(250)
-  accountLevel                           ChartAccountLevel               @map("account_level")
-  accountType                            ChartAccountType?               @map("account_type")
-  accountNature                          AccountNature?                  @map("account_nature")
-  accountGroup                           Json?                           @map("account_group")
-  statementSection                       String?                         @map("statement_section") @db.VarChar(250)
-  reportAlias                            String?                         @map("report_alias") @db.VarChar(250)
-  description                            String?                         @db.VarChar(500)
-  isPostingAccount                       Boolean                         @default(false) @map("is_posting_account")
-  withSubsidiary                         Boolean                         @default(false) @map("with_subsidiary")
-  contraAccount                          Boolean                         @default(false) @map("contra_account")
-  showTotal                              Boolean                         @default(false) @map("show_total")
-  orderNo                                Int?                            @map("order_no")
-  status                                 ChartAccountStatus              @default(ACTIVE)
-  currencyCode                           String?                         @map("currency_code") @db.VarChar(10)
-  whoCreated                             String?                         @map("who_created") @db.VarChar(50)
-  whoModified                            String?                         @map("who_modified") @db.VarChar(50)
-  deletedAt                              DateTime?                       @map("deleted_at")
-  createdAt                              DateTime                        @default(now()) @map("created_at")
-  updatedAt                              DateTime?                       @map("updated_at")
-  company                                Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  parentAccount                          ChartAccount?                   @relation("ChartAccountHierarchy", fields: [parentAccountId], references: [id], onDelete: Restrict)
-  childAccounts                          ChartAccount[]                  @relation("ChartAccountHierarchy")
   bankAccounts                           BankAccount[]
   discounts                              Discount[]
   partyDefaultReceivableAccounts         Party[]                         @relation("PartyDefaultReceivableAccount")
@@ -970,20 +900,6 @@ model ServiceMaintenance {
 }
 
 model Term {
-  id                      BigInt                   @id @default(autoincrement())
-  companyId               Int                      @map("company_id")
-  name                    String                   @db.VarChar(150)
-  description             String?                  @db.VarChar(500)
-  dateMode                TermDateMode             @map("date_mode")
-  period                  Int
-  status                  TermStatus               @default(ACTIVE)
-  createdByUserId         Int?                     @map("created_by_user_id")
-  updatedByUserId         Int?                     @map("updated_by_user_id")
-  deletedAt               DateTime?                @map("deleted_at")
-  createdAt               DateTime                 @default(now()) @map("created_at")
-  updatedAt               DateTime?                @map("updated_at")
-  company                 Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  parties                 Party[]
   id                      BigInt                   @id @default(autoincrement())
   companyId               Int                      @map("company_id")
   name                    String                   @db.VarChar(150)
@@ -1248,26 +1164,6 @@ model ResponsibilityCenter {
   type                          ResponsibilityCenterType          @relation(fields: [typeId], references: [id], onDelete: Restrict)
   parent                        ResponsibilityCenter?             @relation("ResponsibilityCenterHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children                      ResponsibilityCenter[]            @relation("ResponsibilityCenterHierarchy")
-  id                            BigInt                            @id @default(autoincrement())
-  companyId                     Int                               @map("company_id")
-  typeId                        BigInt                            @map("type_id")
-  code                          String                            @db.VarChar(50)
-  name                          String                            @db.VarChar(150)
-  category                      ResponsibilityCenterCategory
-  financialType                 ResponsibilityCenterFinancialType @map("financial_type")
-  manager                       String?                           @db.VarChar(150)
-  parentId                      BigInt?                           @map("parent_id")
-  status                        ResponsibilityCenterStatus        @default(ACTIVE)
-  description                   String?                           @db.VarChar(500)
-  createdByUserId               Int?                              @map("created_by_user_id")
-  updatedByUserId               Int?                              @map("updated_by_user_id")
-  deletedAt                     DateTime?                         @map("deleted_at")
-  createdAt                     DateTime                          @default(now()) @map("created_at")
-  updatedAt                     DateTime?                         @map("updated_at")
-  company                       Company                           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  type                          ResponsibilityCenterType          @relation(fields: [typeId], references: [id], onDelete: Restrict)
-  parent                        ResponsibilityCenter?             @relation("ResponsibilityCenterHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children                      ResponsibilityCenter[]            @relation("ResponsibilityCenterHierarchy")
   accountsPayableVoucherDetails AccountsPayableVoucherDetails[]
   serviceInvoiceDetails         ServiceInvoiceDetails[]
   billingInvoiceDetails         BillingInvoiceDetails[]
@@ -1323,11 +1219,6 @@ model ResponsibilityCenterType {
 }
 
 model Party {
-  id                                  BigInt                          @id @default(autoincrement())
-  companyId                           Int                             @map("company_id")
-  termId                              BigInt?                         @map("term_id")
-  partyEntityTypeId                   BigInt?                         @map("party_entity_type_id")
-  partyCodeNo                         String                          @map("party_code_no") @db.VarChar(80)
   id                                  BigInt                          @id @default(autoincrement())
   companyId                           Int                             @map("company_id")
   termId                              BigInt?                         @map("term_id")
@@ -1592,58 +1483,6 @@ model ServiceInvoice {
   term                  Term?                   @relation(fields: [termId], references: [id], onDelete: SetNull)
   receivableAccount     ChartAccount?           @relation(fields: [receivableAccountId], references: [id], onDelete: Restrict)
   details               ServiceInvoiceDetails[]
-  id                    BigInt                  @id @default(autoincrement())
-  companyId             Int                     @map("company_id")
-  branchUnitId          Int                     @map("branch_unit_id")
-  partyId               BigInt?                 @map("party_id")
-  termId                BigInt?                 @map("term_id")
-  receivableAccountId   BigInt?                 @map("receivable_account_id")
-  transactionNo         String                  @map("transaction_no") @db.VarChar(80)
-  documentDate          DateTime                @map("document_date") @db.Date
-  dueDate               DateTime                @map("due_date") @db.Date
-  invoiceNo             String?                 @map("invoice_no") @db.VarChar(120)
-  referenceNo           String?                 @map("reference_no") @db.VarChar(120)
-  partyCodeSnapshot     String                  @map("party_code_snapshot") @db.VarChar(80)
-  partyNameSnapshot     String                  @map("party_name_snapshot") @db.VarChar(255)
-  billToNameSnapshot    String?                 @map("bill_to_name_snapshot") @db.VarChar(255)
-  addressSnapshot       String?                 @map("address_snapshot") @db.VarChar(500)
-  contactPersonSnapshot String?                 @map("contact_person_snapshot") @db.VarChar(255)
-  contactNoSnapshot     String?                 @map("contact_no_snapshot") @db.VarChar(40)
-  businessStyle         String?                 @map("business_style") @db.VarChar(120)
-  projectCode           String?                 @map("project_code") @db.VarChar(80)
-  projectName           String?                 @map("project_name") @db.VarChar(255)
-  projectRef            String?                 @map("project_ref") @db.VarChar(120)
-  salesAssociate        String?                 @map("sales_associate") @db.VarChar(150)
-  teamAssigned          String?                 @map("team_assigned") @db.VarChar(150)
-  currencyCode          String                  @map("currency_code") @db.VarChar(10)
-  exchangeRate          Decimal                 @map("exchange_rate") @db.Decimal(18, 6)
-  netAmount             Decimal                 @default(0) @map("net_amount") @db.Decimal(18, 2)
-  vatAmount             Decimal                 @default(0) @map("vat_amount") @db.Decimal(18, 2)
-  wvatAmount            Decimal                 @default(0) @map("wvat_amount") @db.Decimal(18, 2)
-  ewtAmount             Decimal                 @default(0) @map("ewt_amount") @db.Decimal(18, 2)
-  discountAmount        Decimal                 @default(0) @map("discount_amount") @db.Decimal(18, 2)
-  grossAmount           Decimal                 @default(0) @map("gross_amount") @db.Decimal(18, 2)
-  remarks               String?                 @db.VarChar(500)
-  status                ServiceInvoiceStatus    @default(DRAFT)
-  createdByUserId       Int?                    @map("created_by_user_id")
-  updatedByUserId       Int?                    @map("updated_by_user_id")
-  approvedByUserId      Int?                    @map("approved_by_user_id")
-  approvedAt            DateTime?               @map("approved_at")
-  disapprovedByUserId   Int?                    @map("disapproved_by_user_id")
-  disapprovedAt         DateTime?               @map("disapproved_at")
-  cancelledByUserId     Int?                    @map("cancelled_by_user_id")
-  cancelledAt           DateTime?               @map("cancelled_at")
-  postedByUserId        Int?                    @map("posted_by_user_id")
-  postedAt              DateTime?               @map("posted_at")
-  deletedAt             DateTime?               @map("deleted_at")
-  createdAt             DateTime                @default(now()) @map("created_at")
-  updatedAt             DateTime                @updatedAt @map("updated_at")
-  company               Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit            CompanyUnit             @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
-  party                 Party?                  @relation(fields: [partyId], references: [id], onDelete: SetNull)
-  term                  Term?                   @relation(fields: [termId], references: [id], onDelete: SetNull)
-  receivableAccount     ChartAccount?           @relation(fields: [receivableAccountId], references: [id], onDelete: Restrict)
-  details               ServiceInvoiceDetails[]
 
   @@unique([companyId, branchUnitId, transactionNo], map: "service_invoices_company_branch_transaction_no_key")
   @@index([companyId, branchUnitId, status], map: "service_invoices_company_branch_status_idx")
@@ -1790,58 +1629,6 @@ model BillingInvoiceDetails {
 }
 
 model Billing {
-  id                    BigInt           @id @default(autoincrement())
-  companyId             Int              @map("company_id")
-  branchUnitId          Int              @map("branch_unit_id")
-  partyId               BigInt?          @map("party_id")
-  termId                BigInt?          @map("term_id")
-  receivableAccountId   BigInt?          @map("receivable_account_id")
-  transactionNo         String           @map("transaction_no") @db.VarChar(80)
-  documentDate          DateTime         @map("document_date") @db.Date
-  dueDate               DateTime         @map("due_date") @db.Date
-  invoiceNo             String?          @map("invoice_no") @db.VarChar(120)
-  referenceNo           String?          @map("reference_no") @db.VarChar(120)
-  partyCodeSnapshot     String           @map("party_code_snapshot") @db.VarChar(80)
-  partyNameSnapshot     String           @map("party_name_snapshot") @db.VarChar(255)
-  billToNameSnapshot    String?          @map("bill_to_name_snapshot") @db.VarChar(255)
-  addressSnapshot       String?          @map("address_snapshot") @db.VarChar(500)
-  contactPersonSnapshot String?          @map("contact_person_snapshot") @db.VarChar(255)
-  contactNoSnapshot     String?          @map("contact_no_snapshot") @db.VarChar(40)
-  businessStyle         String?          @map("business_style") @db.VarChar(120)
-  projectCode           String?          @map("project_code") @db.VarChar(80)
-  projectName           String?          @map("project_name") @db.VarChar(255)
-  projectRef            String?          @map("project_ref") @db.VarChar(120)
-  salesAssociate        String?          @map("sales_associate") @db.VarChar(150)
-  teamAssigned          String?          @map("team_assigned") @db.VarChar(150)
-  currencyCode          String           @map("currency_code") @db.VarChar(10)
-  exchangeRate          Decimal          @map("exchange_rate") @db.Decimal(18, 6)
-  netAmount             Decimal          @default(0) @map("net_amount") @db.Decimal(18, 2)
-  vatAmount             Decimal          @default(0) @map("vat_amount") @db.Decimal(18, 2)
-  wvatAmount            Decimal          @default(0) @map("wvat_amount") @db.Decimal(18, 2)
-  ewtAmount             Decimal          @default(0) @map("ewt_amount") @db.Decimal(18, 2)
-  discountAmount        Decimal          @default(0) @map("discount_amount") @db.Decimal(18, 2)
-  grossAmount           Decimal          @default(0) @map("gross_amount") @db.Decimal(18, 2)
-  remarks               String?          @db.VarChar(500)
-  status                BillingStatus    @default(DRAFT)
-  createdByUserId       Int?             @map("created_by_user_id")
-  updatedByUserId       Int?             @map("updated_by_user_id")
-  approvedByUserId      Int?             @map("approved_by_user_id")
-  approvedAt            DateTime?        @map("approved_at")
-  disapprovedByUserId   Int?             @map("disapproved_by_user_id")
-  disapprovedAt         DateTime?        @map("disapproved_at")
-  cancelledByUserId     Int?             @map("cancelled_by_user_id")
-  cancelledAt           DateTime?        @map("cancelled_at")
-  postedByUserId        Int?             @map("posted_by_user_id")
-  postedAt              DateTime?        @map("posted_at")
-  deletedAt             DateTime?        @map("deleted_at")
-  createdAt             DateTime         @default(now()) @map("created_at")
-  updatedAt             DateTime         @updatedAt @map("updated_at")
-  company               Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit            CompanyUnit      @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
-  party                 Party?           @relation(fields: [partyId], references: [id], onDelete: SetNull)
-  term                  Term?            @relation(fields: [termId], references: [id], onDelete: SetNull)
-  receivableAccount     ChartAccount?    @relation(fields: [receivableAccountId], references: [id], onDelete: Restrict)
-  details               BillingDetails[]
   id                    BigInt           @id @default(autoincrement())
   companyId             Int              @map("company_id")
   branchUnitId          Int              @map("branch_unit_id")
