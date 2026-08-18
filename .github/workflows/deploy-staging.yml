@@ -36,6 +36,8 @@ jobs:
 
           node scripts/run-with-env.cjs .env prisma migrate deploy
           node scripts/run-with-env.cjs .env prisma generate
+          node scripts/run-with-env.cjs .env ts-node prisma/scripts/provision-platform.ts
+          node scripts/run-with-env.cjs .env ts-node prisma/scripts/repair-company-bootstrap.ts --apply
           node scripts/run-with-env.cjs .env prisma migrate status
 
           npm run build
