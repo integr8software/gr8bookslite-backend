@@ -52,6 +52,18 @@ export class AccountsPayableVoucherController {
     return this.accountsPayableVoucherLookupService.findResponsibilityCenters(user);
   }
 
+  @Get('lookups/expense-types')
+  @ApiOkResponse({ description: 'Accounts payable voucher expense type options retrieved.' })
+  findExpenseTypeOptions(@CurrentUser() user: AuthUser) {
+    return this.accountsPayableVoucherLookupService.findExpenseTypes(user);
+  }
+
+  @Get('lookups/posting-accounts')
+  @ApiOkResponse({ description: 'Accounts payable voucher posting account options retrieved.' })
+  findPostingAccountOptions(@CurrentUser() user: AuthUser) {
+    return this.accountsPayableVoucherLookupService.findPostingAccounts(user);
+  }
+
   @Get('lookups/payable-accounts')
   @ApiOkResponse({ description: 'Accounts payable voucher payable account options retrieved.' })
   findPayableAccountOptions(@CurrentUser() user: AuthUser) {
