@@ -719,6 +719,7 @@ function mapApprovalTransaction(transaction: ApprovalTransactionPayload, current
     ruleName: transaction.rule.routeName,
     status: transaction.status,
     canUpdateStatus: canCurrentUserAct,
+    isSequential,
     blockerName: isSequential && !canCurrentUserAct ? firstPendingApprover?.user.name : undefined,
     currentApproverId: currentApprover?.userId ?? null,
     approvers: approvers.map((approver) => ({

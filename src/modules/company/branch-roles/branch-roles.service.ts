@@ -52,11 +52,10 @@ type PermissionCatalogSection = {
 const LegacyPettyCashReplenishmentPermissionCode = 'cash-disbursement-petty-cash-replenishment';
 const LegacyPettyCashFundReplenishmentPermissionCode = 'cash-disbursement-petty-cash-fund-replenishment';
 const PettyCashFundReplenishmentPermissionCode = 'PCFR';
-const PettyCashAdvanceReplenishmentPermissionCode = 'PCAR';
-const PettyCashAdvancePermissionCode = 'PCA';
+const LegacyPettyCashAdvanceReplenishmentShortPermissionCode = 'PCAR';
+const RevolvingFundReplenishmentPermissionCode = 'RFR';
 const AccountsPayableVoucherPermissionCode = 'APV';
 const LegacyPettyCashAdvanceReplenishmentPermissionCode = 'cash-disbursement-petty-cash-advance-replenishment';
-const LegacyPettyCashAdvancePermissionCode = 'cash-disbursement-petty-cash-advance';
 const LegacyAccountsPayableVoucherPermissionCode = 'accounts-payable-accounts-payable-voucher';
 
 @Injectable()
@@ -408,21 +407,18 @@ export class BranchRolesService {
       canonicalPermission = {
         code: PettyCashFundReplenishmentPermissionCode,
         name: 'Petty Cash Fund Replenishment',
-        moduleCode: PettyCashAdvancePermissionCode,
-        moduleName: 'Cash Disbursement',
-      };
-    } else if (permissionCode === LegacyPettyCashAdvanceReplenishmentPermissionCode || permissionCode === PettyCashAdvanceReplenishmentPermissionCode) {
-      canonicalPermission = {
-        code: PettyCashAdvanceReplenishmentPermissionCode,
-        name: 'Petty Cash Advance Replenishment',
-        moduleCode: PettyCashAdvanceReplenishmentPermissionCode,
-        moduleName: 'Cash Disbursement',
-      };
-    } else if (permissionCode === LegacyPettyCashAdvancePermissionCode || permissionCode === PettyCashAdvancePermissionCode) {
-      canonicalPermission = {
-        code: PettyCashAdvancePermissionCode,
-        name: 'Petty Cash Advance',
         moduleCode: PettyCashFundReplenishmentPermissionCode,
+        moduleName: 'Cash Disbursement',
+      };
+    } else if (
+      permissionCode === LegacyPettyCashAdvanceReplenishmentPermissionCode ||
+      permissionCode === LegacyPettyCashAdvanceReplenishmentShortPermissionCode ||
+      permissionCode === RevolvingFundReplenishmentPermissionCode
+    ) {
+      canonicalPermission = {
+        code: RevolvingFundReplenishmentPermissionCode,
+        name: 'Revolving Fund Replenishment',
+        moduleCode: RevolvingFundReplenishmentPermissionCode,
         moduleName: 'Cash Disbursement',
       };
     } else if (permissionCode === LegacyAccountsPayableVoucherPermissionCode || permissionCode === AccountsPayableVoucherPermissionCode) {

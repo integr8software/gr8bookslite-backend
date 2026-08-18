@@ -70,11 +70,11 @@ export const AccountingSidebarTemplate = [
       link('cash-disbursement-petty-cash-voucher', 'PCV', 'cashOut'),
       link('cash-disbursement-petty-cash-fund', 'PCF', 'cashOut'),
       link('cash-disbursement-petty-cash-fund-replenishment', 'PCFR', 'cashOut'),
-      link('cash-disbursement-petty-cash-advance', 'PCA', 'cashOut'),
-      link('cash-disbursement-petty-cash-advance-replenishment', 'PCAR', 'cashOut'),
       link('cash-disbursement-revolving-fund', 'RF', 'cashOut'),
+      link('cash-disbursement-revolving-fund-replenishment', 'RFR', 'cashOut'),
       link('cash-disbursement-request-for-payment', 'RFP', 'fileCheck'),
-      link('cash-disbursement-advances-to-supplier', 'ATS', 'cashOut'),
+      link('cash-disbursement-advances-to-suppliers', 'ATS', 'cashOut'),
+      link('cash-disbursement-recurring-transactions', 'RT', 'cashOut'),
     ],
   },
   {
@@ -231,6 +231,7 @@ export const AccountingAndInventorySidebarTemplate = [
   },
   AccountingSidebarTemplate[6],
   AccountingSidebarTemplate[7],
+  AccountingSidebarTemplate[8],
 ] as const satisfies readonly ModuleSystemSidebarSeedItem[];
 
 export const ModuleSystemCatalog = [

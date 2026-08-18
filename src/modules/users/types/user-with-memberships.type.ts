@@ -4,7 +4,14 @@ export type UserWithMemberships = Prisma.UserGetPayload<{
   include: {
     memberships: {
       include: {
-        company: true;
+        company: {
+          include: {
+            subscriptions: {
+              orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }];
+              take: 1;
+            };
+          };
+        };
         companyRole: true;
         unitAccess: {
           include: {
@@ -15,3 +22,4 @@ export type UserWithMemberships = Prisma.UserGetPayload<{
     };
   };
 }>;
+

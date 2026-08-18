@@ -15,6 +15,8 @@ export function mapWorkspaceCompany(company: WorkspaceCompanyRecord): WorkspaceC
     slug: company.slug,
     legalName: company.legalName,
     companyCode: company.companyCode,
+    countryCode: company.countryCode,
+    baseCurrencyCode: company.baseCurrencyCode,
     taxpayerType: company.taxpayerType,
     ownerLastName: company.ownerLastName,
     ownerFirstName: company.ownerFirstName,

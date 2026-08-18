@@ -312,11 +312,8 @@ export class SaveOnboardingBillingResponseDto {
   @ApiProperty({ type: OnboardingBillingResponseDto })
   billing!: OnboardingBillingResponseDto;
 
-  @ApiPropertyOptional()
-  pendingProviderActivation?: boolean;
-
-  @ApiPropertyOptional({ enum: ['pending_provider_activation', 'ready_for_confirmation'] })
-  paymentSetupState?: 'pending_provider_activation' | 'ready_for_confirmation';
+  @ApiPropertyOptional({ enum: ['ready_for_confirmation'] })
+  paymentSetupState?: 'ready_for_confirmation';
 
   @ApiPropertyOptional({ type: OnboardingPaymentIntentResponseDto, nullable: true })
   paymentIntent?: OnboardingPaymentIntentResponseDto | null;
