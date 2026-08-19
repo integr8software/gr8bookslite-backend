@@ -207,6 +207,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: TransactionRegistry,
   },
   {
+    code: 'CV',
+    name: 'Cash Voucher',
+    icon: 'cashOut',
+    type: TransactionRegistry,
+  },
+  {
     code: 'DV',
     name: 'Disbursement Voucher',
     icon: 'cashOut',
