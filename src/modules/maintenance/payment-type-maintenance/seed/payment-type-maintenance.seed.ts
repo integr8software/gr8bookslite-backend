@@ -29,34 +29,22 @@ export const PaymentTypeMaintenanceSeedRecords = [
     sortOrder: 40,
   },
   {
-    name: 'Cash',
-    description: 'Cash payment without additional bank details.',
-    classification: PaymentTypeClassification.CASH,
-    sortOrder: 50,
-  },
-  {
     name: 'Check',
     description: 'Bank-issued check payment requiring bank and check details.',
     classification: PaymentTypeClassification.CHECK,
-    sortOrder: 60,
+    sortOrder: 50,
   },
   {
     name: "Manager's Check",
     description: "Bank-issued manager's check payment.",
     classification: PaymentTypeClassification.CHECK,
-    sortOrder: 70,
+    sortOrder: 60,
   },
   {
     name: 'E-Wallet',
     description: 'Digital wallet payment through an e-wallet provider.',
     classification: PaymentTypeClassification.DIGITAL_WALLET,
-    sortOrder: 80,
-  },
-  {
-    name: 'Debit Memo',
-    description: 'Non-cash settlement through debit memo.',
-    classification: PaymentTypeClassification.NON_CASH_SETTLEMENT,
-    sortOrder: 90,
+    sortOrder: 70,
   },
 ] as const;
 
