@@ -64,6 +64,7 @@ export const AccountingSidebarTemplate = [
     label: 'Cash Disbursement',
     iconName: 'cashOut',
     children: [
+      link('cash-disbursement-cash-voucher', 'CV', 'cashOut'),
       link('cash-disbursement-disbursement-voucher', 'DV', 'fileCheck'),
       link('cash-disbursement-cash-advance', 'CA', 'cashOut'),
       link('cash-disbursement-cash-advance-multiple-entry', 'CAME', 'cashOut'),
