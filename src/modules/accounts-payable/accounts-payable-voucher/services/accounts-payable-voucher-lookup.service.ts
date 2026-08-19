@@ -1,5 +1,13 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { ChartAccountStatus, PartyClassification, PartyStatus, PartyType, ResponsibilityCenterStatus, TermStatus } from '@prisma/client';
+import {
+  ChartAccountStatus,
+  DefaultAccountTemplateType,
+  PartyClassification,
+  PartyStatus,
+  PartyType,
+  ResponsibilityCenterStatus,
+  TermStatus,
+} from '@prisma/client';
 import { PermissionAction } from '../../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
 import { canAccessModuleAction } from '../../../../common/utils/module-permissions.util';
@@ -143,6 +151,84 @@ export class AccountsPayableVoucherLookupService {
     };
   }
 
+  async findExpenseTypes(user: AuthUser) {
+    const companyId = await this.getAccessibleCompanyId(user);
+    const defaultAccounts = await this.prisma.defaultAccount.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: ChartAccountStatus.ACTIVE,
+        type: DefaultAccountTemplateType.EXPENSE,
+        expenseCoa: {
+          is: {
+            companyId,
+            deletedAt: null,
+            isPostingAccount: true,
+            status: ChartAccountStatus.ACTIVE,
+          },
+        },
+      },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        expenseCoa: {
+          select: {
+            id: true,
+            accountCode: true,
+            accountTitle: true,
+            accountType: true,
+            accountNature: true,
+            statementSection: true,
+            description: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    return {
+      accounts: defaultAccounts.flatMap((defaultAccount) => {
+        if (!defaultAccount.expenseCoa) {
+          return [];
+        }
+
+        return this.mapChartAccountDropdownOption(defaultAccount.expenseCoa, {
+          accountName: defaultAccount.name,
+          description: defaultAccount.description ?? defaultAccount.expenseCoa.description ?? defaultAccount.name,
+        });
+      }),
+    };
+  }
+
+  async findPostingAccounts(user: AuthUser) {
+    const companyId = await this.getAccessibleCompanyId(user);
+    const accounts = await this.prisma.chartAccount.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        isPostingAccount: true,
+        status: ChartAccountStatus.ACTIVE,
+      },
+      orderBy: [{ accountCode: 'asc' }, { orderNo: 'asc' }, { accountTitle: 'asc' }],
+      select: {
+        id: true,
+        accountCode: true,
+        accountTitle: true,
+        accountType: true,
+        accountNature: true,
+        statementSection: true,
+        description: true,
+        status: true,
+      },
+    });
+
+    return {
+      accounts: accounts.map((account) => this.mapChartAccountDropdownOption(account)),
+    };
+  }
+
   async findPayableAccounts(user: AuthUser) {
     const companyId = await this.getAccessibleCompanyId(user);
     const accounts = await this.prisma.chartAccount.findMany({
@@ -162,6 +248,54 @@ export class AccountsPayableVoucherLookupService {
         employeePayableAccount: options.accountOptions.employeePayableAccount,
       },
     };
+  }
+
+  private mapChartAccountDropdownOption(
+    account: {
+      id: bigint;
+      accountCode: string;
+      accountTitle: string;
+      accountType: string | null;
+      accountNature: string | null;
+      statementSection: string | null;
+      description: string | null;
+      status: ChartAccountStatus;
+    },
+    overrides: { accountName?: string; description?: string } = {},
+  ) {
+    const accountType = this.mapAccountTypeLabel(account.accountType);
+    const statementGroup = account.accountType === 'REVENUE' || account.accountType === 'EXPENSE' ? 'Income Statement' : 'Balance Sheet';
+    const statementSection = account.statementSection ?? accountType;
+
+    return {
+      id: account.id.toString(),
+      accountNumber: account.accountCode,
+      accountName: overrides.accountName ?? account.accountTitle,
+      accountType,
+      statementGroup,
+      statementSection,
+      normalBalance: account.accountNature === 'CREDIT' ? 'Credit' : 'Debit',
+      accountCategory: statementSection,
+      description: overrides.description ?? account.description ?? account.accountTitle,
+      status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
+    };
+  }
+
+  private mapAccountTypeLabel(accountType: string | null) {
+    switch (accountType) {
+      case 'ASSET':
+        return 'Assets';
+      case 'LIABILITY':
+        return 'Liabilities';
+      case 'EQUITY':
+        return 'Equity';
+      case 'REVENUE':
+        return 'Revenues';
+      case 'EXPENSE':
+        return 'Expenses';
+      default:
+        return accountType ?? '';
+    }
   }
 
   private async getAccessibleCompanyId(user: AuthUser) {
@@ -192,10 +326,14 @@ export class AccountsPayableVoucherLookupService {
       return party.tradeName?.trim() || party.partyName?.trim() || 'Unnamed Party';
     }
 
-    return [party.firstName, party.middleName, party.lastName, party.suffixName]
-      .map((part) => part?.trim())
-      .filter(Boolean)
-      .join(' ') || party.partyName?.trim() || 'Unnamed Party';
+    return (
+      [party.firstName, party.middleName, party.lastName, party.suffixName]
+        .map((part) => part?.trim())
+        .filter(Boolean)
+        .join(' ') ||
+      party.partyName?.trim() ||
+      'Unnamed Party'
+    );
   }
 
   private mapPartyAddress(

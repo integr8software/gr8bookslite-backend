@@ -44,6 +44,7 @@ import { TransactionNumberSequencesModule } from './modules/system-administratio
 import { StorageModule } from './storage/storage.module';
 import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.module';
 import { AccountsPayableModule } from './modules/accounts-payable/accounts-payable.module';
+import { GeneralJournalModule } from './modules/general-journal/general-journal.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { ReferenceModule } from './modules/reference/reference.module';
 
@@ -103,6 +104,7 @@ import { ReferenceModule } from './modules/reference/reference.module';
     TransactionNumberSequencesModule,
     UserSidebarModule,
     AccountsPayableModule,
+    GeneralJournalModule,
     SalesModule,
     ReferenceModule,
     AiAssistantModule,
