@@ -235,6 +235,8 @@ model Company {
   billingInvoiceDetails         BillingInvoiceDetails[]
   billings                      Billing[]
   billingDetails                BillingDetails[]
+  billingStatements             BillingStatement[]
+  billingStatementDetails       BillingStatementDetails[]
   journalEntryHeaders           JournalEntryHeader[]
   warehouses                    Warehouse[]
   warehouseAccess               WarehouseAccess[]
@@ -284,6 +286,8 @@ model CompanyUnit {
   billingInvoiceDetails         BillingInvoiceDetails[]
   billings                      Billing[]
   billingDetails                BillingDetails[]
+  billingStatements             BillingStatement[]
+  billingStatementDetails       BillingStatementDetails[]
   journalEntryHeaders           JournalEntryHeader[]
 
   @@unique([companyId, code])
@@ -785,6 +789,7 @@ model ChartAccount {
   serviceInvoices                        ServiceInvoice[]
   billingInvoices                        BillingInvoice[]
   billings                               Billing[]
+  billingStatements                      BillingStatement[]
   journalEntryDetails                    JournalEntryDetail[]
 
   @@unique([companyId, accountCode], map: "chart_accounts_company_account_code_key")
@@ -916,6 +921,7 @@ model Term {
   serviceInvoices         ServiceInvoice[]
   billingInvoices         BillingInvoice[]
   billings                Billing[]
+  billingStatements       BillingStatement[]
 
   @@index([companyId], map: "terms_company_id_idx")
   @@index([companyId, status], map: "terms_company_status_idx")
@@ -1166,6 +1172,7 @@ model ResponsibilityCenter {
   serviceInvoiceDetails         ServiceInvoiceDetails[]
   billingInvoiceDetails         BillingInvoiceDetails[]
   billingDetails                BillingDetails[]
+  billingStatementDetails       BillingStatementDetails[]
   journalEntryDetails           JournalEntryDetail[]
 
   @@unique([companyId, code], map: "responsibility_centers_company_code_key")
@@ -1223,59 +1230,60 @@ model Party {
   partyEntityTypeId                   BigInt?                         @map("party_entity_type_id")
   partyCodeNo                         String                          @map("party_code_no") @db.VarChar(80)
   classification                      PartyClassification
-  partyTypes                          PartyType[]               @map("party_types")
-  status                              PartyStatus               @default(ACTIVE)
-  partyName                           String?                   @map("party_name") @db.VarChar(255)
-  tradeName                           String?                   @map("trade_name") @db.VarChar(255)
-  firstName                           String?                   @map("first_name") @db.VarChar(120)
-  middleName                          String?                   @map("middle_name") @db.VarChar(120)
-  lastName                            String?                   @map("last_name") @db.VarChar(120)
-  suffixName                          String?                   @map("suffix_name") @db.VarChar(40)
-  honorific                           String?                   @db.VarChar(80)
-  gender                              String?                   @db.VarChar(40)
-  civilStatus                         String?                   @map("civil_status") @db.VarChar(40)
-  nationality                         String?                   @db.VarChar(80)
-  memberRegistrationDate              DateTime?                 @map("member_registration_date")
-  defaultReceivableAccountId          BigInt?                   @map("default_receivable_account_id")
-  customerAdvanceAccountId            BigInt?                   @map("customer_advance_account_id")
-  defaultPayableAccountId             BigInt?                   @map("default_payable_account_id")
-  vendorAdvanceAccountId              BigInt?                   @map("vendor_advance_account_id")
-  employeeAdvanceAccountId            BigInt?                   @map("employee_advance_account_id")
-  employeePayableAccountId            BigInt?                   @map("employee_payable_account_id")
-  cashAdvanceLimit                    Decimal?                  @map("cash_advance_limit") @db.Decimal(18, 2)
-  tin                                 String?                   @db.VarChar(20)
-  atcCode                             String?                   @map("atc_code") @db.VarChar(40)
-  defaultPurchaseInputVatTaxSourceKey String?                   @map("default_purchase_input_vat_tax_source_key") @db.VarChar(40)
-  defaultPurchaseEwtTaxSourceKey      String?                   @map("default_purchase_ewt_tax_source_key") @db.VarChar(40)
-  defaultPurchaseFwtTaxSourceKey      String?                   @map("default_purchase_fwt_tax_source_key") @db.VarChar(40)
-  defaultPurchaseWvatTaxSourceKey     String?                   @map("default_purchase_wvat_tax_source_key") @db.VarChar(40)
-  defaultSalesOutputVatTaxSourceKey   String?                   @map("default_sales_output_vat_tax_source_key") @db.VarChar(40)
-  defaultSalesCwtTaxSourceKey         String?                   @map("default_sales_cwt_tax_source_key") @db.VarChar(40)
-  defaultSalesWvatTaxSourceKey        String?                   @map("default_sales_wvat_tax_source_key") @db.VarChar(40)
-  contactPerson                       String?                   @map("contact_person") @db.VarChar(255)
-  email                               String?                   @db.VarChar(255)
-  contactNo                           String?                   @map("contact_no") @db.VarChar(40)
-  landline                            String?                   @db.VarChar(40)
-  createdByUserId                     Int?                      @map("created_by_user_id")
-  updatedByUserId                     Int?                      @map("updated_by_user_id")
-  deletedAt                           DateTime?                 @map("deleted_at")
-  createdAt                           DateTime                  @default(now()) @map("created_at")
-  updatedAt                           DateTime?                 @map("updated_at")
-  company                             Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  partyEntityType                     PartyEntityType?          @relation(fields: [partyEntityTypeId], references: [id], onDelete: Restrict)
-  term                                Term?                     @relation(fields: [termId], references: [id], onDelete: SetNull)
-  defaultReceivableAccount            ChartAccount?             @relation("PartyDefaultReceivableAccount", fields: [defaultReceivableAccountId], references: [id], onDelete: Restrict)
-  customerAdvanceAccount              ChartAccount?             @relation("PartyCustomerAdvanceAccount", fields: [customerAdvanceAccountId], references: [id], onDelete: Restrict)
-  defaultPayableAccount               ChartAccount?             @relation("PartyDefaultPayableAccount", fields: [defaultPayableAccountId], references: [id], onDelete: Restrict)
-  vendorAdvanceAccount                ChartAccount?             @relation("PartyVendorAdvanceAccount", fields: [vendorAdvanceAccountId], references: [id], onDelete: Restrict)
-  employeeAdvanceAccount              ChartAccount?             @relation("PartyEmployeeAdvanceAccount", fields: [employeeAdvanceAccountId], references: [id], onDelete: Restrict)
-  employeePayableAccount              ChartAccount?             @relation("PartyEmployeePayableAccount", fields: [employeePayableAccountId], references: [id], onDelete: Restrict)
+  partyTypes                          PartyType[]                     @map("party_types")
+  status                              PartyStatus                     @default(ACTIVE)
+  partyName                           String?                         @map("party_name") @db.VarChar(255)
+  tradeName                           String?                         @map("trade_name") @db.VarChar(255)
+  firstName                           String?                         @map("first_name") @db.VarChar(120)
+  middleName                          String?                         @map("middle_name") @db.VarChar(120)
+  lastName                            String?                         @map("last_name") @db.VarChar(120)
+  suffixName                          String?                         @map("suffix_name") @db.VarChar(40)
+  honorific                           String?                         @db.VarChar(80)
+  gender                              String?                         @db.VarChar(40)
+  civilStatus                         String?                         @map("civil_status") @db.VarChar(40)
+  nationality                         String?                         @db.VarChar(80)
+  memberRegistrationDate              DateTime?                       @map("member_registration_date")
+  defaultReceivableAccountId          BigInt?                         @map("default_receivable_account_id")
+  customerAdvanceAccountId            BigInt?                         @map("customer_advance_account_id")
+  defaultPayableAccountId             BigInt?                         @map("default_payable_account_id")
+  vendorAdvanceAccountId              BigInt?                         @map("vendor_advance_account_id")
+  employeeAdvanceAccountId            BigInt?                         @map("employee_advance_account_id")
+  employeePayableAccountId            BigInt?                         @map("employee_payable_account_id")
+  cashAdvanceLimit                    Decimal?                        @map("cash_advance_limit") @db.Decimal(18, 2)
+  tin                                 String?                         @db.VarChar(20)
+  atcCode                             String?                         @map("atc_code") @db.VarChar(40)
+  defaultPurchaseInputVatTaxSourceKey String?                         @map("default_purchase_input_vat_tax_source_key") @db.VarChar(40)
+  defaultPurchaseEwtTaxSourceKey      String?                         @map("default_purchase_ewt_tax_source_key") @db.VarChar(40)
+  defaultPurchaseFwtTaxSourceKey      String?                         @map("default_purchase_fwt_tax_source_key") @db.VarChar(40)
+  defaultPurchaseWvatTaxSourceKey     String?                         @map("default_purchase_wvat_tax_source_key") @db.VarChar(40)
+  defaultSalesOutputVatTaxSourceKey   String?                         @map("default_sales_output_vat_tax_source_key") @db.VarChar(40)
+  defaultSalesCwtTaxSourceKey         String?                         @map("default_sales_cwt_tax_source_key") @db.VarChar(40)
+  defaultSalesWvatTaxSourceKey        String?                         @map("default_sales_wvat_tax_source_key") @db.VarChar(40)
+  contactPerson                       String?                         @map("contact_person") @db.VarChar(255)
+  email                               String?                         @db.VarChar(255)
+  contactNo                           String?                         @map("contact_no") @db.VarChar(40)
+  landline                            String?                         @db.VarChar(40)
+  createdByUserId                     Int?                            @map("created_by_user_id")
+  updatedByUserId                     Int?                            @map("updated_by_user_id")
+  deletedAt                           DateTime?                       @map("deleted_at")
+  createdAt                           DateTime                        @default(now()) @map("created_at")
+  updatedAt                           DateTime?                       @map("updated_at")
+  company                             Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  partyEntityType                     PartyEntityType?                @relation(fields: [partyEntityTypeId], references: [id], onDelete: Restrict)
+  term                                Term?                           @relation(fields: [termId], references: [id], onDelete: SetNull)
+  defaultReceivableAccount            ChartAccount?                   @relation("PartyDefaultReceivableAccount", fields: [defaultReceivableAccountId], references: [id], onDelete: Restrict)
+  customerAdvanceAccount              ChartAccount?                   @relation("PartyCustomerAdvanceAccount", fields: [customerAdvanceAccountId], references: [id], onDelete: Restrict)
+  defaultPayableAccount               ChartAccount?                   @relation("PartyDefaultPayableAccount", fields: [defaultPayableAccountId], references: [id], onDelete: Restrict)
+  vendorAdvanceAccount                ChartAccount?                   @relation("PartyVendorAdvanceAccount", fields: [vendorAdvanceAccountId], references: [id], onDelete: Restrict)
+  employeeAdvanceAccount              ChartAccount?                   @relation("PartyEmployeeAdvanceAccount", fields: [employeeAdvanceAccountId], references: [id], onDelete: Restrict)
+  employeePayableAccount              ChartAccount?                   @relation("PartyEmployeePayableAccount", fields: [employeePayableAccountId], references: [id], onDelete: Restrict)
   addresses                           PartyAddress[]
   accountsPayableVouchers             AccountsPayableVoucher[]
   accountsPayableVoucherDetails       AccountsPayableVoucherDetails[]
   serviceInvoices                     ServiceInvoice[]
   billingInvoices                     BillingInvoice[]
   billings                            Billing[]
+  billingStatements                   BillingStatement[]
 
   @@unique([companyId, partyCodeNo], map: "parties_company_code_key")
   @@index([companyId], map: "parties_company_id_idx")
@@ -1723,6 +1731,105 @@ model BillingDetails {
   @@index([companyId, branchUnitId], map: "billing_details_company_branch_idx")
   @@index([responsibilityCenterId], map: "billing_details_rc_idx")
   @@map("billing_details")
+}
+
+model BillingStatement {
+  id                    BigInt                    @id @default(autoincrement())
+  companyId             Int                       @map("company_id")
+  branchUnitId          Int                       @map("branch_unit_id")
+  partyId               BigInt?                   @map("party_id")
+  termId                BigInt?                   @map("term_id")
+  receivableAccountId   BigInt?                   @map("receivable_account_id")
+  transactionNo         String                    @map("transaction_no") @db.VarChar(80)
+  documentDate          DateTime                  @map("document_date") @db.Date
+  dueDate               DateTime                  @map("due_date") @db.Date
+  invoiceNo             String?                   @map("invoice_no") @db.VarChar(120)
+  referenceNo           String?                   @map("reference_no") @db.VarChar(120)
+  partyCodeSnapshot     String                    @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot     String                    @map("party_name_snapshot") @db.VarChar(255)
+  billToNameSnapshot    String?                   @map("bill_to_name_snapshot") @db.VarChar(255)
+  addressSnapshot       String?                   @map("address_snapshot") @db.VarChar(500)
+  contactPersonSnapshot String?                   @map("contact_person_snapshot") @db.VarChar(255)
+  contactNoSnapshot     String?                   @map("contact_no_snapshot") @db.VarChar(40)
+  businessStyle         String?                   @map("business_style") @db.VarChar(120)
+  projectCode           String?                   @map("project_code") @db.VarChar(80)
+  projectName           String?                   @map("project_name") @db.VarChar(255)
+  projectRef            String?                   @map("project_ref") @db.VarChar(120)
+  salesAssociate        String?                   @map("sales_associate") @db.VarChar(150)
+  teamAssigned          String?                   @map("team_assigned") @db.VarChar(150)
+  currencyCode          String                    @map("currency_code") @db.VarChar(10)
+  exchangeRate          Decimal                   @map("exchange_rate") @db.Decimal(18, 6)
+  netAmount             Decimal                   @default(0) @map("net_amount") @db.Decimal(18, 2)
+  vatAmount             Decimal                   @default(0) @map("vat_amount") @db.Decimal(18, 2)
+  wvatAmount            Decimal                   @default(0) @map("wvat_amount") @db.Decimal(18, 2)
+  ewtAmount             Decimal                   @default(0) @map("ewt_amount") @db.Decimal(18, 2)
+  discountAmount        Decimal                   @default(0) @map("discount_amount") @db.Decimal(18, 2)
+  grossAmount           Decimal                   @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  remarks               String?                   @db.VarChar(500)
+  status                BillingStatementStatus    @default(DRAFT)
+  createdByUserId       Int?                      @map("created_by_user_id")
+  updatedByUserId       Int?                      @map("updated_by_user_id")
+  approvedByUserId      Int?                      @map("approved_by_user_id")
+  approvedAt            DateTime?                 @map("approved_at")
+  disapprovedByUserId   Int?                      @map("disapproved_by_user_id")
+  disapprovedAt         DateTime?                 @map("disapproved_at")
+  cancelledByUserId     Int?                      @map("cancelled_by_user_id")
+  cancelledAt           DateTime?                 @map("cancelled_at")
+  postedByUserId        Int?                      @map("posted_by_user_id")
+  postedAt              DateTime?                 @map("posted_at")
+  deletedAt             DateTime?                 @map("deleted_at")
+  createdAt             DateTime                  @default(now()) @map("created_at")
+  updatedAt             DateTime                  @updatedAt @map("updated_at")
+  company               Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit            CompanyUnit               @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party                 Party?                    @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  term                  Term?                     @relation(fields: [termId], references: [id], onDelete: SetNull)
+  receivableAccount     ChartAccount?             @relation(fields: [receivableAccountId], references: [id], onDelete: Restrict)
+  details               BillingStatementDetails[]
+
+  @@unique([companyId, branchUnitId, transactionNo], map: "billing_statements_company_branch_transaction_no_key")
+  @@index([companyId, branchUnitId, status], map: "billing_statements_company_branch_status_idx")
+  @@index([companyId, documentDate], map: "billing_statements_company_document_date_idx")
+  @@index([partyId], map: "billing_statements_party_id_idx")
+  @@index([receivableAccountId], map: "billing_statements_receivable_account_id_idx")
+  @@map("billing_statements")
+}
+
+model BillingStatementDetails {
+  id                           BigInt                @id @default(autoincrement())
+  billingStatementId           BigInt                @map("billing_statement_id")
+  companyId                    Int                   @map("company_id")
+  branchUnitId                 Int                   @map("branch_unit_id")
+  lineNumber                   Int                   @map("line_number")
+  description                  String                @db.VarChar(250)
+  particulars                  String?               @db.VarChar(500)
+  quantity                     Decimal               @default(0) @db.Decimal(18, 4)
+  amount                       Decimal               @default(0) @db.Decimal(18, 2)
+  netAmount                    Decimal               @default(0) @map("net_amount") @db.Decimal(18, 2)
+  vatAmount                    Decimal               @default(0) @map("vat_amount") @db.Decimal(18, 2)
+  wvatAmount                   Decimal               @default(0) @map("wvat_amount") @db.Decimal(18, 2)
+  ewtAmount                    Decimal               @default(0) @map("ewt_amount") @db.Decimal(18, 2)
+  discountPercent              Decimal               @default(0) @map("discount_percent") @db.Decimal(8, 4)
+  discountAmount               Decimal               @default(0) @map("discount_amount") @db.Decimal(18, 2)
+  grossAmount                  Decimal               @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  vatType                      String?               @map("vat_type") @db.VarChar(80)
+  vatable                      Boolean               @default(false)
+  vatInclusive                 Boolean               @default(false) @map("vat_inclusive")
+  withWvat                     Boolean               @default(false) @map("with_wvat")
+  wvatType                     String?               @map("wvat_type") @db.VarChar(80)
+  withEwt                      Boolean               @default(false) @map("with_ewt")
+  ewtType                      String?               @map("ewt_type") @db.VarChar(80)
+  responsibilityCenterId       BigInt?               @map("responsibility_center_id")
+  responsibilityCenterSnapshot String?               @map("responsibility_center_snapshot") @db.VarChar(150)
+  billing                      BillingStatement      @relation(fields: [billingStatementId], references: [id], onDelete: Cascade)
+  company                      Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit                   CompanyUnit           @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  responsibilityCenter         ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
+
+  @@unique([billingStatementId, lineNumber], map: "billing_statement_details_billing_line_key")
+  @@index([companyId, branchUnitId], map: "billing_statement_details_company_branch_idx")
+  @@index([responsibilityCenterId], map: "billing_statement_details_rc_idx")
+  @@map("billing_statement_details")
 }
 
 model JournalEntryHeader {
@@ -2638,6 +2745,14 @@ enum BillingInvoiceStatus {
 }
 
 enum BillingStatus {
+  DRAFT
+  FOR_APPROVAL
+  DISAPPROVED
+  POSTED
+  CANCELLED
+}
+
+enum BillingStatementStatus {
   DRAFT
   FOR_APPROVAL
   DISAPPROVED
