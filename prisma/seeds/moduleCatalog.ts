@@ -489,6 +489,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
+    code: 'FM',
+    name: 'Field Management',
+    icon: 'listTree',
+    type: Maintenance,
+  },
+  {
     code: 'MM',
     name: 'Mail Maintenance',
     icon: 'mail',

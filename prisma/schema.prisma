@@ -401,8 +401,31 @@ model Module {
   subscriptionPlanLinks SubscriptionPlanModule[]
   systemLinks           ModuleSystemModule[]
   systemSidebar         ModuleSystemSidebar[]
+  fields                ModuleField[]
 
   @@map("modules")
+}
+
+model ModuleField {
+  id              Int      @id @default(autoincrement())
+  moduleId        Int      @map("module_id")
+  fieldKey        String   @map("field_key")
+  label           String
+  sourcePath      String?  @map("source_path")
+  fieldType       String?  @map("field_type")
+  sortOrder       Int      @default(0) @map("sort_order")
+  isVisible       Boolean  @default(true) @map("is_visible")
+  isRequired      Boolean  @default(false) @map("is_required")
+  defaultVisible  Boolean  @default(true) @map("default_visible")
+  defaultRequired Boolean  @default(false) @map("default_required")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  module          Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([moduleId, fieldKey])
+  @@index([moduleId, isVisible, sortOrder])
+  @@map("module_fields")
 }
 
 model ModuleSystem {
@@ -1864,6 +1887,7 @@ model JournalVoucher {
   @@index([companyId, documentDate], map: "journal_vouchers_company_document_date_idx")
   @@map("journal_vouchers")
 }
+
 model JournalEntryHeader {
   id              BigInt               @id @default(autoincrement())
   jeno            BigInt
