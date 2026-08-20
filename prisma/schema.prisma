@@ -1735,37 +1735,6 @@ model BillingDetails {
   @@map("billing_details")
 }
 
-model JournalVoucher {
-  id                  BigInt               @id @default(autoincrement())
-  companyId           Int                  @map("company_id")
-  branchUnitId        Int                  @map("branch_unit_id")
-  transactionNo       String               @map("transaction_no") @db.VarChar(80)
-  documentDate        DateTime             @map("document_date") @db.Date
-  remarks             String?              @db.VarChar(500)
-  currencyCode        String               @map("currency_code") @db.VarChar(10)
-  exchangeRate        Decimal              @map("exchange_rate") @db.Decimal(18, 6)
-  status              JournalVoucherStatus @default(DRAFT)
-  createdByUserId     Int?                 @map("created_by_user_id")
-  updatedByUserId     Int?                 @map("updated_by_user_id")
-  submittedByUserId   Int?                 @map("submitted_by_user_id")
-  submittedAt         DateTime?            @map("submitted_at")
-  postedByUserId      Int?                 @map("posted_by_user_id")
-  postedAt            DateTime?            @map("posted_at")
-  disapprovedByUserId Int?                 @map("disapproved_by_user_id")
-  disapprovedAt       DateTime?            @map("disapproved_at")
-  cancelledByUserId   Int?                 @map("cancelled_by_user_id")
-  cancelledAt         DateTime?            @map("cancelled_at")
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @updatedAt @map("updated_at")
-  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit          CompanyUnit          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
-
-  @@unique([companyId, branchUnitId, transactionNo], map: "journal_vouchers_company_branch_transaction_no_key")
-  @@index([companyId, branchUnitId, status], map: "journal_vouchers_company_branch_status_idx")
-  @@index([companyId, documentDate], map: "journal_vouchers_company_document_date_idx")
-  @@map("journal_vouchers")
-}
-
 model BillingStatement {
   id                    BigInt                    @id @default(autoincrement())
   companyId             Int                       @map("company_id")
@@ -1865,6 +1834,36 @@ model BillingStatementDetails {
   @@map("billing_statement_details")
 }
 
+model JournalVoucher {
+  id                  BigInt               @id @default(autoincrement())
+  companyId           Int                  @map("company_id")
+  branchUnitId        Int                  @map("branch_unit_id")
+  transactionNo       String               @map("transaction_no") @db.VarChar(80)
+  documentDate        DateTime             @map("document_date") @db.Date
+  remarks             String?              @db.VarChar(500)
+  currencyCode        String               @map("currency_code") @db.VarChar(10)
+  exchangeRate        Decimal              @map("exchange_rate") @db.Decimal(18, 6)
+  status              JournalVoucherStatus @default(DRAFT)
+  createdByUserId     Int?                 @map("created_by_user_id")
+  updatedByUserId     Int?                 @map("updated_by_user_id")
+  submittedByUserId   Int?                 @map("submitted_by_user_id")
+  submittedAt         DateTime?            @map("submitted_at")
+  postedByUserId      Int?                 @map("posted_by_user_id")
+  postedAt            DateTime?            @map("posted_at")
+  disapprovedByUserId Int?                 @map("disapproved_by_user_id")
+  disapprovedAt       DateTime?            @map("disapproved_at")
+  cancelledByUserId   Int?                 @map("cancelled_by_user_id")
+  cancelledAt         DateTime?            @map("cancelled_at")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit          CompanyUnit          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, branchUnitId, transactionNo], map: "journal_vouchers_company_branch_transaction_no_key")
+  @@index([companyId, branchUnitId, status], map: "journal_vouchers_company_branch_status_idx")
+  @@index([companyId, documentDate], map: "journal_vouchers_company_document_date_idx")
+  @@map("journal_vouchers")
+}
 model JournalEntryHeader {
   id              BigInt               @id @default(autoincrement())
   jeno            BigInt
