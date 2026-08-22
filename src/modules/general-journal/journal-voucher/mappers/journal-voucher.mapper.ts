@@ -37,7 +37,7 @@ export function mapJournalVoucher(voucher: JournalVoucherWithEntries, userNames:
       accountId: entry.accountId?.toString() ?? null,
       accountCode: entry.accountCodeSnapshot,
       accountTitle: entry.accountTitleSnapshot,
-      particulars: entry.particulars ?? null,
+      particulars: getTaxCleanedParticulars(entry.particulars, entry.vatType, entry.atcCode),
       partyCode: entry.partyCodeSnapshot ?? null,
       partyName: entry.partyNameSnapshot ?? null,
       responsibilityCenterId: entry.responsibilityCenterId?.toString() ?? null,
@@ -73,4 +73,24 @@ function mapOptionalAuditUser(userId: number | null, userNames: Map<number, stri
 
 function toDateValue(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+function getTaxCleanedParticulars(particulars: string | null | undefined, vatType: string | null | undefined, atcCode: string | null | undefined) {
+  const normalizedParticulars = particulars?.trim() ?? '';
+
+  if (!normalizedParticulars) {
+    return null;
+  }
+
+  const hasSelectedTax = Boolean(vatType?.trim() || atcCode?.trim());
+
+  if (hasSelectedTax && isGeneratedTaxParticulars(normalizedParticulars)) {
+    return null;
+  }
+
+  return normalizedParticulars;
+}
+
+function isGeneratedTaxParticulars(value: string) {
+  return /^(input vat|ewt)(\s+-\s+.*)?$/i.test(value.trim());
 }

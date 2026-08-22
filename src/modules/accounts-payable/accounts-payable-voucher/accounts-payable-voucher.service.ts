@@ -204,7 +204,16 @@ export class AccountsPayableVoucherService {
         });
 
         await this.replaceDetails(tx, created.apvId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.details);
-        await this.replaceJournalEntries(tx, created.apvId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
+        await this.replaceJournalEntries(
+          tx,
+          created.apvId,
+          companyId,
+          branchUnitId,
+          normalized.currencyCode,
+          normalized.exchangeRate,
+          cleanOptional(dto.remarks),
+          references.journalEntries,
+        );
 
         const saved = await tx.accountsPayableVoucher.findUniqueOrThrow({
           where: { apvId: created.apvId },
@@ -288,7 +297,16 @@ export class AccountsPayableVoucherService {
         });
 
         await this.replaceDetails(tx, apvId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.details);
-        await this.replaceJournalEntries(tx, apvId, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
+        await this.replaceJournalEntries(
+          tx,
+          apvId,
+          companyId,
+          branchUnitId,
+          normalized.currencyCode,
+          normalized.exchangeRate,
+          cleanOptional(dto.remarks),
+          references.journalEntries,
+        );
 
         const saved = await tx.accountsPayableVoucher.findUniqueOrThrow({
           where: { apvId },
@@ -664,6 +682,7 @@ export class AccountsPayableVoucherService {
     branchUnitId: number,
     currencyCode: string,
     exchangeRate: number,
+    remarks: string | null,
     journalEntries: ResolvedJournalEntry[],
   ) {
     await tx.journalEntryHeader.deleteMany({
@@ -690,7 +709,7 @@ export class AccountsPayableVoucherService {
         currencyCode,
         exchangeRate,
         jeno,
-        particulars: cleanOptional(journalEntries[0]?.input.particulars),
+        particulars: remarks,
         referenceId: apvId,
         referenceNo: cleanOptional(journalEntries[0]?.input.refNo),
         referenceType: AccountsPayableVoucherReferenceType,
@@ -966,13 +985,7 @@ export class AccountsPayableVoucherService {
     }
   }
 
-  private isTransactionNoIssued(
-    tx: PrismaWriteClient,
-    companyId: number,
-    branchUnitId: number,
-    transactionNo: string,
-    scope: 'all' | 'branch' = 'branch',
-  ) {
+  private isTransactionNoIssued(tx: PrismaWriteClient, companyId: number, branchUnitId: number, transactionNo: string, scope: 'all' | 'branch' = 'branch') {
     return tx.accountsPayableVoucher
       .findFirst({
         where: {
