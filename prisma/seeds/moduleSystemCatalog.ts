@@ -55,7 +55,7 @@ export const AccountingSidebarTemplate = [
       link('cash-receipt-acknowledgement-receipt', 'AR', 'cashIn'),
       link('cash-receipt-provisional-receipt', 'PVR', 'cashIn'),
       link('cash-receipt-bank-reconciliation', 'BR', 'bank'),
-      link('cash-receipt-post-dated-check-registry', 'PDCW', 'calendar'),
+      link('cash-receipt-post-dated-check', 'PDCW', 'calendar'),
     ],
   },
   {
@@ -198,6 +198,7 @@ export const AccountingAndInventorySidebarTemplate = [
       link('sales-billing', 'B', 'billing'),
       link('sales-billing-statement', 'BS', 'billing'),
       link('sales-billing-invoice', 'BI', 'billing'),
+      link('sales-service-quotation', 'SQS', 'sales'),
       link('sales-service-invoice', 'SVI', 'sales'),
       link('sales-cash-sales-invoice', 'CSI', 'cashIn'),
       link('sales-sales-journal', 'SJ', 'journal'),
