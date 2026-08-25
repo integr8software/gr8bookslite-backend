@@ -202,7 +202,7 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   },
   {
     code: 'PDCW',
-    name: 'Post-Dated Check Registry',
+    name: 'Post Dated Check',
     icon: 'cashIn',
     type: TransactionRegistry,
   },
@@ -335,6 +335,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
   {
     code: 'BI',
     name: 'Billing Invoice',
+    icon: 'sales',
+    type: TransactionRegistry,
+  },
+  {
+    code: 'SQS',
+    name: 'Service Quotation',
     icon: 'sales',
     type: TransactionRegistry,
   },
