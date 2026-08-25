@@ -2,9 +2,10 @@ import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
 
 export class UpsertModuleSystemDto {
+  @IsOptional()
   @IsString()
   @MaxLength(64)
-  code!: string;
+  code?: string | null;
 
   @IsString()
   @MaxLength(160)

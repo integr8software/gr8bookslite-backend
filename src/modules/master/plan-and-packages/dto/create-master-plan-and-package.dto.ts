@@ -51,10 +51,10 @@ export class MasterPlanDiscountTierDto {
 }
 
 export class CreateMasterPlanAndPackageDto {
+  @IsOptional()
   @IsString()
-  @MinLength(2)
   @MaxLength(64)
-  code!: string;
+  code?: string | null;
 
   @IsString()
   @MinLength(3)
@@ -66,8 +66,14 @@ export class CreateMasterPlanAndPackageDto {
   @MaxLength(1000)
   description?: string | null;
 
+  @IsOptional()
   @IsEnum(SubscriptionPlanScope)
-  scope!: SubscriptionPlanScope;
+  scope?: SubscriptionPlanScope;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(SubscriptionPlanScope, { each: true })
+  scopes?: SubscriptionPlanScope[];
 
   @IsEnum(SubscriptionPlanStatus)
   status!: SubscriptionPlanStatus;
@@ -83,15 +89,17 @@ export class CreateMasterPlanAndPackageDto {
   @Type(() => MasterPlanPriceDto)
   prices!: MasterPlanPriceDto[];
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MasterPlanUsageRuleDto)
-  usageRules!: MasterPlanUsageRuleDto[];
+  usageRules?: MasterPlanUsageRuleDto[];
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MasterPlanDiscountTierDto)
-  discountTiers!: MasterPlanDiscountTierDto[];
+  discountTiers?: MasterPlanDiscountTierDto[];
 
   @IsArray()
   @IsString({ each: true })
