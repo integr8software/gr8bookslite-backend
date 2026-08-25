@@ -47,6 +47,7 @@ import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.m
 import { AccountsPayableModule } from './modules/accounts-payable/accounts-payable.module';
 import { GeneralJournalModule } from './modules/general-journal/general-journal.module';
 import { SalesModule } from './modules/sales/sales.module';
+import { CashReceiptModule } from './modules/cash-receipt/cash-receipt.module';
 import { ReferenceModule } from './modules/reference/reference.module';
 
 @Module({
@@ -108,6 +109,7 @@ import { ReferenceModule } from './modules/reference/reference.module';
     AccountsPayableModule,
     GeneralJournalModule,
     SalesModule,
+    CashReceiptModule,
     ReferenceModule,
     AiAssistantModule,
   ],
