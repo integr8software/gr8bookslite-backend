@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matchers are typed as any. */
 import { BadRequestException } from '@nestjs/common';
 import { UnitOfMeasurementQuantityMode, UnitOfMeasurementStatus } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
@@ -26,10 +27,10 @@ describe('UnitOfMeasurementService unit options', () => {
       },
     ]);
 
-    const result = await service.findOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' kilo ', quantityMode: UnitOfMeasurementQuantityMode.FLOAT },
-    );
+    const result = await service.findOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, {
+      search: ' kilo ',
+      quantityMode: UnitOfMeasurementQuantityMode.FLOAT,
+    });
 
     expect(prisma.unitOfMeasurement.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -50,7 +50,7 @@ export class PaymentTypeMaintenanceController {
     const classification = type.trim().toUpperCase().replace(/-/g, '_') as PaymentTypeClassification;
 
     if (!Object.values(PaymentTypeClassification).includes(classification)) {
-      throw new BadRequestException('Payment Type option type must be cash, check, bank-transfer, digital-wallet, or non-cash-settlement.');
+      throw new BadRequestException('Payment Type option type must be bank-transfer, check, digital-wallet, or debit-memo.');
     }
 
     return this.paymentTypeLookupService.findOptionsForCompanyUser(user, {

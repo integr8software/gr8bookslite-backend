@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matchers are typed as any. */
 import { AccountNature, ChartAccountStatus, ChartAccountType, DefaultAccountTemplateType } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { DefaultAccountService } from './default-account.service';
@@ -33,10 +34,7 @@ describe('DefaultAccountService default account options', () => {
       },
     ]);
 
-    const result = await service.findExpenseOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' office ' },
-    );
+    const result = await service.findExpenseOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, { search: ' office ' });
 
     expect(prisma.defaultAccount.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

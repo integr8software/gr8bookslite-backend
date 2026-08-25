@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChartAccountStatus } from '@prisma/client';
+import { BankAccountType, ChartAccountStatus } from '@prisma/client';
 
 export class BankChartAccountResponseDto {
   @ApiProperty()
@@ -43,8 +43,8 @@ export class BankAccountResponseDto {
   @ApiProperty()
   accountName!: string;
 
-  @ApiProperty({ nullable: true })
-  accountType!: string | null;
+  @ApiProperty({ enum: BankAccountType, nullable: true })
+  accountType!: BankAccountType | null;
 
   @ApiProperty({ nullable: true })
   seriesStart!: string | null;
