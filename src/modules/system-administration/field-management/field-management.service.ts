@@ -11,7 +11,7 @@ const moduleSelect = Prisma.validator<Prisma.ModuleSelect>()({
   icon: true,
   isActive: true,
   fields: {
-    orderBy: [{ sortOrder: 'asc' }, { label: 'asc' }],
+    orderBy: [{ label: 'asc' }, { fieldKey: 'asc' }],
   },
 });
 

@@ -8,15 +8,13 @@ type ModuleFieldSeed = {
   label: string;
   sourcePath: string;
   fieldType?: string;
+  isRequired: boolean;
   sortOrder: number;
 };
 
 const FrontendModuleRoot = join(__dirname, '..', '..', '..', 'gr8bookslite-frontend', 'app', 'src', 'ui', 'modules');
-const LabelPatterns = [
-  /label\s*=\s*["'`]([^"'`{}]{2,80})["'`]/g,
-  /aria-label\s*=\s*["'`]([^"'`{}]{2,80})["'`]/g,
-  /placeholder\s*=\s*["'`]([^"'`{}]{2,80})["'`]/g,
-];
+const FrontendModuleConstantsRoot = join(__dirname, '..', '..', '..', 'gr8bookslite-frontend', 'app', 'src', 'constants', 'modules');
+const LabelPatterns = [/label\s*=\s*["'`]([^"'`{}]{2,80})["'`]/g];
 const IgnoredLabels = new Set(['Add', 'Edit', 'View', 'Save', 'Cancel', 'Delete', 'Search', 'Actions', 'Status']);
 const ModuleDirectoryHints: Record<string, string[]> = {
   DO: ['dashboard'],
@@ -49,6 +47,7 @@ const ModuleDirectoryHints: Record<string, string[]> = {
   CR: ['cash-receipt/collection-receipt'],
   AR: ['cash-receipt/acknowledgement-receipt'],
   PVR: ['cash-receipt/provisional-receipt'],
+  BR: ['cash-receipt/bank-reconciliation'],
   CV: ['cash-disbursement/cash-voucher'],
   DV: ['cash-disbursement/disbursement-voucher'],
   CA: ['cash-disbursement/cash-advance'],
@@ -99,29 +98,46 @@ export async function seedModuleFields() {
 
   for (const module of modules) {
     const fields = discoverModuleFields(module.code, module.name);
-    const fallbackFields = fields.length ? fields : createFallbackFields(module.code, module.name);
+    const fallbackFields = fields.length ? fields : createFallbackFields(module.code);
 
     for (const field of fallbackFields) {
-      await prisma.moduleField.upsert({
-        where: { moduleId_fieldKey: { moduleId: module.id, fieldKey: field.fieldKey } },
-        create: {
+      const where = { moduleId_fieldKey: { moduleId: module.id, fieldKey: field.fieldKey } };
+      const existingField = await prisma.moduleField.findUnique({
+        where,
+        select: { defaultRequired: true, isRequired: true },
+      });
+      const isRequiredCustomized = existingField && existingField.isRequired !== existingField.defaultRequired;
+
+      if (!existingField) {
+        await prisma.moduleField.create({
+          data: {
+            moduleId: module.id,
+            fieldKey: field.fieldKey,
+            label: field.label,
+            sourcePath: field.sourcePath,
+            fieldType: field.fieldType ?? null,
+            sortOrder: field.sortOrder,
+            isVisible: true,
+            isRequired: field.isRequired,
+            defaultVisible: true,
+            defaultRequired: field.isRequired,
+            metadata: {},
+          },
+        });
+        continue;
+      }
+
+      await prisma.moduleField.update({
+        where,
+        data: {
           moduleId: module.id,
           fieldKey: field.fieldKey,
           label: field.label,
           sourcePath: field.sourcePath,
           fieldType: field.fieldType ?? null,
           sortOrder: field.sortOrder,
-          isVisible: true,
-          isRequired: false,
-          defaultVisible: true,
-          defaultRequired: false,
-          metadata: {},
-        },
-        update: {
-          label: field.label,
-          sourcePath: field.sourcePath,
-          fieldType: field.fieldType ?? null,
-          sortOrder: field.sortOrder,
+          defaultRequired: field.isRequired,
+          isRequired: isRequiredCustomized ? existingField.isRequired : field.isRequired,
         },
       });
     }
@@ -135,34 +151,91 @@ function discoverModuleFields(moduleCode: string, moduleName: string): ModuleFie
   const fields: ModuleFieldSeed[] = [];
 
   for (const directory of directories) {
-    const fullDirectory = join(FrontendModuleRoot, ...directory.split('/'));
-    if (!existsSync(fullDirectory)) continue;
-    for (const filePath of collectSourceFiles(fullDirectory)) {
-      const sourcePath = relative(FrontendModuleRoot, filePath).replace(/\\/g, '/');
-      const text = readFileSync(filePath, 'utf8');
-      for (const pattern of LabelPatterns) {
-        pattern.lastIndex = 0;
-        let match: RegExpExecArray | null;
-        while ((match = pattern.exec(text))) {
-          const label = normalizeLabel(match[1]);
-          if (!label || IgnoredLabels.has(label) || label.length > 80) continue;
-          const fieldKey = toFieldKey(label);
-          if (seen.has(fieldKey)) continue;
-          seen.add(fieldKey);
-          fields.push({
-            moduleCode,
-            fieldKey,
-            label,
-            sourcePath,
-            fieldType: inferFieldType(label),
-            sortOrder: fields.length,
-          });
+    const sourceDirectories = [
+      { root: FrontendModuleRoot, sourcePathPrefix: '', fullDirectory: join(FrontendModuleRoot, ...directory.split('/')) },
+      {
+        root: FrontendModuleConstantsRoot,
+        sourcePathPrefix: 'constants/',
+        fullDirectory: join(FrontendModuleConstantsRoot, ...directory.split('/')),
+      },
+    ];
+
+    for (const sourceDirectory of sourceDirectories) {
+      if (!existsSync(sourceDirectory.fullDirectory)) continue;
+
+      for (const filePath of collectSourceFiles(sourceDirectory.fullDirectory)) {
+        const sourcePath = `${sourceDirectory.sourcePathPrefix}${relative(sourceDirectory.root, filePath).replace(/\\/g, '/')}`;
+        const text = readFileSync(filePath, 'utf8');
+        for (const pattern of LabelPatterns) {
+          pattern.lastIndex = 0;
+          let match: RegExpExecArray | null;
+          while ((match = pattern.exec(text))) {
+            const label = normalizeLabel(match[1]);
+            if (!label || IgnoredLabels.has(label) || label.length > 80) continue;
+            const fieldKey = toFieldKey(label);
+            if (seen.has(fieldKey)) continue;
+            seen.add(fieldKey);
+            fields.push({
+              moduleCode,
+              fieldKey,
+              label,
+              sourcePath,
+              fieldType: inferFieldType(label),
+              isRequired: isLabelRequired(text, match.index),
+              sortOrder: fields.length,
+            });
+          }
+        }
+
+        for (const field of discoverColumnLabelFields(moduleCode, sourcePath, text, seen, fields.length)) {
+          fields.push(field);
         }
       }
     }
   }
 
   return fields;
+}
+
+function discoverColumnLabelFields(moduleCode: string, sourcePath: string, text: string, seen: Set<string>, sortOrderStart: number): ModuleFieldSeed[] {
+  const fields: ModuleFieldSeed[] = [];
+  const columnLabelsPattern = /(?:export\s+const\s+)?([a-zA-Z0-9_]*ColumnLabels|columnLabels)\s*[:=][\s\S]*?\{([\s\S]*?)\};?/g;
+  let blockMatch: RegExpExecArray | null;
+
+  while ((blockMatch = columnLabelsPattern.exec(text))) {
+    const variableName = blockMatch[1] ?? '';
+    if (!isEntryColumnLabelsVariable(variableName)) continue;
+
+    const block = blockMatch[2] ?? '';
+    const labelPattern = /[a-zA-Z0-9_]+\s*:\s*["'`]([^"'`{}]{2,80})["'`]/g;
+    let labelMatch: RegExpExecArray | null;
+
+    while ((labelMatch = labelPattern.exec(block))) {
+      const label = normalizeLabel(labelMatch[1]);
+      if (!label || IgnoredLabels.has(label) || label.length > 80) continue;
+
+      const fieldKey = `entry_${toFieldKey(label)}`;
+      if (seen.has(fieldKey)) continue;
+
+      seen.add(fieldKey);
+      fields.push({
+        moduleCode,
+        fieldKey,
+        label,
+        sourcePath: `${sourcePath}#column-labels`,
+        fieldType: inferFieldType(label),
+        isRequired: false,
+        sortOrder: sortOrderStart + fields.length,
+      });
+    }
+  }
+
+  return fields;
+}
+
+function isEntryColumnLabelsVariable(variableName: string) {
+  const normalized = variableName.toLowerCase();
+  return /(accounting|dataentry|detail|details|entry|expense|grid|item|line|payable)/.test(normalized);
 }
 
 function collectSourceFiles(directory: string): string[] {
@@ -175,15 +248,42 @@ function collectSourceFiles(directory: string): string[] {
   });
 }
 
-function createFallbackFields(moduleCode: string, moduleName: string): ModuleFieldSeed[] {
+function createFallbackFields(moduleCode: string): ModuleFieldSeed[] {
   return ['Code', 'Name', 'Description', 'Status'].map((label, index) => ({
     moduleCode,
     fieldKey: toFieldKey(label),
     label,
     sourcePath: 'fallback',
     fieldType: inferFieldType(label),
+    isRequired: false,
     sortOrder: index,
   }));
+}
+
+function isLabelRequired(text: string, labelIndex: number) {
+  const openingTagStart = text.lastIndexOf('<', labelIndex);
+  const openingTagEnd = text.indexOf('>', labelIndex);
+  const openingTag = openingTagStart >= 0 && openingTagEnd >= 0 ? text.slice(openingTagStart, openingTagEnd + 1) : '';
+
+  if (/\b(?:isRequired|required)\s*=\s*\{\s*false\s*\}/.test(openingTag)) {
+    return false;
+  }
+
+  if (/\b(?:isRequired|required)\b/.test(openingTag) || /\b(?:isRequired|required)\s*=\s*\{\s*true\s*\}/.test(openingTag)) {
+    return true;
+  }
+
+  const nearbyText = text.slice(labelIndex, Math.min(text.length, labelIndex + 320));
+
+  if (/\bfallbackRequired\b/.test(nearbyText)) {
+    return true;
+  }
+
+  if (/<span[^>]*>\s*\*\s*<\/span>/.test(nearbyText)) {
+    return true;
+  }
+
+  return false;
 }
 
 function normalizeLabel(value: string) {
