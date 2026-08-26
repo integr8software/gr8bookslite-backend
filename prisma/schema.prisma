@@ -2734,6 +2734,7 @@ enum SubscriptionInvoiceStatus {
 }
 
 enum SubscriptionPlanScope {
+  ALL
   ONBOARDING
   ADDITIONAL_COMPANY
 }

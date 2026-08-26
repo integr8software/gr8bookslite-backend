@@ -27,7 +27,12 @@ describe('BillingService', () => {
 
     expect(cacheManager.wrap).toHaveBeenCalledWith('billing:plans:ONBOARDING', expect.any(Function), 10 * 60 * 1000);
     expect(prisma.subscriptionPlan.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { isActive: true, scope: SubscriptionPlanScope.ONBOARDING } }),
+      expect.objectContaining({
+        where: {
+          isActive: true,
+          scope: { in: [SubscriptionPlanScope.ONBOARDING, SubscriptionPlanScope.ALL] },
+        },
+      }),
     );
   });
 
@@ -74,5 +79,7 @@ describe('BillingService', () => {
       new BadRequestException('Selected plan is not available for additional companies.'),
     );
     expect(() => assertPurposeMatchesScope(BillingPaymentPurpose.ONBOARDING, SubscriptionPlanScope.ONBOARDING)).not.toThrow();
+    expect(() => assertPurposeMatchesScope(BillingPaymentPurpose.ONBOARDING, SubscriptionPlanScope.ALL)).not.toThrow();
+    expect(() => assertPurposeMatchesScope(BillingPaymentPurpose.ADDITIONAL_COMPANY, SubscriptionPlanScope.ALL)).not.toThrow();
   });
 });

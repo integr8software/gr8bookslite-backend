@@ -2,37 +2,37 @@ import { prisma } from './prismaClient';
 
 const plans = [
   {
-    code: 'ACCOUNTING',
-    name: 'Accounting',
-    description: 'Accounting plan with a 15-day free trial.',
+    code: 'ACCOUNTING_TRIAL',
+    name: 'Accounting (Free Trial)',
+    description: '15-day free trial for accounting.',
     currency: 'PHP',
-    monthlyPriceInCents: 39900,
-    yearlyPriceInCents: 399000,
-    monthlyCompareAtInCents: 49900,
-    yearlyCompareAtInCents: 478800,
+    monthlyPriceInCents: 0,
+    yearlyPriceInCents: 0,
+    monthlyCompareAtInCents: 39900,
+    yearlyCompareAtInCents: 399000,
     scope: 'ONBOARDING',
     status: 'ACTIVE',
     trialDays: 15,
     systemCodes: ['ACCOUNTING'],
   },
   {
-    code: 'ACCOUNTING_AND_INVENTORY',
-    name: 'Accounting and Inventory',
-    description: 'Accounting and inventory plan with a 15-day free trial.',
+    code: 'ACCOUNT_AND_INVENTORY_TRIAL',
+    name: 'Accounting and Inventory (Free Trial)',
+    description: '15-day free trial for accounting and inventory.',
     currency: 'PHP',
-    monthlyPriceInCents: 49900,
-    yearlyPriceInCents: 499000,
-    monthlyCompareAtInCents: 59900,
-    yearlyCompareAtInCents: 598800,
+    monthlyPriceInCents: 0,
+    yearlyPriceInCents: 0,
+    monthlyCompareAtInCents: 49900,
+    yearlyCompareAtInCents: 499000,
     scope: 'ONBOARDING',
     status: 'ACTIVE',
     trialDays: 15,
     systemCodes: ['ACCOUNTING_AND_INVENTORY'],
   },
   {
-    code: 'ADDITIONAL_COMPANY_ACCOUNTING',
+    code: 'REGULAR_PLAN_ACCOUNTING',
     name: 'Accounting',
-    description: 'Additional company accounting plan without a free trial.',
+    description: 'Regular accounting plan with standard 30-day billing.',
     currency: 'PHP',
     monthlyPriceInCents: 39900,
     yearlyPriceInCents: 399000,
@@ -44,10 +44,10 @@ const plans = [
     systemCodes: ['ACCOUNTING'],
   },
   {
-    code: 'ADDITIONAL_COMPANY_ACCOUNTING_AND_INVENTORY',
+    code: 'REGULAR_PLAN_ACCOUNTING_AND_INVENTORY',
     name: 'Accounting and Inventory',
     description:
-      'Additional company accounting and inventory plan without a free trial.',
+      'Regular accounting and inventory plan with standard 30-day billing.',
     currency: 'PHP',
     monthlyPriceInCents: 49900,
     yearlyPriceInCents: 499000,
@@ -62,32 +62,6 @@ const plans = [
 
 const activePlanCodes = plans.map((plan) => plan.code);
 
-const defaultUsageRules = [
-  {
-    metric: 'USER',
-    freeCount: 1,
-    unitPriceInCents: 10000,
-  },
-] as const;
-
-const defaultDiscountTiers = [
-  {
-    metric: 'BRANCH',
-    thresholdCount: 10,
-    discountPercent: '5.00',
-  },
-  {
-    metric: 'BRANCH',
-    thresholdCount: 25,
-    discountPercent: '10.00',
-  },
-  {
-    metric: 'BRANCH',
-    thresholdCount: 50,
-    discountPercent: '20.00',
-  },
-] as const;
-
 export async function seedSubscriptionPlans() {
   await prisma.subscriptionPlan.updateMany({
     where: {
@@ -100,14 +74,7 @@ export async function seedSubscriptionPlans() {
   });
 
   for (const plan of plans) {
-    const {
-      monthlyPriceInCents,
-      yearlyPriceInCents,
-      monthlyCompareAtInCents,
-      yearlyCompareAtInCents,
-      systemCodes,
-      ...planData
-    } = plan;
+    const { monthlyPriceInCents, yearlyPriceInCents, monthlyCompareAtInCents, yearlyCompareAtInCents, systemCodes, ...planData } = plan;
     const subscriptionPlan = await prisma.subscriptionPlan.upsert({
       where: {
         code: plan.code,
@@ -173,59 +140,13 @@ export async function seedSubscriptionPlans() {
           isActive: true,
         },
       }),
-      ...defaultUsageRules.map((rule) =>
-        prisma.subscriptionPlanUsageRule.upsert({
-          where: {
-            subscriptionPlanId_metric: {
-              subscriptionPlanId: subscriptionPlan.id,
-              metric: rule.metric,
-            },
-          },
-          update: {
-            freeCount: rule.freeCount,
-            unitPriceInCents: rule.unitPriceInCents,
-            isActive: true,
-          },
-          create: {
-            subscriptionPlanId: subscriptionPlan.id,
-            metric: rule.metric,
-            freeCount: rule.freeCount,
-            unitPriceInCents: rule.unitPriceInCents,
-            isActive: true,
-          },
-        }),
-      ),
-      ...defaultDiscountTiers.map((tier) =>
-        prisma.subscriptionPlanDiscountTier.upsert({
-          where: {
-            subscriptionPlanId_metric_thresholdCount: {
-              subscriptionPlanId: subscriptionPlan.id,
-              metric: tier.metric,
-              thresholdCount: tier.thresholdCount,
-            },
-          },
-          update: {
-            discountPercent: tier.discountPercent,
-            isActive: true,
-          },
-          create: {
-            subscriptionPlanId: subscriptionPlan.id,
-            metric: tier.metric,
-            thresholdCount: tier.thresholdCount,
-            discountPercent: tier.discountPercent,
-            isActive: true,
-          },
-        }),
-      ),
     ]);
 
     const systems = await prisma.moduleSystem.findMany({
       where: { code: { in: [...systemCodes] }, isActive: true },
       select: { id: true, code: true },
     });
-    const systemIdByCode = new Map(
-      systems.map((system) => [system.code, system.id]),
-    );
+    const systemIdByCode = new Map(systems.map((system) => [system.code, system.id]));
 
     await prisma.subscriptionPlanSystem.deleteMany({
       where: {
