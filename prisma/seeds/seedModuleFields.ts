@@ -187,71 +187,11 @@ function discoverModuleFields(moduleCode: string, moduleName: string): ModuleFie
           }
         }
 
-        for (const field of discoverColumnLabelFields(moduleCode, sourcePath, text, seen, fields.length)) {
-          fields.push(field);
-        }
       }
     }
   }
 
   return fields;
-}
-
-function discoverColumnLabelFields(moduleCode: string, sourcePath: string, text: string, seen: Set<string>, sortOrderStart: number): ModuleFieldSeed[] {
-  const fields: ModuleFieldSeed[] = [];
-  const columnLabelsPattern = /(?:export\s+const\s+)?([a-zA-Z0-9_]*ColumnLabels|columnLabels)\s*[:=][\s\S]*?\{([\s\S]*?)\};?/g;
-  let blockMatch: RegExpExecArray | null;
-
-  if (isAccountingEntrySource(sourcePath)) {
-    return fields;
-  }
-
-  while ((blockMatch = columnLabelsPattern.exec(text))) {
-    const variableName = blockMatch[1] ?? '';
-    if (!isEntryColumnLabelsVariable(variableName)) continue;
-
-    const block = blockMatch[2] ?? '';
-    const labelPattern = /[a-zA-Z0-9_]+\s*:\s*["'`]([^"'`{}]{2,80})["'`]/g;
-    let labelMatch: RegExpExecArray | null;
-
-    while ((labelMatch = labelPattern.exec(block))) {
-      const label = normalizeLabel(labelMatch[1]);
-      if (!label || IgnoredLabels.has(label) || label.length > 80) continue;
-
-      const fieldKey = `entry_${toFieldKey(label)}`;
-      if (seen.has(fieldKey)) continue;
-
-      seen.add(fieldKey);
-      fields.push({
-        moduleCode,
-        fieldKey,
-        label,
-        sourcePath: `${sourcePath}#column-labels`,
-        fieldType: inferFieldType(label),
-        isRequired: false,
-        sortOrder: sortOrderStart + fields.length,
-      });
-    }
-  }
-
-  return fields;
-}
-
-function isEntryColumnLabelsVariable(variableName: string) {
-  const normalized = variableName.toLowerCase();
-  if (normalized.includes('accounting')) return false;
-  return /(dataentry|detail|details|entry|expense|grid|item|line|payable)/.test(normalized);
-}
-
-function isAccountingEntrySource(sourcePath: string) {
-  const normalized = sourcePath.toLowerCase();
-  return (
-    normalized.includes('accounting-grid') ||
-    normalized.includes('accountingtable') ||
-    normalized.includes('accounting-entry') ||
-    normalized.includes('accountingentry') ||
-    normalized.includes('accountinggrid')
-  );
 }
 
 function collectSourceFiles(directory: string): string[] {
