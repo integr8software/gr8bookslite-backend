@@ -62,7 +62,11 @@ export class BillingService {
         const plans = await this.prisma.subscriptionPlan.findMany({
           where: {
             isActive: true,
-            ...(normalizedScope ? { scope: normalizedScope } : {}),
+            ...(normalizedScope
+              ? normalizedScope === SubscriptionPlanScope.ALL
+                ? {}
+                : { scope: { in: [normalizedScope, SubscriptionPlanScope.ALL] } }
+              : {}),
           },
           include: {
             prices: {
@@ -681,6 +685,10 @@ export class BillingService {
   }
 
   private assertManualPurposeMatchesPlanScope(purpose: BillingPaymentPurpose, scope: SubscriptionPlanScope) {
+    if (scope === SubscriptionPlanScope.ALL) {
+      return;
+    }
+
     if (purpose === BillingPaymentPurpose.ONBOARDING && scope !== SubscriptionPlanScope.ONBOARDING) {
       throw new BadRequestException('Selected plan is not available for onboarding.');
     }

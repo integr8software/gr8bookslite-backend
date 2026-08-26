@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChartAccount, ChartAccountStatus, CompanyUnitType, MembershipRole, MembershipStatus, Party, PartyAddress, PartyStatus, PartyType, Prisma, ResponsibilityCenter, ResponsibilityCenterStatus, BillingStatus, Term, TermStatus, TransactionNumberInputMode } from '@prisma/client';
+import { ChartAccount, ChartAccountStatus, CompanyUnitType, MembershipRole, MembershipStatus, Party, PartyAddress, PartyStatus, PartyType, Prisma, ResponsibilityCenter, ResponsibilityCenterStatus, CollectionReceiptStatus, Term, TermStatus, TransactionNumberInputMode } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
@@ -9,19 +9,19 @@ import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../c
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { findTransactionNumberForCompanyBranch, resolveTransactionNumberForCompanyBranch, resolveTransactionNumberScopeForCompanyBranch, suggestTransactionNumberForCompanyBranch } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
-import { CreateBillingDto } from './dto/create-billing.dto';
-import { GetBillingListQueryDto } from './dto/get-billing-list-query.dto';
-import { BillingDetailDto } from './dto/billing-detail.dto';
-import { BillingJournalEntryDto } from './dto/billing-journal-entry.dto';
-import { UpdateBillingStatusDto } from './dto/update-billing-status.dto';
-import { UpdateBillingDto } from './dto/update-billing.dto';
-import { mapBilling } from './mappers/billing.mapper';
-import { BillingInclude } from './prisma/billing.include';
-import { BillingAccountingService } from './services/billing-accounting.service';
-import type { BillingWithDetails } from './types/billing-with-details.type';
+import { CreateCollectionReceiptDto } from './dto/create-collection-receipt.dto';
+import { GetCollectionReceiptListQueryDto } from './dto/get-collection-receipt-list-query.dto';
+import { CollectionReceiptDetailDto } from './dto/collection-receipt-detail.dto';
+import { CollectionReceiptJournalEntryDto } from './dto/collection-receipt-journal-entry.dto';
+import { UpdateCollectionReceiptStatusDto } from './dto/update-collection-receipt-status.dto';
+import { UpdateCollectionReceiptDto } from './dto/update-collection-receipt.dto';
+import { mapCollectionReceipt } from './mappers/collection-receipt.mapper';
+import { CollectionReceiptInclude } from './prisma/collection-receipt.include';
+import { CollectionReceiptAccountingService } from './services/collection-receipt-accounting.service';
+import type { CollectionReceiptWithDetails } from './types/collection-receipt-with-details.type';
 
-const BillingModuleCode = 'B';
-const BillingReferenceType = 'BILL';
+const CollectionReceiptModuleCode = 'CR';
+const CollectionReceiptReferenceType = 'CR';
 const JournalEntryNumberAdvisoryLockNamespace = 9081;
 const CustomerPartyTypes = new Set<PartyType>([PartyType.CUSTOMER, PartyType.MEMBER]);
 
@@ -29,24 +29,24 @@ type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
 type ResolvedDetailLine = {
-  input: BillingDetailDto;
+  input: CollectionReceiptDetailDto;
   responsibilityCenter: ResponsibilityCenter | null;
 };
 
 type ResolvedJournalEntry = {
   account: ChartAccount | null;
-  input: BillingJournalEntryDto;
+  input: CollectionReceiptJournalEntryDto;
   responsibilityCenter: ResponsibilityCenter | null;
 };
 
 @Injectable()
-export class BillingService {
+export class CollectionReceiptService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly accountingService: BillingAccountingService,
+    private readonly accountingService: CollectionReceiptAccountingService,
   ) {}
 
-  async findAll(user: AuthUser, query: GetBillingListQueryDto) {
+  async findAll(user: AuthUser, query: GetCollectionReceiptListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
@@ -55,21 +55,21 @@ export class BillingService {
     const limit = query.limit ?? DefaultLimit;
     const where = this.buildListWhere(companyId, branchUnitId, query);
 
-    const [invoiceRows, total, statistics] = await Promise.all([
-      this.prisma.billing.findMany({
+    const [receiptRows, total, statistics] = await Promise.all([
+      this.prisma.collectionReceipt.findMany({
         where,
-        include: BillingInclude,
+        include: CollectionReceiptInclude,
         orderBy: this.buildOrderBy(query),
         skip: (page - 1) * limit,
         take: limit,
       }),
-      this.prisma.billing.count({ where }),
+      this.prisma.collectionReceipt.count({ where }),
       this.getStatistics(companyId, branchUnitId),
     ]);
-    const invoices = await this.attachJournalEntries(invoiceRows);
+    const receipts = await this.attachJournalEntries(receiptRows);
 
     return {
-      invoices: await this.mapInvoicesWithAuditUsers(invoices),
+      receipts: await this.mapReceiptsWithAuditUsers(receipts),
       pagination: {
         page,
         limit,
@@ -86,10 +86,10 @@ export class BillingService {
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
     const branchUnitId = requestedBranchUnitId ? await this.resolveBranchUnitId(companyId, requestedBranchUnitId) : undefined;
-    const invoice = await this.findInvoiceOrThrow(companyId, parsePositiveBigIntId(id), branchUnitId);
+    const receipt = await this.findReceiptOrThrow(companyId, parsePositiveBigIntId(id), branchUnitId);
 
     return {
-      invoice: (await this.mapInvoicesWithAuditUsers([invoice]))[0],
+      receipt: (await this.mapReceiptsWithAuditUsers([receipt]))[0],
       permissions: this.getPermissions(user, companyId),
     };
   }
@@ -102,7 +102,7 @@ export class BillingService {
     const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
       branchUnitId,
       companyId,
-      moduleCode: BillingModuleCode,
+      moduleCode: CollectionReceiptModuleCode,
       isIssued: (transactionNo, context) => this.isTransactionNoIssued(this.prisma, companyId, branchUnitId, transactionNo, context.scope),
     });
 
@@ -113,12 +113,12 @@ export class BillingService {
     };
   }
 
-  async create(user: AuthUser, dto: CreateBillingDto) {
+  async create(user: AuthUser, dto: CreateCollectionReceiptDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
-    const normalized = this.normalizeInvoiceInput(dto);
+    const normalized = this.normalizeReceiptInput(dto);
 
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
@@ -129,15 +129,15 @@ export class BillingService {
     });
 
     try {
-      const invoice = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveInvoiceReferences(tx, companyId, dto);
+      const receipt = await this.prisma.$transaction(async (tx) => {
+        const references = await this.resolveReceiptReferences(tx, companyId, dto);
         const transactionNo = await this.resolveTransactionNumberForCreate(tx, {
           branchUnitId,
           companyId,
           requestedTransactionNo: dto.transactionNo,
         });
 
-        const created = await tx.billing.create({
+        const created = await tx.collectionReceipt.create({
           data: {
             addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(dto.address),
             billToNameSnapshot: cleanOptional(dto.billToName),
@@ -154,7 +154,7 @@ export class BillingService {
             ewtAmount: normalized.ewtAmount,
             exchangeRate: normalized.exchangeRate,
             grossAmount: normalized.grossAmount,
-            invoiceNo: cleanOptional(dto.invoiceNo) ?? transactionNo,
+            receiptNo: cleanOptional(dto.receiptNo),
             netAmount: normalized.netAmount,
             partyCodeSnapshot: references.party?.partyCodeNo ?? cleanOptional(dto.customerCode) ?? 'MANUAL',
             partyId: references.party?.id ?? null,
@@ -171,26 +171,26 @@ export class BillingService {
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
             salesAssociate: cleanOptional(dto.salesAssociate),
-            status: BillingStatus.DRAFT,
+            status: CollectionReceiptStatus.DRAFT,
             teamAssigned: cleanOptional(dto.teamAssigned),
             termId: references.term?.id ?? null,
             transactionNo,
             vatAmount: normalized.vatAmount,
             wvatAmount: normalized.wvatAmount,
           },
-          include: BillingInclude,
+          include: CollectionReceiptInclude,
         });
 
         await this.replaceDetails(tx, created.id, companyId, branchUnitId, references.details);
         await this.replaceJournalEntries(tx, created.id, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
 
-        const saved = await tx.billing.findUniqueOrThrow({ where: { id: created.id }, include: BillingInclude });
+        const saved = await tx.collectionReceipt.findUniqueOrThrow({ where: { id: created.id }, include: CollectionReceiptInclude });
         return (await this.attachJournalEntries([saved], tx))[0];
       });
 
       return {
-        invoice: (await this.mapInvoicesWithAuditUsers([invoice]))[0],
-        message: 'billing created successfully.',
+        receipt: (await this.mapReceiptsWithAuditUsers([receipt]))[0],
+        message: 'Collection receipt created successfully.',
         permissions: this.getPermissions(user, companyId),
       };
     } catch (error) {
@@ -199,23 +199,23 @@ export class BillingService {
     }
   }
 
-  async update(user: AuthUser, id: string, dto: UpdateBillingDto) {
+  async update(user: AuthUser, id: string, dto: UpdateCollectionReceiptDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const billingId = parsePositiveBigIntId(id);
-    const current = await this.findInvoiceOrThrow(companyId, billingId);
+    const collectionReceiptId = parsePositiveBigIntId(id);
+    const current = await this.findReceiptOrThrow(companyId, collectionReceiptId);
 
-    if (current.status !== BillingStatus.DRAFT) {
-      throw new BadRequestException('Only draft billings can be edited.');
+    if (current.status !== CollectionReceiptStatus.DRAFT) {
+      throw new BadRequestException('Only draft collection receipts can be edited.');
     }
 
     if (dto.branchUnitId !== undefined && dto.branchUnitId !== current.branchUnitId) {
-      throw new BadRequestException('billing branch cannot be changed after creation.');
+      throw new BadRequestException('Collection receipt branch cannot be changed after creation.');
     }
 
     const fullDto = this.requireCompleteUpdateDto(dto);
-    const normalized = this.normalizeInvoiceInput(fullDto);
+    const normalized = this.normalizeReceiptInput(fullDto);
 
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
@@ -226,18 +226,18 @@ export class BillingService {
     });
 
     try {
-      const invoice = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveInvoiceReferences(tx, companyId, fullDto);
+      const receipt = await this.prisma.$transaction(async (tx) => {
+        const references = await this.resolveReceiptReferences(tx, companyId, fullDto);
         const transactionNo = await this.resolveTransactionNumberForUpdate(tx, {
           branchUnitId: current.branchUnitId,
           companyId,
           currentTransactionNo: current.transactionNo,
-          excludedInvoiceId: billingId,
+          excludedReceiptId: collectionReceiptId,
           requestedTransactionNo: fullDto.transactionNo,
         });
 
-        await tx.billing.update({
-          where: { id: billingId },
+        await tx.collectionReceipt.update({
+          where: { id: collectionReceiptId },
           data: {
             addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(fullDto.address),
             billToNameSnapshot: cleanOptional(fullDto.billToName),
@@ -251,7 +251,7 @@ export class BillingService {
             ewtAmount: normalized.ewtAmount,
             exchangeRate: normalized.exchangeRate,
             grossAmount: normalized.grossAmount,
-            invoiceNo: cleanOptional(fullDto.invoiceNo) ?? transactionNo,
+            receiptNo: cleanOptional(fullDto.receiptNo),
             netAmount: normalized.netAmount,
             partyCodeSnapshot: references.party?.partyCodeNo ?? cleanOptional(fullDto.customerCode) ?? 'MANUAL',
             partyId: references.party?.id ?? null,
@@ -277,16 +277,16 @@ export class BillingService {
           },
         });
 
-        await this.replaceDetails(tx, billingId, companyId, current.branchUnitId, references.details);
-        await this.replaceJournalEntries(tx, billingId, companyId, current.branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
+        await this.replaceDetails(tx, collectionReceiptId, companyId, current.branchUnitId, references.details);
+        await this.replaceJournalEntries(tx, collectionReceiptId, companyId, current.branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
 
-        const saved = await tx.billing.findUniqueOrThrow({ where: { id: billingId }, include: BillingInclude });
+        const saved = await tx.collectionReceipt.findUniqueOrThrow({ where: { id: collectionReceiptId }, include: CollectionReceiptInclude });
         return (await this.attachJournalEntries([saved], tx))[0];
       });
 
       return {
-        invoice: (await this.mapInvoicesWithAuditUsers([invoice]))[0],
-        message: 'billing updated successfully.',
+        receipt: (await this.mapReceiptsWithAuditUsers([receipt]))[0],
+        message: 'Collection receipt updated successfully.',
         permissions: this.getPermissions(user, companyId),
       };
     } catch (error) {
@@ -295,52 +295,52 @@ export class BillingService {
     }
   }
 
-  async updateStatus(user: AuthUser, id: string, dto: UpdateBillingStatusDto) {
+  async updateStatus(user: AuthUser, id: string, dto: UpdateCollectionReceiptStatusDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     const targetStatus = this.normalizeStatus(dto.status);
-    const requiredAction = targetStatus === BillingStatus.CANCELLED ? PermissionAction.CANCEL : PermissionAction.UPDATE;
+    const requiredAction = targetStatus === CollectionReceiptStatus.CANCELLED ? PermissionAction.CANCEL : PermissionAction.UPDATE;
 
     this.ensureCan(user, companyId, requiredAction);
-    const billingId = parsePositiveBigIntId(id);
-    const current = await this.findInvoiceOrThrow(companyId, billingId);
+    const collectionReceiptId = parsePositiveBigIntId(id);
+    const current = await this.findReceiptOrThrow(companyId, collectionReceiptId);
 
     if (current.status === targetStatus) {
       return {
-        invoice: (await this.mapInvoicesWithAuditUsers([current]))[0],
-        message: 'billing status is already up to date.',
+        receipt: (await this.mapReceiptsWithAuditUsers([current]))[0],
+        message: 'Collection receipt status is already up to date.',
         permissions: this.getPermissions(user, companyId),
       };
     }
 
     this.ensureStatusTransitionAllowed(current.status, targetStatus);
 
-    if (targetStatus === BillingStatus.POSTED) {
+    if (targetStatus === CollectionReceiptStatus.POSTED) {
       this.accountingService.validatePersistedPayload({
         details: current.details,
         journalEntries: current.journalEntries,
       });
     }
 
-    const invoice = await this.prisma.billing.update({
-      where: { id: billingId },
+    const receipt = await this.prisma.collectionReceipt.update({
+      where: { id: collectionReceiptId },
       data: {
         ...this.getStatusAuditData(targetStatus, user.id),
         status: targetStatus,
         updatedByUserId: user.id,
       },
-      include: BillingInclude,
+      include: CollectionReceiptInclude,
     });
-    const saved = (await this.attachJournalEntries([invoice]))[0];
+    const saved = (await this.attachJournalEntries([receipt]))[0];
 
     return {
-      invoice: (await this.mapInvoicesWithAuditUsers([saved]))[0],
-      message: 'billing status updated successfully.',
+      receipt: (await this.mapReceiptsWithAuditUsers([saved]))[0],
+      message: 'Collection receipt status updated successfully.',
       permissions: this.getPermissions(user, companyId),
     };
   }
 
-  private buildListWhere(companyId: number, branchUnitId: number, query: GetBillingListQueryDto): Prisma.BillingWhereInput {
+  private buildListWhere(companyId: number, branchUnitId: number, query: GetCollectionReceiptListQueryDto): Prisma.CollectionReceiptWhereInput {
     const search = query.search?.trim();
 
     if (query.amountFrom !== undefined && query.amountTo !== undefined && query.amountFrom > query.amountTo) {
@@ -372,7 +372,7 @@ export class BillingService {
         ? {
             OR: [
               { transactionNo: { contains: search, mode: 'insensitive' } },
-              { invoiceNo: { contains: search, mode: 'insensitive' } },
+              { receiptNo: { contains: search, mode: 'insensitive' } },
               { referenceNo: { contains: search, mode: 'insensitive' } },
               { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
               { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
@@ -382,7 +382,7 @@ export class BillingService {
     };
   }
 
-  private buildOrderBy(query: GetBillingListQueryDto): Prisma.BillingOrderByWithRelationInput[] {
+  private buildOrderBy(query: GetCollectionReceiptListQueryDto): Prisma.CollectionReceiptOrderByWithRelationInput[] {
     const sortBy = query.sortBy ?? 'documentDate';
     const sortDirection = query.sortDirection ?? 'desc';
     const field = sortBy === 'customerName' ? 'partyNameSnapshot' : sortBy;
@@ -391,7 +391,7 @@ export class BillingService {
   }
 
   private getStatistics(companyId: number, branchUnitId: number) {
-    return this.prisma.billing
+    return this.prisma.collectionReceipt
       .groupBy({
         by: ['status'],
         where: { branchUnitId, companyId, deletedAt: null },
@@ -399,68 +399,68 @@ export class BillingService {
       })
       .then((groups) => {
         const statistics = {
-          cancelledInvoices: 0,
-          disapprovedInvoices: 0,
-          draftInvoices: 0,
-          forApprovalInvoices: 0,
-          postedInvoices: 0,
-          totalInvoices: 0,
+          cancelledReceipts: 0,
+          disapprovedReceipts: 0,
+          draftReceipts: 0,
+          forApprovalReceipts: 0,
+          postedReceipts: 0,
+          totalReceipts: 0,
         };
 
         for (const group of groups) {
           const count = group._count._all;
 
-          statistics.totalInvoices += count;
-          if (group.status === BillingStatus.CANCELLED) statistics.cancelledInvoices += count;
-          if (group.status === BillingStatus.DISAPPROVED) statistics.disapprovedInvoices += count;
-          if (group.status === BillingStatus.DRAFT) statistics.draftInvoices += count;
-          if (group.status === BillingStatus.FOR_APPROVAL) statistics.forApprovalInvoices += count;
-          if (group.status === BillingStatus.POSTED) statistics.postedInvoices += count;
+          statistics.totalReceipts += count;
+          if (group.status === CollectionReceiptStatus.CANCELLED) statistics.cancelledReceipts += count;
+          if (group.status === CollectionReceiptStatus.DISAPPROVED) statistics.disapprovedReceipts += count;
+          if (group.status === CollectionReceiptStatus.DRAFT) statistics.draftReceipts += count;
+          if (group.status === CollectionReceiptStatus.FOR_APPROVAL) statistics.forApprovalReceipts += count;
+          if (group.status === CollectionReceiptStatus.POSTED) statistics.postedReceipts += count;
         }
 
         return statistics;
       });
   }
 
-  private async mapInvoicesWithAuditUsers(invoices: BillingWithDetails[]) {
+  private async mapReceiptsWithAuditUsers(receipts: CollectionReceiptWithDetails[]) {
     const userNames = await resolveAuditUserNames(
       this.prisma,
-      invoices.flatMap((invoice) => [invoice.createdByUserId, invoice.updatedByUserId]),
+      receipts.flatMap((receipt) => [receipt.createdByUserId, receipt.updatedByUserId]),
     );
 
-    return invoices.map((invoice) => mapBilling(invoice, userNames));
+    return receipts.map((receipt) => mapCollectionReceipt(receipt, userNames));
   }
 
-  private async findInvoiceOrThrow(companyId: number, id: bigint, branchUnitId?: number) {
-    const invoice = await this.prisma.billing.findFirst({
+  private async findReceiptOrThrow(companyId: number, id: bigint, branchUnitId?: number) {
+    const receipt = await this.prisma.collectionReceipt.findFirst({
       where: {
         ...(branchUnitId ? { branchUnitId } : {}),
         companyId,
         deletedAt: null,
         id,
       },
-      include: BillingInclude,
+      include: CollectionReceiptInclude,
     });
 
-    if (!invoice) {
-      throw new NotFoundException('billing not found.');
+    if (!receipt) {
+      throw new NotFoundException('Collection receipt not found.');
     }
 
-    return (await this.attachJournalEntries([invoice]))[0];
+    return (await this.attachJournalEntries([receipt]))[0];
   }
 
   private async attachJournalEntries(
-    invoices: Prisma.BillingGetPayload<{ include: typeof BillingInclude }>[],
+    receipts: Prisma.CollectionReceiptGetPayload<{ include: typeof CollectionReceiptInclude }>[],
     tx: PrismaWriteClient = this.prisma,
-  ): Promise<BillingWithDetails[]> {
-    if (invoices.length === 0) {
+  ): Promise<CollectionReceiptWithDetails[]> {
+    if (receipts.length === 0) {
       return [];
     }
 
     const journalHeaders = await tx.journalEntryHeader.findMany({
       where: {
-        referenceId: { in: invoices.map((invoice) => invoice.id) },
-        referenceType: BillingReferenceType,
+        referenceId: { in: receipts.map((receipt) => receipt.id) },
+        referenceType: CollectionReceiptReferenceType,
       },
       include: {
         details: {
@@ -468,7 +468,7 @@ export class BillingService {
         },
       },
     });
-    const entriesByReferenceId = new Map<string, BillingWithDetails['journalEntries']>();
+    const entriesByReferenceId = new Map<string, CollectionReceiptWithDetails['journalEntries']>();
 
     for (const header of journalHeaders) {
       entriesByReferenceId.set(
@@ -485,13 +485,13 @@ export class BillingService {
       );
     }
 
-    return invoices.map((invoice) => ({
-      ...invoice,
-      journalEntries: entriesByReferenceId.get(invoice.id.toString()) ?? [],
+    return receipts.map((receipt) => ({
+      ...receipt,
+      journalEntries: entriesByReferenceId.get(receipt.id.toString()) ?? [],
     }));
   }
 
-  private async resolveInvoiceReferences(tx: PrismaWriteClient, companyId: number, dto: CreateBillingDto) {
+  private async resolveReceiptReferences(tx: PrismaWriteClient, companyId: number, dto: CreateCollectionReceiptDto) {
     const [party, receivableAccount, term, details, journalEntries] = await Promise.all([
       this.resolveParty(tx, companyId, { partyCode: dto.customerCode, partyId: dto.partyId }),
       this.resolvePostingAccount(tx, companyId, {
@@ -507,7 +507,7 @@ export class BillingService {
     return { details, journalEntries, party, receivableAccount, term };
   }
 
-  private async resolveDetailLine(tx: PrismaWriteClient, companyId: number, input: BillingDetailDto): Promise<ResolvedDetailLine> {
+  private async resolveDetailLine(tx: PrismaWriteClient, companyId: number, input: CollectionReceiptDetailDto): Promise<ResolvedDetailLine> {
     return {
       input,
       responsibilityCenter: await this.resolveResponsibilityCenter(tx, companyId, {
@@ -518,7 +518,7 @@ export class BillingService {
     };
   }
 
-  private async resolveJournalEntry(tx: PrismaWriteClient, companyId: number, input: BillingJournalEntryDto): Promise<ResolvedJournalEntry> {
+  private async resolveJournalEntry(tx: PrismaWriteClient, companyId: number, input: CollectionReceiptJournalEntryDto): Promise<ResolvedJournalEntry> {
     return {
       account: await this.resolvePostingAccount(tx, companyId, {
         accountCode: input.accountCode,
@@ -534,9 +534,9 @@ export class BillingService {
     };
   }
 
-  private async replaceDetails(tx: Prisma.TransactionClient, billingId: bigint, companyId: number, branchUnitId: number, details: ResolvedDetailLine[]) {
-    await tx.billingDetails.deleteMany({ where: { billingId } });
-    await tx.billingDetails.createMany({
+  private async replaceDetails(tx: Prisma.TransactionClient, collectionReceiptId: bigint, companyId: number, branchUnitId: number, details: ResolvedDetailLine[]) {
+    await tx.collectionReceiptDetails.deleteMany({ where: { collectionReceiptId } });
+    await tx.collectionReceiptDetails.createMany({
       data: details.map(({ input, responsibilityCenter }) => ({
         amount: roundToDecimal(input.amount, 2),
         branchUnitId,
@@ -553,7 +553,7 @@ export class BillingService {
         quantity: roundToDecimal(input.quantity, 4),
         responsibilityCenterId: responsibilityCenter?.id ?? null,
         responsibilityCenterSnapshot: responsibilityCenter?.name ?? cleanOptional(input.responsibilityCenter),
-        billingId,
+        collectionReceiptId,
         vatAmount: roundToDecimal(input.vatAmount, 2),
         vatInclusive: input.vatInclusive,
         vatType: cleanOptional(input.vatType),
@@ -568,7 +568,7 @@ export class BillingService {
 
   private async replaceJournalEntries(
     tx: Prisma.TransactionClient,
-    billingId: bigint,
+    collectionReceiptId: bigint,
     companyId: number,
     branchUnitId: number,
     currencyCode: string,
@@ -577,8 +577,8 @@ export class BillingService {
   ) {
     await tx.journalEntryHeader.deleteMany({
       where: {
-        referenceId: billingId,
-        referenceType: BillingReferenceType,
+        referenceId: collectionReceiptId,
+        referenceType: CollectionReceiptReferenceType,
       },
     });
 
@@ -599,9 +599,9 @@ export class BillingService {
         exchangeRate,
         jeno,
         particulars: cleanOptional(journalEntries[0]?.input.particulars),
-        referenceId: billingId,
+        referenceId: collectionReceiptId,
         referenceNo: cleanOptional(journalEntries[0]?.input.refNo),
-        referenceType: BillingReferenceType,
+        referenceType: CollectionReceiptReferenceType,
         status: 'Draft',
         totalCredit: totals.credit,
         totalDebit: totals.debit,
@@ -644,7 +644,7 @@ export class BillingService {
     return resolveTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
-      moduleCode: BillingModuleCode,
+      moduleCode: CollectionReceiptModuleCode,
       requestedTransactionNumber: requestedTransactionNo,
       isIssued: (transactionNo, context) => this.isTransactionNoIssued(tx, companyId, branchUnitId, transactionNo, context.scope),
     });
@@ -656,13 +656,13 @@ export class BillingService {
       branchUnitId,
       companyId,
       currentTransactionNo,
-      excludedInvoiceId,
+      excludedReceiptId,
       requestedTransactionNo,
     }: {
       branchUnitId: number;
       companyId: number;
       currentTransactionNo: string;
-      excludedInvoiceId: bigint;
+      excludedReceiptId: bigint;
       requestedTransactionNo?: string | null;
     },
   ) {
@@ -675,20 +675,20 @@ export class BillingService {
     const sequence = await findTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
-      moduleCode: BillingModuleCode,
+      moduleCode: CollectionReceiptModuleCode,
     });
 
     if (sequence?.inputMode !== TransactionNumberInputMode.MANUAL) {
-      throw new BadRequestException('billing transaction number is auto-generated for this branch and cannot be changed manually.');
+      throw new BadRequestException('Collection receipt transaction number is auto-generated for this branch and cannot be changed manually.');
     }
 
     const sequenceScope = await resolveTransactionNumberScopeForCompanyBranch(tx, {
       branchUnitId,
       companyId,
-      moduleCode: BillingModuleCode,
+      moduleCode: CollectionReceiptModuleCode,
     });
 
-    await this.ensureTransactionNoAvailable(tx, companyId, branchUnitId, nextTransactionNo, excludedInvoiceId, sequenceScope.scope);
+    await this.ensureTransactionNoAvailable(tx, companyId, branchUnitId, nextTransactionNo, excludedReceiptId, sequenceScope.scope);
     return nextTransactionNo;
   }
 
@@ -743,7 +743,7 @@ export class BillingService {
     }
 
     if (!party.partyTypes.some((partyType) => CustomerPartyTypes.has(partyType))) {
-      throw new BadRequestException('Party must be a customer or member for billing.');
+      throw new BadRequestException('Party must be a customer or member for collection receipt.');
     }
 
     return party;
@@ -802,25 +802,25 @@ export class BillingService {
     return center;
   }
 
-  private async ensureTransactionNoAvailable(tx: PrismaWriteClient, companyId: number, branchUnitId: number, transactionNo: string, excludedInvoiceId?: bigint, scope: 'all' | 'branch' = 'branch') {
-    const existing = await tx.billing.findFirst({
+  private async ensureTransactionNoAvailable(tx: PrismaWriteClient, companyId: number, branchUnitId: number, transactionNo: string, excludedReceiptId?: bigint, scope: 'all' | 'branch' = 'branch') {
+    const existing = await tx.collectionReceipt.findFirst({
       where: {
         ...(scope === 'branch' ? { branchUnitId } : {}),
         companyId,
         deletedAt: null,
-        id: excludedInvoiceId ? { not: excludedInvoiceId } : undefined,
+        id: excludedReceiptId ? { not: excludedReceiptId } : undefined,
         transactionNo: { equals: transactionNo, mode: 'insensitive' },
       },
       select: { id: true },
     });
 
     if (existing) {
-      throw new ConflictException('A billing with this transaction number already exists for this branch.');
+      throw new ConflictException('A collection receipt with this transaction number already exists for this branch.');
     }
   }
 
   private isTransactionNoIssued(tx: PrismaWriteClient, companyId: number, branchUnitId: number, transactionNo: string, scope: 'all' | 'branch' = 'branch') {
-    return tx.billing
+    return tx.collectionReceipt
       .findFirst({
         where: {
           ...(scope === 'branch' ? { branchUnitId } : {}),
@@ -851,43 +851,43 @@ export class BillingService {
     return branch.id;
   }
 
-  private ensureStatusTransitionAllowed(currentStatus: BillingStatus, targetStatus: BillingStatus) {
-    const allowedStatuses: Record<BillingStatus, BillingStatus[]> = {
-      [BillingStatus.CANCELLED]: [],
-      [BillingStatus.DISAPPROVED]: [BillingStatus.DRAFT],
-      [BillingStatus.DRAFT]: [BillingStatus.CANCELLED, BillingStatus.DISAPPROVED, BillingStatus.FOR_APPROVAL],
-      [BillingStatus.FOR_APPROVAL]: [BillingStatus.CANCELLED, BillingStatus.DISAPPROVED, BillingStatus.POSTED],
-      [BillingStatus.POSTED]: [],
+  private ensureStatusTransitionAllowed(currentStatus: CollectionReceiptStatus, targetStatus: CollectionReceiptStatus) {
+    const allowedStatuses: Record<CollectionReceiptStatus, CollectionReceiptStatus[]> = {
+      [CollectionReceiptStatus.CANCELLED]: [],
+      [CollectionReceiptStatus.DISAPPROVED]: [CollectionReceiptStatus.DRAFT],
+      [CollectionReceiptStatus.DRAFT]: [CollectionReceiptStatus.CANCELLED, CollectionReceiptStatus.DISAPPROVED, CollectionReceiptStatus.FOR_APPROVAL],
+      [CollectionReceiptStatus.FOR_APPROVAL]: [CollectionReceiptStatus.CANCELLED, CollectionReceiptStatus.DISAPPROVED, CollectionReceiptStatus.POSTED],
+      [CollectionReceiptStatus.POSTED]: [],
     };
 
     if (!allowedStatuses[currentStatus].includes(targetStatus)) {
-      throw new BadRequestException(`Cannot move billing from ${currentStatus} to ${targetStatus}.`);
+      throw new BadRequestException(`Cannot move collection receipt from ${currentStatus} to ${targetStatus}.`);
     }
   }
 
-  private getStatusAuditData(targetStatus: BillingStatus, userId: number): Prisma.BillingUncheckedUpdateInput {
+  private getStatusAuditData(targetStatus: CollectionReceiptStatus, userId: number): Prisma.CollectionReceiptUncheckedUpdateInput {
     const now = new Date();
 
-    if (targetStatus === BillingStatus.FOR_APPROVAL) {
+    if (targetStatus === CollectionReceiptStatus.FOR_APPROVAL) {
       return { approvedAt: now, approvedByUserId: userId };
     }
 
-    if (targetStatus === BillingStatus.DISAPPROVED) {
+    if (targetStatus === CollectionReceiptStatus.DISAPPROVED) {
       return { disapprovedAt: now, disapprovedByUserId: userId };
     }
 
-    if (targetStatus === BillingStatus.CANCELLED) {
+    if (targetStatus === CollectionReceiptStatus.CANCELLED) {
       return { cancelledAt: now, cancelledByUserId: userId };
     }
 
-    if (targetStatus === BillingStatus.POSTED) {
+    if (targetStatus === CollectionReceiptStatus.POSTED) {
       return { postedAt: now, postedByUserId: userId };
     }
 
     return {};
   }
 
-  private normalizeInvoiceInput(dto: CreateBillingDto) {
+  private normalizeReceiptInput(dto: CreateCollectionReceiptDto) {
     const currencyCode = cleanCurrencyCode(dto.currency);
 
     if (!currencyCode) {
@@ -908,8 +908,8 @@ export class BillingService {
     };
   }
 
-  private requireCompleteUpdateDto(dto: UpdateBillingDto): CreateBillingDto {
-    const requiredFields: Array<keyof CreateBillingDto> = [
+  private requireCompleteUpdateDto(dto: UpdateCollectionReceiptDto): CreateCollectionReceiptDto {
+    const requiredFields: Array<keyof CreateCollectionReceiptDto> = [
       'customerCode',
       'customerName',
       'currency',
@@ -930,11 +930,11 @@ export class BillingService {
 
     for (const field of requiredFields) {
       if (dto[field] === undefined || dto[field] === null) {
-        throw new BadRequestException(`Field ${String(field)} is required when updating a billing.`);
+        throw new BadRequestException(`Field ${String(field)} is required when updating a collection receipt.`);
       }
     }
 
-    return dto as CreateBillingDto;
+    return dto as CreateCollectionReceiptDto;
   }
 
   private normalizeStatus(status: string) {
@@ -943,11 +943,11 @@ export class BillingService {
       .toUpperCase()
       .replace(/[\s-]+/g, '_');
 
-    if (!Object.values(BillingStatus).includes(normalized as BillingStatus)) {
-      throw new BadRequestException('Invalid billing status.');
+    if (!Object.values(CollectionReceiptStatus).includes(normalized as CollectionReceiptStatus)) {
+      throw new BadRequestException('Invalid collection receipt status.');
     }
 
-    return normalized as BillingStatus;
+    return normalized as CollectionReceiptStatus;
   }
 
   private parseDate(value: string, label: string) {
@@ -1010,11 +1010,11 @@ export class BillingService {
       return;
     }
 
-    if (user.companyId === companyId && user.permissions.includes(`${BillingModuleCode}:${action}`)) {
+    if (user.companyId === companyId && user.permissions.includes(`${CollectionReceiptModuleCode}:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException('You do not have permission to manage billings.');
+    throw new ForbiddenException('You do not have permission to manage collection receipts.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -1035,7 +1035,7 @@ export class BillingService {
       return true;
     }
 
-    return user.companyId === companyId && user.permissions.includes(`${BillingModuleCode}:${action}`);
+    return user.companyId === companyId && user.permissions.includes(`${CollectionReceiptModuleCode}:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -1048,7 +1048,7 @@ export class BillingService {
 
   private throwFriendlyPrismaError(error: unknown) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('A billing with this transaction number already exists for this branch.');
+      throw new ConflictException('A collection receipt with this transaction number already exists for this branch.');
     }
   }
 }

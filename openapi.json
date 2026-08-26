@@ -16141,6 +16141,7 @@
         "properties": {
           "code": {
             "type": "string",
+            "nullable": true,
             "maxLength": 64
           },
           "name": {
@@ -16161,7 +16162,6 @@
           }
         },
         "required": [
-          "code",
           "name"
         ]
       },
@@ -16212,12 +16212,12 @@
             "maxLength": 500
           },
           "itemType": {
-            "type": "string",
             "enum": [
               "SECTION",
               "CONTAINER",
               "LINK"
-            ]
+            ],
+            "type": "string"
           },
           "moduleId": {
             "type": "number",
@@ -16273,24 +16273,24 @@
         "type": "object",
         "properties": {
           "billingCycle": {
-            "type": "string",
             "enum": [
               "MONTHLY",
               "QUARTERLY",
               "YEARLY"
-            ]
+            ],
+            "type": "string"
           },
           "intervalCount": {
             "type": "number",
             "minimum": 1
           },
           "intervalUnit": {
-            "type": "string",
             "enum": [
               "DAY",
               "MONTH",
               "YEAR"
-            ]
+            ],
+            "type": "string"
           },
           "priceInCents": {
             "type": "number",
@@ -16313,13 +16313,13 @@
         "type": "object",
         "properties": {
           "metric": {
-            "type": "string",
             "enum": [
-              "USER",
-              "BRANCH",
               "COMPANY",
-              "SATELLITE"
-            ]
+              "BRANCH",
+              "SATELLITE",
+              "USER"
+            ],
+            "type": "string"
           },
           "freeCount": {
             "type": "number",
@@ -16340,13 +16340,13 @@
         "type": "object",
         "properties": {
           "metric": {
-            "type": "string",
             "enum": [
-              "USER",
-              "BRANCH",
               "COMPANY",
-              "SATELLITE"
-            ]
+              "BRANCH",
+              "SATELLITE",
+              "USER"
+            ],
+            "type": "string"
           },
           "thresholdCount": {
             "type": "number",
@@ -16369,7 +16369,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "minLength": 2,
+            "nullable": true,
             "maxLength": 64
           },
           "name": {
@@ -16384,16 +16384,28 @@
           },
           "scope": {
             "enum": [
+              "ALL",
               "ONBOARDING",
               "ADDITIONAL_COMPANY"
             ],
             "type": "string"
           },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ALL",
+                "ONBOARDING",
+                "ADDITIONAL_COMPANY"
+              ]
+            }
+          },
           "status": {
             "enum": [
               "ACTIVE",
-              "INACTIVE",
-              "DRAFT"
+              "DRAFT",
+              "INACTIVE"
             ],
             "type": "string"
           },
@@ -16429,14 +16441,10 @@
           }
         },
         "required": [
-          "code",
           "name",
-          "scope",
           "status",
           "trialDays",
           "prices",
-          "usageRules",
-          "discountTiers",
           "systemCodes"
         ]
       },

@@ -55,8 +55,7 @@ export class ModuleSystemsService {
   }
 
   async createSystem(dto: UpsertModuleSystemDto) {
-    const code = this.normalizeCode(dto.code);
-    await this.assertUniqueCode(code);
+    const code = await this.resolveSystemCode(dto.code, dto.name);
 
     const system = await this.prisma.moduleSystem.create({
       data: {
@@ -79,8 +78,11 @@ export class ModuleSystemsService {
 
   async updateSystem(systemId: number, dto: UpsertModuleSystemDto) {
     const existing = await this.findSystem(systemId);
-    const code = this.normalizeCode(dto.code);
-    if (code !== existing.code) await this.assertUniqueCode(code);
+    let code = existing.code;
+    if (dto.code?.trim()) {
+      code = this.normalizeCode(dto.code);
+      if (code !== existing.code) await this.assertUniqueCode(code);
+    }
 
     const system = await this.prisma.moduleSystem.update({
       where: { id: systemId },
@@ -95,6 +97,38 @@ export class ModuleSystemsService {
     });
 
     return { message: 'System updated.', system: this.mapSystem(system) };
+  }
+
+  private async resolveSystemCode(providedCode: string | null | undefined, name: string): Promise<string> {
+    if (providedCode?.trim()) {
+      const code = this.normalizeCode(providedCode);
+      await this.assertUniqueCode(code);
+      return code;
+    }
+
+    const baseCode = this.slugifyToCode(name);
+    let candidateCode = baseCode;
+    let counter = 1;
+    while (true) {
+      const existing = await this.prisma.moduleSystem.findUnique({
+        where: { code: candidateCode },
+        select: { id: true },
+      });
+      if (!existing) {
+        return candidateCode;
+      }
+      counter += 1;
+      candidateCode = `${baseCode}_${counter}`;
+    }
+  }
+
+  private slugifyToCode(value: string) {
+    const slug = value
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    return slug || 'SYSTEM';
   }
 
   async updateStatus(systemId: number, dto: UpdateModuleSystemStatusDto) {
