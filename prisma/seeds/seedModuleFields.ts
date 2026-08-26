@@ -202,6 +202,10 @@ function discoverColumnLabelFields(moduleCode: string, sourcePath: string, text:
   const columnLabelsPattern = /(?:export\s+const\s+)?([a-zA-Z0-9_]*ColumnLabels|columnLabels)\s*[:=][\s\S]*?\{([\s\S]*?)\};?/g;
   let blockMatch: RegExpExecArray | null;
 
+  if (isAccountingEntrySource(sourcePath)) {
+    return fields;
+  }
+
   while ((blockMatch = columnLabelsPattern.exec(text))) {
     const variableName = blockMatch[1] ?? '';
     if (!isEntryColumnLabelsVariable(variableName)) continue;
@@ -235,7 +239,19 @@ function discoverColumnLabelFields(moduleCode: string, sourcePath: string, text:
 
 function isEntryColumnLabelsVariable(variableName: string) {
   const normalized = variableName.toLowerCase();
-  return /(accounting|dataentry|detail|details|entry|expense|grid|item|line|payable)/.test(normalized);
+  if (normalized.includes('accounting')) return false;
+  return /(dataentry|detail|details|entry|expense|grid|item|line|payable)/.test(normalized);
+}
+
+function isAccountingEntrySource(sourcePath: string) {
+  const normalized = sourcePath.toLowerCase();
+  return (
+    normalized.includes('accounting-grid') ||
+    normalized.includes('accountingtable') ||
+    normalized.includes('accounting-entry') ||
+    normalized.includes('accountingentry') ||
+    normalized.includes('accountinggrid')
+  );
 }
 
 function collectSourceFiles(directory: string): string[] {
