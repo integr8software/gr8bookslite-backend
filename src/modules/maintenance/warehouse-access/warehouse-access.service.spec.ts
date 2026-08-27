@@ -38,7 +38,10 @@ describe('WarehouseAccessService company directory', () => {
       },
     ]);
 
-    const result = await service.findDirectoryUsers({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, { search: ' ana ' });
+    const result = await service.findDirectoryUsers(
+      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
+      { search: ' ana ' },
+    );
 
     expect(prisma.membership.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

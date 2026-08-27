@@ -361,17 +361,15 @@ export class ServicesMaintenanceService {
       orderBy: [{ accountCode: 'asc' }],
     });
 
-    return accounts
-      .filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag))
-      .map((account) => ({
-        id: account.id.toString(),
-        accountNumber: account.accountCode,
-        accountName: account.accountTitle,
-        description: account.description ?? '',
-        accountType: account.accountType ?? '',
-        accountCategory: account.accountLevel === ChartAccountLevel.SPECIFIC ? 'Detail' : 'Header',
-        status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
-      }));
+    return accounts.filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag)).map((account) => ({
+      id: account.id.toString(),
+      accountNumber: account.accountCode,
+      accountName: account.accountTitle,
+      description: account.description ?? '',
+      accountType: account.accountType ?? '',
+      accountCategory: account.accountLevel === ChartAccountLevel.SPECIFIC ? 'Detail' : 'Header',
+      status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
+    }));
   }
 
   private async ensureSelectedRevenueAccountIsValid(companyId: number, revenueCoaId: bigint, tx: ServicesMaintenancePrismaClient) {

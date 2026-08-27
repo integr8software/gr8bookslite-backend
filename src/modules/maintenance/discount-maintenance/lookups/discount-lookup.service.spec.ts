@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matchers are typed as any. */
 import { DiscountStatus, DiscountType, DiscountValueType, Prisma } from '@prisma/client';
 import { DiscountLookupService } from './discount-lookup.service';
 

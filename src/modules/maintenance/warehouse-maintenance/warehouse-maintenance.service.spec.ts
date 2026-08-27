@@ -17,7 +17,9 @@ describe('WarehouseMaintenanceService branch ownership', () => {
     const { prisma, service } = createService();
     prisma.companyUnit.findMany.mockResolvedValue([{ id: 101 }, { id: 102 }]);
 
-    await expect(callPrivate(service, 'resolveBranchUnitIds', 11, [101, 102, 101], WarehouseBranchAvailabilityMode.SPECIFIC)).resolves.toEqual([101, 102]);
+    await expect(
+      callPrivate(service, 'resolveBranchUnitIds', 11, [101, 102, 101], WarehouseBranchAvailabilityMode.SPECIFIC),
+    ).resolves.toEqual([101, 102]);
     expect(prisma.companyUnit.findMany).toHaveBeenCalledWith({
       where: { id: { in: [101, 102] }, companyId: 11, isActive: true },
       select: { id: true },
@@ -28,7 +30,9 @@ describe('WarehouseMaintenanceService branch ownership', () => {
     const { prisma, service } = createService();
     prisma.companyUnit.findMany.mockResolvedValue([{ id: 101 }]);
 
-    await expect(callPrivate(service, 'resolveBranchUnitIds', 11, [101, 999], WarehouseBranchAvailabilityMode.SPECIFIC)).rejects.toThrow(BadRequestException);
+    await expect(
+      callPrivate(service, 'resolveBranchUnitIds', 11, [101, 999], WarehouseBranchAvailabilityMode.SPECIFIC),
+    ).rejects.toThrow(BadRequestException);
   });
 });
 

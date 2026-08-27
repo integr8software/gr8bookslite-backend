@@ -33,3 +33,4 @@ export type SuggestTransactionNumberOptions = TransactionNumberContext &
   TransactionNumberFallbackOptions & {
     isIssued?: TransactionNumberIssueCheck;
   };
+

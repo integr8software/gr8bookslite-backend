@@ -3,7 +3,11 @@ import { Prisma } from '@prisma/client';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpsertApprovalWorkflowDto } from './dto/upsert-approval-workflow.dto';
-import { ApprovalRuleInclude, ApprovalRulePayload, mapApprovalRulesToWorkflows } from './mappers/approval-workflow.mapper';
+import {
+  ApprovalRuleInclude,
+  ApprovalRulePayload,
+  mapApprovalRulesToWorkflows,
+} from './mappers/approval-workflow.mapper';
 
 @Injectable()
 export class ApprovalManagementService {
@@ -73,9 +77,15 @@ export class ApprovalManagementService {
       });
 
       const stageBySequence = new Map(dto.stages.map((stage) => [stage.sequence, stage]));
-      const selectedApproverIds = [...new Set(dto.stages.flatMap((stage) => stage.approverIds))];
+      const selectedApproverIds = [
+        ...new Set(dto.stages.flatMap((stage) => stage.approverIds)),
+      ];
       const sourceApproverSetupIds = [
-        ...new Set(dto.stages.map((stage) => stage.sourceApproverSetupId?.trim()).filter((setupId): setupId is string => Boolean(setupId))),
+        ...new Set(
+          dto.stages
+            .map((stage) => stage.sourceApproverSetupId?.trim())
+            .filter((setupId): setupId is string => Boolean(setupId)),
+        ),
       ];
       const sourceApproverSetups = (await approvalTx.approverSetup.findMany({
         where: {
@@ -107,13 +117,17 @@ export class ApprovalManagementService {
         },
       })) as ApproverSetupWithUsers[];
 
-      const foundSourceApproverSetupIds = new Set(sourceApproverSetups.map((setup) => setup.id));
+      const foundSourceApproverSetupIds = new Set(
+        sourceApproverSetups.map((setup) => setup.id),
+      );
 
       if (sourceApproverSetupIds.some((setupId) => !foundSourceApproverSetupIds.has(setupId))) {
         throw new BadRequestException('Choose approver setup records that still exist for this module.');
       }
 
-      const sourceApproverSetupById = new Map(sourceApproverSetups.map((setup) => [setup.id, setup]));
+      const sourceApproverSetupById = new Map(
+        sourceApproverSetups.map((setup) => [setup.id, setup]),
+      );
 
       const routingRules = dto.routingRules.length
         ? dto.routingRules
@@ -124,7 +138,9 @@ export class ApprovalManagementService {
               basis: 'default' as const,
               name: 'Otherwise',
               sequence: 1,
-              stageSequences: [...stageBySequence.keys()].sort((first, second) => first - second),
+              stageSequences: [...stageBySequence.keys()].sort(
+                (first, second) => first - second,
+              ),
             },
           ];
 
@@ -136,23 +152,25 @@ export class ApprovalManagementService {
         }
 
         const approvalPath = selectedStages.map((stage, index) => {
-          const selectedStage = stage as (typeof dto.stages)[number];
-          const userId = selectedStage.approverIds[0];
-          const sourceSetupId = selectedStage.sourceApproverSetupId?.trim();
-          const sourceSetup = sourceSetupId
-            ? sourceApproverSetupById.get(sourceSetupId)
-            : sourceApproverSetups.find((setup) => setup.approvers.some((approver) => approver.userId === userId));
+            const selectedStage = stage as (typeof dto.stages)[number];
+            const userId = selectedStage.approverIds[0];
+            const sourceSetupId = selectedStage.sourceApproverSetupId?.trim();
+            const sourceSetup = sourceSetupId
+              ? sourceApproverSetupById.get(sourceSetupId)
+              : sourceApproverSetups.find((setup) =>
+                  setup.approvers.some((approver) => approver.userId === userId),
+                );
 
-          if (!sourceSetup?.approvers.some((approver) => approver.userId === userId)) {
-            throw new BadRequestException('Choose approvers that still belong to the selected approver setup.');
-          }
+            if (!sourceSetup?.approvers.some((approver) => approver.userId === userId)) {
+              throw new BadRequestException('Choose approvers that still belong to the selected approver setup.');
+            }
 
-          return {
-            approverSetupId: sourceSetup.id,
-            userId,
-            sequence: index + 1,
-          };
-        });
+            return {
+              approverSetupId: sourceSetup.id,
+              userId,
+              sequence: index + 1,
+            };
+          });
         const primaryApproverSetupId = approvalPath[0]?.approverSetupId;
 
         if (!primaryApproverSetupId) {
@@ -278,7 +296,9 @@ export class ApprovalManagementService {
     });
 
     return {
-      transactions: transactions.map((transaction) => mapApprovalTransaction(transaction as ApprovalTransactionPayload, user.id)),
+      transactions: transactions.map((transaction) =>
+        mapApprovalTransaction(transaction as ApprovalTransactionPayload, user.id),
+      ),
     };
   }
 
@@ -298,7 +318,9 @@ export class ApprovalManagementService {
     }
 
     const approvalTransaction = transaction as ApprovalTransactionPayload;
-    const approvers = [...approvalTransaction.approvers].sort((first, second) => first.sequence - second.sequence);
+    const approvers = [...approvalTransaction.approvers].sort(
+      (first, second) => first.sequence - second.sequence,
+    );
     const currentApprover = approvers.find((approver) => approver.status !== ApprovalStatusApproved);
     const selectedApprover = approvers.find((approver) => approver.userId === user.id);
     const isSequential = isSequentialApprovalRule(approvalTransaction.rule.ruleType);
@@ -308,8 +330,8 @@ export class ApprovalManagementService {
     }
 
     if (!selectedApprover || selectedApprover.status === ApprovalStatusApproved) {
-      throw new BadRequestException('You are not a pending approver for this transaction.');
-    }
+	  throw new BadRequestException('You are not a pending approver for this transaction.');
+	}
 
     if (isSequential && currentApprover.userId !== user.id) {
       throw new BadRequestException(`Waiting for ${currentApprover.user.name} to approve first.`);
@@ -328,7 +350,9 @@ export class ApprovalManagementService {
       },
     });
 
-    const pendingApproverCount = approvers.filter((approver) => approver.userId !== user.id && approver.status !== ApprovalStatusApproved).length;
+    const pendingApproverCount = approvers.filter(
+      (approver) => approver.userId !== user.id && approver.status !== ApprovalStatusApproved,
+    ).length;
     await db.approvalTransaction.update({
       where: {
         id: transactionId,
@@ -369,7 +393,9 @@ export class ApprovalManagementService {
     }
 
     const approvalTransaction = transaction as ApprovalTransactionPayload;
-    const approvers = [...approvalTransaction.approvers].sort((first, second) => first.sequence - second.sequence);
+    const approvers = [...approvalTransaction.approvers].sort(
+      (first, second) => first.sequence - second.sequence,
+    );
     const currentApprover = approvers.find((approver) => approver.status !== ApprovalStatusApproved);
     const selectedApprover = approvers.find((approver) => approver.userId === user.id);
     const isSequential = isSequentialApprovalRule(approvalTransaction.rule.ruleType);
@@ -379,8 +405,8 @@ export class ApprovalManagementService {
     }
 
     if (!selectedApprover || selectedApprover.status === ApprovalStatusApproved) {
-      throw new BadRequestException('You are not a pending approver for this transaction.');
-    }
+	  throw new BadRequestException('You are not a pending approver for this transaction.');
+	}
 
     if (isSequential && currentApprover.userId !== user.id) {
       throw new BadRequestException(`Waiting for ${currentApprover.user.name} to approve first.`);
@@ -441,7 +467,9 @@ export class ApprovalManagementService {
   }
 
   private async assertApproversBelongToCompany(companyId: number, dto: UpsertApprovalWorkflowDto) {
-    const approverIds = [...new Set(dto.stages.flatMap((stage) => stage.approverIds))];
+    const approverIds = [
+      ...new Set(dto.stages.flatMap((stage) => stage.approverIds)),
+    ];
     const users = await this.prisma.user.findMany({
       where: {
         id: {
@@ -559,7 +587,7 @@ type ApprovalRulePrismaClient = {
   };
   approvalTransaction: {
     create: (args: Record<string, unknown>) => Promise<unknown>;
-    findFirst: (args: Record<string, unknown>) => Promise<unknown>;
+    findFirst: (args: Record<string, unknown>) => Promise<unknown | null>;
     findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
     update: (args: Record<string, unknown>) => Promise<unknown>;
   };
@@ -642,31 +670,43 @@ type RuleApprovalPathEntry = {
 };
 
 function getRuleApprovalPath(rule: ApprovalRuleSeedPayload): RuleApprovalPathEntry[] {
-  return rule.approverSetup.approvers
-    .map((approver) => ({
-      sequence: approver.sequence,
-      userId: approver.userId,
-    }))
-    .sort((first, second) => first.sequence - second.sequence);
+	return rule.approverSetup.approvers
+		.map((approver) => ({
+			sequence: approver.sequence,
+			userId: approver.userId,
+		}))
+		.sort((first, second) => first.sequence - second.sequence);
 }
 
 function createSeedTransactionAmount(amountValue: string, index: number) {
   const baseAmount = Number(amountValue.replaceAll(',', '').trim());
-  const amount = Number.isFinite(baseAmount) && baseAmount > 0 ? baseAmount + index * 1250 : 10000 + index * 2750;
+  const amount = Number.isFinite(baseAmount) && baseAmount > 0
+    ? baseAmount + index * 1250
+    : 10000 + index * 2750;
 
   return new Prisma.Decimal(amount);
 }
 
 function mapApprovalTransaction(transaction: ApprovalTransactionPayload, currentUserId: number) {
-  const approvers = [...transaction.approvers].sort((first, second) => first.sequence - second.sequence);
+  const approvers = [...transaction.approvers].sort(
+    (first, second) => first.sequence - second.sequence,
+  );
   const isTerminal = transaction.status === ApprovalStatusApproved || transaction.status === ApprovalStatusDisapproved;
-  const firstPendingApprover = isTerminal ? undefined : approvers.find((approver) => approver.status !== ApprovalStatusApproved);
+  const firstPendingApprover = isTerminal
+    ? undefined
+    : approvers.find((approver) => approver.status !== ApprovalStatusApproved);
   const selectedApprover = approvers.find((approver) => approver.userId === currentUserId);
   const isSequential = isSequentialApprovalRule(transaction.rule.ruleType);
   const canCurrentUserAct = Boolean(
-    !isTerminal && selectedApprover?.status !== ApprovalStatusApproved && (!isSequential || firstPendingApprover?.userId === currentUserId),
+    !isTerminal &&
+    selectedApprover?.status !== ApprovalStatusApproved &&
+    (!isSequential || firstPendingApprover?.userId === currentUserId),
   );
-  const currentApprover = isSequential ? firstPendingApprover : canCurrentUserAct ? selectedApprover : firstPendingApprover;
+  const currentApprover = isSequential
+    ? firstPendingApprover
+    : canCurrentUserAct
+      ? selectedApprover
+      : firstPendingApprover;
 
   return {
     id: transaction.id,
@@ -694,4 +734,8 @@ function mapApprovalTransaction(transaction: ApprovalTransactionPayload, current
 
 function isSequentialApprovalRule(ruleType: string) {
   return ruleType === 'amount';
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }

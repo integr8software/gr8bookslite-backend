@@ -5,12 +5,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateBillingInvoiceDto } from './dto/create-billing-invoice.dto';
 import { GetBillingInvoiceListQueryDto } from './dto/get-billing-invoice-list-query.dto';
-import {
-  SaveSalesBillingInvoiceResponseDto,
-  BillingInvoiceContainerResponseDto,
-  BillingInvoiceListResponseDto,
-  BillingInvoiceNumberSuggestionResponseDto,
-} from './dto/billing-invoice-response.dto';
+import { SaveSalesBillingInvoiceResponseDto, BillingInvoiceContainerResponseDto, BillingInvoiceListResponseDto, BillingInvoiceNumberSuggestionResponseDto } from './dto/billing-invoice-response.dto';
 import { UpdateBillingInvoiceStatusDto } from './dto/update-billing-invoice-status.dto';
 import { UpdateBillingInvoiceDto } from './dto/update-billing-invoice.dto';
 import { BillingInvoiceService } from './billing-invoice.service';

@@ -19,12 +19,7 @@ export async function findServiceRevenueParentOrThrow(companyId: number, tx: Ser
   return findSystemAccountGroupOrThrow(tx, companyId, SystemAccountGroups.servicesMaintenance.serviceRevenueParent);
 }
 
-export async function generateNextServiceRevenueAccountCode(
-  companyId: number,
-  parentAccountId: bigint,
-  parentAccountCode: string,
-  tx: ServicesMaintenancePrismaClient,
-) {
+export async function generateNextServiceRevenueAccountCode(companyId: number, parentAccountId: bigint, parentAccountCode: string, tx: ServicesMaintenancePrismaClient) {
   const siblings = await tx.chartAccount.findMany({
     where: {
       companyId,

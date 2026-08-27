@@ -56,13 +56,21 @@ export function mapApprovalRulesToWorkflows(rules: ApprovalRulePayload[]) {
   const rulesByModule = new Map<string, ApprovalRulePayload[]>();
 
   for (const rule of rules) {
-    rulesByModule.set(rule.moduleScope, [...(rulesByModule.get(rule.moduleScope) ?? []), rule]);
+    rulesByModule.set(rule.moduleScope, [
+      ...(rulesByModule.get(rule.moduleScope) ?? []),
+      rule,
+    ]);
   }
 
   return [...rulesByModule.entries()].map(([moduleScope, moduleRules]) => {
-    const sortedRules = [...moduleRules].sort((first, second) => first.routeName.localeCompare(second.routeName));
+    const sortedRules = [...moduleRules].sort((first, second) =>
+      first.routeName.localeCompare(second.routeName),
+    );
     const primaryRule = sortedRules[0];
-    const stageById = new Map<string, { entry: ApprovalRulePathEntry; setup: ApprovalRulePayload['approverSetup'] }>();
+    const stageById = new Map<
+      string,
+      { entry: ApprovalRulePathEntry; setup: ApprovalRulePayload['approverSetup'] }
+    >();
     const stageOrder: string[] = [];
 
     for (const rule of sortedRules) {
@@ -88,6 +96,10 @@ export function mapApprovalRulesToWorkflows(rules: ApprovalRulePayload[]) {
         if (!stage) {
           return null;
         }
+
+        const approver = stage.setup.approvers.find(
+          (setupApprover) => setupApprover.userId === stage.entry.userId,
+        );
 
         return {
           id: stageId,
@@ -123,7 +135,11 @@ export function mapApprovalRulesToWorkflows(rules: ApprovalRulePayload[]) {
       })),
       status: primaryRule.status,
       description: primaryRule.description,
-      updatedAt: sortedRules.reduce((latest, rule) => (rule.updatedAt.getTime() > latest.getTime() ? rule.updatedAt : latest), primaryRule.updatedAt),
+      updatedAt: sortedRules.reduce(
+        (latest, rule) =>
+          rule.updatedAt.getTime() > latest.getTime() ? rule.updatedAt : latest,
+        primaryRule.updatedAt,
+      ),
     };
   });
 }

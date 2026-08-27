@@ -130,7 +130,10 @@ export class MasterPlanAndPackagesService {
 
   private resolveScope(dto: CreateMasterPlanAndPackageDto) {
     if (dto.scopes && dto.scopes.length > 0) {
-      if (dto.scopes.includes('ALL') || (dto.scopes.includes('ONBOARDING') && dto.scopes.includes('ADDITIONAL_COMPANY'))) {
+      if (
+        dto.scopes.includes('ALL') ||
+        (dto.scopes.includes('ONBOARDING') && dto.scopes.includes('ADDITIONAL_COMPANY'))
+      ) {
         return 'ALL';
       }
       if (dto.scopes.includes('ONBOARDING')) {

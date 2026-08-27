@@ -15,9 +15,14 @@ describe('ServicesMaintenanceService service options', () => {
 
   it('returns active services using the backend service name', async () => {
     const { prisma, service } = createService();
-    prisma.serviceMaintenance.findMany.mockResolvedValue([{ id: 18n, serviceName: 'Equipment Installation', status: ChartAccountStatus.ACTIVE }]);
+    prisma.serviceMaintenance.findMany.mockResolvedValue([
+      { id: 18n, serviceName: 'Equipment Installation', status: ChartAccountStatus.ACTIVE },
+    ]);
 
-    const result = await service.findOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, { search: ' installation ' });
+    const result = await service.findOptions(
+      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
+      { search: ' installation ' },
+    );
 
     expect(prisma.serviceMaintenance.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

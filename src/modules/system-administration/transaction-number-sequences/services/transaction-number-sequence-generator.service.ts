@@ -42,7 +42,13 @@ export async function findTransactionNumberForCompanyBranch(
 
 export async function generateTransactionNumberForCompanyBranch(
   tx: TransactionNumberWriteClient,
-  { branchUnitId, companyId, createDefaultIfMissing = false, isIssued, moduleCode }: SuggestTransactionNumberOptions,
+  {
+    branchUnitId,
+    companyId,
+    createDefaultIfMissing = false,
+    isIssued,
+    moduleCode,
+  }: SuggestTransactionNumberOptions,
 ) {
   const sequence = await resolveTransactionNumberSequenceForCompanyBranch(tx, {
     branchUnitId,
@@ -80,7 +86,13 @@ export async function generateTransactionNumberForCompanyBranch(
 
 export async function suggestTransactionNumberForCompanyBranch(
   tx: TransactionNumberWriteClient,
-  { branchUnitId, companyId, createDefaultIfMissing = true, isIssued, moduleCode }: SuggestTransactionNumberOptions,
+  {
+    branchUnitId,
+    companyId,
+    createDefaultIfMissing = true,
+    isIssued,
+    moduleCode,
+  }: SuggestTransactionNumberOptions,
 ) {
   const sequence = await resolveTransactionNumberSequenceForCompanyBranch(tx, {
     branchUnitId,
@@ -118,7 +130,14 @@ export async function suggestTransactionNumberForCompanyBranch(
 
 export async function resolveTransactionNumberForCompanyBranch(
   tx: TransactionNumberWriteClient,
-  { branchUnitId, companyId, createDefaultIfMissing = true, isIssued, moduleCode, requestedTransactionNumber }: ResolveTransactionNumberOptions,
+  {
+    branchUnitId,
+    companyId,
+    createDefaultIfMissing = true,
+    isIssued,
+    moduleCode,
+    requestedTransactionNumber,
+  }: ResolveTransactionNumberOptions,
 ) {
   const sequence = await resolveTransactionNumberSequenceForCompanyBranch(tx, {
     branchUnitId,
@@ -164,7 +183,12 @@ export async function resolveTransactionNumberForCompanyBranch(
 
 export async function resolveTransactionNumberSequenceForCompanyBranch(
   tx: TransactionNumberWriteClient,
-  { branchUnitId, companyId, createDefaultIfMissing = false, moduleCode }: TransactionNumberContext & TransactionNumberFallbackOptions,
+  {
+    branchUnitId,
+    companyId,
+    createDefaultIfMissing = false,
+    moduleCode,
+  }: TransactionNumberContext & TransactionNumberFallbackOptions,
 ) {
   const sequence =
     (await findTransactionNumberForCompanyBranch(tx, {
@@ -193,10 +217,7 @@ export async function resolveTransactionNumberScopeForCompanyBranch(tx: Transact
   return resolveTransactionNumberSequenceScope(tx, context, sequence);
 }
 
-async function createDefaultAutoTransactionNumbersForCompanyModule(
-  tx: TransactionNumberWriteClient,
-  { branchUnitId, companyId, moduleCode }: TransactionNumberContext,
-) {
+async function createDefaultAutoTransactionNumbersForCompanyModule(tx: TransactionNumberWriteClient, { branchUnitId, companyId, moduleCode }: TransactionNumberContext) {
   const module = await tx.module.findFirst({
     where: {
       code: moduleCode,
@@ -356,3 +377,4 @@ async function ensureBranchBelongsToCompany(tx: TransactionNumberWriteClient, { 
     throw new BadRequestException('Select an active branch.');
   }
 }
+

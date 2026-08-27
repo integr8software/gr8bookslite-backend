@@ -9,17 +9,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import {
-  AuthProvider,
-  CompanyStatus,
-  MembershipStatus,
-  MembershipRole,
-  Prisma,
-  SubscriptionStatus,
-  SystemRole,
-  UserStatus,
-  VerificationPurpose,
-} from '@prisma/client';
+import { AuthProvider, CompanyStatus, MembershipStatus, MembershipRole, Prisma, SubscriptionStatus, SystemRole, UserStatus, VerificationPurpose } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
 import { AccessControlService } from '../../common/access/access-control.service';
@@ -1209,7 +1199,11 @@ export class AuthService {
           };
         },
   ) {
-    if (!membership.company.isActive || membership.company.status === CompanyStatus.SUSPENDED || membership.company.status === CompanyStatus.FAILED) {
+    if (
+      !membership.company.isActive ||
+      membership.company.status === CompanyStatus.SUSPENDED ||
+      membership.company.status === CompanyStatus.FAILED
+    ) {
       return false;
     }
 
@@ -1522,7 +1516,9 @@ export class AuthService {
     activeCompanyId: number | null,
   ) {
     const usableMemberships = memberships.filter(
-      (membership) => membership.status === MembershipStatus.ACTIVE && this.isMembershipCompanyUsable(membership as UserWithMemberships['memberships'][number]),
+      (membership) =>
+        membership.status === MembershipStatus.ACTIVE &&
+        this.isMembershipCompanyUsable(membership as UserWithMemberships['memberships'][number]),
     );
     const activeMembership = activeCompanyId == null ? null : (usableMemberships.find((membership) => membership.companyId === activeCompanyId) ?? null);
 

@@ -74,6 +74,7 @@ export function validateBankInput(dto: CreateBankAccountDto | UpdateBankAccountD
   ) {
     throw new BadRequestException('Series start should not be greater than series end.');
   }
+
 }
 
 export function ensureNoDuplicateImportedBankAccounts(banks: CreateBankAccountDto[]) {
