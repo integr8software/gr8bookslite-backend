@@ -51,48 +51,8 @@ export class CreateOfficialReceiptDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(500)
-  address?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  contactPerson?: string | null;
-
-  @IsOptional()
-  @IsString()
   @MaxLength(40)
-  contactNo?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  businessStyle?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  projectCode?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  projectName?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  projectRef?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  salesAssociate?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  teamAssigned?: string | null;
+  paymentId?: string | null;
 
   @IsString()
   @MaxLength(10)
@@ -126,16 +86,6 @@ export class CreateOfficialReceiptDto {
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   grossAmount!: number;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(40)
-  termId?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  terms?: string | null;
 
   @IsOptional()
   @IsString()
