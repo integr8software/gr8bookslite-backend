@@ -102,6 +102,12 @@ export class CreateMasterPlanAndPackageDto {
   @Max(365)
   trialDays!: number;
 
+  @ApiPropertyOptional({ minimum: 0, type: Number })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  trialPriceInCents?: number;
+
   @ApiProperty({ type: () => [MasterPlanPriceDto] })
   @IsArray()
   @ArrayNotEmpty()
