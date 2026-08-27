@@ -12,7 +12,7 @@ import {
   Prisma,
   ResponsibilityCenter,
   ResponsibilityCenterStatus,
-  OfficialReceiptStatus,
+  AcknowledgementReceiptStatus,
   Term,
   TermStatus,
   TransactionNumberInputMode,
@@ -31,19 +31,19 @@ import {
   resolveTransactionNumberScopeForCompanyBranch,
   suggestTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
-import { CreateOfficialReceiptDto } from './dto/create-official-receipt.dto';
-import { GetOfficialReceiptListQueryDto } from './dto/get-official-receipt-list-query.dto';
-import { OfficialReceiptDetailDto } from './dto/official-receipt-detail.dto';
-import { OfficialReceiptJournalEntryDto } from './dto/official-receipt-journal-entry.dto';
-import { UpdateOfficialReceiptStatusDto } from './dto/update-official-receipt-status.dto';
-import { UpdateOfficialReceiptDto } from './dto/update-official-receipt.dto';
-import { mapOfficialReceipt } from './mappers/official-receipt.mapper';
-import { OfficialReceiptInclude } from './prisma/official-receipt.include';
-import { OfficialReceiptAccountingService } from './services/official-receipt-accounting.service';
-import type { OfficialReceiptWithDetails } from './types/official-receipt-with-details.type';
+import { CreateAcknowledgementReceiptDto } from './dto/create-acknowledgement-receipt.dto';
+import { GetAcknowledgementReceiptListQueryDto } from './dto/get-acknowledgement-receipt-list-query.dto';
+import { AcknowledgementReceiptDetailDto } from './dto/acknowledgement-receipt-detail.dto';
+import { AcknowledgementReceiptJournalEntryDto } from './dto/acknowledgement-receipt-journal-entry.dto';
+import { UpdateAcknowledgementReceiptStatusDto } from './dto/update-acknowledgement-receipt-status.dto';
+import { UpdateAcknowledgementReceiptDto } from './dto/update-acknowledgement-receipt.dto';
+import { mapAcknowledgementReceipt } from './mappers/acknowledgement-receipt.mapper';
+import { AcknowledgementReceiptInclude } from './prisma/acknowledgement-receipt.include';
+import { AcknowledgementReceiptAccountingService } from './services/acknowledgement-receipt-accounting.service';
+import type { AcknowledgementReceiptWithDetails } from './types/acknowledgement-receipt-with-details.type';
 
-const OfficialReceiptModuleCode = 'OR';
-const OfficialReceiptReferenceType = 'OR';
+const AcknowledgementReceiptModuleCode = 'AR';
+const AcknowledgementReceiptReferenceType = 'AR';
 const JournalEntryNumberAdvisoryLockNamespace = 9081;
 const CustomerPartyTypes = new Set<PartyType>([PartyType.CUSTOMER, PartyType.MEMBER]);
 
@@ -51,24 +51,24 @@ type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
 type ResolvedDetailLine = {
-  input: OfficialReceiptDetailDto;
+  input: AcknowledgementReceiptDetailDto;
   responsibilityCenter: ResponsibilityCenter | null;
 };
 
 type ResolvedJournalEntry = {
   account: ChartAccount | null;
-  input: OfficialReceiptJournalEntryDto;
+  input: AcknowledgementReceiptJournalEntryDto;
   responsibilityCenter: ResponsibilityCenter | null;
 };
 
 @Injectable()
-export class OfficialReceiptService {
+export class AcknowledgementReceiptService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly accountingService: OfficialReceiptAccountingService,
+    private readonly accountingService: AcknowledgementReceiptAccountingService,
   ) {}
 
-  async findAll(user: AuthUser, query: GetOfficialReceiptListQueryDto) {
+  async findAll(user: AuthUser, query: GetAcknowledgementReceiptListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
@@ -78,14 +78,14 @@ export class OfficialReceiptService {
     const where = this.buildListWhere(companyId, branchUnitId, query);
 
     const [receiptRows, total, statistics] = await Promise.all([
-      this.prisma.officialReceipt.findMany({
+      this.prisma.acknowledgementReceipt.findMany({
         where,
-        include: OfficialReceiptInclude,
+        include: AcknowledgementReceiptInclude,
         orderBy: this.buildOrderBy(query),
         skip: (page - 1) * limit,
         take: limit,
       }),
-      this.prisma.officialReceipt.count({ where }),
+      this.prisma.acknowledgementReceipt.count({ where }),
       this.getStatistics(companyId, branchUnitId),
     ]);
     const receipts = await this.attachJournalEntries(receiptRows);
@@ -124,7 +124,7 @@ export class OfficialReceiptService {
     const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
       branchUnitId,
       companyId,
-      moduleCode: OfficialReceiptModuleCode,
+      moduleCode: AcknowledgementReceiptModuleCode,
       isIssued: (transactionNo, context) => this.isTransactionNoIssued(this.prisma, companyId, branchUnitId, transactionNo, context.scope),
     });
 
@@ -135,7 +135,7 @@ export class OfficialReceiptService {
     };
   }
 
-  async create(user: AuthUser, dto: CreateOfficialReceiptDto) {
+  async create(user: AuthUser, dto: CreateAcknowledgementReceiptDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
@@ -159,7 +159,7 @@ export class OfficialReceiptService {
           requestedTransactionNo: dto.transactionNo,
         });
 
-        const created = await tx.officialReceipt.create({
+        const created = await tx.acknowledgementReceipt.create({
           data: {
             addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(dto.address),
             billToNameSnapshot: cleanOptional(dto.billToName),
@@ -193,26 +193,26 @@ export class OfficialReceiptService {
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
             salesAssociate: cleanOptional(dto.salesAssociate),
-            status: OfficialReceiptStatus.DRAFT,
+            status: AcknowledgementReceiptStatus.DRAFT,
             teamAssigned: cleanOptional(dto.teamAssigned),
             termId: references.term?.id ?? null,
             transactionNo,
             vatAmount: normalized.vatAmount,
             wvatAmount: normalized.wvatAmount,
           },
-          include: OfficialReceiptInclude,
+          include: AcknowledgementReceiptInclude,
         });
 
         await this.replaceDetails(tx, created.id, companyId, branchUnitId, references.details);
         await this.replaceJournalEntries(tx, created.id, companyId, branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
 
-        const saved = await tx.officialReceipt.findUniqueOrThrow({ where: { id: created.id }, include: OfficialReceiptInclude });
+        const saved = await tx.acknowledgementReceipt.findUniqueOrThrow({ where: { id: created.id }, include: AcknowledgementReceiptInclude });
         return (await this.attachJournalEntries([saved], tx))[0];
       });
 
       return {
         receipt: (await this.mapReceiptsWithAuditUsers([receipt]))[0],
-        message: 'official receipt created successfully.',
+        message: 'Acknowledgement Receipt created successfully.',
         permissions: this.getPermissions(user, companyId),
       };
     } catch (error) {
@@ -221,19 +221,19 @@ export class OfficialReceiptService {
     }
   }
 
-  async update(user: AuthUser, id: string, dto: UpdateOfficialReceiptDto) {
+  async update(user: AuthUser, id: string, dto: UpdateAcknowledgementReceiptDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
-    const officialReceiptId = parsePositiveBigIntId(id);
-    const current = await this.findReceiptOrThrow(companyId, officialReceiptId);
+    const acknowledgementReceiptId = parsePositiveBigIntId(id);
+    const current = await this.findReceiptOrThrow(companyId, acknowledgementReceiptId);
 
-    if (current.status !== OfficialReceiptStatus.DRAFT) {
-      throw new BadRequestException('Only draft official receipts can be edited.');
+    if (current.status !== AcknowledgementReceiptStatus.DRAFT) {
+      throw new BadRequestException('Only draft Acknowledgement Receipts can be edited.');
     }
 
     if (dto.branchUnitId !== undefined && dto.branchUnitId !== current.branchUnitId) {
-      throw new BadRequestException('official receipt branch cannot be changed after creation.');
+      throw new BadRequestException('Acknowledgement Receipt branch cannot be changed after creation.');
     }
 
     const fullDto = this.requireCompleteUpdateDto(dto);
@@ -254,12 +254,12 @@ export class OfficialReceiptService {
           branchUnitId: current.branchUnitId,
           companyId,
           currentTransactionNo: current.transactionNo,
-          excludedReceiptId: officialReceiptId,
+          excludedReceiptId: acknowledgementReceiptId,
           requestedTransactionNo: fullDto.transactionNo,
         });
 
-        await tx.officialReceipt.update({
-          where: { id: officialReceiptId },
+        await tx.acknowledgementReceipt.update({
+          where: { id: acknowledgementReceiptId },
           data: {
             addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(fullDto.address),
             billToNameSnapshot: cleanOptional(fullDto.billToName),
@@ -299,10 +299,10 @@ export class OfficialReceiptService {
           },
         });
 
-        await this.replaceDetails(tx, officialReceiptId, companyId, current.branchUnitId, references.details);
+        await this.replaceDetails(tx, acknowledgementReceiptId, companyId, current.branchUnitId, references.details);
         await this.replaceJournalEntries(
           tx,
-          officialReceiptId,
+          acknowledgementReceiptId,
           companyId,
           current.branchUnitId,
           normalized.currencyCode,
@@ -310,13 +310,13 @@ export class OfficialReceiptService {
           references.journalEntries,
         );
 
-        const saved = await tx.officialReceipt.findUniqueOrThrow({ where: { id: officialReceiptId }, include: OfficialReceiptInclude });
+        const saved = await tx.acknowledgementReceipt.findUniqueOrThrow({ where: { id: acknowledgementReceiptId }, include: AcknowledgementReceiptInclude });
         return (await this.attachJournalEntries([saved], tx))[0];
       });
 
       return {
         receipt: (await this.mapReceiptsWithAuditUsers([receipt]))[0],
-        message: 'official receipt updated successfully.',
+        message: 'Acknowledgement Receipt updated successfully.',
         permissions: this.getPermissions(user, companyId),
       };
     } catch (error) {
@@ -325,52 +325,52 @@ export class OfficialReceiptService {
     }
   }
 
-  async updateStatus(user: AuthUser, id: string, dto: UpdateOfficialReceiptStatusDto) {
+  async updateStatus(user: AuthUser, id: string, dto: UpdateAcknowledgementReceiptStatusDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     const targetStatus = this.normalizeStatus(dto.status);
-    const requiredAction = targetStatus === OfficialReceiptStatus.CANCELLED ? PermissionAction.CANCEL : PermissionAction.UPDATE;
+    const requiredAction = targetStatus === AcknowledgementReceiptStatus.CANCELLED ? PermissionAction.CANCEL : PermissionAction.UPDATE;
 
     this.ensureCan(user, companyId, requiredAction);
-    const officialReceiptId = parsePositiveBigIntId(id);
-    const current = await this.findReceiptOrThrow(companyId, officialReceiptId);
+    const acknowledgementReceiptId = parsePositiveBigIntId(id);
+    const current = await this.findReceiptOrThrow(companyId, acknowledgementReceiptId);
 
     if (current.status === targetStatus) {
       return {
         receipt: (await this.mapReceiptsWithAuditUsers([current]))[0],
-        message: 'official receipt status is already up to date.',
+        message: 'Acknowledgement Receipt status is already up to date.',
         permissions: this.getPermissions(user, companyId),
       };
     }
 
     this.ensureStatusTransitionAllowed(current.status, targetStatus);
 
-    if (targetStatus === OfficialReceiptStatus.POSTED) {
+    if (targetStatus === AcknowledgementReceiptStatus.POSTED) {
       this.accountingService.validatePersistedPayload({
         details: current.details,
         journalEntries: current.journalEntries,
       });
     }
 
-    const receipt = await this.prisma.officialReceipt.update({
-      where: { id: officialReceiptId },
+    const receipt = await this.prisma.acknowledgementReceipt.update({
+      where: { id: acknowledgementReceiptId },
       data: {
         ...this.getStatusAuditData(targetStatus, user.id),
         status: targetStatus,
         updatedByUserId: user.id,
       },
-      include: OfficialReceiptInclude,
+      include: AcknowledgementReceiptInclude,
     });
     const saved = (await this.attachJournalEntries([receipt]))[0];
 
     return {
       receipt: (await this.mapReceiptsWithAuditUsers([saved]))[0],
-      message: 'official receipt status updated successfully.',
+      message: 'Acknowledgement Receipt status updated successfully.',
       permissions: this.getPermissions(user, companyId),
     };
   }
 
-  private buildListWhere(companyId: number, branchUnitId: number, query: GetOfficialReceiptListQueryDto): Prisma.OfficialReceiptWhereInput {
+  private buildListWhere(companyId: number, branchUnitId: number, query: GetAcknowledgementReceiptListQueryDto): Prisma.AcknowledgementReceiptWhereInput {
     const search = query.search?.trim();
 
     if (query.amountFrom !== undefined && query.amountTo !== undefined && query.amountFrom > query.amountTo) {
@@ -412,7 +412,7 @@ export class OfficialReceiptService {
     };
   }
 
-  private buildOrderBy(query: GetOfficialReceiptListQueryDto): Prisma.OfficialReceiptOrderByWithRelationInput[] {
+  private buildOrderBy(query: GetAcknowledgementReceiptListQueryDto): Prisma.AcknowledgementReceiptOrderByWithRelationInput[] {
     const sortBy = query.sortBy ?? 'documentDate';
     const sortDirection = query.sortDirection ?? 'desc';
     const field = sortBy === 'customerName' ? 'partyNameSnapshot' : sortBy;
@@ -421,7 +421,7 @@ export class OfficialReceiptService {
   }
 
   private getStatistics(companyId: number, branchUnitId: number) {
-    return this.prisma.officialReceipt
+    return this.prisma.acknowledgementReceipt
       .groupBy({
         by: ['status'],
         where: { branchUnitId, companyId, deletedAt: null },
@@ -441,48 +441,48 @@ export class OfficialReceiptService {
           const count = group._count._all;
 
           statistics.totalReceipts += count;
-          if (group.status === OfficialReceiptStatus.CANCELLED) statistics.cancelledReceipts += count;
-          if (group.status === OfficialReceiptStatus.DISAPPROVED) statistics.disapprovedReceipts += count;
-          if (group.status === OfficialReceiptStatus.DRAFT) statistics.draftReceipts += count;
-          if (group.status === OfficialReceiptStatus.FOR_APPROVAL) statistics.forApprovalReceipts += count;
-          if (group.status === OfficialReceiptStatus.POSTED) statistics.postedReceipts += count;
+          if (group.status === AcknowledgementReceiptStatus.CANCELLED) statistics.cancelledReceipts += count;
+          if (group.status === AcknowledgementReceiptStatus.DISAPPROVED) statistics.disapprovedReceipts += count;
+          if (group.status === AcknowledgementReceiptStatus.DRAFT) statistics.draftReceipts += count;
+          if (group.status === AcknowledgementReceiptStatus.FOR_APPROVAL) statistics.forApprovalReceipts += count;
+          if (group.status === AcknowledgementReceiptStatus.POSTED) statistics.postedReceipts += count;
         }
 
         return statistics;
       });
   }
 
-  private async mapReceiptsWithAuditUsers(receipts: OfficialReceiptWithDetails[]) {
+  private async mapReceiptsWithAuditUsers(receipts: AcknowledgementReceiptWithDetails[]) {
     const userNames = await resolveAuditUserNames(
       this.prisma,
       receipts.flatMap((receipt) => [receipt.createdByUserId, receipt.updatedByUserId]),
     );
 
-    return receipts.map((receipt) => mapOfficialReceipt(receipt, userNames));
+    return receipts.map((receipt) => mapAcknowledgementReceipt(receipt, userNames));
   }
 
   private async findReceiptOrThrow(companyId: number, id: bigint, branchUnitId?: number) {
-    const receipt = await this.prisma.officialReceipt.findFirst({
+    const receipt = await this.prisma.acknowledgementReceipt.findFirst({
       where: {
         ...(branchUnitId ? { branchUnitId } : {}),
         companyId,
         deletedAt: null,
         id,
       },
-      include: OfficialReceiptInclude,
+      include: AcknowledgementReceiptInclude,
     });
 
     if (!receipt) {
-      throw new NotFoundException('official receipt not found.');
+      throw new NotFoundException('Acknowledgement Receipt not found.');
     }
 
     return (await this.attachJournalEntries([receipt]))[0];
   }
 
   private async attachJournalEntries(
-    receipts: Prisma.OfficialReceiptGetPayload<{ include: typeof OfficialReceiptInclude }>[],
+    receipts: Prisma.AcknowledgementReceiptGetPayload<{ include: typeof AcknowledgementReceiptInclude }>[],
     tx: PrismaWriteClient = this.prisma,
-  ): Promise<OfficialReceiptWithDetails[]> {
+  ): Promise<AcknowledgementReceiptWithDetails[]> {
     if (receipts.length === 0) {
       return [];
     }
@@ -490,7 +490,7 @@ export class OfficialReceiptService {
     const journalHeaders = await tx.journalEntryHeader.findMany({
       where: {
         referenceId: { in: receipts.map((receipt) => receipt.id) },
-        referenceType: OfficialReceiptReferenceType,
+        referenceType: AcknowledgementReceiptReferenceType,
       },
       include: {
         details: {
@@ -498,7 +498,7 @@ export class OfficialReceiptService {
         },
       },
     });
-    const entriesByReferenceId = new Map<string, OfficialReceiptWithDetails['journalEntries']>();
+    const entriesByReferenceId = new Map<string, AcknowledgementReceiptWithDetails['journalEntries']>();
 
     for (const header of journalHeaders) {
       entriesByReferenceId.set(
@@ -521,7 +521,7 @@ export class OfficialReceiptService {
     }));
   }
 
-  private async resolveReceiptReferences(tx: PrismaWriteClient, companyId: number, dto: CreateOfficialReceiptDto) {
+  private async resolveReceiptReferences(tx: PrismaWriteClient, companyId: number, dto: CreateAcknowledgementReceiptDto) {
     const [party, receivableAccount, term, details, journalEntries] = await Promise.all([
       this.resolveParty(tx, companyId, { partyCode: dto.customerCode, partyId: dto.partyId }),
       this.resolvePostingAccount(tx, companyId, {
@@ -537,7 +537,7 @@ export class OfficialReceiptService {
     return { details, journalEntries, party, receivableAccount, term };
   }
 
-  private async resolveDetailLine(tx: PrismaWriteClient, companyId: number, input: OfficialReceiptDetailDto): Promise<ResolvedDetailLine> {
+  private async resolveDetailLine(tx: PrismaWriteClient, companyId: number, input: AcknowledgementReceiptDetailDto): Promise<ResolvedDetailLine> {
     return {
       input,
       responsibilityCenter: await this.resolveResponsibilityCenter(tx, companyId, {
@@ -548,7 +548,7 @@ export class OfficialReceiptService {
     };
   }
 
-  private async resolveJournalEntry(tx: PrismaWriteClient, companyId: number, input: OfficialReceiptJournalEntryDto): Promise<ResolvedJournalEntry> {
+  private async resolveJournalEntry(tx: PrismaWriteClient, companyId: number, input: AcknowledgementReceiptJournalEntryDto): Promise<ResolvedJournalEntry> {
     return {
       account: await this.resolvePostingAccount(tx, companyId, {
         accountCode: input.accountCode,
@@ -566,13 +566,13 @@ export class OfficialReceiptService {
 
   private async replaceDetails(
     tx: Prisma.TransactionClient,
-    officialReceiptId: bigint,
+    acknowledgementReceiptId: bigint,
     companyId: number,
     branchUnitId: number,
     details: ResolvedDetailLine[],
   ) {
-    await tx.officialReceiptDetails.deleteMany({ where: { officialReceiptId } });
-    await tx.officialReceiptDetails.createMany({
+    await tx.acknowledgementReceiptDetails.deleteMany({ where: { acknowledgementReceiptId } });
+    await tx.acknowledgementReceiptDetails.createMany({
       data: details.map(({ input, responsibilityCenter }) => ({
         amount: roundToDecimal(input.amount, 2),
         branchUnitId,
@@ -589,7 +589,7 @@ export class OfficialReceiptService {
         quantity: roundToDecimal(input.quantity, 4),
         responsibilityCenterId: responsibilityCenter?.id ?? null,
         responsibilityCenterSnapshot: responsibilityCenter?.name ?? cleanOptional(input.responsibilityCenter),
-        officialReceiptId,
+        acknowledgementReceiptId,
         vatAmount: roundToDecimal(input.vatAmount, 2),
         vatInclusive: input.vatInclusive,
         vatType: cleanOptional(input.vatType),
@@ -604,7 +604,7 @@ export class OfficialReceiptService {
 
   private async replaceJournalEntries(
     tx: Prisma.TransactionClient,
-    officialReceiptId: bigint,
+    acknowledgementReceiptId: bigint,
     companyId: number,
     branchUnitId: number,
     currencyCode: string,
@@ -613,8 +613,8 @@ export class OfficialReceiptService {
   ) {
     await tx.journalEntryHeader.deleteMany({
       where: {
-        referenceId: officialReceiptId,
-        referenceType: OfficialReceiptReferenceType,
+        referenceId: acknowledgementReceiptId,
+        referenceType: AcknowledgementReceiptReferenceType,
       },
     });
 
@@ -635,9 +635,9 @@ export class OfficialReceiptService {
         exchangeRate,
         jeno,
         particulars: cleanOptional(journalEntries[0]?.input.particulars),
-        referenceId: officialReceiptId,
+        referenceId: acknowledgementReceiptId,
         referenceNo: cleanOptional(journalEntries[0]?.input.refNo),
-        referenceType: OfficialReceiptReferenceType,
+        referenceType: AcknowledgementReceiptReferenceType,
         status: 'Draft',
         totalCredit: totals.credit,
         totalDebit: totals.debit,
@@ -683,7 +683,7 @@ export class OfficialReceiptService {
     return resolveTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
-      moduleCode: OfficialReceiptModuleCode,
+      moduleCode: AcknowledgementReceiptModuleCode,
       requestedTransactionNumber: requestedTransactionNo,
       isIssued: (transactionNo, context) => this.isTransactionNoIssued(tx, companyId, branchUnitId, transactionNo, context.scope),
     });
@@ -714,17 +714,17 @@ export class OfficialReceiptService {
     const sequence = await findTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
-      moduleCode: OfficialReceiptModuleCode,
+      moduleCode: AcknowledgementReceiptModuleCode,
     });
 
     if (sequence?.inputMode !== TransactionNumberInputMode.MANUAL) {
-      throw new BadRequestException('official receipt transaction number is auto-generated for this branch and cannot be changed manually.');
+      throw new BadRequestException('Acknowledgement Receipt transaction number is auto-generated for this branch and cannot be changed manually.');
     }
 
     const sequenceScope = await resolveTransactionNumberScopeForCompanyBranch(tx, {
       branchUnitId,
       companyId,
-      moduleCode: OfficialReceiptModuleCode,
+      moduleCode: AcknowledgementReceiptModuleCode,
     });
 
     await this.ensureTransactionNoAvailable(tx, companyId, branchUnitId, nextTransactionNo, excludedReceiptId, sequenceScope.scope);
@@ -786,7 +786,7 @@ export class OfficialReceiptService {
     }
 
     if (!party.partyTypes.some((partyType) => CustomerPartyTypes.has(partyType))) {
-      throw new BadRequestException('Party must be a customer or member for official receipt.');
+      throw new BadRequestException('Party must be a customer or member for Acknowledgement Receipt.');
     }
 
     return party;
@@ -853,7 +853,7 @@ export class OfficialReceiptService {
     excludedReceiptId?: bigint,
     scope: 'all' | 'branch' = 'branch',
   ) {
-    const existing = await tx.officialReceipt.findFirst({
+    const existing = await tx.acknowledgementReceipt.findFirst({
       where: {
         ...(scope === 'branch' ? { branchUnitId } : {}),
         companyId,
@@ -865,12 +865,12 @@ export class OfficialReceiptService {
     });
 
     if (existing) {
-      throw new ConflictException('A official receipt with this transaction number already exists for this branch.');
+      throw new ConflictException('A Acknowledgement Receipt with this transaction number already exists for this branch.');
     }
   }
 
   private isTransactionNoIssued(tx: PrismaWriteClient, companyId: number, branchUnitId: number, transactionNo: string, scope: 'all' | 'branch' = 'branch') {
-    return tx.officialReceipt
+    return tx.acknowledgementReceipt
       .findFirst({
         where: {
           ...(scope === 'branch' ? { branchUnitId } : {}),
@@ -901,43 +901,51 @@ export class OfficialReceiptService {
     return branch.id;
   }
 
-  private ensureStatusTransitionAllowed(currentStatus: OfficialReceiptStatus, targetStatus: OfficialReceiptStatus) {
-    const allowedStatuses: Record<OfficialReceiptStatus, OfficialReceiptStatus[]> = {
-      [OfficialReceiptStatus.CANCELLED]: [],
-      [OfficialReceiptStatus.DISAPPROVED]: [OfficialReceiptStatus.DRAFT],
-      [OfficialReceiptStatus.DRAFT]: [OfficialReceiptStatus.CANCELLED, OfficialReceiptStatus.DISAPPROVED, OfficialReceiptStatus.FOR_APPROVAL],
-      [OfficialReceiptStatus.FOR_APPROVAL]: [OfficialReceiptStatus.CANCELLED, OfficialReceiptStatus.DISAPPROVED, OfficialReceiptStatus.POSTED],
-      [OfficialReceiptStatus.POSTED]: [],
+  private ensureStatusTransitionAllowed(currentStatus: AcknowledgementReceiptStatus, targetStatus: AcknowledgementReceiptStatus) {
+    const allowedStatuses: Record<AcknowledgementReceiptStatus, AcknowledgementReceiptStatus[]> = {
+      [AcknowledgementReceiptStatus.CANCELLED]: [],
+      [AcknowledgementReceiptStatus.DISAPPROVED]: [AcknowledgementReceiptStatus.DRAFT],
+      [AcknowledgementReceiptStatus.DRAFT]: [
+        AcknowledgementReceiptStatus.CANCELLED,
+        AcknowledgementReceiptStatus.DISAPPROVED,
+        AcknowledgementReceiptStatus.FOR_APPROVAL,
+      ],
+      [AcknowledgementReceiptStatus.FOR_APPROVAL]: [
+        AcknowledgementReceiptStatus.CANCELLED,
+        AcknowledgementReceiptStatus.DISAPPROVED,
+        AcknowledgementReceiptStatus.POSTED,
+      ],
+      [AcknowledgementReceiptStatus.POSTED]: [],
     };
 
     if (!allowedStatuses[currentStatus].includes(targetStatus)) {
-      throw new BadRequestException(`Cannot move official receipt from ${currentStatus} to ${targetStatus}.`);
+      throw new BadRequestException(`Cannot move Acknowledgement Receipt from ${currentStatus} to ${targetStatus}.`);
     }
   }
 
-  private getStatusAuditData(targetStatus: OfficialReceiptStatus, userId: number): Prisma.OfficialReceiptUncheckedUpdateInput {
+  private getStatusAuditData(targetStatus: AcknowledgementReceiptStatus, userId: number): Prisma.AcknowledgementReceiptUncheckedUpdateInput {
     const now = new Date();
 
-    if (targetStatus === OfficialReceiptStatus.FOR_APPROVAL) {
+    if (targetStatus === AcknowledgementReceiptStatus.FOR_APPROVAL) {
       return { approvedAt: now, approvedByUserId: userId };
     }
 
-    if (targetStatus === OfficialReceiptStatus.DISAPPROVED) {
+    if (targetStatus === AcknowledgementReceiptStatus.DISAPPROVED) {
       return { disapprovedAt: now, disapprovedByUserId: userId };
     }
 
-    if (targetStatus === OfficialReceiptStatus.CANCELLED) {
+    if (targetStatus === AcknowledgementReceiptStatus.CANCELLED) {
       return { cancelledAt: now, cancelledByUserId: userId };
     }
 
-    if (targetStatus === OfficialReceiptStatus.POSTED) {
+    if (targetStatus === AcknowledgementReceiptStatus.POSTED) {
       return { postedAt: now, postedByUserId: userId };
     }
 
     return {};
   }
 
-  private normalizeReceiptInput(dto: CreateOfficialReceiptDto) {
+  private normalizeReceiptInput(dto: CreateAcknowledgementReceiptDto) {
     const currencyCode = cleanCurrencyCode(dto.currency);
 
     if (!currencyCode) {
@@ -958,8 +966,8 @@ export class OfficialReceiptService {
     };
   }
 
-  private requireCompleteUpdateDto(dto: UpdateOfficialReceiptDto): CreateOfficialReceiptDto {
-    const requiredFields: Array<keyof CreateOfficialReceiptDto> = [
+  private requireCompleteUpdateDto(dto: UpdateAcknowledgementReceiptDto): CreateAcknowledgementReceiptDto {
+    const requiredFields: Array<keyof CreateAcknowledgementReceiptDto> = [
       'customerCode',
       'customerName',
       'currency',
@@ -980,11 +988,11 @@ export class OfficialReceiptService {
 
     for (const field of requiredFields) {
       if (dto[field] === undefined || dto[field] === null) {
-        throw new BadRequestException(`Field ${String(field)} is required when updating a official receipt.`);
+        throw new BadRequestException(`Field ${String(field)} is required when updating a Acknowledgement Receipt.`);
       }
     }
 
-    return dto as CreateOfficialReceiptDto;
+    return dto as CreateAcknowledgementReceiptDto;
   }
 
   private normalizeStatus(status: string) {
@@ -993,11 +1001,11 @@ export class OfficialReceiptService {
       .toUpperCase()
       .replace(/[\s-]+/g, '_');
 
-    if (!Object.values(OfficialReceiptStatus).includes(normalized as OfficialReceiptStatus)) {
-      throw new BadRequestException('Invalid official receipt status.');
+    if (!Object.values(AcknowledgementReceiptStatus).includes(normalized as AcknowledgementReceiptStatus)) {
+      throw new BadRequestException('Invalid Acknowledgement Receipt status.');
     }
 
-    return normalized as OfficialReceiptStatus;
+    return normalized as AcknowledgementReceiptStatus;
   }
 
   private parseDate(value: string, label: string) {
@@ -1060,11 +1068,11 @@ export class OfficialReceiptService {
       return;
     }
 
-    if (user.companyId === companyId && user.permissions.includes(`${OfficialReceiptModuleCode}:${action}`)) {
+    if (user.companyId === companyId && user.permissions.includes(`${AcknowledgementReceiptModuleCode}:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException('You do not have permission to manage official receipts.');
+    throw new ForbiddenException('You do not have permission to manage Acknowledgement Receipts.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -1085,7 +1093,7 @@ export class OfficialReceiptService {
       return true;
     }
 
-    return user.companyId === companyId && user.permissions.includes(`${OfficialReceiptModuleCode}:${action}`);
+    return user.companyId === companyId && user.permissions.includes(`${AcknowledgementReceiptModuleCode}:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -1102,7 +1110,7 @@ export class OfficialReceiptService {
 
   private throwFriendlyPrismaError(error: unknown) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('A official receipt with this transaction number already exists for this branch.');
+      throw new ConflictException('A Acknowledgement Receipt with this transaction number already exists for this branch.');
     }
   }
 }
