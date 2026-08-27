@@ -141,7 +141,7 @@ type DiscountManagement = {
   id: string;
   name: string;
   description: string;
-  type: "SALES" | "PURCHASE";
+  type: "SALES" | "PURCHASES";
   valueType: "PERCENTAGE" | "FIXED";
   value: string;
   status: "ACTIVE" | "INACTIVE";
@@ -160,7 +160,7 @@ Frontend mappers can display backend enums as:
 | Backend | Frontend |
 |---|---|
 | `SALES` | `Sales` |
-| `PURCHASE` | `Purchase` |
+| `PURCHASES` | `Purchases` |
 | `PERCENTAGE` | `Percentage` |
 | `FIXED` | `Fixed` |
 | `ACTIVE` | `Active` |
@@ -199,7 +199,7 @@ model Discount {
 
 enum DiscountType {
   SALES
-  PURCHASE
+  PURCHASES
 }
 
 enum DiscountValueType {
@@ -344,7 +344,7 @@ Backend import should:
 1. Reject duplicate names inside the upload.
 2. Reject names that already exist in the company.
 3. Normalize `Sales`, `Sale` to `SALES`.
-4. Normalize `Purchase`, `Purchases` to `PURCHASE`.
+4. Normalize `Purchase`, `Purchases` to `PURCHASES`.
 5. Normalize `Percentage`, `Percent`, `%` to `PERCENTAGE`.
 6. Normalize `Fixed`, `Amount`, `Flat` to `FIXED`.
 7. For each row, create or resolve the COA account first, then create the discount.

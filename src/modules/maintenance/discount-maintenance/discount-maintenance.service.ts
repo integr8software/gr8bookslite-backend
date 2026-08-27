@@ -330,7 +330,7 @@ export class DiscountMaintenanceService {
           statistics.totalDiscounts += count;
           if (group.status === DiscountStatus.ACTIVE) statistics.activeDiscounts += count;
           if (group.status === DiscountStatus.INACTIVE) statistics.inactiveDiscounts += count;
-          if (group.type === DiscountType.PURCHASE) statistics.purchaseDiscounts += count;
+          if (group.type === DiscountType.PURCHASES) statistics.purchaseDiscounts += count;
           if (group.type === DiscountType.SALES) statistics.salesDiscounts += count;
           if (group.valueType === DiscountValueType.PERCENTAGE) statistics.percentageDiscounts += count;
         }

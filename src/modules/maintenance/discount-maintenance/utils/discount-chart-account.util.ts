@@ -17,7 +17,7 @@ export async function resolveDiscountChartAccount(
   const parent = await findSystemAccountGroupOrThrow(
     tx,
     input.companyId,
-    input.type === DiscountType.PURCHASE
+    input.type === DiscountType.PURCHASES
       ? SystemAccountGroups.discountManagement.purchaseDiscountParent
       : SystemAccountGroups.discountManagement.salesDiscountParent,
   );
@@ -60,8 +60,8 @@ export async function resolveDiscountChartAccount(
       accountCode,
       accountTitle: input.accountTitle,
       accountLevel: ChartAccountLevel.SPECIFIC,
-      accountType: input.type === DiscountType.PURCHASE ? ChartAccountType.EXPENSE : ChartAccountType.REVENUE,
-      accountNature: input.type === DiscountType.PURCHASE ? AccountNature.CREDIT : AccountNature.DEBIT,
+      accountType: input.type === DiscountType.PURCHASES ? ChartAccountType.EXPENSE : ChartAccountType.REVENUE,
+      accountNature: input.type === DiscountType.PURCHASES ? AccountNature.CREDIT : AccountNature.DEBIT,
       accountGroup: mergeAccountGroupTags(parent.accountGroup),
       statementSection: parent.statementSection,
       reportAlias: input.accountTitle,
@@ -78,5 +78,5 @@ export async function resolveDiscountChartAccount(
 }
 
 export function getGeneratedDiscountAccountTitle(type: DiscountType, name: string) {
-  return `${type === DiscountType.PURCHASE ? 'Purchase' : 'Sales'} Discount - ${name.trim()}`;
+  return `${type === DiscountType.PURCHASES ? 'Purchase' : 'Sales'} Discount - ${name.trim()}`;
 }

@@ -901,7 +901,7 @@ model BankAccount {
   branch               String?            @db.VarChar(100)
   accountNumber        String             @map("account_number") @db.VarChar(100)
   accountName          String             @map("account_name") @db.VarChar(250)
-  accountType          String?            @map("account_type") @db.VarChar(50)
+  accountType          BankAccountType?   @map("account_type")
   seriesStart          String?            @map("series_start") @db.VarChar(50)
   seriesEnd            String?            @map("series_end") @db.VarChar(50)
   seriesDigits         Int?               @map("series_digits")
@@ -3119,11 +3119,10 @@ enum UnitOfMeasurementStatus {
 }
 
 enum PaymentTypeClassification {
-  CASH
-  CHECK
   BANK_TRANSFER
+  CHECK
   DIGITAL_WALLET
-  NON_CASH_SETTLEMENT
+  DEBIT_MEMO
 }
 
 enum PaymentTypeStatus {
@@ -3131,9 +3130,17 @@ enum PaymentTypeStatus {
   INACTIVE
 }
 
+enum BankAccountType {
+  CHECKING
+  SAVINGS
+  CURRENT
+  TIME_DEPOSIT
+  CREDIT_CARD
+}
+
 enum DiscountType {
   SALES
-  PURCHASE
+  PURCHASES
 }
 
 enum DiscountValueType {
