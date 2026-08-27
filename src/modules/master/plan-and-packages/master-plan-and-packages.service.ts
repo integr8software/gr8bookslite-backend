@@ -56,6 +56,7 @@ export class MasterPlanAndPackagesService {
         scope: resolvedScope,
         status: dto.status,
         trialDays: dto.trialDays,
+        trialPriceInCents: dto.trialPriceInCents ?? 0,
         isActive,
         prices: {
           create: normalizedPrices.map((price) => ({

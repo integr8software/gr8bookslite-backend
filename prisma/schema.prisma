@@ -2408,6 +2408,7 @@ model SubscriptionPlan {
   scope            SubscriptionPlanScope          @default(ONBOARDING)
   status           SubscriptionPlanStatus         @default(ACTIVE)
   trialDays        Int                            @default(15) @map("trial_days")
+  trialPriceInCents Int                           @default(0) @map("trial_price_in_cents")
   isActive         Boolean                        @default(true) @map("is_active")
   createdAt        DateTime                       @default(now()) @map("created_at")
   updatedAt        DateTime                       @updatedAt @map("updated_at")
