@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsInt, IsNumber, IsObject, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
+import { AccountNature, BankAccountType, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { normalizeOptionalQueryString } from '../../../../common/utils/dto-transform.util';
 
@@ -33,11 +33,10 @@ class ChartAccountBankDetailsDto {
   @MaxLength(100)
   accountNumber?: string;
 
-  @ApiPropertyOptional({ maxLength: 50 })
+  @ApiPropertyOptional({ enum: BankAccountType })
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  accountType?: string;
+  @IsEnum(BankAccountType)
+  accountType?: BankAccountType;
 
   @ApiPropertyOptional({ maxLength: 10 })
   @IsOptional()

@@ -88,7 +88,7 @@ export const DiscountMaintenanceSeedRecords = [
   {
     name: 'Supplier Early Payment',
     description: 'Use for purchase transactions when the supplier gives a discount for paying before the due date.',
-    type: DiscountType.PURCHASE,
+    type: DiscountType.PURCHASES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 2,
     accountTitle: 'Purchase Discount - Supplier Early Payment',
@@ -96,7 +96,7 @@ export const DiscountMaintenanceSeedRecords = [
   {
     name: 'Volume Purchase Discount',
     description: 'Use for purchase transactions where the supplier grants a fixed discount because the order meets a volume threshold.',
-    type: DiscountType.PURCHASE,
+    type: DiscountType.PURCHASES,
     valueType: DiscountValueType.FIXED,
     value: 100,
     accountTitle: 'Purchase Discount - Volume Purchase',
@@ -104,7 +104,7 @@ export const DiscountMaintenanceSeedRecords = [
   {
     name: 'Supplier Trade Discount',
     description: 'Use for regular supplier trade discounts deducted from purchase cost before recording the payable.',
-    type: DiscountType.PURCHASE,
+    type: DiscountType.PURCHASES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 5,
     accountTitle: 'Purchase Discount - Supplier Trade',
@@ -112,7 +112,7 @@ export const DiscountMaintenanceSeedRecords = [
   {
     name: 'Purchase Rebate',
     description: 'Use for supplier rebates or purchase discounts earned after meeting agreed buying conditions.',
-    type: DiscountType.PURCHASE,
+    type: DiscountType.PURCHASES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 3,
     accountTitle: 'Purchase Discount - Rebate',
@@ -120,7 +120,7 @@ export const DiscountMaintenanceSeedRecords = [
   {
     name: 'Bulk Purchase Discount',
     description: 'Use for supplier discounts granted when purchases are ordered or received in bulk quantities.',
-    type: DiscountType.PURCHASE,
+    type: DiscountType.PURCHASES,
     valueType: DiscountValueType.PERCENTAGE,
     value: 10,
     accountTitle: 'Purchase Discount - Bulk Purchase',

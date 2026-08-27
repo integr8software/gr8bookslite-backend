@@ -1,7 +1,7 @@
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
-import { ChartAccountStatus } from '@prisma/client';
+import { BankAccountType, ChartAccountStatus } from '@prisma/client';
 
 export class CreateBankAccountDto {
   @ApiProperty({ maxLength: 100 })
@@ -27,11 +27,9 @@ export class CreateBankAccountDto {
   @MaxLength(250)
   accountName?: string;
 
-  @ApiPropertyOptional({ maxLength: 50 })
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  accountType?: string;
+  @ApiProperty({ enum: BankAccountType })
+  @IsEnum(BankAccountType)
+  accountType!: BankAccountType;
 
   @ApiProperty({ maxLength: 50 })
   @IsString()

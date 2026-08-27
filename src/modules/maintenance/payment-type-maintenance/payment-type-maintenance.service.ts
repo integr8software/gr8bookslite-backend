@@ -257,11 +257,10 @@ export class PaymentTypeMaintenanceService {
           totalPaymentTypes: 0,
           activePaymentTypes: 0,
           inactivePaymentTypes: 0,
-          cashPaymentTypes: 0,
           bankTransferPaymentTypes: 0,
           checkPaymentTypes: 0,
           digitalWalletPaymentTypes: 0,
-          nonCashSettlementPaymentTypes: 0,
+          debitMemoPaymentTypes: 0,
         };
 
         for (const group of groups) {
@@ -274,9 +273,6 @@ export class PaymentTypeMaintenanceService {
           if (group.status === PaymentTypeStatus.INACTIVE) {
             statistics.inactivePaymentTypes += count;
           }
-          if (group.classification === PaymentTypeClassification.CASH) {
-            statistics.cashPaymentTypes += count;
-          }
           if (group.classification === PaymentTypeClassification.BANK_TRANSFER) {
             statistics.bankTransferPaymentTypes += count;
           }
@@ -286,8 +282,8 @@ export class PaymentTypeMaintenanceService {
           if (group.classification === PaymentTypeClassification.DIGITAL_WALLET) {
             statistics.digitalWalletPaymentTypes += count;
           }
-          if (group.classification === PaymentTypeClassification.NON_CASH_SETTLEMENT) {
-            statistics.nonCashSettlementPaymentTypes += count;
+          if (group.classification === PaymentTypeClassification.DEBIT_MEMO) {
+            statistics.debitMemoPaymentTypes += count;
           }
         }
 

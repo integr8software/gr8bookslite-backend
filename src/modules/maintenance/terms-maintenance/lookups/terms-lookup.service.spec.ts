@@ -69,6 +69,7 @@ describe('TermsLookupService', () => {
     });
     expect(prisma.term.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matchers are typed as any.
         where: expect.objectContaining({
           companyId: user.companyId,
           deletedAt: null,

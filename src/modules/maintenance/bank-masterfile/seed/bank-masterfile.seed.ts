@@ -1,4 +1,4 @@
-import { ChartAccountLevel, ChartAccountStatus, Prisma } from '@prisma/client';
+import { BankAccountType, ChartAccountLevel, ChartAccountStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { findSystemAccountGroupOrThrow, SystemAccountGroups } from '../../chart-of-accounts/utils/system-account-groups.util';
 
@@ -78,7 +78,7 @@ export async function seedCompanyBankAccountDefaults(tx: Prisma.TransactionClien
         bankName,
         accountNumber: '',
         accountName: '',
-        accountType: 'Checking',
+        accountType: BankAccountType.CHECKING,
         currencyCode: account.currencyCode,
         isDefault: false,
         status: ChartAccountStatus.INACTIVE,

@@ -4,7 +4,7 @@ import { cleanCurrencyCode, cleanOptional, normalizeIdentityValue } from '../../
 import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
 import { GetBankAccountListQueryDto } from '../dto/get-bank-account-list-query.dto';
 import { UpdateBankAccountDto } from '../dto/update-bank-account.dto';
-import type { BankAccountIdentity, BankAccountPayload } from '../types/bank-account.type';
+import type { BankAccountIdentity, BankAccountInput, BankAccountPayload } from '../types/bank-account.type';
 
 export function buildBankAccountListWhere(companyId: number, query: GetBankAccountListQueryDto): Prisma.BankAccountWhereInput {
   const search = query.search?.trim();
@@ -38,7 +38,7 @@ export function buildBankAccountOrderBy(query: GetBankAccountListQueryDto): Pris
   return [{ [sortBy]: sortDirection }, { id: 'asc' }];
 }
 
-export function validateBankInput(dto: CreateBankAccountDto | UpdateBankAccountDto) {
+export function validateBankInput(dto: BankAccountInput) {
   const bankName = dto.bankName?.trim();
 
   if (!bankName) {
@@ -74,7 +74,6 @@ export function validateBankInput(dto: CreateBankAccountDto | UpdateBankAccountD
   ) {
     throw new BadRequestException('Series start should not be greater than series end.');
   }
-
 }
 
 export function ensureNoDuplicateImportedBankAccounts(banks: CreateBankAccountDto[]) {
@@ -117,7 +116,7 @@ export function ensureAtMostOneDefaultImportedBank(banks: CreateBankAccountDto[]
   }
 }
 
-export function resolveBankAccountName(dto: CreateBankAccountDto | UpdateBankAccountDto) {
+export function resolveBankAccountName(dto: BankAccountInput) {
   return ['Cash in Bank', dto.bankName?.trim(), dto.branch?.trim(), dto.accountNumber?.trim()].filter(Boolean).join(' - ');
 }
 
@@ -127,7 +126,7 @@ export function toCreateBankAccountData(dto: CreateBankAccountDto, accountName: 
     branch: cleanOptional(dto.branch),
     accountNumber: dto.accountNumber?.trim() ?? '',
     accountName,
-    accountType: cleanOptional(dto.accountType),
+    accountType: dto.accountType,
     seriesStart: cleanOptional(dto.seriesStart),
     seriesEnd: cleanOptional(dto.seriesEnd),
     seriesDigits: dto.seriesDigits,
@@ -142,7 +141,7 @@ export function toUpdateBankAccountData(dto: UpdateBankAccountDto, accountName: 
     ...(dto.branch !== undefined ? { branch: cleanOptional(dto.branch) } : {}),
     ...(dto.accountNumber !== undefined ? { accountNumber: dto.accountNumber.trim() } : {}),
     ...(dto.accountName !== undefined || dto.bankName !== undefined || dto.branch !== undefined || dto.accountNumber !== undefined ? { accountName } : {}),
-    ...(dto.accountType !== undefined ? { accountType: cleanOptional(dto.accountType) } : {}),
+    ...(dto.accountType !== undefined ? { accountType: dto.accountType } : {}),
     ...(dto.seriesStart !== undefined ? { seriesStart: cleanOptional(dto.seriesStart) } : {}),
     ...(dto.seriesEnd !== undefined ? { seriesEnd: cleanOptional(dto.seriesEnd) } : {}),
     ...(dto.seriesDigits !== undefined ? { seriesDigits: dto.seriesDigits } : {}),

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matchers are typed as any. */
 import { AccessScopeLevel, MembershipStatus, UserStatus } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { WarehouseAccessService } from './warehouse-access.service';
@@ -38,10 +39,7 @@ describe('WarehouseAccessService company directory', () => {
       },
     ]);
 
-    const result = await service.findDirectoryUsers(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' ana ' },
-    );
+    const result = await service.findDirectoryUsers({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, { search: ' ana ' });
 
     expect(prisma.membership.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

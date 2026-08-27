@@ -61,9 +61,6 @@ export class PaymentTypeStatisticsResponseDto {
   inactivePaymentTypes!: number;
 
   @ApiProperty()
-  cashPaymentTypes!: number;
-
-  @ApiProperty()
   bankTransferPaymentTypes!: number;
 
   @ApiProperty()
@@ -73,7 +70,7 @@ export class PaymentTypeStatisticsResponseDto {
   digitalWalletPaymentTypes!: number;
 
   @ApiProperty()
-  nonCashSettlementPaymentTypes!: number;
+  debitMemoPaymentTypes!: number;
 }
 
 export class PaymentTypePermissionsResponseDto {

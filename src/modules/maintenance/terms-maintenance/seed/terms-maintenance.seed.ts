@@ -14,7 +14,7 @@ export const TermsMaintenanceSeedRecords = [
   { name: 'Monthly', dateMode: TermDateMode.MONTH, period: 1 },
   { name: 'Two Months', dateMode: TermDateMode.MONTH, period: 2 },
   { name: 'Quarterly', dateMode: TermDateMode.MONTH, period: 3 },
-  { name: 'Semi-annual', dateMode: TermDateMode.MONTH, period: 6 },
+  { name: 'Semi-Annual', dateMode: TermDateMode.MONTH, period: 6 },
   { name: 'Trial Period - 1 month', dateMode: TermDateMode.MONTH, period: 1 },
   { name: 'Probationary Period', dateMode: TermDateMode.MONTH, period: 6 },
   { name: 'Annual', dateMode: TermDateMode.YEAR, period: 1 },
