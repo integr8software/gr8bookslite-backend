@@ -252,6 +252,10 @@ model Company {
   auditLogs                     AuditLog[]
   onboardingDrafts              UserOnboardingDraft[]           @relation("ProvisionedOnboardingCompany")
   createdByUser                 User?                           @relation("CompanyCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  acknowledgementReceipts       AcknowledgementReceipt[]
+  acknowledgementReceiptDetails AcknowledgementReceiptDetails[]
+  provisionalReceipts           ProvisionalReceipt[]
+  provisionalReceiptDetails     ProvisionalReceiptDetails[]
 
   @@index([createdByUserId])
   @@map("companies")
@@ -299,6 +303,10 @@ model CompanyUnit {
   billingStatements             BillingStatement[]
   billingStatementDetails       BillingStatementDetails[]
   journalEntryHeaders           JournalEntryHeader[]
+  acknowledgementReceipts       AcknowledgementReceipt[]
+  acknowledgementReceiptDetails AcknowledgementReceiptDetails[]
+  provisionalReceipts           ProvisionalReceipt[]
+  provisionalReceiptDetails     ProvisionalReceiptDetails[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -826,6 +834,8 @@ model ChartAccount {
   billings                               Billing[]
   billingStatements                      BillingStatement[]
   journalEntryDetails                    JournalEntryDetail[]
+  acknowledgementReceipts                AcknowledgementReceipt[]
+  provisionalReceipts                    ProvisionalReceipt[]
 
   @@unique([companyId, accountCode], map: "chart_accounts_company_account_code_key")
   @@index([parentAccountId], map: "chart_accounts_parent_account_id_idx")
@@ -959,6 +969,8 @@ model Term {
   billingInvoices         BillingInvoice[]
   billings                Billing[]
   billingStatements       BillingStatement[]
+  acknowledgementReceipts AcknowledgementReceipt[]
+  provisionalReceipts     ProvisionalReceipt[]
 
   @@index([companyId], map: "terms_company_id_idx")
   @@index([companyId, status], map: "terms_company_status_idx")
@@ -1213,6 +1225,8 @@ model ResponsibilityCenter {
   billingDetails                BillingDetails[]
   billingStatementDetails       BillingStatementDetails[]
   journalEntryDetails           JournalEntryDetail[]
+  acknowledgementReceiptDetails AcknowledgementReceiptDetails[]
+  provisionalReceiptDetails     ProvisionalReceiptDetails[]
 
   @@unique([companyId, code], map: "responsibility_centers_company_code_key")
   @@unique([companyId, name], map: "responsibility_centers_company_name_key")
@@ -1325,6 +1339,8 @@ model Party {
   billingInvoices                     BillingInvoice[]
   billings                            Billing[]
   billingStatements                   BillingStatement[]
+  acknowledgementReceipts             AcknowledgementReceipt[]
+  provisionalReceipts                 ProvisionalReceipt[]
 
   @@unique([companyId, partyCodeNo], map: "parties_company_code_key")
   @@index([companyId], map: "parties_company_id_idx")
@@ -1772,6 +1788,204 @@ model CollectionReceiptDetails {
   @@index([companyId, branchUnitId], map: "collection_receipt_details_company_branch_idx")
   @@index([responsibilityCenterId], map: "collection_receipt_details_rc_idx")
   @@map("collection_receipt_details")
+}
+
+model AcknowledgementReceipt {
+  id                    BigInt                          @id @default(autoincrement())
+  companyId             Int                             @map("company_id")
+  branchUnitId          Int                             @map("branch_unit_id")
+  partyId               BigInt?                         @map("party_id")
+  termId                BigInt?                         @map("term_id")
+  receivableAccountId   BigInt?                         @map("receivable_account_id")
+  transactionNo         String                          @map("transaction_no") @db.VarChar(80)
+  documentDate          DateTime                        @map("document_date") @db.Date
+  dueDate               DateTime                        @map("due_date") @db.Date
+  receiptNo             String?                         @map("receipt_no") @db.VarChar(120)
+  referenceNo           String?                         @map("reference_no") @db.VarChar(120)
+  partyCodeSnapshot     String                          @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot     String                          @map("party_name_snapshot") @db.VarChar(255)
+  billToNameSnapshot    String?                         @map("bill_to_name_snapshot") @db.VarChar(255)
+  addressSnapshot       String?                         @map("address_snapshot") @db.VarChar(500)
+  contactPersonSnapshot String?                         @map("contact_person_snapshot") @db.VarChar(255)
+  contactNoSnapshot     String?                         @map("contact_no_snapshot") @db.VarChar(40)
+  businessStyle         String?                         @map("business_style") @db.VarChar(120)
+  projectCode           String?                         @map("project_code") @db.VarChar(80)
+  projectName           String?                         @map("project_name") @db.VarChar(255)
+  projectRef            String?                         @map("project_ref") @db.VarChar(120)
+  salesAssociate        String?                         @map("sales_associate") @db.VarChar(150)
+  teamAssigned          String?                         @map("team_assigned") @db.VarChar(150)
+  currencyCode          String                          @map("currency_code") @db.VarChar(10)
+  exchangeRate          Decimal                         @map("exchange_rate") @db.Decimal(18, 6)
+  netAmount             Decimal                         @default(0) @map("net_amount") @db.Decimal(18, 2)
+  vatAmount             Decimal                         @default(0) @map("vat_amount") @db.Decimal(18, 2)
+  wvatAmount            Decimal                         @default(0) @map("wvat_amount") @db.Decimal(18, 2)
+  ewtAmount             Decimal                         @default(0) @map("ewt_amount") @db.Decimal(18, 2)
+  discountAmount        Decimal                         @default(0) @map("discount_amount") @db.Decimal(18, 2)
+  grossAmount           Decimal                         @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  remarks               String?                         @db.VarChar(500)
+  status                AcknowledgementReceiptStatus    @default(DRAFT)
+  createdByUserId       Int?                            @map("created_by_user_id")
+  updatedByUserId       Int?                            @map("updated_by_user_id")
+  approvedByUserId      Int?                            @map("approved_by_user_id")
+  approvedAt            DateTime?                       @map("approved_at")
+  disapprovedByUserId   Int?                            @map("disapproved_by_user_id")
+  disapprovedAt         DateTime?                       @map("disapproved_at")
+  cancelledByUserId     Int?                            @map("cancelled_by_user_id")
+  cancelledAt           DateTime?                       @map("cancelled_at")
+  postedByUserId        Int?                            @map("posted_by_user_id")
+  postedAt              DateTime?                       @map("posted_at")
+  deletedAt             DateTime?                       @map("deleted_at")
+  createdAt             DateTime                        @default(now()) @map("created_at")
+  updatedAt             DateTime                        @updatedAt @map("updated_at")
+  company               Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit            CompanyUnit                     @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party                 Party?                          @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  term                  Term?                           @relation(fields: [termId], references: [id], onDelete: SetNull)
+  receivableAccount     ChartAccount?                   @relation(fields: [receivableAccountId], references: [id], onDelete: Restrict)
+  details               AcknowledgementReceiptDetails[]
+
+  @@unique([companyId, branchUnitId, transactionNo], map: "acknowledgement_receipts_company_branch_transaction_no_key")
+  @@index([companyId, branchUnitId, status], map: "acknowledgement_receipts_company_branch_status_idx")
+  @@index([companyId, documentDate], map: "acknowledgement_receipts_company_document_date_idx")
+  @@index([partyId], map: "acknowledgement_receipts_party_id_idx")
+  @@index([receivableAccountId], map: "acknowledgement_receipts_receivable_account_id_idx")
+  @@map("acknowledgement_receipts")
+}
+
+model AcknowledgementReceiptDetails {
+  id                           BigInt                 @id @default(autoincrement())
+  acknowledgementReceiptId     BigInt                 @map("acknowledgement_receipt_id")
+  companyId                    Int                    @map("company_id")
+  branchUnitId                 Int                    @map("branch_unit_id")
+  lineNumber                   Int                    @map("line_number")
+  description                  String                 @db.VarChar(250)
+  particulars                  String?                @db.VarChar(500)
+  quantity                     Decimal                @default(0) @db.Decimal(18, 4)
+  amount                       Decimal                @default(0) @db.Decimal(18, 2)
+  netAmount                    Decimal                @default(0) @map("net_amount") @db.Decimal(18, 2)
+  vatAmount                    Decimal                @default(0) @map("vat_amount") @db.Decimal(18, 2)
+  wvatAmount                   Decimal                @default(0) @map("wvat_amount") @db.Decimal(18, 2)
+  ewtAmount                    Decimal                @default(0) @map("ewt_amount") @db.Decimal(18, 2)
+  discountPercent              Decimal                @default(0) @map("discount_percent") @db.Decimal(8, 4)
+  discountAmount               Decimal                @default(0) @map("discount_amount") @db.Decimal(18, 2)
+  grossAmount                  Decimal                @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  vatType                      String?                @map("vat_type") @db.VarChar(80)
+  vatable                      Boolean                @default(false)
+  vatInclusive                 Boolean                @default(false) @map("vat_inclusive")
+  withWvat                     Boolean                @default(false) @map("with_wvat")
+  wvatType                     String?                @map("wvat_type") @db.VarChar(80)
+  withEwt                      Boolean                @default(false) @map("with_ewt")
+  ewtType                      String?                @map("ewt_type") @db.VarChar(80)
+  responsibilityCenterId       BigInt?                @map("responsibility_center_id")
+  responsibilityCenterSnapshot String?                @map("responsibility_center_snapshot") @db.VarChar(150)
+  acknowledgementReceipt       AcknowledgementReceipt @relation(fields: [acknowledgementReceiptId], references: [id], onDelete: Cascade)
+  company                      Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit                   CompanyUnit            @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  responsibilityCenter         ResponsibilityCenter?  @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
+
+  @@unique([acknowledgementReceiptId, lineNumber], map: "acknowledgement_receipt_details_receipt_line_key")
+  @@index([companyId, branchUnitId], map: "acknowledgement_receipt_details_company_branch_idx")
+  @@index([responsibilityCenterId], map: "acknowledgement_receipt_details_rc_idx")
+  @@map("acknowledgement_receipt_details")
+}
+
+model ProvisionalReceipt {
+  id                    BigInt                      @id @default(autoincrement())
+  companyId             Int                         @map("company_id")
+  branchUnitId          Int                         @map("branch_unit_id")
+  partyId               BigInt?                     @map("party_id")
+  termId                BigInt?                     @map("term_id")
+  receivableAccountId   BigInt?                     @map("receivable_account_id")
+  transactionNo         String                      @map("transaction_no") @db.VarChar(80)
+  documentDate          DateTime                    @map("document_date") @db.Date
+  dueDate               DateTime                    @map("due_date") @db.Date
+  receiptNo             String?                     @map("receipt_no") @db.VarChar(120)
+  referenceNo           String?                     @map("reference_no") @db.VarChar(120)
+  partyCodeSnapshot     String                      @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot     String                      @map("party_name_snapshot") @db.VarChar(255)
+  billToNameSnapshot    String?                     @map("bill_to_name_snapshot") @db.VarChar(255)
+  addressSnapshot       String?                     @map("address_snapshot") @db.VarChar(500)
+  contactPersonSnapshot String?                     @map("contact_person_snapshot") @db.VarChar(255)
+  contactNoSnapshot     String?                     @map("contact_no_snapshot") @db.VarChar(40)
+  businessStyle         String?                     @map("business_style") @db.VarChar(120)
+  projectCode           String?                     @map("project_code") @db.VarChar(80)
+  projectName           String?                     @map("project_name") @db.VarChar(255)
+  projectRef            String?                     @map("project_ref") @db.VarChar(120)
+  salesAssociate        String?                     @map("sales_associate") @db.VarChar(150)
+  teamAssigned          String?                     @map("team_assigned") @db.VarChar(150)
+  currencyCode          String                      @map("currency_code") @db.VarChar(10)
+  exchangeRate          Decimal                     @map("exchange_rate") @db.Decimal(18, 6)
+  netAmount             Decimal                     @default(0) @map("net_amount") @db.Decimal(18, 2)
+  vatAmount             Decimal                     @default(0) @map("vat_amount") @db.Decimal(18, 2)
+  wvatAmount            Decimal                     @default(0) @map("wvat_amount") @db.Decimal(18, 2)
+  ewtAmount             Decimal                     @default(0) @map("ewt_amount") @db.Decimal(18, 2)
+  discountAmount        Decimal                     @default(0) @map("discount_amount") @db.Decimal(18, 2)
+  grossAmount           Decimal                     @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  remarks               String?                     @db.VarChar(500)
+  status                ProvisionalReceiptStatus    @default(DRAFT)
+  createdByUserId       Int?                        @map("created_by_user_id")
+  updatedByUserId       Int?                        @map("updated_by_user_id")
+  approvedByUserId      Int?                        @map("approved_by_user_id")
+  approvedAt            DateTime?                   @map("approved_at")
+  disapprovedByUserId   Int?                        @map("disapproved_by_user_id")
+  disapprovedAt         DateTime?                   @map("disapproved_at")
+  cancelledByUserId     Int?                        @map("cancelled_by_user_id")
+  cancelledAt           DateTime?                   @map("cancelled_at")
+  postedByUserId        Int?                        @map("posted_by_user_id")
+  postedAt              DateTime?                   @map("posted_at")
+  deletedAt             DateTime?                   @map("deleted_at")
+  createdAt             DateTime                    @default(now()) @map("created_at")
+  updatedAt             DateTime                    @updatedAt @map("updated_at")
+  company               Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit            CompanyUnit                 @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party                 Party?                      @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  term                  Term?                       @relation(fields: [termId], references: [id], onDelete: SetNull)
+  receivableAccount     ChartAccount?               @relation(fields: [receivableAccountId], references: [id], onDelete: Restrict)
+  details               ProvisionalReceiptDetails[]
+
+  @@unique([companyId, branchUnitId, transactionNo], map: "provisional_receipts_company_branch_transaction_no_key")
+  @@index([companyId, branchUnitId, status], map: "provisional_receipts_company_branch_status_idx")
+  @@index([companyId, documentDate], map: "provisional_receipts_company_document_date_idx")
+  @@index([partyId], map: "provisional_receipts_party_id_idx")
+  @@index([receivableAccountId], map: "provisional_receipts_receivable_account_id_idx")
+  @@map("provisional_receipts")
+}
+
+model ProvisionalReceiptDetails {
+  id                           BigInt                @id @default(autoincrement())
+  provisionalReceiptId         BigInt                @map("provisional_receipt_id")
+  companyId                    Int                   @map("company_id")
+  branchUnitId                 Int                   @map("branch_unit_id")
+  lineNumber                   Int                   @map("line_number")
+  description                  String                @db.VarChar(250)
+  particulars                  String?               @db.VarChar(500)
+  quantity                     Decimal               @default(0) @db.Decimal(18, 4)
+  amount                       Decimal               @default(0) @db.Decimal(18, 2)
+  netAmount                    Decimal               @default(0) @map("net_amount") @db.Decimal(18, 2)
+  vatAmount                    Decimal               @default(0) @map("vat_amount") @db.Decimal(18, 2)
+  wvatAmount                   Decimal               @default(0) @map("wvat_amount") @db.Decimal(18, 2)
+  ewtAmount                    Decimal               @default(0) @map("ewt_amount") @db.Decimal(18, 2)
+  discountPercent              Decimal               @default(0) @map("discount_percent") @db.Decimal(8, 4)
+  discountAmount               Decimal               @default(0) @map("discount_amount") @db.Decimal(18, 2)
+  grossAmount                  Decimal               @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  vatType                      String?               @map("vat_type") @db.VarChar(80)
+  vatable                      Boolean               @default(false)
+  vatInclusive                 Boolean               @default(false) @map("vat_inclusive")
+  withWvat                     Boolean               @default(false) @map("with_wvat")
+  wvatType                     String?               @map("wvat_type") @db.VarChar(80)
+  withEwt                      Boolean               @default(false) @map("with_ewt")
+  ewtType                      String?               @map("ewt_type") @db.VarChar(80)
+  responsibilityCenterId       BigInt?               @map("responsibility_center_id")
+  responsibilityCenterSnapshot String?               @map("responsibility_center_snapshot") @db.VarChar(150)
+  provisionalReceipt           ProvisionalReceipt    @relation(fields: [provisionalReceiptId], references: [id], onDelete: Cascade)
+  company                      Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit                   CompanyUnit           @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  responsibilityCenter         ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
+
+  @@unique([provisionalReceiptId, lineNumber], map: "provisional_receipt_details_receipt_line_key")
+  @@index([companyId, branchUnitId], map: "provisional_receipt_details_company_branch_idx")
+  @@index([responsibilityCenterId], map: "provisional_receipt_details_rc_idx")
+  @@map("provisional_receipt_details")
 }
 
 model BillingInvoice {
@@ -3024,6 +3238,22 @@ enum OfficialReceiptStatus {
 }
 
 enum CollectionReceiptStatus {
+  DRAFT
+  FOR_APPROVAL
+  DISAPPROVED
+  POSTED
+  CANCELLED
+}
+
+enum AcknowledgementReceiptStatus {
+  DRAFT
+  FOR_APPROVAL
+  DISAPPROVED
+  POSTED
+  CANCELLED
+}
+
+enum ProvisionalReceiptStatus {
   DRAFT
   FOR_APPROVAL
   DISAPPROVED
