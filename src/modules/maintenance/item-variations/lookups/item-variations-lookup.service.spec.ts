@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matchers are typed as any. */
 import { ItemAttributeStatus, ItemAttributeValueStatus } from '@prisma/client';
 import { ItemVariationsLookupService } from './item-variations-lookup.service';
 

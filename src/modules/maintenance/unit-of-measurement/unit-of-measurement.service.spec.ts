@@ -26,10 +26,10 @@ describe('UnitOfMeasurementService unit options', () => {
       },
     ]);
 
-    const result = await service.findOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' kilo ', quantityMode: UnitOfMeasurementQuantityMode.FLOAT },
-    );
+    const result = await service.findOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, {
+      search: ' kilo ',
+      quantityMode: UnitOfMeasurementQuantityMode.FLOAT,
+    });
 
     expect(prisma.unitOfMeasurement.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

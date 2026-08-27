@@ -33,10 +33,7 @@ describe('DefaultAccountService default account options', () => {
       },
     ]);
 
-    const result = await service.findExpenseOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' office ' },
-    );
+    const result = await service.findExpenseOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, { search: ' office ' });
 
     expect(prisma.defaultAccount.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

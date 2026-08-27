@@ -61,11 +61,7 @@ export class ApprovalManagementController {
   @ApiParam({ name: 'moduleCode', type: String })
   @ApiBody({ type: UpsertApprovalWorkflowDto })
   @ApiOkResponse({ type: UpsertApprovalWorkflowResponseDto })
-  upsertWorkflow(
-    @CurrentUser() user: AuthUser,
-    @Param('moduleCode') moduleCode: string,
-    @Body() dto: UpsertApprovalWorkflowDto,
-  ) {
+  upsertWorkflow(@CurrentUser() user: AuthUser, @Param('moduleCode') moduleCode: string, @Body() dto: UpsertApprovalWorkflowDto) {
     return this.approvalManagement.upsertWorkflow(user, moduleCode, dto);
   }
 
@@ -106,10 +102,7 @@ export class ApprovalManagementController {
   @ApiOperation({ summary: 'Approve an approval transaction' })
   @ApiParam({ name: 'transactionId', type: String })
   @ApiOkResponse({ type: ApprovalTransactionResponseDto })
-  approveTransaction(
-    @CurrentUser() user: AuthUser,
-    @Param('transactionId') transactionId: string,
-  ) {
+  approveTransaction(@CurrentUser() user: AuthUser, @Param('transactionId') transactionId: string) {
     return this.approvalManagement.approveTransaction(user, transactionId);
   }
 
@@ -123,10 +116,7 @@ export class ApprovalManagementController {
   @ApiOperation({ summary: 'Disapprove an approval transaction' })
   @ApiParam({ name: 'transactionId', type: String })
   @ApiOkResponse({ type: ApprovalTransactionResponseDto })
-  disapproveTransaction(
-    @CurrentUser() user: AuthUser,
-    @Param('transactionId') transactionId: string,
-  ) {
+  disapproveTransaction(@CurrentUser() user: AuthUser, @Param('transactionId') transactionId: string) {
     return this.approvalManagement.disapproveTransaction(user, transactionId);
   }
 }

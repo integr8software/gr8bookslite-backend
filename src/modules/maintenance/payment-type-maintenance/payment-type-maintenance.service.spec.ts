@@ -25,10 +25,10 @@ describe('PaymentTypeMaintenanceService payment type options', () => {
       },
     ]);
 
-    const result = await service.findOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' transfer ', classification: PaymentTypeClassification.NON_CASH_SETTLEMENT },
-    );
+    const result = await service.findOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, {
+      search: ' transfer ',
+      classification: PaymentTypeClassification.NON_CASH_SETTLEMENT,
+    });
 
     expect(prisma.paymentType.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

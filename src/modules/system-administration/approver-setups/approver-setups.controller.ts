@@ -84,11 +84,7 @@ export class ApproverSetupsController {
   @ApiParam({ name: 'setupId', type: String })
   @ApiBody({ type: CreateApproverSetupDto })
   @ApiOkResponse({ description: 'Approver setup updated.' })
-  update(
-    @CurrentUser() user: AuthUser,
-    @Param('setupId') setupId: string,
-    @Body() dto: CreateApproverSetupDto,
-  ): Promise<CreateApproverSetupResponse> {
+  update(@CurrentUser() user: AuthUser, @Param('setupId') setupId: string, @Body() dto: CreateApproverSetupDto): Promise<CreateApproverSetupResponse> {
     return this.approverSetupsService.update(user, setupId, dto);
   }
 
@@ -102,11 +98,7 @@ export class ApproverSetupsController {
   @ApiOperation({ summary: 'Update approver setup status' })
   @ApiParam({ name: 'setupId', type: String })
   @ApiOkResponse({ description: 'Approver setup status updated.' })
-  updateStatus(
-    @CurrentUser() user: AuthUser,
-    @Param('setupId') setupId: string,
-    @Body() body: { status: string },
-  ): Promise<CreateApproverSetupResponse> {
+  updateStatus(@CurrentUser() user: AuthUser, @Param('setupId') setupId: string, @Body() body: { status: string }): Promise<CreateApproverSetupResponse> {
     return this.approverSetupsService.updateStatus(user, setupId, body.status);
   }
 

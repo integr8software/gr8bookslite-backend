@@ -13,7 +13,6 @@ import {
   ResponsibilityCenter,
   ResponsibilityCenterStatus,
   AcknowledgementReceiptStatus,
-  Term,
   TermStatus,
   TransactionNumberInputMode,
 } from '@prisma/client';

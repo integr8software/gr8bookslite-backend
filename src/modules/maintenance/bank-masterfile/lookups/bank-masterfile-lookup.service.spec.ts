@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matchers are typed as any. */
 import { ChartAccountStatus } from '@prisma/client';
 import { BankMasterfileLookupService } from './bank-masterfile-lookup.service';
 

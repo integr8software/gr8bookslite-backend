@@ -18,4 +18,3 @@ export function mapTransactionNumberInputMode(inputMode: 'Auto' | 'Manual') {
 export function mapTransactionNumberStatus(status: 'Active' | 'Inactive') {
   return status === 'Active' ? TransactionNumberStatus.ACTIVE : TransactionNumberStatus.INACTIVE;
 }
-

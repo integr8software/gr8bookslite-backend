@@ -29,10 +29,7 @@ describe('BankMasterfileService bank options', () => {
       },
     ]);
 
-    const result = await service.findOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' operating ', currencyCode: ' php ' },
-    );
+    const result = await service.findOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, { search: ' operating ', currencyCode: ' php ' });
 
     expect(prisma.bankAccount.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -40,9 +37,7 @@ describe('BankMasterfileService bank options', () => {
           companyId: 11,
           status: ChartAccountStatus.ACTIVE,
           currencyCode: { equals: 'PHP', mode: 'insensitive' },
-          OR: expect.arrayContaining([
-            { accountName: { contains: 'operating', mode: 'insensitive' } },
-          ]),
+          OR: expect.arrayContaining([{ accountName: { contains: 'operating', mode: 'insensitive' } }]),
         }),
       }),
     );

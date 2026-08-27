@@ -69,7 +69,9 @@ export async function seedCompanyUnitOfMeasurementDefaults(tx: UnitOfMeasurement
   });
   const existingNames = new Set(existingUnits.map((unit) => unit.name.toLowerCase()));
   const existingSymbols = new Set(existingUnits.map((unit) => unit.symbol.toUpperCase()));
-  const missingUnits = UnitOfMeasurementSeedRecords.filter((unit) => !existingNames.has(unit.name.toLowerCase()) && !existingSymbols.has(unit.symbol.toUpperCase()));
+  const missingUnits = UnitOfMeasurementSeedRecords.filter(
+    (unit) => !existingNames.has(unit.name.toLowerCase()) && !existingSymbols.has(unit.symbol.toUpperCase()),
+  );
 
   if (missingUnits.length === 0) {
     return 0;

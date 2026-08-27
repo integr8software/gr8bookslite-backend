@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matchers are typed as any. */
 import { AccessScopeLevel, UserStatus } from '@prisma/client';
 import { WarehouseAccessLookupService } from './warehouse-access-lookup.service';
 

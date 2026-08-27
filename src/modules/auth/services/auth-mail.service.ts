@@ -4,12 +4,7 @@ import { Job, Queue, Worker, type JobsOptions, type RedisOptions } from 'bullmq'
 import { Resend, type CreateEmailOptions } from 'resend';
 
 type MailJobName =
-  | 'verification-code'
-  | 'password-reset-code'
-  | 'onboarding-congratulations'
-  | 'company-created'
-  | 'workspace-user-invitation'
-  | 'workspace-user-activated';
+  'verification-code' | 'password-reset-code' | 'onboarding-congratulations' | 'company-created' | 'workspace-user-invitation' | 'workspace-user-activated';
 
 type MailJobData =
   | {

@@ -7,9 +7,7 @@ export type DefaultAccountPayload = Prisma.DefaultAccountGetPayload<{
 
 export type GeneratedDefaultAccount = NonNullable<DefaultAccountPayload['expenseCoa']>;
 
-export type DefaultAccountParentRole =
-  | 'EXPENSE_PARENT'
-  | 'REVENUE_PARENT';
+export type DefaultAccountParentRole = 'EXPENSE_PARENT' | 'REVENUE_PARENT';
 
 export type GeneratedAccountKey = never;
 

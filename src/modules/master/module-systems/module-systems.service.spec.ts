@@ -43,7 +43,7 @@ describe('ModuleSystemsService', () => {
       description: 'POS modules',
       sortOrder: 1,
       isActive: true,
-    } as never);
+    });
 
     expect(prisma.moduleSystem.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -85,7 +85,7 @@ describe('ModuleSystemsService', () => {
     const result = await service.updateSystem(5, {
       name: 'Updated Name',
       description: 'Updated Description',
-    } as never);
+    });
 
     expect(prisma.moduleSystem.update).toHaveBeenCalledWith(
       expect.objectContaining({

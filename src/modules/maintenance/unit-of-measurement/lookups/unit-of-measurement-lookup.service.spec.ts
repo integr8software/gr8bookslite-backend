@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matchers are typed as any. */
 import { UnitOfMeasurementQuantityMode, UnitOfMeasurementStatus } from '@prisma/client';
 import { UnitOfMeasurementLookupService } from './unit-of-measurement-lookup.service';
 

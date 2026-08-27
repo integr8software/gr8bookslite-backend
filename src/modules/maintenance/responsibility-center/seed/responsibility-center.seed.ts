@@ -8,8 +8,7 @@ import {
 } from '../utils/responsibility-center-defaults.util';
 
 type ResponsibilityCenterWriteClient =
-  | Pick<PrismaService, 'responsibilityCenter' | 'responsibilityCenterClassification' | 'responsibilityCenterType'>
-  | Prisma.TransactionClient;
+  Pick<PrismaService, 'responsibilityCenter' | 'responsibilityCenterClassification' | 'responsibilityCenterType'> | Prisma.TransactionClient;
 
 export const ResponsibilityCenterSeedRecords = [
   {
