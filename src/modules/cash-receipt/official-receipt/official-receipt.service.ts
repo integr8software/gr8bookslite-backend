@@ -1,5 +1,22 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChartAccount, ChartAccountStatus, CompanyUnitType, MembershipRole, MembershipStatus, Party, PartyAddress, PartyStatus, PartyType, Prisma, ResponsibilityCenter, ResponsibilityCenterStatus, OfficialReceiptStatus, Term, TermStatus, TransactionNumberInputMode } from '@prisma/client';
+import {
+  ChartAccount,
+  ChartAccountStatus,
+  CompanyUnitType,
+  MembershipRole,
+  MembershipStatus,
+  Party,
+  PartyAddress,
+  PartyStatus,
+  PartyType,
+  Prisma,
+  ResponsibilityCenter,
+  ResponsibilityCenterStatus,
+  OfficialReceiptStatus,
+  Term,
+  TermStatus,
+  TransactionNumberInputMode,
+} from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
@@ -8,7 +25,12 @@ import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { findTransactionNumberForCompanyBranch, resolveTransactionNumberForCompanyBranch, resolveTransactionNumberScopeForCompanyBranch, suggestTransactionNumberForCompanyBranch } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
+import {
+  findTransactionNumberForCompanyBranch,
+  resolveTransactionNumberForCompanyBranch,
+  resolveTransactionNumberScopeForCompanyBranch,
+  suggestTransactionNumberForCompanyBranch,
+} from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
 import { CreateOfficialReceiptDto } from './dto/create-official-receipt.dto';
 import { GetOfficialReceiptListQueryDto } from './dto/get-official-receipt-list-query.dto';
 import { OfficialReceiptDetailDto } from './dto/official-receipt-detail.dto';
@@ -278,7 +300,15 @@ export class OfficialReceiptService {
         });
 
         await this.replaceDetails(tx, officialReceiptId, companyId, current.branchUnitId, references.details);
-        await this.replaceJournalEntries(tx, officialReceiptId, companyId, current.branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
+        await this.replaceJournalEntries(
+          tx,
+          officialReceiptId,
+          companyId,
+          current.branchUnitId,
+          normalized.currencyCode,
+          normalized.exchangeRate,
+          references.journalEntries,
+        );
 
         const saved = await tx.officialReceipt.findUniqueOrThrow({ where: { id: officialReceiptId }, include: OfficialReceiptInclude });
         return (await this.attachJournalEntries([saved], tx))[0];
@@ -534,7 +564,13 @@ export class OfficialReceiptService {
     };
   }
 
-  private async replaceDetails(tx: Prisma.TransactionClient, officialReceiptId: bigint, companyId: number, branchUnitId: number, details: ResolvedDetailLine[]) {
+  private async replaceDetails(
+    tx: Prisma.TransactionClient,
+    officialReceiptId: bigint,
+    companyId: number,
+    branchUnitId: number,
+    details: ResolvedDetailLine[],
+  ) {
     await tx.officialReceiptDetails.deleteMany({ where: { officialReceiptId } });
     await tx.officialReceiptDetails.createMany({
       data: details.map(({ input, responsibilityCenter }) => ({
@@ -640,7 +676,10 @@ export class OfficialReceiptService {
     return (latest._max.jeno ?? 0n) + 1n;
   }
 
-  private async resolveTransactionNumberForCreate(tx: Prisma.TransactionClient, { branchUnitId, companyId, requestedTransactionNo }: { branchUnitId: number; companyId: number; requestedTransactionNo?: string | null }) {
+  private async resolveTransactionNumberForCreate(
+    tx: Prisma.TransactionClient,
+    { branchUnitId, companyId, requestedTransactionNo }: { branchUnitId: number; companyId: number; requestedTransactionNo?: string | null },
+  ) {
     return resolveTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
@@ -692,7 +731,11 @@ export class OfficialReceiptService {
     return nextTransactionNo;
   }
 
-  private async resolvePostingAccount(tx: PrismaWriteClient, companyId: number, { accountCode, accountId, label }: { accountCode?: string | null; accountId?: string | null; label: string }) {
+  private async resolvePostingAccount(
+    tx: PrismaWriteClient,
+    companyId: number,
+    { accountCode, accountId, label }: { accountCode?: string | null; accountId?: string | null; label: string },
+  ) {
     const parsedAccountId = parseOptionalPositiveBigIntId(accountId, `${label} ID`);
     const normalizedCode = cleanOptional(accountCode);
 
@@ -802,7 +845,14 @@ export class OfficialReceiptService {
     return center;
   }
 
-  private async ensureTransactionNoAvailable(tx: PrismaWriteClient, companyId: number, branchUnitId: number, transactionNo: string, excludedReceiptId?: bigint, scope: 'all' | 'branch' = 'branch') {
+  private async ensureTransactionNoAvailable(
+    tx: PrismaWriteClient,
+    companyId: number,
+    branchUnitId: number,
+    transactionNo: string,
+    excludedReceiptId?: bigint,
+    scope: 'all' | 'branch' = 'branch',
+  ) {
     const existing = await tx.officialReceipt.findFirst({
       where: {
         ...(scope === 'branch' ? { branchUnitId } : {}),
@@ -1043,7 +1093,11 @@ export class OfficialReceiptService {
       return true;
     }
 
-    return user.companyId === companyId && user.membershipStatus === MembershipStatus.ACTIVE && (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN);
+    return (
+      user.companyId === companyId &&
+      user.membershipStatus === MembershipStatus.ACTIVE &&
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
+    );
   }
 
   private throwFriendlyPrismaError(error: unknown) {
