@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AccessScopeLevel, CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SystemRole, UserStatus } from '@prisma/client';
+import { AccessScopeLevel, CompanyStatus, CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SubscriptionStatus, SystemRole, UserStatus } from '@prisma/client';
+
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { normalizeEmail } from '../../../common/utils/email.util';
@@ -313,7 +314,42 @@ export class WorkspaceUsersService {
 
     await this.ensureCanManageCompanies(user, companyIds);
 
+    const companies = await this.prisma.company.findMany({
+      where: {
+        id: { in: companyIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        status: true,
+        subscriptions: {
+          take: 1,
+          orderBy: { createdAt: 'desc' },
+          select: { status: true },
+        },
+      },
+    });
+
+    for (const company of companies) {
+      if (!company.isActive || company.status !== CompanyStatus.ACTIVE) {
+        throw new BadRequestException(`Cannot assign users to company ${company.name} because it is inactive.`);
+      }
+
+      const latestSub = company.subscriptions?.[0];
+      if (
+        latestSub &&
+        latestSub.status !== SubscriptionStatus.ACTIVE &&
+        latestSub.status !== SubscriptionStatus.TRIALING
+      ) {
+        throw new BadRequestException(
+          `Cannot assign users to company ${company.name} because its subscription is ${latestSub.status.toLowerCase().replace('_', ' ')}.`,
+        );
+      }
+    }
+
     const units = await this.prisma.companyUnit.findMany({
+
       where: {
         id: { in: assignments.flatMap(({ unitIds }) => unitIds) },
         isActive: true,
