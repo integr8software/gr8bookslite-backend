@@ -4580,8 +4580,7 @@
                 "BANK_TRANSFER",
                 "CHECK",
                 "DIGITAL_WALLET",
-                "CASH",
-                "NON_CASH_SETTLEMENT"
+                "DEBIT_MEMO"
               ]
             }
           },
@@ -4724,8 +4723,7 @@
                 "BANK_TRANSFER",
                 "CHECK",
                 "DIGITAL_WALLET",
-                "CASH",
-                "NON_CASH_SETTLEMENT"
+                "DEBIT_MEMO"
               ]
             }
           }
@@ -4783,8 +4781,7 @@
                 "BANK_TRANSFER",
                 "CHECK",
                 "DIGITAL_WALLET",
-                "CASH",
-                "NON_CASH_SETTLEMENT"
+                "DEBIT_MEMO"
               ]
             }
           }
@@ -4945,8 +4942,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "PURCHASE",
-                "SALES"
+                "SALES",
+                "PURCHASES"
               ]
             }
           },
@@ -5099,8 +5096,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "PURCHASE",
-                "SALES"
+                "SALES",
+                "PURCHASES"
               ]
             }
           },
@@ -5167,8 +5164,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "PURCHASE",
-                "SALES"
+                "SALES",
+                "PURCHASES"
               ]
             }
           },
@@ -13217,6 +13214,7 @@
             }
           }
         },
+        "summary": "List official receipts",
         "tags": [
           "Official Receipt"
         ]
@@ -13246,6 +13244,7 @@
             }
           }
         },
+        "summary": "Create an official receipt",
         "tags": [
           "Official Receipt"
         ]
@@ -13381,6 +13380,7 @@
             }
           }
         },
+        "summary": "Suggest an official receipt transaction number",
         "tags": [
           "Official Receipt"
         ]
@@ -13524,6 +13524,7 @@
             }
           }
         },
+        "summary": "Get an official receipt",
         "tags": [
           "Official Receipt"
         ]
@@ -13562,6 +13563,7 @@
             }
           }
         },
+        "summary": "Update an official receipt",
         "tags": [
           "Official Receipt"
         ]
@@ -13602,8 +13604,1587 @@
             }
           }
         },
+        "summary": "Update an official receipt status",
         "tags": [
           "Official Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/collection-receipt": {
+      "get": {
+        "operationId": "CollectionReceiptController_findAll_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "receiptNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collection receipts retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionReceiptListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List collection receipts",
+        "tags": [
+          "Collection Receipt"
+        ]
+      },
+      "post": {
+        "operationId": "CollectionReceiptController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollectionReceiptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Collection receipt created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveCollectionReceiptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a collection receipt",
+        "tags": [
+          "Collection Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/collection-receipt/transaction-number": {
+      "get": {
+        "operationId": "CollectionReceiptController_suggestTransactionNumber_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "receiptNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collection receipt transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionReceiptNumberSuggestionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Suggest a collection receipt transaction number",
+        "tags": [
+          "Collection Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/collection-receipt/{id}": {
+      "get": {
+        "operationId": "CollectionReceiptController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "receiptNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collection receipt retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionReceiptContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a collection receipt",
+        "tags": [
+          "Collection Receipt"
+        ]
+      },
+      "patch": {
+        "operationId": "CollectionReceiptController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCollectionReceiptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collection receipt updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveCollectionReceiptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a collection receipt",
+        "tags": [
+          "Collection Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/collection-receipt/{id}/status": {
+      "patch": {
+        "operationId": "CollectionReceiptController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCollectionReceiptStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Collection receipt status updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveCollectionReceiptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a collection receipt status",
+        "tags": [
+          "Collection Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/acknowledgement-receipt": {
+      "get": {
+        "operationId": "AcknowledgementReceiptController_findAll_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "receiptNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Acknowledgement Receipts retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgementReceiptListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List acknowledgement receipts",
+        "tags": [
+          "Acknowledgement Receipt"
+        ]
+      },
+      "post": {
+        "operationId": "AcknowledgementReceiptController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAcknowledgementReceiptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Acknowledgement Receipt created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveAcknowledgementReceiptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create an acknowledgement receipt",
+        "tags": [
+          "Acknowledgement Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/acknowledgement-receipt/transaction-number": {
+      "get": {
+        "operationId": "AcknowledgementReceiptController_suggestTransactionNumber_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "receiptNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Acknowledgement Receipt transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgementReceiptNumberSuggestionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Suggest an acknowledgement receipt transaction number",
+        "tags": [
+          "Acknowledgement Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/acknowledgement-receipt/{id}": {
+      "get": {
+        "operationId": "AcknowledgementReceiptController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "receiptNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Acknowledgement Receipt retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgementReceiptContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get an acknowledgement receipt",
+        "tags": [
+          "Acknowledgement Receipt"
+        ]
+      },
+      "patch": {
+        "operationId": "AcknowledgementReceiptController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAcknowledgementReceiptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledgement Receipt updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveAcknowledgementReceiptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update an acknowledgement receipt",
+        "tags": [
+          "Acknowledgement Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/acknowledgement-receipt/{id}/status": {
+      "patch": {
+        "operationId": "AcknowledgementReceiptController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAcknowledgementReceiptStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledgement Receipt status updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveAcknowledgementReceiptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update an acknowledgement receipt status",
+        "tags": [
+          "Acknowledgement Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/provisional-receipt": {
+      "get": {
+        "operationId": "ProvisionalReceiptController_findAll_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "receiptNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provisional Receipts retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionalReceiptListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List provisional receipts",
+        "tags": [
+          "Provisional Receipt"
+        ]
+      },
+      "post": {
+        "operationId": "ProvisionalReceiptController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProvisionalReceiptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Provisional Receipt created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveProvisionalReceiptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a provisional receipt",
+        "tags": [
+          "Provisional Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/provisional-receipt/transaction-number": {
+      "get": {
+        "operationId": "ProvisionalReceiptController_suggestTransactionNumber_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "receiptNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provisional Receipt transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionalReceiptNumberSuggestionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Suggest a provisional receipt transaction number",
+        "tags": [
+          "Provisional Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/provisional-receipt/{id}": {
+      "get": {
+        "operationId": "ProvisionalReceiptController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "FOR_APPROVAL",
+                "DISAPPROVED",
+                "POSTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transactionNo",
+                "documentDate",
+                "customerName",
+                "receiptNo",
+                "referenceNo",
+                "grossAmount",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provisional Receipt retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvisionalReceiptContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a provisional receipt",
+        "tags": [
+          "Provisional Receipt"
+        ]
+      },
+      "patch": {
+        "operationId": "ProvisionalReceiptController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProvisionalReceiptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provisional Receipt updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveProvisionalReceiptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a provisional receipt",
+        "tags": [
+          "Provisional Receipt"
+        ]
+      }
+    },
+    "/api/v1/cash-receipt/provisional-receipt/{id}/status": {
+      "patch": {
+        "operationId": "ProvisionalReceiptController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProvisionalReceiptStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provisional Receipt status updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveProvisionalReceiptResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a provisional receipt status",
+        "tags": [
+          "Provisional Receipt"
         ]
       }
     }
@@ -16414,6 +17995,10 @@
             "minimum": 0,
             "maximum": 365
           },
+          "trialPriceInCents": {
+            "type": "number",
+            "minimum": 0
+          },
           "prices": {
             "minItems": 1,
             "type": "array",
@@ -18453,8 +20038,14 @@
             "maxLength": 100
           },
           "accountType": {
-            "type": "string",
-            "maxLength": 50
+            "enum": [
+              "CHECKING",
+              "SAVINGS",
+              "CURRENT",
+              "TIME_DEPOSIT",
+              "CREDIT_CARD"
+            ],
+            "type": "string"
           },
           "currencyCode": {
             "type": "string",
@@ -19929,11 +21520,10 @@
           },
           "classification": {
             "enum": [
-              "CASH",
-              "CHECK",
               "BANK_TRANSFER",
+              "CHECK",
               "DIGITAL_WALLET",
-              "NON_CASH_SETTLEMENT"
+              "DEBIT_MEMO"
             ],
             "type": "string"
           },
@@ -19989,9 +21579,6 @@
           "inactivePaymentTypes": {
             "type": "number"
           },
-          "cashPaymentTypes": {
-            "type": "number"
-          },
           "bankTransferPaymentTypes": {
             "type": "number"
           },
@@ -20001,7 +21588,7 @@
           "digitalWalletPaymentTypes": {
             "type": "number"
           },
-          "nonCashSettlementPaymentTypes": {
+          "debitMemoPaymentTypes": {
             "type": "number"
           }
         },
@@ -20009,11 +21596,10 @@
           "totalPaymentTypes",
           "activePaymentTypes",
           "inactivePaymentTypes",
-          "cashPaymentTypes",
           "bankTransferPaymentTypes",
           "checkPaymentTypes",
           "digitalWalletPaymentTypes",
-          "nonCashSettlementPaymentTypes"
+          "debitMemoPaymentTypes"
         ]
       },
       "PaymentTypePaginationResponseDto": {
@@ -20102,11 +21688,10 @@
           },
           "classification": {
             "enum": [
-              "CASH",
-              "CHECK",
               "BANK_TRANSFER",
+              "CHECK",
               "DIGITAL_WALLET",
-              "NON_CASH_SETTLEMENT"
+              "DEBIT_MEMO"
             ],
             "type": "string"
           },
@@ -20171,11 +21756,10 @@
           },
           "classification": {
             "enum": [
-              "CASH",
-              "CHECK",
               "BANK_TRANSFER",
+              "CHECK",
               "DIGITAL_WALLET",
-              "NON_CASH_SETTLEMENT"
+              "DEBIT_MEMO"
             ],
             "type": "string"
           },
@@ -20258,11 +21842,10 @@
           },
           "classification": {
             "enum": [
-              "CASH",
-              "CHECK",
               "BANK_TRANSFER",
+              "CHECK",
               "DIGITAL_WALLET",
-              "NON_CASH_SETTLEMENT"
+              "DEBIT_MEMO"
             ],
             "type": "string"
           },
@@ -20295,7 +21878,7 @@
           "type": {
             "enum": [
               "SALES",
-              "PURCHASE"
+              "PURCHASES"
             ],
             "type": "string"
           },
@@ -20481,7 +22064,7 @@
           "type": {
             "enum": [
               "SALES",
-              "PURCHASE"
+              "PURCHASES"
             ],
             "type": "string"
           },
@@ -20555,7 +22138,7 @@
           "type": {
             "enum": [
               "SALES",
-              "PURCHASE"
+              "PURCHASES"
             ],
             "type": "string"
           },
@@ -20648,7 +22231,7 @@
           "type": {
             "enum": [
               "SALES",
-              "PURCHASE"
+              "PURCHASES"
             ],
             "type": "string"
           },
@@ -22151,8 +23734,15 @@
             "type": "string"
           },
           "accountType": {
-            "type": "string",
-            "nullable": true
+            "nullable": true,
+            "enum": [
+              "CHECKING",
+              "SAVINGS",
+              "CURRENT",
+              "TIME_DEPOSIT",
+              "CREDIT_CARD"
+            ],
+            "type": "string"
           },
           "seriesStart": {
             "type": "string",
@@ -22424,8 +24014,14 @@
             "maxLength": 250
           },
           "accountType": {
-            "type": "string",
-            "maxLength": 50
+            "enum": [
+              "CHECKING",
+              "SAVINGS",
+              "CURRENT",
+              "TIME_DEPOSIT",
+              "CREDIT_CARD"
+            ],
+            "type": "string"
           },
           "seriesStart": {
             "type": "string",
@@ -22460,6 +24056,7 @@
         },
         "required": [
           "bankName",
+          "accountType",
           "seriesStart",
           "seriesEnd",
           "seriesDigits"
@@ -22534,8 +24131,14 @@
             "maxLength": 250
           },
           "accountType": {
-            "type": "string",
-            "maxLength": 50
+            "enum": [
+              "CHECKING",
+              "SAVINGS",
+              "CURRENT",
+              "TIME_DEPOSIT",
+              "CREDIT_CARD"
+            ],
+            "type": "string"
           },
           "seriesStart": {
             "type": "string",
@@ -32065,6 +33668,3267 @@
         }
       },
       "UpdateOfficialReceiptStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "DISAPPROVED",
+              "POSTED",
+              "CANCELLED",
+              "Draft",
+              "For Approval",
+              "Disapproved",
+              "Posted",
+              "Cancelled"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CollectionReceiptDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "withWvat": {
+            "type": "boolean"
+          },
+          "wvatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "withEwt": {
+            "type": "boolean"
+          },
+          "ewtType": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "description",
+          "quantity",
+          "amount",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountPercent",
+          "discountAmount",
+          "grossAmount",
+          "vatable",
+          "vatInclusive",
+          "withWvat",
+          "withEwt"
+        ]
+      },
+      "CollectionReceiptJournalEntryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "referenceType": {
+            "type": "string"
+          },
+          "referenceId": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "debit": {
+            "type": "number"
+          },
+          "credit": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "referenceType",
+          "referenceId",
+          "lineNumber",
+          "accountId",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "debit",
+          "credit"
+        ]
+      },
+      "CollectionReceiptResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerCode": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true
+          },
+          "receivableAccountId": {
+            "type": "string"
+          },
+          "receivableAccountCode": {
+            "type": "string"
+          },
+          "receivableAccountTitle": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "DISAPPROVED",
+              "POSTED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionReceiptDetailResponseDto"
+            }
+          },
+          "journalEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionReceiptJournalEntryResponseDto"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "dueDate",
+          "customerCode",
+          "customerName",
+          "currency",
+          "exchangeRate",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountAmount",
+          "grossAmount",
+          "receivableAccountId",
+          "receivableAccountCode",
+          "receivableAccountTitle",
+          "status",
+          "details",
+          "journalEntries",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CollectionReceiptStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "cancelledReceipts": {
+            "type": "number"
+          },
+          "disapprovedReceipts": {
+            "type": "number"
+          },
+          "draftReceipts": {
+            "type": "number"
+          },
+          "forApprovalReceipts": {
+            "type": "number"
+          },
+          "postedReceipts": {
+            "type": "number"
+          },
+          "totalReceipts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cancelledReceipts",
+          "disapprovedReceipts",
+          "draftReceipts",
+          "forApprovalReceipts",
+          "postedReceipts",
+          "totalReceipts"
+        ]
+      },
+      "CollectionReceiptPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "CollectionReceiptPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canApprove": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canDisapprove": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canPost": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canView": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canApprove",
+          "canCancel",
+          "canCreate",
+          "canDisapprove",
+          "canExport",
+          "canPost",
+          "canUpdate",
+          "canView"
+        ]
+      },
+      "CollectionReceiptListResponseDto": {
+        "type": "object",
+        "properties": {
+          "receipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionReceiptResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/CollectionReceiptStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/CollectionReceiptPaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/CollectionReceiptPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "receipts",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "CollectionReceiptNumberSuggestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number"
+          },
+          "inputMode": {
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchUnitId",
+          "inputMode",
+          "transactionNo"
+        ]
+      },
+      "CollectionReceiptContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/CollectionReceiptResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/CollectionReceiptPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "receipt",
+          "permissions"
+        ]
+      },
+      "CollectionReceiptDetailDto": {
+        "type": "object",
+        "properties": {
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "withWvat": {
+            "type": "boolean"
+          },
+          "wvatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "withEwt": {
+            "type": "boolean"
+          },
+          "ewtType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          }
+        },
+        "required": [
+          "lineNumber",
+          "description",
+          "quantity",
+          "amount",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountPercent",
+          "discountAmount",
+          "grossAmount",
+          "vatable",
+          "vatInclusive",
+          "withWvat",
+          "withEwt"
+        ]
+      },
+      "CollectionReceiptJournalEntryDto": {
+        "type": "object",
+        "properties": {
+          "referenceType": {
+            "type": "string",
+            "enum": [
+              "CR"
+            ]
+          },
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "accountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "debit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "credit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "lineNumber",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "debit",
+          "credit"
+        ]
+      },
+      "CreateCollectionReceiptDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "receivableAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "receivableAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "receivableAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionReceiptDetailDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionReceiptJournalEntryDto"
+            }
+          }
+        },
+        "required": [
+          "documentDate",
+          "dueDate",
+          "customerCode",
+          "customerName",
+          "currency",
+          "exchangeRate",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountAmount",
+          "grossAmount",
+          "receivableAccountCode",
+          "receivableAccountTitle",
+          "details",
+          "journalEntries"
+        ]
+      },
+      "SaveCollectionReceiptResponseDto": {
+        "type": "object",
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/CollectionReceiptResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/CollectionReceiptPermissionsResponseDto"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt",
+          "permissions",
+          "message"
+        ]
+      },
+      "UpdateCollectionReceiptDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "receivableAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "receivableAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "receivableAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionReceiptDetailDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionReceiptJournalEntryDto"
+            }
+          }
+        }
+      },
+      "UpdateCollectionReceiptStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "DISAPPROVED",
+              "POSTED",
+              "CANCELLED",
+              "Draft",
+              "For Approval",
+              "Disapproved",
+              "Posted",
+              "Cancelled"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "AcknowledgementReceiptDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "withWvat": {
+            "type": "boolean"
+          },
+          "wvatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "withEwt": {
+            "type": "boolean"
+          },
+          "ewtType": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "description",
+          "quantity",
+          "amount",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountPercent",
+          "discountAmount",
+          "grossAmount",
+          "vatable",
+          "vatInclusive",
+          "withWvat",
+          "withEwt"
+        ]
+      },
+      "AcknowledgementReceiptJournalEntryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "referenceType": {
+            "type": "string"
+          },
+          "referenceId": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "debit": {
+            "type": "number"
+          },
+          "credit": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "referenceType",
+          "referenceId",
+          "lineNumber",
+          "accountId",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "debit",
+          "credit"
+        ]
+      },
+      "AcknowledgementReceiptResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerCode": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true
+          },
+          "receivableAccountId": {
+            "type": "string"
+          },
+          "receivableAccountCode": {
+            "type": "string"
+          },
+          "receivableAccountTitle": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "DISAPPROVED",
+              "POSTED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AcknowledgementReceiptDetailResponseDto"
+            }
+          },
+          "journalEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AcknowledgementReceiptJournalEntryResponseDto"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "dueDate",
+          "customerCode",
+          "customerName",
+          "currency",
+          "exchangeRate",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountAmount",
+          "grossAmount",
+          "receivableAccountId",
+          "receivableAccountCode",
+          "receivableAccountTitle",
+          "status",
+          "details",
+          "journalEntries",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "AcknowledgementReceiptStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "cancelledReceipts": {
+            "type": "number"
+          },
+          "disapprovedReceipts": {
+            "type": "number"
+          },
+          "draftReceipts": {
+            "type": "number"
+          },
+          "forApprovalReceipts": {
+            "type": "number"
+          },
+          "postedReceipts": {
+            "type": "number"
+          },
+          "totalReceipts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cancelledReceipts",
+          "disapprovedReceipts",
+          "draftReceipts",
+          "forApprovalReceipts",
+          "postedReceipts",
+          "totalReceipts"
+        ]
+      },
+      "AcknowledgementReceiptPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "AcknowledgementReceiptPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canApprove": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canDisapprove": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canPost": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canView": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canApprove",
+          "canCancel",
+          "canCreate",
+          "canDisapprove",
+          "canExport",
+          "canPost",
+          "canUpdate",
+          "canView"
+        ]
+      },
+      "AcknowledgementReceiptListResponseDto": {
+        "type": "object",
+        "properties": {
+          "receipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AcknowledgementReceiptResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/AcknowledgementReceiptStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/AcknowledgementReceiptPaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/AcknowledgementReceiptPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "receipts",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "AcknowledgementReceiptNumberSuggestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number"
+          },
+          "inputMode": {
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchUnitId",
+          "inputMode",
+          "transactionNo"
+        ]
+      },
+      "AcknowledgementReceiptContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/AcknowledgementReceiptResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/AcknowledgementReceiptPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "receipt",
+          "permissions"
+        ]
+      },
+      "AcknowledgementReceiptDetailDto": {
+        "type": "object",
+        "properties": {
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "withWvat": {
+            "type": "boolean"
+          },
+          "wvatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "withEwt": {
+            "type": "boolean"
+          },
+          "ewtType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          }
+        },
+        "required": [
+          "lineNumber",
+          "description",
+          "quantity",
+          "amount",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountPercent",
+          "discountAmount",
+          "grossAmount",
+          "vatable",
+          "vatInclusive",
+          "withWvat",
+          "withEwt"
+        ]
+      },
+      "AcknowledgementReceiptJournalEntryDto": {
+        "type": "object",
+        "properties": {
+          "referenceType": {
+            "type": "string",
+            "enum": [
+              "AR"
+            ]
+          },
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "accountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "debit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "credit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "lineNumber",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "debit",
+          "credit"
+        ]
+      },
+      "CreateAcknowledgementReceiptDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "receivableAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "receivableAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "receivableAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AcknowledgementReceiptDetailDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AcknowledgementReceiptJournalEntryDto"
+            }
+          }
+        },
+        "required": [
+          "documentDate",
+          "dueDate",
+          "customerCode",
+          "customerName",
+          "currency",
+          "exchangeRate",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountAmount",
+          "grossAmount",
+          "receivableAccountCode",
+          "receivableAccountTitle",
+          "details",
+          "journalEntries"
+        ]
+      },
+      "SaveAcknowledgementReceiptResponseDto": {
+        "type": "object",
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/AcknowledgementReceiptResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/AcknowledgementReceiptPermissionsResponseDto"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt",
+          "permissions",
+          "message"
+        ]
+      },
+      "UpdateAcknowledgementReceiptDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "receivableAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "receivableAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "receivableAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AcknowledgementReceiptDetailDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AcknowledgementReceiptJournalEntryDto"
+            }
+          }
+        }
+      },
+      "UpdateAcknowledgementReceiptStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "DISAPPROVED",
+              "POSTED",
+              "CANCELLED",
+              "Draft",
+              "For Approval",
+              "Disapproved",
+              "Posted",
+              "Cancelled"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ProvisionalReceiptDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "withWvat": {
+            "type": "boolean"
+          },
+          "wvatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "withEwt": {
+            "type": "boolean"
+          },
+          "ewtType": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "description",
+          "quantity",
+          "amount",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountPercent",
+          "discountAmount",
+          "grossAmount",
+          "vatable",
+          "vatInclusive",
+          "withWvat",
+          "withEwt"
+        ]
+      },
+      "ProvisionalReceiptJournalEntryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "referenceType": {
+            "type": "string"
+          },
+          "referenceId": {
+            "type": "string"
+          },
+          "lineNumber": {
+            "type": "number"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true
+          },
+          "debit": {
+            "type": "number"
+          },
+          "credit": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "referenceType",
+          "referenceId",
+          "lineNumber",
+          "accountId",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "debit",
+          "credit"
+        ]
+      },
+      "ProvisionalReceiptResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerCode": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true
+          },
+          "receivableAccountId": {
+            "type": "string"
+          },
+          "receivableAccountCode": {
+            "type": "string"
+          },
+          "receivableAccountTitle": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "DISAPPROVED",
+              "POSTED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProvisionalReceiptDetailResponseDto"
+            }
+          },
+          "journalEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProvisionalReceiptJournalEntryResponseDto"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "dueDate",
+          "customerCode",
+          "customerName",
+          "currency",
+          "exchangeRate",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountAmount",
+          "grossAmount",
+          "receivableAccountId",
+          "receivableAccountCode",
+          "receivableAccountTitle",
+          "status",
+          "details",
+          "journalEntries",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ProvisionalReceiptStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "cancelledReceipts": {
+            "type": "number"
+          },
+          "disapprovedReceipts": {
+            "type": "number"
+          },
+          "draftReceipts": {
+            "type": "number"
+          },
+          "forApprovalReceipts": {
+            "type": "number"
+          },
+          "postedReceipts": {
+            "type": "number"
+          },
+          "totalReceipts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cancelledReceipts",
+          "disapprovedReceipts",
+          "draftReceipts",
+          "forApprovalReceipts",
+          "postedReceipts",
+          "totalReceipts"
+        ]
+      },
+      "ProvisionalReceiptPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "ProvisionalReceiptPermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canApprove": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canDisapprove": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canPost": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canView": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canApprove",
+          "canCancel",
+          "canCreate",
+          "canDisapprove",
+          "canExport",
+          "canPost",
+          "canUpdate",
+          "canView"
+        ]
+      },
+      "ProvisionalReceiptListResponseDto": {
+        "type": "object",
+        "properties": {
+          "receipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProvisionalReceiptResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/ProvisionalReceiptStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/ProvisionalReceiptPaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ProvisionalReceiptPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "receipts",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "ProvisionalReceiptNumberSuggestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number"
+          },
+          "inputMode": {
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchUnitId",
+          "inputMode",
+          "transactionNo"
+        ]
+      },
+      "ProvisionalReceiptContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/ProvisionalReceiptResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ProvisionalReceiptPermissionsResponseDto"
+          }
+        },
+        "required": [
+          "receipt",
+          "permissions"
+        ]
+      },
+      "ProvisionalReceiptDetailDto": {
+        "type": "object",
+        "properties": {
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0
+          },
+          "amount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountPercent": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "withWvat": {
+            "type": "boolean"
+          },
+          "wvatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "withEwt": {
+            "type": "boolean"
+          },
+          "ewtType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          }
+        },
+        "required": [
+          "lineNumber",
+          "description",
+          "quantity",
+          "amount",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountPercent",
+          "discountAmount",
+          "grossAmount",
+          "vatable",
+          "vatInclusive",
+          "withWvat",
+          "withEwt"
+        ]
+      },
+      "ProvisionalReceiptJournalEntryDto": {
+        "type": "object",
+        "properties": {
+          "referenceType": {
+            "type": "string",
+            "enum": [
+              "PVR"
+            ]
+          },
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "accountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "accountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "currencyCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "debit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "credit": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "atcCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "lineNumber",
+          "accountCode",
+          "accountTitle",
+          "currencyCode",
+          "exchangeRate",
+          "debit",
+          "credit"
+        ]
+      },
+      "CreateProvisionalReceiptDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "receivableAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "receivableAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "receivableAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProvisionalReceiptDetailDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProvisionalReceiptJournalEntryDto"
+            }
+          }
+        },
+        "required": [
+          "documentDate",
+          "dueDate",
+          "customerCode",
+          "customerName",
+          "currency",
+          "exchangeRate",
+          "netAmount",
+          "vatAmount",
+          "wvatAmount",
+          "ewtAmount",
+          "discountAmount",
+          "grossAmount",
+          "receivableAccountCode",
+          "receivableAccountTitle",
+          "details",
+          "journalEntries"
+        ]
+      },
+      "SaveProvisionalReceiptResponseDto": {
+        "type": "object",
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/ProvisionalReceiptResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ProvisionalReceiptPermissionsResponseDto"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt",
+          "permissions",
+          "message"
+        ]
+      },
+      "UpdateProvisionalReceiptDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "documentDate": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "businessStyle": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "projectRef": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "salesAssociate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "teamAssigned": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "wvatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "terms": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "receivableAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "receivableAccountCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "receivableAccountTitle": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "details": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProvisionalReceiptDetailDto"
+            }
+          },
+          "journalEntries": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProvisionalReceiptJournalEntryDto"
+            }
+          }
+        }
+      },
+      "UpdateProvisionalReceiptStatusDto": {
         "type": "object",
         "properties": {
           "status": {

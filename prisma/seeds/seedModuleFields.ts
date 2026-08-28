@@ -54,7 +54,7 @@ const ModuleDirectoryHints: Record<string, string[]> = {
   CAME: ['cash-disbursement/cash-advance-multiple-entry'],
   PCV: ['cash-disbursement/petty-cash-voucher'],
   PCF: ['cash-disbursement/petty-cash-fund'],
-  PCFR: ['cash-disbursement/petty-cash-fund-replenishment'],
+  PCR: ['cash-disbursement/petty-cash-replenishment'],
   RF: ['cash-disbursement/revolving-fund'],
   RFR: ['cash-disbursement/revolving-fund-replenishment'],
   ATS: ['cash-disbursement/advances-to-suppliers'],

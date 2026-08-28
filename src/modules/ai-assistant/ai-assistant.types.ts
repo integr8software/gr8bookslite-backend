@@ -1,5 +1,11 @@
 export type AiAssistantAction =
   | {
+      type: 'module_command';
+      moduleCode: string;
+      command: 'open';
+      label?: string;
+    }
+  | {
       type: 'navigate';
       route: string;
       label?: string;
