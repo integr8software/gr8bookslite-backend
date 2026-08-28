@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class OfficialReceiptDetailDto {
   @Type(() => Number)
@@ -16,14 +16,40 @@ export class OfficialReceiptDetailDto {
   @MaxLength(500)
   particulars?: string | null;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  partyCode?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  partyName?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  referenceNo?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  vatType?: string | null;
+
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 4 })
   @Min(0)
-  quantity!: number;
+  vatPercent!: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  cwtCode?: string | null;
 
   @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  amount!: number;
+  @IsNumber({ maxDecimalPlaces: 4 })
+  @Min(0)
+  cwtPercent!: number;
 
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -42,11 +68,6 @@ export class OfficialReceiptDetailDto {
   ewtAmount!: number;
 
   @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 4 })
-  @Min(0)
-  discountPercent!: number;
-
-  @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   discountAmount!: number;
 
@@ -54,32 +75,9 @@ export class OfficialReceiptDetailDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   grossAmount!: number;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  vatType?: string | null;
-
-  @IsBoolean()
-  vatable!: boolean;
-
-  @IsBoolean()
-  vatInclusive!: boolean;
-
-  @IsBoolean()
-  withWvat!: boolean;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  wvatType?: string | null;
-
-  @IsBoolean()
-  withEwt!: boolean;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  ewtType?: string | null;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  totalReceived!: number;
 
   @IsOptional()
   @IsString()

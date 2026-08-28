@@ -19,16 +19,16 @@ describe('PaymentTypeMaintenanceService payment type options', () => {
       {
         id: 7n,
         name: 'Bank Transfer',
-        classification: PaymentTypeClassification.NON_CASH_SETTLEMENT,
+        classification: PaymentTypeClassification.BANK_TRANSFER,
         sortOrder: 20,
         status: PaymentTypeStatus.ACTIVE,
       },
     ]);
 
-    const result = await service.findOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' transfer ', classification: PaymentTypeClassification.NON_CASH_SETTLEMENT },
-    );
+    const result = await service.findOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, {
+      search: ' transfer ',
+      classification: PaymentTypeClassification.BANK_TRANSFER,
+    });
 
     expect(prisma.paymentType.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -36,7 +36,7 @@ describe('PaymentTypeMaintenanceService payment type options', () => {
           companyId: 11,
           deletedAt: null,
           status: PaymentTypeStatus.ACTIVE,
-          classification: PaymentTypeClassification.NON_CASH_SETTLEMENT,
+          classification: PaymentTypeClassification.BANK_TRANSFER,
           name: { contains: 'transfer', mode: 'insensitive' },
         },
       }),
@@ -45,7 +45,7 @@ describe('PaymentTypeMaintenanceService payment type options', () => {
       {
         id: '7',
         name: 'Bank Transfer',
-        classification: PaymentTypeClassification.NON_CASH_SETTLEMENT,
+        classification: PaymentTypeClassification.BANK_TRANSFER,
         sortOrder: 20,
         status: PaymentTypeStatus.ACTIVE,
       },
