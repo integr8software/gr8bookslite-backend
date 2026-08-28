@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayMinSize, IsArray, IsDateString, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
 import { OfficialReceiptDetailDto } from './official-receipt-detail.dto';
@@ -52,6 +53,11 @@ export class CreateOfficialReceiptDto {
   @IsOptional()
   @IsString()
   @MaxLength(40)
+  @ApiPropertyOptional({
+    description: 'Payment type ID from the payment types master data.',
+    example: '1',
+    nullable: true,
+  })
   paymentId?: string | null;
 
   @IsString()
