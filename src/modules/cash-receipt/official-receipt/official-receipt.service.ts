@@ -6,15 +6,14 @@ import {
   MembershipRole,
   MembershipStatus,
   Party,
-  PartyAddress,
   PartyStatus,
   PartyType,
+  PaymentType,
+  PaymentTypeStatus,
   Prisma,
   ResponsibilityCenter,
   ResponsibilityCenterStatus,
   OfficialReceiptStatus,
-  Term,
-  TermStatus,
   TransactionNumberInputMode,
 } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
@@ -48,7 +47,6 @@ const JournalEntryNumberAdvisoryLockNamespace = 9081;
 const CustomerPartyTypes = new Set<PartyType>([PartyType.CUSTOMER, PartyType.MEMBER]);
 
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
-type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
 type ResolvedDetailLine = {
   input: OfficialReceiptDetailDto;
@@ -161,13 +159,9 @@ export class OfficialReceiptService {
 
         const created = await tx.officialReceipt.create({
           data: {
-            addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(dto.address),
             billToNameSnapshot: cleanOptional(dto.billToName),
             branchUnitId,
-            businessStyle: cleanOptional(dto.businessStyle),
             companyId,
-            contactNoSnapshot: cleanOptional(dto.contactNo),
-            contactPersonSnapshot: cleanOptional(dto.contactPerson),
             createdByUserId: user.id,
             currencyCode: normalized.currencyCode,
             discountAmount: normalized.discountAmount,
@@ -186,16 +180,11 @@ export class OfficialReceiptService {
               cleanOptional(dto.billToName) ??
               cleanOptional(dto.customerCode) ??
               'Manual customer',
-            projectCode: cleanOptional(dto.projectCode),
-            projectName: cleanOptional(dto.projectName),
-            projectRef: cleanOptional(dto.projectRef),
+            paymentId: references.payment?.id ?? null,
             receivableAccountId: references.receivableAccount?.id ?? null,
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
-            salesAssociate: cleanOptional(dto.salesAssociate),
             status: OfficialReceiptStatus.DRAFT,
-            teamAssigned: cleanOptional(dto.teamAssigned),
-            termId: references.term?.id ?? null,
             transactionNo,
             vatAmount: normalized.vatAmount,
             wvatAmount: normalized.wvatAmount,
@@ -261,11 +250,7 @@ export class OfficialReceiptService {
         await tx.officialReceipt.update({
           where: { id: officialReceiptId },
           data: {
-            addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(fullDto.address),
             billToNameSnapshot: cleanOptional(fullDto.billToName),
-            businessStyle: cleanOptional(fullDto.businessStyle),
-            contactNoSnapshot: cleanOptional(fullDto.contactNo),
-            contactPersonSnapshot: cleanOptional(fullDto.contactPerson),
             currencyCode: normalized.currencyCode,
             discountAmount: normalized.discountAmount,
             documentDate: normalized.documentDate,
@@ -283,15 +268,10 @@ export class OfficialReceiptService {
               cleanOptional(fullDto.billToName) ??
               cleanOptional(fullDto.customerCode) ??
               'Manual customer',
-            projectCode: cleanOptional(fullDto.projectCode),
-            projectName: cleanOptional(fullDto.projectName),
-            projectRef: cleanOptional(fullDto.projectRef),
+            paymentId: references.payment?.id ?? null,
             receivableAccountId: references.receivableAccount?.id ?? null,
             referenceNo: cleanOptional(fullDto.referenceNo),
             remarks: cleanOptional(fullDto.remarks),
-            salesAssociate: cleanOptional(fullDto.salesAssociate),
-            teamAssigned: cleanOptional(fullDto.teamAssigned),
-            termId: references.term?.id ?? null,
             transactionNo,
             updatedByUserId: user.id,
             vatAmount: normalized.vatAmount,
@@ -507,7 +487,7 @@ export class OfficialReceiptService {
           ...detail,
           currencyCode: header.currencyCode,
           exchangeRate: header.exchangeRate,
-          particulars: header.particulars,
+          particulars: detail.particulars ?? header.particulars,
           referenceId: header.referenceId,
           referenceNo: header.referenceNo,
           referenceType: header.referenceType,
@@ -522,19 +502,19 @@ export class OfficialReceiptService {
   }
 
   private async resolveReceiptReferences(tx: PrismaWriteClient, companyId: number, dto: CreateOfficialReceiptDto) {
-    const [party, receivableAccount, term, details, journalEntries] = await Promise.all([
+    const [party, payment, receivableAccount, details, journalEntries] = await Promise.all([
       this.resolveParty(tx, companyId, { partyCode: dto.customerCode, partyId: dto.partyId }),
+      this.resolvePaymentType(tx, companyId, dto.paymentId),
       this.resolvePostingAccount(tx, companyId, {
         accountCode: dto.receivableAccountCode,
         accountId: dto.receivableAccountId,
         label: 'Receivable account',
       }),
-      this.resolveTerm(tx, companyId, dto.termId),
       Promise.all(dto.details.map((input) => this.resolveDetailLine(tx, companyId, input))),
       Promise.all(dto.journalEntries.map((input) => this.resolveJournalEntry(tx, companyId, input))),
     ]);
 
-    return { details, journalEntries, party, receivableAccount, term };
+    return { details, journalEntries, party, payment, receivableAccount };
   }
 
   private async resolveDetailLine(tx: PrismaWriteClient, companyId: number, input: OfficialReceiptDetailDto): Promise<ResolvedDetailLine> {
@@ -574,30 +554,28 @@ export class OfficialReceiptService {
     await tx.officialReceiptDetails.deleteMany({ where: { officialReceiptId } });
     await tx.officialReceiptDetails.createMany({
       data: details.map(({ input, responsibilityCenter }) => ({
-        amount: roundToDecimal(input.amount, 2),
         branchUnitId,
+        cwtCode: cleanOptional(input.cwtCode),
+        cwtPercent: roundToDecimal(input.cwtPercent, 4),
         companyId,
         description: input.description.trim(),
         discountAmount: roundToDecimal(input.discountAmount, 2),
-        discountPercent: roundToDecimal(input.discountPercent, 4),
         ewtAmount: roundToDecimal(input.ewtAmount, 2),
-        ewtType: cleanOptional(input.ewtType),
         grossAmount: roundToDecimal(input.grossAmount, 2),
         lineNumber: input.lineNumber,
         netAmount: roundToDecimal(input.netAmount, 2),
         particulars: cleanOptional(input.particulars),
-        quantity: roundToDecimal(input.quantity, 4),
+        partyCodeSnapshot: cleanOptional(input.partyCode),
+        partyNameSnapshot: cleanOptional(input.partyName),
+        referenceNo: cleanOptional(input.referenceNo),
         responsibilityCenterId: responsibilityCenter?.id ?? null,
         responsibilityCenterSnapshot: responsibilityCenter?.name ?? cleanOptional(input.responsibilityCenter),
         officialReceiptId,
+        totalReceived: roundToDecimal(input.totalReceived, 2),
         vatAmount: roundToDecimal(input.vatAmount, 2),
-        vatInclusive: input.vatInclusive,
+        vatPercent: roundToDecimal(input.vatPercent, 4),
         vatType: cleanOptional(input.vatType),
-        vatable: input.vatable,
-        withEwt: input.withEwt,
-        withWvat: input.withWvat,
         wvatAmount: roundToDecimal(input.wvatAmount, 2),
-        wvatType: cleanOptional(input.wvatType),
       })),
     });
   }
@@ -651,6 +629,7 @@ export class OfficialReceiptService {
             credit: roundToDecimal(input.credit, 2),
             debit: roundToDecimal(input.debit, 2),
             lineNumber: input.lineNumber,
+            particulars: cleanOptional(input.particulars),
             partyCodeSnapshot: cleanOptional(input.partyCode),
             partyNameSnapshot: cleanOptional(input.partyName),
             refNo: cleanOptional(input.refNo),
@@ -792,27 +771,27 @@ export class OfficialReceiptService {
     return party;
   }
 
-  private async resolveTerm(tx: PrismaWriteClient, companyId: number, termId?: string | null) {
-    const parsedTermId = parseOptionalPositiveBigIntId(termId, 'termId');
+  private async resolvePaymentType(tx: PrismaWriteClient, companyId: number, paymentId?: string | null): Promise<PaymentType | null> {
+    const parsedPaymentId = parseOptionalPositiveBigIntId(paymentId, 'paymentId');
 
-    if (!parsedTermId) {
+    if (!parsedPaymentId) {
       return null;
     }
 
-    const term = await tx.term.findFirst({
+    const paymentType = await tx.paymentType.findFirst({
       where: {
         companyId,
         deletedAt: null,
-        id: parsedTermId,
-        status: TermStatus.ACTIVE,
+        id: parsedPaymentId,
+        status: PaymentTypeStatus.ACTIVE,
       },
     });
 
-    if (!term) {
-      throw new BadRequestException('Terms must reference an active company term.');
+    if (!paymentType) {
+      throw new BadRequestException('Payment type must reference an active company payment type.');
     }
 
-    return term;
+    return paymentType;
   }
 
   private async resolveResponsibilityCenter(
@@ -1017,19 +996,6 @@ export class OfficialReceiptService {
       .join(' ');
 
     return cleanOptional(party.partyName) ?? cleanOptional(party.tradeName) ?? cleanOptional(individualName) ?? cleanOptional(fallback) ?? party.partyCodeNo;
-  }
-
-  private getPartyAddress(party: PartyWithAddresses) {
-    const address = party.addresses.find((item) => item.isDefault) ?? party.addresses[0];
-
-    if (!address) {
-      return null;
-    }
-
-    return [address.addressLine1, address.addressLine2, address.barangay, address.cityMunicipality, address.province, address.region]
-      .map(cleanOptional)
-      .filter(Boolean)
-      .join(', ');
   }
 
   private getActiveCompanyId(user: AuthUser) {
