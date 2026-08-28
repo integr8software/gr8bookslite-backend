@@ -122,20 +122,19 @@ export type AiAssistantActionDto =
   | AiAssistantOpenFormActionDto
   | AiAssistantTermsMaintenanceActionDto;
 
+const AiAssistantActionOneOfSchemas = [
+  { $ref: getSchemaPath(AiAssistantModuleCommandActionDto) },
+  { $ref: getSchemaPath(AiAssistantNavigateActionDto) },
+  { $ref: getSchemaPath(AiAssistantOpenFormActionDto) },
+  { $ref: getSchemaPath(AiAssistantTermsMaintenanceActionDto) },
+];
+
 @ApiExtraModels(AiAssistantModuleCommandActionDto, AiAssistantNavigateActionDto, AiAssistantOpenFormActionDto, AiAssistantTermsMaintenanceActionDto)
 export class AiAssistantChatResponseDto {
   @ApiProperty()
   message: string;
 
-  @ApiProperty({
-    nullable: true,
-    oneOf: [
-      { $ref: getSchemaPath(AiAssistantModuleCommandActionDto) },
-      { $ref: getSchemaPath(AiAssistantNavigateActionDto) },
-      { $ref: getSchemaPath(AiAssistantOpenFormActionDto) },
-      { $ref: getSchemaPath(AiAssistantTermsMaintenanceActionDto) },
-    ],
-  })
+  @ApiProperty({ nullable: true, oneOf: AiAssistantActionOneOfSchemas })
   action: AiAssistantActionDto | null;
 }
 
