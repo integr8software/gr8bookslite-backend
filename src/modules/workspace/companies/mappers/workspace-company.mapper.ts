@@ -60,10 +60,20 @@ export function mapWorkspaceCompany(company: WorkspaceCompanyRecord): WorkspaceC
     totalUsers: company._count?.memberships ?? undefined,
     totalUnits: company._count?.units ?? undefined,
     units: units?.map(mapCompanyUnit),
+    roles:
+      'roles' in company && Array.isArray(company.roles)
+        ? company.roles.map((role) => ({
+            id: role.id,
+            name: role.name,
+            code: role.code,
+            unitId: role.unitId,
+          }))
+        : undefined,
     createdAt: company.createdAt,
     updatedAt: company.updatedAt,
   };
 }
+
 
 export function mapCompanyUnit(unit: CompanyUnit): CompanyUnitResponse {
   return {

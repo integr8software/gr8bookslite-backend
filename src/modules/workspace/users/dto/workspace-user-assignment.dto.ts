@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsInt, Min } from 'class-validator';
+import { ArrayMinSize, IsEnum, IsInt, IsOptional, Min } from 'class-validator';
+import { MembershipRole } from '@prisma/client';
 
 export class WorkspaceUserAssignmentDto {
   @Type(() => Number)
@@ -14,4 +15,14 @@ export class WorkspaceUserAssignmentDto {
     message: 'Select at least one head office, branch, or satellite.',
   })
   unitIds!: number[];
+
+  @IsOptional()
+  @IsEnum(MembershipRole)
+  role?: MembershipRole;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  companyRoleId?: number | null;
 }
+

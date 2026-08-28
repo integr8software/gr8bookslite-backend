@@ -13,7 +13,10 @@ export function mapWorkspaceUserMemberships(memberships: WorkspaceUserMembership
         ...access.unit,
         displayName: access.unit.name,
       })),
+      role: membership.role,
+      companyRoleId: membership.companyRoleId,
     };
+
 
     if (current) {
       current.companyAssignments.push(assignment);

@@ -43,7 +43,20 @@ export const WorkspaceCompanyListInclude = {
     },
     orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
   },
+  roles: {
+    where: {
+      isActive: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      code: true,
+      unitId: true,
+    },
+    orderBy: [{ isSystem: 'desc' }, { name: 'asc' }],
+  },
 } satisfies Prisma.CompanyInclude;
+
 
 export const WorkspaceCompanyDetailsInclude = {
   ...WorkspaceCompanyListInclude,

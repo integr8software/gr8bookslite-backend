@@ -47,6 +47,12 @@ export type SidebarSystemTemplateRow = {
 export type SidebarMembershipSource = {
   role: MembershipRole;
   accessScope: AccessScopeLevel;
+  companyRole?: {
+    id: number;
+    code: string;
+    name: string;
+  } | null;
+  permissionOverrides?: Array<unknown>;
   company: {
     units: Array<{ id: number }>;
     sidebarPreferences: SidebarPreferenceRow[];

@@ -42,7 +42,7 @@ export class AccessControlService {
   }
 
   hasPermission(user: AuthUser, permissionCode: string, action: PermissionAction): boolean {
-    if (user.role === AppRole.SUPER_ADMIN) {
+    if (user.role === AppRole.SUPER_ADMIN || user.role === AppRole.ADMIN) {
       return true;
     }
 
@@ -52,6 +52,8 @@ export class AccessControlService {
 
     return user.permissions.includes(this.buildPermissionKey(permissionCode, action));
   }
+
+
 
   assertCompanyContext(user: AuthUser): void {
     if (user.role === AppRole.SUPER_ADMIN) {

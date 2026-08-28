@@ -67,6 +67,13 @@ export interface WorkspaceCompanyResponse {
   totalUsers?: number;
   totalUnits?: number;
   units?: CompanyUnitResponse[];
+  roles?: Array<{
+    id: number;
+    name: string;
+    code: string;
+    unitId: number | null;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
+

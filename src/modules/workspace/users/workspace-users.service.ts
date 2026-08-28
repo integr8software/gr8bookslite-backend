@@ -305,7 +305,10 @@ export class WorkspaceUsersService {
     const assignments = dto.companyAssignments.map((assignment) => ({
       companyId: assignment.companyId,
       unitIds: [...new Set(assignment.unitIds)],
+      role: assignment.role,
+      companyRoleId: assignment.companyRoleId,
     }));
+
     const companyIds = [...new Set(assignments.map(({ companyId }) => companyId))];
 
     if (companyIds.length !== assignments.length) {
@@ -376,6 +379,8 @@ export class WorkspaceUsersService {
     return {
       assignments: assignments.map((assignment) => ({
         ...assignment,
+        role: assignment.role ?? MembershipRole.USER,
+        companyRoleId: assignment.companyRoleId ?? null,
         accessScope: getAccessScope(assignment.unitIds.map((unitId) => unitById.get(unitId)?.type)),
       })),
       manageableCompanyIds: await this.getManageableCompanyIds(user),
@@ -392,6 +397,8 @@ export class WorkspaceUsersService {
         companyId: number;
         unitIds: number[];
         accessScope: AccessScopeLevel;
+        role?: MembershipRole;
+        companyRoleId?: number | null;
       }[];
     },
   ) {
@@ -407,6 +414,9 @@ export class WorkspaceUsersService {
     });
 
     for (const assignment of input.assignments) {
+      const role = assignment.role ?? MembershipRole.USER;
+      const companyRoleId = assignment.companyRoleId ?? null;
+
       await tx.membership.upsert({
         where: {
           userId_companyId: {
@@ -415,6 +425,8 @@ export class WorkspaceUsersService {
           },
         },
         update: {
+          role,
+          companyRoleId,
           status: MembershipStatus.ACTIVE,
           accessScope: assignment.accessScope,
           invitedByUserId: input.actorUserId,
@@ -423,7 +435,8 @@ export class WorkspaceUsersService {
         create: {
           userId: input.targetUserId,
           companyId: assignment.companyId,
-          role: MembershipRole.USER,
+          role,
+          companyRoleId,
           status: MembershipStatus.ACTIVE,
           accessScope: assignment.accessScope,
           invitedByUserId: input.actorUserId,
@@ -443,11 +456,13 @@ export class WorkspaceUsersService {
           userId: input.targetUserId,
           companyId: assignment.companyId,
           unitId,
+          companyRoleId,
         })),
         skipDuplicates: true,
       });
     }
   }
+
 
   private async findUserMemberships(userId: number) {
     return this.prisma.membership.findMany({
