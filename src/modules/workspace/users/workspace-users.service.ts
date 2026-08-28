@@ -302,12 +302,26 @@ export class WorkspaceUsersService {
   }
 
   private async validateAssignments(user: AuthUser, dto: CreateWorkspaceUserDto | UpdateWorkspaceUserDto) {
-    const assignments = dto.companyAssignments.map((assignment) => ({
-      companyId: assignment.companyId,
-      unitIds: [...new Set(assignment.unitIds)],
-      role: assignment.role,
-      companyRoleId: assignment.companyRoleId,
-    }));
+    const assignments = dto.companyAssignments.map((assignment) => {
+      const unitMap = new Map<number, number | null>();
+      if (assignment.unitAssignments) {
+        for (const ua of assignment.unitAssignments) {
+          unitMap.set(ua.unitId, ua.companyRoleId ?? null);
+        }
+      }
+      const rawUnitIds = assignment.unitIds ?? assignment.unitAssignments?.map((u) => u.unitId) ?? [];
+      const unitIds = [...new Set(rawUnitIds)];
+      return {
+        companyId: assignment.companyId,
+        unitIds,
+        unitAssignments: unitIds.map((unitId) => ({
+          unitId,
+          companyRoleId: unitMap.get(unitId) ?? assignment.companyRoleId ?? null,
+        })),
+        role: assignment.role,
+        companyRoleId: assignment.companyRoleId,
+      };
+    });
 
     const companyIds = [...new Set(assignments.map(({ companyId }) => companyId))];
 
@@ -396,6 +410,7 @@ export class WorkspaceUsersService {
       assignments: {
         companyId: number;
         unitIds: number[];
+        unitAssignments: { unitId: number; companyRoleId: number | null }[];
         accessScope: AccessScopeLevel;
         role?: MembershipRole;
         companyRoleId?: number | null;
@@ -415,7 +430,7 @@ export class WorkspaceUsersService {
 
     for (const assignment of input.assignments) {
       const role = assignment.role ?? MembershipRole.USER;
-      const companyRoleId = assignment.companyRoleId ?? null;
+      const primaryCompanyRoleId = assignment.unitAssignments[0]?.companyRoleId ?? assignment.companyRoleId ?? null;
 
       await tx.membership.upsert({
         where: {
@@ -426,7 +441,7 @@ export class WorkspaceUsersService {
         },
         update: {
           role,
-          companyRoleId,
+          companyRoleId: primaryCompanyRoleId,
           status: MembershipStatus.ACTIVE,
           accessScope: assignment.accessScope,
           invitedByUserId: input.actorUserId,
@@ -436,7 +451,7 @@ export class WorkspaceUsersService {
           userId: input.targetUserId,
           companyId: assignment.companyId,
           role,
-          companyRoleId,
+          companyRoleId: primaryCompanyRoleId,
           status: MembershipStatus.ACTIVE,
           accessScope: assignment.accessScope,
           invitedByUserId: input.actorUserId,
@@ -452,16 +467,17 @@ export class WorkspaceUsersService {
       });
 
       await tx.membershipUnitAccess.createMany({
-        data: assignment.unitIds.map((unitId) => ({
+        data: assignment.unitAssignments.map(({ unitId, companyRoleId }) => ({
           userId: input.targetUserId,
           companyId: assignment.companyId,
           unitId,
-          companyRoleId,
+          companyRoleId: companyRoleId ?? null,
         })),
         skipDuplicates: true,
       });
     }
   }
+
 
 
   private async findUserMemberships(userId: number) {

@@ -7,6 +7,12 @@ export interface WorkspaceUserAssignedUnitResponse {
   name: string;
   displayName: string | null;
   isActive: boolean;
+  companyRoleId?: number | null;
+  companyRole?: {
+    id: number;
+    name: string;
+    code: string;
+  } | null;
 }
 
 export interface WorkspaceUserCompanyAssignmentResponse {
@@ -16,6 +22,7 @@ export interface WorkspaceUserCompanyAssignmentResponse {
   role: MembershipRole;
   companyRoleId: number | null;
 }
+
 
 
 export interface WorkspaceUserResponse {

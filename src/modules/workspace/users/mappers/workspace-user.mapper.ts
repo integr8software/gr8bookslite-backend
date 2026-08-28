@@ -12,10 +12,19 @@ export function mapWorkspaceUserMemberships(memberships: WorkspaceUserMembership
       units: membership.unitAccess.map((access) => ({
         ...access.unit,
         displayName: access.unit.name,
+        companyRoleId: access.companyRoleId,
+        companyRole: access.companyRole
+          ? {
+              id: access.companyRole.id,
+              name: access.companyRole.name,
+              code: access.companyRole.code,
+            }
+          : null,
       })),
       role: membership.role,
       companyRoleId: membership.companyRoleId,
     };
+
 
 
     if (current) {

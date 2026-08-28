@@ -16,6 +16,14 @@ export const WorkspaceUserMembershipInclude = {
   unitAccess: {
     select: {
       unitId: true,
+      companyRoleId: true,
+      companyRole: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+        },
+      },
       unit: {
         select: {
           id: true,
@@ -27,6 +35,7 @@ export const WorkspaceUserMembershipInclude = {
       },
     },
   },
+
 } satisfies Prisma.MembershipInclude;
 
 export type WorkspaceUserMembershipRecord = Prisma.MembershipGetPayload<{
