@@ -1,0 +1,68 @@
+import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.util';
+import type { CashVoucherWithPayload } from '../prisma/cash-voucher.include';
+
+export function mapCashVoucher(record: CashVoucherWithPayload, userNames: Map<number, string>) {
+  return {
+    id: record.id.toString(),
+    branchUnitId: record.branchUnitId,
+    voucherNo: record.voucherNo,
+    voucherDate: toDateValue(record.voucherDate),
+    paymentDueDate: record.paymentDueDate ? toDateValue(record.paymentDueDate) : null,
+    referenceNo: record.referenceNo ?? null,
+    referenceModule: record.referenceModule ?? null,
+    voucherReferenceNo: record.voucherReferenceNo ?? null,
+    invoiceReferenceNo: record.invoiceReferenceNo ?? null,
+    paymentMethod: record.paymentMethod,
+    disbursementType: record.disbursementType ?? null,
+    partyId: record.partyId?.toString() ?? null,
+    partyCode: record.partyCodeSnapshot || record.party?.partyCodeNo || '',
+    partyName: record.partyNameSnapshot || record.party?.partyName || '',
+    creditAccountId: record.creditAccountId?.toString() ?? null,
+    costCenter: record.costCenter ?? null,
+    projectName: record.projectName ?? null,
+    preparedBy: record.preparedBy ?? null,
+    currency: record.currencyCode,
+    fxRate: Number(record.exchangeRate),
+    amount: Number(record.amount),
+    remarks: record.remarks ?? null,
+    status: record.status,
+    details: (record.details || []).map((detail) => ({
+      id: detail.id.toString(),
+      lineNumber: detail.lineNumber,
+      accountId: detail.accountId?.toString() ?? null,
+      accountCode: detail.accountCodeSnapshot || detail.account?.accountCode || '',
+      accountTitle: detail.accountTitleSnapshot || detail.account?.accountTitle || '',
+      particulars: detail.particulars ?? null,
+      remarks: detail.remarks ?? null,
+      debit: Number(detail.debit),
+      credit: Number(detail.credit),
+      grossAmount: Number(detail.grossAmount),
+      netAmount: Number(detail.netAmount),
+      vatType: detail.vatType ?? null,
+      vatCode: detail.vatCode ?? null,
+      vatPercent: Number(detail.vatPercent),
+      vatAmount: Number(detail.vatAmount),
+      ewtCode: detail.ewtCode ?? null,
+      ewtPercent: Number(detail.ewtPercent),
+      ewtAmount: Number(detail.ewtAmount),
+      disburseAmount: Number(detail.disburseAmount),
+      partyId: detail.partyId?.toString() ?? null,
+      partyCode: detail.partyCodeSnapshot || detail.party?.partyCodeNo || null,
+      partyName: detail.partyNameSnapshot || detail.party?.partyName || null,
+      responsibilityCenterId: detail.responsibilityCenterId?.toString() ?? null,
+      responsibilityCenter: detail.responsibilityCenterSnapshot || detail.responsibilityCenter?.name || null,
+      refId: detail.refId ?? null,
+      checkDate: detail.checkDate ? toDateValue(detail.checkDate) : null,
+      checkNo: detail.checkNo ?? null,
+      checkStatus: detail.checkStatus ?? null,
+    })),
+    createdBy: record.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(record.createdByUserId) ?? null),
+    createdAt: record.createdAt.toISOString(),
+    updatedBy: (record.updatedByUserId && userNames.get(record.updatedByUserId)) ?? null,
+    updatedAt: record.updatedAt ? record.updatedAt.toISOString() : null,
+  };
+}
+
+function toDateValue(date: Date) {
+  return date.toISOString().slice(0, 10);
+}

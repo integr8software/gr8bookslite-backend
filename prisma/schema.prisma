@@ -256,6 +256,9 @@ model Company {
   acknowledgementReceiptDetails AcknowledgementReceiptDetails[]
   provisionalReceipts           ProvisionalReceipt[]
   provisionalReceiptDetails     ProvisionalReceiptDetails[]
+  cashAdvances                  CashAdvance[]
+  cashVouchers                  CashVoucher[]
+  cashVoucherDetails            CashVoucherDetail[]
 
   @@index([createdByUserId])
   @@map("companies")
@@ -307,6 +310,8 @@ model CompanyUnit {
   acknowledgementReceiptDetails AcknowledgementReceiptDetails[]
   provisionalReceipts           ProvisionalReceipt[]
   provisionalReceiptDetails     ProvisionalReceiptDetails[]
+  cashVouchers                  CashVoucher[]
+  cashVoucherDetails            CashVoucherDetail[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -836,6 +841,9 @@ model ChartAccount {
   journalEntryDetails                    JournalEntryDetail[]
   acknowledgementReceipts                AcknowledgementReceipt[]
   provisionalReceipts                    ProvisionalReceipt[]
+  cashAdvances                           CashAdvance[]
+  cashVouchers                           CashVoucher[]
+  cashVoucherDetails                     CashVoucherDetail[]
 
   @@unique([companyId, accountCode], map: "chart_accounts_company_account_code_key")
   @@index([parentAccountId], map: "chart_accounts_parent_account_id_idx")
@@ -1227,6 +1235,7 @@ model ResponsibilityCenter {
   journalEntryDetails           JournalEntryDetail[]
   acknowledgementReceiptDetails AcknowledgementReceiptDetails[]
   provisionalReceiptDetails     ProvisionalReceiptDetails[]
+  cashVoucherDetails            CashVoucherDetail[]
 
   @@unique([companyId, code], map: "responsibility_centers_company_code_key")
   @@unique([companyId, name], map: "responsibility_centers_company_name_key")
@@ -1341,6 +1350,9 @@ model Party {
   billingStatements                   BillingStatement[]
   acknowledgementReceipts             AcknowledgementReceipt[]
   provisionalReceipts                 ProvisionalReceipt[]
+  cashAdvances                        CashAdvance[]
+  cashVouchers                        CashVoucher[]
+  cashVoucherDetails                  CashVoucherDetail[]
 
   @@unique([companyId, partyCodeNo], map: "parties_company_code_key")
   @@index([companyId], map: "parties_company_id_idx")
@@ -1491,6 +1503,171 @@ model AccountsPayableVoucherDetails {
   @@index([expenseAccountId], map: "ap_voucher_details_expense_account_idx")
   @@index([responsibilityCenterId], map: "ap_voucher_details_rc_idx")
   @@map("accounts_payable_voucher_details")
+}
+
+model CashAdvance {
+  id                     BigInt            @id @default(autoincrement())
+  companyId              Int               @map("company_id")
+  branchUnitId           Int?              @map("branch_unit_id")
+  partyId                BigInt?           @map("party_id")
+  creditAccountId        BigInt?           @map("credit_account_id")
+  termId                 BigInt?           @map("term_id")
+  transNo                String            @map("trans_no") @db.VarChar(80)
+  documentDate           DateTime          @map("document_date") @db.Date
+  dueDate                DateTime?         @map("due_date") @db.Date
+  referenceNo            String?           @map("reference_no") @db.VarChar(120)
+  partyCodeSnapshot      String            @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot      String            @map("party_name_snapshot") @db.VarChar(255)
+  addressSnapshot        String?           @map("address_snapshot") @db.VarChar(500)
+  contactPersonSnapshot  String?           @map("contact_person_snapshot") @db.VarChar(255)
+  contactNoSnapshot      String?           @map("contact_no_snapshot") @db.VarChar(40)
+  accountCodeSnapshot    String            @map("account_code_snapshot") @db.VarChar(80)
+  accountTitleSnapshot   String?           @map("account_title_snapshot") @db.VarChar(255)
+  costCenterSnapshot     String?           @map("cost_center_snapshot") @db.VarChar(255)
+  costCenterCodeSnapshot String?           @map("cost_center_code_snapshot") @db.VarChar(80)
+  projectRefSnapshot     String?           @map("project_ref_snapshot") @db.VarChar(255)
+  projectCodeSnapshot    String?           @map("project_code_snapshot") @db.VarChar(80)
+  currencyCode           String            @default("PHP") @map("currency_code") @db.VarChar(10)
+  exchangeRate           Decimal           @default(1.00) @map("exchange_rate") @db.Decimal(18, 6)
+  amount                 Decimal           @db.Decimal(18, 2)
+  remarks                String?           @db.VarChar(500)
+  status                 CashAdvanceStatus @default(DRAFT)
+  createdByUserId        Int?              @map("created_by_user_id")
+  updatedByUserId        Int?              @map("updated_by_user_id")
+  approvedByUserId       Int?              @map("approved_by_user_id")
+  approvedAt             DateTime?         @map("approved_at")
+  disapprovedByUserId    Int?              @map("disapproved_by_user_id")
+  disapprovedAt          DateTime?         @map("disapproved_at")
+  cancelledByUserId      Int?              @map("cancelled_by_user_id")
+  cancelledAt            DateTime?         @map("cancelled_at")
+  postedByUserId         Int?              @map("posted_by_user_id")
+  postedAt               DateTime?         @map("posted_at")
+  deletedAt              DateTime?         @map("deleted_at")
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+  company                Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  party                  Party?            @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  creditAccount          ChartAccount?     @relation(fields: [creditAccountId], references: [id], onDelete: SetNull)
+
+  @@unique([companyId, transNo], map: "cash_advances_company_trans_no_key")
+  @@index([companyId, status], map: "cash_advances_company_status_idx")
+  @@index([companyId, documentDate], map: "cash_advances_company_document_date_idx")
+  @@index([partyId], map: "cash_advances_party_id_idx")
+  @@map("cash_advances")
+}
+
+model CashVoucher {
+  id                    BigInt             @id @default(autoincrement())
+  companyId             Int                @map("company_id")
+  branchUnitId          Int?               @map("branch_unit_id")
+  partyId               BigInt?            @map("party_id")
+  creditAccountId       BigInt?            @map("credit_account_id")
+
+  // Document identification
+  voucherNo             String             @map("voucher_no") @db.VarChar(80)
+  voucherDate           DateTime           @map("voucher_date") @db.Date
+  paymentDueDate        DateTime?          @map("payment_due_date") @db.Date
+  referenceNo           String?            @map("reference_no") @db.VarChar(120)
+  referenceModule       String?            @map("reference_module") @db.VarChar(80)
+  voucherReferenceNo    String?            @map("voucher_reference_no") @db.VarChar(120)
+  invoiceReferenceNo    String?            @map("invoice_reference_no") @db.VarChar(120)
+
+  // Payment info
+  paymentMethod         String             @default("Cash") @map("payment_method") @db.VarChar(50)
+  disbursementType      String?            @map("disbursement_type") @db.VarChar(100)
+
+  // Master data snapshots
+  partyCodeSnapshot     String             @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot     String             @map("party_name_snapshot") @db.VarChar(255)
+  costCenter            String?            @map("cost_center") @db.VarChar(80)
+  projectName           String?            @map("project_name") @db.VarChar(255)
+  preparedBy            String?            @map("prepared_by") @db.VarChar(255)
+
+  // Financial amounts & currency
+  currencyCode          String             @default("PHP") @map("currency_code") @db.VarChar(10)
+  exchangeRate          Decimal            @default(1.00) @map("exchange_rate") @db.Decimal(18, 6)
+  amount                Decimal            @default(0) @db.Decimal(18, 2)
+  remarks               String?            @db.VarChar(500)
+
+  // Status
+  status                CashVoucherStatus  @default(DRAFT)
+
+  // Audit Trails
+  createdByUserId       Int?               @map("created_by_user_id")
+  updatedByUserId       Int?               @map("updated_by_user_id")
+  approvedByUserId      Int?               @map("approved_by_user_id")
+  approvedAt            DateTime?          @map("approved_at")
+  disapprovedByUserId   Int?               @map("disapproved_by_user_id")
+  disapprovedAt         DateTime?          @map("disapproved_at")
+  cancelledByUserId     Int?               @map("cancelled_by_user_id")
+  cancelledAt           DateTime?          @map("cancelled_at")
+  postedByUserId        Int?               @map("posted_by_user_id")
+  postedAt              DateTime?          @map("posted_at")
+  deletedAt             DateTime?          @map("deleted_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  company               Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit            CompanyUnit?       @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party                 Party?             @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  creditAccount         ChartAccount?      @relation(fields: [creditAccountId], references: [id], onDelete: SetNull)
+  details               CashVoucherDetail[]
+
+  @@unique([companyId, voucherNo], map: "cash_vouchers_company_voucher_no_key")
+  @@index([companyId, status], map: "cash_vouchers_company_status_idx")
+  @@index([companyId, voucherDate], map: "cash_vouchers_company_voucher_date_idx")
+  @@index([partyId], map: "cash_vouchers_party_id_idx")
+  @@map("cash_vouchers")
+}
+
+model CashVoucherDetail {
+  id                           BigInt                @id @default(autoincrement())
+  voucherId                    BigInt                @map("voucher_id")
+  companyId                    Int                   @map("company_id")
+  branchUnitId                 Int?                  @map("branch_unit_id")
+  partyId                      BigInt?               @map("party_id")
+  lineNumber                   Int                   @map("line_number")
+  accountId                    BigInt?               @map("account_id")
+  accountCodeSnapshot          String                @map("account_code_snapshot") @db.VarChar(80)
+  accountTitleSnapshot         String                @map("account_title_snapshot") @db.VarChar(255)
+  particulars                  String?               @db.VarChar(500)
+  remarks                      String?               @db.VarChar(500)
+  debit                        Decimal               @default(0) @db.Decimal(18, 2)
+  credit                       Decimal               @default(0) @db.Decimal(18, 2)
+  grossAmount                  Decimal               @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  netAmount                    Decimal               @default(0) @map("net_amount") @db.Decimal(18, 2)
+  vatType                      String?               @map("vat_type") @db.VarChar(80)
+  vatCode                      String?               @map("vat_code") @db.VarChar(80)
+  vatPercent                   Decimal               @default(0) @map("vat_percent") @db.Decimal(8, 4)
+  vatAmount                    Decimal               @default(0) @map("vat_amount") @db.Decimal(18, 2)
+  ewtCode                      String?               @map("ewt_code") @db.VarChar(80)
+  ewtPercent                   Decimal               @default(0) @map("ewt_percent") @db.Decimal(8, 4)
+  ewtAmount                    Decimal               @default(0) @map("ewt_amount") @db.Decimal(18, 2)
+  disburseAmount               Decimal               @default(0) @map("disburse_amount") @db.Decimal(18, 2)
+  partyCodeSnapshot            String?               @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot            String?               @map("party_name_snapshot") @db.VarChar(255)
+  responsibilityCenterId       BigInt?               @map("responsibility_center_id")
+  responsibilityCenterSnapshot String?               @map("responsibility_center_snapshot") @db.VarChar(150)
+  refId                        String?               @map("ref_id") @db.VarChar(120)
+  checkDate                    DateTime?             @map("check_date") @db.Date
+  checkNo                      String?               @map("check_no") @db.VarChar(80)
+  checkStatus                  String?               @map("check_status") @db.VarChar(50)
+  createdAt                    DateTime              @default(now()) @map("created_at")
+  updatedAt                    DateTime              @updatedAt @map("updated_at")
+
+  voucher                      CashVoucher           @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  company                      Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit                   CompanyUnit?          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party                        Party?                @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  account                      ChartAccount?         @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  responsibilityCenter         ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
+
+  @@unique([voucherId, lineNumber], map: "cash_voucher_details_voucher_line_key")
+  @@index([companyId], map: "cash_voucher_details_company_idx")
+  @@index([partyId], map: "cash_voucher_details_party_id_idx")
+  @@index([accountId], map: "cash_voucher_details_account_id_idx")
+  @@map("cash_voucher_details")
 }
 
 model ServiceInvoice {
@@ -3198,6 +3375,25 @@ enum AccountsPayableVoucherStatus {
   DISAPPROVED
   CLOSED
   CANCELLED
+}
+
+enum CashAdvanceStatus {
+  DRAFT
+  FOR_APPROVAL
+  APPROVED
+  DISAPPROVED
+  POSTED
+  CANCELLED
+}
+
+enum CashVoucherStatus {
+  DRAFT
+  FOR_APPROVAL
+  APPROVED
+  POSTED
+  DISAPPROVED
+  CANCELLED
+  CLOSED
 }
 
 enum JournalVoucherStatus {

@@ -15217,6 +15217,933 @@
           "Provisional Receipt"
         ]
       }
+    },
+    "/api/v1/cash-disbursement/cash-advance": {
+      "get": {
+        "operationId": "CashAdvanceController_findAll_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Records per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term (transNo, partyName, partyCode, remarks)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Status filter (DRAFT, FOR_APPROVAL, APPROVED, DISAPPROVED, POSTED, CANCELLED)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "description": "Party Code filter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start Date in YYYY-MM-DD format",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "End Date in YYYY-MM-DD format",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort field",
+            "schema": {
+              "default": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction (asc/desc)",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAdvanceListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated list of cash advance records",
+        "tags": [
+          "Cash Advance"
+        ]
+      },
+      "post": {
+        "operationId": "CashAdvanceController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCashAdvanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAdvanceSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create new cash advance record",
+        "tags": [
+          "Cash Advance"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-advance/party-options": {
+      "get": {
+        "operationId": "CashAdvanceController_getPartyOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAdvancePartyOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get party options with Limit, Advances, and Balance calculations for Cash Advance",
+        "tags": [
+          "Cash Advance"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-advance/next-transaction-no": {
+      "get": {
+        "operationId": "CashAdvanceController_getNextTransactionNo_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nextTransNo": {
+                      "type": "string",
+                      "example": "CA-2026-00001"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get auto-generated next transaction sequence number",
+        "tags": [
+          "Cash Advance"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-advance/{id}": {
+      "get": {
+        "operationId": "CashAdvanceController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAdvanceSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get single cash advance details by ID",
+        "tags": [
+          "Cash Advance"
+        ]
+      },
+      "put": {
+        "operationId": "CashAdvanceController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCashAdvanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAdvanceSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update existing cash advance record",
+        "tags": [
+          "Cash Advance"
+        ]
+      },
+      "delete": {
+        "operationId": "CashAdvanceController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Cash Advance record cancelled successfully."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel/soft-delete cash advance record",
+        "tags": [
+          "Cash Advance"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-advance/{id}/submit-approval": {
+      "post": {
+        "operationId": "CashAdvanceController_submitApproval_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAdvanceSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit cash advance record for approval",
+        "tags": [
+          "Cash Advance"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-voucher": {
+      "get": {
+        "operationId": "CashVoucherController_findAll_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "description": "Branch Unit ID filter",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Free-text search (voucherNo, partyName, partyCode, remarks)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Party Code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start Date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "End Date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "description": "Minimum Amount",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "description": "Maximum Amount",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "voucherNo",
+                "voucherDate",
+                "partyName",
+                "partyCode",
+                "amount",
+                "currencyCode",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashVoucherListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated list of cash voucher records",
+        "tags": [
+          "Cash Voucher"
+        ]
+      },
+      "post": {
+        "operationId": "CashVoucherController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCashVoucherDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashVoucherSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create new cash voucher record",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-voucher/next-transaction-no": {
+      "get": {
+        "operationId": "CashVoucherController_getNextTransactionNo_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nextTransNo": {
+                      "type": "string",
+                      "example": "CV-2026-000001"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get auto-generated next cash voucher transaction sequence number",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-voucher/lookups/parties": {
+      "get": {
+        "operationId": "CashVoucherController_findParties_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "parties": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "partyCode": {
+                            "type": "string"
+                          },
+                          "partyName": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get party options for cash voucher",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-voucher/lookups/accounts": {
+      "get": {
+        "operationId": "CashVoucherController_findAccounts_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "accountCode": {
+                            "type": "string"
+                          },
+                          "accountTitle": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get chart of account options for cash voucher",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-voucher/lookups/responsibility-centers": {
+      "get": {
+        "operationId": "CashVoucherController_findResponsibilityCenters_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "responsibilityCenters": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get responsibility center options for cash voucher",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-voucher/{id}": {
+      "get": {
+        "operationId": "CashVoucherController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashVoucherSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get single cash voucher details by ID",
+        "tags": [
+          "Cash Voucher"
+        ]
+      },
+      "put": {
+        "operationId": "CashVoucherController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCashVoucherDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashVoucherSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update existing cash voucher record",
+        "tags": [
+          "Cash Voucher"
+        ]
+      },
+      "delete": {
+        "operationId": "CashVoucherController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Cash Voucher record cancelled successfully."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel/soft-delete cash voucher record",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-voucher/{id}/status": {
+      "patch": {
+        "operationId": "CashVoucherController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCashVoucherStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashVoucherSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update cash voucher status",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
     }
   },
   "info": {
@@ -27530,49 +28457,6 @@
           "items"
         ]
       },
-      "AiAssistantChatMessageDto": {
-        "type": "object",
-        "properties": {
-          "role": {
-            "enum": [
-              "user",
-              "assistant"
-            ],
-            "type": "string"
-          },
-          "content": {
-            "type": "string",
-            "maxLength": 4000
-          }
-        },
-        "required": [
-          "role",
-          "content"
-        ]
-      },
-      "AiAssistantChatDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "maxLength": 4000
-          },
-          "currentPath": {
-            "type": "string",
-            "maxLength": 2048
-          },
-          "history": {
-            "maxItems": 50,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AiAssistantChatMessageDto"
-            }
-          }
-        },
-        "required": [
-          "message"
-        ]
-      },
       "AiAssistantQueuedTranscriptionResponseDto": {
         "type": "object",
         "properties": {
@@ -27650,6 +28534,49 @@
           "error",
           "jobId",
           "status"
+        ]
+      },
+      "AiAssistantChatMessageDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "type": "string"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ]
+      },
+      "AiAssistantChatDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "currentPath": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "history": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiAssistantChatMessageDto"
+            }
+          }
+        },
+        "required": [
+          "message"
         ]
       },
       "AiAssistantModuleCommandActionDto": {
@@ -37002,409 +37929,824 @@
           "status"
         ]
       },
-      "CollectionReceiptDetailResponseDto": {
+      "CashAdvanceDto": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
-          },
-          "lineNumber": {
-            "type": "number"
-          },
-          "description": {
-            "type": "string"
-          },
-          "particulars": {
             "type": "string",
-            "nullable": true
+            "example": "1"
           },
-          "quantity": {
-            "type": "number"
-          },
-          "amount": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "vatType": {
+          "transNo": {
             "type": "string",
-            "nullable": true
-          },
-          "vatable": {
-            "type": "boolean"
-          },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "withEwt": {
-            "type": "boolean"
-          },
-          "ewtType": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "lineNumber",
-          "description",
-          "quantity",
-          "amount",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountPercent",
-          "discountAmount",
-          "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
-        ]
-      },
-      "CollectionReceiptJournalEntryResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "referenceType": {
-            "type": "string"
-          },
-          "referenceId": {
-            "type": "string"
-          },
-          "lineNumber": {
-            "type": "number"
-          },
-          "accountId": {
-            "type": "string"
-          },
-          "accountCode": {
-            "type": "string"
-          },
-          "accountTitle": {
-            "type": "string"
-          },
-          "currencyCode": {
-            "type": "string"
-          },
-          "exchangeRate": {
-            "type": "number"
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true
-          },
-          "debit": {
-            "type": "number"
-          },
-          "credit": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "atcCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "partyCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "partyName": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true
-          },
-          "refNo": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "referenceType",
-          "referenceId",
-          "lineNumber",
-          "accountId",
-          "accountCode",
-          "accountTitle",
-          "currencyCode",
-          "exchangeRate",
-          "debit",
-          "credit"
-        ]
-      },
-      "CollectionReceiptResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "transactionNo": {
-            "type": "string"
+            "example": "CA-2026-00001"
           },
           "documentDate": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-06-11"
           },
           "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
             "type": "string",
-            "nullable": true
+            "example": "2026-06-11"
           },
           "referenceNo": {
             "type": "string",
-            "nullable": true
+            "example": "REF-12345"
           },
           "partyId": {
             "type": "string",
-            "nullable": true
+            "example": "17"
           },
-          "customerCode": {
-            "type": "string"
-          },
-          "customerName": {
-            "type": "string"
-          },
-          "billToName": {
+          "partyCode": {
             "type": "string",
-            "nullable": true
+            "example": "EMP-0017"
           },
-          "address": {
+          "partyName": {
             "type": "string",
-            "nullable": true
+            "example": "Maria Santos"
           },
-          "contactPerson": {
+          "accountCode": {
             "type": "string",
-            "nullable": true
+            "example": "1130-CA"
           },
-          "contactNo": {
+          "accountTitle": {
             "type": "string",
-            "nullable": true
+            "example": "Cash Advance - Employees"
           },
-          "businessStyle": {
+          "costCenter": {
             "type": "string",
-            "nullable": true
+            "example": "Operations"
           },
-          "projectCode": {
+          "costCenterCode": {
             "type": "string",
-            "nullable": true
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true
+            "example": "OPS-01"
           },
           "projectRef": {
             "type": "string",
-            "nullable": true
+            "example": "Site Expansion"
           },
-          "salesAssociate": {
+          "projectCode": {
             "type": "string",
-            "nullable": true
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true
+            "example": "PRJ-001"
           },
           "currency": {
-            "type": "string"
-          },
-          "exchangeRate": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "termId": {
             "type": "string",
-            "nullable": true
+            "example": "PHP"
           },
-          "terms": {
-            "type": "string",
-            "nullable": true
+          "fxRate": {
+            "type": "number",
+            "example": 1
           },
-          "receivableAccountId": {
-            "type": "string"
-          },
-          "receivableAccountCode": {
-            "type": "string"
-          },
-          "receivableAccountTitle": {
-            "type": "string"
+          "amount": {
+            "type": "number",
+            "example": 12500
           },
           "remarks": {
             "type": "string",
-            "nullable": true
+            "example": "Optional remarks"
           },
           "status": {
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
+              "APPROVED",
               "DISAPPROVED",
               "POSTED",
               "CANCELLED"
             ],
-            "type": "string"
-          },
-          "details": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollectionReceiptDetailResponseDto"
-            }
-          },
-          "journalEntries": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollectionReceiptJournalEntryResponseDto"
-            }
+            "type": "string",
+            "example": "DRAFT"
           },
           "createdBy": {
             "type": "string",
-            "nullable": true
+            "example": "Maria Santos"
           },
           "createdAt": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-06-11T08:15:00.000Z"
           },
           "updatedBy": {
             "type": "string",
-            "nullable": true
+            "example": "Maria Santos"
           },
           "updatedAt": {
-            "type": "string"
+            "type": "string",
+            "example": "2026-06-11T08:15:00.000Z"
           }
         },
         "required": [
           "id",
-          "transactionNo",
+          "transNo",
           "documentDate",
-          "dueDate",
-          "customerCode",
-          "customerName",
+          "partyCode",
+          "partyName",
           "currency",
-          "exchangeRate",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountAmount",
-          "grossAmount",
-          "receivableAccountId",
-          "receivableAccountCode",
-          "receivableAccountTitle",
+          "fxRate",
+          "amount",
           "status",
-          "details",
-          "journalEntries",
-          "createdAt",
-          "updatedAt"
+          "createdAt"
         ]
       },
-      "CollectionReceiptStatisticsResponseDto": {
+      "CashAdvanceListResponseDto": {
         "type": "object",
         "properties": {
-          "cancelledReceipts": {
-            "type": "number"
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashAdvanceDto"
+            }
           },
-          "disapprovedReceipts": {
-            "type": "number"
-          },
-          "draftReceipts": {
-            "type": "number"
-          },
-          "forApprovalReceipts": {
-            "type": "number"
-          },
-          "postedReceipts": {
-            "type": "number"
-          },
-          "totalReceipts": {
-            "type": "number"
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "page",
+              "limit",
+              "total",
+              "totalPages"
+            ]
           }
         },
         "required": [
-          "cancelledReceipts",
-          "disapprovedReceipts",
-          "draftReceipts",
-          "forApprovalReceipts",
-          "postedReceipts",
-          "totalReceipts"
+          "data",
+          "meta"
         ]
       },
-      "CollectionReceiptPaginationResponseDto": {
+      "CashAdvancePartyOptionDto": {
+        "type": "object",
+        "properties": {
+          "partyId": {
+            "type": "string",
+            "example": "17"
+          },
+          "partyCode": {
+            "type": "string",
+            "example": "EMP-0017"
+          },
+          "partyName": {
+            "type": "string",
+            "example": "Maria Santos"
+          },
+          "label": {
+            "type": "string",
+            "example": "EMP-0017 - Maria Santos"
+          },
+          "value": {
+            "type": "string",
+            "example": "EMP-0017"
+          },
+          "cashAdvanceLimit": {
+            "type": "string",
+            "example": "50000.00"
+          },
+          "totalCashAdvance": {
+            "type": "string",
+            "example": "12500.00"
+          },
+          "availableCashAdvance": {
+            "type": "string",
+            "example": "37500.00"
+          }
+        },
+        "required": [
+          "partyId",
+          "partyCode",
+          "partyName",
+          "label",
+          "value",
+          "cashAdvanceLimit",
+          "totalCashAdvance",
+          "availableCashAdvance"
+        ]
+      },
+      "CashAdvancePartyOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashAdvancePartyOptionDto"
+            }
+          }
+        },
+        "required": [
+          "options"
+        ]
+      },
+      "CashAdvanceSingleResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Cash advance operation successfully completed."
+          },
+          "data": {
+            "$ref": "#/components/schemas/CashAdvanceDto"
+          }
+        },
+        "required": [
+          "message",
+          "data"
+        ]
+      },
+      "CreateCashAdvanceDto": {
+        "type": "object",
+        "properties": {
+          "partyId": {
+            "type": "string",
+            "description": "Party Primary Key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "description": "Party Code (Employee/Vendor)",
+            "example": "EMP-0017"
+          },
+          "partyName": {
+            "type": "string",
+            "description": "Party Name",
+            "example": "Maria Santos"
+          },
+          "creditAccountId": {
+            "type": "string",
+            "description": "Chart Account Primary Key ID",
+            "example": "1"
+          },
+          "accountCode": {
+            "type": "string",
+            "description": "Default Account Code",
+            "example": "1010103000"
+          },
+          "accountTitle": {
+            "type": "string",
+            "description": "Default Account Title",
+            "example": "Accounts Receivable - Trade"
+          },
+          "costCenterId": {
+            "type": "string",
+            "description": "Responsibility Center Primary Key ID",
+            "example": "1"
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "Responsibility Center Name",
+            "example": "Finance and Administration"
+          },
+          "costCenterCode": {
+            "type": "string",
+            "description": "Responsibility Center Code",
+            "example": "FA-01"
+          },
+          "projectId": {
+            "type": "string",
+            "description": "Project Primary Key ID",
+            "example": "1"
+          },
+          "projectRef": {
+            "type": "string",
+            "description": "Project Reference / Name",
+            "example": "Implementation Projects"
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "Project Code",
+            "example": "PRJ-01"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency Code",
+            "example": "PHP",
+            "default": "PHP"
+          },
+          "fxRate": {
+            "type": "string",
+            "description": "Exchange Rate",
+            "example": "1.0000",
+            "default": "1.0000"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Cash Advance Amount",
+            "example": "12500.00"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "Document Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
+          },
+          "transNo": {
+            "type": "string",
+            "description": "Custom Transaction Sequence No",
+            "example": "CA-2026-000001"
+          },
+          "remarks": {
+            "type": "string",
+            "description": "Remarks",
+            "example": "Travel allowance advance"
+          }
+        },
+        "required": [
+          "partyCode",
+          "partyName",
+          "accountCode",
+          "currency",
+          "fxRate",
+          "amount",
+          "documentDate"
+        ]
+      },
+      "UpdateCashAdvanceDto": {
+        "type": "object",
+        "properties": {
+          "partyId": {
+            "type": "string",
+            "description": "Party Primary Key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "description": "Party Code (Employee/Vendor)",
+            "example": "EMP-0017"
+          },
+          "partyName": {
+            "type": "string",
+            "description": "Party Name",
+            "example": "Maria Santos"
+          },
+          "creditAccountId": {
+            "type": "string",
+            "description": "Chart Account Primary Key ID",
+            "example": "1"
+          },
+          "accountCode": {
+            "type": "string",
+            "description": "Default Account Code",
+            "example": "1010103000"
+          },
+          "accountTitle": {
+            "type": "string",
+            "description": "Default Account Title",
+            "example": "Accounts Receivable - Trade"
+          },
+          "costCenterId": {
+            "type": "string",
+            "description": "Responsibility Center Primary Key ID",
+            "example": "1"
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "Responsibility Center Name",
+            "example": "Finance and Administration"
+          },
+          "costCenterCode": {
+            "type": "string",
+            "description": "Responsibility Center Code",
+            "example": "FA-01"
+          },
+          "projectId": {
+            "type": "string",
+            "description": "Project Primary Key ID",
+            "example": "1"
+          },
+          "projectRef": {
+            "type": "string",
+            "description": "Project Reference / Name",
+            "example": "Implementation Projects"
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "Project Code",
+            "example": "PRJ-01"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency Code",
+            "example": "PHP",
+            "default": "PHP"
+          },
+          "fxRate": {
+            "type": "string",
+            "description": "Exchange Rate",
+            "example": "1.0000",
+            "default": "1.0000"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Cash Advance Amount",
+            "example": "12500.00"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "Document Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
+          },
+          "transNo": {
+            "type": "string",
+            "description": "Custom Transaction Sequence No",
+            "example": "CA-2026-000001"
+          },
+          "remarks": {
+            "type": "string",
+            "description": "Remarks",
+            "example": "Travel allowance advance"
+          }
+        }
+      },
+      "CashVoucherDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Detail Primary Key ID",
+            "example": "1"
+          },
+          "lineNumber": {
+            "type": "number",
+            "description": "Line Number",
+            "example": 1
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Account ID",
+            "example": "1"
+          },
+          "accountCode": {
+            "type": "string",
+            "description": "Account Code",
+            "example": "6001010000"
+          },
+          "accountTitle": {
+            "type": "string",
+            "description": "Account Title",
+            "example": "Office Supplies Expense"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "description": "Particulars",
+            "example": "Office supplies for HQ"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Monthly supplies replenishment"
+          },
+          "debit": {
+            "type": "number",
+            "description": "Debit Amount",
+            "example": 5000
+          },
+          "credit": {
+            "type": "number",
+            "description": "Credit Amount",
+            "example": 0
+          },
+          "grossAmount": {
+            "type": "number",
+            "description": "Gross Amount",
+            "example": 5000
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net Amount",
+            "example": 4464.29
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT Type / Label",
+            "example": "VAT Inclusive"
+          },
+          "vatCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT Code",
+            "example": "VAT-IN"
+          },
+          "vatPercent": {
+            "type": "number",
+            "description": "VAT Percent",
+            "example": 12
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "VAT Amount",
+            "example": 535.71
+          },
+          "ewtCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "EWT Code",
+            "example": "WI158"
+          },
+          "ewtPercent": {
+            "type": "number",
+            "description": "EWT Percent",
+            "example": 1
+          },
+          "ewtAmount": {
+            "type": "number",
+            "description": "EWT Amount",
+            "example": 44.64
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Disburse Amount",
+            "example": 4955.36
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party Code",
+            "example": "SUP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party Name",
+            "example": "National Bookstore"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility Center ID",
+            "example": "1"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility Center Name / Snapshot",
+            "example": "Admin Dept"
+          },
+          "refId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reference ID / No",
+            "example": "REF-001"
+          },
+          "checkDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Check Date (YYYY-MM-DD)",
+            "example": "2026-06-11"
+          },
+          "checkNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Check Number",
+            "example": "CHK-123456"
+          },
+          "checkStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Check Status",
+            "example": "Cleared"
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "accountCode",
+          "accountTitle",
+          "debit",
+          "credit",
+          "grossAmount",
+          "netAmount",
+          "vatPercent",
+          "vatAmount",
+          "ewtPercent",
+          "ewtAmount",
+          "disburseAmount"
+        ]
+      },
+      "CashVoucherRecordResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Cash Voucher ID",
+            "example": "1"
+          },
+          "branchUnitId": {
+            "type": "number",
+            "nullable": true,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
+          "voucherNo": {
+            "type": "string",
+            "description": "Voucher Sequence Number",
+            "example": "CV-2026-000001"
+          },
+          "voucherDate": {
+            "type": "string",
+            "description": "Voucher Date (YYYY-MM-DD)",
+            "example": "2026-06-11"
+          },
+          "paymentDueDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment Due Date (YYYY-MM-DD)",
+            "example": "2026-06-11"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reference No",
+            "example": "REF-001"
+          },
+          "referenceModule": {
+            "type": "string",
+            "nullable": true,
+            "description": "Source Reference Module",
+            "example": "Accounts Payable Voucher"
+          },
+          "voucherReferenceNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Voucher Reference No",
+            "example": "APV-2026-0001"
+          },
+          "invoiceReferenceNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoice Reference No",
+            "example": "INV-2026-0001"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "description": "Payment Method",
+            "example": "Cash"
+          },
+          "disbursementType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Disbursement Type",
+            "example": "Vendor Payment"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party Primary Key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "description": "Party Code",
+            "example": "SUP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "description": "Party Name",
+            "example": "National Bookstore"
+          },
+          "creditAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Credit Chart Account ID",
+            "example": "1"
+          },
+          "costCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cost Center / Project Code",
+            "example": "CC-01"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project Name / Reference",
+            "example": "Main Office Expansion"
+          },
+          "preparedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Prepared By Name",
+            "example": "John Doe"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency Code",
+            "example": "PHP"
+          },
+          "fxRate": {
+            "type": "number",
+            "description": "Exchange Rate",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "description": "Total Voucher Amount",
+            "example": 5000
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Disbursement for supplies"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "APPROVED",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
+            ],
+            "type": "string",
+            "description": "Status",
+            "example": "DRAFT"
+          },
+          "details": {
+            "description": "Details / Line items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashVoucherDetailResponseDto"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Created By User Name",
+            "example": "System Administrator"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Created Timestamp",
+            "example": "2026-06-11T08:30:00.000Z"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated By User Name",
+            "example": "System Administrator"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated Timestamp",
+            "example": "2026-06-11T08:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "voucherNo",
+          "voucherDate",
+          "paymentMethod",
+          "partyCode",
+          "partyName",
+          "currency",
+          "fxRate",
+          "amount",
+          "status",
+          "details",
+          "createdAt"
+        ]
+      },
+      "CashVoucherPaginationMetaDto": {
         "type": "object",
         "properties": {
           "page": {
-            "type": "number"
+            "type": "number",
+            "description": "Current Page",
+            "example": 1
           },
           "limit": {
-            "type": "number"
+            "type": "number",
+            "description": "Items per Page",
+            "example": 20
           },
           "total": {
-            "type": "number"
+            "type": "number",
+            "description": "Total Records Count",
+            "example": 50
           },
           "totalPages": {
-            "type": "number"
+            "type": "number",
+            "description": "Total Pages Count",
+            "example": 3
           }
         },
         "required": [
@@ -37414,2849 +38756,538 @@
           "totalPages"
         ]
       },
-      "CollectionReceiptPermissionsResponseDto": {
+      "CashVoucherStatisticsDto": {
         "type": "object",
         "properties": {
-          "canApprove": {
-            "type": "boolean"
+          "totalVouchers": {
+            "type": "number",
+            "description": "Total Vouchers Count",
+            "example": 10
           },
-          "canCancel": {
-            "type": "boolean"
+          "draftVouchers": {
+            "type": "number",
+            "description": "Draft Vouchers Count",
+            "example": 2
           },
-          "canCreate": {
-            "type": "boolean"
+          "forApprovalVouchers": {
+            "type": "number",
+            "description": "For Approval Vouchers Count",
+            "example": 3
           },
-          "canDisapprove": {
-            "type": "boolean"
+          "postedVouchers": {
+            "type": "number",
+            "description": "Posted Vouchers Count",
+            "example": 4
           },
-          "canExport": {
-            "type": "boolean"
+          "disapprovedVouchers": {
+            "type": "number",
+            "description": "Disapproved Vouchers Count",
+            "example": 0
           },
-          "canPost": {
-            "type": "boolean"
-          },
-          "canUpdate": {
-            "type": "boolean"
-          },
-          "canView": {
-            "type": "boolean"
+          "cancelledVouchers": {
+            "type": "number",
+            "description": "Cancelled Vouchers Count",
+            "example": 1
           }
         },
         "required": [
-          "canApprove",
-          "canCancel",
-          "canCreate",
-          "canDisapprove",
-          "canExport",
-          "canPost",
-          "canUpdate",
-          "canView"
+          "totalVouchers",
+          "draftVouchers",
+          "forApprovalVouchers",
+          "postedVouchers",
+          "disapprovedVouchers",
+          "cancelledVouchers"
         ]
       },
-      "CollectionReceiptListResponseDto": {
+      "CashVoucherListResponseDto": {
         "type": "object",
         "properties": {
-          "receipts": {
+          "data": {
+            "description": "List of Cash Vouchers",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CollectionReceiptResponseDto"
+              "$ref": "#/components/schemas/CashVoucherRecordResponseDto"
             }
+          },
+          "meta": {
+            "description": "Pagination Metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashVoucherPaginationMetaDto"
+              }
+            ]
           },
           "statistics": {
-            "$ref": "#/components/schemas/CollectionReceiptStatisticsResponseDto"
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/CollectionReceiptPaginationResponseDto"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/CollectionReceiptPermissionsResponseDto"
-          }
-        },
-        "required": [
-          "receipts",
-          "statistics",
-          "pagination",
-          "permissions"
-        ]
-      },
-      "CollectionReceiptNumberSuggestionResponseDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number"
-          },
-          "inputMode": {
-            "type": "string"
-          },
-          "transactionNo": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "branchUnitId",
-          "inputMode",
-          "transactionNo"
-        ]
-      },
-      "CollectionReceiptContainerResponseDto": {
-        "type": "object",
-        "properties": {
-          "receipt": {
-            "$ref": "#/components/schemas/CollectionReceiptResponseDto"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/CollectionReceiptPermissionsResponseDto"
-          }
-        },
-        "required": [
-          "receipt",
-          "permissions"
-        ]
-      },
-      "CollectionReceiptDetailDto": {
-        "type": "object",
-        "properties": {
-          "lineNumber": {
-            "type": "number",
-            "minimum": 1
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 250
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "quantity": {
-            "type": "number",
-            "minimum": 0
-          },
-          "amount": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number",
-            "minimum": 0
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "vatable": {
-            "type": "boolean"
-          },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "withEwt": {
-            "type": "boolean"
-          },
-          "ewtType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          }
-        },
-        "required": [
-          "lineNumber",
-          "description",
-          "quantity",
-          "amount",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountPercent",
-          "discountAmount",
-          "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
-        ]
-      },
-      "CollectionReceiptJournalEntryDto": {
-        "type": "object",
-        "properties": {
-          "referenceType": {
-            "type": "string",
-            "enum": [
-              "CR"
+            "description": "Voucher Status Statistics",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashVoucherStatisticsDto"
+              }
             ]
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "CashVoucherSingleResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Cash Voucher Record",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashVoucherRecordResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "CashVoucherDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Line Detail ID",
+            "example": "1"
           },
           "lineNumber": {
             "type": "number",
-            "minimum": 1
+            "minimum": 1,
+            "description": "Line Number (1-indexed)",
+            "example": 1
           },
           "accountId": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 40
+            "description": "Account ID",
+            "example": "1"
           },
           "accountCode": {
             "type": "string",
-            "maxLength": 20
+            "description": "Account Code",
+            "example": "6001010000"
           },
           "accountTitle": {
             "type": "string",
-            "maxLength": 250
-          },
-          "currencyCode": {
-            "type": "string",
-            "maxLength": 10
-          },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0.000001
+            "description": "Account Title / Name",
+            "example": "Office Supplies Expense"
           },
           "particulars": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 500
+            "description": "Particulars",
+            "example": "Office supplies for HQ"
+          },
+          "remarks": {
+            "type": "string",
+            "description": "Remarks",
+            "example": "Monthly supplies replenishment"
           },
           "debit": {
-            "type": "number",
-            "minimum": 0
+            "type": "object",
+            "description": "Debit Amount",
+            "example": 5000
           },
           "credit": {
-            "type": "number",
-            "minimum": 0
+            "type": "object",
+            "description": "Credit Amount",
+            "example": 0
+          },
+          "grossAmount": {
+            "type": "object",
+            "description": "Gross Amount",
+            "example": 5000
+          },
+          "netAmount": {
+            "type": "object",
+            "description": "Net Amount",
+            "example": 4464.29
           },
           "vatType": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 80
+            "description": "VAT Type / Label",
+            "example": "VAT Inclusive"
           },
-          "atcCode": {
+          "vatCode": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 80
+            "description": "VAT Code",
+            "example": "VAT-IN"
+          },
+          "vatPercent": {
+            "type": "object",
+            "description": "VAT Percent",
+            "example": 12
+          },
+          "vatAmount": {
+            "type": "object",
+            "description": "VAT Amount",
+            "example": 535.71
+          },
+          "ewtCode": {
+            "type": "string",
+            "description": "EWT Code",
+            "example": "WI158"
+          },
+          "ewtPercent": {
+            "type": "object",
+            "description": "EWT Percent",
+            "example": 1
+          },
+          "ewtAmount": {
+            "type": "object",
+            "description": "EWT Amount",
+            "example": 44.64
+          },
+          "disburseAmount": {
+            "type": "object",
+            "description": "Disburse Amount",
+            "example": 4955.36
+          },
+          "partyId": {
+            "type": "string",
+            "description": "Party ID",
+            "example": "1"
           },
           "partyCode": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 80
+            "description": "Party Code",
+            "example": "SUP-001"
           },
           "partyName": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
+            "description": "Party Name",
+            "example": "National Bookstore"
           },
           "responsibilityCenterId": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 40
+            "description": "Responsibility Center ID",
+            "example": "1"
           },
           "responsibilityCenter": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 150
+            "description": "Responsibility Center Name / Snapshot",
+            "example": "Admin Dept"
           },
-          "refNo": {
+          "refId": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 120
+            "description": "Reference ID / No",
+            "example": "REF-001"
+          },
+          "checkDate": {
+            "type": "string",
+            "description": "Check Date (YYYY-MM-DD)",
+            "example": "2026-06-11"
+          },
+          "checkNo": {
+            "type": "string",
+            "description": "Check Number",
+            "example": "CHK-123456"
+          },
+          "checkStatus": {
+            "type": "string",
+            "description": "Check Status",
+            "example": "Cleared"
           }
         },
         "required": [
           "lineNumber",
           "accountCode",
-          "accountTitle",
-          "currencyCode",
-          "exchangeRate",
-          "debit",
-          "credit"
+          "accountTitle"
         ]
       },
-      "CreateCollectionReceiptDto": {
+      "CreateCashVoucherDto": {
         "type": "object",
         "properties": {
           "branchUnitId": {
             "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
+            "description": "Branch Unit ID",
+            "example": 1
           },
           "partyId": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 40
+            "description": "Party Primary Key ID",
+            "example": "1"
           },
-          "customerCode": {
+          "partyCode": {
             "type": "string",
-            "maxLength": 80
+            "description": "Party Code (Vendor/Employee/Customer)",
+            "example": "SUP-001"
           },
-          "customerName": {
+          "partyName": {
             "type": "string",
-            "maxLength": 255
+            "description": "Party Name",
+            "example": "National Bookstore"
           },
-          "billToName": {
+          "creditAccountId": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
+            "description": "Chart Account Primary Key ID (Cash/Bank)",
+            "example": "1"
           },
-          "address": {
+          "voucherNo": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 500
+            "description": "Custom/Suggested Voucher Sequence No",
+            "example": "CV-2026-000001"
           },
-          "contactPerson": {
+          "voucherDate": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
+            "description": "Voucher Document Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
           },
-          "contactNo": {
+          "paymentDueDate": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "currency": {
-            "type": "string",
-            "maxLength": 10
-          },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0.000001
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "receivableAccountId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "receivableAccountCode": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "receivableAccountTitle": {
-            "type": "string",
-            "maxLength": 250
-          },
-          "remarks": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "details": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollectionReceiptDetailDto"
-            }
-          },
-          "journalEntries": {
-            "minItems": 2,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollectionReceiptJournalEntryDto"
-            }
-          }
-        },
-        "required": [
-          "documentDate",
-          "dueDate",
-          "customerCode",
-          "customerName",
-          "currency",
-          "exchangeRate",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountAmount",
-          "grossAmount",
-          "receivableAccountCode",
-          "receivableAccountTitle",
-          "details",
-          "journalEntries"
-        ]
-      },
-      "SaveCollectionReceiptResponseDto": {
-        "type": "object",
-        "properties": {
-          "receipt": {
-            "$ref": "#/components/schemas/CollectionReceiptResponseDto"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/CollectionReceiptPermissionsResponseDto"
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "receipt",
-          "permissions",
-          "message"
-        ]
-      },
-      "UpdateCollectionReceiptDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
+            "description": "Payment Due Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
           },
           "referenceNo": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 120
+            "description": "Reference No",
+            "example": "REF-001"
           },
-          "partyId": {
+          "referenceModule": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 40
+            "description": "Source Reference Module",
+            "example": "Accounts Payable Voucher"
           },
-          "customerCode": {
+          "voucherReferenceNo": {
             "type": "string",
-            "maxLength": 80
+            "description": "Voucher Reference No",
+            "example": "APV-2026-0001"
           },
-          "customerName": {
+          "invoiceReferenceNo": {
             "type": "string",
-            "maxLength": 255
+            "description": "Invoice Reference No",
+            "example": "INV-2026-0001"
           },
-          "billToName": {
+          "paymentMethod": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
+            "description": "Payment Method",
+            "example": "Cash",
+            "default": "Cash"
           },
-          "address": {
+          "disbursementType": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 500
+            "description": "Disbursement Type",
+            "example": "Vendor Payment"
           },
-          "contactPerson": {
+          "costCenter": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
+            "description": "Cost Center / Project Code",
+            "example": "CC-01"
           },
           "projectName": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
+            "description": "Project Name / Reference",
+            "example": "Main Office Expansion"
           },
-          "projectRef": {
+          "preparedBy": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
+            "description": "Prepared By Name",
+            "example": "John Doe"
           },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "description": "Currency Code",
+            "example": "PHP",
+            "default": "PHP"
           },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0.000001
+          "fxRate": {
+            "type": "object",
+            "description": "Exchange Rate",
+            "example": "1.0000",
+            "default": "1.0000"
           },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "receivableAccountId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "receivableAccountCode": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "receivableAccountTitle": {
-            "type": "string",
-            "maxLength": 250
+          "amount": {
+            "type": "object",
+            "description": "Total Voucher Amount",
+            "example": 5000
           },
           "remarks": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 500
+            "description": "Remarks / Memo",
+            "example": "Disbursement for supplies"
           },
-          "details": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollectionReceiptDetailDto"
-            }
-          },
-          "journalEntries": {
-            "minItems": 2,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollectionReceiptJournalEntryDto"
-            }
-          }
-        }
-      },
-      "UpdateCollectionReceiptStatusDto": {
-        "type": "object",
-        "properties": {
           "status": {
-            "type": "string",
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "DISAPPROVED",
+              "APPROVED",
               "POSTED",
+              "DISAPPROVED",
               "CANCELLED",
-              "Draft",
-              "For Approval",
-              "Disapproved",
-              "Posted",
-              "Cancelled"
-            ]
-          }
-        },
-        "required": [
-          "status"
-        ]
-      },
-      "AcknowledgementReceiptDetailResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "lineNumber": {
-            "type": "number"
-          },
-          "description": {
-            "type": "string"
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true
-          },
-          "quantity": {
-            "type": "number"
-          },
-          "amount": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "vatable": {
-            "type": "boolean"
-          },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "withEwt": {
-            "type": "boolean"
-          },
-          "ewtType": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "lineNumber",
-          "description",
-          "quantity",
-          "amount",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountPercent",
-          "discountAmount",
-          "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
-        ]
-      },
-      "AcknowledgementReceiptJournalEntryResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "referenceType": {
-            "type": "string"
-          },
-          "referenceId": {
-            "type": "string"
-          },
-          "lineNumber": {
-            "type": "number"
-          },
-          "accountId": {
-            "type": "string"
-          },
-          "accountCode": {
-            "type": "string"
-          },
-          "accountTitle": {
-            "type": "string"
-          },
-          "currencyCode": {
-            "type": "string"
-          },
-          "exchangeRate": {
-            "type": "number"
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true
-          },
-          "debit": {
-            "type": "number"
-          },
-          "credit": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "atcCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "partyCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "partyName": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true
-          },
-          "refNo": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "referenceType",
-          "referenceId",
-          "lineNumber",
-          "accountId",
-          "accountCode",
-          "accountTitle",
-          "currencyCode",
-          "exchangeRate",
-          "debit",
-          "credit"
-        ]
-      },
-      "AcknowledgementReceiptResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "transactionNo": {
-            "type": "string"
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true
-          },
-          "customerCode": {
-            "type": "string"
-          },
-          "customerName": {
-            "type": "string"
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true
-          },
-          "address": {
-            "type": "string",
-            "nullable": true
-          },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true
-          },
-          "currency": {
-            "type": "string"
-          },
-          "exchangeRate": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true
-          },
-          "receivableAccountId": {
-            "type": "string"
-          },
-          "receivableAccountCode": {
-            "type": "string"
-          },
-          "receivableAccountTitle": {
-            "type": "string"
-          },
-          "remarks": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "enum": [
-              "DRAFT",
-              "FOR_APPROVAL",
-              "DISAPPROVED",
-              "POSTED",
-              "CANCELLED"
+              "CLOSED"
             ],
-            "type": "string"
+            "type": "string",
+            "description": "Voucher Status",
+            "default": "DRAFT"
           },
           "details": {
+            "description": "Voucher Line Entries / Details",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/AcknowledgementReceiptDetailResponseDto"
+              "$ref": "#/components/schemas/CashVoucherDetailDto"
             }
-          },
-          "journalEntries": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AcknowledgementReceiptJournalEntryResponseDto"
-            }
-          },
-          "createdBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "updatedAt": {
-            "type": "string"
           }
         },
         "required": [
-          "id",
-          "transactionNo",
-          "documentDate",
-          "dueDate",
-          "customerCode",
-          "customerName",
-          "currency",
-          "exchangeRate",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountAmount",
-          "grossAmount",
-          "receivableAccountId",
-          "receivableAccountCode",
-          "receivableAccountTitle",
-          "status",
-          "details",
-          "journalEntries",
-          "createdAt",
-          "updatedAt"
+          "partyCode",
+          "partyName",
+          "voucherDate",
+          "details"
         ]
       },
-      "AcknowledgementReceiptStatisticsResponseDto": {
-        "type": "object",
-        "properties": {
-          "cancelledReceipts": {
-            "type": "number"
-          },
-          "disapprovedReceipts": {
-            "type": "number"
-          },
-          "draftReceipts": {
-            "type": "number"
-          },
-          "forApprovalReceipts": {
-            "type": "number"
-          },
-          "postedReceipts": {
-            "type": "number"
-          },
-          "totalReceipts": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "cancelledReceipts",
-          "disapprovedReceipts",
-          "draftReceipts",
-          "forApprovalReceipts",
-          "postedReceipts",
-          "totalReceipts"
-        ]
-      },
-      "AcknowledgementReceiptPaginationResponseDto": {
-        "type": "object",
-        "properties": {
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          },
-          "total": {
-            "type": "number"
-          },
-          "totalPages": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
-        ]
-      },
-      "AcknowledgementReceiptPermissionsResponseDto": {
-        "type": "object",
-        "properties": {
-          "canApprove": {
-            "type": "boolean"
-          },
-          "canCancel": {
-            "type": "boolean"
-          },
-          "canCreate": {
-            "type": "boolean"
-          },
-          "canDisapprove": {
-            "type": "boolean"
-          },
-          "canExport": {
-            "type": "boolean"
-          },
-          "canPost": {
-            "type": "boolean"
-          },
-          "canUpdate": {
-            "type": "boolean"
-          },
-          "canView": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "canApprove",
-          "canCancel",
-          "canCreate",
-          "canDisapprove",
-          "canExport",
-          "canPost",
-          "canUpdate",
-          "canView"
-        ]
-      },
-      "AcknowledgementReceiptListResponseDto": {
-        "type": "object",
-        "properties": {
-          "receipts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AcknowledgementReceiptResponseDto"
-            }
-          },
-          "statistics": {
-            "$ref": "#/components/schemas/AcknowledgementReceiptStatisticsResponseDto"
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/AcknowledgementReceiptPaginationResponseDto"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/AcknowledgementReceiptPermissionsResponseDto"
-          }
-        },
-        "required": [
-          "receipts",
-          "statistics",
-          "pagination",
-          "permissions"
-        ]
-      },
-      "AcknowledgementReceiptNumberSuggestionResponseDto": {
+      "UpdateCashVoucherDto": {
         "type": "object",
         "properties": {
           "branchUnitId": {
-            "type": "number"
-          },
-          "inputMode": {
-            "type": "string"
-          },
-          "transactionNo": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "branchUnitId",
-          "inputMode",
-          "transactionNo"
-        ]
-      },
-      "AcknowledgementReceiptContainerResponseDto": {
-        "type": "object",
-        "properties": {
-          "receipt": {
-            "$ref": "#/components/schemas/AcknowledgementReceiptResponseDto"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/AcknowledgementReceiptPermissionsResponseDto"
-          }
-        },
-        "required": [
-          "receipt",
-          "permissions"
-        ]
-      },
-      "AcknowledgementReceiptDetailDto": {
-        "type": "object",
-        "properties": {
-          "lineNumber": {
             "type": "number",
-            "minimum": 1
+            "description": "Branch Unit ID",
+            "example": 1
           },
-          "description": {
+          "partyId": {
             "type": "string",
-            "maxLength": 250
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "quantity": {
-            "type": "number",
-            "minimum": 0
-          },
-          "amount": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number",
-            "minimum": 0
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "vatable": {
-            "type": "boolean"
-          },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "withEwt": {
-            "type": "boolean"
-          },
-          "ewtType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          }
-        },
-        "required": [
-          "lineNumber",
-          "description",
-          "quantity",
-          "amount",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountPercent",
-          "discountAmount",
-          "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
-        ]
-      },
-      "AcknowledgementReceiptJournalEntryDto": {
-        "type": "object",
-        "properties": {
-          "referenceType": {
-            "type": "string",
-            "enum": [
-              "AR"
-            ]
-          },
-          "lineNumber": {
-            "type": "number",
-            "minimum": 1
-          },
-          "accountId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "accountCode": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "accountTitle": {
-            "type": "string",
-            "maxLength": 250
-          },
-          "currencyCode": {
-            "type": "string",
-            "maxLength": 10
-          },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0.000001
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "debit": {
-            "type": "number",
-            "minimum": 0
-          },
-          "credit": {
-            "type": "number",
-            "minimum": 0
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "atcCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
+            "description": "Party Primary Key ID",
+            "example": "1"
           },
           "partyCode": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 80
+            "description": "Party Code (Vendor/Employee/Customer)",
+            "example": "SUP-001"
           },
           "partyName": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
+            "description": "Party Name",
+            "example": "National Bookstore"
           },
-          "responsibilityCenterId": {
+          "creditAccountId": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 40
+            "description": "Chart Account Primary Key ID (Cash/Bank)",
+            "example": "1"
           },
-          "responsibilityCenter": {
+          "voucherNo": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 150
+            "description": "Custom/Suggested Voucher Sequence No",
+            "example": "CV-2026-000001"
           },
-          "refNo": {
+          "voucherDate": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          }
-        },
-        "required": [
-          "lineNumber",
-          "accountCode",
-          "accountTitle",
-          "currencyCode",
-          "exchangeRate",
-          "debit",
-          "credit"
-        ]
-      },
-      "CreateAcknowledgementReceiptDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
+            "description": "Voucher Document Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
           },
-          "transactionNo": {
+          "paymentDueDate": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
+            "description": "Payment Due Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
           },
           "referenceNo": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 120
+            "description": "Reference No",
+            "example": "REF-001"
           },
-          "partyId": {
+          "referenceModule": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 40
+            "description": "Source Reference Module",
+            "example": "Accounts Payable Voucher"
           },
-          "customerCode": {
+          "voucherReferenceNo": {
             "type": "string",
-            "maxLength": 80
+            "description": "Voucher Reference No",
+            "example": "APV-2026-0001"
           },
-          "customerName": {
+          "invoiceReferenceNo": {
             "type": "string",
-            "maxLength": 255
+            "description": "Invoice Reference No",
+            "example": "INV-2026-0001"
           },
-          "billToName": {
+          "paymentMethod": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
+            "description": "Payment Method",
+            "example": "Cash",
+            "default": "Cash"
           },
-          "address": {
+          "disbursementType": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 500
+            "description": "Disbursement Type",
+            "example": "Vendor Payment"
           },
-          "contactPerson": {
+          "costCenter": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
+            "description": "Cost Center / Project Code",
+            "example": "CC-01"
           },
           "projectName": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 255
+            "description": "Project Name / Reference",
+            "example": "Main Office Expansion"
           },
-          "projectRef": {
+          "preparedBy": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
+            "description": "Prepared By Name",
+            "example": "John Doe"
           },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "description": "Currency Code",
+            "example": "PHP",
+            "default": "PHP"
           },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0.000001
+          "fxRate": {
+            "type": "object",
+            "description": "Exchange Rate",
+            "example": "1.0000",
+            "default": "1.0000"
           },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "receivableAccountId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "receivableAccountCode": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "receivableAccountTitle": {
-            "type": "string",
-            "maxLength": 250
+          "amount": {
+            "type": "object",
+            "description": "Total Voucher Amount",
+            "example": 5000
           },
           "remarks": {
             "type": "string",
-            "nullable": true,
-            "maxLength": 500
+            "description": "Remarks / Memo",
+            "example": "Disbursement for supplies"
           },
-          "details": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AcknowledgementReceiptDetailDto"
-            }
-          },
-          "journalEntries": {
-            "minItems": 2,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AcknowledgementReceiptJournalEntryDto"
-            }
-          }
-        },
-        "required": [
-          "documentDate",
-          "dueDate",
-          "customerCode",
-          "customerName",
-          "currency",
-          "exchangeRate",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountAmount",
-          "grossAmount",
-          "receivableAccountCode",
-          "receivableAccountTitle",
-          "details",
-          "journalEntries"
-        ]
-      },
-      "SaveAcknowledgementReceiptResponseDto": {
-        "type": "object",
-        "properties": {
-          "receipt": {
-            "$ref": "#/components/schemas/AcknowledgementReceiptResponseDto"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/AcknowledgementReceiptPermissionsResponseDto"
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "receipt",
-          "permissions",
-          "message"
-        ]
-      },
-      "UpdateAcknowledgementReceiptDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "address": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "currency": {
-            "type": "string",
-            "maxLength": 10
-          },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0.000001
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "receivableAccountId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "receivableAccountCode": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "receivableAccountTitle": {
-            "type": "string",
-            "maxLength": 250
-          },
-          "remarks": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "details": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AcknowledgementReceiptDetailDto"
-            }
-          },
-          "journalEntries": {
-            "minItems": 2,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AcknowledgementReceiptJournalEntryDto"
-            }
-          }
-        }
-      },
-      "UpdateAcknowledgementReceiptStatusDto": {
-        "type": "object",
-        "properties": {
           "status": {
-            "type": "string",
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "DISAPPROVED",
+              "APPROVED",
               "POSTED",
+              "DISAPPROVED",
               "CANCELLED",
-              "Draft",
-              "For Approval",
-              "Disapproved",
-              "Posted",
-              "Cancelled"
-            ]
-          }
-        },
-        "required": [
-          "status"
-        ]
-      },
-      "ProvisionalReceiptDetailResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "lineNumber": {
-            "type": "number"
-          },
-          "description": {
-            "type": "string"
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true
-          },
-          "quantity": {
-            "type": "number"
-          },
-          "amount": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "vatable": {
-            "type": "boolean"
-          },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "withEwt": {
-            "type": "boolean"
-          },
-          "ewtType": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "lineNumber",
-          "description",
-          "quantity",
-          "amount",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountPercent",
-          "discountAmount",
-          "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
-        ]
-      },
-      "ProvisionalReceiptJournalEntryResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "referenceType": {
-            "type": "string"
-          },
-          "referenceId": {
-            "type": "string"
-          },
-          "lineNumber": {
-            "type": "number"
-          },
-          "accountId": {
-            "type": "string"
-          },
-          "accountCode": {
-            "type": "string"
-          },
-          "accountTitle": {
-            "type": "string"
-          },
-          "currencyCode": {
-            "type": "string"
-          },
-          "exchangeRate": {
-            "type": "number"
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true
-          },
-          "debit": {
-            "type": "number"
-          },
-          "credit": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "atcCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "partyCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "partyName": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true
-          },
-          "refNo": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "referenceType",
-          "referenceId",
-          "lineNumber",
-          "accountId",
-          "accountCode",
-          "accountTitle",
-          "currencyCode",
-          "exchangeRate",
-          "debit",
-          "credit"
-        ]
-      },
-      "ProvisionalReceiptResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "transactionNo": {
-            "type": "string"
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true
-          },
-          "customerCode": {
-            "type": "string"
-          },
-          "customerName": {
-            "type": "string"
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true
-          },
-          "address": {
-            "type": "string",
-            "nullable": true
-          },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true
-          },
-          "currency": {
-            "type": "string"
-          },
-          "exchangeRate": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true
-          },
-          "receivableAccountId": {
-            "type": "string"
-          },
-          "receivableAccountCode": {
-            "type": "string"
-          },
-          "receivableAccountTitle": {
-            "type": "string"
-          },
-          "remarks": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "enum": [
-              "DRAFT",
-              "FOR_APPROVAL",
-              "DISAPPROVED",
-              "POSTED",
-              "CANCELLED"
+              "CLOSED"
             ],
-            "type": "string"
+            "type": "string",
+            "description": "Voucher Status",
+            "default": "DRAFT"
           },
           "details": {
+            "description": "Voucher Line Entries / Details",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ProvisionalReceiptDetailResponseDto"
-            }
-          },
-          "journalEntries": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProvisionalReceiptJournalEntryResponseDto"
-            }
-          },
-          "createdBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedBy": {
-            "type": "string",
-            "nullable": true
-          },
-          "updatedAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "transactionNo",
-          "documentDate",
-          "dueDate",
-          "customerCode",
-          "customerName",
-          "currency",
-          "exchangeRate",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountAmount",
-          "grossAmount",
-          "receivableAccountId",
-          "receivableAccountCode",
-          "receivableAccountTitle",
-          "status",
-          "details",
-          "journalEntries",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "ProvisionalReceiptStatisticsResponseDto": {
-        "type": "object",
-        "properties": {
-          "cancelledReceipts": {
-            "type": "number"
-          },
-          "disapprovedReceipts": {
-            "type": "number"
-          },
-          "draftReceipts": {
-            "type": "number"
-          },
-          "forApprovalReceipts": {
-            "type": "number"
-          },
-          "postedReceipts": {
-            "type": "number"
-          },
-          "totalReceipts": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "cancelledReceipts",
-          "disapprovedReceipts",
-          "draftReceipts",
-          "forApprovalReceipts",
-          "postedReceipts",
-          "totalReceipts"
-        ]
-      },
-      "ProvisionalReceiptPaginationResponseDto": {
-        "type": "object",
-        "properties": {
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          },
-          "total": {
-            "type": "number"
-          },
-          "totalPages": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
-        ]
-      },
-      "ProvisionalReceiptPermissionsResponseDto": {
-        "type": "object",
-        "properties": {
-          "canApprove": {
-            "type": "boolean"
-          },
-          "canCancel": {
-            "type": "boolean"
-          },
-          "canCreate": {
-            "type": "boolean"
-          },
-          "canDisapprove": {
-            "type": "boolean"
-          },
-          "canExport": {
-            "type": "boolean"
-          },
-          "canPost": {
-            "type": "boolean"
-          },
-          "canUpdate": {
-            "type": "boolean"
-          },
-          "canView": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "canApprove",
-          "canCancel",
-          "canCreate",
-          "canDisapprove",
-          "canExport",
-          "canPost",
-          "canUpdate",
-          "canView"
-        ]
-      },
-      "ProvisionalReceiptListResponseDto": {
-        "type": "object",
-        "properties": {
-          "receipts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProvisionalReceiptResponseDto"
-            }
-          },
-          "statistics": {
-            "$ref": "#/components/schemas/ProvisionalReceiptStatisticsResponseDto"
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/ProvisionalReceiptPaginationResponseDto"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/ProvisionalReceiptPermissionsResponseDto"
-          }
-        },
-        "required": [
-          "receipts",
-          "statistics",
-          "pagination",
-          "permissions"
-        ]
-      },
-      "ProvisionalReceiptNumberSuggestionResponseDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number"
-          },
-          "inputMode": {
-            "type": "string"
-          },
-          "transactionNo": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "branchUnitId",
-          "inputMode",
-          "transactionNo"
-        ]
-      },
-      "ProvisionalReceiptContainerResponseDto": {
-        "type": "object",
-        "properties": {
-          "receipt": {
-            "$ref": "#/components/schemas/ProvisionalReceiptResponseDto"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/ProvisionalReceiptPermissionsResponseDto"
-          }
-        },
-        "required": [
-          "receipt",
-          "permissions"
-        ]
-      },
-      "ProvisionalReceiptDetailDto": {
-        "type": "object",
-        "properties": {
-          "lineNumber": {
-            "type": "number",
-            "minimum": 1
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 250
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "quantity": {
-            "type": "number",
-            "minimum": 0
-          },
-          "amount": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number",
-            "minimum": 0
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "vatable": {
-            "type": "boolean"
-          },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "withEwt": {
-            "type": "boolean"
-          },
-          "ewtType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          }
-        },
-        "required": [
-          "lineNumber",
-          "description",
-          "quantity",
-          "amount",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountPercent",
-          "discountAmount",
-          "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
-        ]
-      },
-      "ProvisionalReceiptJournalEntryDto": {
-        "type": "object",
-        "properties": {
-          "referenceType": {
-            "type": "string",
-            "enum": [
-              "PVR"
-            ]
-          },
-          "lineNumber": {
-            "type": "number",
-            "minimum": 1
-          },
-          "accountId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "accountCode": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "accountTitle": {
-            "type": "string",
-            "maxLength": 250
-          },
-          "currencyCode": {
-            "type": "string",
-            "maxLength": 10
-          },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0.000001
-          },
-          "particulars": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "debit": {
-            "type": "number",
-            "minimum": 0
-          },
-          "credit": {
-            "type": "number",
-            "minimum": 0
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "atcCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "partyCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "partyName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "refNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          }
-        },
-        "required": [
-          "lineNumber",
-          "accountCode",
-          "accountTitle",
-          "currencyCode",
-          "exchangeRate",
-          "debit",
-          "credit"
-        ]
-      },
-      "CreateProvisionalReceiptDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "address": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "currency": {
-            "type": "string",
-            "maxLength": 10
-          },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0.000001
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "receivableAccountId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "receivableAccountCode": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "receivableAccountTitle": {
-            "type": "string",
-            "maxLength": 250
-          },
-          "remarks": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "details": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProvisionalReceiptDetailDto"
-            }
-          },
-          "journalEntries": {
-            "minItems": 2,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProvisionalReceiptJournalEntryDto"
-            }
-          }
-        },
-        "required": [
-          "documentDate",
-          "dueDate",
-          "customerCode",
-          "customerName",
-          "currency",
-          "exchangeRate",
-          "netAmount",
-          "vatAmount",
-          "wvatAmount",
-          "ewtAmount",
-          "discountAmount",
-          "grossAmount",
-          "receivableAccountCode",
-          "receivableAccountTitle",
-          "details",
-          "journalEntries"
-        ]
-      },
-      "SaveProvisionalReceiptResponseDto": {
-        "type": "object",
-        "properties": {
-          "receipt": {
-            "$ref": "#/components/schemas/ProvisionalReceiptResponseDto"
-          },
-          "permissions": {
-            "$ref": "#/components/schemas/ProvisionalReceiptPermissionsResponseDto"
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "receipt",
-          "permissions",
-          "message"
-        ]
-      },
-      "UpdateProvisionalReceiptDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "address": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "currency": {
-            "type": "string",
-            "maxLength": 10
-          },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0.000001
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "receivableAccountId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "receivableAccountCode": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "receivableAccountTitle": {
-            "type": "string",
-            "maxLength": 250
-          },
-          "remarks": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "details": {
-            "minItems": 1,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProvisionalReceiptDetailDto"
-            }
-          },
-          "journalEntries": {
-            "minItems": 2,
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProvisionalReceiptJournalEntryDto"
+              "$ref": "#/components/schemas/CashVoucherDetailDto"
             }
           }
         }
       },
-      "UpdateProvisionalReceiptStatusDto": {
+      "UpdateCashVoucherStatusDto": {
         "type": "object",
         "properties": {
           "status": {
-            "type": "string",
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "DISAPPROVED",
+              "APPROVED",
               "POSTED",
+              "DISAPPROVED",
               "CANCELLED",
-              "Draft",
-              "For Approval",
-              "Disapproved",
-              "Posted",
-              "Cancelled"
-            ]
+              "CLOSED"
+            ],
+            "type": "string",
+            "description": "New voucher status",
+            "example": "FOR_APPROVAL"
           }
         },
         "required": [

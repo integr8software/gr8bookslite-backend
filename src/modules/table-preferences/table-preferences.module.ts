@@ -9,5 +9,6 @@ import { TablePreferencesService } from './table-preferences.service';
   imports: [PrismaModule, AccessControlModule, AuthModule],
   controllers: [TablePreferencesController],
   providers: [TablePreferencesService],
+  exports: [TablePreferencesService],
 })
 export class TablePreferencesModule {}
