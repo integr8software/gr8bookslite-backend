@@ -9824,19 +9824,19 @@
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/AiAssistantChatResponseDto"
                 }
               }
             }
           }
         },
         "tags": [
-          "AiAssistant"
+          "AI Assistant"
         ]
       }
     },
@@ -9844,20 +9844,37 @@
       "post": {
         "operationId": "AiAssistantController_transcribe_v1",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AiAssistantTranscriptionUploadDto"
+              }
+            }
+          }
+        },
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AiAssistantQueuedTranscriptionResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AiAssistantCompletedTranscriptionResponseDto"
+                    }
+                  ]
                 }
               }
             }
           }
         },
         "tags": [
-          "AiAssistant"
+          "AI Assistant"
         ]
       }
     },
@@ -9880,14 +9897,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AiAssistantQueuedTranscriptionResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AiAssistantProcessingTranscriptionResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AiAssistantCompletedTranscriptionResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AiAssistantFailedTranscriptionResponseDto"
+                    }
+                  ]
                 }
               }
             }
           }
         },
         "tags": [
-          "AiAssistant"
+          "AI Assistant"
         ]
       }
     },
@@ -27504,11 +27534,11 @@
         "type": "object",
         "properties": {
           "role": {
-            "type": "string",
             "enum": [
               "user",
               "assistant"
-            ]
+            ],
+            "type": "string"
           },
           "content": {
             "type": "string",
@@ -27528,9 +27558,11 @@
             "maxLength": 4000
           },
           "currentPath": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 2048
           },
           "history": {
+            "maxItems": 50,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AiAssistantChatMessageDto"
@@ -27539,6 +27571,326 @@
         },
         "required": [
           "message"
+        ]
+      },
+      "AiAssistantQueuedTranscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued"
+            ]
+          }
+        },
+        "required": [
+          "jobId",
+          "status"
+        ]
+      },
+      "AiAssistantProcessingTranscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "processing"
+            ]
+          }
+        },
+        "required": [
+          "jobId",
+          "status"
+        ]
+      },
+      "AiAssistantCompletedTranscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed"
+            ]
+          },
+          "transcript": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "transcript"
+        ]
+      },
+      "AiAssistantFailedTranscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "failed"
+            ]
+          }
+        },
+        "required": [
+          "error",
+          "jobId",
+          "status"
+        ]
+      },
+      "AiAssistantModuleCommandActionDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "module_command"
+            ]
+          },
+          "moduleCode": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string",
+            "enum": [
+              "open"
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "moduleCode",
+          "command"
+        ]
+      },
+      "AiAssistantNavigateActionDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "navigate"
+            ]
+          },
+          "route": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "route"
+        ]
+      },
+      "AiAssistantPurchaseRequestItemPrefillDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "uom": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "number"
+          }
+        }
+      },
+      "AiAssistantPurchaseRequestPrefillDto": {
+        "type": "object",
+        "properties": {
+          "purchaseType": {
+            "type": "string"
+          },
+          "supplierName": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiAssistantPurchaseRequestItemPrefillDto"
+            }
+          }
+        }
+      },
+      "AiAssistantOpenFormActionDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "open_form"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "purchase_request"
+            ]
+          },
+          "route": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "prefill": {
+            "$ref": "#/components/schemas/AiAssistantPurchaseRequestPrefillDto"
+          }
+        },
+        "required": [
+          "type",
+          "target",
+          "route"
+        ]
+      },
+      "AiAssistantTermsMaintenancePrefillDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "datemode": {
+            "enum": [
+              "Day",
+              "Month",
+              "Year"
+            ],
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "AiAssistantTermsMaintenanceActionDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "terms_maintenance"
+            ]
+          },
+          "moduleCode": {
+            "type": "string",
+            "enum": [
+              "TM"
+            ]
+          },
+          "command": {
+            "enum": [
+              "open",
+              "search",
+              "filter_status",
+              "prepare_add",
+              "preview_edit"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string"
+          },
+          "prefill": {
+            "$ref": "#/components/schemas/AiAssistantTermsMaintenancePrefillDto"
+          },
+          "targetTermName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "moduleCode",
+          "command"
+        ]
+      },
+      "AiAssistantChatResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "action": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AiAssistantModuleCommandActionDto"
+              },
+              {
+                "$ref": "#/components/schemas/AiAssistantNavigateActionDto"
+              },
+              {
+                "$ref": "#/components/schemas/AiAssistantOpenFormActionDto"
+              },
+              {
+                "$ref": "#/components/schemas/AiAssistantTermsMaintenanceActionDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "message",
+          "action"
+        ]
+      },
+      "AiAssistantTranscriptionUploadDto": {
+        "type": "object",
+        "properties": {
+          "audio": {
+            "type": "string",
+            "format": "binary"
+          }
+        },
+        "required": [
+          "audio"
         ]
       },
       "AccountsPayableVoucherDetailsDto": {

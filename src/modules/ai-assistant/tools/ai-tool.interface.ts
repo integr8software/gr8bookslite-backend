@@ -1,7 +1,6 @@
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
-import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
-import type { AiAssistantAction } from '../ai-assistant.types';
 import type { AiModuleToolName } from '../catalog/ai-module-profile.types';
+import type { AiAssistantActionDto } from '../dto/ai-assistant-response.dto';
 
 export type AiToolDefinition = {
   name: AiModuleToolName;
@@ -14,7 +13,7 @@ export type AiToolAuthorizationResult = {
 };
 
 export type AiToolExecutionResult = {
-  action: AiAssistantAction | null;
+  action: AiAssistantActionDto | null;
   denialMessage?: string;
 };
 
@@ -23,9 +22,4 @@ export type AiModuleCommandCandidate = {
   moduleCode?: unknown;
   command?: unknown;
   label?: unknown;
-};
-
-export type AiToolContext = {
-  user: AuthUser;
-  moduleCode: string;
 };

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
+  InternalServerErrorException,
   Injectable,
   Logger,
   NotFoundException,
@@ -15,7 +16,12 @@ import type { JobsOptions, RedisOptions } from 'bullmq';
 import { PermissionAction } from '../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AiAssistantChatDto } from './dto/ai-assistant-chat.dto';
-import { AiAssistantAction, AiAssistantChatResponse, GeminiGenerateContentResponse } from './ai-assistant.types';
+import {
+  AiAssistantActionDto,
+  AiAssistantChatResponseDto,
+  AiAssistantTranscriptionJobResponseDto,
+  AiAssistantTranscriptionResponseDto,
+} from './dto/ai-assistant-response.dto';
 import { AiModuleProfiles, findAiModuleProfile, getAiModulePromptProfiles } from './catalog/ai-module-profile.registry';
 import { AiToolAuthorizerService } from './tools/ai-tool-authorizer.service';
 import { AiToolExecutorService } from './tools/ai-tool-executor.service';
@@ -100,7 +106,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     await this.transcriptionQueue?.close();
   }
 
-  async chat(user: AuthUser, dto: AiAssistantChatDto): Promise<AiAssistantChatResponse> {
+  async chat(user: AuthUser, dto: AiAssistantChatDto): Promise<AiAssistantChatResponseDto> {
     const requestedModule = findAiModuleProfile(dto.message);
 
     if (requestedModule) {
@@ -171,7 +177,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async transcribe(user: AuthUser, file: UploadedAiAssistantAudioFile | undefined) {
+  async transcribe(user: AuthUser, file: UploadedAiAssistantAudioFile | undefined): Promise<AiAssistantTranscriptionResponseDto> {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
 
     if (!apiKey) {
@@ -191,6 +197,10 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
         userId: user.id,
       });
 
+      if (!job.id) {
+        throw new InternalServerErrorException('Neo AI could not queue that recording. Please try again.');
+      }
+
       return {
         jobId: job.id,
         status: 'queued' as const,
@@ -205,7 +215,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  async getTranscriptionJob(user: AuthUser, jobId: string) {
+  async getTranscriptionJob(user: AuthUser, jobId: string): Promise<AiAssistantTranscriptionJobResponseDto> {
     if (!this.transcriptionQueue) {
       throw new BadRequestException('Voice transcription queue is not enabled.');
     }
@@ -343,7 +353,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     ].join('\n');
   }
 
-  private normalizeResponse(user: AuthUser, text?: string): AiAssistantChatResponse {
+  private normalizeResponse(user: AuthUser, text?: string): AiAssistantChatResponseDto {
     if (!text) {
       return {
         message: `I am Neo AI, your ${PRODUCT_NAME} assistant. I can guide you through modules, open approved pages, and prepare forms for your review. What would you like to do?`,
@@ -352,7 +362,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const parsed = JSON.parse(text) as AiAssistantChatResponse;
+      const parsed = JSON.parse(text) as AiAssistantChatResponseDto;
       const actionResult = this.normalizeAction(user, parsed.action);
 
       return {
@@ -448,7 +458,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       return { action: null };
     }
 
-    const candidate = action as Partial<AiAssistantAction>;
+    const candidate = action as Partial<AiAssistantActionDto>;
 
     if (candidate.type === 'module_command') {
       return this.toolExecutor.executeModuleCommand(user, candidate);
@@ -502,7 +512,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return { action: null };
   }
 
-  private createLocalDemoResponse(user: AuthUser, message: string): AiAssistantChatResponse {
+  private createLocalDemoResponse(user: AuthUser, message: string): AiAssistantChatResponseDto {
     const normalized = message.toLowerCase();
     const purchaseRequestPrefill = this.createPurchaseRequestPrefill(message);
 
@@ -575,7 +585,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  private isAllowedTermsMaintenanceCommand(command: unknown): command is Extract<AiAssistantAction, { type: 'terms_maintenance' }>['command'] {
+  private isAllowedTermsMaintenanceCommand(command: unknown): command is Extract<AiAssistantActionDto, { type: 'terms_maintenance' }>['command'] {
     return command === 'open' || command === 'search' || command === 'filter_status' || command === 'prepare_add' || command === 'preview_edit';
   }
 
@@ -603,7 +613,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return value === 'Active' || value === 'Inactive' ? value : undefined;
   }
 
-  private getTermsMaintenancePermissionDenialMessage(user: AuthUser, command: Extract<AiAssistantAction, { type: 'terms_maintenance' }>['command']) {
+  private getTermsMaintenancePermissionDenialMessage(user: AuthUser, command: Extract<AiAssistantActionDto, { type: 'terms_maintenance' }>['command']) {
     const viewAuthorization = this.toolAuthorizer.authorize(user, 'TM', PermissionAction.VIEW);
 
     if (!viewAuthorization.allowed) {
@@ -635,7 +645,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  private createModuleListResponse(user: AuthUser): AiAssistantChatResponse {
+  private createModuleListResponse(user: AuthUser): AiAssistantChatResponseDto {
     const accessibleModuleCodes = this.toolAuthorizer.getAccessibleModuleCodes(user);
     const modulesByArea = new Map<string, string[]>();
 
@@ -737,8 +747,18 @@ type VoiceTranscriptionJobData = {
 };
 
 type AiAssistantActionPermissionResult = {
-  action: AiAssistantAction | null;
+  action: AiAssistantActionDto | null;
   denialMessage?: string;
+};
+
+type GeminiGenerateContentResponse = {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: string;
+      }>;
+    };
+  }>;
 };
 
 function readTranscriptionJobReturnValue(value: unknown) {
