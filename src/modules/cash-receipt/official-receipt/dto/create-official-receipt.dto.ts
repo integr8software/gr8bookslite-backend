@@ -50,14 +50,10 @@ export class CreateOfficialReceiptDto {
   @MaxLength(255)
   billToName?: string | null;
 
+  @ApiPropertyOptional({ example: '1', nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(40)
-  @ApiPropertyOptional({
-    description: 'Payment type ID from the payment types master data.',
-    example: '1',
-    nullable: true,
-  })
   paymentId?: string | null;
 
   @IsString()
