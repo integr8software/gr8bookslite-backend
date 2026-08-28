@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
+  InternalServerErrorException,
   Injectable,
   Logger,
   NotFoundException,
@@ -12,19 +13,24 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Job, Queue, Worker } from 'bullmq';
 import type { JobsOptions, RedisOptions } from 'bullmq';
-import { MembershipRole, MembershipStatus } from '@prisma/client';
-import { AppRole } from '../../common/enums/app-role.enum';
 import { PermissionAction } from '../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { AiAssistantChatDto } from './dto/ai-assistant-chat.dto';
-import { AiAssistantAction, AiAssistantChatResponse, GeminiGenerateContentResponse } from './ai-assistant.types';
+import {
+  AiAssistantActionDto,
+  AiAssistantChatResponseDto,
+  AiAssistantTranscriptionJobResponseDto,
+  AiAssistantTranscriptionResponseDto,
+} from './dto/ai-assistant-response.dto';
+import { AiModuleProfiles, findAiModuleProfile, getAiModulePromptProfiles } from './catalog/ai-module-profile.registry';
+import { AiToolAuthorizerService } from './tools/ai-tool-authorizer.service';
+import { AiToolExecutorService } from './tools/ai-tool-executor.service';
 import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant-audio-file.type';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const PRODUCT_NAME = 'Gr8Books Neo';
 const SHORT_PRODUCT_NAME_PATTERN = /\bGr8Books\b(?!\s+Neo)/gi;
 const PURCHASE_REQUEST_ADD_ROUTE = '/purchasing/purchase-request/add?assistant=1';
-const TERM_MANAGEMENT_PERMISSION_CODE = 'TM';
 export const MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES = 4 * 1024 * 1024;
 const GEMINI_TRANSCRIPTION_TIMEOUT_MS = 90_000;
 const MAX_CONCURRENT_TRANSCRIPTIONS = 4;
@@ -40,58 +46,6 @@ const SUPPORTED_TRANSCRIPTION_AUDIO_TYPES = new Set([
   'audio/mp4',
   'audio/aac',
 ]);
-
-const moduleGuide = [
-  {
-    label: 'Purchasing > Purchase Request',
-    route: '/purchasing/purchase-request',
-    aliases: ['purchase request', 'pr', 'purchasing request'],
-    actions: ['navigate', 'explain'],
-    notes: 'Use Purchase Request to start a controlled request for goods or services before procurement continues to canvass, purchase order, and receiving.',
-  },
-  {
-    label: 'Purchasing > Canvass Form',
-    route: '/purchasing/canvass-form',
-    aliases: ['canvass', 'canvass form', 'quotation comparison'],
-    actions: ['navigate', 'explain'],
-    notes: 'Use Canvass Form when comparing supplier quotations before choosing where to buy.',
-  },
-  {
-    label: 'Inventory > Material Request',
-    route: '/inventory/material-request',
-    aliases: ['material request', 'inventory request'],
-    actions: ['navigate', 'explain'],
-    notes: 'Use Material Request when a department needs items from inventory stock.',
-  },
-  {
-    label: 'Accounts Payable > Accounts Payable Voucher',
-    route: '/accounts-payable/accounts-payable-voucher',
-    aliases: ['accounts payable voucher', 'ap voucher', 'payables voucher'],
-    actions: ['navigate', 'explain'],
-    notes: 'Use Accounts Payable Voucher to record and track supplier obligations before payment.',
-  },
-  {
-    label: 'Sales > Sales Invoice',
-    route: '/sales/sales-invoice',
-    aliases: ['sales invoice', 'customer invoice'],
-    actions: ['navigate', 'explain'],
-    notes: 'Use Sales Invoice to bill customers for delivered goods or completed services.',
-  },
-  {
-    label: 'Maintenance > Charts of Accounts',
-    route: '/maintenance/charts-of-accounts',
-    aliases: ['chart of accounts', 'charts of accounts', 'coa', 'accounts list'],
-    actions: ['navigate', 'explain'],
-    notes: 'Use Charts of Accounts to maintain the account codes and names used for posting accounting entries.',
-  },
-  {
-    label: 'Maintenance > Terms Maintenance',
-    moduleCode: 'TM',
-    aliases: ['terms maintenance', 'terms maintenance', 'term', 'terms', 'payment term', 'payment terms', 'due term', 'datemode'],
-    actions: ['open', 'explain', 'search', 'filter_status', 'prepare_add', 'preview_edit'],
-    notes: 'Use Terms Maintenance to maintain payment term definitions, including term name, datemode, period, and active status.',
-  },
-];
 
 @Injectable()
 export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
@@ -115,7 +69,11 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
   private transcriptionQueue?: Queue<VoiceTranscriptionJobData>;
   private transcriptionWorker?: Worker<VoiceTranscriptionJobData>;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly toolExecutor: AiToolExecutorService,
+    private readonly toolAuthorizer: AiToolAuthorizerService,
+  ) {}
 
   onModuleInit() {
     if (this.configService.get<string>('VOICE_TRANSCRIPTION_QUEUE_ENABLED') !== 'true') {
@@ -148,7 +106,24 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     await this.transcriptionQueue?.close();
   }
 
-  async chat(user: AuthUser, dto: AiAssistantChatDto): Promise<AiAssistantChatResponse> {
+  async chat(user: AuthUser, dto: AiAssistantChatDto): Promise<AiAssistantChatResponseDto> {
+    const requestedModule = findAiModuleProfile(dto.message);
+
+    if (requestedModule) {
+      const authorization = this.toolAuthorizer.authorize(user, requestedModule.moduleCode, PermissionAction.VIEW);
+
+      if (!authorization.allowed) {
+        return {
+          message: authorization.denialMessage ?? `You do not have permission to view ${requestedModule.name}.`,
+          action: null,
+        };
+      }
+    }
+
+    if (this.isModuleListIntent(dto.message)) {
+      return this.createModuleListResponse(user);
+    }
+
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
 
     if (!apiKey) {
@@ -163,7 +138,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
         },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: this.createSystemPrompt() }],
+            parts: [{ text: this.createSystemPrompt(user) }],
           },
           contents: [
             ...(dto.history ?? []).slice(-6).map((message) => ({
@@ -202,7 +177,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async transcribe(user: AuthUser, file: UploadedAiAssistantAudioFile | undefined) {
+  async transcribe(user: AuthUser, file: UploadedAiAssistantAudioFile | undefined): Promise<AiAssistantTranscriptionResponseDto> {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
 
     if (!apiKey) {
@@ -222,6 +197,10 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
         userId: user.id,
       });
 
+      if (!job.id) {
+        throw new InternalServerErrorException('Neo AI could not queue that recording. Please try again.');
+      }
+
       return {
         jobId: job.id,
         status: 'queued' as const,
@@ -236,7 +215,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  async getTranscriptionJob(user: AuthUser, jobId: string) {
+  async getTranscriptionJob(user: AuthUser, jobId: string): Promise<AiAssistantTranscriptionJobResponseDto> {
     if (!this.transcriptionQueue) {
       throw new BadRequestException('Voice transcription queue is not enabled.');
     }
@@ -350,27 +329,31 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private createSystemPrompt() {
+  private createSystemPrompt(user: AuthUser) {
+    const accessibleModuleCodes = this.toolAuthorizer.getAccessibleModuleCodes(user);
+
     return [
       `You are Neo AI, the ${PRODUCT_NAME} in-app assistant.`,
       'Speak naturally and conversationally, not like a scripted command response.',
+      'Keep responses concise and easy to scan.',
+      'Never put a long list into one paragraph. Group module lists by business area, place each area on its own line, and use line breaks between groups.',
+      'Return plain text inside the JSON message. Do not return HTML, HTML entities, Markdown tables, or escaped spacing entities.',
       `Always refer to the product as "${PRODUCT_NAME}". Do not shorten it to "Gr8Books".`,
       'For now, focus on explaining modules, opening approved module pages, preparing Purchase Request drafts, and preparing Terms Maintenance previews for user review. Never submit, approve, delete, or save records.',
       `If the user asks you to introduce yourself, say: "Hi there! I'm Neo AI, your in-app assistant for ${PRODUCT_NAME}. I can help you understand different modules and open specific pages for you to review."`,
       'Return only JSON matching this TypeScript shape:',
-      '{ "message": string, "action": null | { "type": "navigate", "route": string, "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } | { "type": "terms_maintenance", "moduleCode": "TM", "command": "open" | "search" | "filter_status" | "prepare_add" | "preview_edit", "label"?: string, "query"?: string, "status"?: "Active" | "Inactive", "prefill"?: { "name"?: string, "description"?: string, "datemode"?: "Day" | "Month" | "Year", "period"?: string, "status"?: "Active" | "Inactive" }, "targetTermName"?: string } }',
-      'Use route only for navigate and open_form actions. Use moduleCode for module-specific actions such as Terms Maintenance.',
-      'Use only these approved modules and module identities:',
-      JSON.stringify(moduleGuide),
-      'If the user asks to open a module, respond like: "Okay, got it. Give me a moment, I will open Purchase Request for you." and include a navigate action.',
-      'If the user asks to open Terms Maintenance, return a terms_maintenance action with command "open"; do not return a frontend route for Terms Maintenance.',
+      '{ "message": string, "action": null | { "type": "module_command", "moduleCode": string, "command": "open", "label"?: string } | { "type": "open_form", "target": "purchase_request", "route": "/purchasing/purchase-request/add?assistant=1", "label"?: string, "prefill"?: { "purchaseType"?: string, "supplierName"?: string, "department"?: string, "remarks"?: string, "items"?: [{ "description"?: string, "quantity"?: number, "uom"?: string, "cost"?: number }] } } | { "type": "terms_maintenance", "moduleCode": "TM", "command": "search" | "filter_status" | "prepare_add" | "preview_edit", "label"?: string, "query"?: string, "status"?: "Active" | "Inactive", "prefill"?: { "name"?: string, "description"?: string, "datemode"?: "Day" | "Month" | "Year", "period"?: string, "status"?: "Active" | "Inactive" }, "targetTermName"?: string } }',
+      'Use module_command with the exact moduleCode to open any approved module. Never create or return a frontend route for module navigation.',
+      'Use only the following modules and capabilities, which are already filtered for the current user:',
+      JSON.stringify(getAiModulePromptProfiles(accessibleModuleCodes)),
+      'If the user asks to open a module, include a module_command action with command "open".',
       'If the user asks to create or prepare a Purchase Request draft, extract item description, quantity, unit of measure, and unit price if present. Use an open_form action, do not save. Tell the user to review before saving.',
       'If the user asks about Terms Maintenance filtering, searching, adding, or editing, return a terms_maintenance action. For add or edit, prepare a preview only and explicitly tell the user to review before saving. Required add preview fields are name, datemode, period, and status. Negative or decimal periods are invalid. Period 0 means the term does not add time.',
       'If the user asks what a module is for or how it works, explain it clearly and return action null.',
     ].join('\n');
   }
 
-  private normalizeResponse(user: AuthUser, text?: string): AiAssistantChatResponse {
+  private normalizeResponse(user: AuthUser, text?: string): AiAssistantChatResponseDto {
     if (!text) {
       return {
         message: `I am Neo AI, your ${PRODUCT_NAME} assistant. I can guide you through modules, open approved pages, and prepare forms for your review. What would you like to do?`,
@@ -379,7 +362,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const parsed = JSON.parse(text) as AiAssistantChatResponse;
+      const parsed = JSON.parse(text) as AiAssistantChatResponseDto;
       const actionResult = this.normalizeAction(user, parsed.action);
 
       return {
@@ -463,7 +446,11 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
   }
 
   private normalizeProductName(message: string) {
-    return message.replace(SHORT_PRODUCT_NAME_PATTERN, PRODUCT_NAME);
+    return message
+      .replace(SHORT_PRODUCT_NAME_PATTERN, PRODUCT_NAME)
+      .replace(/(?:&#x20;|&#32;|&nbsp;)/gi, ' ')
+      .replace(/[ \t]+\n/g, '\n')
+      .trim();
   }
 
   private normalizeAction(user: AuthUser, action: unknown): AiAssistantActionPermissionResult {
@@ -471,19 +458,22 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       return { action: null };
     }
 
-    const candidate = action as Partial<AiAssistantAction>;
+    const candidate = action as Partial<AiAssistantActionDto>;
 
-    if (candidate.type === 'navigate' && typeof candidate.route === 'string' && this.isAllowedRoute(candidate.route)) {
-      return {
-        action: {
-          type: 'navigate',
-          route: candidate.route,
-          label: candidate.label,
-        },
-      };
+    if (candidate.type === 'module_command') {
+      return this.toolExecutor.executeModuleCommand(user, candidate);
     }
 
     if (candidate.type === 'open_form' && candidate.target === 'purchase_request' && candidate.route === PURCHASE_REQUEST_ADD_ROUTE) {
+      const authorization = this.toolAuthorizer.authorize(user, 'PR', PermissionAction.CREATE);
+
+      if (!authorization.allowed) {
+        return {
+          action: null,
+          denialMessage: authorization.denialMessage,
+        };
+      }
+
       return {
         action: {
           type: 'open_form',
@@ -522,15 +512,20 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return { action: null };
   }
 
-  private isAllowedRoute(route?: string) {
-    return moduleGuide.some((module) => 'route' in module && module.route === route);
-  }
-
-  private createLocalDemoResponse(user: AuthUser, message: string): AiAssistantChatResponse {
+  private createLocalDemoResponse(user: AuthUser, message: string): AiAssistantChatResponseDto {
     const normalized = message.toLowerCase();
     const purchaseRequestPrefill = this.createPurchaseRequestPrefill(message);
 
     if (purchaseRequestPrefill && this.isCreateIntent(normalized)) {
+      const authorization = this.toolAuthorizer.authorize(user, 'PR', PermissionAction.CREATE);
+
+      if (!authorization.allowed) {
+        return {
+          message: authorization.denialMessage ?? 'You do not have permission to add records in Purchase Request.',
+          action: null,
+        };
+      }
+
       const item = purchaseRequestPrefill.items?.[0];
       const itemSummary = item?.description ? `${item.quantity ?? 1} ${item.description}` : 'your requested item';
       const priceSummary = item?.cost ? ` at PHP ${item.cost} per ${item.uom ?? 'qty'}` : '';
@@ -547,34 +542,19 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       };
     }
 
-    const module = this.findModule(normalized);
+    const module = findAiModuleProfile(normalized);
 
     if (module && this.isOpenIntent(normalized)) {
-      const route = 'route' in module ? module.route : undefined;
-
-      if (!route) {
-        const denialMessage = this.getTermsMaintenancePermissionDenialMessage(user, 'open');
-
-        if (denialMessage) {
-          return {
-            message: denialMessage,
-            action: null,
-          };
-        }
-
-        return {
-          message: 'Neo AI needs Gemini configured to perform that module action.',
-          action: null,
-        };
-      }
+      const actionResult = this.toolExecutor.executeModuleCommand(user, {
+        type: 'module_command',
+        moduleCode: module.moduleCode,
+        command: 'open',
+        label: module.name,
+      });
 
       return {
-        message: `Okay, got it. Give me a moment, I will open ${this.getModuleShortName(module.label)} for you.`,
-        action: {
-          type: 'navigate',
-          route,
-          label: this.getModuleShortName(module.label),
-        },
+        message: actionResult.denialMessage ?? `Okay, got it. Give me a moment, I will open ${module.name} for you.`,
+        action: actionResult.action,
       };
     }
 
@@ -587,9 +567,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
     if (module) {
       return {
-        message: `${this.getModuleShortName(module.label)} is for ${module.notes.charAt(0).toLowerCase()}${module.notes.slice(
-          1,
-        )} I can also open that module if you want.`,
+        message: `${module.name}: ${module.summary} I can also open that module if you want.`,
         action: null,
       };
     }
@@ -602,17 +580,12 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
 
     return {
-      message:
-        "Neo AI can't process that fully at the moment, but I can still help you find and understand modules. Try asking me to open or explain Purchase Request, Charts of Accounts, Material Request, AP Voucher, or Sales Invoice.",
+      message: "Neo AI can't process that fully at the moment, but I can still help you find, understand, and open the modules available to you.",
       action: null,
     };
   }
 
-  private findModule(message: string) {
-    return moduleGuide.find((module) => [module.label.toLowerCase(), ...module.aliases].some((alias) => message.includes(alias)));
-  }
-
-  private isAllowedTermsMaintenanceCommand(command: unknown): command is Extract<AiAssistantAction, { type: 'terms_maintenance' }>['command'] {
+  private isAllowedTermsMaintenanceCommand(command: unknown): command is Extract<AiAssistantActionDto, { type: 'terms_maintenance' }>['command'] {
     return command === 'open' || command === 'search' || command === 'filter_status' || command === 'prepare_add' || command === 'preview_edit';
   }
 
@@ -640,48 +613,65 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return value === 'Active' || value === 'Inactive' ? value : undefined;
   }
 
-  private getTermsMaintenancePermissionDenialMessage(user: AuthUser, command: Extract<AiAssistantAction, { type: 'terms_maintenance' }>['command']) {
-    if (!user.companyId) {
-      return 'Please select a company before I can help with Terms Maintenance.';
+  private getTermsMaintenancePermissionDenialMessage(user: AuthUser, command: Extract<AiAssistantActionDto, { type: 'terms_maintenance' }>['command']) {
+    const viewAuthorization = this.toolAuthorizer.authorize(user, 'TM', PermissionAction.VIEW);
+
+    if (!viewAuthorization.allowed) {
+      return viewAuthorization.denialMessage ?? 'You do not have permission to view Terms Maintenance.';
     }
 
-    if (!this.canUseTermsMaintenance(user, PermissionAction.VIEW)) {
-      return 'You do not have permission to view Terms Maintenance.';
-    }
-
-    if (command === 'prepare_add' && !this.canUseTermsMaintenance(user, PermissionAction.CREATE)) {
+    if (command === 'prepare_add' && !this.toolAuthorizer.authorize(user, 'TM', PermissionAction.CREATE).allowed) {
       return 'You can view Terms Maintenance, but you do not have permission to add terms.';
     }
 
-    if (command === 'preview_edit' && !this.canUseTermsMaintenance(user, PermissionAction.UPDATE)) {
+    if (command === 'preview_edit' && !this.toolAuthorizer.authorize(user, 'TM', PermissionAction.UPDATE).allowed) {
       return 'You can view Terms Maintenance, but you do not have permission to edit terms.';
     }
 
     return null;
   }
 
-  private canUseTermsMaintenance(user: AuthUser, action: PermissionAction) {
-    if (this.hasReservedCompanyRoleAccess(user)) {
-      return true;
-    }
-
-    return user.permissions.includes(`${TERM_MANAGEMENT_PERMISSION_CODE}:${action}`);
+  private isOpenIntent(message: string) {
+    return /\b(open|go to|goto|navigate|show|bring me|take me)\b/i.test(message);
   }
 
-  private hasReservedCompanyRoleAccess(user: AuthUser) {
-    if (user.role === AppRole.SUPER_ADMIN) {
-      return true;
-    }
+  private isModuleListIntent(message: string) {
+    const normalized = message.toLowerCase();
 
     return (
-      user.companyId !== null &&
-      user.membershipStatus === MembershipStatus.ACTIVE &&
-      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
+      /\b(?:list|show)\b.*\bmodules?\b/.test(normalized) ||
+      /\b(?:what|which)\b.*\bmodules?\b.*\b(?:know|support|available|access|help)\b/.test(normalized) ||
+      /\b(?:available|accessible|supported)\s+modules?\b/.test(normalized)
     );
   }
 
-  private isOpenIntent(message: string) {
-    return /\b(open|go to|goto|navigate|show|bring me|take me)\b/i.test(message);
+  private createModuleListResponse(user: AuthUser): AiAssistantChatResponseDto {
+    const accessibleModuleCodes = this.toolAuthorizer.getAccessibleModuleCodes(user);
+    const modulesByArea = new Map<string, string[]>();
+
+    for (const profile of AiModuleProfiles) {
+      if (!accessibleModuleCodes.has(profile.moduleCode)) {
+        continue;
+      }
+
+      const modules = modulesByArea.get(profile.area) ?? [];
+      modules.push(profile.name);
+      modulesByArea.set(profile.area, modules);
+    }
+
+    if (modulesByArea.size === 0) {
+      return {
+        message: 'No modules are currently available in your selected company and access context.',
+        action: null,
+      };
+    }
+
+    const groups = Array.from(modulesByArea, ([area, modules]) => `${area}:\n${modules.map((module) => `• ${module}`).join('\n')}`);
+
+    return {
+      message: `Here are the modules available to you, grouped by area:\n\n${groups.join('\n\n')}\n\nAsk me to explain or open any module.`,
+      action: null,
+    };
   }
 
   private isCreateIntent(message: string) {
@@ -694,10 +684,6 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
 
   private isGreetingIntent(message: string) {
     return /^(hi|hello|hey|good morning|good afternoon|good evening)\b/i.test(message.trim());
-  }
-
-  private getModuleShortName(label: string) {
-    return label.split('>').at(-1)?.trim() ?? label;
   }
 
   private createPurchaseRequestPrefill(message: string) {
@@ -761,8 +747,18 @@ type VoiceTranscriptionJobData = {
 };
 
 type AiAssistantActionPermissionResult = {
-  action: AiAssistantAction | null;
+  action: AiAssistantActionDto | null;
   denialMessage?: string;
+};
+
+type GeminiGenerateContentResponse = {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: string;
+      }>;
+    };
+  }>;
 };
 
 function readTranscriptionJobReturnValue(value: unknown) {

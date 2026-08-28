@@ -51,7 +51,7 @@ type PermissionCatalogSection = {
 
 const LegacyPettyCashReplenishmentPermissionCode = 'cash-disbursement-petty-cash-replenishment';
 const LegacyPettyCashFundReplenishmentPermissionCode = 'cash-disbursement-petty-cash-fund-replenishment';
-const PettyCashFundReplenishmentPermissionCode = 'PCFR';
+const PettyCashReplenishmentPermissionCode = 'PCR';
 const LegacyPettyCashAdvanceReplenishmentShortPermissionCode = 'PCAR';
 const RevolvingFundReplenishmentPermissionCode = 'RFR';
 const AccountsPayableVoucherPermissionCode = 'APV';
@@ -402,12 +402,12 @@ export class BranchRolesService {
     if (
       permissionCode === LegacyPettyCashReplenishmentPermissionCode ||
       permissionCode === LegacyPettyCashFundReplenishmentPermissionCode ||
-      permissionCode === PettyCashFundReplenishmentPermissionCode
+      permissionCode === PettyCashReplenishmentPermissionCode
     ) {
       canonicalPermission = {
-        code: PettyCashFundReplenishmentPermissionCode,
-        name: 'Petty Cash Fund Replenishment',
-        moduleCode: PettyCashFundReplenishmentPermissionCode,
+        code: PettyCashReplenishmentPermissionCode,
+        name: 'Petty Cash Replenishment',
+        moduleCode: PettyCashReplenishmentPermissionCode,
         moduleName: 'Cash Disbursement',
       };
     } else if (
