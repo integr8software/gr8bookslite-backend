@@ -72,6 +72,7 @@
     "db:seed:default-discounts:staging": "node scripts/run-with-process-env.cjs staging ts-node prisma/scripts/seed-default-discounts.ts",
     "db:seed:default-discounts:production": "node scripts/run-with-process-env.cjs production ts-node prisma/scripts/seed-default-discounts.ts",
     "db:seed:fixtures:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/seed-local-fixtures.ts",
+    "db:seed:accounting-inventory-admin:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/seed-accounting-inventory-admin.ts",
     "db:bootstrap-admin:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/bootstrap-admin.ts",
     "db:delete-user-owned-data:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/deleteUserOwnedData.ts",
     "db:backfill-head-offices:local": "node scripts/run-with-env.cjs .env ts-node prisma/scripts/backfillCompanyHeadOffices.ts",

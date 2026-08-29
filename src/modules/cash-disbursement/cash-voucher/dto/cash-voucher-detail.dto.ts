@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsDateString, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class CashVoucherDetailDto {
   @ApiPropertyOptional({ description: 'Line Detail ID', example: '1' })
@@ -12,126 +12,157 @@ export class CashVoucherDetailDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  lineNumber: number;
+  lineNumber!: number;
 
   @ApiPropertyOptional({ description: 'Account ID', example: '1' })
   @IsString()
   @IsOptional()
-  accountId?: string;
+  accountId?: string | null;
 
   @ApiProperty({ description: 'Account Code', example: '6001010000' })
   @IsString()
   @IsNotEmpty()
-  accountCode: string;
+  @MaxLength(80)
+  accountCode!: string;
 
   @ApiProperty({ description: 'Account Title / Name', example: 'Office Supplies Expense' })
   @IsString()
   @IsNotEmpty()
-  accountTitle: string;
+  @MaxLength(255)
+  accountTitle!: string;
 
   @ApiPropertyOptional({ description: 'Particulars', example: 'Office supplies for HQ' })
   @IsString()
   @IsOptional()
-  particulars?: string;
+  @MaxLength(500)
+  particulars?: string | null;
 
   @ApiPropertyOptional({ description: 'Remarks', example: 'Monthly supplies replenishment' })
   @IsString()
   @IsOptional()
-  remarks?: string;
+  @MaxLength(500)
+  remarks?: string | null;
 
   @ApiPropertyOptional({ description: 'Debit Amount', example: 5000.0 })
   @IsOptional()
-  debit?: number | string;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  debit?: number;
 
   @ApiPropertyOptional({ description: 'Credit Amount', example: 0.0 })
   @IsOptional()
-  credit?: number | string;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  credit?: number;
 
   @ApiPropertyOptional({ description: 'Gross Amount', example: 5000.0 })
   @IsOptional()
-  grossAmount?: number | string;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  grossAmount?: number;
 
   @ApiPropertyOptional({ description: 'Net Amount', example: 4464.29 })
   @IsOptional()
-  netAmount?: number | string;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  netAmount?: number;
 
   @ApiPropertyOptional({ description: 'VAT Type / Label', example: 'VAT Inclusive' })
   @IsString()
   @IsOptional()
-  vatType?: string;
+  @MaxLength(80)
+  vatType?: string | null;
 
   @ApiPropertyOptional({ description: 'VAT Code', example: 'VAT-IN' })
   @IsString()
   @IsOptional()
-  vatCode?: string;
+  @MaxLength(80)
+  vatCode?: string | null;
 
   @ApiPropertyOptional({ description: 'VAT Percent', example: 12.0 })
   @IsOptional()
-  vatPercent?: number | string;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 4 })
+  vatPercent?: number;
 
   @ApiPropertyOptional({ description: 'VAT Amount', example: 535.71 })
   @IsOptional()
-  vatAmount?: number | string;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  vatAmount?: number;
 
   @ApiPropertyOptional({ description: 'EWT Code', example: 'WI158' })
   @IsString()
   @IsOptional()
-  ewtCode?: string;
+  @MaxLength(80)
+  ewtCode?: string | null;
 
   @ApiPropertyOptional({ description: 'EWT Percent', example: 1.0 })
   @IsOptional()
-  ewtPercent?: number | string;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 4 })
+  ewtPercent?: number;
 
   @ApiPropertyOptional({ description: 'EWT Amount', example: 44.64 })
   @IsOptional()
-  ewtAmount?: number | string;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  ewtAmount?: number;
 
   @ApiPropertyOptional({ description: 'Disburse Amount', example: 4955.36 })
   @IsOptional()
-  disburseAmount?: number | string;
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  disburseAmount?: number;
 
   @ApiPropertyOptional({ description: 'Party ID', example: '1' })
   @IsString()
   @IsOptional()
-  partyId?: string;
+  partyId?: string | null;
 
   @ApiPropertyOptional({ description: 'Party Code', example: 'SUP-001' })
   @IsString()
   @IsOptional()
-  partyCode?: string;
+  @MaxLength(80)
+  partyCode?: string | null;
 
   @ApiPropertyOptional({ description: 'Party Name', example: 'National Bookstore' })
   @IsString()
   @IsOptional()
-  partyName?: string;
+  @MaxLength(255)
+  partyName?: string | null;
 
   @ApiPropertyOptional({ description: 'Responsibility Center ID', example: '1' })
   @IsString()
   @IsOptional()
-  responsibilityCenterId?: string;
+  responsibilityCenterId?: string | null;
 
   @ApiPropertyOptional({ description: 'Responsibility Center Name / Snapshot', example: 'Admin Dept' })
   @IsString()
   @IsOptional()
-  responsibilityCenter?: string;
+  @MaxLength(150)
+  responsibilityCenter?: string | null;
 
   @ApiPropertyOptional({ description: 'Reference ID / No', example: 'REF-001' })
   @IsString()
   @IsOptional()
-  refId?: string;
+  @MaxLength(120)
+  refId?: string | null;
 
   @ApiPropertyOptional({ description: 'Check Date (YYYY-MM-DD)', example: '2026-06-11' })
   @IsDateString()
   @IsOptional()
-  checkDate?: string;
+  checkDate?: string | null;
 
   @ApiPropertyOptional({ description: 'Check Number', example: 'CHK-123456' })
   @IsString()
   @IsOptional()
-  checkNo?: string;
+  @MaxLength(80)
+  checkNo?: string | null;
 
   @ApiPropertyOptional({ description: 'Check Status', example: 'Cleared' })
   @IsString()
   @IsOptional()
-  checkStatus?: string;
+  @MaxLength(50)
+  checkStatus?: string | null;
 }

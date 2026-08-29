@@ -1,10 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CashVoucherStatus } from '@prisma/client';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdateCashVoucherStatusDto {
-  @ApiProperty({ description: 'New voucher status', enum: CashVoucherStatus, example: CashVoucherStatus.FOR_APPROVAL })
-  @IsEnum(CashVoucherStatus)
+  @ApiProperty({ description: 'New voucher status', example: 'For Approval' })
+  @IsString()
   @IsNotEmpty()
-  status: CashVoucherStatus;
+  status!: string;
 }

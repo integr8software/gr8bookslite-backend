@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -8,6 +8,7 @@ import { CashAdvancePartyOptionsResponseDto } from './dto/cash-advance-party-opt
 import { CashAdvanceListResponseDto, CashAdvanceSingleResponseDto } from './dto/cash-advance-response.dto';
 import { CreateCashAdvanceDto } from './dto/create-cash-advance.dto';
 import { GetCashAdvanceListQueryDto } from './dto/get-cash-advance-list-query.dto';
+import { UpdateCashAdvanceStatusDto } from './dto/update-cash-advance-status.dto';
 import { UpdateCashAdvanceDto } from './dto/update-cash-advance.dto';
 
 @UseGuards(JwtAuthGuard)
@@ -81,6 +82,13 @@ export class CashAdvanceController {
   })
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.cashAdvanceService.remove(user, id);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Update cash advance status' })
+  @ApiOkResponse({ type: CashAdvanceSingleResponseDto })
+  updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateCashAdvanceStatusDto) {
+    return this.cashAdvanceService.updateStatus(user, id, dto);
   }
 
   @Post(':id/submit-approval')

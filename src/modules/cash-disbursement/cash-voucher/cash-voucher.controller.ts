@@ -4,6 +4,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CashVoucherService } from './cash-voucher.service';
+import { CashVoucherLookupService } from './services/cash-voucher-lookup.service';
 import {
   CashVoucherListResponseDto,
   CashVoucherSingleResponseDto,
@@ -21,13 +22,23 @@ import { UpdateCashVoucherDto } from './dto/update-cash-voucher.dto';
   version: '1',
 })
 export class CashVoucherController {
-  constructor(private readonly cashVoucherService: CashVoucherService) {}
+  constructor(
+    private readonly cashVoucherService: CashVoucherService,
+    private readonly cashVoucherLookupService: CashVoucherLookupService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get paginated list of cash voucher records' })
   @ApiOkResponse({ type: CashVoucherListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetCashVoucherListQueryDto) {
     return this.cashVoucherService.findAll(user, query);
+  }
+
+  @Get('transaction-number')
+  @ApiOperation({ summary: 'Get auto-suggested transaction number sequence' })
+  @ApiOkResponse({ description: 'Suggested transaction number retrieved.' })
+  suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query() query: GetCashVoucherListQueryDto) {
+    return this.cashVoucherService.suggestTransactionNumber(user, query.branchUnitId);
   }
 
   @Get('next-transaction-no')
@@ -46,90 +57,58 @@ export class CashVoucherController {
 
   @Get('lookups/parties')
   @ApiOperation({ summary: 'Get party options for cash voucher' })
-  @ApiOkResponse({
-    schema: {
-      type: 'object',
-      properties: {
-        parties: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              partyCode: { type: 'string' },
-              partyName: { type: 'string' },
-              name: { type: 'string' },
-              label: { type: 'string' },
-              value: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-  })
+  @ApiOkResponse({ description: 'Party options retrieved.' })
   findParties(@CurrentUser() user: AuthUser) {
-    return this.cashVoucherService.findParties(user);
+    return this.cashVoucherLookupService.findParties(user);
   }
 
   @Get('lookups/accounts')
   @ApiOperation({ summary: 'Get chart of account options for cash voucher' })
-  @ApiOkResponse({
-    schema: {
-      type: 'object',
-      properties: {
-        accounts: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              accountCode: { type: 'string' },
-              accountTitle: { type: 'string' },
-              name: { type: 'string' },
-              label: { type: 'string' },
-              value: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-  })
+  @ApiOkResponse({ description: 'Account options retrieved.' })
   findAccounts(@CurrentUser() user: AuthUser) {
-    return this.cashVoucherService.findAccounts(user);
+    return this.cashVoucherLookupService.findPostingAccounts(user);
+  }
+
+  @Get('lookups/posting-accounts')
+  @ApiOperation({ summary: 'Get posting account options for cash voucher' })
+  @ApiOkResponse({ description: 'Posting account options retrieved.' })
+  findPostingAccounts(@CurrentUser() user: AuthUser) {
+    return this.cashVoucherLookupService.findPostingAccounts(user);
   }
 
   @Get('lookups/responsibility-centers')
   @ApiOperation({ summary: 'Get responsibility center options for cash voucher' })
-  @ApiOkResponse({
-    schema: {
-      type: 'object',
-      properties: {
-        responsibilityCenters: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              code: { type: 'string' },
-              name: { type: 'string' },
-              category: { type: 'string' },
-              label: { type: 'string' },
-              value: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-  })
+  @ApiOkResponse({ description: 'Responsibility center options retrieved.' })
   findResponsibilityCenters(@CurrentUser() user: AuthUser) {
-    return this.cashVoucherService.findResponsibilityCenters(user);
+    return this.cashVoucherLookupService.findResponsibilityCenters(user);
+  }
+
+  @Get('lookups/terms')
+  @ApiOperation({ summary: 'Get term options for cash voucher' })
+  @ApiOkResponse({ description: 'Term options retrieved.' })
+  findTerms(@CurrentUser() user: AuthUser) {
+    return this.cashVoucherLookupService.findTerms(user);
+  }
+
+  @Get('lookups/expense-types')
+  @ApiOperation({ summary: 'Get default expense type options for cash voucher' })
+  @ApiOkResponse({ description: 'Expense type options retrieved.' })
+  findExpenseTypes(@CurrentUser() user: AuthUser) {
+    return this.cashVoucherLookupService.findExpenseTypes(user);
+  }
+
+  @Get('lookups/disbursement-accounts')
+  @ApiOperation({ summary: 'Get disbursement account options for cash voucher' })
+  @ApiOkResponse({ description: 'Disbursement account options retrieved.' })
+  findDisbursementAccounts(@CurrentUser() user: AuthUser) {
+    return this.cashVoucherLookupService.findDisbursementAccounts(user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get single cash voucher details by ID' })
   @ApiOkResponse({ type: CashVoucherSingleResponseDto })
-  findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.cashVoucherService.findOne(user, id);
+  findOne(@CurrentUser() user: AuthUser, @Param('id') id: string, @Query() query: GetCashVoucherListQueryDto) {
+    return this.cashVoucherService.findOne(user, id, query.branchUnitId);
   }
 
   @Post()
@@ -142,7 +121,14 @@ export class CashVoucherController {
   @Put(':id')
   @ApiOperation({ summary: 'Update existing cash voucher record' })
   @ApiOkResponse({ type: CashVoucherSingleResponseDto })
-  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateCashVoucherDto) {
+  updatePut(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateCashVoucherDto) {
+    return this.cashVoucherService.update(user, id, dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Patch existing cash voucher record' })
+  @ApiOkResponse({ type: CashVoucherSingleResponseDto })
+  updatePatch(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateCashVoucherDto) {
     return this.cashVoucherService.update(user, id, dto);
   }
 

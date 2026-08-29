@@ -10,12 +10,12 @@ export class GetCashVoucherListQueryDto {
   @IsOptional()
   page?: number = 1;
 
-  @ApiPropertyOptional({ description: 'Items per page', default: 20, minimum: 1 })
+  @ApiPropertyOptional({ description: 'Items per page', default: 50, minimum: 1 })
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @IsOptional()
-  limit?: number = 20;
+  limit?: number = 50;
 
   @ApiPropertyOptional({ description: 'Branch Unit ID filter' })
   @Type(() => Number)
@@ -48,6 +48,16 @@ export class GetCashVoucherListQueryDto {
   @IsOptional()
   endDate?: string;
 
+  @ApiPropertyOptional({ description: 'Document Date From (alias for startDate)' })
+  @IsDateString()
+  @IsOptional()
+  documentDateFrom?: string;
+
+  @ApiPropertyOptional({ description: 'Document Date To (alias for endDate)' })
+  @IsDateString()
+  @IsOptional()
+  documentDateTo?: string;
+
   @ApiPropertyOptional({ description: 'Minimum Amount' })
   @Type(() => Number)
   @IsNumber()
@@ -62,15 +72,19 @@ export class GetCashVoucherListQueryDto {
 
   @ApiPropertyOptional({
     description: 'Field to sort by',
-    enum: ['voucherNo', 'voucherDate', 'partyName', 'partyCode', 'amount', 'currencyCode', 'status', 'createdAt', 'updatedAt'],
-    default: 'createdAt',
+    default: 'voucherDate',
   })
   @IsString()
   @IsOptional()
-  sortBy?: string = 'createdAt';
+  sortBy?: string;
 
   @ApiPropertyOptional({ description: 'Sort direction', enum: ['asc', 'desc'], default: 'desc' })
   @IsIn(['asc', 'desc'])
   @IsOptional()
-  sortOrder?: 'asc' | 'desc' = 'desc';
+  sortOrder?: 'asc' | 'desc';
+
+  @ApiPropertyOptional({ description: 'Sort direction alias', enum: ['asc', 'desc'], default: 'desc' })
+  @IsIn(['asc', 'desc'])
+  @IsOptional()
+  sortDirection?: 'asc' | 'desc';
 }

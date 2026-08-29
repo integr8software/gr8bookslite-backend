@@ -52,15 +52,20 @@ export class CreateCashAdvanceDto {
   @IsOptional()
   projectId?: string;
 
-  @ApiPropertyOptional({ description: 'Project Reference / Name', example: 'Implementation Projects' })
+  @ApiPropertyOptional({ description: 'Project Name', example: 'Implementation Projects' })
   @IsString()
   @IsOptional()
-  projectRef?: string;
+  projectName?: string;
 
   @ApiPropertyOptional({ description: 'Project Code', example: 'PRJ-01' })
   @IsString()
   @IsOptional()
   projectCode?: string;
+
+  @ApiPropertyOptional({ description: 'Legacy alias for Project Name', example: 'Implementation Projects' })
+  @IsString()
+  @IsOptional()
+  projectRef?: string;
 
   @ApiProperty({ description: 'Currency Code', example: 'PHP', default: 'PHP' })
   @IsString()

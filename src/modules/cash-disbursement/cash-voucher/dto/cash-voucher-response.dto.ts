@@ -136,7 +136,10 @@ export class CashVoucherRecordResponseDto {
   @ApiPropertyOptional({ description: 'Cost Center / Project Code', example: 'CC-01' })
   costCenter?: string | null;
 
-  @ApiPropertyOptional({ description: 'Project Name / Reference', example: 'Main Office Expansion' })
+  @ApiPropertyOptional({ description: 'Project Code', example: 'PRJ-01' })
+  projectCode?: string | null;
+
+  @ApiPropertyOptional({ description: 'Project Name', example: 'Main Office Expansion' })
   projectName?: string | null;
 
   @ApiPropertyOptional({ description: 'Prepared By Name', example: 'John Doe' })

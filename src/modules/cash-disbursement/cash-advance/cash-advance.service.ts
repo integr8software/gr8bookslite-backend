@@ -9,6 +9,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { TablePreferencesService } from '../../table-preferences/table-preferences.service';
 import { CreateCashAdvanceDto } from './dto/create-cash-advance.dto';
 import { GetCashAdvanceListQueryDto } from './dto/get-cash-advance-list-query.dto';
+import { UpdateCashAdvanceStatusDto } from './dto/update-cash-advance-status.dto';
 import { UpdateCashAdvanceDto } from './dto/update-cash-advance.dto';
 import { mapCashAdvance } from './mappers/cash-advance.mapper';
 import { CashAdvanceInclude, CashAdvanceWithPayload } from './prisma/cash-advance.include';
@@ -29,6 +30,7 @@ export class CashAdvanceService {
     const where: Prisma.CashAdvanceWhereInput = {
       companyId,
       deletedAt: null,
+      NOT: { transNo: { startsWith: 'CAME-' } },
     };
 
     if (query.search?.trim()) {
@@ -152,7 +154,12 @@ export class CashAdvanceService {
 
   async getNextTransactionNo(user: AuthUser) {
     const companyId = this.getActiveCompanyId(user);
-    const count = await this.prisma.cashAdvance.count({ where: { companyId } });
+    const count = await this.prisma.cashAdvance.count({
+      where: {
+        companyId,
+        NOT: { transNo: { startsWith: 'CAME-' } },
+      },
+    });
     const sequenceNumber = (count + 1).toString().padStart(6, '0');
     const year = new Date().getFullYear();
     const nextTransNo = `CA-${year}-${sequenceNumber}`;
@@ -211,7 +218,7 @@ export class CashAdvanceService {
         accountTitleSnapshot: cleanOptional(dto.accountTitle) || creditAccount?.accountTitle || null,
         costCenterSnapshot: cleanOptional(dto.costCenter),
         costCenterCodeSnapshot: cleanOptional(dto.costCenterCode),
-        projectRefSnapshot: cleanOptional(dto.projectRef),
+        projectNameSnapshot: cleanOptional(dto.projectName) ?? cleanOptional(dto.projectRef),
         projectCodeSnapshot: cleanOptional(dto.projectCode),
         currencyCode: dto.currency.trim(),
         exchangeRate: new Prisma.Decimal(dto.fxRate.replaceAll(',', '').trim() || '1.0000'),
@@ -274,7 +281,9 @@ export class CashAdvanceService {
         ...(dto.accountTitle !== undefined ? { accountTitleSnapshot: cleanOptional(dto.accountTitle) } : {}),
         ...(dto.costCenter !== undefined ? { costCenterSnapshot: cleanOptional(dto.costCenter) } : {}),
         ...(dto.costCenterCode !== undefined ? { costCenterCodeSnapshot: cleanOptional(dto.costCenterCode) } : {}),
-        ...(dto.projectRef !== undefined ? { projectRefSnapshot: cleanOptional(dto.projectRef) } : {}),
+        ...(dto.projectName !== undefined || dto.projectRef !== undefined
+          ? { projectNameSnapshot: cleanOptional(dto.projectName) ?? cleanOptional(dto.projectRef) }
+          : {}),
         ...(dto.projectCode !== undefined ? { projectCodeSnapshot: cleanOptional(dto.projectCode) } : {}),
         ...(dto.currency ? { currencyCode: dto.currency.trim() } : {}),
         ...(dto.fxRate ? { exchangeRate: new Prisma.Decimal(dto.fxRate.replaceAll(',', '').trim() || '1.0000') } : {}),
@@ -313,6 +322,35 @@ export class CashAdvanceService {
     });
 
     return { message: 'Cash Advance record cancelled successfully.' };
+  }
+
+  async updateStatus(user: AuthUser, id: string, dto: UpdateCashAdvanceStatusDto) {
+    const companyId = this.getActiveCompanyId(user);
+    const recordId = parsePositiveBigIntId(id);
+    const existing = await this.prisma.cashAdvance.findFirst({
+      where: { id: recordId, companyId, deletedAt: null },
+      include: CashAdvanceInclude,
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Cash Advance record not found.');
+    }
+
+    const actionDate = new Date();
+    const updated = await this.prisma.cashAdvance.update({
+      where: { id: recordId },
+      data: {
+        status: dto.status,
+        updatedByUserId: user.id,
+        ...(dto.status === CashAdvanceStatus.POSTED ? { postedByUserId: user.id, postedAt: actionDate } : {}),
+        ...(dto.status === CashAdvanceStatus.DISAPPROVED ? { disapprovedByUserId: user.id, disapprovedAt: actionDate } : {}),
+        ...(dto.status === CashAdvanceStatus.CANCELLED ? { cancelledByUserId: user.id, cancelledAt: actionDate } : {}),
+      },
+      include: CashAdvanceInclude,
+    });
+
+    const mapped = (await this.mapWithAuditUsers([updated]))[0];
+    return { message: 'Cash Advance status updated successfully.', data: mapped };
   }
 
   async submitApproval(user: AuthUser, id: string) {

@@ -34,6 +34,24 @@ const PURCHASE_REQUEST_ADD_ROUTE = '/purchasing/purchase-request/add?assistant=1
 export const MAX_TRANSCRIPTION_AUDIO_SIZE_BYTES = 4 * 1024 * 1024;
 const GEMINI_TRANSCRIPTION_TIMEOUT_MS = 90_000;
 const MAX_CONCURRENT_TRANSCRIPTIONS = 4;
+const MODULE_LIST_AREA_ORDER = [
+  'Dashboard',
+  'Financial Maintenance',
+  'Party Management',
+  'Item Management',
+  'Warehouse Management',
+  'Delivery Vehicle Management',
+  'Cash Receipt',
+  'Cash Disbursement',
+  'Accounts Payable',
+  'General Journal',
+  'Sales',
+  'Inventory',
+  'Purchasing',
+  'System Administration',
+  'Others',
+] as const;
+const MODULE_LIST_AREA_SORT_INDEX = new Map<string, number>(MODULE_LIST_AREA_ORDER.map((area, index) => [area, index]));
 const VOICE_TRANSCRIPTION_QUEUE_NAME = 'neo-ai-voice-transcription';
 const SUPPORTED_TRANSCRIPTION_AUDIO_TYPES = new Set([
   'audio/webm',
@@ -666,7 +684,14 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
       };
     }
 
-    const groups = Array.from(modulesByArea, ([area, modules]) => `${area}:\n${modules.map((module) => `• ${module}`).join('\n')}`);
+    const groups = Array.from(modulesByArea, ([area, modules]) => ({ area, modules }))
+      .sort((left, right) => {
+        const leftIndex = MODULE_LIST_AREA_SORT_INDEX.get(left.area) ?? Number.MAX_SAFE_INTEGER;
+        const rightIndex = MODULE_LIST_AREA_SORT_INDEX.get(right.area) ?? Number.MAX_SAFE_INTEGER;
+
+        return leftIndex - rightIndex || left.area.localeCompare(right.area);
+      })
+      .map(({ area, modules }) => `${area}:\n${modules.map((module) => `• ${module}`).join('\n')}`);
 
     return {
       message: `Here are the modules available to you, grouped by area:\n\n${groups.join('\n\n')}\n\nAsk me to explain or open any module.`,

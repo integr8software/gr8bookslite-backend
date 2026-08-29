@@ -39,10 +39,13 @@ export class CashAdvanceDto {
   costCenterCode?: string;
 
   @ApiPropertyOptional({ example: 'Site Expansion' })
-  projectRef?: string;
+  projectName?: string;
 
   @ApiPropertyOptional({ example: 'PRJ-001' })
   projectCode?: string;
+
+  @ApiPropertyOptional({ example: 'Site Expansion', description: 'Legacy alias for projectName' })
+  projectRef?: string;
 
   @ApiProperty({ example: 'PHP' })
   currency: string;
