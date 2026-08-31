@@ -2,12 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CashVoucherStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
-  ArrayMinSize,
   IsArray,
   IsDateString,
   IsEnum,
   IsInt,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -64,17 +62,17 @@ export class CreateCashVoucherDto {
   @MaxLength(40)
   partyId?: string | null;
 
-  @ApiProperty({ description: 'Party Code (Vendor/Employee/Customer)', example: 'SUP-001' })
+  @ApiPropertyOptional({ description: 'Party Code (Vendor/Employee/Customer)', example: 'SUP-001' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(80)
-  partyCode!: string;
+  partyCode?: string | null;
 
-  @ApiProperty({ description: 'Party Name', example: 'National Bookstore' })
+  @ApiPropertyOptional({ description: 'Party Name', example: 'National Bookstore' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(255)
-  partyName!: string;
+  partyName?: string | null;
 
   @ApiPropertyOptional({ description: 'Party Address snapshot', example: '123 Main St, Manila' })
   @IsString()
@@ -215,12 +213,12 @@ export class CreateCashVoucherDto {
   @IsOptional()
   status?: CashVoucherStatus;
 
-  @ApiProperty({ description: 'Voucher Line Entries / Details', type: [CashVoucherDetailDto] })
+  @ApiPropertyOptional({ description: 'Voucher Line Entries / Details', type: [CashVoucherDetailDto] })
   @IsArray()
-  @ArrayMinSize(1)
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => CashVoucherDetailDto)
-  details!: CashVoucherDetailDto[];
+  details?: CashVoucherDetailDto[];
 
   @ApiPropertyOptional({ description: 'Journal Entries', type: [JournalEntryDto] })
   @IsArray()

@@ -8,7 +8,7 @@ describe('CashVoucherAccountingService', () => {
       service.validateSubmittedPayload({
         currencyCode: 'PHP',
         exchangeRate: 1,
-        voucherAmount: 990,
+        voucherAmount: 1000,
         details: [
           {
             id: 'expense-1',
@@ -48,7 +48,7 @@ describe('CashVoucherAccountingService', () => {
       service.validateSubmittedPayload({
         currencyCode: 'PHP',
         exchangeRate: 1,
-        voucherAmount: 990,
+        voucherAmount: 1000,
         details: [
           {
             lineNumber: 1,

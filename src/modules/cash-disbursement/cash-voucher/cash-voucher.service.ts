@@ -12,7 +12,6 @@ import {
   Prisma,
   ResponsibilityCenter,
   ResponsibilityCenterStatus,
-  TransactionNumberInputMode,
 } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
@@ -141,33 +140,19 @@ export class CashVoucherService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, requestedBranchUnitId);
 
-    try {
-      const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
-        branchUnitId,
-        companyId,
-        moduleCode: CashVoucherModuleCode,
-        isIssued: (transactionNo, context) => this.isTransactionNoIssued(this.prisma, companyId, branchUnitId, transactionNo, context.scope),
-      });
+    const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
+      branchUnitId,
+      companyId,
+      moduleCode: CashVoucherModuleCode,
+      isIssued: (transactionNo, context) => this.isTransactionNoIssued(this.prisma, companyId, branchUnitId, transactionNo, context.scope),
+    });
 
-      return {
-        branchUnitId,
-        inputMode: suggestion.inputMode,
-        nextTransNo: suggestion.transactionNumber,
-        transactionNo: suggestion.transactionNumber,
-      };
-    } catch {
-      const count = await this.prisma.cashVoucher.count({ where: { companyId } });
-      const sequenceNumber = (count + 1).toString().padStart(6, '0');
-      const year = new Date().getFullYear();
-      const nextTransNo = `CV-${year}-${sequenceNumber}`;
-
-      return {
-        branchUnitId,
-        inputMode: TransactionNumberInputMode.AUTO,
-        nextTransNo,
-        transactionNo: nextTransNo,
-      };
-    }
+    return {
+      branchUnitId,
+      inputMode: suggestion.inputMode,
+      nextTransNo: suggestion.transactionNumber,
+      transactionNo: suggestion.transactionNumber,
+    };
   }
 
   async getNextTransactionNo(user: AuthUser) {
@@ -181,18 +166,24 @@ export class CashVoucherService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
+    const targetStatus = dto.status || CashVoucherStatus.DRAFT;
 
-    this.accountingService.validateSubmittedPayload({
-      currencyCode: normalized.currencyCode,
-      details: dto.details,
-      exchangeRate: normalized.exchangeRate,
-      journalEntries: dto.journalEntries,
-      voucherAmount: normalized.amount,
-    });
+    if (this.requiresSubmissionValidation(targetStatus)) {
+      this.validateSubmittedHeader(dto);
+      this.accountingService.validateSubmittedPayload({
+        currencyCode: normalized.currencyCode,
+        details: dto.details ?? [],
+        exchangeRate: normalized.exchangeRate,
+        journalEntries: dto.journalEntries,
+        voucherAmount: normalized.amount,
+      });
+    }
 
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveVoucherReferences(tx, companyId, dto);
+        const references = await this.resolveVoucherReferences(tx, companyId, dto, {
+          requireDetailAccounts: this.requiresSubmissionValidation(targetStatus),
+        });
         const transactionNo = await this.resolveTransactionNumberForCreate(tx, {
           branchUnitId,
           companyId,
@@ -214,8 +205,8 @@ export class CashVoucherService {
             invoiceReferenceNo: cleanOptional(dto.invoiceReferenceNo),
             paymentMethod: cleanOptional(dto.paymentMethod) || 'Cash',
             disbursementType: cleanOptional(dto.disbursementType) || 'Vendor Payment',
-            partyCodeSnapshot: references.party?.partyCodeNo || dto.partyCode.trim(),
-            partyNameSnapshot: references.party ? this.getPartyName(references.party, dto.partyName) : dto.partyName.trim(),
+            partyCodeSnapshot: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+            partyNameSnapshot: references.party ? this.getPartyName(references.party, dto.partyName) : dto.partyName?.trim() || '',
             projectCode: cleanOptional(dto.projectCode) ?? cleanOptional(dto.costCenter),
             projectName: cleanOptional(dto.projectName),
             preparedBy: cleanOptional(dto.preparedBy),
@@ -223,7 +214,7 @@ export class CashVoucherService {
             exchangeRate: new Prisma.Decimal(String(normalized.exchangeRate)),
             amount: new Prisma.Decimal(String(normalized.amount)),
             remarks: cleanOptional(dto.remarks),
-            status: dto.status || CashVoucherStatus.DRAFT,
+            status: targetStatus,
             createdByUserId: user.id ? Number(user.id) : null,
           },
           include: CashVoucherInclude,
@@ -283,11 +274,26 @@ export class CashVoucherService {
       voucherDate: dto.voucherDate ?? dto.documentDate ?? current.voucherDate.toISOString(),
       details: dto.details ?? [],
     });
+    const targetStatus = dto.status || current.status;
 
-    if (dto.details && dto.details.length > 0) {
+    if (this.requiresSubmissionValidation(targetStatus)) {
+      this.validateSubmittedHeader({
+        ...dto,
+        partyCode: dto.partyCode ?? current.partyCodeSnapshot,
+        partyName: dto.partyName ?? current.partyNameSnapshot,
+      });
       this.accountingService.validateSubmittedPayload({
         currencyCode: normalized.currencyCode,
-        details: dto.details,
+        details: dto.details ?? current.details.map((detail, index) => ({
+          lineNumber: detail.lineNumber || index + 1,
+          accountId: detail.accountId?.toString(),
+          accountCode: detail.accountCodeSnapshot,
+          accountTitle: detail.accountTitleSnapshot,
+          debit: Number(detail.debit),
+          credit: Number(detail.credit),
+          grossAmount: Number(detail.grossAmount),
+          disburseAmount: Number(detail.disburseAmount),
+        })),
         exchangeRate: normalized.exchangeRate,
         journalEntries: dto.journalEntries,
         voucherAmount: normalized.amount,
@@ -296,7 +302,9 @@ export class CashVoucherService {
 
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveVoucherReferences(tx, companyId, dto);
+        const references = await this.resolveVoucherReferences(tx, companyId, dto, {
+          requireDetailAccounts: this.requiresSubmissionValidation(targetStatus),
+        });
         const transactionNo = await this.resolveTransactionNumberForUpdate(tx, {
           branchUnitId,
           companyId,
@@ -335,7 +343,7 @@ export class CashVoucherService {
             exchangeRate: new Prisma.Decimal(String(normalized.exchangeRate)),
             amount: new Prisma.Decimal(String(normalized.amount)),
             remarks: dto.remarks !== undefined ? cleanOptional(dto.remarks) : current.remarks,
-            status: dto.status || current.status,
+            status: targetStatus,
             updatedByUserId: user.id ? Number(user.id) : null,
           },
         });
@@ -400,7 +408,15 @@ export class CashVoucherService {
       };
     }
 
-    if (targetStatus === CashVoucherStatus.APPROVED || targetStatus === CashVoucherStatus.POSTED) {
+    if (
+      targetStatus === CashVoucherStatus.FOR_APPROVAL ||
+      targetStatus === CashVoucherStatus.APPROVED ||
+      targetStatus === CashVoucherStatus.POSTED
+    ) {
+      this.validateSubmittedHeader({
+        partyCode: current.partyCodeSnapshot,
+        partyName: current.partyNameSnapshot,
+      });
       this.accountingService.validatePersistedPayload({
         amount: Number(current.amount),
         details: current.details,
@@ -798,7 +814,12 @@ export class CashVoucherService {
     };
   }
 
-  private async resolveVoucherReferences(tx: PrismaWriteClient, companyId: number, dto: Partial<CreateCashVoucherDto>): Promise<ResolvedVoucherReferences> {
+  private async resolveVoucherReferences(
+    tx: PrismaWriteClient,
+    companyId: number,
+    dto: Partial<CreateCashVoucherDto>,
+    options: { requireDetailAccounts?: boolean } = {},
+  ): Promise<ResolvedVoucherReferences> {
     let party: PartyWithAddresses | null = null;
     if (dto.partyId || dto.partyCode) {
       party = await this.resolveParty(tx, companyId, { partyCode: dto.partyCode, partyId: dto.partyId, required: false });
@@ -821,7 +842,7 @@ export class CashVoucherService {
           accountCode: line.accountCode,
           accountId: line.accountId,
           label: `Detail line ${line.lineNumber} account`,
-          required: false,
+          required: options.requireDetailAccounts,
         });
 
         const lineParty =
@@ -970,15 +991,8 @@ export class CashVoucherService {
 
   private async resolveTransactionNumberForCreate(
     tx: Prisma.TransactionClient,
-    { branchUnitId, companyId, requestedTransactionNo }: { branchUnitId: number | null; companyId: number; requestedTransactionNo?: string | null },
+    { branchUnitId, companyId, requestedTransactionNo }: { branchUnitId: number; companyId: number; requestedTransactionNo?: string | null },
   ) {
-    if (!branchUnitId) {
-      if (requestedTransactionNo?.trim()) return requestedTransactionNo.trim();
-      const count = await tx.cashVoucher.count({ where: { companyId } });
-      const seq = (count + 1).toString().padStart(6, '0');
-      return `CV-${new Date().getFullYear()}-${seq}`;
-    }
-
     const transactionNumber = await resolveTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
@@ -999,7 +1013,7 @@ export class CashVoucherService {
       excludedVoucherId,
       requestedTransactionNo,
     }: {
-      branchUnitId: number | null;
+      branchUnitId: number;
       companyId: number;
       currentTransactionNo: string;
       excludedVoucherId: bigint;
@@ -1009,10 +1023,6 @@ export class CashVoucherService {
     const normalizedRequested = cleanOptional(requestedTransactionNo);
     if (!normalizedRequested || normalizedRequested === currentTransactionNo) {
       return currentTransactionNo;
-    }
-
-    if (!branchUnitId) {
-      return normalizedRequested;
     }
 
     const sequenceScope = await resolveTransactionNumberScopeForCompanyBranch(tx, {
@@ -1091,6 +1101,20 @@ export class CashVoucherService {
     if (normalized === 'CLOSED') return CashVoucherStatus.CLOSED;
 
     return CashVoucherStatus.DRAFT;
+  }
+
+  private requiresSubmissionValidation(status: CashVoucherStatus) {
+    return status !== CashVoucherStatus.DRAFT && status !== CashVoucherStatus.CANCELLED && status !== CashVoucherStatus.DISAPPROVED;
+  }
+
+  private validateSubmittedHeader(dto: Pick<Partial<CreateCashVoucherDto>, 'partyCode' | 'partyName'>) {
+    if (!dto.partyCode?.trim()) {
+      throw new BadRequestException('Party code is required before submission.');
+    }
+
+    if (!dto.partyName?.trim()) {
+      throw new BadRequestException('Party name is required before submission.');
+    }
   }
 
   private getPartyName(

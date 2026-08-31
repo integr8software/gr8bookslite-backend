@@ -1,31 +1,40 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty, IsNumberString, IsOptional, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsDateString, IsInt, IsNotEmpty, IsNumberString, IsOptional, IsString, Min } from 'class-validator';
+import { normalizeNumberStringInput } from '../../../../common/utils/dto-transform.util';
 
 export class CreateCashAdvanceDto {
+  @ApiPropertyOptional({ description: 'Branch Unit ID', example: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  branchUnitId?: number;
+
   @ApiPropertyOptional({ description: 'Party Primary Key ID', example: '1' })
   @IsString()
   @IsOptional()
   partyId?: string;
 
-  @ApiProperty({ description: 'Party Code (Employee/Vendor)', example: 'EMP-0017' })
+  @ApiPropertyOptional({ description: 'Party Code (Employee/Vendor)', example: 'EMP-0017' })
   @IsString()
-  @IsNotEmpty()
-  partyCode: string;
+  @IsOptional()
+  partyCode?: string;
 
-  @ApiProperty({ description: 'Party Name', example: 'Maria Santos' })
+  @ApiPropertyOptional({ description: 'Party Name', example: 'Maria Santos' })
   @IsString()
-  @IsNotEmpty()
-  partyName: string;
+  @IsOptional()
+  partyName?: string;
 
   @ApiPropertyOptional({ description: 'Chart Account Primary Key ID', example: '1' })
   @IsString()
   @IsOptional()
   creditAccountId?: string;
 
-  @ApiProperty({ description: 'Default Account Code', example: '1010103000' })
+  @ApiPropertyOptional({ description: 'Default Account Code', example: '1010103000' })
   @IsString()
-  @IsNotEmpty()
-  accountCode: string;
+  @IsOptional()
+  accountCode?: string;
 
   @ApiPropertyOptional({ description: 'Default Account Title', example: 'Accounts Receivable - Trade' })
   @IsString()
@@ -67,20 +76,21 @@ export class CreateCashAdvanceDto {
   @IsOptional()
   projectRef?: string;
 
-  @ApiProperty({ description: 'Currency Code', example: 'PHP', default: 'PHP' })
+  @ApiPropertyOptional({ description: 'Currency Code', example: 'PHP', default: 'PHP' })
   @IsString()
-  @IsNotEmpty()
-  currency: string;
+  @IsOptional()
+  currency?: string;
 
-  @ApiProperty({ description: 'Exchange Rate', example: '1.0000', default: '1.0000' })
+  @ApiPropertyOptional({ description: 'Exchange Rate', example: '1.0000', default: '1.0000' })
   @IsString()
-  @IsNotEmpty()
-  fxRate: string;
+  @IsOptional()
+  fxRate?: string;
 
-  @ApiProperty({ description: 'Cash Advance Amount', example: '12500.00' })
+  @ApiPropertyOptional({ description: 'Cash Advance Amount', example: '12500.00' })
+  @Transform(({ value }) => normalizeNumberStringInput(value))
   @IsNumberString()
-  @IsNotEmpty()
-  amount: string;
+  @IsOptional()
+  amount?: string;
 
   @ApiProperty({ description: 'Document Date in YYYY-MM-DD format', example: '2026-06-11' })
   @IsDateString()

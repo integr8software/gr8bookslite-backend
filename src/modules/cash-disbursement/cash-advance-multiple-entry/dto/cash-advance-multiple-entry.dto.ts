@@ -1,7 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CashAdvanceStatus } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsArray, IsDateString, IsEnum, IsInt, IsNotEmpty, IsNumberString, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
+import { normalizeNumberStringInput } from '../../../../common/utils/dto-transform.util';
 
 export class CashAdvanceMultipleEntryItemDto {
   @ApiPropertyOptional({ example: 'EMP-0017' })
@@ -9,15 +10,15 @@ export class CashAdvanceMultipleEntryItemDto {
   @IsOptional()
   id?: string;
 
-  @ApiProperty({ example: 'EMP-0017' })
+  @ApiPropertyOptional({ example: 'EMP-0017' })
   @IsString()
-  @IsNotEmpty()
-  partyCode: string;
+  @IsOptional()
+  partyCode?: string;
 
-  @ApiProperty({ example: 'Maria Santos' })
+  @ApiPropertyOptional({ example: 'Maria Santos' })
   @IsString()
-  @IsNotEmpty()
-  partyName: string;
+  @IsOptional()
+  partyName?: string;
 
   @ApiPropertyOptional({ example: '50000.00' })
   @IsString()
@@ -39,10 +40,11 @@ export class CashAdvanceMultipleEntryItemDto {
   @IsOptional()
   responsibilityCenter?: string;
 
-  @ApiProperty({ example: '12500.00' })
+  @ApiPropertyOptional({ example: '12500.00' })
+  @Transform(({ value }) => normalizeNumberStringInput(value))
   @IsNumberString()
-  @IsNotEmpty()
-  amount: string;
+  @IsOptional()
+  amount?: string;
 }
 
 export class CashAdvanceMultipleEntryAccountingEntryDto {
@@ -90,28 +92,40 @@ export class CashAdvanceMultipleEntryAccountingEntryDto {
   @IsString()
   @IsOptional()
   responsibilityCenter?: string;
+
+  @ApiPropertyOptional({ example: 'Travel advance' })
+  @IsString()
+  @IsOptional()
+  remarks?: string;
 }
 
 export class CreateCashAdvanceMultipleEntryDto {
-  @ApiProperty({ example: '1010103000' })
+  @ApiPropertyOptional({ description: 'Branch Unit ID', example: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  branchUnitId?: number;
+
+  @ApiPropertyOptional({ example: '1010103000' })
   @IsString()
-  @IsNotEmpty()
-  accountCode: string;
+  @IsOptional()
+  accountCode?: string;
 
   @ApiPropertyOptional({ example: 'Cash Advance - Employees' })
   @IsString()
   @IsOptional()
   accountTitle?: string;
 
-  @ApiProperty({ example: 'PHP' })
+  @ApiPropertyOptional({ example: 'PHP' })
   @IsString()
-  @IsNotEmpty()
-  currency: string;
+  @IsOptional()
+  currency?: string;
 
-  @ApiProperty({ example: '1.0000' })
+  @ApiPropertyOptional({ example: '1.0000' })
   @IsString()
-  @IsNotEmpty()
-  exchangeRate: string;
+  @IsOptional()
+  exchangeRate?: string;
 
   @ApiProperty({ example: '2026-08-28' })
   @IsDateString()
@@ -163,11 +177,12 @@ export class CreateCashAdvanceMultipleEntryDto {
   @IsOptional()
   status?: CashAdvanceStatus;
 
-  @ApiProperty({ type: [CashAdvanceMultipleEntryItemDto] })
+  @ApiPropertyOptional({ type: [CashAdvanceMultipleEntryItemDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CashAdvanceMultipleEntryItemDto)
-  items: CashAdvanceMultipleEntryItemDto[];
+  @IsOptional()
+  items?: CashAdvanceMultipleEntryItemDto[];
 
   @ApiPropertyOptional({ type: [CashAdvanceMultipleEntryAccountingEntryDto] })
   @IsArray()

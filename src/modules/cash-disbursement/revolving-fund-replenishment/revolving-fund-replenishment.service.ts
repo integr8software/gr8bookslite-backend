@@ -1,12 +1,12 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ChartAccount,
+  CompanyUnitType,
   Party,
   PartyAddress,
   RevolvingFundReplenishmentStatus,
   Prisma,
   ResponsibilityCenter,
-  TransactionNumberInputMode,
 } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
@@ -100,32 +100,18 @@ export class RevolvingFundReplenishmentService {
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const resolvedBranchId = await this.resolveBranchUnitId(companyId, branchUnitId);
 
-    try {
-      const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
-        branchUnitId: resolvedBranchId ?? 0,
-        companyId,
-        moduleCode: RevolvingFundReplenishmentModuleCode,
-      });
+    const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
+      branchUnitId: resolvedBranchId,
+      companyId,
+      moduleCode: RevolvingFundReplenishmentModuleCode,
+    });
 
-      return {
-        branchUnitId: resolvedBranchId,
-        inputMode: suggestion.inputMode,
-        nextTransNo: suggestion.transactionNumber,
-        transactionNo: suggestion.transactionNumber,
-      };
-    } catch {
-      const count = await this.prisma.revolvingFundReplenishment.count({ where: { companyId } });
-      const sequenceNumber = (count + 1).toString().padStart(6, '0');
-      const year = new Date().getFullYear();
-      const nextTransNo = `RFR-${year}-${sequenceNumber}`;
-
-      return {
-        branchUnitId: resolvedBranchId,
-        inputMode: TransactionNumberInputMode.AUTO,
-        nextTransNo,
-        transactionNo: nextTransNo,
-      };
-    }
+    return {
+      branchUnitId: resolvedBranchId,
+      inputMode: suggestion.inputMode,
+      nextTransNo: suggestion.transactionNumber,
+      transactionNo: suggestion.transactionNumber,
+    };
   }
 
   async create(user: AuthUser, dto: CreateRevolvingFundReplenishmentDto) {
@@ -138,25 +124,12 @@ export class RevolvingFundReplenishmentService {
 
     return this.prisma.$transaction(async (tx) => {
       const inputNo = cleanOptional((dto as any).voucherNo ?? (dto as any).transactionNo);
-      let assignedNo: string;
-
-      try {
-        assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
-          branchUnitId: branchUnitId ?? 0,
-          companyId,
-          moduleCode: RevolvingFundReplenishmentModuleCode,
-          requestedTransactionNumber: inputNo,
-        });
-      } catch {
-        if (inputNo) {
-          assignedNo = inputNo;
-        } else {
-          const count = await tx.revolvingFundReplenishment.count({ where: { companyId } });
-          const sequenceNumber = (count + 1).toString().padStart(6, '0');
-          const year = new Date().getFullYear();
-          assignedNo = `RFR-${year}-${sequenceNumber}`;
-        }
-      }
+      const assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
+        branchUnitId,
+        companyId,
+        moduleCode: RevolvingFundReplenishmentModuleCode,
+        requestedTransactionNumber: inputNo,
+      });
 
       const existing = await tx.revolvingFundReplenishment.findFirst({
         where: { companyId, transactionNo: assignedNo, deletedAt: null } as any,
@@ -169,8 +142,9 @@ export class RevolvingFundReplenishmentService {
 
       let calculatedAmount = dto.amount ?? 0;
       if (dto.details && dto.details.length > 0) {
-        calculatedAmount = dto.details.reduce((sum, d) => sum + (d.amount ?? (d as any).grossAmount ?? (d as any).disburseAmount ?? 0), 0);
+        calculatedAmount = dto.details.reduce((sum, d) => sum + ((d as any).grossAmount ?? d.amount ?? (d as any).disburseAmount ?? 0), 0);
       }
+      const targetStatus = dto.status ?? RevolvingFundReplenishmentStatus.DRAFT;
 
       const created = await tx.revolvingFundReplenishment.create({
         data: {
@@ -180,7 +154,7 @@ export class RevolvingFundReplenishmentService {
           documentDate: new Date(dto.documentDate),
           partyId: resolvedReferences.party?.id ?? null,
           partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? '',
-          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName,
+          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName ?? '',
           creditAccountId: resolvedReferences.creditAccount?.id ?? null,
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? '',
           accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? '',
@@ -193,7 +167,7 @@ export class RevolvingFundReplenishmentService {
           exchangeRate: dto.exchangeRate ?? 1.0,
           amount: calculatedAmount,
           remarks: cleanOptional(dto.remarks) ?? undefined,
-          status: dto.status ?? (RevolvingFundReplenishmentStatus.DRAFT as any),
+          status: targetStatus as any,
           createdByUserId: user.id,
         },
       });
@@ -206,6 +180,10 @@ export class RevolvingFundReplenishmentService {
         where: { id: created.id },
         include: RevolvingFundReplenishmentInclude,
       });
+
+      if (this.isSubmittedStatus(targetStatus)) {
+        this.assertRevolvingFundReplenishmentReady(reloaded as any);
+      }
 
       return RevolvingFundReplenishmentMapper.toResponseDto(reloaded as any);
     });
@@ -241,8 +219,9 @@ export class RevolvingFundReplenishmentService {
 
       let calculatedAmount = dto.amount !== undefined ? dto.amount : Number(existing.amount);
       if (dto.details && dto.details.length > 0) {
-        calculatedAmount = dto.details.reduce((sum, d) => sum + (d.amount ?? (d as any).grossAmount ?? (d as any).disburseAmount ?? 0), 0);
+        calculatedAmount = dto.details.reduce((sum, d) => sum + ((d as any).grossAmount ?? d.amount ?? (d as any).disburseAmount ?? 0), 0);
       }
+      const targetStatus = dto.status ?? existing.status;
 
       await tx.revolvingFundReplenishment.update({
         where: { id: recordId },
@@ -265,7 +244,7 @@ export class RevolvingFundReplenishmentService {
           exchangeRate: dto.exchangeRate ?? existing.exchangeRate,
           amount: calculatedAmount,
           remarks: dto.remarks !== undefined ? (cleanOptional(dto.remarks) ?? undefined) : (existing.remarks ?? undefined),
-          status: dto.status ?? existing.status,
+          status: targetStatus,
           updatedByUserId: user.id,
         },
       });
@@ -281,6 +260,10 @@ export class RevolvingFundReplenishmentService {
         where: { id: recordId },
         include: RevolvingFundReplenishmentInclude,
       });
+
+      if (this.isSubmittedStatus(targetStatus)) {
+        this.assertRevolvingFundReplenishmentReady(reloaded as any);
+      }
 
       return RevolvingFundReplenishmentMapper.toResponseDto(reloaded as any);
     });
@@ -299,6 +282,10 @@ export class RevolvingFundReplenishmentService {
 
     if (!existing) {
       throw new NotFoundException(`RevolvingFundReplenishment #${id} not found.`);
+    }
+
+    if (this.isSubmittedStatus(dto.status)) {
+      this.assertRevolvingFundReplenishmentReady(existing as any);
     }
 
     const now = new Date();
@@ -354,6 +341,39 @@ export class RevolvingFundReplenishmentService {
     });
 
     return { success: true, message: `RevolvingFundReplenishment #${id} deleted successfully.` };
+  }
+
+  private isSubmittedStatus(status: RevolvingFundReplenishmentStatus) {
+    return status === RevolvingFundReplenishmentStatus.FOR_APPROVAL || status === RevolvingFundReplenishmentStatus.APPROVED || status === RevolvingFundReplenishmentStatus.POSTED;
+  }
+
+  private assertRevolvingFundReplenishmentReady(record: {
+    partyCodeSnapshot: string | null;
+    partyNameSnapshot: string | null;
+    accountCodeSnapshot: string | null;
+    accountTitleSnapshot: string | null;
+    amount: Prisma.Decimal;
+    details?: Array<{
+      supplierNameSnapshot: string | null;
+      grossAmount: Prisma.Decimal;
+      amount: Prisma.Decimal;
+    }>;
+  }) {
+    if (!record.partyCodeSnapshot?.trim() || !record.partyNameSnapshot?.trim()) {
+      throw new BadRequestException('Select a party before submitting this Revolving Fund Replenishment.');
+    }
+    if (!record.accountCodeSnapshot?.trim() || !record.accountTitleSnapshot?.trim()) {
+      throw new BadRequestException('Select an account before submitting this Revolving Fund Replenishment.');
+    }
+    if (Number(record.amount) <= 0) {
+      throw new BadRequestException('Enter a gross amount greater than zero before submitting this Revolving Fund Replenishment.');
+    }
+
+    const details = record.details ?? [];
+    const validDetails = details.filter((detail) => detail.supplierNameSnapshot?.trim() && Number(detail.grossAmount ?? detail.amount) > 0);
+    if (validDetails.length === 0) {
+      throw new BadRequestException('Add at least one detail row with a supplier and non-zero gross amount before submitting this Revolving Fund Replenishment.');
+    }
   }
 
   private async createDetails(
@@ -532,11 +552,20 @@ export class RevolvingFundReplenishmentService {
     return { party, creditAccount, responsibilityCenter };
   }
 
-  private async resolveBranchUnitId(companyId: number, branchUnitId?: number): Promise<number | null> {
-    if (!branchUnitId) return null;
+  private async resolveBranchUnitId(companyId: number, branchUnitId?: number): Promise<number> {
     const unit = await this.prisma.companyUnit.findFirst({
-      where: { id: branchUnitId, companyId },
+      where: {
+        companyId,
+        isActive: true,
+        ...(branchUnitId ? { id: branchUnitId } : {}),
+        type: { in: [CompanyUnitType.HEAD_OFFICE, CompanyUnitType.BRANCH, CompanyUnitType.SATELLITE] },
+      },
+      orderBy: [{ type: 'asc' }, { name: 'asc' }, { id: 'asc' }],
     });
-    return unit ? unit.id : null;
+    if (!unit) {
+      throw new BadRequestException('Select an active branch.');
+    }
+
+    return unit.id;
   }
 }

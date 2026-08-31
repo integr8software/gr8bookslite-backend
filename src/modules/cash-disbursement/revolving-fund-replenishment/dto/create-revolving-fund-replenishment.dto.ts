@@ -42,10 +42,11 @@ export class CreateRevolvingFundReplenishmentDto {
   @MaxLength(80)
   partyCode?: string;
 
-  @ApiProperty({ description: 'Party Name (Custodian)', example: 'Jane Smith' })
+  @ApiPropertyOptional({ description: 'Party Name (Custodian)', example: 'Jane Smith' })
+  @IsOptional()
   @IsString()
   @MaxLength(255)
-  partyName: string;
+  partyName?: string;
 
   @ApiPropertyOptional({ description: 'Responsibility Center ID', example: '1' })
   @IsOptional()
@@ -92,10 +93,11 @@ export class CreateRevolvingFundReplenishmentDto {
   @MaxLength(80)
   accountCode?: string;
 
-  @ApiProperty({ description: 'Account Title Snapshot', example: 'Revolving Fund' })
+  @ApiPropertyOptional({ description: 'Account Title Snapshot', example: 'Revolving Fund' })
+  @IsOptional()
   @IsString()
   @MaxLength(255)
-  accountTitle: string;
+  accountTitle?: string;
 
   @ApiPropertyOptional({ description: 'Currency code', default: 'PHP', example: 'PHP' })
   @IsOptional()

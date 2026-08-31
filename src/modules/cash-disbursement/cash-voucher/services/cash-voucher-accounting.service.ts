@@ -37,7 +37,7 @@ export class CashVoucherAccountingService {
     // the user-entered expense rows. Those rows are accounting counterparts,
     // not additional voucher detail amounts, so exclude them from this check.
     const detailTotals = getCashVoucherDetailTotals(details.filter(isSourceDetailRow));
-    const expectedAmount = detailTotals.disburseAmount > 0 ? detailTotals.disburseAmount : detailTotals.grossAmount;
+    const expectedAmount = detailTotals.grossAmount > 0 ? detailTotals.grossAmount : detailTotals.disburseAmount;
 
     if (expectedAmount > 0 && !amountsMatch(expectedAmount, voucherAmount)) {
       throw new BadRequestException('Detail total amount must match voucher amount.');
@@ -60,11 +60,25 @@ export class CashVoucherAccountingService {
     details: CashVoucherDetail[];
     journalEntries: CashVoucherJournalEntry[];
   }) {
-    if (details.length === 0) {
+    const sourceDetails = details.filter(isPersistedSourceDetailRow);
+
+    if (sourceDetails.length === 0) {
       throw new BadRequestException('Add at least one Cash Voucher detail row before approval.');
     }
 
-    for (const detail of details) {
+    if (amount <= 0) {
+      throw new BadRequestException('Cash Voucher amount must be non-zero before approval.');
+    }
+
+    for (const detail of sourceDetails) {
+      if (!detail.accountId && !detail.accountCodeSnapshot.trim()) {
+        throw new BadRequestException('Detail row account is required before approval.');
+      }
+
+      if (!detail.accountTitleSnapshot.trim()) {
+        throw new BadRequestException('Detail row account title is required before approval.');
+      }
+
       const debit = Number(detail.debit);
       const gross = Number(detail.grossAmount);
       const disburse = Number(detail.disburseAmount);
@@ -106,13 +120,23 @@ export class CashVoucherAccountingService {
   }
 
   private validateDetailRows(details: CashVoucherDetailDto[], currencyCode: string, exchangeRate: number) {
-    if (details.length === 0) {
+    const sourceDetails = details.filter(isSourceDetailRow);
+
+    if (sourceDetails.length === 0) {
       throw new BadRequestException('Add at least one Cash Voucher detail row.');
     }
 
-    for (const detail of details) {
+    for (const detail of sourceDetails) {
+      if (!detail.accountId?.trim() && !detail.accountCode?.trim()) {
+        throw new BadRequestException(`Detail line ${detail.lineNumber} account is required.`);
+      }
+
+      if (!detail.accountTitle?.trim()) {
+        throw new BadRequestException(`Detail line ${detail.lineNumber} account title is required.`);
+      }
+
       const amountVal = Number(detail.debit ?? detail.grossAmount ?? detail.disburseAmount ?? 0);
-      if (Math.abs(amountVal) < 0) {
+      if (Math.abs(amountVal) <= 0) {
         throw new BadRequestException(`Detail line ${detail.lineNumber} amount must be non-zero.`);
       }
     }
@@ -152,7 +176,7 @@ export class CashVoucherAccountingService {
 
 function isSourceDetailRow(detail: CashVoucherDetailDto): boolean {
   const generatedId = detail.id?.toLowerCase() ?? '';
-  const accountTitle = detail.accountTitle.trim().toLowerCase();
+  const accountTitle = detail.accountTitle?.trim().toLowerCase() ?? '';
   const debit = Number(detail.debit ?? 0);
   const credit = Number(detail.credit ?? 0);
 
@@ -161,7 +185,7 @@ function isSourceDetailRow(detail: CashVoucherDetailDto): boolean {
   }
 
   // Keep compatibility with older clients that did not send the generated row ID.
-  if (accountTitle === 'input vat' || accountTitle === 'expanded withholding tax') {
+  if (isGeneratedAccountTitle(accountTitle)) {
     return false;
   }
 
@@ -171,4 +195,32 @@ function isSourceDetailRow(detail: CashVoucherDetailDto): boolean {
   }
 
   return true;
+}
+
+function isPersistedSourceDetailRow(detail: CashVoucherDetail): boolean {
+  const accountTitle = detail.accountTitleSnapshot.trim().toLowerCase();
+  const debit = Number(detail.debit);
+  const credit = Number(detail.credit);
+
+  if (isGeneratedAccountTitle(accountTitle)) {
+    return false;
+  }
+
+  if (credit > 0 && debit <= 0) {
+    return false;
+  }
+
+  return true;
+}
+
+function isGeneratedAccountTitle(accountTitle: string): boolean {
+  return (
+    accountTitle === 'input vat' ||
+    accountTitle === 'expanded withholding tax' ||
+    accountTitle === 'cash on hand' ||
+    accountTitle === 'cash in bank' ||
+    accountTitle.startsWith('cash in bank - ') ||
+    accountTitle === 'check cashvoucher clearing' ||
+    accountTitle === 'online payment clearing'
+  );
 }

@@ -1,12 +1,12 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ChartAccount,
+  CompanyUnitType,
   Party,
   PartyAddress,
   PettyCashVoucherStatus,
   Prisma,
   ResponsibilityCenter,
-  TransactionNumberInputMode,
 } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
@@ -100,32 +100,18 @@ export class PettyCashVoucherService {
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const resolvedBranchId = await this.resolveBranchUnitId(companyId, branchUnitId);
 
-    try {
-      const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
-        branchUnitId: resolvedBranchId ?? 0,
-        companyId,
-        moduleCode: PettyCashVoucherModuleCode,
-      });
+    const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
+      branchUnitId: resolvedBranchId,
+      companyId,
+      moduleCode: PettyCashVoucherModuleCode,
+    });
 
-      return {
-        branchUnitId: resolvedBranchId,
-        inputMode: suggestion.inputMode,
-        nextTransNo: suggestion.transactionNumber,
-        transactionNo: suggestion.transactionNumber,
-      };
-    } catch {
-      const count = await this.prisma.pettyCashVoucher.count({ where: { companyId } });
-      const sequenceNumber = (count + 1).toString().padStart(6, '0');
-      const year = new Date().getFullYear();
-      const nextTransNo = `PCV-${year}-${sequenceNumber}`;
-
-      return {
-        branchUnitId: resolvedBranchId,
-        inputMode: TransactionNumberInputMode.AUTO,
-        nextTransNo,
-        transactionNo: nextTransNo,
-      };
-    }
+    return {
+      branchUnitId: resolvedBranchId,
+      inputMode: suggestion.inputMode,
+      nextTransNo: suggestion.transactionNumber,
+      transactionNo: suggestion.transactionNumber,
+    };
   }
 
   async create(user: AuthUser, dto: CreatePettyCashVoucherDto) {
@@ -138,25 +124,12 @@ export class PettyCashVoucherService {
 
     return this.prisma.$transaction(async (tx) => {
       const inputNo = cleanOptional((dto as any).voucherNo ?? (dto as any).transactionNo);
-      let assignedNo: string;
-
-      try {
-        assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
-          branchUnitId: branchUnitId ?? 0,
-          companyId,
-          moduleCode: PettyCashVoucherModuleCode,
-          requestedTransactionNumber: inputNo,
-        });
-      } catch {
-        if (inputNo) {
-          assignedNo = inputNo;
-        } else {
-          const count = await tx.pettyCashVoucher.count({ where: { companyId } });
-          const sequenceNumber = (count + 1).toString().padStart(6, '0');
-          const year = new Date().getFullYear();
-          assignedNo = `PCV-${year}-${sequenceNumber}`;
-        }
-      }
+      const assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
+        branchUnitId,
+        companyId,
+        moduleCode: PettyCashVoucherModuleCode,
+        requestedTransactionNumber: inputNo,
+      });
 
       const existing = await tx.pettyCashVoucher.findFirst({
         where: { companyId, voucherNo: assignedNo, deletedAt: null } as any,
@@ -172,6 +145,17 @@ export class PettyCashVoucherService {
       const ewtAmount = dto.ewtAmount ?? 0;
       const netAmount = dto.netAmount ?? (grossAmount - ewtAmount);
       const amount = dto.amount ?? netAmount;
+      const targetStatus = dto.status ?? PettyCashVoucherStatus.DRAFT;
+
+      if (this.isSubmittedStatus(targetStatus)) {
+        this.assertPettyCashVoucherReady({
+          partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? '',
+          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName ?? '',
+          accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? '',
+          accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? '',
+          grossAmount: new Prisma.Decimal(grossAmount),
+        });
+      }
 
       const created = await tx.pettyCashVoucher.create({
         data: {
@@ -181,7 +165,7 @@ export class PettyCashVoucherService {
           documentDate: new Date(dto.documentDate),
           partyId: resolvedReferences.party?.id ?? null,
           partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? '',
-          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName,
+          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName ?? '',
           creditAccountId: resolvedReferences.creditAccount?.id ?? null,
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? '',
           accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? '',
@@ -205,7 +189,7 @@ export class PettyCashVoucherService {
           ewtPercent: dto.ewtPercent ?? 0,
           ewtAmount,
           remarks: cleanOptional(dto.remarks) ?? undefined,
-          status: dto.status ?? PettyCashVoucherStatus.DRAFT,
+          status: targetStatus,
           createdByUserId: user.id,
         },
       });
@@ -252,6 +236,17 @@ export class PettyCashVoucherService {
       const ewtAmount = dto.ewtAmount ?? Number(existing.ewtAmount);
       const netAmount = dto.netAmount ?? (grossAmount - ewtAmount);
       const amount = dto.amount ?? netAmount;
+      const targetStatus = dto.status ?? existing.status;
+
+      if (this.isSubmittedStatus(targetStatus)) {
+        this.assertPettyCashVoucherReady({
+          partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? existing.partyCodeSnapshot,
+          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName ?? existing.partyNameSnapshot,
+          accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? existing.accountCodeSnapshot,
+          accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? existing.accountTitleSnapshot,
+          grossAmount: new Prisma.Decimal(grossAmount),
+        });
+      }
 
       await tx.pettyCashVoucher.update({
         where: { id: recordId },
@@ -285,7 +280,7 @@ export class PettyCashVoucherService {
           ewtPercent: dto.ewtPercent ?? existing.ewtPercent,
           ewtAmount,
           remarks: dto.remarks !== undefined ? (cleanOptional(dto.remarks) ?? undefined) : (existing.remarks ?? undefined),
-          status: dto.status ?? existing.status,
+          status: targetStatus,
           updatedByUserId: user.id,
         },
       });
@@ -312,6 +307,10 @@ export class PettyCashVoucherService {
 
     if (!existing) {
       throw new NotFoundException(`PettyCashVoucher #${id} not found.`);
+    }
+
+    if (this.isSubmittedStatus(dto.status)) {
+      this.assertPettyCashVoucherReady(existing);
     }
 
     const now = new Date();
@@ -367,6 +366,28 @@ export class PettyCashVoucherService {
     });
 
     return { success: true, message: `PettyCashVoucher #${id} deleted successfully.` };
+  }
+
+  private isSubmittedStatus(status: PettyCashVoucherStatus) {
+    return status === PettyCashVoucherStatus.FOR_APPROVAL || status === PettyCashVoucherStatus.APPROVED || status === PettyCashVoucherStatus.POSTED;
+  }
+
+  private assertPettyCashVoucherReady(record: {
+    partyCodeSnapshot: string | null;
+    partyNameSnapshot: string | null;
+    accountCodeSnapshot: string | null;
+    accountTitleSnapshot: string | null;
+    grossAmount: Prisma.Decimal;
+  }) {
+    if (!record.partyCodeSnapshot?.trim() || !record.partyNameSnapshot?.trim()) {
+      throw new BadRequestException('Select a party before submitting this Petty Cash Voucher.');
+    }
+    if (!record.accountCodeSnapshot?.trim() || !record.accountTitleSnapshot?.trim()) {
+      throw new BadRequestException('Select an account before submitting this Petty Cash Voucher.');
+    }
+    if (Number(record.grossAmount) <= 0) {
+      throw new BadRequestException('Enter a gross amount greater than zero before submitting this Petty Cash Voucher.');
+    }
   }
 
   private buildListWhere(companyId: number, branchUnitId: number | null, query: GetPettyCashVoucherListQueryDto): Prisma.PettyCashVoucherWhereInput {
@@ -489,11 +510,20 @@ export class PettyCashVoucherService {
     return { party, creditAccount, responsibilityCenter };
   }
 
-  private async resolveBranchUnitId(companyId: number, branchUnitId?: number): Promise<number | null> {
-    if (!branchUnitId) return null;
+  private async resolveBranchUnitId(companyId: number, branchUnitId?: number): Promise<number> {
     const unit = await this.prisma.companyUnit.findFirst({
-      where: { id: branchUnitId, companyId },
+      where: {
+        companyId,
+        isActive: true,
+        ...(branchUnitId ? { id: branchUnitId } : {}),
+        type: { in: [CompanyUnitType.HEAD_OFFICE, CompanyUnitType.BRANCH, CompanyUnitType.SATELLITE] },
+      },
+      orderBy: [{ type: 'asc' }, { name: 'asc' }, { id: 'asc' }],
     });
-    return unit ? unit.id : null;
+    if (!unit) {
+      throw new BadRequestException('Select an active branch.');
+    }
+
+    return unit.id;
   }
 }

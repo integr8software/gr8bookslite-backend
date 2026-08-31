@@ -29,10 +29,11 @@ export class CreatePettyCashVoucherDto {
   @MaxLength(80)
   partyCode?: string;
 
-  @ApiProperty({ description: 'Party Name', example: 'Acme Corp' })
+  @ApiPropertyOptional({ description: 'Party Name', example: 'Acme Corp' })
+  @IsOptional()
   @IsString()
   @MaxLength(255)
-  partyName: string;
+  partyName?: string;
 
   @ApiPropertyOptional({ description: 'Responsibility Center ID', example: '1' })
   @IsOptional()
@@ -79,10 +80,11 @@ export class CreatePettyCashVoucherDto {
   @MaxLength(80)
   accountCode?: string;
 
-  @ApiProperty({ description: 'Default Account Title', example: 'Petty Cash Fund' })
+  @ApiPropertyOptional({ description: 'Default Account Title', example: 'Petty Cash Fund' })
+  @IsOptional()
   @IsString()
   @MaxLength(255)
-  accountTitle: string;
+  accountTitle?: string;
 
   @ApiPropertyOptional({ description: 'Transaction Voucher Number', example: 'PCV-2026-000001' })
   @IsOptional()

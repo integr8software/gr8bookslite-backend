@@ -1,13 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  ChartAccount,
-  Party,
-  PartyAddress,
-  PettyCashFundStatus,
-  Prisma,
-  ResponsibilityCenter,
-  TransactionNumberInputMode,
-} from '@prisma/client';
+import { ChartAccount, CompanyUnitType, Party, PartyAddress, PettyCashFundStatus, Prisma, ResponsibilityCenter } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -100,32 +92,18 @@ export class PettyCashFundService {
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const resolvedBranchId = await this.resolveBranchUnitId(companyId, branchUnitId);
 
-    try {
-      const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
-        branchUnitId: resolvedBranchId ?? 0,
-        companyId,
-        moduleCode: PettyCashFundModuleCode,
-      });
+    const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
+      branchUnitId: resolvedBranchId,
+      companyId,
+      moduleCode: PettyCashFundModuleCode,
+    });
 
-      return {
-        branchUnitId: resolvedBranchId,
-        inputMode: suggestion.inputMode,
-        nextTransNo: suggestion.transactionNumber,
-        transactionNo: suggestion.transactionNumber,
-      };
-    } catch {
-      const count = await this.prisma.pettyCashFund.count({ where: { companyId } });
-      const sequenceNumber = (count + 1).toString().padStart(6, '0');
-      const year = new Date().getFullYear();
-      const nextTransNo = `PCF-${year}-${sequenceNumber}`;
-
-      return {
-        branchUnitId: resolvedBranchId,
-        inputMode: TransactionNumberInputMode.AUTO,
-        nextTransNo,
-        transactionNo: nextTransNo,
-      };
-    }
+    return {
+      branchUnitId: resolvedBranchId,
+      inputMode: suggestion.inputMode,
+      nextTransNo: suggestion.transactionNumber,
+      transactionNo: suggestion.transactionNumber,
+    };
   }
 
   async create(user: AuthUser, dto: CreatePettyCashFundDto) {
@@ -138,25 +116,12 @@ export class PettyCashFundService {
 
     return this.prisma.$transaction(async (tx) => {
       const inputNo = cleanOptional((dto as any).voucherNo ?? (dto as any).transactionNo);
-      let assignedNo: string;
-
-      try {
-        assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
-          branchUnitId: branchUnitId ?? 0,
-          companyId,
-          moduleCode: PettyCashFundModuleCode,
-          requestedTransactionNumber: inputNo,
-        });
-      } catch {
-        if (inputNo) {
-          assignedNo = inputNo;
-        } else {
-          const count = await tx.pettyCashFund.count({ where: { companyId } });
-          const sequenceNumber = (count + 1).toString().padStart(6, '0');
-          const year = new Date().getFullYear();
-          assignedNo = `PCF-${year}-${sequenceNumber}`;
-        }
-      }
+      const assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
+        branchUnitId,
+        companyId,
+        moduleCode: PettyCashFundModuleCode,
+        requestedTransactionNumber: inputNo,
+      });
 
       const existing = await tx.pettyCashFund.findFirst({
         where: { companyId, transactionNo: assignedNo, deletedAt: null } as any,
@@ -169,8 +134,9 @@ export class PettyCashFundService {
 
       let calculatedAmount = dto.amount ?? 0;
       if (dto.details && dto.details.length > 0) {
-        calculatedAmount = dto.details.reduce((sum, d) => sum + (d.amount ?? (d as any).grossAmount ?? (d as any).disburseAmount ?? 0), 0);
+        calculatedAmount = dto.details.reduce((sum, d) => sum + ((d as any).grossAmount ?? d.amount ?? (d as any).disburseAmount ?? 0), 0);
       }
+      const targetStatus = dto.status ?? PettyCashFundStatus.DRAFT;
 
       const created = await tx.pettyCashFund.create({
         data: {
@@ -180,20 +146,24 @@ export class PettyCashFundService {
           documentDate: new Date(dto.documentDate),
           partyId: resolvedReferences.party?.id ?? null,
           partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? '',
-          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName,
+          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName ?? '',
           creditAccountId: resolvedReferences.creditAccount?.id ?? null,
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? '',
           accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? '',
           responsibilityCenterId: resolvedReferences.responsibilityCenter?.id ?? null,
-          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.code : (cleanOptional(dto.responsibilityCenterCode) ?? undefined),
-          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.name : (cleanOptional(dto.responsibilityCenter) ?? undefined),
+          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.code
+            : (cleanOptional(dto.responsibilityCenterCode) ?? undefined),
+          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.name
+            : (cleanOptional(dto.responsibilityCenter) ?? undefined),
           projectCode: cleanOptional(dto.projectCode) ?? undefined,
           projectName: cleanOptional(dto.projectName) ?? undefined,
           currencyCode,
           exchangeRate: dto.exchangeRate ?? 1.0,
           amount: calculatedAmount,
           remarks: cleanOptional(dto.remarks) ?? undefined,
-          status: dto.status ?? (PettyCashFundStatus.DRAFT as any),
+          status: targetStatus as any,
           createdByUserId: user.id,
         },
       });
@@ -206,6 +176,10 @@ export class PettyCashFundService {
         where: { id: created.id },
         include: PettyCashFundInclude,
       });
+
+      if (this.isSubmittedStatus(targetStatus)) {
+        this.assertPettyCashFundReady(reloaded as any);
+      }
 
       return PettyCashFundMapper.toResponseDto(reloaded as any);
     });
@@ -230,25 +204,25 @@ export class PettyCashFundService {
       throw new BadRequestException(`Cannot update a PettyCashFund in ${existing.status} status.`);
     }
 
-    const branchUnitId = dto.branchUnitId !== undefined
-      ? await this.resolveBranchUnitId(companyId, dto.branchUnitId)
-      : existing.branchUnitId;
+    const branchUnitId = dto.branchUnitId !== undefined ? await this.resolveBranchUnitId(companyId, dto.branchUnitId) : existing.branchUnitId;
 
     const resolvedReferences = await this.resolveReferences(companyId, dto as CreatePettyCashFundDto);
 
     return this.prisma.$transaction(async (tx) => {
-      const currencyCode = dto.currencyCode || dto.currency ? (cleanCurrencyCode(dto.currencyCode ?? dto.currency ?? 'PHP') ?? existing.currencyCode) : existing.currencyCode;
+      const currencyCode =
+        dto.currencyCode || dto.currency ? (cleanCurrencyCode(dto.currencyCode ?? dto.currency ?? 'PHP') ?? existing.currencyCode) : existing.currencyCode;
 
       let calculatedAmount = dto.amount !== undefined ? dto.amount : Number(existing.amount);
       if (dto.details && dto.details.length > 0) {
-        calculatedAmount = dto.details.reduce((sum, d) => sum + (d.amount ?? (d as any).grossAmount ?? (d as any).disburseAmount ?? 0), 0);
+        calculatedAmount = dto.details.reduce((sum, d) => sum + ((d as any).grossAmount ?? d.amount ?? (d as any).disburseAmount ?? 0), 0);
       }
+      const targetStatus = dto.status ?? existing.status;
 
       await tx.pettyCashFund.update({
         where: { id: recordId },
         data: {
           branchUnitId,
-          transactionNo: dto.transactionNo ? cleanOptional(dto.transactionNo) ?? undefined : existing.transactionNo,
+          transactionNo: dto.transactionNo ? (cleanOptional(dto.transactionNo) ?? undefined) : existing.transactionNo,
           documentDate: dto.documentDate ? new Date(dto.documentDate) : existing.documentDate,
           partyId: resolvedReferences.party ? resolvedReferences.party.id : existing.partyId,
           partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? existing.partyCodeSnapshot,
@@ -257,15 +231,23 @@ export class PettyCashFundService {
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? existing.accountCodeSnapshot,
           accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? existing.accountTitleSnapshot,
           responsibilityCenterId: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.id : existing.responsibilityCenterId,
-          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.code : (dto.responsibilityCenterCode !== undefined ? (cleanOptional(dto.responsibilityCenterCode) ?? undefined) : (existing.responsibilityCenterCodeSnapshot ?? undefined)),
-          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.name : (dto.responsibilityCenter !== undefined ? (cleanOptional(dto.responsibilityCenter) ?? undefined) : (existing.responsibilityCenterSnapshot ?? undefined)),
+          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.code
+            : dto.responsibilityCenterCode !== undefined
+              ? (cleanOptional(dto.responsibilityCenterCode) ?? undefined)
+              : (existing.responsibilityCenterCodeSnapshot ?? undefined),
+          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.name
+            : dto.responsibilityCenter !== undefined
+              ? (cleanOptional(dto.responsibilityCenter) ?? undefined)
+              : (existing.responsibilityCenterSnapshot ?? undefined),
           projectCode: dto.projectCode !== undefined ? (cleanOptional(dto.projectCode) ?? undefined) : (existing.projectCode ?? undefined),
           projectName: dto.projectName !== undefined ? (cleanOptional(dto.projectName) ?? undefined) : (existing.projectName ?? undefined),
           currencyCode,
           exchangeRate: dto.exchangeRate ?? existing.exchangeRate,
           amount: calculatedAmount,
           remarks: dto.remarks !== undefined ? (cleanOptional(dto.remarks) ?? undefined) : (existing.remarks ?? undefined),
-          status: dto.status ?? existing.status,
+          status: targetStatus,
           updatedByUserId: user.id,
         },
       });
@@ -281,6 +263,10 @@ export class PettyCashFundService {
         where: { id: recordId },
         include: PettyCashFundInclude,
       });
+
+      if (this.isSubmittedStatus(targetStatus)) {
+        this.assertPettyCashFundReady(reloaded as any);
+      }
 
       return PettyCashFundMapper.toResponseDto(reloaded as any);
     });
@@ -299,6 +285,10 @@ export class PettyCashFundService {
 
     if (!existing) {
       throw new NotFoundException(`PettyCashFund #${id} not found.`);
+    }
+
+    if (this.isSubmittedStatus(dto.status)) {
+      this.assertPettyCashFundReady(existing as any);
     }
 
     const now = new Date();
@@ -356,13 +346,7 @@ export class PettyCashFundService {
     return { success: true, message: `PettyCashFund #${id} deleted successfully.` };
   }
 
-  private async createDetails(
-    tx: Prisma.TransactionClient,
-    companyId: number,
-    branchUnitId: number | null,
-    fundId: bigint,
-    details: PettyCashFundDetailDto[],
-  ) {
+  private async createDetails(tx: Prisma.TransactionClient, companyId: number, branchUnitId: number | null, fundId: bigint, details: PettyCashFundDetailDto[]) {
     for (let i = 0; i < details.length; i++) {
       const line = details[i];
       const lineNumber = line.lineNumber ?? i + 1;
@@ -370,7 +354,7 @@ export class PettyCashFundService {
       const grossAmount = line.grossAmount ?? amount;
       const vatAmount = line.vatAmount ?? 0;
       const ewtAmount = line.ewtAmount ?? 0;
-      const netAmount = line.netAmount ?? (grossAmount - ewtAmount);
+      const netAmount = line.netAmount ?? grossAmount - ewtAmount;
       const disburseAmount = line.disburseAmount ?? amount;
 
       let detailPartyId: bigint | null = null;
@@ -389,7 +373,7 @@ export class PettyCashFundService {
           companyId,
           branchUnitId,
           lineNumber,
-          date: line.date ? new Date(line.date) : null,
+          date: line.date || line.itemDate ? new Date(line.date ?? line.itemDate!) : null,
           partyId: detailPartyId,
           supplierCodeSnapshot: line.supplierCodeSnapshot ?? line.supplierCode ?? null,
           supplierNameSnapshot: line.supplierNameSnapshot ?? line.supplierName ?? null,
@@ -413,6 +397,39 @@ export class PettyCashFundService {
           responsibilityCenterSnapshot: cleanOptional(line.responsibilityCenterSnapshot ?? line.responsibilityCenter) ?? undefined,
         },
       });
+    }
+  }
+
+  private isSubmittedStatus(status: PettyCashFundStatus) {
+    return status === PettyCashFundStatus.FOR_APPROVAL || status === PettyCashFundStatus.APPROVED || status === PettyCashFundStatus.POSTED;
+  }
+
+  private assertPettyCashFundReady(record: {
+    partyCodeSnapshot: string | null;
+    partyNameSnapshot: string | null;
+    accountCodeSnapshot: string | null;
+    accountTitleSnapshot: string | null;
+    amount: Prisma.Decimal;
+    details?: Array<{
+      supplierNameSnapshot: string | null;
+      grossAmount: Prisma.Decimal;
+      amount: Prisma.Decimal;
+    }>;
+  }) {
+    if (!record.partyCodeSnapshot?.trim() || !record.partyNameSnapshot?.trim()) {
+      throw new BadRequestException('Select a party before submitting this Petty Cash Fund.');
+    }
+    if (!record.accountCodeSnapshot?.trim() || !record.accountTitleSnapshot?.trim()) {
+      throw new BadRequestException('Select an account before submitting this Petty Cash Fund.');
+    }
+    if (Number(record.amount) <= 0) {
+      throw new BadRequestException('Enter a gross amount greater than zero before submitting this Petty Cash Fund.');
+    }
+
+    const details = record.details ?? [];
+    const validDetails = details.filter((detail) => detail.supplierNameSnapshot?.trim() && Number(detail.grossAmount ?? detail.amount) > 0);
+    if (validDetails.length === 0) {
+      throw new BadRequestException('Add at least one detail row with a supplier and non-zero gross amount before submitting this Petty Cash Fund.');
     }
   }
 
@@ -536,11 +553,20 @@ export class PettyCashFundService {
     return { party, creditAccount, responsibilityCenter };
   }
 
-  private async resolveBranchUnitId(companyId: number, branchUnitId?: number): Promise<number | null> {
-    if (!branchUnitId) return null;
+  private async resolveBranchUnitId(companyId: number, branchUnitId?: number): Promise<number> {
     const unit = await this.prisma.companyUnit.findFirst({
-      where: { id: branchUnitId, companyId },
+      where: {
+        companyId,
+        isActive: true,
+        ...(branchUnitId ? { id: branchUnitId } : {}),
+        type: { in: [CompanyUnitType.HEAD_OFFICE, CompanyUnitType.BRANCH, CompanyUnitType.SATELLITE] },
+      },
+      orderBy: [{ type: 'asc' }, { name: 'asc' }, { id: 'asc' }],
     });
-    return unit ? unit.id : null;
+    if (!unit) {
+      throw new BadRequestException('Select an active branch.');
+    }
+
+    return unit.id;
   }
 }

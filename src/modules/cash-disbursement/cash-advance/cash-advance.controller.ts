@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -37,6 +37,7 @@ export class CashAdvanceController {
 
   @Get('next-transaction-no')
   @ApiOperation({ summary: 'Get auto-generated next transaction sequence number' })
+  @ApiQuery({ name: 'branchUnitId', required: false, type: Number })
   @ApiOkResponse({
     schema: {
       type: 'object',
@@ -45,8 +46,8 @@ export class CashAdvanceController {
       },
     },
   })
-  getNextTransactionNo(@CurrentUser() user: AuthUser) {
-    return this.cashAdvanceService.getNextTransactionNo(user);
+  getNextTransactionNo(@CurrentUser() user: AuthUser, @Query('branchUnitId') branchUnitId?: string) {
+    return this.cashAdvanceService.getNextTransactionNo(user, branchUnitId);
   }
 
   @Get(':id')

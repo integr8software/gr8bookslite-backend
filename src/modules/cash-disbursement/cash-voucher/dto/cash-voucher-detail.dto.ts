@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { IsDateString, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class CashVoucherDetailDto {
   @ApiPropertyOptional({ description: 'Line Detail ID', example: '1' })
@@ -19,17 +19,17 @@ export class CashVoucherDetailDto {
   @IsOptional()
   accountId?: string | null;
 
-  @ApiProperty({ description: 'Account Code', example: '6001010000' })
+  @ApiPropertyOptional({ description: 'Account Code', example: '6001010000' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(80)
-  accountCode!: string;
+  accountCode?: string | null;
 
-  @ApiProperty({ description: 'Account Title / Name', example: 'Office Supplies Expense' })
+  @ApiPropertyOptional({ description: 'Account Title / Name', example: 'Office Supplies Expense' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @MaxLength(255)
-  accountTitle!: string;
+  accountTitle?: string | null;
 
   @ApiPropertyOptional({ description: 'Particulars', example: 'Office supplies for HQ' })
   @IsString()

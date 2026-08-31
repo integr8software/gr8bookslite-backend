@@ -20,6 +20,11 @@ export class RevolvingFundDetailDto {
   @IsDateString()
   date?: string;
 
+  @ApiPropertyOptional({ description: 'Receipt/Disbursement Date alias', example: '2026-05-21' })
+  @IsOptional()
+  @IsDateString()
+  itemDate?: string;
+
   @ApiPropertyOptional({ description: 'Supplier / Party ID', example: '1' })
   @IsOptional()
   @IsString()

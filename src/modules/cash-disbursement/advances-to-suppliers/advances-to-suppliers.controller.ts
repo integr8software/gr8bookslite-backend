@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -44,8 +44,9 @@ export class AdvancesToSuppliersController {
   @Get('lookups/suggest-transaction-no')
   @ApiOperation({ summary: 'Suggest next Advances to Suppliers sequence number' })
   @ApiOkResponse({ description: 'Next transaction number' })
-  suggestTransactionNo(@CurrentUser() user: AuthUser) {
-    return this.service.suggestTransactionNumber(user);
+  @ApiQuery({ name: 'branchUnitId', required: false, type: Number })
+  suggestTransactionNo(@CurrentUser() user: AuthUser, @Query('branchUnitId') branchUnitId?: string) {
+    return this.service.suggestTransactionNumber(user, branchUnitId);
   }
 
   @Get()

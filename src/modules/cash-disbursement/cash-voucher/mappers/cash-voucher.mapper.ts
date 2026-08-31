@@ -6,6 +6,9 @@ export function mapCashVoucher(voucher: CashVoucherWithDetails, userNames: Map<n
   const partyName = voucher.partyNameSnapshot || voucher.party?.partyName || '';
   const creditAccountCode = voucher.creditAccount?.accountCode || '';
   const creditAccountTitle = voucher.creditAccount?.accountTitle || '';
+  const sourceDetails = (voucher.details || []).filter((detail) => !isGeneratedCashVoucherDetail(detail));
+  const grossAmount = sourceDetails.reduce((sum, detail) => sum + getCashVoucherDetailGrossAmount(detail), 0);
+  const disburseAmount = sourceDetails.reduce((sum, detail) => sum + getCashVoucherDetailDisburseAmount(detail), 0);
 
   return {
     id: voucher.id.toString(),
@@ -39,7 +42,8 @@ export function mapCashVoucher(voucher: CashVoucherWithDetails, userNames: Map<n
     currencyCode: voucher.currencyCode,
     fxRate: Number(voucher.exchangeRate),
     exchangeRate: Number(voucher.exchangeRate),
-    amount: Number(voucher.amount),
+    amount: roundCashVoucherAmount(grossAmount || Number(voucher.amount)),
+    disburseAmount: roundCashVoucherAmount(disburseAmount || Number(voucher.amount)),
     remarks: voucher.remarks ?? null,
     purpose: voucher.remarks ?? null,
     status: voucher.status,
@@ -140,4 +144,49 @@ export function mapCashVoucher(voucher: CashVoucherWithDetails, userNames: Map<n
 
 function toDateValue(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+function getCashVoucherDetailGrossAmount(detail: CashVoucherWithDetails['details'][number]) {
+  const storedGrossAmount = Number(detail.grossAmount);
+  const debitAmount = Number(detail.debit);
+  const vatPercent = Number(detail.vatPercent);
+
+  if (storedGrossAmount > 0 && debitAmount > 0 && vatPercent > 0 && Math.abs(storedGrossAmount - debitAmount) <= 0.01) {
+    const netRatio = 1 - vatPercent / 100;
+
+    if (netRatio > 0) {
+      return debitAmount / netRatio;
+    }
+  }
+
+  return storedGrossAmount || debitAmount;
+}
+
+function getCashVoucherDetailDisburseAmount(detail: CashVoucherWithDetails['details'][number]) {
+  const grossAmount = getCashVoucherDetailGrossAmount(detail);
+  const ewtPercent = Number(detail.ewtPercent);
+
+  if (grossAmount > 0 && ewtPercent > 0) {
+    return grossAmount - grossAmount * (ewtPercent / 100);
+  }
+
+  return Number(detail.disburseAmount) || grossAmount;
+}
+
+function isGeneratedCashVoucherDetail(detail: CashVoucherWithDetails['details'][number]) {
+  const accountTitle = (detail.accountTitleSnapshot || detail.account?.accountTitle || '').trim().toLowerCase();
+
+  return (
+    accountTitle === 'input vat' ||
+    accountTitle === 'expanded withholding tax' ||
+    accountTitle === 'cash on hand' ||
+    accountTitle === 'cash in bank' ||
+    accountTitle.startsWith('cash in bank - ') ||
+    accountTitle === 'check cashvoucher clearing' ||
+    accountTitle === 'online payment clearing'
+  );
+}
+
+function roundCashVoucherAmount(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }

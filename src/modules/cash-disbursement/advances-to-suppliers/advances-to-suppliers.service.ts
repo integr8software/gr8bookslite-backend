@@ -1,17 +1,23 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AdvanceToSupplierStatus, Prisma } from '@prisma/client';
+import { AdvanceToSupplierPaymentType, AdvanceToSupplierStatus, CompanyUnitType, Prisma } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import {
+  resolveTransactionNumberForCompanyBranch,
+  suggestTransactionNumberForCompanyBranch,
+} from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
 import { CreateAdvanceToSupplierDto } from './dto/create-advance-to-supplier.dto';
 import { GetAdvanceToSupplierListQueryDto } from './dto/get-advance-to-supplier-list-query.dto';
 import { UpdateAdvanceToSupplierStatusDto } from './dto/update-advance-to-supplier-status.dto';
 import { UpdateAdvanceToSupplierDto } from './dto/update-advance-to-supplier.dto';
 import { mapAdvanceToSupplier } from './mappers/advance-to-supplier.mapper';
 import { AdvanceToSupplierInclude, AdvanceToSupplierWithPayload } from './prisma/advance-to-supplier.include';
+
+const AdvancesToSuppliersModuleCode = 'ATS';
 
 @Injectable()
 export class AdvancesToSuppliersService {
@@ -67,23 +73,38 @@ export class AdvancesToSuppliersService {
     return mapped;
   }
 
-  async suggestTransactionNumber(user: AuthUser) {
+  async suggestTransactionNumber(user: AuthUser, requestedBranchUnitId?: number | string) {
     const companyId = this.getActiveCompanyId(user);
-    const count = await this.prisma.advanceToSupplier.count({ where: { companyId } });
-    const sequenceNumber = (count + 1).toString().padStart(6, '0');
-    const year = new Date().getFullYear();
-    const nextTransactionNo = `ATS-${year}-${sequenceNumber}`;
+    const branchUnitId = await this.resolveBranchUnitId(companyId, requestedBranchUnitId);
+    const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
+      branchUnitId,
+      companyId,
+      moduleCode: AdvancesToSuppliersModuleCode,
+      isIssued: (transactionNo) => this.isTransactionNoIssued(companyId, transactionNo),
+    });
 
     return {
-      nextTransactionNo,
-      transactionNo: nextTransactionNo,
+      branchUnitId,
+      inputMode: suggestion.inputMode,
+      nextTransactionNo: suggestion.transactionNumber,
+      transactionNo: suggestion.transactionNumber,
     };
   }
 
   async create(user: AuthUser, dto: CreateAdvanceToSupplierDto) {
     const companyId = this.getActiveCompanyId(user);
+    const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const references = await this.resolveReferences(companyId, dto);
-    const transactionNo = cleanOptional(dto.transactionNo) ?? (await this.suggestTransactionNumber(user)).nextTransactionNo;
+    const partyCode = dto.partyCode?.trim() ?? '';
+    const accountCode = dto.accountCode?.trim() ?? '';
+    const transactionNo = await resolveTransactionNumberForCompanyBranch(this.prisma, {
+      branchUnitId,
+      companyId,
+      moduleCode: AdvancesToSuppliersModuleCode,
+      requestedTransactionNumber: cleanOptional(dto.transactionNo),
+      isIssued: (value) => this.isTransactionNoIssued(companyId, value),
+    });
+    const targetStatus = dto.status ?? AdvanceToSupplierStatus.DRAFT;
 
     const existing = await this.prisma.advanceToSupplier.findFirst({
       where: { companyId, transNo: transactionNo, deletedAt: null },
@@ -92,30 +113,42 @@ export class AdvancesToSuppliersService {
       throw new ConflictException(`Advances to Suppliers number "${transactionNo}" already exists.`);
     }
 
+    if (this.isSubmittedStatus(targetStatus)) {
+      this.assertAdvanceToSupplierReady({
+        partyCodeSnapshot: references.party?.partyCodeNo ?? partyCode,
+        partyNameSnapshot: references.party?.partyName ?? dto.partyName?.trim() ?? '',
+        accountCodeSnapshot: references.creditAccount?.accountCode ?? accountCode,
+        poReference: dto.poReference?.trim() ?? '',
+        totalPoAmount: this.toDecimal(dto.totalPoAmount, '0.00'),
+        amount: this.toDecimal(dto.advancePaymentAmount, '0.00'),
+      });
+    }
+
     const created = await this.prisma.advanceToSupplier.create({
       data: {
         companyId,
+        branchUnitId,
         partyId: references.party?.id ?? null,
         creditAccountId: references.creditAccount?.id ?? null,
         transNo: transactionNo,
         documentDate: new Date(dto.documentDate),
-        partyCodeSnapshot: references.party?.partyCodeNo ?? dto.partyCode.trim(),
-        partyNameSnapshot: references.party?.partyName ?? dto.partyName.trim(),
-        accountCodeSnapshot: references.creditAccount?.accountCode ?? dto.accountCode.trim(),
+        partyCodeSnapshot: references.party?.partyCodeNo ?? partyCode,
+        partyNameSnapshot: references.party?.partyName ?? dto.partyName?.trim() ?? '',
+        accountCodeSnapshot: references.creditAccount?.accountCode ?? accountCode,
         accountTitleSnapshot: references.creditAccount?.accountTitle ?? cleanOptional(dto.accountTitle),
         responsibilityCenterSnapshot: cleanOptional(dto.responsibilityCenter),
         responsibilityCenterCodeSnapshot: cleanOptional(dto.responsibilityCenterCode),
         projectNameSnapshot: cleanOptional(dto.projectName),
         projectCodeSnapshot: cleanOptional(dto.projectCode),
-        currencyCode: dto.currency.trim(),
+        currencyCode: dto.currency?.trim() || 'PHP',
         exchangeRate: this.toDecimal(dto.exchangeRate, '1.0000'),
-        poReference: dto.poReference.trim(),
+        poReference: dto.poReference?.trim() ?? '',
         totalPoAmount: this.toDecimal(dto.totalPoAmount, '0.00'),
-        advancePaymentType: dto.advancePaymentType,
+        advancePaymentType: dto.advancePaymentType ?? AdvanceToSupplierPaymentType.PERCENTAGE,
         advancePaymentPercentage: this.toDecimal(dto.advancePaymentPercentage, '0.00'),
         amount: this.toDecimal(dto.advancePaymentAmount, '0.00'),
         remarks: cleanOptional(dto.remarks),
-        status: dto.status ?? AdvanceToSupplierStatus.DRAFT,
+        status: targetStatus,
         createdByUserId: user.id,
       },
       include: AdvanceToSupplierInclude,
@@ -140,6 +173,17 @@ export class AdvancesToSuppliersService {
     }
 
     const references = await this.resolveReferences(companyId, dto);
+    if (dto.status && this.isSubmittedStatus(dto.status)) {
+      this.assertAdvanceToSupplierReady({
+        partyCodeSnapshot: references.party?.partyCodeNo ?? dto.partyCode ?? existing.partyCodeSnapshot,
+        partyNameSnapshot: references.party?.partyName ?? dto.partyName ?? existing.partyNameSnapshot,
+        accountCodeSnapshot: references.creditAccount?.accountCode ?? dto.accountCode ?? existing.accountCodeSnapshot,
+        poReference: dto.poReference ?? existing.poReference,
+        totalPoAmount: dto.totalPoAmount ? this.toDecimal(dto.totalPoAmount, '0.00') : existing.totalPoAmount,
+        amount: dto.advancePaymentAmount ? this.toDecimal(dto.advancePaymentAmount, '0.00') : existing.amount,
+      });
+    }
+
     const updated = await this.prisma.advanceToSupplier.update({
       where: { id: recordId },
       data: {
@@ -180,6 +224,10 @@ export class AdvancesToSuppliersService {
 
     if (!existing) {
       throw new NotFoundException('Advances to Suppliers record not found.');
+    }
+
+    if (this.isSubmittedStatus(dto.status)) {
+      this.assertAdvanceToSupplierReady(existing);
     }
 
     const actionDate = new Date();
@@ -378,8 +426,44 @@ export class AdvancesToSuppliersService {
     return { party, creditAccount };
   }
 
+  private async isTransactionNoIssued(companyId: number, transactionNo: string) {
+    const count = await this.prisma.advanceToSupplier.count({
+      where: { companyId, transNo: transactionNo, deletedAt: null },
+    });
+    return count > 0;
+  }
+
   private toDecimal(value: string | undefined, fallback: string) {
     return new Prisma.Decimal((value ?? fallback).replaceAll(',', '').trim() || fallback);
+  }
+
+  private isSubmittedStatus(status: AdvanceToSupplierStatus) {
+    return status === AdvanceToSupplierStatus.FOR_APPROVAL || status === AdvanceToSupplierStatus.APPROVED || status === AdvanceToSupplierStatus.POSTED;
+  }
+
+  private assertAdvanceToSupplierReady(record: {
+    partyCodeSnapshot: string | null;
+    partyNameSnapshot: string | null;
+    accountCodeSnapshot: string | null;
+    poReference: string | null;
+    totalPoAmount: Prisma.Decimal;
+    amount: Prisma.Decimal;
+  }) {
+    if (!record.partyCodeSnapshot?.trim() || !record.partyNameSnapshot?.trim()) {
+      throw new BadRequestException('Select a supplier before submitting this Advances to Suppliers record.');
+    }
+    if (!record.accountCodeSnapshot?.trim()) {
+      throw new BadRequestException('Select a default account before submitting this Advances to Suppliers record.');
+    }
+    if (!record.poReference?.trim()) {
+      throw new BadRequestException('Select a PO reference before submitting this Advances to Suppliers record.');
+    }
+    if (Number(record.totalPoAmount) <= 0) {
+      throw new BadRequestException('Enter a total PO amount greater than zero before submitting this Advances to Suppliers record.');
+    }
+    if (Number(record.amount) <= 0) {
+      throw new BadRequestException('Enter an advance payment amount greater than zero before submitting this Advances to Suppliers record.');
+    }
   }
 
   private getActiveCompanyId(user: AuthUser): number {
@@ -387,6 +471,33 @@ export class AdvancesToSuppliersService {
       throw new BadRequestException('Select an active company first.');
     }
     return user.companyId;
+  }
+
+  private async resolveBranchUnitId(companyId: number, requestedBranchUnitId?: number | string | null): Promise<number> {
+    const parsedBranchUnitId = requestedBranchUnitId ? Number(requestedBranchUnitId) : undefined;
+
+    if (parsedBranchUnitId !== undefined && !Number.isInteger(parsedBranchUnitId)) {
+      throw new BadRequestException('Select an active branch.');
+    }
+
+    const branch = await this.prisma.companyUnit.findFirst({
+      where: {
+        companyId,
+        isActive: true,
+        ...(parsedBranchUnitId ? { id: parsedBranchUnitId } : {}),
+        type: {
+          in: [CompanyUnitType.HEAD_OFFICE, CompanyUnitType.BRANCH, CompanyUnitType.SATELLITE],
+        },
+      },
+      orderBy: [{ type: 'asc' }, { name: 'asc' }, { id: 'asc' }],
+      select: { id: true },
+    });
+
+    if (!branch) {
+      throw new BadRequestException('Select an active branch.');
+    }
+
+    return branch.id;
   }
 
   private async mapWithAuditUsers(records: AdvanceToSupplierWithPayload[]) {
