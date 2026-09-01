@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayMinSize, IsArray, IsDateString, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
 import { ProvisionalReceiptDetailDto } from './provisional-receipt-detail.dto';
@@ -49,50 +50,11 @@ export class CreateProvisionalReceiptDto {
   @MaxLength(255)
   billToName?: string | null;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  address?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  contactPerson?: string | null;
-
+  @ApiPropertyOptional({ example: '1', nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(40)
-  contactNo?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  businessStyle?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  projectCode?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  projectName?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  projectRef?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  salesAssociate?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  teamAssigned?: string | null;
+  paymentId?: string | null;
 
   @IsString()
   @MaxLength(10)
@@ -126,16 +88,6 @@ export class CreateProvisionalReceiptDto {
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   grossAmount!: number;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(40)
-  termId?: string | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  terms?: string | null;
 
   @IsOptional()
   @IsString()

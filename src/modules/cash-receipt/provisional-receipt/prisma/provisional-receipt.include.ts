@@ -6,7 +6,7 @@ export const ProvisionalReceiptInclude = {
       lineNumber: 'asc',
     },
   },
+  payment: true,
   party: true,
   receivableAccount: true,
-  term: true,
 } satisfies Prisma.ProvisionalReceiptInclude;

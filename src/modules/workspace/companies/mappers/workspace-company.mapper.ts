@@ -44,6 +44,7 @@ export function mapWorkspaceCompany(company: WorkspaceCompanyRecord): WorkspaceC
       : null,
     isActive: company.isActive,
     status: company.status,
+    subscriptionStatus: subscription ? subscription.status : null,
     subscriptionPlan: subscription
       ? {
           code: subscription.plan.code,
@@ -52,15 +53,27 @@ export function mapWorkspaceCompany(company: WorkspaceCompanyRecord): WorkspaceC
           billingCycle: subscription.billingCycle,
           monthlyPriceInCents: priceSummary.monthlyPriceInCents,
           yearlyPriceInCents: priceSummary.yearlyPriceInCents,
+          status: subscription.status,
         }
       : null,
+
     totalUsers: company._count?.memberships ?? undefined,
     totalUnits: company._count?.units ?? undefined,
     units: units?.map(mapCompanyUnit),
+    roles:
+      'roles' in company && Array.isArray(company.roles)
+        ? company.roles.map((role) => ({
+            id: role.id,
+            name: role.name,
+            code: role.code,
+            unitId: role.unitId,
+          }))
+        : undefined,
     createdAt: company.createdAt,
     updatedAt: company.updatedAt,
   };
 }
+
 
 export function mapCompanyUnit(unit: CompanyUnit): CompanyUnitResponse {
   return {

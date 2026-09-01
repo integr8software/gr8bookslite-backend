@@ -26,42 +26,42 @@ export class AcknowledgementReceiptController {
 
   @Get()
   @ApiOperation({ summary: 'List acknowledgement receipts' })
-  @ApiOkResponse({ description: 'Acknowledgement Receipts retrieved.', type: AcknowledgementReceiptListResponseDto })
+  @ApiOkResponse({ description: 'Acknowledgement receipts retrieved.', type: AcknowledgementReceiptListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetAcknowledgementReceiptListQueryDto) {
     return this.acknowledgementReceiptService.findAll(user, query);
   }
 
   @Get('transaction-number')
-  @ApiOperation({ summary: 'Suggest an acknowledgement receipt transaction number' })
-  @ApiOkResponse({ description: 'Acknowledgement Receipt transaction number retrieved.', type: AcknowledgementReceiptNumberSuggestionResponseDto })
+  @ApiOperation({ summary: 'Suggest a acknowledgement receipt transaction number' })
+  @ApiOkResponse({ description: 'Acknowledgement receipt transaction number retrieved.', type: AcknowledgementReceiptNumberSuggestionResponseDto })
   suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query() query: GetAcknowledgementReceiptListQueryDto) {
     return this.acknowledgementReceiptService.suggestTransactionNumber(user, query.branchUnitId);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get an acknowledgement receipt' })
-  @ApiOkResponse({ description: 'Acknowledgement Receipt retrieved.', type: AcknowledgementReceiptContainerResponseDto })
+  @ApiOperation({ summary: 'Get a acknowledgement receipt' })
+  @ApiOkResponse({ description: 'Acknowledgement receipt retrieved.', type: AcknowledgementReceiptContainerResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string, @Query() query: GetAcknowledgementReceiptListQueryDto) {
     return this.acknowledgementReceiptService.findOne(user, id, query.branchUnitId);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create an acknowledgement receipt' })
-  @ApiCreatedResponse({ description: 'Acknowledgement Receipt created.', type: SaveAcknowledgementReceiptResponseDto })
+  @ApiOperation({ summary: 'Create a acknowledgement receipt' })
+  @ApiCreatedResponse({ description: 'Acknowledgement receipt created.', type: SaveAcknowledgementReceiptResponseDto })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateAcknowledgementReceiptDto) {
     return this.acknowledgementReceiptService.create(user, dto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update an acknowledgement receipt' })
-  @ApiOkResponse({ description: 'Acknowledgement Receipt updated.', type: SaveAcknowledgementReceiptResponseDto })
+  @ApiOperation({ summary: 'Update a acknowledgement receipt' })
+  @ApiOkResponse({ description: 'Acknowledgement receipt updated.', type: SaveAcknowledgementReceiptResponseDto })
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateAcknowledgementReceiptDto) {
     return this.acknowledgementReceiptService.update(user, id, dto);
   }
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update an acknowledgement receipt status' })
-  @ApiOkResponse({ description: 'Acknowledgement Receipt status updated.', type: SaveAcknowledgementReceiptResponseDto })
+  @ApiOperation({ summary: 'Update a acknowledgement receipt status' })
+  @ApiOkResponse({ description: 'Acknowledgement receipt status updated.', type: SaveAcknowledgementReceiptResponseDto })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateAcknowledgementReceiptStatusDto) {
     return this.acknowledgementReceiptService.updateStatus(user, id, dto);
   }

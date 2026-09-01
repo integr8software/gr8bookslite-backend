@@ -14393,7 +14393,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Acknowledgement Receipts retrieved.",
+            "description": "Acknowledgement receipts retrieved.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14423,7 +14423,7 @@
         },
         "responses": {
           "201": {
-            "description": "Acknowledgement Receipt created.",
+            "description": "Acknowledgement receipt created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14433,7 +14433,7 @@
             }
           }
         },
-        "summary": "Create an acknowledgement receipt",
+        "summary": "Create a acknowledgement receipt",
         "tags": [
           "Acknowledgement Receipt"
         ]
@@ -14559,7 +14559,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Acknowledgement Receipt transaction number retrieved.",
+            "description": "Acknowledgement receipt transaction number retrieved.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14569,7 +14569,7 @@
             }
           }
         },
-        "summary": "Suggest an acknowledgement receipt transaction number",
+        "summary": "Suggest a acknowledgement receipt transaction number",
         "tags": [
           "Acknowledgement Receipt"
         ]
@@ -14703,7 +14703,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Acknowledgement Receipt retrieved.",
+            "description": "Acknowledgement receipt retrieved.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14713,7 +14713,7 @@
             }
           }
         },
-        "summary": "Get an acknowledgement receipt",
+        "summary": "Get a acknowledgement receipt",
         "tags": [
           "Acknowledgement Receipt"
         ]
@@ -14742,7 +14742,7 @@
         },
         "responses": {
           "200": {
-            "description": "Acknowledgement Receipt updated.",
+            "description": "Acknowledgement receipt updated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14752,7 +14752,7 @@
             }
           }
         },
-        "summary": "Update an acknowledgement receipt",
+        "summary": "Update a acknowledgement receipt",
         "tags": [
           "Acknowledgement Receipt"
         ]
@@ -14783,7 +14783,7 @@
         },
         "responses": {
           "200": {
-            "description": "Acknowledgement Receipt status updated.",
+            "description": "Acknowledgement receipt status updated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14793,7 +14793,7 @@
             }
           }
         },
-        "summary": "Update an acknowledgement receipt status",
+        "summary": "Update a acknowledgement receipt status",
         "tags": [
           "Acknowledgement Receipt"
         ]
@@ -14919,7 +14919,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Provisional Receipts retrieved.",
+            "description": "Provisional receipts retrieved.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14949,7 +14949,7 @@
         },
         "responses": {
           "201": {
-            "description": "Provisional Receipt created.",
+            "description": "Provisional receipt created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15085,7 +15085,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Provisional Receipt transaction number retrieved.",
+            "description": "Provisional receipt transaction number retrieved.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15229,7 +15229,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Provisional Receipt retrieved.",
+            "description": "Provisional receipt retrieved.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15268,7 +15268,7 @@
         },
         "responses": {
           "200": {
-            "description": "Provisional Receipt updated.",
+            "description": "Provisional receipt updated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15309,7 +15309,7 @@
         },
         "responses": {
           "200": {
-            "description": "Provisional Receipt status updated.",
+            "description": "Provisional receipt status updated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22673,6 +22673,22 @@
           }
         }
       },
+      "WorkspaceUserUnitAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "unitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "companyRoleId": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "unitId"
+        ]
+      },
       "WorkspaceUserAssignmentDto": {
         "type": "object",
         "properties": {
@@ -22687,6 +22703,23 @@
               "type": "number",
               "minimum": 1
             }
+          },
+          "unitAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceUserUnitAssignmentDto"
+            }
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "USER"
+            ]
+          },
+          "companyRoleId": {
+            "type": "number",
+            "nullable": true
           }
         },
         "required": [
@@ -38666,58 +38699,19 @@
           "description": {
             "type": "string"
           },
+          "partyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
           "particulars": {
             "type": "string",
             "nullable": true
           },
-          "quantity": {
-            "type": "number"
-          },
-          "amount": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "vatable": {
-            "type": "boolean"
-          },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "withEwt": {
-            "type": "boolean"
-          },
-          "ewtType": {
+          "referenceNo": {
             "type": "string",
             "nullable": true
           },
@@ -38728,25 +38722,48 @@
           "responsibilityCenter": {
             "type": "string",
             "nullable": true
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatPercent": {
+            "type": "number"
+          },
+          "cwtCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "cwtPercent": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "totalReceived": {
+            "type": "number"
           }
         },
         "required": [
           "id",
           "lineNumber",
           "description",
-          "quantity",
-          "amount",
+          "vatPercent",
+          "cwtPercent",
           "netAmount",
           "vatAmount",
-          "wvatAmount",
           "ewtAmount",
-          "discountPercent",
-          "discountAmount",
           "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
+          "totalReceived"
         ]
       },
       "AcknowledgementReceiptJournalEntryResponseDto": {
@@ -38869,39 +38886,11 @@
             "type": "string",
             "nullable": true
           },
-          "address": {
+          "paymentId": {
             "type": "string",
             "nullable": true
           },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true
-          },
-          "teamAssigned": {
+          "paymentType": {
             "type": "string",
             "nullable": true
           },
@@ -38928,14 +38917,6 @@
           },
           "grossAmount": {
             "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true
           },
           "receivableAccountId": {
             "type": "string"
@@ -39170,72 +39151,75 @@
         "properties": {
           "lineNumber": {
             "type": "number",
-            "minimum": 1
+            "minimum": 1,
+            "example": 1
           },
           "description": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Service Revenue",
+            "description": "Collection Type selected in the item row."
           },
           "particulars": {
             "type": "string",
             "nullable": true,
             "maxLength": 500
           },
-          "quantity": {
-            "type": "number",
-            "minimum": 0
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
           },
-          "amount": {
-            "type": "number"
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
           },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number",
-            "minimum": 0
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
           },
           "vatType": {
             "type": "string",
             "nullable": true,
             "maxLength": 80
           },
-          "vatable": {
-            "type": "boolean"
+          "vatPercent": {
+            "type": "number",
+            "minimum": 0,
+            "example": 12
           },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
+          "cwtCode": {
             "type": "string",
             "nullable": true,
             "maxLength": 80
           },
-          "withEwt": {
-            "type": "boolean"
+          "cwtPercent": {
+            "type": "number",
+            "minimum": 0,
+            "example": 2
           },
-          "ewtType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
+          "netAmount": {
+            "type": "number",
+            "example": 44000
+          },
+          "vatAmount": {
+            "type": "number",
+            "example": 6000
+          },
+          "ewtAmount": {
+            "type": "number",
+            "example": 1000,
+            "description": "CWT Amount for the collection item."
+          },
+          "grossAmount": {
+            "type": "number",
+            "example": 50000
+          },
+          "totalReceived": {
+            "type": "number",
+            "example": 49000
           },
           "responsibilityCenterId": {
             "type": "string",
@@ -39251,19 +39235,13 @@
         "required": [
           "lineNumber",
           "description",
-          "quantity",
-          "amount",
+          "vatPercent",
+          "cwtPercent",
           "netAmount",
           "vatAmount",
-          "wvatAmount",
           "ewtAmount",
-          "discountPercent",
-          "discountAmount",
           "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
+          "totalReceived"
         ]
       },
       "AcknowledgementReceiptJournalEntryDto": {
@@ -39362,6 +39340,12 @@
       "CreateAcknowledgementReceiptDto": {
         "type": "object",
         "properties": {
+          "paymentId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
           "branchUnitId": {
             "type": "number",
             "minimum": 1
@@ -39405,51 +39389,6 @@
             "nullable": true,
             "maxLength": 255
           },
-          "address": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
           "currency": {
             "type": "string",
             "maxLength": 10
@@ -39475,16 +39414,6 @@
           },
           "grossAmount": {
             "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
           },
           "receivableAccountId": {
             "type": "string",
@@ -39560,6 +39489,12 @@
       "UpdateAcknowledgementReceiptDto": {
         "type": "object",
         "properties": {
+          "paymentId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
           "branchUnitId": {
             "type": "number",
             "minimum": 1
@@ -39603,51 +39538,6 @@
             "nullable": true,
             "maxLength": 255
           },
-          "address": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
           "currency": {
             "type": "string",
             "maxLength": 10
@@ -39673,16 +39563,6 @@
           },
           "grossAmount": {
             "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
           },
           "receivableAccountId": {
             "type": "string",
@@ -39753,58 +39633,19 @@
           "description": {
             "type": "string"
           },
+          "partyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
           "particulars": {
             "type": "string",
             "nullable": true
           },
-          "quantity": {
-            "type": "number"
-          },
-          "amount": {
-            "type": "number"
-          },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number"
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "vatable": {
-            "type": "boolean"
-          },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
-            "type": "string",
-            "nullable": true
-          },
-          "withEwt": {
-            "type": "boolean"
-          },
-          "ewtType": {
+          "referenceNo": {
             "type": "string",
             "nullable": true
           },
@@ -39815,25 +39656,48 @@
           "responsibilityCenter": {
             "type": "string",
             "nullable": true
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true
+          },
+          "vatPercent": {
+            "type": "number"
+          },
+          "cwtCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "cwtPercent": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "ewtAmount": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "totalReceived": {
+            "type": "number"
           }
         },
         "required": [
           "id",
           "lineNumber",
           "description",
-          "quantity",
-          "amount",
+          "vatPercent",
+          "cwtPercent",
           "netAmount",
           "vatAmount",
-          "wvatAmount",
           "ewtAmount",
-          "discountPercent",
-          "discountAmount",
           "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
+          "totalReceived"
         ]
       },
       "ProvisionalReceiptJournalEntryResponseDto": {
@@ -39956,39 +39820,11 @@
             "type": "string",
             "nullable": true
           },
-          "address": {
+          "paymentId": {
             "type": "string",
             "nullable": true
           },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true
-          },
-          "teamAssigned": {
+          "paymentType": {
             "type": "string",
             "nullable": true
           },
@@ -40015,14 +39851,6 @@
           },
           "grossAmount": {
             "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true
           },
           "receivableAccountId": {
             "type": "string"
@@ -40257,72 +40085,75 @@
         "properties": {
           "lineNumber": {
             "type": "number",
-            "minimum": 1
+            "minimum": 1,
+            "example": 1
           },
           "description": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Service Revenue",
+            "description": "Collection Type selected in the item row."
           },
           "particulars": {
             "type": "string",
             "nullable": true,
             "maxLength": 500
           },
-          "quantity": {
-            "type": "number",
-            "minimum": 0
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
           },
-          "amount": {
-            "type": "number"
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
           },
-          "netAmount": {
-            "type": "number"
-          },
-          "vatAmount": {
-            "type": "number"
-          },
-          "wvatAmount": {
-            "type": "number"
-          },
-          "ewtAmount": {
-            "type": "number"
-          },
-          "discountPercent": {
-            "type": "number",
-            "minimum": 0
-          },
-          "discountAmount": {
-            "type": "number"
-          },
-          "grossAmount": {
-            "type": "number"
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
           },
           "vatType": {
             "type": "string",
             "nullable": true,
             "maxLength": 80
           },
-          "vatable": {
-            "type": "boolean"
+          "vatPercent": {
+            "type": "number",
+            "minimum": 0,
+            "example": 12
           },
-          "vatInclusive": {
-            "type": "boolean"
-          },
-          "withWvat": {
-            "type": "boolean"
-          },
-          "wvatType": {
+          "cwtCode": {
             "type": "string",
             "nullable": true,
             "maxLength": 80
           },
-          "withEwt": {
-            "type": "boolean"
+          "cwtPercent": {
+            "type": "number",
+            "minimum": 0,
+            "example": 2
           },
-          "ewtType": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
+          "netAmount": {
+            "type": "number",
+            "example": 44000
+          },
+          "vatAmount": {
+            "type": "number",
+            "example": 6000
+          },
+          "ewtAmount": {
+            "type": "number",
+            "example": 1000,
+            "description": "CWT Amount for the collection item."
+          },
+          "grossAmount": {
+            "type": "number",
+            "example": 50000
+          },
+          "totalReceived": {
+            "type": "number",
+            "example": 49000
           },
           "responsibilityCenterId": {
             "type": "string",
@@ -40338,19 +40169,13 @@
         "required": [
           "lineNumber",
           "description",
-          "quantity",
-          "amount",
+          "vatPercent",
+          "cwtPercent",
           "netAmount",
           "vatAmount",
-          "wvatAmount",
           "ewtAmount",
-          "discountPercent",
-          "discountAmount",
           "grossAmount",
-          "vatable",
-          "vatInclusive",
-          "withWvat",
-          "withEwt"
+          "totalReceived"
         ]
       },
       "ProvisionalReceiptJournalEntryDto": {
@@ -40449,6 +40274,12 @@
       "CreateProvisionalReceiptDto": {
         "type": "object",
         "properties": {
+          "paymentId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
           "branchUnitId": {
             "type": "number",
             "minimum": 1
@@ -40492,51 +40323,6 @@
             "nullable": true,
             "maxLength": 255
           },
-          "address": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
           "currency": {
             "type": "string",
             "maxLength": 10
@@ -40562,16 +40348,6 @@
           },
           "grossAmount": {
             "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
           },
           "receivableAccountId": {
             "type": "string",
@@ -40647,6 +40423,12 @@
       "UpdateProvisionalReceiptDto": {
         "type": "object",
         "properties": {
+          "paymentId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
           "branchUnitId": {
             "type": "number",
             "minimum": 1
@@ -40690,51 +40472,6 @@
             "nullable": true,
             "maxLength": 255
           },
-          "address": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "contactPerson": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "contactNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "businessStyle": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "projectRef": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "salesAssociate": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
-          "teamAssigned": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
-          },
           "currency": {
             "type": "string",
             "maxLength": 10
@@ -40760,16 +40497,6 @@
           },
           "grossAmount": {
             "type": "number"
-          },
-          "termId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "terms": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 150
           },
           "receivableAccountId": {
             "type": "string",

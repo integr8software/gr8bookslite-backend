@@ -39,7 +39,7 @@ export class AcknowledgementReceiptAccountingService {
 
   validatePersistedPayload({ details, journalEntries }: { details: AcknowledgementReceiptDetails[]; journalEntries: AcknowledgementReceiptJournalEntry[] }) {
     if (details.length === 0) {
-      throw new BadRequestException('Add at least one Acknowledgement Receipt item before posting.');
+      throw new BadRequestException('Add at least one acknowledgement receipt item before posting.');
     }
 
     if (journalEntries.length < 2) {
@@ -56,7 +56,7 @@ export class AcknowledgementReceiptAccountingService {
 
     for (const entry of journalEntries) {
       if (entry.referenceType !== AcknowledgementReceiptReferenceType) {
-        throw new BadRequestException('Acknowledgement Receipt journal rows must use referenceType AR.');
+        throw new BadRequestException('Acknowledgement receipt journal rows must use referenceType AR.');
       }
 
       const debit = Number(entry.debit);
@@ -78,7 +78,7 @@ export class AcknowledgementReceiptAccountingService {
 
   private validateDetailRows(details: AcknowledgementReceiptDetailDto[]) {
     if (details.length === 0) {
-      throw new BadRequestException('Add at least one Acknowledgement Receipt item.');
+      throw new BadRequestException('Add at least one acknowledgement receipt item.');
     }
 
     for (const detail of details) {
@@ -99,7 +99,7 @@ export class AcknowledgementReceiptAccountingService {
 
     for (const entry of journalEntries) {
       if (entry.referenceType && entry.referenceType !== AcknowledgementReceiptReferenceType) {
-        throw new BadRequestException('Acknowledgement Receipt journal rows must use referenceType AR.');
+        throw new BadRequestException('Acknowledgement receipt journal rows must use referenceType AR.');
       }
 
       const debit = Number(entry.debit || 0);

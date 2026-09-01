@@ -39,7 +39,7 @@ export class ProvisionalReceiptAccountingService {
 
   validatePersistedPayload({ details, journalEntries }: { details: ProvisionalReceiptDetails[]; journalEntries: ProvisionalReceiptJournalEntry[] }) {
     if (details.length === 0) {
-      throw new BadRequestException('Add at least one Provisional Receipt item before posting.');
+      throw new BadRequestException('Add at least one provisional receipt item before posting.');
     }
 
     if (journalEntries.length < 2) {
@@ -56,7 +56,7 @@ export class ProvisionalReceiptAccountingService {
 
     for (const entry of journalEntries) {
       if (entry.referenceType !== ProvisionalReceiptReferenceType) {
-        throw new BadRequestException('Provisional Receipt journal rows must use referenceType PVR.');
+        throw new BadRequestException('Provisional receipt journal rows must use referenceType PVR.');
       }
 
       const debit = Number(entry.debit);
@@ -78,7 +78,7 @@ export class ProvisionalReceiptAccountingService {
 
   private validateDetailRows(details: ProvisionalReceiptDetailDto[]) {
     if (details.length === 0) {
-      throw new BadRequestException('Add at least one Provisional Receipt item.');
+      throw new BadRequestException('Add at least one provisional receipt item.');
     }
 
     for (const detail of details) {
@@ -99,7 +99,7 @@ export class ProvisionalReceiptAccountingService {
 
     for (const entry of journalEntries) {
       if (entry.referenceType && entry.referenceType !== ProvisionalReceiptReferenceType) {
-        throw new BadRequestException('Provisional Receipt journal rows must use referenceType PVR.');
+        throw new BadRequestException('Provisional receipt journal rows must use referenceType PVR.');
       }
 
       const debit = Number(entry.debit || 0);

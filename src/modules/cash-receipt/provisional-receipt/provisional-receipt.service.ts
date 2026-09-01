@@ -6,15 +6,14 @@ import {
   MembershipRole,
   MembershipStatus,
   Party,
-  PartyAddress,
   PartyStatus,
   PartyType,
+  PaymentType,
+  PaymentTypeStatus,
   Prisma,
   ResponsibilityCenter,
   ResponsibilityCenterStatus,
   ProvisionalReceiptStatus,
-  Term,
-  TermStatus,
   TransactionNumberInputMode,
 } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
@@ -48,7 +47,6 @@ const JournalEntryNumberAdvisoryLockNamespace = 9081;
 const CustomerPartyTypes = new Set<PartyType>([PartyType.CUSTOMER, PartyType.MEMBER]);
 
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
-type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
 type ResolvedDetailLine = {
   input: ProvisionalReceiptDetailDto;
@@ -161,13 +159,9 @@ export class ProvisionalReceiptService {
 
         const created = await tx.provisionalReceipt.create({
           data: {
-            addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(dto.address),
             billToNameSnapshot: cleanOptional(dto.billToName),
             branchUnitId,
-            businessStyle: cleanOptional(dto.businessStyle),
             companyId,
-            contactNoSnapshot: cleanOptional(dto.contactNo),
-            contactPersonSnapshot: cleanOptional(dto.contactPerson),
             createdByUserId: user.id,
             currencyCode: normalized.currencyCode,
             discountAmount: normalized.discountAmount,
@@ -186,16 +180,11 @@ export class ProvisionalReceiptService {
               cleanOptional(dto.billToName) ??
               cleanOptional(dto.customerCode) ??
               'Manual customer',
-            projectCode: cleanOptional(dto.projectCode),
-            projectName: cleanOptional(dto.projectName),
-            projectRef: cleanOptional(dto.projectRef),
+            paymentId: references.payment?.id ?? null,
             receivableAccountId: references.receivableAccount?.id ?? null,
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
-            salesAssociate: cleanOptional(dto.salesAssociate),
             status: ProvisionalReceiptStatus.DRAFT,
-            teamAssigned: cleanOptional(dto.teamAssigned),
-            termId: references.term?.id ?? null,
             transactionNo,
             vatAmount: normalized.vatAmount,
             wvatAmount: normalized.wvatAmount,
@@ -212,7 +201,7 @@ export class ProvisionalReceiptService {
 
       return {
         receipt: (await this.mapReceiptsWithAuditUsers([receipt]))[0],
-        message: 'Provisional Receipt created successfully.',
+        message: 'Provisional receipt created successfully.',
         permissions: this.getPermissions(user, companyId),
       };
     } catch (error) {
@@ -229,11 +218,11 @@ export class ProvisionalReceiptService {
     const current = await this.findReceiptOrThrow(companyId, provisionalReceiptId);
 
     if (current.status !== ProvisionalReceiptStatus.DRAFT) {
-      throw new BadRequestException('Only draft Provisional Receipts can be edited.');
+      throw new BadRequestException('Only draft provisional receipts can be edited.');
     }
 
     if (dto.branchUnitId !== undefined && dto.branchUnitId !== current.branchUnitId) {
-      throw new BadRequestException('Provisional Receipt branch cannot be changed after creation.');
+      throw new BadRequestException('Provisional receipt branch cannot be changed after creation.');
     }
 
     const fullDto = this.requireCompleteUpdateDto(dto);
@@ -261,11 +250,7 @@ export class ProvisionalReceiptService {
         await tx.provisionalReceipt.update({
           where: { id: provisionalReceiptId },
           data: {
-            addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(fullDto.address),
             billToNameSnapshot: cleanOptional(fullDto.billToName),
-            businessStyle: cleanOptional(fullDto.businessStyle),
-            contactNoSnapshot: cleanOptional(fullDto.contactNo),
-            contactPersonSnapshot: cleanOptional(fullDto.contactPerson),
             currencyCode: normalized.currencyCode,
             discountAmount: normalized.discountAmount,
             documentDate: normalized.documentDate,
@@ -283,15 +268,10 @@ export class ProvisionalReceiptService {
               cleanOptional(fullDto.billToName) ??
               cleanOptional(fullDto.customerCode) ??
               'Manual customer',
-            projectCode: cleanOptional(fullDto.projectCode),
-            projectName: cleanOptional(fullDto.projectName),
-            projectRef: cleanOptional(fullDto.projectRef),
+            paymentId: references.payment?.id ?? null,
             receivableAccountId: references.receivableAccount?.id ?? null,
             referenceNo: cleanOptional(fullDto.referenceNo),
             remarks: cleanOptional(fullDto.remarks),
-            salesAssociate: cleanOptional(fullDto.salesAssociate),
-            teamAssigned: cleanOptional(fullDto.teamAssigned),
-            termId: references.term?.id ?? null,
             transactionNo,
             updatedByUserId: user.id,
             vatAmount: normalized.vatAmount,
@@ -316,7 +296,7 @@ export class ProvisionalReceiptService {
 
       return {
         receipt: (await this.mapReceiptsWithAuditUsers([receipt]))[0],
-        message: 'Provisional Receipt updated successfully.',
+        message: 'Provisional receipt updated successfully.',
         permissions: this.getPermissions(user, companyId),
       };
     } catch (error) {
@@ -338,7 +318,7 @@ export class ProvisionalReceiptService {
     if (current.status === targetStatus) {
       return {
         receipt: (await this.mapReceiptsWithAuditUsers([current]))[0],
-        message: 'Provisional Receipt status is already up to date.',
+        message: 'Provisional receipt status is already up to date.',
         permissions: this.getPermissions(user, companyId),
       };
     }
@@ -365,7 +345,7 @@ export class ProvisionalReceiptService {
 
     return {
       receipt: (await this.mapReceiptsWithAuditUsers([saved]))[0],
-      message: 'Provisional Receipt status updated successfully.',
+      message: 'Provisional receipt status updated successfully.',
       permissions: this.getPermissions(user, companyId),
     };
   }
@@ -473,7 +453,7 @@ export class ProvisionalReceiptService {
     });
 
     if (!receipt) {
-      throw new NotFoundException('Provisional Receipt not found.');
+      throw new NotFoundException('Provisional receipt not found.');
     }
 
     return (await this.attachJournalEntries([receipt]))[0];
@@ -522,19 +502,19 @@ export class ProvisionalReceiptService {
   }
 
   private async resolveReceiptReferences(tx: PrismaWriteClient, companyId: number, dto: CreateProvisionalReceiptDto) {
-    const [party, receivableAccount, term, details, journalEntries] = await Promise.all([
+    const [party, payment, receivableAccount, details, journalEntries] = await Promise.all([
       this.resolveParty(tx, companyId, { partyCode: dto.customerCode, partyId: dto.partyId }),
+      this.resolvePaymentType(tx, companyId, dto.paymentId),
       this.resolvePostingAccount(tx, companyId, {
         accountCode: dto.receivableAccountCode,
         accountId: dto.receivableAccountId,
         label: 'Receivable account',
       }),
-      this.resolveTerm(tx, companyId, dto.termId),
       Promise.all(dto.details.map((input) => this.resolveDetailLine(tx, companyId, input))),
       Promise.all(dto.journalEntries.map((input) => this.resolveJournalEntry(tx, companyId, input))),
     ]);
 
-    return { details, journalEntries, party, receivableAccount, term };
+    return { details, journalEntries, party, payment, receivableAccount };
   }
 
   private async resolveDetailLine(tx: PrismaWriteClient, companyId: number, input: ProvisionalReceiptDetailDto): Promise<ResolvedDetailLine> {
@@ -574,30 +554,26 @@ export class ProvisionalReceiptService {
     await tx.provisionalReceiptDetails.deleteMany({ where: { provisionalReceiptId } });
     await tx.provisionalReceiptDetails.createMany({
       data: details.map(({ input, responsibilityCenter }) => ({
-        amount: roundToDecimal(input.amount, 2),
         branchUnitId,
+        cwtCode: cleanOptional(input.cwtCode),
+        cwtPercent: roundToDecimal(input.cwtPercent, 4),
         companyId,
         description: input.description.trim(),
-        discountAmount: roundToDecimal(input.discountAmount, 2),
-        discountPercent: roundToDecimal(input.discountPercent, 4),
         ewtAmount: roundToDecimal(input.ewtAmount, 2),
-        ewtType: cleanOptional(input.ewtType),
         grossAmount: roundToDecimal(input.grossAmount, 2),
         lineNumber: input.lineNumber,
         netAmount: roundToDecimal(input.netAmount, 2),
         particulars: cleanOptional(input.particulars),
-        quantity: roundToDecimal(input.quantity, 4),
+        partyCodeSnapshot: cleanOptional(input.partyCode),
+        partyNameSnapshot: cleanOptional(input.partyName),
+        referenceNo: cleanOptional(input.referenceNo),
         responsibilityCenterId: responsibilityCenter?.id ?? null,
         responsibilityCenterSnapshot: responsibilityCenter?.name ?? cleanOptional(input.responsibilityCenter),
         provisionalReceiptId,
+        totalReceived: roundToDecimal(input.totalReceived, 2),
         vatAmount: roundToDecimal(input.vatAmount, 2),
-        vatInclusive: input.vatInclusive,
+        vatPercent: roundToDecimal(input.vatPercent, 4),
         vatType: cleanOptional(input.vatType),
-        vatable: input.vatable,
-        withEwt: input.withEwt,
-        withWvat: input.withWvat,
-        wvatAmount: roundToDecimal(input.wvatAmount, 2),
-        wvatType: cleanOptional(input.wvatType),
       })),
     });
   }
@@ -719,7 +695,7 @@ export class ProvisionalReceiptService {
     });
 
     if (sequence?.inputMode !== TransactionNumberInputMode.MANUAL) {
-      throw new BadRequestException('Provisional Receipt transaction number is auto-generated for this branch and cannot be changed manually.');
+      throw new BadRequestException('Provisional receipt transaction number is auto-generated for this branch and cannot be changed manually.');
     }
 
     const sequenceScope = await resolveTransactionNumberScopeForCompanyBranch(tx, {
@@ -787,33 +763,33 @@ export class ProvisionalReceiptService {
     }
 
     if (!party.partyTypes.some((partyType) => CustomerPartyTypes.has(partyType))) {
-      throw new BadRequestException('Party must be a customer or member for Provisional Receipt.');
+      throw new BadRequestException('Party must be a customer or member for provisional receipt.');
     }
 
     return party;
   }
 
-  private async resolveTerm(tx: PrismaWriteClient, companyId: number, termId?: string | null) {
-    const parsedTermId = parseOptionalPositiveBigIntId(termId, 'termId');
+  private async resolvePaymentType(tx: PrismaWriteClient, companyId: number, paymentId?: string | null): Promise<PaymentType | null> {
+    const parsedPaymentId = parseOptionalPositiveBigIntId(paymentId, 'paymentId');
 
-    if (!parsedTermId) {
+    if (!parsedPaymentId) {
       return null;
     }
 
-    const term = await tx.term.findFirst({
+    const paymentType = await tx.paymentType.findFirst({
       where: {
         companyId,
         deletedAt: null,
-        id: parsedTermId,
-        status: TermStatus.ACTIVE,
+        id: parsedPaymentId,
+        status: PaymentTypeStatus.ACTIVE,
       },
     });
 
-    if (!term) {
-      throw new BadRequestException('Terms must reference an active company term.');
+    if (!paymentType) {
+      throw new BadRequestException('Payment type must reference an active company payment type.');
     }
 
-    return term;
+    return paymentType;
   }
 
   private async resolveResponsibilityCenter(
@@ -866,7 +842,7 @@ export class ProvisionalReceiptService {
     });
 
     if (existing) {
-      throw new ConflictException('A Provisional Receipt with this transaction number already exists for this branch.');
+      throw new ConflictException('A provisional receipt with this transaction number already exists for this branch.');
     }
   }
 
@@ -912,7 +888,7 @@ export class ProvisionalReceiptService {
     };
 
     if (!allowedStatuses[currentStatus].includes(targetStatus)) {
-      throw new BadRequestException(`Cannot move Provisional Receipt from ${currentStatus} to ${targetStatus}.`);
+      throw new BadRequestException(`Cannot move provisional receipt from ${currentStatus} to ${targetStatus}.`);
     }
   }
 
@@ -981,7 +957,7 @@ export class ProvisionalReceiptService {
 
     for (const field of requiredFields) {
       if (dto[field] === undefined || dto[field] === null) {
-        throw new BadRequestException(`Field ${String(field)} is required when updating a Provisional Receipt.`);
+        throw new BadRequestException(`Field ${String(field)} is required when updating a provisional receipt.`);
       }
     }
 
@@ -995,7 +971,7 @@ export class ProvisionalReceiptService {
       .replace(/[\s-]+/g, '_');
 
     if (!Object.values(ProvisionalReceiptStatus).includes(normalized as ProvisionalReceiptStatus)) {
-      throw new BadRequestException('Invalid Provisional Receipt status.');
+      throw new BadRequestException('Invalid provisional receipt status.');
     }
 
     return normalized as ProvisionalReceiptStatus;
@@ -1018,19 +994,6 @@ export class ProvisionalReceiptService {
       .join(' ');
 
     return cleanOptional(party.partyName) ?? cleanOptional(party.tradeName) ?? cleanOptional(individualName) ?? cleanOptional(fallback) ?? party.partyCodeNo;
-  }
-
-  private getPartyAddress(party: PartyWithAddresses) {
-    const address = party.addresses.find((item) => item.isDefault) ?? party.addresses[0];
-
-    if (!address) {
-      return null;
-    }
-
-    return [address.addressLine1, address.addressLine2, address.barangay, address.cityMunicipality, address.province, address.region]
-      .map(cleanOptional)
-      .filter(Boolean)
-      .join(', ');
   }
 
   private getActiveCompanyId(user: AuthUser) {
@@ -1065,7 +1028,7 @@ export class ProvisionalReceiptService {
       return;
     }
 
-    throw new ForbiddenException('You do not have permission to manage Provisional Receipts.');
+    throw new ForbiddenException('You do not have permission to manage provisional receipts.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -1103,7 +1066,7 @@ export class ProvisionalReceiptService {
 
   private throwFriendlyPrismaError(error: unknown) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('A Provisional Receipt with this transaction number already exists for this branch.');
+      throw new ConflictException('A provisional receipt with this transaction number already exists for this branch.');
     }
   }
 }

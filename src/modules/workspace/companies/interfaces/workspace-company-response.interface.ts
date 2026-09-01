@@ -1,4 +1,4 @@
-import type { BillingCycle, CompanyStatus, CompanyUnitType, TaxpayerType } from '@prisma/client';
+import type { BillingCycle, CompanyStatus, CompanyUnitType, SubscriptionStatus, TaxpayerType } from '@prisma/client';
 
 export interface CompanyUnitResponse {
   id: number;
@@ -53,6 +53,7 @@ export interface WorkspaceCompanyResponse {
   } | null;
   isActive: boolean;
   status: CompanyStatus;
+  subscriptionStatus?: SubscriptionStatus | null;
   subscriptionPlan: {
     code: string;
     name: string;
@@ -60,10 +61,19 @@ export interface WorkspaceCompanyResponse {
     billingCycle: BillingCycle;
     monthlyPriceInCents: number;
     yearlyPriceInCents: number;
+    status?: SubscriptionStatus;
   } | null;
+
   totalUsers?: number;
   totalUnits?: number;
   units?: CompanyUnitResponse[];
+  roles?: Array<{
+    id: number;
+    name: string;
+    code: string;
+    unitId: number | null;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
+
