@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
-import { ChartAccountStatus, ServiceAccountSetupMode } from '@prisma/client';
+import { ChartAccountStatus, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export class GetServiceMaintenanceListQueryDto {
@@ -18,6 +18,10 @@ export class GetServiceMaintenanceListQueryDto {
   accountSetupMode?: ServiceAccountSetupMode;
 
   @IsOptional()
+  @IsEnum(ServiceMaintenanceType)
+  serviceType?: ServiceMaintenanceType;
+
+  @IsOptional()
   @Transform(({ value }) => toOptionalInt(value))
   @IsInt()
   @Min(1)
@@ -31,8 +35,8 @@ export class GetServiceMaintenanceListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn(['serviceName', 'status', 'accountSetupMode', 'createdAt', 'updatedAt'])
-  sortBy?: 'serviceName' | 'status' | 'accountSetupMode' | 'createdAt' | 'updatedAt';
+  @IsIn(['serviceName', 'serviceType', 'status', 'accountSetupMode', 'createdAt', 'updatedAt'])
+  sortBy?: 'serviceName' | 'serviceType' | 'status' | 'accountSetupMode' | 'createdAt' | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

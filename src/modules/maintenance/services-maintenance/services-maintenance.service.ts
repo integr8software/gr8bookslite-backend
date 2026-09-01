@@ -91,6 +91,7 @@ export class ServicesMaintenanceService {
       select: {
         id: true,
         serviceName: true,
+        serviceType: true,
         status: true,
       },
       orderBy: [{ serviceName: 'asc' }, { id: 'asc' }],
@@ -101,6 +102,7 @@ export class ServicesMaintenanceService {
         id: service.id.toString(),
         serviceName: service.serviceName,
         name: service.serviceName,
+        serviceType: service.serviceType,
         status: service.status,
       })),
     };

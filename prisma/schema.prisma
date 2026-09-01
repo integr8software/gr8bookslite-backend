@@ -967,6 +967,7 @@ model ServiceMaintenance {
   companyId                 Int                     @map("company_id")
   revenueCoaId              BigInt                  @map("revenue_coa_id")
   serviceName               String                  @map("service_name") @db.VarChar(150)
+  serviceType               ServiceMaintenanceType  @default(SALES) @map("service_type")
   description               String?                 @db.VarChar(500)
   accountSetupMode          ServiceAccountSetupMode @default(AUTO) @map("account_setup_mode")
   isGeneratedRevenueAccount Boolean                 @default(true) @map("is_generated_revenue_account")
@@ -3810,6 +3811,11 @@ enum ChartAccountStatus {
 enum ServiceAccountSetupMode {
   AUTO
   EXISTING
+}
+
+enum ServiceMaintenanceType {
+  PURCHASES
+  SALES
 }
 
 enum DefaultAccountUsageType {

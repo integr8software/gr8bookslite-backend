@@ -6796,6 +6796,18 @@
             }
           },
           {
+            "name": "serviceType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SALES",
+                "PURCHASES"
+              ]
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -6822,6 +6834,7 @@
               "type": "string",
               "enum": [
                 "serviceName",
+                "serviceType",
                 "status",
                 "accountSetupMode",
                 "createdAt",
@@ -6938,6 +6951,18 @@
             }
           },
           {
+            "name": "serviceType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SALES",
+                "PURCHASES"
+              ]
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -6964,6 +6989,7 @@
               "type": "string",
               "enum": [
                 "serviceName",
+                "serviceType",
                 "status",
                 "accountSetupMode",
                 "createdAt",
@@ -29424,6 +29450,13 @@
           "serviceName": {
             "type": "string"
           },
+          "serviceType": {
+            "enum": [
+              "PURCHASES",
+              "SALES"
+            ],
+            "type": "string"
+          },
           "description": {
             "type": "string",
             "nullable": true
@@ -29473,6 +29506,7 @@
         "required": [
           "id",
           "serviceName",
+          "serviceType",
           "description",
           "status",
           "accountSetupMode",
@@ -29596,6 +29630,13 @@
           "name": {
             "type": "string"
           },
+          "serviceType": {
+            "enum": [
+              "PURCHASES",
+              "SALES"
+            ],
+            "type": "string"
+          },
           "status": {
             "enum": [
               "ACTIVE",
@@ -29608,6 +29649,7 @@
           "id",
           "serviceName",
           "name",
+          "serviceType",
           "status"
         ]
       },
@@ -29749,6 +29791,13 @@
             "type": "string",
             "maxLength": 150
           },
+          "serviceType": {
+            "enum": [
+              "PURCHASES",
+              "SALES"
+            ],
+            "type": "string"
+          },
           "description": {
             "type": "string",
             "nullable": true,
@@ -29775,6 +29824,7 @@
         },
         "required": [
           "serviceName",
+          "serviceType",
           "accountSetupMode"
         ]
       },
@@ -29799,6 +29849,13 @@
           "serviceName": {
             "type": "string",
             "maxLength": 150
+          },
+          "serviceType": {
+            "enum": [
+              "PURCHASES",
+              "SALES"
+            ],
+            "type": "string"
           },
           "description": {
             "type": "string",

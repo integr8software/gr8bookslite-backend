@@ -13,6 +13,7 @@ export function buildServiceMaintenanceListWhere(companyId: number, query: GetSe
     deletedAt: null,
     ...(query.status ? { status: query.status } : {}),
     ...(query.accountSetupMode ? { accountSetupMode: query.accountSetupMode } : {}),
+    ...(query.serviceType ? { serviceType: query.serviceType } : {}),
     ...(search
       ? {
           OR: [
@@ -58,6 +59,7 @@ export function resolveServiceRevenueAccountTitle(serviceName: string) {
 export function toCreateServiceMaintenanceData(dto: CreateServiceMaintenanceDto, revenueCoaId: bigint, isGeneratedRevenueAccount: boolean) {
   return {
     serviceName: dto.serviceName.trim(),
+    serviceType: dto.serviceType,
     description: cleanOptional(dto.description),
     accountSetupMode: dto.accountSetupMode,
     revenueCoaId,
@@ -68,6 +70,7 @@ export function toCreateServiceMaintenanceData(dto: CreateServiceMaintenanceDto,
 export function toUpdateServiceMaintenanceData(dto: UpdateServiceMaintenanceDto, revenueCoaId?: bigint, isGeneratedRevenueAccount?: boolean) {
   return {
     ...(dto.serviceName !== undefined ? { serviceName: dto.serviceName.trim() } : {}),
+    ...(dto.serviceType !== undefined ? { serviceType: dto.serviceType } : {}),
     ...(dto.description !== undefined ? { description: cleanOptional(dto.description) } : {}),
     ...(dto.accountSetupMode !== undefined ? { accountSetupMode: dto.accountSetupMode } : {}),
     ...(revenueCoaId !== undefined ? { revenueCoaId } : {}),
