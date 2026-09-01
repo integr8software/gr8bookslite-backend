@@ -26,42 +26,42 @@ export class ProvisionalReceiptController {
 
   @Get()
   @ApiOperation({ summary: 'List provisional receipts' })
-  @ApiOkResponse({ description: 'Provisional Receipts retrieved.', type: ProvisionalReceiptListResponseDto })
+  @ApiOkResponse({ description: 'Provisional receipts retrieved.', type: ProvisionalReceiptListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetProvisionalReceiptListQueryDto) {
     return this.provisionalReceiptService.findAll(user, query);
   }
 
   @Get('transaction-number')
   @ApiOperation({ summary: 'Suggest a provisional receipt transaction number' })
-  @ApiOkResponse({ description: 'Provisional Receipt transaction number retrieved.', type: ProvisionalReceiptNumberSuggestionResponseDto })
+  @ApiOkResponse({ description: 'Provisional receipt transaction number retrieved.', type: ProvisionalReceiptNumberSuggestionResponseDto })
   suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query() query: GetProvisionalReceiptListQueryDto) {
     return this.provisionalReceiptService.suggestTransactionNumber(user, query.branchUnitId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a provisional receipt' })
-  @ApiOkResponse({ description: 'Provisional Receipt retrieved.', type: ProvisionalReceiptContainerResponseDto })
+  @ApiOkResponse({ description: 'Provisional receipt retrieved.', type: ProvisionalReceiptContainerResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string, @Query() query: GetProvisionalReceiptListQueryDto) {
     return this.provisionalReceiptService.findOne(user, id, query.branchUnitId);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a provisional receipt' })
-  @ApiCreatedResponse({ description: 'Provisional Receipt created.', type: SaveProvisionalReceiptResponseDto })
+  @ApiCreatedResponse({ description: 'Provisional receipt created.', type: SaveProvisionalReceiptResponseDto })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateProvisionalReceiptDto) {
     return this.provisionalReceiptService.create(user, dto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a provisional receipt' })
-  @ApiOkResponse({ description: 'Provisional Receipt updated.', type: SaveProvisionalReceiptResponseDto })
+  @ApiOkResponse({ description: 'Provisional receipt updated.', type: SaveProvisionalReceiptResponseDto })
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateProvisionalReceiptDto) {
     return this.provisionalReceiptService.update(user, id, dto);
   }
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update a provisional receipt status' })
-  @ApiOkResponse({ description: 'Provisional Receipt status updated.', type: SaveProvisionalReceiptResponseDto })
+  @ApiOkResponse({ description: 'Provisional receipt status updated.', type: SaveProvisionalReceiptResponseDto })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateProvisionalReceiptStatusDto) {
     return this.provisionalReceiptService.updateStatus(user, id, dto);
   }

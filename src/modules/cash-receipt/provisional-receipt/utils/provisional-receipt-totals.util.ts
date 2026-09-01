@@ -14,12 +14,11 @@ export function amountsMatch(left: number, right: number) {
 export function getProvisionalReceiptDetailTotals(details: ProvisionalReceiptDetailDto[]) {
   return details.reduce(
     (total, detail) => ({
-      discountAmount: roundCurrency(total.discountAmount + Number(detail.discountAmount || 0)),
       grossAmount: roundCurrency(total.grossAmount + Number(detail.grossAmount || 0)),
       netAmount: roundCurrency(total.netAmount + Number(detail.netAmount || 0)),
       vatAmount: roundCurrency(total.vatAmount + Number(detail.vatAmount || 0)),
     }),
-    { discountAmount: 0, grossAmount: 0, netAmount: 0, vatAmount: 0 },
+    { grossAmount: 0, netAmount: 0, vatAmount: 0 },
   );
 }
 
