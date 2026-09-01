@@ -1,91 +1,99 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class ProvisionalReceiptDetailDto {
+  @ApiProperty({ example: 1 })
   @Type(() => Number)
   @IsInt()
   @Min(1)
   lineNumber!: number;
 
+  @ApiProperty({ example: 'Service Revenue', description: 'Collection Type selected in the item row.' })
   @IsString()
   @MaxLength(250)
   description!: string;
 
+  @ApiPropertyOptional({ type: String, nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(500)
   particulars?: string | null;
 
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 4 })
-  @Min(0)
-  quantity!: number;
+  @ApiPropertyOptional({ type: String, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  partyCode?: string | null;
 
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  amount!: number;
+  @ApiPropertyOptional({ type: String, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  partyName?: string | null;
 
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  netAmount!: number;
+  @ApiPropertyOptional({ type: String, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  referenceNo?: string | null;
 
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  vatAmount!: number;
-
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  wvatAmount!: number;
-
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  ewtAmount!: number;
-
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 4 })
-  @Min(0)
-  discountPercent!: number;
-
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  discountAmount!: number;
-
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  grossAmount!: number;
-
+  @ApiPropertyOptional({ type: String, nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(80)
   vatType?: string | null;
 
-  @IsBoolean()
-  vatable!: boolean;
+  @ApiProperty({ example: 12 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 4 })
+  @Min(0)
+  vatPercent!: number;
 
-  @IsBoolean()
-  vatInclusive!: boolean;
-
-  @IsBoolean()
-  withWvat!: boolean;
-
+  @ApiPropertyOptional({ type: String, nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(80)
-  wvatType?: string | null;
+  cwtCode?: string | null;
 
-  @IsBoolean()
-  withEwt!: boolean;
+  @ApiProperty({ example: 2 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 4 })
+  @Min(0)
+  cwtPercent!: number;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  ewtType?: string | null;
+  @ApiProperty({ example: 44000 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  netAmount!: number;
 
+  @ApiProperty({ example: 6000 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  vatAmount!: number;
+
+  @ApiProperty({ example: 1000, description: 'CWT Amount for the collection item.' })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  ewtAmount!: number;
+
+  @ApiProperty({ example: 50000 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  grossAmount!: number;
+
+  @ApiProperty({ example: 49000 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  totalReceived!: number;
+
+  @ApiPropertyOptional({ type: String, nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(40)
   responsibilityCenterId?: string | null;
 
+  @ApiPropertyOptional({ type: String, nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(150)
