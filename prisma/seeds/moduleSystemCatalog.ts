@@ -70,7 +70,7 @@ export const AccountingSidebarTemplate = [
       link('cash-disbursement-cash-advance-multiple-entry', 'CAME', 'cashOut'),
       link('cash-disbursement-petty-cash-voucher', 'PCV', 'cashOut'),
       link('cash-disbursement-petty-cash-fund', 'PCF', 'cashOut'),
-      link('cash-disbursement-petty-cash-fund-replenishment', 'PCFR', 'cashOut'),
+      link('cash-disbursement-petty-cash-replenishment', 'PCR', 'cashOut'),
       link('cash-disbursement-revolving-fund', 'RF', 'cashOut'),
       link('cash-disbursement-revolving-fund-replenishment', 'RFR', 'cashOut'),
       link('cash-disbursement-request-for-payment', 'RFP', 'fileCheck'),

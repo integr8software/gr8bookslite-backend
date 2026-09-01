@@ -17,7 +17,7 @@ describe('PermissionService', () => {
               canUncancel: true,
               canExport: false,
               permission: {
-                code: 'PCFR',
+                code: 'PCR',
                 module: null,
                 submodule: {
                   module: {
@@ -35,7 +35,7 @@ describe('PermissionService', () => {
     );
 
     expect(permissions).toEqual(
-      expect.arrayContaining([`PCFR:${PermissionAction.VIEW}`, `PCFR:${PermissionAction.CANCEL}`, `PCFR:${PermissionAction.UNCANCEL}`]),
+      expect.arrayContaining([`PCR:${PermissionAction.VIEW}`, `PCR:${PermissionAction.CANCEL}`, `PCR:${PermissionAction.UNCANCEL}`]),
     );
   });
 
@@ -52,7 +52,7 @@ describe('PermissionService', () => {
             canUncancel: false,
             canExport: false,
             permission: {
-              code: 'PCFR',
+              code: 'PCR',
               module: null,
               submodule: {
                 module: {
@@ -67,7 +67,7 @@ describe('PermissionService', () => {
       permissionOverrides: [],
     };
 
-    expect(service.computePermissions(membership, ['cash-disbursement'])).toContain('PCFR:view');
+    expect(service.computePermissions(membership, ['cash-disbursement'])).toContain('PCR:view');
     expect(service.computePermissions(membership, ['OTHER'])).toEqual([]);
   });
 

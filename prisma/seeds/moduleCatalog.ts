@@ -243,8 +243,8 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: TransactionRegistry,
   },
   {
-    code: 'PCFR',
-    name: 'Petty Cash Fund Replenishment',
+    code: 'PCR',
+    name: 'Petty Cash Replenishment',
     icon: 'cashOut',
     type: TransactionRegistry,
   },

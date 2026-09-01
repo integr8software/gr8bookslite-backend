@@ -49,9 +49,9 @@ describe('BranchRolesService permission architecture', () => {
     entitlementService.getCompanyAllowedModules.mockResolvedValue([
       {
         id: 1,
-        code: 'PCFR',
-        name: 'Petty Cash Fund Replenishment',
-        permissions: [{ code: 'PCFR' }],
+        code: 'PCR',
+        name: 'Petty Cash Replenishment',
+        permissions: [{ code: 'PCR' }],
       },
     ]);
     entitlementService.getCompanyPlanSidebarItems.mockResolvedValue([]);
@@ -63,9 +63,9 @@ describe('BranchRolesService permission architecture', () => {
           name: 'Other Modules',
           submodules: [
             {
-              code: 'PCFR',
-              name: 'Petty Cash Fund Replenishment',
-              permissionCode: 'PCFR',
+              code: 'PCR',
+              name: 'Petty Cash Replenishment',
+              permissionCode: 'PCR',
               actions: ['view', 'create', 'update', 'cancel', 'uncancel', 'export'],
             },
           ],
@@ -141,8 +141,8 @@ describe('BranchRolesService permission architecture', () => {
     const { prisma, service } = createService();
     prisma.permission.findUnique.mockResolvedValue({
       id: 100,
-      code: 'PCFR',
-      name: 'Petty Cash Fund Replenishment',
+      code: 'PCR',
+      name: 'Petty Cash Replenishment',
       isActive: true,
       module: null,
       submodule: {
@@ -161,7 +161,7 @@ describe('BranchRolesService permission architecture', () => {
       }
     ).resolveRolePermissions([
       {
-        permissionCode: 'PCFR',
+        permissionCode: 'PCR',
         actions: ['create', 'cancel', 'uncancel'],
       },
     ]);
@@ -169,8 +169,8 @@ describe('BranchRolesService permission architecture', () => {
     expect(resolved).toEqual([
       expect.objectContaining({
         permissionId: 100,
-        permissionCode: 'PCFR',
-        permissionName: 'Petty Cash Fund Replenishment',
+        permissionCode: 'PCR',
+        permissionName: 'Petty Cash Replenishment',
         moduleCode: 'cash-disbursement',
         moduleName: 'Cash Disbursement',
         canView: true,
@@ -181,12 +181,12 @@ describe('BranchRolesService permission architecture', () => {
     ]);
   });
 
-  it('maps legacy replenishment codes to PCFR cancel access', async () => {
+  it('maps legacy replenishment codes to PCR cancel access', async () => {
     const { prisma, service } = createService();
     prisma.permission.findUnique.mockResolvedValue({
       id: 100,
-      code: 'PCFR',
-      name: 'Petty Cash Fund Replenishment',
+      code: 'PCR',
+      name: 'Petty Cash Replenishment',
       isActive: true,
       module: null,
       submodule: {
@@ -208,7 +208,7 @@ describe('BranchRolesService permission architecture', () => {
         moduleCode: 'cash-disbursement',
         moduleName: 'Cash Disbursement',
         permissionCode: 'cash-disbursement-petty-cash-fund-replenishment',
-        permissionName: 'Petty Cash Fund Replenishment',
+        permissionName: 'Petty Cash Replenishment',
         actions: ['cancel'],
       },
     ]);
@@ -216,7 +216,7 @@ describe('BranchRolesService permission architecture', () => {
     expect(prisma.permission.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          code: 'PCFR',
+          code: 'PCR',
         },
       }),
     );
@@ -313,8 +313,8 @@ describe('BranchRolesService permission architecture', () => {
     const { prisma, service } = createService();
     prisma.permission.findUnique.mockResolvedValue({
       id: 100,
-      code: 'PCFR',
-      name: 'Petty Cash Fund Replenishment',
+      code: 'PCR',
+      name: 'Petty Cash Replenishment',
       isActive: true,
       module: null,
       submodule: {
@@ -334,7 +334,7 @@ describe('BranchRolesService permission architecture', () => {
         }
       ).resolveRolePermissions([
         {
-          permissionCode: 'PCFR',
+          permissionCode: 'PCR',
           actions: ['view'],
         },
       ]),
@@ -345,8 +345,8 @@ describe('BranchRolesService permission architecture', () => {
     const { prisma, service } = createService();
     prisma.permission.findUnique.mockResolvedValue({
       id: 100,
-      code: 'PCFR',
-      name: 'Petty Cash Fund Replenishment',
+      code: 'PCR',
+      name: 'Petty Cash Replenishment',
       isActive: true,
       module: null,
       submodule: {
@@ -365,11 +365,11 @@ describe('BranchRolesService permission architecture', () => {
       }
     ).resolveRolePermissions([
       {
-        permissionCode: 'PCFR',
+        permissionCode: 'PCR',
         actions: ['create'],
       },
       {
-        permissionCode: 'PCFR',
+        permissionCode: 'PCR',
         actions: ['cancel'],
       },
     ]);
@@ -386,11 +386,11 @@ describe('BranchRolesService permission architecture', () => {
 
   it('validates the preferred payload and rejects deprecated actions', async () => {
     const preferred = Object.assign(new BranchRolePermissionDto(), {
-      permissionCode: 'PCFR',
+      permissionCode: 'PCR',
       actions: ['view', 'cancel', 'uncancel'],
     });
     const deprecated = Object.assign(new BranchRolePermissionDto(), {
-      permissionCode: 'PCFR',
+      permissionCode: 'PCR',
       actions: ['delete', 'approve'],
     });
 
@@ -433,8 +433,8 @@ describe('BranchRolesService permission architecture', () => {
           updatedAt: new Date(),
           permission: {
             id: 100,
-            code: 'PCFR',
-            name: 'Petty Cash Fund Replenishment',
+            code: 'PCR',
+            name: 'Petty Cash Replenishment',
             description: null,
             targetType: 'SUBMODULE',
             moduleId: 40,
@@ -448,8 +448,8 @@ describe('BranchRolesService permission architecture', () => {
             submodule: {
               id: 60,
               moduleId: 40,
-              code: 'PCFR',
-              name: 'Petty Cash Fund Replenishment',
+              code: 'PCR',
+              name: 'Petty Cash Replenishment',
               sortOrder: 60,
               isActive: true,
               createdAt: new Date(),
@@ -472,7 +472,7 @@ describe('BranchRolesService permission architecture', () => {
 
     expect(role.permissions[0]).toEqual(
       expect.objectContaining({
-        permissionCode: 'PCFR',
+        permissionCode: 'PCR',
         moduleCode: 'cash-disbursement',
         actions: ['view', 'create', 'cancel'],
       }),
