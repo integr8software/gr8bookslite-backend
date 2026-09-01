@@ -12,13 +12,34 @@ export class AcknowledgementReceiptDetailResponseDto {
   description!: string;
 
   @ApiPropertyOptional({ nullable: true })
+  partyCode!: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  partyName!: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
   particulars!: string | null;
 
-  @ApiProperty()
-  quantity!: number;
+  @ApiPropertyOptional({ nullable: true })
+  referenceNo!: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  responsibilityCenterId!: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  responsibilityCenter!: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  vatType!: string | null;
 
   @ApiProperty()
-  amount!: number;
+  vatPercent!: number;
+
+  @ApiPropertyOptional({ nullable: true })
+  cwtCode!: string | null;
+
+  @ApiProperty()
+  cwtPercent!: number;
 
   @ApiProperty()
   netAmount!: number;
@@ -27,46 +48,13 @@ export class AcknowledgementReceiptDetailResponseDto {
   vatAmount!: number;
 
   @ApiProperty()
-  wvatAmount!: number;
-
-  @ApiProperty()
   ewtAmount!: number;
-
-  @ApiProperty()
-  discountPercent!: number;
-
-  @ApiProperty()
-  discountAmount!: number;
 
   @ApiProperty()
   grossAmount!: number;
 
-  @ApiPropertyOptional({ nullable: true })
-  vatType!: string | null;
-
   @ApiProperty()
-  vatable!: boolean;
-
-  @ApiProperty()
-  vatInclusive!: boolean;
-
-  @ApiProperty()
-  withWvat!: boolean;
-
-  @ApiPropertyOptional({ nullable: true })
-  wvatType!: string | null;
-
-  @ApiProperty()
-  withEwt!: boolean;
-
-  @ApiPropertyOptional({ nullable: true })
-  ewtType!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  responsibilityCenterId!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  responsibilityCenter!: string | null;
+  totalReceived!: number;
 }
 
 export class AcknowledgementReceiptJournalEntryResponseDto {
@@ -160,31 +148,10 @@ export class AcknowledgementReceiptResponseDto {
   billToName!: string | null;
 
   @ApiPropertyOptional({ nullable: true })
-  address!: string | null;
+  paymentId!: string | null;
 
   @ApiPropertyOptional({ nullable: true })
-  contactPerson!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  contactNo!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  businessStyle!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  projectCode!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  projectName!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  projectRef!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  salesAssociate!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  teamAssigned!: string | null;
+  paymentType!: string | null;
 
   @ApiProperty()
   currency!: string;
@@ -209,12 +176,6 @@ export class AcknowledgementReceiptResponseDto {
 
   @ApiProperty()
   grossAmount!: number;
-
-  @ApiPropertyOptional({ nullable: true })
-  termId!: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  terms!: string | null;
 
   @ApiProperty()
   receivableAccountId!: string;
