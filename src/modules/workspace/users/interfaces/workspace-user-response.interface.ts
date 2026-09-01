@@ -1,4 +1,4 @@
-import type { CompanyUnitType } from '@prisma/client';
+import type { CompanyUnitType, MembershipRole } from '@prisma/client';
 
 export interface WorkspaceUserAssignedUnitResponse {
   id: number;
@@ -7,13 +7,23 @@ export interface WorkspaceUserAssignedUnitResponse {
   name: string;
   displayName: string | null;
   isActive: boolean;
+  companyRoleId?: number | null;
+  companyRole?: {
+    id: number;
+    name: string;
+    code: string;
+  } | null;
 }
 
 export interface WorkspaceUserCompanyAssignmentResponse {
   companyId: number;
   unitIds: number[];
   units: WorkspaceUserAssignedUnitResponse[];
+  role: MembershipRole;
+  companyRoleId: number | null;
 }
+
+
 
 export interface WorkspaceUserResponse {
   id: number;

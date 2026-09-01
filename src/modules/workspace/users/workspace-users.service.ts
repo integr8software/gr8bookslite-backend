@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AccessScopeLevel, CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SystemRole, UserStatus } from '@prisma/client';
+import { AccessScopeLevel, CompanyStatus, CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SubscriptionStatus, SystemRole, UserStatus } from '@prisma/client';
+
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { normalizeEmail } from '../../../common/utils/email.util';
@@ -301,10 +302,27 @@ export class WorkspaceUsersService {
   }
 
   private async validateAssignments(user: AuthUser, dto: CreateWorkspaceUserDto | UpdateWorkspaceUserDto) {
-    const assignments = dto.companyAssignments.map((assignment) => ({
-      companyId: assignment.companyId,
-      unitIds: [...new Set(assignment.unitIds)],
-    }));
+    const assignments = dto.companyAssignments.map((assignment) => {
+      const unitMap = new Map<number, number | null>();
+      if (assignment.unitAssignments) {
+        for (const ua of assignment.unitAssignments) {
+          unitMap.set(ua.unitId, ua.companyRoleId ?? null);
+        }
+      }
+      const rawUnitIds = assignment.unitIds ?? assignment.unitAssignments?.map((u) => u.unitId) ?? [];
+      const unitIds = [...new Set(rawUnitIds)];
+      return {
+        companyId: assignment.companyId,
+        unitIds,
+        unitAssignments: unitIds.map((unitId) => ({
+          unitId,
+          companyRoleId: unitMap.get(unitId) ?? assignment.companyRoleId ?? null,
+        })),
+        role: assignment.role,
+        companyRoleId: assignment.companyRoleId,
+      };
+    });
+
     const companyIds = [...new Set(assignments.map(({ companyId }) => companyId))];
 
     if (companyIds.length !== assignments.length) {
@@ -313,7 +331,42 @@ export class WorkspaceUsersService {
 
     await this.ensureCanManageCompanies(user, companyIds);
 
+    const companies = await this.prisma.company.findMany({
+      where: {
+        id: { in: companyIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        status: true,
+        subscriptions: {
+          take: 1,
+          orderBy: { createdAt: 'desc' },
+          select: { status: true },
+        },
+      },
+    });
+
+    for (const company of companies) {
+      if (!company.isActive || company.status !== CompanyStatus.ACTIVE) {
+        throw new BadRequestException(`Cannot assign users to company ${company.name} because it is inactive.`);
+      }
+
+      const latestSub = company.subscriptions?.[0];
+      if (
+        latestSub &&
+        latestSub.status !== SubscriptionStatus.ACTIVE &&
+        latestSub.status !== SubscriptionStatus.TRIALING
+      ) {
+        throw new BadRequestException(
+          `Cannot assign users to company ${company.name} because its subscription is ${latestSub.status.toLowerCase().replace('_', ' ')}.`,
+        );
+      }
+    }
+
     const units = await this.prisma.companyUnit.findMany({
+
       where: {
         id: { in: assignments.flatMap(({ unitIds }) => unitIds) },
         isActive: true,
@@ -340,6 +393,8 @@ export class WorkspaceUsersService {
     return {
       assignments: assignments.map((assignment) => ({
         ...assignment,
+        role: assignment.role ?? MembershipRole.USER,
+        companyRoleId: assignment.companyRoleId ?? null,
         accessScope: getAccessScope(assignment.unitIds.map((unitId) => unitById.get(unitId)?.type)),
       })),
       manageableCompanyIds: await this.getManageableCompanyIds(user),
@@ -355,7 +410,10 @@ export class WorkspaceUsersService {
       assignments: {
         companyId: number;
         unitIds: number[];
+        unitAssignments: { unitId: number; companyRoleId: number | null }[];
         accessScope: AccessScopeLevel;
+        role?: MembershipRole;
+        companyRoleId?: number | null;
       }[];
     },
   ) {
@@ -371,6 +429,9 @@ export class WorkspaceUsersService {
     });
 
     for (const assignment of input.assignments) {
+      const role = assignment.role ?? MembershipRole.USER;
+      const primaryCompanyRoleId = assignment.unitAssignments[0]?.companyRoleId ?? assignment.companyRoleId ?? null;
+
       await tx.membership.upsert({
         where: {
           userId_companyId: {
@@ -379,6 +440,8 @@ export class WorkspaceUsersService {
           },
         },
         update: {
+          role,
+          companyRoleId: primaryCompanyRoleId,
           status: MembershipStatus.ACTIVE,
           accessScope: assignment.accessScope,
           invitedByUserId: input.actorUserId,
@@ -387,7 +450,8 @@ export class WorkspaceUsersService {
         create: {
           userId: input.targetUserId,
           companyId: assignment.companyId,
-          role: MembershipRole.USER,
+          role,
+          companyRoleId: primaryCompanyRoleId,
           status: MembershipStatus.ACTIVE,
           accessScope: assignment.accessScope,
           invitedByUserId: input.actorUserId,
@@ -403,15 +467,18 @@ export class WorkspaceUsersService {
       });
 
       await tx.membershipUnitAccess.createMany({
-        data: assignment.unitIds.map((unitId) => ({
+        data: assignment.unitAssignments.map(({ unitId, companyRoleId }) => ({
           userId: input.targetUserId,
           companyId: assignment.companyId,
           unitId,
+          companyRoleId: companyRoleId ?? null,
         })),
         skipDuplicates: true,
       });
     }
   }
+
+
 
   private async findUserMemberships(userId: number) {
     return this.prisma.membership.findMany({
