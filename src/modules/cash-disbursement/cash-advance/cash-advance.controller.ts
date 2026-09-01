@@ -2,9 +2,9 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuard
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/transaction-number-suggestion-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CashAdvanceService } from './cash-advance.service';
-import { CashAdvancePartyOptionsResponseDto } from './dto/cash-advance-party-option.dto';
 import { CashAdvanceListResponseDto, CashAdvanceSingleResponseDto } from './dto/cash-advance-response.dto';
 import { CreateCashAdvanceDto } from './dto/create-cash-advance.dto';
 import { GetCashAdvanceListQueryDto } from './dto/get-cash-advance-list-query.dto';
@@ -28,26 +28,12 @@ export class CashAdvanceController {
     return this.cashAdvanceService.findAll(user, query);
   }
 
-  @Get('party-options')
-  @ApiOperation({ summary: 'Get party options with Limit, Advances, and Balance calculations for Cash Advance' })
-  @ApiOkResponse({ type: CashAdvancePartyOptionsResponseDto })
-  getPartyOptions(@CurrentUser() user: AuthUser) {
-    return this.cashAdvanceService.getPartyOptions(user);
-  }
-
-  @Get('next-transaction-no')
-  @ApiOperation({ summary: 'Get auto-generated next transaction sequence number' })
+  @Get('transaction-number')
+  @ApiOperation({ summary: 'Suggest a cash advance transaction number' })
   @ApiQuery({ name: 'branchUnitId', required: false, type: Number })
-  @ApiOkResponse({
-    schema: {
-      type: 'object',
-      properties: {
-        nextTransNo: { type: 'string', example: 'CA-2026-00001' },
-      },
-    },
-  })
-  getNextTransactionNo(@CurrentUser() user: AuthUser, @Query('branchUnitId') branchUnitId?: string) {
-    return this.cashAdvanceService.getNextTransactionNo(user, branchUnitId);
+  @ApiOkResponse({ description: 'Cash Advance transaction number retrieved.', type: TransactionNumberSuggestionResponseDto })
+  suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query('branchUnitId') branchUnitId?: string) {
+    return this.cashAdvanceService.suggestTransactionNumber(user, branchUnitId);
   }
 
   @Get(':id')

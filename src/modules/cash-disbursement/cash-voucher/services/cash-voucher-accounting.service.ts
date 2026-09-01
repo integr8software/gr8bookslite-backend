@@ -22,7 +22,7 @@ export class CashVoucherAccountingService {
     journalEntries?: JournalEntryDto[];
     voucherAmount: number;
   }) {
-    this.validateDetailRows(details, currencyCode, exchangeRate);
+    this.validateDetailRows(details);
 
     if (journalEntries && journalEntries.length > 0) {
       this.validateJournalRows(journalEntries, currencyCode, exchangeRate);
@@ -51,15 +51,7 @@ export class CashVoucherAccountingService {
     };
   }
 
-  validatePersistedPayload({
-    amount,
-    details,
-    journalEntries,
-  }: {
-    amount: number;
-    details: CashVoucherDetail[];
-    journalEntries: CashVoucherJournalEntry[];
-  }) {
+  validatePersistedPayload({ amount, details, journalEntries }: { amount: number; details: CashVoucherDetail[]; journalEntries: CashVoucherJournalEntry[] }) {
     const sourceDetails = details.filter(isPersistedSourceDetailRow);
 
     if (sourceDetails.length === 0) {
@@ -119,7 +111,7 @@ export class CashVoucherAccountingService {
     }
   }
 
-  private validateDetailRows(details: CashVoucherDetailDto[], currencyCode: string, exchangeRate: number) {
+  private validateDetailRows(details: CashVoucherDetailDto[]) {
     const sourceDetails = details.filter(isSourceDetailRow);
 
     if (sourceDetails.length === 0) {
@@ -149,7 +141,7 @@ export class CashVoucherAccountingService {
 
     for (const entry of journalEntries) {
       if (entry.referenceType && entry.referenceType !== CashVoucherReferenceType) {
-        throw new BadRequestException(`Cash Voucher journal rows must use referenceType ${CashVoucherReferenceType}.`);
+        throw new BadRequestException('Cash Voucher journal rows must use referenceType CASH_VOUCHER.');
       }
 
       const debit = Number(entry.debit || 0);

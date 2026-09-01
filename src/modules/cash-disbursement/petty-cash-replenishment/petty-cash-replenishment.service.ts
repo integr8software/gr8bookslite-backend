@@ -1,13 +1,5 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  ChartAccount,
-  CompanyUnitType,
-  Party,
-  PartyAddress,
-  PettyCashReplenishmentStatus,
-  Prisma,
-  ResponsibilityCenter,
-} from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ChartAccount, CompanyUnitType, Party, PartyAddress, PettyCashReplenishmentStatus, Prisma, ResponsibilityCenter } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -28,7 +20,7 @@ import { UpdatePettyCashReplenishmentDto } from './dto/update-petty-cash-repleni
 import { UpdatePettyCashReplenishmentStatusDto } from './dto/update-petty-cash-replenishment-status.dto';
 import { PettyCashReplenishmentMapper } from './mappers/petty-cash-replenishment.mapper';
 import { PettyCashReplenishmentInclude } from './prisma/petty-cash-replenishment.include';
-import { PettyCashReplenishmentModuleCode } from './services/petty-cash-replenishment-lookup.service';
+export const PettyCashReplenishmentModuleCode = 'PCR';
 
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
@@ -42,7 +34,13 @@ export class PettyCashReplenishmentService {
   async findAll(user: AuthUser, query: GetPettyCashReplenishmentListQueryDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, PettyCashReplenishmentModuleCode, PermissionAction.VIEW, 'You do not have permission to view PettyCashReplenishment records.');
+    ensureModuleAction(
+      user,
+      companyId,
+      PettyCashReplenishmentModuleCode,
+      PermissionAction.VIEW,
+      'You do not have permission to view PettyCashReplenishment records.',
+    );
     const branchUnitId = await this.resolveBranchUnitId(companyId, query.branchUnitId);
 
     const page = query.page ?? DefaultPage;
@@ -65,7 +63,7 @@ export class PettyCashReplenishmentService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      items: records.map((record) => PettyCashReplenishmentMapper.toResponseDto(record as any)),
+      items: records.map((record) => PettyCashReplenishmentMapper.toResponseDto(record)),
       meta: {
         page,
         limit,
@@ -80,7 +78,13 @@ export class PettyCashReplenishmentService {
   async findOne(user: AuthUser, id: string) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, PettyCashReplenishmentModuleCode, PermissionAction.VIEW, 'You do not have permission to view PettyCashReplenishment records.');
+    ensureModuleAction(
+      user,
+      companyId,
+      PettyCashReplenishmentModuleCode,
+      PermissionAction.VIEW,
+      'You do not have permission to view PettyCashReplenishment records.',
+    );
 
     const recordId = parsePositiveBigIntId(id, 'PettyCashReplenishment ID');
     const record = await this.prisma.pettyCashReplenishment.findFirst({
@@ -92,7 +96,7 @@ export class PettyCashReplenishmentService {
       throw new NotFoundException(`PettyCashReplenishment #${id} not found.`);
     }
 
-    return PettyCashReplenishmentMapper.toResponseDto(record as any);
+    return PettyCashReplenishmentMapper.toResponseDto(record);
   }
 
   async suggestTransactionNumber(user: AuthUser, branchUnitId?: number) {
@@ -109,7 +113,6 @@ export class PettyCashReplenishmentService {
     return {
       branchUnitId: resolvedBranchId,
       inputMode: suggestion.inputMode,
-      nextTransNo: suggestion.transactionNumber,
       transactionNo: suggestion.transactionNumber,
     };
   }
@@ -117,13 +120,19 @@ export class PettyCashReplenishmentService {
   async create(user: AuthUser, dto: CreatePettyCashReplenishmentDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, PettyCashReplenishmentModuleCode, PermissionAction.CREATE, 'You do not have permission to create PettyCashReplenishment records.');
+    ensureModuleAction(
+      user,
+      companyId,
+      PettyCashReplenishmentModuleCode,
+      PermissionAction.CREATE,
+      'You do not have permission to create PettyCashReplenishment records.',
+    );
 
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const resolvedReferences = await this.resolveReferences(companyId, dto);
 
     return this.prisma.$transaction(async (tx) => {
-      const inputNo = cleanOptional((dto as any).voucherNo ?? (dto as any).transactionNo);
+      const inputNo = cleanOptional(dto.transactionNo);
       const assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
         branchUnitId,
         companyId,
@@ -132,7 +141,7 @@ export class PettyCashReplenishmentService {
       });
 
       const existing = await tx.pettyCashReplenishment.findFirst({
-        where: { companyId, transactionNo: assignedNo, deletedAt: null } as any,
+        where: { companyId, transactionNo: assignedNo, deletedAt: null },
       });
       if (existing) {
         throw new ConflictException(`PettyCashReplenishment number "${assignedNo}" already exists.`);
@@ -142,7 +151,7 @@ export class PettyCashReplenishmentService {
 
       let calculatedAmount = dto.amount ?? 0;
       if (dto.details && dto.details.length > 0) {
-        calculatedAmount = dto.details.reduce((sum, d) => sum + ((d as any).grossAmount ?? d.amount ?? (d as any).disburseAmount ?? 0), 0);
+        calculatedAmount = dto.details.reduce((sum, detail) => sum + (detail.amount ?? detail.disburseAmount ?? 0), 0);
       }
       const targetStatus = dto.status ?? PettyCashReplenishmentStatus.DRAFT;
 
@@ -159,15 +168,19 @@ export class PettyCashReplenishmentService {
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? '',
           accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? '',
           responsibilityCenterId: resolvedReferences.responsibilityCenter?.id ?? null,
-          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.code : (cleanOptional(dto.responsibilityCenterCode) ?? undefined),
-          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.name : (cleanOptional(dto.responsibilityCenter) ?? undefined),
+          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.code
+            : (cleanOptional(dto.responsibilityCenterCode) ?? undefined),
+          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.name
+            : (cleanOptional(dto.responsibilityCenter) ?? undefined),
           projectCode: cleanOptional(dto.projectCode) ?? undefined,
           projectName: cleanOptional(dto.projectName) ?? undefined,
           currencyCode,
           exchangeRate: dto.exchangeRate ?? 1.0,
           amount: calculatedAmount,
           remarks: cleanOptional(dto.remarks) ?? undefined,
-          status: targetStatus as any,
+          status: targetStatus,
           createdByUserId: user.id,
         },
       });
@@ -182,17 +195,23 @@ export class PettyCashReplenishmentService {
       });
 
       if (this.isSubmittedStatus(targetStatus)) {
-        this.assertPettyCashReplenishmentReady(reloaded as any);
+        this.assertPettyCashReplenishmentReady(reloaded);
       }
 
-      return PettyCashReplenishmentMapper.toResponseDto(reloaded as any);
+      return PettyCashReplenishmentMapper.toResponseDto(reloaded);
     });
   }
 
   async update(user: AuthUser, id: string, dto: UpdatePettyCashReplenishmentDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, PettyCashReplenishmentModuleCode, PermissionAction.UPDATE, 'You do not have permission to update PettyCashReplenishment records.');
+    ensureModuleAction(
+      user,
+      companyId,
+      PettyCashReplenishmentModuleCode,
+      PermissionAction.UPDATE,
+      'You do not have permission to update PettyCashReplenishment records.',
+    );
 
     const recordId = parsePositiveBigIntId(id, 'PettyCashReplenishment ID');
     const existing = await this.prisma.pettyCashReplenishment.findFirst({
@@ -208,18 +227,17 @@ export class PettyCashReplenishmentService {
       throw new BadRequestException(`Cannot update a PettyCashReplenishment in ${existing.status} status.`);
     }
 
-    const branchUnitId = dto.branchUnitId !== undefined
-      ? await this.resolveBranchUnitId(companyId, dto.branchUnitId)
-      : existing.branchUnitId;
+    const branchUnitId = dto.branchUnitId !== undefined ? await this.resolveBranchUnitId(companyId, dto.branchUnitId) : existing.branchUnitId;
 
     const resolvedReferences = await this.resolveReferences(companyId, dto as CreatePettyCashReplenishmentDto);
 
     return this.prisma.$transaction(async (tx) => {
-      const currencyCode = dto.currencyCode || dto.currency ? (cleanCurrencyCode(dto.currencyCode ?? dto.currency ?? 'PHP') ?? existing.currencyCode) : existing.currencyCode;
+      const currencyCode =
+        dto.currencyCode || dto.currency ? (cleanCurrencyCode(dto.currencyCode ?? dto.currency ?? 'PHP') ?? existing.currencyCode) : existing.currencyCode;
 
       let calculatedAmount = dto.amount !== undefined ? dto.amount : Number(existing.amount);
       if (dto.details && dto.details.length > 0) {
-        calculatedAmount = dto.details.reduce((sum, d) => sum + ((d as any).grossAmount ?? d.amount ?? (d as any).disburseAmount ?? 0), 0);
+        calculatedAmount = dto.details.reduce((sum, detail) => sum + (detail.amount ?? detail.disburseAmount ?? 0), 0);
       }
       const targetStatus = dto.status ?? existing.status;
 
@@ -227,7 +245,7 @@ export class PettyCashReplenishmentService {
         where: { id: recordId },
         data: {
           branchUnitId,
-          transactionNo: dto.transactionNo ? cleanOptional(dto.transactionNo) ?? undefined : existing.transactionNo,
+          transactionNo: dto.transactionNo ? (cleanOptional(dto.transactionNo) ?? undefined) : existing.transactionNo,
           documentDate: dto.documentDate ? new Date(dto.documentDate) : existing.documentDate,
           partyId: resolvedReferences.party ? resolvedReferences.party.id : existing.partyId,
           partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? existing.partyCodeSnapshot,
@@ -236,8 +254,16 @@ export class PettyCashReplenishmentService {
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? existing.accountCodeSnapshot,
           accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? existing.accountTitleSnapshot,
           responsibilityCenterId: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.id : existing.responsibilityCenterId,
-          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.code : (dto.responsibilityCenterCode !== undefined ? (cleanOptional(dto.responsibilityCenterCode) ?? undefined) : (existing.responsibilityCenterCodeSnapshot ?? undefined)),
-          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.name : (dto.responsibilityCenter !== undefined ? (cleanOptional(dto.responsibilityCenter) ?? undefined) : (existing.responsibilityCenterSnapshot ?? undefined)),
+          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.code
+            : dto.responsibilityCenterCode !== undefined
+              ? (cleanOptional(dto.responsibilityCenterCode) ?? undefined)
+              : (existing.responsibilityCenterCodeSnapshot ?? undefined),
+          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.name
+            : dto.responsibilityCenter !== undefined
+              ? (cleanOptional(dto.responsibilityCenter) ?? undefined)
+              : (existing.responsibilityCenterSnapshot ?? undefined),
           projectCode: dto.projectCode !== undefined ? (cleanOptional(dto.projectCode) ?? undefined) : (existing.projectCode ?? undefined),
           projectName: dto.projectName !== undefined ? (cleanOptional(dto.projectName) ?? undefined) : (existing.projectName ?? undefined),
           currencyCode,
@@ -250,7 +276,7 @@ export class PettyCashReplenishmentService {
       });
 
       if (dto.details !== undefined) {
-        await tx.pettyCashReplenishmentDetail.deleteMany({ where: { replenishmentId: recordId } as any });
+        await tx.pettyCashReplenishmentDetail.deleteMany({ where: { replenishmentId: recordId } });
         if (dto.details.length > 0) {
           await this.createDetails(tx, companyId, branchUnitId, recordId, dto.details);
         }
@@ -262,17 +288,23 @@ export class PettyCashReplenishmentService {
       });
 
       if (this.isSubmittedStatus(targetStatus)) {
-        this.assertPettyCashReplenishmentReady(reloaded as any);
+        this.assertPettyCashReplenishmentReady(reloaded);
       }
 
-      return PettyCashReplenishmentMapper.toResponseDto(reloaded as any);
+      return PettyCashReplenishmentMapper.toResponseDto(reloaded);
     });
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdatePettyCashReplenishmentStatusDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, PettyCashReplenishmentModuleCode, PermissionAction.UPDATE, 'You do not have permission to update PettyCashReplenishment status.');
+    ensureModuleAction(
+      user,
+      companyId,
+      PettyCashReplenishmentModuleCode,
+      PermissionAction.UPDATE,
+      'You do not have permission to update PettyCashReplenishment status.',
+    );
 
     const recordId = parsePositiveBigIntId(id, 'PettyCashReplenishment ID');
     const existing = await this.prisma.pettyCashReplenishment.findFirst({
@@ -285,11 +317,11 @@ export class PettyCashReplenishmentService {
     }
 
     if (this.isSubmittedStatus(dto.status)) {
-      this.assertPettyCashReplenishmentReady(existing as any);
+      this.assertPettyCashReplenishmentReady(existing);
     }
 
     const now = new Date();
-    const statusData: any = {
+    const statusData: Prisma.PettyCashReplenishmentUncheckedUpdateInput = {
       status: dto.status,
       updatedByUserId: user.id,
     };
@@ -314,13 +346,19 @@ export class PettyCashReplenishmentService {
       include: PettyCashReplenishmentInclude,
     });
 
-    return PettyCashReplenishmentMapper.toResponseDto(updated as any);
+    return PettyCashReplenishmentMapper.toResponseDto(updated);
   }
 
   async remove(user: AuthUser, id: string) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, PettyCashReplenishmentModuleCode, PermissionAction.CANCEL, 'You do not have permission to cancel/delete PettyCashReplenishment records.');
+    ensureModuleAction(
+      user,
+      companyId,
+      PettyCashReplenishmentModuleCode,
+      PermissionAction.CANCEL,
+      'You do not have permission to cancel/delete PettyCashReplenishment records.',
+    );
 
     const recordId = parsePositiveBigIntId(id, 'PettyCashReplenishment ID');
     const existing = await this.prisma.pettyCashReplenishment.findFirst({
@@ -344,7 +382,9 @@ export class PettyCashReplenishmentService {
   }
 
   private isSubmittedStatus(status: PettyCashReplenishmentStatus) {
-    return status === PettyCashReplenishmentStatus.FOR_APPROVAL || status === PettyCashReplenishmentStatus.APPROVED || status === PettyCashReplenishmentStatus.POSTED;
+    return (
+      status === PettyCashReplenishmentStatus.FOR_APPROVAL || status === PettyCashReplenishmentStatus.APPROVED || status === PettyCashReplenishmentStatus.POSTED
+    );
   }
 
   private assertPettyCashReplenishmentReady(record: {
@@ -355,7 +395,6 @@ export class PettyCashReplenishmentService {
     amount: Prisma.Decimal;
     details?: Array<{
       supplierNameSnapshot: string | null;
-      grossAmount: Prisma.Decimal;
       amount: Prisma.Decimal;
     }>;
   }) {
@@ -370,7 +409,7 @@ export class PettyCashReplenishmentService {
     }
 
     const details = record.details ?? [];
-    const validDetails = details.filter((detail) => detail.supplierNameSnapshot?.trim() && Number(detail.grossAmount ?? detail.amount) > 0);
+    const validDetails = details.filter((detail) => detail.supplierNameSnapshot?.trim() && Number(detail.amount) > 0);
     if (validDetails.length === 0) {
       throw new BadRequestException('Add at least one detail row with a supplier and non-zero gross amount before submitting this Petty Cash Replenishment.');
     }
@@ -389,7 +428,7 @@ export class PettyCashReplenishmentService {
       const amount = line.amount ?? line.disburseAmount ?? 0;
       const vatAmount = line.vatAmount ?? 0;
       const ewtAmount = line.ewtAmount ?? 0;
-      const netAmount = line.netAmount ?? (amount - ewtAmount);
+      const netAmount = line.netAmount ?? amount - ewtAmount;
       const disburseAmount = line.disburseAmount ?? amount;
 
       let detailPartyId: bigint | null = null;
@@ -432,7 +471,11 @@ export class PettyCashReplenishmentService {
     }
   }
 
-  private buildListWhere(companyId: number, branchUnitId: number | null, query: GetPettyCashReplenishmentListQueryDto): Prisma.PettyCashReplenishmentWhereInput {
+  private buildListWhere(
+    companyId: number,
+    branchUnitId: number | null,
+    query: GetPettyCashReplenishmentListQueryDto,
+  ): Prisma.PettyCashReplenishmentWhereInput {
     const where: Prisma.PettyCashReplenishmentWhereInput = {
       companyId,
       deletedAt: null,
@@ -490,7 +533,6 @@ export class PettyCashReplenishmentService {
     const sortBy = query.sortBy ?? 'createdAt';
 
     switch (sortBy) {
-      case 'transactionNo':
       case 'transactionNo':
       case 'voucherNo':
         return [{ transactionNo: sortOrder }, { id: 'desc' }];

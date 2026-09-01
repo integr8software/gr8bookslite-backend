@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -33,60 +33,70 @@ export class ChartOfAccountsController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get list of chart of account records' })
   @ApiOkResponse({ type: ChartAccountListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
     return this.chartOfAccountsService.findAll(user, query);
   }
 
   @Get('options')
+  @ApiOperation({ summary: 'Get chart of account options' })
   @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
     return this.chartOfAccountsLookupService.findAllOptionsForCompanyUser(user, query);
   }
 
   @Get('options/posting-accounts')
+  @ApiOperation({ summary: 'Get posting chart of account options' })
   @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
   findPostingAccounts(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
     return this.chartOfAccountsLookupService.findPostingOptionsForCompanyUser(user, query);
   }
 
   @Get('options/all-accounts')
+  @ApiOperation({ summary: 'Get all chart of account options' })
   @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
   findAllAccounts(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
     return this.chartOfAccountsLookupService.findAllOptionsForCompanyUser(user, query);
   }
 
   @Get('tree')
+  @ApiOperation({ summary: 'Get chart of accounts tree' })
   @ApiOkResponse({ type: ChartAccountTreeResponseDto })
   findTree(@CurrentUser() user: AuthUser) {
     return this.chartOfAccountsService.findTree(user);
   }
 
   @Get('next-code')
+  @ApiOperation({ summary: 'Get next chart of account code' })
   @ApiOkResponse({ type: ChartAccountNextCodeResponseDto })
   findNextCode(@CurrentUser() user: AuthUser, @Query() query: GetNextChartAccountCodeQueryDto) {
     return this.chartOfAccountsService.findNextCode(user, query);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get chart of account details by ID' })
   @ApiOkResponse({ type: ChartAccountContainerResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.chartOfAccountsService.findOne(user, id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a chart of account record' })
   @ApiCreatedResponse({ type: ChartAccountSaveResponseDto })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateChartAccountDto) {
     return this.chartOfAccountsService.create(user, dto);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a chart of account record' })
   @ApiOkResponse({ type: ChartAccountSaveResponseDto })
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateChartAccountDto) {
     return this.chartOfAccountsService.update(user, id, dto);
   }
 
   @Patch(':id/status')
+  @ApiOperation({ summary: 'Update chart of account status' })
   @ApiOkResponse({ type: ChartAccountSaveResponseDto })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateChartAccountStatusDto) {
     return this.chartOfAccountsService.updateStatus(user, id, dto);

@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  ItemAttributeStatus as ItemVariationStatus,
-  ItemAttributeValueStatus as ItemVariationValueStatus,
-} from '@prisma/client';
+import { ItemAttributeStatus as ItemVariationStatus, ItemAttributeValueStatus as ItemVariationValueStatus } from '@prisma/client';
 import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../../prisma/prisma.service';
 

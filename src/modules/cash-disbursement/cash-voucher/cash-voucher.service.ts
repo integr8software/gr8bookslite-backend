@@ -36,7 +36,7 @@ import { UpdateCashVoucherStatusDto } from './dto/update-cash-voucher-status.dto
 import { mapCashVoucher } from './mappers/cash-voucher.mapper';
 import { CashVoucherInclude } from './prisma/cash-voucher.include';
 import { CashVoucherAccountingService, CashVoucherReferenceType } from './services/cash-voucher-accounting.service';
-import { CashVoucherModuleCode } from './services/cash-voucher-lookup.service';
+export const CashVoucherModuleCode = 'CV';
 import type { CashVoucherJournalEntry, CashVoucherWithDetails } from './types/cash-voucher-with-details.type';
 import { roundCurrency } from './utils/cash-voucher-totals.util';
 
@@ -150,14 +150,8 @@ export class CashVoucherService {
     return {
       branchUnitId,
       inputMode: suggestion.inputMode,
-      nextTransNo: suggestion.transactionNumber,
       transactionNo: suggestion.transactionNumber,
     };
-  }
-
-  async getNextTransactionNo(user: AuthUser) {
-    const suggestion = await this.suggestTransactionNumber(user);
-    return { nextTransNo: suggestion.nextTransNo };
   }
 
   async create(user: AuthUser, dto: CreateCashVoucherDto) {
@@ -284,16 +278,18 @@ export class CashVoucherService {
       });
       this.accountingService.validateSubmittedPayload({
         currencyCode: normalized.currencyCode,
-        details: dto.details ?? current.details.map((detail, index) => ({
-          lineNumber: detail.lineNumber || index + 1,
-          accountId: detail.accountId?.toString(),
-          accountCode: detail.accountCodeSnapshot,
-          accountTitle: detail.accountTitleSnapshot,
-          debit: Number(detail.debit),
-          credit: Number(detail.credit),
-          grossAmount: Number(detail.grossAmount),
-          disburseAmount: Number(detail.disburseAmount),
-        })),
+        details:
+          dto.details ??
+          current.details.map((detail, index) => ({
+            lineNumber: detail.lineNumber || index + 1,
+            accountId: detail.accountId?.toString(),
+            accountCode: detail.accountCodeSnapshot,
+            accountTitle: detail.accountTitleSnapshot,
+            debit: Number(detail.debit),
+            credit: Number(detail.credit),
+            grossAmount: Number(detail.grossAmount),
+            disburseAmount: Number(detail.disburseAmount),
+          })),
         exchangeRate: normalized.exchangeRate,
         journalEntries: dto.journalEntries,
         voucherAmount: normalized.amount,
@@ -408,11 +404,7 @@ export class CashVoucherService {
       };
     }
 
-    if (
-      targetStatus === CashVoucherStatus.FOR_APPROVAL ||
-      targetStatus === CashVoucherStatus.APPROVED ||
-      targetStatus === CashVoucherStatus.POSTED
-    ) {
+    if (targetStatus === CashVoucherStatus.FOR_APPROVAL || targetStatus === CashVoucherStatus.APPROVED || targetStatus === CashVoucherStatus.POSTED) {
       this.validateSubmittedHeader({
         partyCode: current.partyCodeSnapshot,
         partyName: current.partyNameSnapshot,

@@ -6,12 +6,11 @@ import { AuthModule } from '../../auth/auth.module';
 import { TablePreferencesModule } from '../../table-preferences/table-preferences.module';
 import { RevolvingFundController } from './revolving-fund.controller';
 import { RevolvingFundService } from './revolving-fund.service';
-import { RevolvingFundLookupService } from './services/revolving-fund-lookup.service';
 
 @Module({
   imports: [PrismaModule, AccessControlModule, AuthModule, CompanyCurrencyModule, TablePreferencesModule],
   controllers: [RevolvingFundController],
-  providers: [RevolvingFundService, RevolvingFundLookupService],
-  exports: [RevolvingFundService, RevolvingFundLookupService],
+  providers: [RevolvingFundService],
+  exports: [RevolvingFundService],
 })
 export class RevolvingFundModule {}

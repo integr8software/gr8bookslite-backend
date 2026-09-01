@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ChartAccount, CompanyUnitType, Party, PartyAddress, PettyCashFundStatus, Prisma, ResponsibilityCenter } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
@@ -20,7 +20,7 @@ import { UpdatePettyCashFundDto } from './dto/update-petty-cash-fund.dto';
 import { UpdatePettyCashFundStatusDto } from './dto/update-petty-cash-fund-status.dto';
 import { PettyCashFundMapper } from './mappers/petty-cash-fund.mapper';
 import { PettyCashFundInclude } from './prisma/petty-cash-fund.include';
-import { PettyCashFundModuleCode } from './services/petty-cash-fund-lookup.service';
+export const PettyCashFundModuleCode = 'PCF';
 
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
@@ -57,7 +57,7 @@ export class PettyCashFundService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      items: records.map((record) => PettyCashFundMapper.toResponseDto(record as any)),
+      items: records.map((record) => PettyCashFundMapper.toResponseDto(record)),
       meta: {
         page,
         limit,
@@ -84,7 +84,7 @@ export class PettyCashFundService {
       throw new NotFoundException(`PettyCashFund #${id} not found.`);
     }
 
-    return PettyCashFundMapper.toResponseDto(record as any);
+    return PettyCashFundMapper.toResponseDto(record);
   }
 
   async suggestTransactionNumber(user: AuthUser, branchUnitId?: number) {
@@ -101,7 +101,6 @@ export class PettyCashFundService {
     return {
       branchUnitId: resolvedBranchId,
       inputMode: suggestion.inputMode,
-      nextTransNo: suggestion.transactionNumber,
       transactionNo: suggestion.transactionNumber,
     };
   }
@@ -115,7 +114,7 @@ export class PettyCashFundService {
     const resolvedReferences = await this.resolveReferences(companyId, dto);
 
     return this.prisma.$transaction(async (tx) => {
-      const inputNo = cleanOptional((dto as any).voucherNo ?? (dto as any).transactionNo);
+      const inputNo = cleanOptional(dto.transactionNo);
       const assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
         branchUnitId,
         companyId,
@@ -124,7 +123,7 @@ export class PettyCashFundService {
       });
 
       const existing = await tx.pettyCashFund.findFirst({
-        where: { companyId, transactionNo: assignedNo, deletedAt: null } as any,
+        where: { companyId, transactionNo: assignedNo, deletedAt: null },
       });
       if (existing) {
         throw new ConflictException(`PettyCashFund number "${assignedNo}" already exists.`);
@@ -134,7 +133,7 @@ export class PettyCashFundService {
 
       let calculatedAmount = dto.amount ?? 0;
       if (dto.details && dto.details.length > 0) {
-        calculatedAmount = dto.details.reduce((sum, d) => sum + ((d as any).grossAmount ?? d.amount ?? (d as any).disburseAmount ?? 0), 0);
+        calculatedAmount = dto.details.reduce((sum, detail) => sum + (detail.grossAmount ?? detail.amount ?? detail.disburseAmount ?? 0), 0);
       }
       const targetStatus = dto.status ?? PettyCashFundStatus.DRAFT;
 
@@ -163,7 +162,7 @@ export class PettyCashFundService {
           exchangeRate: dto.exchangeRate ?? 1.0,
           amount: calculatedAmount,
           remarks: cleanOptional(dto.remarks) ?? undefined,
-          status: targetStatus as any,
+          status: targetStatus,
           createdByUserId: user.id,
         },
       });
@@ -178,10 +177,10 @@ export class PettyCashFundService {
       });
 
       if (this.isSubmittedStatus(targetStatus)) {
-        this.assertPettyCashFundReady(reloaded as any);
+        this.assertPettyCashFundReady(reloaded);
       }
 
-      return PettyCashFundMapper.toResponseDto(reloaded as any);
+      return PettyCashFundMapper.toResponseDto(reloaded);
     });
   }
 
@@ -214,7 +213,7 @@ export class PettyCashFundService {
 
       let calculatedAmount = dto.amount !== undefined ? dto.amount : Number(existing.amount);
       if (dto.details && dto.details.length > 0) {
-        calculatedAmount = dto.details.reduce((sum, d) => sum + ((d as any).grossAmount ?? d.amount ?? (d as any).disburseAmount ?? 0), 0);
+        calculatedAmount = dto.details.reduce((sum, detail) => sum + (detail.grossAmount ?? detail.amount ?? detail.disburseAmount ?? 0), 0);
       }
       const targetStatus = dto.status ?? existing.status;
 
@@ -253,7 +252,7 @@ export class PettyCashFundService {
       });
 
       if (dto.details !== undefined) {
-        await tx.pettyCashFundDetail.deleteMany({ where: { fundId: recordId } as any });
+        await tx.pettyCashFundDetail.deleteMany({ where: { fundId: recordId } });
         if (dto.details.length > 0) {
           await this.createDetails(tx, companyId, branchUnitId, recordId, dto.details);
         }
@@ -265,10 +264,10 @@ export class PettyCashFundService {
       });
 
       if (this.isSubmittedStatus(targetStatus)) {
-        this.assertPettyCashFundReady(reloaded as any);
+        this.assertPettyCashFundReady(reloaded);
       }
 
-      return PettyCashFundMapper.toResponseDto(reloaded as any);
+      return PettyCashFundMapper.toResponseDto(reloaded);
     });
   }
 
@@ -288,11 +287,11 @@ export class PettyCashFundService {
     }
 
     if (this.isSubmittedStatus(dto.status)) {
-      this.assertPettyCashFundReady(existing as any);
+      this.assertPettyCashFundReady(existing);
     }
 
     const now = new Date();
-    const statusData: any = {
+    const statusData: Prisma.PettyCashFundUncheckedUpdateInput = {
       status: dto.status,
       updatedByUserId: user.id,
     };
@@ -317,7 +316,7 @@ export class PettyCashFundService {
       include: PettyCashFundInclude,
     });
 
-    return PettyCashFundMapper.toResponseDto(updated as any);
+    return PettyCashFundMapper.toResponseDto(updated);
   }
 
   async remove(user: AuthUser, id: string) {
@@ -491,7 +490,6 @@ export class PettyCashFundService {
     const sortBy = query.sortBy ?? 'createdAt';
 
     switch (sortBy) {
-      case 'transactionNo':
       case 'transactionNo':
       case 'voucherNo':
         return [{ transactionNo: sortOrder }, { id: 'desc' }];

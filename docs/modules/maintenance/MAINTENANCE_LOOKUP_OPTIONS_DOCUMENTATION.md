@@ -72,6 +72,20 @@ Recommended mapping rules:
 - Keep domain-specific fields in `meta` so dependent forms can read values such as `period`, `classification`, `valueType`, `typeName`, or `accountGroupPath`.
 - Prefer resource-specific `options/:type` routes when the UI already knows the option category. Use query filters when the category is user-selectable.
 
+### Cash Disbursement Consumers
+
+Cash-disbursement modules must consume these maintenance option APIs directly. They must not expose or maintain module-specific copies of party, chart-account, responsibility-center, term, default-account, or other maintenance lookups.
+
+| Cash-disbursement data | Maintenance endpoint |
+| --- | --- |
+| Parties | `GET /api/v1/maintenance/party-maintenance/options` |
+| Posting accounts | `GET /api/v1/maintenance/chart-of-accounts/options/posting-accounts` |
+| Responsibility centers | `GET /api/v1/maintenance/financial-management/responsibility-centers/options` |
+| Terms | `GET /api/v1/maintenance/terms-maintenance/options` |
+| Expense account templates | `GET /api/v1/maintenance/financial-management/default-accounts/options/expense` |
+
+Transaction-specific operations such as transaction-number suggestions remain on their owning transaction API; they are not maintenance lookups.
+
 ## Option Endpoint Inventory
 
 | Area | Endpoint | Response key | Main option fields |
@@ -88,7 +102,7 @@ Recommended mapping rules:
 | Form Signatories | `GET /api/v1/maintenance/form-signatories/options` | `branches`, `modules` | Branch/unit options and signatory module options |
 | Item Categories | `GET /api/v1/maintenance/item-categories/options` | `categories` | `id`, `code`, `name`, accounting setup fields |
 | Item Variations | `GET /api/v1/maintenance/item-variations/options` | `variations` | `id`, `code`, `name`, `usage`, `requiredOnItem`, `affectsStock`, `values` |
-| Party Maintenance | `GET /api/v1/maintenance/party-maintenance/options` | `parties` | Party identity, type, contact, address, accounting summary fields |
+| Party Maintenance | `GET /api/v1/maintenance/party-maintenance/options` | `parties` | Party identity, type, contact, address, accounting summary, and cash-advance availability fields |
 | Party Maintenance | `GET /api/v1/maintenance/party-maintenance/options/:partyType` | `parties` | Parties filtered by type |
 | Payment Type Maintenance | `GET /api/v1/maintenance/payment-type-maintenance/options` | `paymentTypes` | `id`, `name`, `classification`, `sortOrder`, `status` |
 | Payment Type Maintenance | `GET /api/v1/maintenance/payment-type-maintenance/options/:type` | `paymentTypes` | Payment types filtered by classification/type |

@@ -1,13 +1,5 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  ChartAccount,
-  CompanyUnitType,
-  Party,
-  PartyAddress,
-  PettyCashVoucherStatus,
-  Prisma,
-  ResponsibilityCenter,
-} from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ChartAccount, CompanyUnitType, Party, PartyAddress, PettyCashVoucherStatus, Prisma, ResponsibilityCenter } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -28,7 +20,7 @@ import { UpdatePettyCashVoucherDto } from './dto/update-petty-cash-voucher.dto';
 import { UpdatePettyCashVoucherStatusDto } from './dto/update-petty-cash-voucher-status.dto';
 import { PettyCashVoucherMapper } from './mappers/petty-cash-voucher.mapper';
 import { PettyCashVoucherInclude } from './prisma/petty-cash-voucher.include';
-import { PettyCashVoucherModuleCode } from './services/petty-cash-voucher-lookup.service';
+export const PettyCashVoucherModuleCode = 'PCV';
 
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
@@ -65,7 +57,7 @@ export class PettyCashVoucherService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      items: records.map((record) => PettyCashVoucherMapper.toResponseDto(record as any)),
+      items: records.map((record) => PettyCashVoucherMapper.toResponseDto(record)),
       meta: {
         page,
         limit,
@@ -92,10 +84,10 @@ export class PettyCashVoucherService {
       throw new NotFoundException(`PettyCashVoucher #${id} not found.`);
     }
 
-    return PettyCashVoucherMapper.toResponseDto(record as any);
+    return PettyCashVoucherMapper.toResponseDto(record);
   }
 
-  async suggestVoucherNumber(user: AuthUser, branchUnitId?: number) {
+  async suggestTransactionNumber(user: AuthUser, branchUnitId?: number) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
     const resolvedBranchId = await this.resolveBranchUnitId(companyId, branchUnitId);
@@ -109,7 +101,6 @@ export class PettyCashVoucherService {
     return {
       branchUnitId: resolvedBranchId,
       inputMode: suggestion.inputMode,
-      nextTransNo: suggestion.transactionNumber,
       transactionNo: suggestion.transactionNumber,
     };
   }
@@ -123,7 +114,7 @@ export class PettyCashVoucherService {
     const resolvedReferences = await this.resolveReferences(companyId, dto);
 
     return this.prisma.$transaction(async (tx) => {
-      const inputNo = cleanOptional((dto as any).voucherNo ?? (dto as any).transactionNo);
+      const inputNo = cleanOptional(dto.voucherNo ?? dto.transactionNo);
       const assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
         branchUnitId,
         companyId,
@@ -132,7 +123,7 @@ export class PettyCashVoucherService {
       });
 
       const existing = await tx.pettyCashVoucher.findFirst({
-        where: { companyId, voucherNo: assignedNo, deletedAt: null } as any,
+        where: { companyId, voucherNo: assignedNo, deletedAt: null },
       });
       if (existing) {
         throw new ConflictException(`PettyCashVoucher number "${assignedNo}" already exists.`);
@@ -143,7 +134,7 @@ export class PettyCashVoucherService {
       const grossAmount = dto.grossAmount ?? dto.amount ?? 0;
       const vatAmount = dto.vatAmount ?? 0;
       const ewtAmount = dto.ewtAmount ?? 0;
-      const netAmount = dto.netAmount ?? (grossAmount - ewtAmount);
+      const netAmount = dto.netAmount ?? grossAmount - ewtAmount;
       const amount = dto.amount ?? netAmount;
       const targetStatus = dto.status ?? PettyCashVoucherStatus.DRAFT;
 
@@ -170,8 +161,12 @@ export class PettyCashVoucherService {
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? '',
           accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? '',
           responsibilityCenterId: resolvedReferences.responsibilityCenter?.id ?? null,
-          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.code : (cleanOptional(dto.responsibilityCenterCode) ?? undefined),
-          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.name : (cleanOptional(dto.responsibilityCenter) ?? undefined),
+          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.code
+            : (cleanOptional(dto.responsibilityCenterCode) ?? undefined),
+          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.name
+            : (cleanOptional(dto.responsibilityCenter) ?? undefined),
           projectCode: cleanOptional(dto.projectCode) ?? undefined,
           projectName: cleanOptional(dto.projectName) ?? undefined,
           currencyCode,
@@ -199,7 +194,7 @@ export class PettyCashVoucherService {
         include: PettyCashVoucherInclude,
       });
 
-      return PettyCashVoucherMapper.toResponseDto(reloaded as any);
+      return PettyCashVoucherMapper.toResponseDto(reloaded);
     });
   }
 
@@ -222,19 +217,18 @@ export class PettyCashVoucherService {
       throw new BadRequestException(`Cannot update a PettyCashVoucher in ${existing.status} status.`);
     }
 
-    const branchUnitId = dto.branchUnitId !== undefined
-      ? await this.resolveBranchUnitId(companyId, dto.branchUnitId)
-      : existing.branchUnitId;
+    const branchUnitId = dto.branchUnitId !== undefined ? await this.resolveBranchUnitId(companyId, dto.branchUnitId) : existing.branchUnitId;
 
     const resolvedReferences = await this.resolveReferences(companyId, dto as CreatePettyCashVoucherDto);
 
     return this.prisma.$transaction(async (tx) => {
-      const currencyCode = dto.currencyCode || dto.currency ? (cleanCurrencyCode(dto.currencyCode ?? dto.currency ?? 'PHP') ?? existing.currencyCode) : existing.currencyCode;
+      const currencyCode =
+        dto.currencyCode || dto.currency ? (cleanCurrencyCode(dto.currencyCode ?? dto.currency ?? 'PHP') ?? existing.currencyCode) : existing.currencyCode;
 
       const grossAmount = dto.grossAmount ?? (dto.amount !== undefined ? dto.amount : Number(existing.grossAmount));
       const vatAmount = dto.vatAmount ?? Number(existing.vatAmount);
       const ewtAmount = dto.ewtAmount ?? Number(existing.ewtAmount);
-      const netAmount = dto.netAmount ?? (grossAmount - ewtAmount);
+      const netAmount = dto.netAmount ?? grossAmount - ewtAmount;
       const amount = dto.amount ?? netAmount;
       const targetStatus = dto.status ?? existing.status;
 
@@ -252,7 +246,7 @@ export class PettyCashVoucherService {
         where: { id: recordId },
         data: {
           branchUnitId,
-          voucherNo: dto.voucherNo ? cleanOptional(dto.voucherNo) ?? undefined : existing.voucherNo,
+          voucherNo: dto.voucherNo ? (cleanOptional(dto.voucherNo) ?? undefined) : existing.voucherNo,
           documentDate: dto.documentDate ? new Date(dto.documentDate) : existing.documentDate,
           partyId: resolvedReferences.party ? resolvedReferences.party.id : existing.partyId,
           partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? existing.partyCodeSnapshot,
@@ -261,8 +255,16 @@ export class PettyCashVoucherService {
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? existing.accountCodeSnapshot,
           accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? existing.accountTitleSnapshot,
           responsibilityCenterId: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.id : existing.responsibilityCenterId,
-          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.code : (dto.responsibilityCenterCode !== undefined ? (cleanOptional(dto.responsibilityCenterCode) ?? undefined) : (existing.responsibilityCenterCodeSnapshot ?? undefined)),
-          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.name : (dto.responsibilityCenter !== undefined ? (cleanOptional(dto.responsibilityCenter) ?? undefined) : (existing.responsibilityCenterSnapshot ?? undefined)),
+          responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.code
+            : dto.responsibilityCenterCode !== undefined
+              ? (cleanOptional(dto.responsibilityCenterCode) ?? undefined)
+              : (existing.responsibilityCenterCodeSnapshot ?? undefined),
+          responsibilityCenterSnapshot: resolvedReferences.responsibilityCenter
+            ? resolvedReferences.responsibilityCenter.name
+            : dto.responsibilityCenter !== undefined
+              ? (cleanOptional(dto.responsibilityCenter) ?? undefined)
+              : (existing.responsibilityCenterSnapshot ?? undefined),
           projectCode: dto.projectCode !== undefined ? (cleanOptional(dto.projectCode) ?? undefined) : (existing.projectCode ?? undefined),
           projectName: dto.projectName !== undefined ? (cleanOptional(dto.projectName) ?? undefined) : (existing.projectName ?? undefined),
           currencyCode,
@@ -290,7 +292,7 @@ export class PettyCashVoucherService {
         include: PettyCashVoucherInclude,
       });
 
-      return PettyCashVoucherMapper.toResponseDto(reloaded as any);
+      return PettyCashVoucherMapper.toResponseDto(reloaded);
     });
   }
 
@@ -314,7 +316,7 @@ export class PettyCashVoucherService {
     }
 
     const now = new Date();
-    const statusData: any = {
+    const statusData: Prisma.PettyCashVoucherUncheckedUpdateInput = {
       status: dto.status,
       updatedByUserId: user.id,
     };
@@ -339,13 +341,19 @@ export class PettyCashVoucherService {
       include: PettyCashVoucherInclude,
     });
 
-    return PettyCashVoucherMapper.toResponseDto(updated as any);
+    return PettyCashVoucherMapper.toResponseDto(updated);
   }
 
   async remove(user: AuthUser, id: string) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
-    ensureModuleAction(user, companyId, PettyCashVoucherModuleCode, PermissionAction.CANCEL, 'You do not have permission to cancel/delete PettyCashVoucher records.');
+    ensureModuleAction(
+      user,
+      companyId,
+      PettyCashVoucherModuleCode,
+      PermissionAction.CANCEL,
+      'You do not have permission to cancel/delete PettyCashVoucher records.',
+    );
 
     const recordId = parsePositiveBigIntId(id, 'PettyCashVoucher ID');
     const existing = await this.prisma.pettyCashVoucher.findFirst({
@@ -450,7 +458,6 @@ export class PettyCashVoucherService {
     switch (sortBy) {
       case 'voucherNo':
       case 'transactionNo':
-      case 'voucherNo':
         return [{ voucherNo: sortOrder }, { id: 'desc' }];
       case 'documentDate':
         return [{ documentDate: sortOrder }, { id: 'desc' }];

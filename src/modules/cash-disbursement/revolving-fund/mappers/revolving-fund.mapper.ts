@@ -1,9 +1,6 @@
 import { RevolvingFundDetailDto } from '../dto/revolving-fund-detail.dto';
 import { RevolvingFundResponseDto } from '../dto/revolving-fund-response.dto';
-import {
-  RevolvingFundDetailWithRelations,
-  RevolvingFundWithDetails,
-} from '../types/revolving-fund-with-details.type';
+import { RevolvingFundDetailWithRelations, RevolvingFundWithDetails } from '../types/revolving-fund-with-details.type';
 
 export class RevolvingFundMapper {
   static toResponseDto(record: RevolvingFundWithDetails): RevolvingFundResponseDto {

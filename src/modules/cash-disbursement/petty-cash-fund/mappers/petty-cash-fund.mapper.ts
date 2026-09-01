@@ -1,9 +1,6 @@
 import { PettyCashFundDetailDto } from '../dto/petty-cash-fund-detail.dto';
 import { PettyCashFundResponseDto } from '../dto/petty-cash-fund-response.dto';
-import {
-  PettyCashFundDetailWithRelations,
-  PettyCashFundWithDetails,
-} from '../types/petty-cash-fund-with-details.type';
+import { PettyCashFundDetailWithRelations, PettyCashFundWithDetails } from '../types/petty-cash-fund-with-details.type';
 
 export class PettyCashFundMapper {
   static toResponseDto(record: PettyCashFundWithDetails): PettyCashFundResponseDto {

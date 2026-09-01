@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -32,36 +32,42 @@ export class UnitOfMeasurementController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get paginated list of unit of measurement records' })
   @ApiOkResponse({ type: UnitOfMeasurementListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetUnitOfMeasurementListQueryDto) {
     return this.unitOfMeasurementService.findAll(user, query);
   }
 
   @Get('options')
+  @ApiOperation({ summary: 'Get unit of measurement options' })
   @ApiOkResponse({ type: UnitOfMeasurementOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: UnitOfMeasurementLookupQueryDto) {
     return this.unitOfMeasurementLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get unit of measurement details by ID' })
   @ApiOkResponse({ type: UnitOfMeasurementContainerResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.unitOfMeasurementService.findOne(user, id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a unit of measurement record' })
   @ApiCreatedResponse({ type: SaveUnitOfMeasurementResponseDto })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateUnitOfMeasurementDto) {
     return this.unitOfMeasurementService.create(user, dto);
   }
 
   @Post('import')
+  @ApiOperation({ summary: 'Import unit of measurement records' })
   @ApiCreatedResponse({ type: ImportUnitOfMeasurementsResponseDto })
   importUnits(@CurrentUser() user: AuthUser, @Body() dto: ImportUnitOfMeasurementsDto) {
     return this.unitOfMeasurementService.importUnits(user, dto);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a unit of measurement record' })
   @ApiOkResponse({ type: SaveUnitOfMeasurementResponseDto })
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateUnitOfMeasurementDto) {
     return this.unitOfMeasurementService.update(user, id, dto);

@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuard
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/transaction-number-suggestion-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CashAdvanceMultipleEntryService } from './cash-advance-multiple-entry.service';
 import {
@@ -28,12 +29,15 @@ export class CashAdvanceMultipleEntryController {
     return this.service.findAll(user, query);
   }
 
-  @Get('next-transaction-no')
-  @ApiOperation({ summary: 'Get the next CAME transaction number' })
-  @ApiOkResponse({ description: 'Next transaction number.' })
+  @Get('transaction-number')
+  @ApiOperation({ summary: 'Suggest a cash advance multiple-entry transaction number' })
+  @ApiOkResponse({
+    description: 'Cash advance multiple-entry transaction number retrieved.',
+    type: TransactionNumberSuggestionResponseDto,
+  })
   @ApiQuery({ name: 'branchUnitId', required: false, type: Number })
-  getNextTransactionNo(@CurrentUser() user: AuthUser, @Query('branchUnitId') branchUnitId?: string) {
-    return this.service.getNextTransactionNo(user, branchUnitId);
+  suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query('branchUnitId') branchUnitId?: string) {
+    return this.service.suggestTransactionNumber(user, branchUnitId);
   }
 
   @Get(':id')

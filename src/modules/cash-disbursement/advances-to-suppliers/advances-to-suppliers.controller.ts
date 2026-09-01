@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } f
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
+import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/transaction-number-suggestion-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AdvancesToSuppliersService } from './advances-to-suppliers.service';
 import { AdvanceToSupplierListResponseDto, AdvanceToSupplierResponseDto } from './dto/advance-to-supplier-response.dto';
@@ -10,7 +11,7 @@ import { GetAdvanceToSupplierListQueryDto } from './dto/get-advance-to-supplier-
 import { UpdateAdvanceToSupplierStatusDto } from './dto/update-advance-to-supplier-status.dto';
 import { UpdateAdvanceToSupplierDto } from './dto/update-advance-to-supplier.dto';
 
-@ApiTags('Cash Disbursement - Advances To Suppliers')
+@ApiTags('Advances To Suppliers')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller({
@@ -20,32 +21,11 @@ import { UpdateAdvanceToSupplierDto } from './dto/update-advance-to-supplier.dto
 export class AdvancesToSuppliersController {
   constructor(private readonly service: AdvancesToSuppliersService) {}
 
-  @Get('lookups/parties')
-  @ApiOperation({ summary: 'Get party options for Advances to Suppliers' })
-  @ApiOkResponse({ description: 'List of active party options' })
-  findParties(@CurrentUser() user: AuthUser) {
-    return this.service.findParties(user);
-  }
-
-  @Get('lookups/responsibility-centers')
-  @ApiOperation({ summary: 'Get responsibility center options for Advances to Suppliers' })
-  @ApiOkResponse({ description: 'List of active responsibility centers' })
-  findResponsibilityCenters(@CurrentUser() user: AuthUser) {
-    return this.service.findResponsibilityCenters(user);
-  }
-
-  @Get('lookups/posting-accounts')
-  @ApiOperation({ summary: 'Get posting chart of account options for Advances to Suppliers' })
-  @ApiOkResponse({ description: 'List of active posting accounts' })
-  findPostingAccounts(@CurrentUser() user: AuthUser) {
-    return this.service.findPostingAccounts(user);
-  }
-
-  @Get('lookups/suggest-transaction-no')
-  @ApiOperation({ summary: 'Suggest next Advances to Suppliers sequence number' })
-  @ApiOkResponse({ description: 'Next transaction number' })
+  @Get('transaction-number')
+  @ApiOperation({ summary: 'Suggest an Advances to Suppliers transaction number' })
+  @ApiOkResponse({ description: 'Advances to Suppliers transaction number retrieved.', type: TransactionNumberSuggestionResponseDto })
   @ApiQuery({ name: 'branchUnitId', required: false, type: Number })
-  suggestTransactionNo(@CurrentUser() user: AuthUser, @Query('branchUnitId') branchUnitId?: string) {
+  suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query('branchUnitId') branchUnitId?: string) {
     return this.service.suggestTransactionNumber(user, branchUnitId);
   }
 

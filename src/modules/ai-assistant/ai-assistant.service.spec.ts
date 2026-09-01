@@ -12,18 +12,7 @@ describe('AiAssistantService', () => {
     id: 42,
     companyId: 1,
     enabledModules: ['APV', 'BBU', 'DVMR', 'FA', 'PR', 'SI', 'TM'],
-    permissions: [
-      'APV:view',
-      'BBU:view',
-      'DVMR:view',
-      'FA:view',
-      'PR:view',
-      'PR:create',
-      'SI:view',
-      'TM:view',
-      'TM:create',
-      'TM:update',
-    ],
+    permissions: ['APV:view', 'BBU:view', 'DVMR:view', 'FA:view', 'PR:view', 'PR:create', 'SI:view', 'TM:view', 'TM:create', 'TM:update'],
   } as AuthUser;
   const createService = (apiKey?: string) => {
     const accessControlService = {

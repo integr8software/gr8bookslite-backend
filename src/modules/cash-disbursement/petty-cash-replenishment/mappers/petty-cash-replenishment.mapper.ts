@@ -1,9 +1,6 @@
 import { PettyCashReplenishmentDetailDto } from '../dto/petty-cash-replenishment-detail.dto';
 import { PettyCashReplenishmentResponseDto } from '../dto/petty-cash-replenishment-response.dto';
-import {
-  PettyCashReplenishmentDetailWithRelations,
-  PettyCashReplenishmentWithDetails,
-} from '../types/petty-cash-replenishment-with-details.type';
+import { PettyCashReplenishmentDetailWithRelations, PettyCashReplenishmentWithDetails } from '../types/petty-cash-replenishment-with-details.type';
 
 export class PettyCashReplenishmentMapper {
   static toResponseDto(record: PettyCashReplenishmentWithDetails): PettyCashReplenishmentResponseDto {

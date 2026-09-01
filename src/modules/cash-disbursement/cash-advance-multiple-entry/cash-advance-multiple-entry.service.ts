@@ -89,7 +89,7 @@ export class CashAdvanceMultipleEntryService {
     };
   }
 
-  async getNextTransactionNo(user: AuthUser, requestedBranchUnitId?: number | string) {
+  async suggestTransactionNumber(user: AuthUser, requestedBranchUnitId?: number | string) {
     const companyId = this.getActiveCompanyId(user);
     const branchUnitId = await this.resolveBranchUnitId(companyId, requestedBranchUnitId);
     const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
@@ -102,7 +102,6 @@ export class CashAdvanceMultipleEntryService {
     return {
       branchUnitId,
       inputMode: suggestion.inputMode,
-      nextTransNo: suggestion.transactionNumber,
       transactionNo: suggestion.transactionNumber,
     };
   }
@@ -241,12 +240,7 @@ export class CashAdvanceMultipleEntryService {
       status === CashAdvanceStatus.DRAFT
         ? ((dto.items ?? []).filter((item) => item.partyCode?.trim() || item.partyName?.trim() || item.amount?.trim()) ?? [])
         : (dto.items ?? []).filter((item) => item.partyCode?.trim() && item.partyName?.trim());
-    const validItems =
-      sourceItems.length > 0
-        ? sourceItems
-        : status === CashAdvanceStatus.DRAFT
-          ? [{ partyCode: '', partyName: '', amount: '0.00' }]
-          : [];
+    const validItems = sourceItems.length > 0 ? sourceItems : status === CashAdvanceStatus.DRAFT ? [{ partyCode: '', partyName: '', amount: '0.00' }] : [];
 
     if (validItems.length === 0) {
       throw new BadRequestException('Add at least one cash advance entry.');
@@ -417,7 +411,9 @@ export class CashAdvanceMultipleEntryService {
       throw new BadRequestException('Select a default account before submitting this Cash Advance Multiple Entry.');
     }
 
-    const validItems = (dto.items ?? []).filter((item) => item.partyCode?.trim() && item.partyName?.trim() && Number((item.amount ?? '0').replaceAll(',', '')) > 0);
+    const validItems = (dto.items ?? []).filter(
+      (item) => item.partyCode?.trim() && item.partyName?.trim() && Number((item.amount ?? '0').replaceAll(',', '')) > 0,
+    );
     if (validItems.length === 0) {
       throw new BadRequestException('Add at least one cash advance entry with a party and non-zero amount before submitting.');
     }

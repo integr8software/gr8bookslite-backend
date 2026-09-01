@@ -86,7 +86,6 @@ export class AdvancesToSuppliersService {
     return {
       branchUnitId,
       inputMode: suggestion.inputMode,
-      nextTransactionNo: suggestion.transactionNumber,
       transactionNo: suggestion.transactionNumber,
     };
   }
@@ -274,98 +273,6 @@ export class AdvancesToSuppliersService {
     });
 
     return { success: true, message: 'Advances to Suppliers record cancelled successfully.' };
-  }
-
-  async findParties(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    const parties = await this.prisma.party.findMany({
-      where: { companyId, deletedAt: null },
-      select: {
-        id: true,
-        partyCodeNo: true,
-        partyName: true,
-        tradeName: true,
-        firstName: true,
-        lastName: true,
-      },
-      orderBy: { partyCodeNo: 'asc' },
-    });
-
-    return {
-      parties: parties.map((party) => {
-        const partyName = party.partyName?.trim() || [party.firstName, party.lastName].filter(Boolean).join(' ') || party.tradeName || party.partyCodeNo;
-        return {
-          id: party.id.toString(),
-          partyId: party.id.toString(),
-          partyCode: party.partyCodeNo,
-          partyName,
-          label: party.partyCodeNo,
-          name: partyName,
-          value: party.partyCodeNo,
-        };
-      }),
-    };
-  }
-
-  async findPostingAccounts(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    const accounts = await this.prisma.chartAccount.findMany({
-      where: {
-        companyId,
-        deletedAt: null,
-        isPostingAccount: true,
-      },
-      select: {
-        id: true,
-        accountCode: true,
-        accountTitle: true,
-        accountType: true,
-        accountNature: true,
-      },
-      orderBy: { accountCode: 'asc' },
-    });
-
-    return {
-      accounts: accounts.map((account) => ({
-        id: account.id.toString(),
-        accountId: account.id.toString(),
-        accountCode: account.accountCode,
-        accountTitle: account.accountTitle,
-        accountType: account.accountType ?? null,
-        accountNature: account.accountNature ?? null,
-        label: account.accountCode,
-        name: account.accountTitle,
-        value: account.accountCode,
-      })),
-    };
-  }
-
-  async findResponsibilityCenters(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-    const centers = await this.prisma.responsibilityCenter.findMany({
-      where: { companyId, deletedAt: null },
-      select: {
-        id: true,
-        code: true,
-        name: true,
-        category: true,
-        type: { select: { name: true } },
-      },
-      orderBy: { code: 'asc' },
-    });
-
-    return {
-      responsibilityCenters: centers.map((center) => ({
-        id: center.id.toString(),
-        centerId: center.id.toString(),
-        code: center.code,
-        name: center.name,
-        category: center.category,
-        typeName: center.type.name,
-        label: center.code,
-        value: center.code,
-      })),
-    };
   }
 
   private buildListWhere(companyId: number, query: GetAdvanceToSupplierListQueryDto): Prisma.AdvanceToSupplierWhereInput {

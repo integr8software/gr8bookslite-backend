@@ -8,19 +8,11 @@ import { TransactionNumberSequencesModule } from '../../system-administration/tr
 import { CashVoucherController } from './cash-voucher.controller';
 import { CashVoucherService } from './cash-voucher.service';
 import { CashVoucherAccountingService } from './services/cash-voucher-accounting.service';
-import { CashVoucherLookupService } from './services/cash-voucher-lookup.service';
 
 @Module({
-  imports: [
-    PrismaModule,
-    CompanyCurrencyModule,
-    AccessControlModule,
-    AuthModule,
-    TablePreferencesModule,
-    TransactionNumberSequencesModule,
-  ],
+  imports: [PrismaModule, CompanyCurrencyModule, AccessControlModule, AuthModule, TablePreferencesModule, TransactionNumberSequencesModule],
   controllers: [CashVoucherController],
-  providers: [CashVoucherService, CashVoucherAccountingService, CashVoucherLookupService],
-  exports: [CashVoucherService, CashVoucherAccountingService, CashVoucherLookupService],
+  providers: [CashVoucherService, CashVoucherAccountingService],
+  exports: [CashVoucherService, CashVoucherAccountingService],
 })
 export class CashVoucherModule {}

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -33,47 +33,55 @@ export class BankMasterfileController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get paginated list of bank account records' })
   @ApiOkResponse({ type: BankAccountListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
     return this.bankMasterfileService.findAll(user, query);
   }
 
   @Get('options')
+  @ApiOperation({ summary: 'Get bank account options' })
   @ApiOkResponse({ type: BankAccountOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: GetBankAccountListQueryDto) {
     return this.bankMasterfileLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get('next-account-code')
+  @ApiOperation({ summary: 'Get next bank account code' })
   @ApiOkResponse({ type: BankNextAccountCodeResponseDto })
   getNextAccountCode(@CurrentUser() user: AuthUser) {
     return this.bankMasterfileService.getNextAccountCode(user);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get bank account details by ID' })
   @ApiOkResponse({ type: BankAccountContainerResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.bankMasterfileService.findOne(user, id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a bank account record' })
   @ApiCreatedResponse({ type: SaveBankAccountResponseDto })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateBankAccountDto) {
     return this.bankMasterfileService.create(user, dto);
   }
   @Post('import')
+  @ApiOperation({ summary: 'Import bank account records' })
   @ApiCreatedResponse({ type: ImportBankAccountsResponseDto })
   importBankAccounts(@CurrentUser() user: AuthUser, @Body() dto: ImportBankAccountsDto) {
     return this.bankMasterfileService.importBankAccounts(user, dto);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a bank account record' })
   @ApiOkResponse({ type: SaveBankAccountResponseDto })
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateBankAccountDto) {
     return this.bankMasterfileService.update(user, id, dto);
   }
 
   @Patch(':id/status')
+  @ApiOperation({ summary: 'Update bank account status' })
   @ApiOkResponse({ type: SaveBankAccountResponseDto })
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateBankAccountStatusDto) {
     return this.bankMasterfileService.updateStatus(user, id, dto);

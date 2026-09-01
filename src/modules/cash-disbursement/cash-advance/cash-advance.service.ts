@@ -97,69 +97,7 @@ export class CashAdvanceService {
     };
   }
 
-  async getPartyOptions(user: AuthUser) {
-    const companyId = this.getActiveCompanyId(user);
-
-    const parties = await this.prisma.party.findMany({
-      where: {
-        companyId,
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        partyCodeNo: true,
-        partyName: true,
-        tradeName: true,
-        firstName: true,
-        lastName: true,
-        cashAdvanceLimit: true,
-      },
-      orderBy: { partyCodeNo: 'asc' },
-    });
-
-    const activeAdvancesByParty = await this.prisma.cashAdvance.groupBy({
-      by: ['partyId'],
-      where: {
-        companyId,
-        deletedAt: null,
-        status: { in: [CashAdvanceStatus.FOR_APPROVAL, CashAdvanceStatus.APPROVED, CashAdvanceStatus.POSTED] },
-      },
-      _sum: { amount: true },
-    });
-
-    const advancesMap = new Map<string, number>();
-    for (const group of activeAdvancesByParty) {
-      if (group.partyId) {
-        advancesMap.set(group.partyId.toString(), Number(group._sum.amount ?? 0));
-      }
-    }
-
-    const options = parties.map((party) => {
-      const partyIdStr = party.id.toString();
-      const partyName = party.partyName?.trim() || [party.firstName, party.lastName].filter(Boolean).join(' ') || party.tradeName || party.partyCodeNo;
-      const hasLimit = party.cashAdvanceLimit !== null;
-      const limit = Number(party.cashAdvanceLimit ?? 0);
-      const totalAdvanced = advancesMap.get(partyIdStr) ?? 0;
-      const balance = Math.max(0, limit - totalAdvanced);
-
-      return {
-        id: partyIdStr,
-        partyId: partyIdStr,
-        partyCode: party.partyCodeNo,
-        partyName,
-        name: partyName,
-        label: party.partyCodeNo,
-        value: partyIdStr,
-        cashAdvanceLimit: hasLimit ? limit.toFixed(2) : '',
-        totalCashAdvance: totalAdvanced.toFixed(2),
-        availableCashAdvance: hasLimit ? balance.toFixed(2) : '',
-      };
-    });
-
-    return { options };
-  }
-
-  async getNextTransactionNo(user: AuthUser, requestedBranchUnitId?: number | string) {
+  async suggestTransactionNumber(user: AuthUser, requestedBranchUnitId?: number | string) {
     const companyId = this.getActiveCompanyId(user);
     const branchUnitId = await this.resolveBranchUnitId(companyId, requestedBranchUnitId);
     const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
@@ -182,7 +120,6 @@ export class CashAdvanceService {
     return {
       branchUnitId,
       inputMode: suggestion.inputMode,
-      nextTransNo: suggestion.transactionNumber,
       transactionNo: suggestion.transactionNumber,
     };
   }

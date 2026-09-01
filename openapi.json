@@ -2896,6 +2896,7 @@
             }
           }
         },
+        "summary": "Get list of form signatory setup records",
         "tags": [
           "Form Signatories"
         ]
@@ -2925,6 +2926,7 @@
             }
           }
         },
+        "summary": "Create a form signatory setup record",
         "tags": [
           "Form Signatories"
         ]
@@ -2946,6 +2948,7 @@
             }
           }
         },
+        "summary": "Get form signatory options",
         "tags": [
           "Form Signatories"
         ]
@@ -2967,6 +2970,7 @@
             }
           }
         },
+        "summary": "Get form signatory setup bootstrap data",
         "tags": [
           "Form Signatories"
         ]
@@ -3005,6 +3009,7 @@
             }
           }
         },
+        "summary": "Resolve form signatory setup",
         "tags": [
           "Form Signatories"
         ]
@@ -3035,6 +3040,7 @@
             }
           }
         },
+        "summary": "Get form signatory setup details by ID",
         "tags": [
           "Form Signatories"
         ]
@@ -3073,6 +3079,7 @@
             }
           }
         },
+        "summary": "Update a form signatory setup record",
         "tags": [
           "Form Signatories"
         ]
@@ -3179,6 +3186,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get list of chart of account records",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3213,6 +3221,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a chart of account record",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3319,6 +3328,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get chart of account options",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3425,6 +3435,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get posting chart of account options",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3531,6 +3542,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get all chart of account options",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3557,6 +3569,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get chart of accounts tree",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3607,6 +3620,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get next chart of account code",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3642,6 +3656,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get chart of account details by ID",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3685,6 +3700,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a chart of account record",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3730,6 +3746,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update chart of account status",
         "tags": [
           "Chart of Accounts"
         ]
@@ -3838,6 +3855,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of term records",
         "tags": [
           "Terms Maintenance"
         ]
@@ -3872,6 +3890,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a term record",
         "tags": [
           "Terms Maintenance"
         ]
@@ -3921,6 +3940,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get term options",
         "tags": [
           "Terms Maintenance"
         ]
@@ -3956,6 +3976,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get term details by ID",
         "tags": [
           "Terms Maintenance"
         ]
@@ -3999,6 +4020,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a term record",
         "tags": [
           "Terms Maintenance"
         ]
@@ -4035,6 +4057,7 @@
             "bearer": []
           }
         ],
+        "summary": "Import term records",
         "tags": [
           "Terms Maintenance"
         ]
@@ -4049,6 +4072,7 @@
             "description": "Item variation list retrieved."
           }
         },
+        "summary": "Get list of item variation records",
         "tags": [
           "Item Variations"
         ]
@@ -4071,6 +4095,7 @@
             "description": "Item variation created."
           }
         },
+        "summary": "Create an item variation record",
         "tags": [
           "Item Variations"
         ]
@@ -4085,6 +4110,7 @@
             "description": "Item variation options retrieved."
           }
         },
+        "summary": "Get item variation options",
         "tags": [
           "Item Variations"
         ]
@@ -4118,6 +4144,7 @@
             "description": "Item variation updated."
           }
         },
+        "summary": "Update an item variation record",
         "tags": [
           "Item Variations"
         ]
@@ -4144,6 +4171,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get list of item category records",
         "tags": [
           "Item Categories"
         ]
@@ -4178,6 +4206,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create an item category record",
         "tags": [
           "Item Categories"
         ]
@@ -4204,6 +4233,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get item category options",
         "tags": [
           "Item Categories"
         ]
@@ -4249,6 +4279,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update an item category record",
         "tags": [
           "Item Categories"
         ]
@@ -4356,6 +4387,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of unit of measurement records",
         "tags": [
           "Unit of Measurement"
         ]
@@ -4390,6 +4422,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a unit of measurement record",
         "tags": [
           "Unit of Measurement"
         ]
@@ -4438,6 +4471,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get unit of measurement options",
         "tags": [
           "Unit of Measurement"
         ]
@@ -4473,6 +4507,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get unit of measurement details by ID",
         "tags": [
           "Unit of Measurement"
         ]
@@ -4516,6 +4551,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a unit of measurement record",
         "tags": [
           "Unit of Measurement"
         ]
@@ -4552,6 +4588,7 @@
             "bearer": []
           }
         ],
+        "summary": "Import unit of measurement records",
         "tags": [
           "Unit of Measurement"
         ]
@@ -4661,6 +4698,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of payment type records",
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4695,6 +4733,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a payment type record",
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4745,6 +4784,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get payment type options",
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4803,6 +4843,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get payment type options by classification",
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4838,6 +4879,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get payment type details by ID",
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4881,6 +4923,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a payment type record",
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -4917,6 +4960,7 @@
             "bearer": []
           }
         ],
+        "summary": "Import payment type records",
         "tags": [
           "Payment Type Maintenance"
         ]
@@ -5037,6 +5081,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of discount records",
         "tags": [
           "Discount Maintenance"
         ]
@@ -5071,6 +5116,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a discount record",
         "tags": [
           "Discount Maintenance"
         ]
@@ -5131,6 +5177,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get discount options",
         "tags": [
           "Discount Maintenance"
         ]
@@ -5199,6 +5246,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get discount options by type",
         "tags": [
           "Discount Maintenance"
         ]
@@ -5234,6 +5282,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get discount details by ID",
         "tags": [
           "Discount Maintenance"
         ]
@@ -5277,6 +5326,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a discount record",
         "tags": [
           "Discount Maintenance"
         ]
@@ -5313,6 +5363,7 @@
             "bearer": []
           }
         ],
+        "summary": "Import discount records",
         "tags": [
           "Discount Maintenance"
         ]
@@ -5455,6 +5506,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of party records",
         "tags": [
           "Party Maintenance"
         ]
@@ -5489,6 +5541,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a party record",
         "tags": [
           "Party Maintenance"
         ]
@@ -5515,6 +5568,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get party accounting options",
         "tags": [
           "Party Maintenance"
         ]
@@ -5610,6 +5664,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get party options",
         "tags": [
           "Party Maintenance"
         ]
@@ -5703,6 +5758,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get party options by party type",
         "tags": [
           "Party Maintenance"
         ]
@@ -5738,6 +5794,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get party details by ID",
         "tags": [
           "Party Maintenance"
         ]
@@ -5781,6 +5838,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a party record",
         "tags": [
           "Party Maintenance"
         ]
@@ -5817,6 +5875,7 @@
             "bearer": []
           }
         ],
+        "summary": "Import party records",
         "tags": [
           "Party Maintenance"
         ]
@@ -5922,6 +5981,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of bank account records",
         "tags": [
           "Bank Masterfile"
         ]
@@ -5956,6 +6016,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a bank account record",
         "tags": [
           "Bank Masterfile"
         ]
@@ -6061,6 +6122,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get bank account options",
         "tags": [
           "Bank Masterfile"
         ]
@@ -6087,6 +6149,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get next bank account code",
         "tags": [
           "Bank Masterfile"
         ]
@@ -6122,6 +6185,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get bank account details by ID",
         "tags": [
           "Bank Masterfile"
         ]
@@ -6165,6 +6229,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a bank account record",
         "tags": [
           "Bank Masterfile"
         ]
@@ -6201,6 +6266,7 @@
             "bearer": []
           }
         ],
+        "summary": "Import bank account records",
         "tags": [
           "Bank Masterfile"
         ]
@@ -6246,6 +6312,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update bank account status",
         "tags": [
           "Bank Masterfile"
         ]
@@ -6354,6 +6421,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of default account template records",
         "tags": [
           "Default Account"
         ]
@@ -6388,6 +6456,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a default account template record",
         "tags": [
           "Default Account"
         ]
@@ -6436,6 +6505,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get default account options",
         "tags": [
           "Default Account"
         ]
@@ -6492,6 +6562,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get default account options by template type",
         "tags": [
           "Default Account"
         ]
@@ -6518,6 +6589,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get default expense parent account options",
         "tags": [
           "Default Account"
         ]
@@ -6554,6 +6626,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a default expense sub-account",
         "tags": [
           "Default Account"
         ]
@@ -6589,6 +6662,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get default account template details by ID",
         "tags": [
           "Default Account"
         ]
@@ -6632,6 +6706,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a default account template record",
         "tags": [
           "Default Account"
         ]
@@ -6677,6 +6752,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update default account template status",
         "tags": [
           "Default Account"
         ]
@@ -6783,6 +6859,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of service records",
         "tags": [
           "Services Maintenance"
         ]
@@ -6817,6 +6894,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a service record",
         "tags": [
           "Services Maintenance"
         ]
@@ -6923,6 +7001,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get service options",
         "tags": [
           "Services Maintenance"
         ]
@@ -6949,6 +7028,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get service account options",
         "tags": [
           "Services Maintenance"
         ]
@@ -6975,6 +7055,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get next service account code",
         "tags": [
           "Services Maintenance"
         ]
@@ -7010,6 +7091,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get service details by ID",
         "tags": [
           "Services Maintenance"
         ]
@@ -7053,6 +7135,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a service record",
         "tags": [
           "Services Maintenance"
         ]
@@ -7098,6 +7181,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update service status",
         "tags": [
           "Services Maintenance"
         ]
@@ -7250,6 +7334,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of responsibility center records",
         "tags": [
           "Responsibility Center"
         ]
@@ -7284,6 +7369,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a responsibility center record",
         "tags": [
           "Responsibility Center"
         ]
@@ -7436,6 +7522,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get responsibility center options",
         "tags": [
           "Responsibility Center"
         ]
@@ -7596,6 +7683,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get responsibility center options by type",
         "tags": [
           "Responsibility Center"
         ]
@@ -7748,6 +7836,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get responsibility center tree",
         "tags": [
           "Responsibility Center"
         ]
@@ -7774,6 +7863,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get responsibility center classifications",
         "tags": [
           "Responsibility Center"
         ]
@@ -7809,6 +7899,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get responsibility center types",
         "tags": [
           "Responsibility Center"
         ]
@@ -7844,6 +7935,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get suggested responsibility center code",
         "tags": [
           "Responsibility Center"
         ]
@@ -7879,6 +7971,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get responsibility center details by ID",
         "tags": [
           "Responsibility Center"
         ]
@@ -7922,6 +8015,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a responsibility center record",
         "tags": [
           "Responsibility Center"
         ]
@@ -7967,6 +8061,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update responsibility center status",
         "tags": [
           "Responsibility Center"
         ]
@@ -8540,6 +8635,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of warehouse records",
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -8574,6 +8670,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a warehouse record",
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -8619,6 +8716,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get warehouse options",
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -8654,6 +8752,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get warehouse details by ID",
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -8697,6 +8796,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a warehouse record",
         "tags": [
           "Warehouse Maintenance"
         ]
@@ -8826,6 +8926,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get paginated list of warehouse access records",
         "tags": [
           "Warehouse Access"
         ]
@@ -8860,6 +8961,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a warehouse access record",
         "tags": [
           "Warehouse Access"
         ]
@@ -8905,6 +9007,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get warehouse access user directory",
         "tags": [
           "Warehouse Access"
         ]
@@ -8940,6 +9043,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get warehouse access details by ID",
         "tags": [
           "Warehouse Access"
         ]
@@ -8983,6 +9087,7 @@
             "bearer": []
           }
         ],
+        "summary": "Update a warehouse access record",
         "tags": [
           "Warehouse Access"
         ]
@@ -9016,6 +9121,7 @@
             "bearer": []
           }
         ],
+        "summary": "Revoke a warehouse access record",
         "tags": [
           "Warehouse Access"
         ]
@@ -9030,6 +9136,7 @@
             "description": "Warehouse storage list retrieved."
           }
         },
+        "summary": "Get list of warehouse storage records",
         "tags": [
           "Warehouse Storage"
         ]
@@ -15218,13 +15325,29 @@
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/advances-to-suppliers/lookups/parties": {
+    "/api/v1/cash-disbursement/advances-to-suppliers/transaction-number": {
       "get": {
-        "operationId": "AdvancesToSuppliersController_findParties",
-        "parameters": [],
+        "operationId": "AdvancesToSuppliersController_suggestTransactionNumber_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "List of active party options"
+            "description": "Advances to Suppliers transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -15232,75 +15355,15 @@
             "bearer": []
           }
         ],
-        "summary": "Get party options for Advances to Suppliers",
+        "summary": "Suggest an Advances to Suppliers transaction number",
         "tags": [
-          "Cash Disbursement - Advances To Suppliers"
+          "Advances To Suppliers"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/advances-to-suppliers/lookups/responsibility-centers": {
+    "/api/v1/cash-disbursement/advances-to-suppliers": {
       "get": {
-        "operationId": "AdvancesToSuppliersController_findResponsibilityCenters",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active responsibility centers"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get responsibility center options for Advances to Suppliers",
-        "tags": [
-          "Cash Disbursement - Advances To Suppliers"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/advances-to-suppliers/lookups/posting-accounts": {
-      "get": {
-        "operationId": "AdvancesToSuppliersController_findPostingAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active posting accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get posting chart of account options for Advances to Suppliers",
-        "tags": [
-          "Cash Disbursement - Advances To Suppliers"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/advances-to-suppliers/lookups/suggest-transaction-no": {
-      "get": {
-        "operationId": "AdvancesToSuppliersController_suggestTransactionNo",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Next transaction number"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Suggest next Advances to Suppliers sequence number",
-        "tags": [
-          "Cash Disbursement - Advances To Suppliers"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/advances-to-suppliers": {
-      "get": {
-        "operationId": "AdvancesToSuppliersController_findAll",
+        "operationId": "AdvancesToSuppliersController_findAll_v1",
         "parameters": [
           {
             "name": "page",
@@ -15410,11 +15473,11 @@
         ],
         "summary": "List Advances to Suppliers records with pagination and filtering",
         "tags": [
-          "Cash Disbursement - Advances To Suppliers"
+          "Advances To Suppliers"
         ]
       },
       "post": {
-        "operationId": "AdvancesToSuppliersController_create",
+        "operationId": "AdvancesToSuppliersController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -15445,13 +15508,13 @@
         ],
         "summary": "Create a new Advances to Suppliers record",
         "tags": [
-          "Cash Disbursement - Advances To Suppliers"
+          "Advances To Suppliers"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/advances-to-suppliers/{id}": {
+    "/api/v1/cash-disbursement/advances-to-suppliers/{id}": {
       "get": {
-        "operationId": "AdvancesToSuppliersController_findOne",
+        "operationId": "AdvancesToSuppliersController_findOne_v1",
         "parameters": [
           {
             "name": "id",
@@ -15481,11 +15544,11 @@
         ],
         "summary": "Get Advances to Suppliers details by ID",
         "tags": [
-          "Cash Disbursement - Advances To Suppliers"
+          "Advances To Suppliers"
         ]
       },
       "patch": {
-        "operationId": "AdvancesToSuppliersController_update",
+        "operationId": "AdvancesToSuppliersController_update_v1",
         "parameters": [
           {
             "name": "id",
@@ -15525,11 +15588,11 @@
         ],
         "summary": "Update an existing Advances to Suppliers record",
         "tags": [
-          "Cash Disbursement - Advances To Suppliers"
+          "Advances To Suppliers"
         ]
       },
       "delete": {
-        "operationId": "AdvancesToSuppliersController_remove",
+        "operationId": "AdvancesToSuppliersController_remove_v1",
         "parameters": [
           {
             "name": "id",
@@ -15552,13 +15615,13 @@
         ],
         "summary": "Soft delete an Advances to Suppliers record",
         "tags": [
-          "Cash Disbursement - Advances To Suppliers"
+          "Advances To Suppliers"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/advances-to-suppliers/{id}/status": {
+    "/api/v1/cash-disbursement/advances-to-suppliers/{id}/status": {
       "patch": {
-        "operationId": "AdvancesToSuppliersController_updateStatus",
+        "operationId": "AdvancesToSuppliersController_updateStatus_v1",
         "parameters": [
           {
             "name": "id",
@@ -15598,13 +15661,13 @@
         ],
         "summary": "Update Advances to Suppliers status",
         "tags": [
-          "Cash Disbursement - Advances To Suppliers"
+          "Advances To Suppliers"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/advances-to-suppliers/{id}/submit-approval": {
+    "/api/v1/cash-disbursement/advances-to-suppliers/{id}/submit-approval": {
       "post": {
-        "operationId": "AdvancesToSuppliersController_submitApproval",
+        "operationId": "AdvancesToSuppliersController_submitApproval_v1",
         "parameters": [
           {
             "name": "id",
@@ -15634,7 +15697,7 @@
         ],
         "summary": "Submit Advances to Suppliers for approval",
         "tags": [
-          "Cash Disbursement - Advances To Suppliers"
+          "Advances To Suppliers"
         ]
       }
     },
@@ -15793,17 +15856,26 @@
         ]
       }
     },
-    "/api/v1/cash-disbursement/cash-advance/party-options": {
+    "/api/v1/cash-disbursement/cash-advance/transaction-number": {
       "get": {
-        "operationId": "CashAdvanceController_getPartyOptions_v1",
-        "parameters": [],
+        "operationId": "CashAdvanceController_suggestTransactionNumber_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Cash Advance transaction number retrieved.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CashAdvancePartyOptionsResponseDto"
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
                 }
               }
             }
@@ -15814,40 +15886,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get party options with Limit, Advances, and Balance calculations for Cash Advance",
-        "tags": [
-          "Cash Advance"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-advance/next-transaction-no": {
-      "get": {
-        "operationId": "CashAdvanceController_getNextTransactionNo_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "nextTransNo": {
-                      "type": "string",
-                      "example": "CA-2026-00001"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get auto-generated next transaction sequence number",
+        "summary": "Suggest a cash advance transaction number",
         "tags": [
           "Cash Advance"
         ]
@@ -16143,13 +16182,29 @@
         ]
       }
     },
-    "/api/v1/cash-disbursement/cash-advance-multiple-entry/next-transaction-no": {
+    "/api/v1/cash-disbursement/cash-advance-multiple-entry/transaction-number": {
       "get": {
-        "operationId": "CashAdvanceMultipleEntryController_getNextTransactionNo_v1",
-        "parameters": [],
+        "operationId": "CashAdvanceMultipleEntryController_suggestTransactionNumber_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Next transaction number."
+            "description": "Cash advance multiple-entry transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -16157,7 +16212,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get the next CAME transaction number",
+        "summary": "Suggest a cash advance multiple-entry transaction number",
         "tags": [
           "Cash Advance Multiple Entry"
         ]
@@ -16665,37 +16720,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Suggested transaction number retrieved."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get auto-suggested transaction number sequence",
-        "tags": [
-          "Cash Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-voucher/next-transaction-no": {
-      "get": {
-        "operationId": "CashVoucherController_getNextTransactionNo_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
+            "description": "Cash Voucher transaction number retrieved.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "nextTransNo": {
-                      "type": "string",
-                      "example": "CV-2026-000001"
-                    }
-                  }
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
                 }
               }
             }
@@ -16706,147 +16735,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get auto-generated next cash voucher transaction sequence number",
-        "tags": [
-          "Cash Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-voucher/lookups/parties": {
-      "get": {
-        "operationId": "CashVoucherController_findParties_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Party options retrieved."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get party options for cash voucher",
-        "tags": [
-          "Cash Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-voucher/lookups/accounts": {
-      "get": {
-        "operationId": "CashVoucherController_findAccounts_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Account options retrieved."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get chart of account options for cash voucher",
-        "tags": [
-          "Cash Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-voucher/lookups/posting-accounts": {
-      "get": {
-        "operationId": "CashVoucherController_findPostingAccounts_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Posting account options retrieved."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get posting account options for cash voucher",
-        "tags": [
-          "Cash Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-voucher/lookups/responsibility-centers": {
-      "get": {
-        "operationId": "CashVoucherController_findResponsibilityCenters_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Responsibility center options retrieved."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get responsibility center options for cash voucher",
-        "tags": [
-          "Cash Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-voucher/lookups/terms": {
-      "get": {
-        "operationId": "CashVoucherController_findTerms_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Term options retrieved."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get term options for cash voucher",
-        "tags": [
-          "Cash Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-voucher/lookups/expense-types": {
-      "get": {
-        "operationId": "CashVoucherController_findExpenseTypes_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Expense type options retrieved."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get default expense type options for cash voucher",
-        "tags": [
-          "Cash Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-voucher/lookups/disbursement-accounts": {
-      "get": {
-        "operationId": "CashVoucherController_findDisbursementAccounts_v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Disbursement account options retrieved."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get disbursement account options for cash voucher",
+        "summary": "Get auto-suggested transaction number sequence",
         "tags": [
           "Cash Voucher"
         ]
@@ -17212,89 +17101,9 @@
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-voucher/lookups/parties": {
+    "/api/v1/cash-disbursement/petty-cash-voucher/transaction-number": {
       "get": {
-        "operationId": "PettyCashVoucherController_findParties",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active party options"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get party options for Petty Cash Voucher",
-        "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-voucher/lookups/responsibility-centers": {
-      "get": {
-        "operationId": "PettyCashVoucherController_findResponsibilityCenters",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active responsibility centers"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get responsibility center options for Petty Cash Voucher",
-        "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-voucher/lookups/posting-accounts": {
-      "get": {
-        "operationId": "PettyCashVoucherController_findPostingAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active posting accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get posting chart of account options for Petty Cash Voucher",
-        "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-voucher/lookups/disbursement-accounts": {
-      "get": {
-        "operationId": "PettyCashVoucherController_findDisbursementAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active disbursement accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get disbursement account options for Petty Cash Voucher",
-        "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-voucher/lookups/suggest-voucher-no": {
-      "get": {
-        "operationId": "PettyCashVoucherController_suggestVoucherNo",
+        "operationId": "PettyCashVoucherController_suggestTransactionNumber_v1",
         "parameters": [
           {
             "name": "branchUnitId",
@@ -17307,7 +17116,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Petty Cash Voucher transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -17315,15 +17131,15 @@
             "bearer": []
           }
         ],
-        "summary": "Suggest next Petty Cash Voucher sequence number",
+        "summary": "Suggest a Petty Cash Voucher transaction number",
         "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
+          "Petty Cash Voucher"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-voucher": {
+    "/api/v1/cash-disbursement/petty-cash-voucher": {
       "get": {
-        "operationId": "PettyCashVoucherController_findAll",
+        "operationId": "PettyCashVoucherController_findAll_v1",
         "parameters": [
           {
             "name": "page",
@@ -17480,11 +17296,11 @@
         ],
         "summary": "List Petty Cash Vouchers with pagination and filtering",
         "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
+          "Petty Cash Voucher"
         ]
       },
       "post": {
-        "operationId": "PettyCashVoucherController_create",
+        "operationId": "PettyCashVoucherController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -17515,13 +17331,13 @@
         ],
         "summary": "Create a new Petty Cash Voucher",
         "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
+          "Petty Cash Voucher"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-voucher/{id}": {
+    "/api/v1/cash-disbursement/petty-cash-voucher/{id}": {
       "get": {
-        "operationId": "PettyCashVoucherController_findOne",
+        "operationId": "PettyCashVoucherController_findOne_v1",
         "parameters": [
           {
             "name": "id",
@@ -17551,11 +17367,11 @@
         ],
         "summary": "Get Petty Cash Voucher details by ID",
         "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
+          "Petty Cash Voucher"
         ]
       },
       "patch": {
-        "operationId": "PettyCashVoucherController_update",
+        "operationId": "PettyCashVoucherController_update_v1",
         "parameters": [
           {
             "name": "id",
@@ -17595,11 +17411,11 @@
         ],
         "summary": "Update an existing Petty Cash Voucher",
         "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
+          "Petty Cash Voucher"
         ]
       },
       "delete": {
-        "operationId": "PettyCashVoucherController_remove",
+        "operationId": "PettyCashVoucherController_remove_v1",
         "parameters": [
           {
             "name": "id",
@@ -17622,13 +17438,13 @@
         ],
         "summary": "Soft delete a Petty Cash Voucher",
         "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
+          "Petty Cash Voucher"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-voucher/{id}/status": {
+    "/api/v1/cash-disbursement/petty-cash-voucher/{id}/status": {
       "patch": {
-        "operationId": "PettyCashVoucherController_updateStatus",
+        "operationId": "PettyCashVoucherController_updateStatus_v1",
         "parameters": [
           {
             "name": "id",
@@ -17668,93 +17484,13 @@
         ],
         "summary": "Update status of a Petty Cash Voucher",
         "tags": [
-          "Cash Disbursement - Petty Cash Voucher"
+          "Petty Cash Voucher"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-fund/lookups/parties": {
+    "/api/v1/cash-disbursement/petty-cash-fund/transaction-number": {
       "get": {
-        "operationId": "PettyCashFundController_findParties",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active party options"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get party options for Petty Cash Fund",
-        "tags": [
-          "Cash Disbursement - Petty Cash Fund"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-fund/lookups/responsibility-centers": {
-      "get": {
-        "operationId": "PettyCashFundController_findResponsibilityCenters",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active responsibility centers"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get responsibility center options for Petty Cash Fund",
-        "tags": [
-          "Cash Disbursement - Petty Cash Fund"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-fund/lookups/posting-accounts": {
-      "get": {
-        "operationId": "PettyCashFundController_findPostingAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active posting accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get posting chart of account options for Petty Cash Fund",
-        "tags": [
-          "Cash Disbursement - Petty Cash Fund"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-fund/lookups/disbursement-accounts": {
-      "get": {
-        "operationId": "PettyCashFundController_findDisbursementAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active disbursement accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get disbursement account options for Petty Cash Fund",
-        "tags": [
-          "Cash Disbursement - Petty Cash Fund"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-fund/lookups/suggest-transaction-no": {
-      "get": {
-        "operationId": "PettyCashFundController_suggestTransactionNo",
+        "operationId": "PettyCashFundController_suggestTransactionNumber_v1",
         "parameters": [
           {
             "name": "branchUnitId",
@@ -17767,7 +17503,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Petty Cash Fund transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -17775,15 +17518,15 @@
             "bearer": []
           }
         ],
-        "summary": "Suggest next Petty Cash Fund sequence number",
+        "summary": "Suggest a Petty Cash Fund transaction number",
         "tags": [
-          "Cash Disbursement - Petty Cash Fund"
+          "Petty Cash Fund"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-fund": {
+    "/api/v1/cash-disbursement/petty-cash-fund": {
       "get": {
-        "operationId": "PettyCashFundController_findAll",
+        "operationId": "PettyCashFundController_findAll_v1",
         "parameters": [
           {
             "name": "page",
@@ -17940,11 +17683,11 @@
         ],
         "summary": "List Petty Cash Funds with pagination and filtering",
         "tags": [
-          "Cash Disbursement - Petty Cash Fund"
+          "Petty Cash Fund"
         ]
       },
       "post": {
-        "operationId": "PettyCashFundController_create",
+        "operationId": "PettyCashFundController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -17975,13 +17718,13 @@
         ],
         "summary": "Create a new Petty Cash Fund",
         "tags": [
-          "Cash Disbursement - Petty Cash Fund"
+          "Petty Cash Fund"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-fund/{id}": {
+    "/api/v1/cash-disbursement/petty-cash-fund/{id}": {
       "get": {
-        "operationId": "PettyCashFundController_findOne",
+        "operationId": "PettyCashFundController_findOne_v1",
         "parameters": [
           {
             "name": "id",
@@ -18011,11 +17754,11 @@
         ],
         "summary": "Get Petty Cash Fund details by ID",
         "tags": [
-          "Cash Disbursement - Petty Cash Fund"
+          "Petty Cash Fund"
         ]
       },
       "patch": {
-        "operationId": "PettyCashFundController_update",
+        "operationId": "PettyCashFundController_update_v1",
         "parameters": [
           {
             "name": "id",
@@ -18055,11 +17798,11 @@
         ],
         "summary": "Update an existing Petty Cash Fund",
         "tags": [
-          "Cash Disbursement - Petty Cash Fund"
+          "Petty Cash Fund"
         ]
       },
       "delete": {
-        "operationId": "PettyCashFundController_remove",
+        "operationId": "PettyCashFundController_remove_v1",
         "parameters": [
           {
             "name": "id",
@@ -18082,13 +17825,13 @@
         ],
         "summary": "Soft delete a Petty Cash Fund",
         "tags": [
-          "Cash Disbursement - Petty Cash Fund"
+          "Petty Cash Fund"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-fund/{id}/status": {
+    "/api/v1/cash-disbursement/petty-cash-fund/{id}/status": {
       "patch": {
-        "operationId": "PettyCashFundController_updateStatus",
+        "operationId": "PettyCashFundController_updateStatus_v1",
         "parameters": [
           {
             "name": "id",
@@ -18128,113 +17871,13 @@
         ],
         "summary": "Update status of a Petty Cash Fund",
         "tags": [
-          "Cash Disbursement - Petty Cash Fund"
+          "Petty Cash Fund"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-replenishment/lookups/parties": {
+    "/api/v1/cash-disbursement/petty-cash-replenishment/transaction-number": {
       "get": {
-        "operationId": "PettyCashReplenishmentController_findParties",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active party options"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get party options for Petty Cash Replenishment",
-        "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-replenishment/lookups/responsibility-centers": {
-      "get": {
-        "operationId": "PettyCashReplenishmentController_findResponsibilityCenters",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active responsibility centers"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get responsibility center options for Petty Cash Replenishment",
-        "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-replenishment/lookups/posting-accounts": {
-      "get": {
-        "operationId": "PettyCashReplenishmentController_findPostingAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active posting accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get posting chart of account options for Petty Cash Replenishment",
-        "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-replenishment/lookups/disbursement-accounts": {
-      "get": {
-        "operationId": "PettyCashReplenishmentController_findDisbursementAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active disbursement accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get disbursement account options for Petty Cash Replenishment",
-        "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-replenishment/lookups/petty-cash-vouchers": {
-      "get": {
-        "operationId": "PettyCashReplenishmentController_findPettyCashVouchers",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of eligible petty cash vouchers"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get approved Petty Cash Vouchers for replenishment detail selection",
-        "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/petty-cash-replenishment/lookups/suggest-transaction-no": {
-      "get": {
-        "operationId": "PettyCashReplenishmentController_suggestTransactionNo",
+        "operationId": "PettyCashReplenishmentController_suggestTransactionNumber_v1",
         "parameters": [
           {
             "name": "branchUnitId",
@@ -18247,7 +17890,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Petty Cash Replenishment transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18255,15 +17905,15 @@
             "bearer": []
           }
         ],
-        "summary": "Suggest next Petty Cash Replenishment sequence number",
+        "summary": "Suggest a Petty Cash Replenishment transaction number",
         "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
+          "Petty Cash Replenishment"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-replenishment": {
+    "/api/v1/cash-disbursement/petty-cash-replenishment": {
       "get": {
-        "operationId": "PettyCashReplenishmentController_findAll",
+        "operationId": "PettyCashReplenishmentController_findAll_v1",
         "parameters": [
           {
             "name": "page",
@@ -18420,11 +18070,11 @@
         ],
         "summary": "List Petty Cash Replenishments with pagination and filtering",
         "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
+          "Petty Cash Replenishment"
         ]
       },
       "post": {
-        "operationId": "PettyCashReplenishmentController_create",
+        "operationId": "PettyCashReplenishmentController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -18455,13 +18105,13 @@
         ],
         "summary": "Create a new Petty Cash Replenishment",
         "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
+          "Petty Cash Replenishment"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-replenishment/{id}": {
+    "/api/v1/cash-disbursement/petty-cash-replenishment/{id}": {
       "get": {
-        "operationId": "PettyCashReplenishmentController_findOne",
+        "operationId": "PettyCashReplenishmentController_findOne_v1",
         "parameters": [
           {
             "name": "id",
@@ -18491,11 +18141,11 @@
         ],
         "summary": "Get Petty Cash Replenishment details by ID",
         "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
+          "Petty Cash Replenishment"
         ]
       },
       "patch": {
-        "operationId": "PettyCashReplenishmentController_update",
+        "operationId": "PettyCashReplenishmentController_update_v1",
         "parameters": [
           {
             "name": "id",
@@ -18535,11 +18185,11 @@
         ],
         "summary": "Update an existing Petty Cash Replenishment",
         "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
+          "Petty Cash Replenishment"
         ]
       },
       "delete": {
-        "operationId": "PettyCashReplenishmentController_remove",
+        "operationId": "PettyCashReplenishmentController_remove_v1",
         "parameters": [
           {
             "name": "id",
@@ -18562,13 +18212,13 @@
         ],
         "summary": "Soft delete a Petty Cash Replenishment",
         "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
+          "Petty Cash Replenishment"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/petty-cash-replenishment/{id}/status": {
+    "/api/v1/cash-disbursement/petty-cash-replenishment/{id}/status": {
       "patch": {
-        "operationId": "PettyCashReplenishmentController_updateStatus",
+        "operationId": "PettyCashReplenishmentController_updateStatus_v1",
         "parameters": [
           {
             "name": "id",
@@ -18608,93 +18258,13 @@
         ],
         "summary": "Update status of a Petty Cash Replenishment",
         "tags": [
-          "Cash Disbursement - Petty Cash Replenishment"
+          "Petty Cash Replenishment"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/revolving-fund/lookups/parties": {
+    "/api/v1/cash-disbursement/revolving-fund/transaction-number": {
       "get": {
-        "operationId": "RevolvingFundController_findParties",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active party options"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get party options for Revolving Fund",
-        "tags": [
-          "Cash Disbursement - Revolving Fund"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/revolving-fund/lookups/responsibility-centers": {
-      "get": {
-        "operationId": "RevolvingFundController_findResponsibilityCenters",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active responsibility centers"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get responsibility center options for Revolving Fund",
-        "tags": [
-          "Cash Disbursement - Revolving Fund"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/revolving-fund/lookups/posting-accounts": {
-      "get": {
-        "operationId": "RevolvingFundController_findPostingAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active posting accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get posting chart of account options for Revolving Fund",
-        "tags": [
-          "Cash Disbursement - Revolving Fund"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/revolving-fund/lookups/disbursement-accounts": {
-      "get": {
-        "operationId": "RevolvingFundController_findDisbursementAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active disbursement accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get disbursement account options for Revolving Fund",
-        "tags": [
-          "Cash Disbursement - Revolving Fund"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/revolving-fund/lookups/suggest-transaction-no": {
-      "get": {
-        "operationId": "RevolvingFundController_suggestTransactionNo",
+        "operationId": "RevolvingFundController_suggestTransactionNumber_v1",
         "parameters": [
           {
             "name": "branchUnitId",
@@ -18707,7 +18277,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Revolving Fund transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18715,15 +18292,15 @@
             "bearer": []
           }
         ],
-        "summary": "Suggest next Revolving Fund sequence number",
+        "summary": "Suggest a Revolving Fund transaction number",
         "tags": [
-          "Cash Disbursement - Revolving Fund"
+          "Revolving Fund"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/revolving-fund": {
+    "/api/v1/cash-disbursement/revolving-fund": {
       "get": {
-        "operationId": "RevolvingFundController_findAll",
+        "operationId": "RevolvingFundController_findAll_v1",
         "parameters": [
           {
             "name": "page",
@@ -18880,11 +18457,11 @@
         ],
         "summary": "List Revolving Funds with pagination and filtering",
         "tags": [
-          "Cash Disbursement - Revolving Fund"
+          "Revolving Fund"
         ]
       },
       "post": {
-        "operationId": "RevolvingFundController_create",
+        "operationId": "RevolvingFundController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -18915,13 +18492,13 @@
         ],
         "summary": "Create a new Revolving Fund",
         "tags": [
-          "Cash Disbursement - Revolving Fund"
+          "Revolving Fund"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/revolving-fund/{id}": {
+    "/api/v1/cash-disbursement/revolving-fund/{id}": {
       "get": {
-        "operationId": "RevolvingFundController_findOne",
+        "operationId": "RevolvingFundController_findOne_v1",
         "parameters": [
           {
             "name": "id",
@@ -18951,11 +18528,11 @@
         ],
         "summary": "Get Revolving Fund details by ID",
         "tags": [
-          "Cash Disbursement - Revolving Fund"
+          "Revolving Fund"
         ]
       },
       "patch": {
-        "operationId": "RevolvingFundController_update",
+        "operationId": "RevolvingFundController_update_v1",
         "parameters": [
           {
             "name": "id",
@@ -18995,11 +18572,11 @@
         ],
         "summary": "Update an existing Revolving Fund",
         "tags": [
-          "Cash Disbursement - Revolving Fund"
+          "Revolving Fund"
         ]
       },
       "delete": {
-        "operationId": "RevolvingFundController_remove",
+        "operationId": "RevolvingFundController_remove_v1",
         "parameters": [
           {
             "name": "id",
@@ -19022,13 +18599,13 @@
         ],
         "summary": "Soft delete a Revolving Fund",
         "tags": [
-          "Cash Disbursement - Revolving Fund"
+          "Revolving Fund"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/revolving-fund/{id}/status": {
+    "/api/v1/cash-disbursement/revolving-fund/{id}/status": {
       "patch": {
-        "operationId": "RevolvingFundController_updateStatus",
+        "operationId": "RevolvingFundController_updateStatus_v1",
         "parameters": [
           {
             "name": "id",
@@ -19068,113 +18645,13 @@
         ],
         "summary": "Update status of a Revolving Fund",
         "tags": [
-          "Cash Disbursement - Revolving Fund"
+          "Revolving Fund"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/revolving-fund-replenishment/lookups/parties": {
+    "/api/v1/cash-disbursement/revolving-fund-replenishment/transaction-number": {
       "get": {
-        "operationId": "RevolvingFundReplenishmentController_findParties",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active party options"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get party options for Revolving Fund Replenishment",
-        "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/revolving-fund-replenishment/lookups/responsibility-centers": {
-      "get": {
-        "operationId": "RevolvingFundReplenishmentController_findResponsibilityCenters",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active responsibility centers"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get responsibility center options for Revolving Fund Replenishment",
-        "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/revolving-fund-replenishment/lookups/posting-accounts": {
-      "get": {
-        "operationId": "RevolvingFundReplenishmentController_findPostingAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active posting accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get posting chart of account options for Revolving Fund Replenishment",
-        "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/revolving-fund-replenishment/lookups/disbursement-accounts": {
-      "get": {
-        "operationId": "RevolvingFundReplenishmentController_findDisbursementAccounts",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of active disbursement accounts"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get disbursement account options for Revolving Fund Replenishment",
-        "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/revolving-fund-replenishment/lookups/revolving-funds": {
-      "get": {
-        "operationId": "RevolvingFundReplenishmentController_findRevolvingFunds",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of eligible revolving funds"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get approved Revolving Funds for replenishment detail selection",
-        "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
-        ]
-      }
-    },
-    "/api/api/v1/cash-disbursement/revolving-fund-replenishment/lookups/suggest-transaction-no": {
-      "get": {
-        "operationId": "RevolvingFundReplenishmentController_suggestTransactionNo",
+        "operationId": "RevolvingFundReplenishmentController_suggestTransactionNumber_v1",
         "parameters": [
           {
             "name": "branchUnitId",
@@ -19187,7 +18664,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Revolving Fund Replenishment transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19195,15 +18679,15 @@
             "bearer": []
           }
         ],
-        "summary": "Suggest next Revolving Fund Replenishment sequence number",
+        "summary": "Suggest a Revolving Fund Replenishment transaction number",
         "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
+          "Revolving Fund Replenishment"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/revolving-fund-replenishment": {
+    "/api/v1/cash-disbursement/revolving-fund-replenishment": {
       "get": {
-        "operationId": "RevolvingFundReplenishmentController_findAll",
+        "operationId": "RevolvingFundReplenishmentController_findAll_v1",
         "parameters": [
           {
             "name": "page",
@@ -19360,11 +18844,11 @@
         ],
         "summary": "List Revolving Fund Replenishments with pagination and filtering",
         "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
+          "Revolving Fund Replenishment"
         ]
       },
       "post": {
-        "operationId": "RevolvingFundReplenishmentController_create",
+        "operationId": "RevolvingFundReplenishmentController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -19395,13 +18879,13 @@
         ],
         "summary": "Create a new Revolving Fund Replenishment",
         "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
+          "Revolving Fund Replenishment"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/revolving-fund-replenishment/{id}": {
+    "/api/v1/cash-disbursement/revolving-fund-replenishment/{id}": {
       "get": {
-        "operationId": "RevolvingFundReplenishmentController_findOne",
+        "operationId": "RevolvingFundReplenishmentController_findOne_v1",
         "parameters": [
           {
             "name": "id",
@@ -19431,11 +18915,11 @@
         ],
         "summary": "Get Revolving Fund Replenishment details by ID",
         "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
+          "Revolving Fund Replenishment"
         ]
       },
       "patch": {
-        "operationId": "RevolvingFundReplenishmentController_update",
+        "operationId": "RevolvingFundReplenishmentController_update_v1",
         "parameters": [
           {
             "name": "id",
@@ -19475,11 +18959,11 @@
         ],
         "summary": "Update an existing Revolving Fund Replenishment",
         "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
+          "Revolving Fund Replenishment"
         ]
       },
       "delete": {
-        "operationId": "RevolvingFundReplenishmentController_remove",
+        "operationId": "RevolvingFundReplenishmentController_remove_v1",
         "parameters": [
           {
             "name": "id",
@@ -19502,13 +18986,13 @@
         ],
         "summary": "Soft delete a Revolving Fund Replenishment",
         "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
+          "Revolving Fund Replenishment"
         ]
       }
     },
-    "/api/api/v1/cash-disbursement/revolving-fund-replenishment/{id}/status": {
+    "/api/v1/cash-disbursement/revolving-fund-replenishment/{id}/status": {
       "patch": {
-        "operationId": "RevolvingFundReplenishmentController_updateStatus",
+        "operationId": "RevolvingFundReplenishmentController_updateStatus_v1",
         "parameters": [
           {
             "name": "id",
@@ -19548,7 +19032,7 @@
         ],
         "summary": "Update status of a Revolving Fund Replenishment",
         "tags": [
-          "Cash Disbursement - Revolving Fund Replenishment"
+          "Revolving Fund Replenishment"
         ]
       }
     }
@@ -27320,6 +26804,14 @@
           "cashAdvanceBalance": {
             "type": "string",
             "description": "Available cash advance balance for the employee."
+          },
+          "totalCashAdvance": {
+            "type": "string",
+            "description": "Total active cash advances for the party."
+          },
+          "availableCashAdvance": {
+            "type": "string",
+            "description": "Cash advance limit remaining after active advances."
           },
           "partyEntityType": {
             "type": "string",
@@ -41336,6 +40828,25 @@
           "status"
         ]
       },
+      "TransactionNumberSuggestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number"
+          },
+          "inputMode": {
+            "type": "string"
+          },
+          "transactionNo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchUnitId",
+          "inputMode",
+          "transactionNo"
+        ]
+      },
       "AdvanceToSupplierResponseDto": {
         "type": "object",
         "properties": {
@@ -41529,6 +41040,12 @@
       "CreateAdvanceToSupplierDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
           "partyId": {
             "type": "string",
             "description": "Party primary key ID",
@@ -41646,22 +41163,18 @@
           }
         },
         "required": [
-          "partyCode",
-          "partyName",
-          "accountCode",
-          "currency",
-          "exchangeRate",
-          "poReference",
-          "totalPoAmount",
-          "advancePaymentType",
-          "advancePaymentPercentage",
-          "advancePaymentAmount",
           "documentDate"
         ]
       },
       "UpdateAdvanceToSupplierDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
           "partyId": {
             "type": "string",
             "description": "Party primary key ID",
@@ -41959,67 +41472,6 @@
           "meta"
         ]
       },
-      "CashAdvancePartyOptionDto": {
-        "type": "object",
-        "properties": {
-          "partyId": {
-            "type": "string",
-            "example": "17"
-          },
-          "partyCode": {
-            "type": "string",
-            "example": "EMP-0017"
-          },
-          "partyName": {
-            "type": "string",
-            "example": "Maria Santos"
-          },
-          "label": {
-            "type": "string",
-            "example": "EMP-0017 - Maria Santos"
-          },
-          "value": {
-            "type": "string",
-            "example": "EMP-0017"
-          },
-          "cashAdvanceLimit": {
-            "type": "string",
-            "example": "50000.00"
-          },
-          "totalCashAdvance": {
-            "type": "string",
-            "example": "12500.00"
-          },
-          "availableCashAdvance": {
-            "type": "string",
-            "example": "37500.00"
-          }
-        },
-        "required": [
-          "partyId",
-          "partyCode",
-          "partyName",
-          "label",
-          "value",
-          "cashAdvanceLimit",
-          "totalCashAdvance",
-          "availableCashAdvance"
-        ]
-      },
-      "CashAdvancePartyOptionsResponseDto": {
-        "type": "object",
-        "properties": {
-          "options": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CashAdvancePartyOptionDto"
-            }
-          }
-        },
-        "required": [
-          "options"
-        ]
-      },
       "CashAdvanceSingleResponseDto": {
         "type": "object",
         "properties": {
@@ -42039,6 +41491,12 @@
       "CreateCashAdvanceDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
           "partyId": {
             "type": "string",
             "description": "Party Primary Key ID",
@@ -42138,18 +41596,18 @@
           }
         },
         "required": [
-          "partyCode",
-          "partyName",
-          "accountCode",
-          "currency",
-          "fxRate",
-          "amount",
           "documentDate"
         ]
       },
       "UpdateCashAdvanceDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
           "partyId": {
             "type": "string",
             "description": "Party Primary Key ID",
@@ -42304,12 +41762,7 @@
             "type": "string",
             "example": "12500.00"
           }
-        },
-        "required": [
-          "partyCode",
-          "partyName",
-          "amount"
-        ]
+        }
       },
       "CashAdvanceMultipleEntryAccountingEntryDto": {
         "type": "object",
@@ -42349,12 +41802,22 @@
           "responsibilityCenter": {
             "type": "string",
             "example": "Operations"
+          },
+          "remarks": {
+            "type": "string",
+            "example": "Travel advance"
           }
         }
       },
       "CreateCashAdvanceMultipleEntryDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
           "accountCode": {
             "type": "string",
             "example": "1010103000"
@@ -42434,16 +41897,18 @@
           }
         },
         "required": [
-          "accountCode",
-          "currency",
-          "exchangeRate",
-          "documentDate",
-          "items"
+          "documentDate"
         ]
       },
       "UpdateCashAdvanceMultipleEntryDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
           "accountCode": {
             "type": "string",
             "example": "1010103000"
@@ -42523,11 +41988,7 @@
           }
         },
         "required": [
-          "accountCode",
-          "currency",
-          "exchangeRate",
-          "documentDate",
-          "items"
+          "documentDate"
         ]
       },
       "UpdateCashAdvanceMultipleEntryStatusDto": {
@@ -43061,12 +42522,14 @@
           },
           "accountCode": {
             "type": "string",
+            "nullable": true,
             "maxLength": 80,
             "description": "Account Code",
             "example": "6001010000"
           },
           "accountTitle": {
             "type": "string",
+            "nullable": true,
             "maxLength": 255,
             "description": "Account Title / Name",
             "example": "Office Supplies Expense"
@@ -43213,9 +42676,7 @@
           }
         },
         "required": [
-          "lineNumber",
-          "accountCode",
-          "accountTitle"
+          "lineNumber"
         ]
       },
       "CreateCashVoucherDto": {
@@ -43270,12 +42731,14 @@
           },
           "partyCode": {
             "type": "string",
+            "nullable": true,
             "maxLength": 80,
             "description": "Party Code (Vendor/Employee/Customer)",
             "example": "SUP-001"
           },
           "partyName": {
             "type": "string",
+            "nullable": true,
             "maxLength": 255,
             "description": "Party Name",
             "example": "National Bookstore"
@@ -43446,7 +42909,6 @@
             "default": "DRAFT"
           },
           "details": {
-            "minItems": 1,
             "description": "Voucher Line Entries / Details",
             "type": "array",
             "items": {
@@ -43460,12 +42922,7 @@
               "$ref": "#/components/schemas/JournalEntryDto"
             }
           }
-        },
-        "required": [
-          "partyCode",
-          "partyName",
-          "details"
-        ]
+        }
       },
       "UpdateCashVoucherDto": {
         "type": "object",
@@ -43519,12 +42976,14 @@
           },
           "partyCode": {
             "type": "string",
+            "nullable": true,
             "maxLength": 80,
             "description": "Party Code (Vendor/Employee/Customer)",
             "example": "SUP-001"
           },
           "partyName": {
             "type": "string",
+            "nullable": true,
             "maxLength": 255,
             "description": "Party Name",
             "example": "National Bookstore"
@@ -43695,7 +43154,6 @@
             "default": "DRAFT"
           },
           "details": {
-            "minItems": 1,
             "description": "Voucher Line Entries / Details",
             "type": "array",
             "items": {
@@ -44261,8 +43719,6 @@
           }
         },
         "required": [
-          "partyName",
-          "accountTitle",
           "documentDate"
         ]
       },
@@ -44511,6 +43967,11 @@
           "date": {
             "type": "string",
             "description": "Receipt/Disbursement Date",
+            "example": "2026-05-21"
+          },
+          "itemDate": {
+            "type": "string",
+            "description": "Receipt/Disbursement Date alias",
             "example": "2026-05-21"
           },
           "partyId": {
@@ -45062,9 +44523,7 @@
           }
         },
         "required": [
-          "documentDate",
-          "partyName",
-          "accountTitle"
+          "documentDate"
         ]
       },
       "UpdatePettyCashFundDto": {
@@ -45792,9 +45251,7 @@
           }
         },
         "required": [
-          "documentDate",
-          "partyName",
-          "accountTitle"
+          "documentDate"
         ]
       },
       "UpdatePettyCashReplenishmentDto": {
@@ -45977,6 +45434,11 @@
           "date": {
             "type": "string",
             "description": "Receipt/Disbursement Date",
+            "example": "2026-05-21"
+          },
+          "itemDate": {
+            "type": "string",
+            "description": "Receipt/Disbursement Date alias",
             "example": "2026-05-21"
           },
           "partyId": {
@@ -46528,9 +45990,7 @@
           }
         },
         "required": [
-          "documentDate",
-          "partyName",
-          "accountTitle"
+          "documentDate"
         ]
       },
       "UpdateRevolvingFundDto": {
@@ -47258,9 +46718,7 @@
           }
         },
         "required": [
-          "documentDate",
-          "partyName",
-          "accountTitle"
+          "documentDate"
         ]
       },
       "UpdateRevolvingFundReplenishmentDto": {
