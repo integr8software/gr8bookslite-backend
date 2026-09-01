@@ -6,7 +6,7 @@ export const AcknowledgementReceiptInclude = {
       lineNumber: 'asc',
     },
   },
+  payment: true,
   party: true,
   receivableAccount: true,
-  term: true,
 } satisfies Prisma.AcknowledgementReceiptInclude;

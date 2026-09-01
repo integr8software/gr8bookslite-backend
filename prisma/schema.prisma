@@ -967,7 +967,6 @@ model Term {
   billingInvoices         BillingInvoice[]
   billings                Billing[]
   billingStatements       BillingStatement[]
-  acknowledgementReceipts AcknowledgementReceipt[]
   provisionalReceipts     ProvisionalReceipt[]
 
   @@index([companyId], map: "terms_company_id_idx")
@@ -1161,6 +1160,7 @@ model PaymentType {
   company            Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   officialReceipts   OfficialReceipt[]
   collectionReceipts CollectionReceipt[]
+  acknowledgementReceipts AcknowledgementReceipt[]
 
   @@unique([companyId, name], map: "payment_types_company_name_key")
   @@index([companyId], map: "payment_types_company_id_idx")
@@ -1773,7 +1773,7 @@ model AcknowledgementReceipt {
   companyId             Int                             @map("company_id")
   branchUnitId          Int                             @map("branch_unit_id")
   partyId               BigInt?                         @map("party_id")
-  termId                BigInt?                         @map("term_id")
+  paymentId             BigInt?                         @map("payment_id")
   receivableAccountId   BigInt?                         @map("receivable_account_id")
   transactionNo         String                          @map("transaction_no") @db.VarChar(80)
   documentDate          DateTime                        @map("document_date") @db.Date
@@ -1783,15 +1783,6 @@ model AcknowledgementReceipt {
   partyCodeSnapshot     String                          @map("party_code_snapshot") @db.VarChar(80)
   partyNameSnapshot     String                          @map("party_name_snapshot") @db.VarChar(255)
   billToNameSnapshot    String?                         @map("bill_to_name_snapshot") @db.VarChar(255)
-  addressSnapshot       String?                         @map("address_snapshot") @db.VarChar(500)
-  contactPersonSnapshot String?                         @map("contact_person_snapshot") @db.VarChar(255)
-  contactNoSnapshot     String?                         @map("contact_no_snapshot") @db.VarChar(40)
-  businessStyle         String?                         @map("business_style") @db.VarChar(120)
-  projectCode           String?                         @map("project_code") @db.VarChar(80)
-  projectName           String?                         @map("project_name") @db.VarChar(255)
-  projectRef            String?                         @map("project_ref") @db.VarChar(120)
-  salesAssociate        String?                         @map("sales_associate") @db.VarChar(150)
-  teamAssigned          String?                         @map("team_assigned") @db.VarChar(150)
   currencyCode          String                          @map("currency_code") @db.VarChar(10)
   exchangeRate          Decimal                         @map("exchange_rate") @db.Decimal(18, 6)
   netAmount             Decimal                         @default(0) @map("net_amount") @db.Decimal(18, 2)
@@ -1818,7 +1809,7 @@ model AcknowledgementReceipt {
   company               Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   branchUnit            CompanyUnit                     @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
   party                 Party?                          @relation(fields: [partyId], references: [id], onDelete: SetNull)
-  term                  Term?                           @relation(fields: [termId], references: [id], onDelete: SetNull)
+  payment               PaymentType?                    @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   receivableAccount     ChartAccount?                   @relation(fields: [receivableAccountId], references: [id], onDelete: Restrict)
   details               AcknowledgementReceiptDetails[]
 
@@ -1826,6 +1817,7 @@ model AcknowledgementReceipt {
   @@index([companyId, branchUnitId, status], map: "acknowledgement_receipts_company_branch_status_idx")
   @@index([companyId, documentDate], map: "acknowledgement_receipts_company_document_date_idx")
   @@index([partyId], map: "acknowledgement_receipts_party_id_idx")
+  @@index([paymentId], map: "acknowledgement_receipts_payment_id_idx")
   @@index([receivableAccountId], map: "acknowledgement_receipts_receivable_account_id_idx")
   @@map("acknowledgement_receipts")
 }
@@ -1837,25 +1829,21 @@ model AcknowledgementReceiptDetails {
   branchUnitId                 Int                    @map("branch_unit_id")
   lineNumber                   Int                    @map("line_number")
   description                  String                 @db.VarChar(250)
+  partyCodeSnapshot            String?                @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot            String?                @map("party_name_snapshot") @db.VarChar(255)
   particulars                  String?                @db.VarChar(500)
-  quantity                     Decimal                @default(0) @db.Decimal(18, 4)
-  amount                       Decimal                @default(0) @db.Decimal(18, 2)
-  netAmount                    Decimal                @default(0) @map("net_amount") @db.Decimal(18, 2)
-  vatAmount                    Decimal                @default(0) @map("vat_amount") @db.Decimal(18, 2)
-  wvatAmount                   Decimal                @default(0) @map("wvat_amount") @db.Decimal(18, 2)
-  ewtAmount                    Decimal                @default(0) @map("ewt_amount") @db.Decimal(18, 2)
-  discountPercent              Decimal                @default(0) @map("discount_percent") @db.Decimal(8, 4)
-  discountAmount               Decimal                @default(0) @map("discount_amount") @db.Decimal(18, 2)
-  grossAmount                  Decimal                @default(0) @map("gross_amount") @db.Decimal(18, 2)
-  vatType                      String?                @map("vat_type") @db.VarChar(80)
-  vatable                      Boolean                @default(false)
-  vatInclusive                 Boolean                @default(false) @map("vat_inclusive")
-  withWvat                     Boolean                @default(false) @map("with_wvat")
-  wvatType                     String?                @map("wvat_type") @db.VarChar(80)
-  withEwt                      Boolean                @default(false) @map("with_ewt")
-  ewtType                      String?                @map("ewt_type") @db.VarChar(80)
+  referenceNo                  String?                @map("reference_no") @db.VarChar(120)
   responsibilityCenterId       BigInt?                @map("responsibility_center_id")
   responsibilityCenterSnapshot String?                @map("responsibility_center_snapshot") @db.VarChar(150)
+  vatType                      String?                @map("vat_type") @db.VarChar(80)
+  vatPercent                   Decimal                @default(0) @map("vat_percent") @db.Decimal(8, 4)
+  cwtCode                      String?                @map("cwt_code") @db.VarChar(80)
+  cwtPercent                   Decimal                @default(0) @map("cwt_percent") @db.Decimal(8, 4)
+  netAmount                    Decimal                @default(0) @map("net_amount") @db.Decimal(18, 2)
+  vatAmount                    Decimal                @default(0) @map("vat_amount") @db.Decimal(18, 2)
+  ewtAmount                    Decimal                @default(0) @map("ewt_amount") @db.Decimal(18, 2)
+  grossAmount                  Decimal                @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  totalReceived                Decimal                @default(0) @map("total_received") @db.Decimal(18, 2)
   acknowledgementReceipt       AcknowledgementReceipt @relation(fields: [acknowledgementReceiptId], references: [id], onDelete: Cascade)
   company                      Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
   branchUnit                   CompanyUnit            @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)

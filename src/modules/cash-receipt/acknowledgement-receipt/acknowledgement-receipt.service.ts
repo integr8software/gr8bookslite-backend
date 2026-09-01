@@ -6,15 +6,14 @@ import {
   MembershipRole,
   MembershipStatus,
   Party,
-  PartyAddress,
   PartyStatus,
   PartyType,
+  PaymentType,
+  PaymentTypeStatus,
   Prisma,
   ResponsibilityCenter,
   ResponsibilityCenterStatus,
   AcknowledgementReceiptStatus,
-  Term,
-  TermStatus,
   TransactionNumberInputMode,
 } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
@@ -48,7 +47,6 @@ const JournalEntryNumberAdvisoryLockNamespace = 9081;
 const CustomerPartyTypes = new Set<PartyType>([PartyType.CUSTOMER, PartyType.MEMBER]);
 
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
-type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
 type ResolvedDetailLine = {
   input: AcknowledgementReceiptDetailDto;
@@ -161,13 +159,9 @@ export class AcknowledgementReceiptService {
 
         const created = await tx.acknowledgementReceipt.create({
           data: {
-            addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(dto.address),
             billToNameSnapshot: cleanOptional(dto.billToName),
             branchUnitId,
-            businessStyle: cleanOptional(dto.businessStyle),
             companyId,
-            contactNoSnapshot: cleanOptional(dto.contactNo),
-            contactPersonSnapshot: cleanOptional(dto.contactPerson),
             createdByUserId: user.id,
             currencyCode: normalized.currencyCode,
             discountAmount: normalized.discountAmount,
@@ -186,16 +180,11 @@ export class AcknowledgementReceiptService {
               cleanOptional(dto.billToName) ??
               cleanOptional(dto.customerCode) ??
               'Manual customer',
-            projectCode: cleanOptional(dto.projectCode),
-            projectName: cleanOptional(dto.projectName),
-            projectRef: cleanOptional(dto.projectRef),
+            paymentId: references.payment?.id ?? null,
             receivableAccountId: references.receivableAccount?.id ?? null,
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
-            salesAssociate: cleanOptional(dto.salesAssociate),
             status: AcknowledgementReceiptStatus.DRAFT,
-            teamAssigned: cleanOptional(dto.teamAssigned),
-            termId: references.term?.id ?? null,
             transactionNo,
             vatAmount: normalized.vatAmount,
             wvatAmount: normalized.wvatAmount,
@@ -212,7 +201,7 @@ export class AcknowledgementReceiptService {
 
       return {
         receipt: (await this.mapReceiptsWithAuditUsers([receipt]))[0],
-        message: 'Acknowledgement Receipt created successfully.',
+        message: 'Acknowledgement receipt created successfully.',
         permissions: this.getPermissions(user, companyId),
       };
     } catch (error) {
@@ -229,11 +218,11 @@ export class AcknowledgementReceiptService {
     const current = await this.findReceiptOrThrow(companyId, acknowledgementReceiptId);
 
     if (current.status !== AcknowledgementReceiptStatus.DRAFT) {
-      throw new BadRequestException('Only draft Acknowledgement Receipts can be edited.');
+      throw new BadRequestException('Only draft acknowledgement receipts can be edited.');
     }
 
     if (dto.branchUnitId !== undefined && dto.branchUnitId !== current.branchUnitId) {
-      throw new BadRequestException('Acknowledgement Receipt branch cannot be changed after creation.');
+      throw new BadRequestException('Acknowledgement receipt branch cannot be changed after creation.');
     }
 
     const fullDto = this.requireCompleteUpdateDto(dto);
@@ -261,11 +250,7 @@ export class AcknowledgementReceiptService {
         await tx.acknowledgementReceipt.update({
           where: { id: acknowledgementReceiptId },
           data: {
-            addressSnapshot: (references.party ? this.getPartyAddress(references.party) : null) ?? cleanOptional(fullDto.address),
             billToNameSnapshot: cleanOptional(fullDto.billToName),
-            businessStyle: cleanOptional(fullDto.businessStyle),
-            contactNoSnapshot: cleanOptional(fullDto.contactNo),
-            contactPersonSnapshot: cleanOptional(fullDto.contactPerson),
             currencyCode: normalized.currencyCode,
             discountAmount: normalized.discountAmount,
             documentDate: normalized.documentDate,
@@ -283,15 +268,10 @@ export class AcknowledgementReceiptService {
               cleanOptional(fullDto.billToName) ??
               cleanOptional(fullDto.customerCode) ??
               'Manual customer',
-            projectCode: cleanOptional(fullDto.projectCode),
-            projectName: cleanOptional(fullDto.projectName),
-            projectRef: cleanOptional(fullDto.projectRef),
+            paymentId: references.payment?.id ?? null,
             receivableAccountId: references.receivableAccount?.id ?? null,
             referenceNo: cleanOptional(fullDto.referenceNo),
             remarks: cleanOptional(fullDto.remarks),
-            salesAssociate: cleanOptional(fullDto.salesAssociate),
-            teamAssigned: cleanOptional(fullDto.teamAssigned),
-            termId: references.term?.id ?? null,
             transactionNo,
             updatedByUserId: user.id,
             vatAmount: normalized.vatAmount,
@@ -316,7 +296,7 @@ export class AcknowledgementReceiptService {
 
       return {
         receipt: (await this.mapReceiptsWithAuditUsers([receipt]))[0],
-        message: 'Acknowledgement Receipt updated successfully.',
+        message: 'Acknowledgement receipt updated successfully.',
         permissions: this.getPermissions(user, companyId),
       };
     } catch (error) {
@@ -338,7 +318,7 @@ export class AcknowledgementReceiptService {
     if (current.status === targetStatus) {
       return {
         receipt: (await this.mapReceiptsWithAuditUsers([current]))[0],
-        message: 'Acknowledgement Receipt status is already up to date.',
+        message: 'Acknowledgement receipt status is already up to date.',
         permissions: this.getPermissions(user, companyId),
       };
     }
@@ -365,7 +345,7 @@ export class AcknowledgementReceiptService {
 
     return {
       receipt: (await this.mapReceiptsWithAuditUsers([saved]))[0],
-      message: 'Acknowledgement Receipt status updated successfully.',
+      message: 'Acknowledgement receipt status updated successfully.',
       permissions: this.getPermissions(user, companyId),
     };
   }
@@ -473,7 +453,7 @@ export class AcknowledgementReceiptService {
     });
 
     if (!receipt) {
-      throw new NotFoundException('Acknowledgement Receipt not found.');
+      throw new NotFoundException('Acknowledgement receipt not found.');
     }
 
     return (await this.attachJournalEntries([receipt]))[0];
@@ -522,19 +502,19 @@ export class AcknowledgementReceiptService {
   }
 
   private async resolveReceiptReferences(tx: PrismaWriteClient, companyId: number, dto: CreateAcknowledgementReceiptDto) {
-    const [party, receivableAccount, term, details, journalEntries] = await Promise.all([
+    const [party, payment, receivableAccount, details, journalEntries] = await Promise.all([
       this.resolveParty(tx, companyId, { partyCode: dto.customerCode, partyId: dto.partyId }),
+      this.resolvePaymentType(tx, companyId, dto.paymentId),
       this.resolvePostingAccount(tx, companyId, {
         accountCode: dto.receivableAccountCode,
         accountId: dto.receivableAccountId,
         label: 'Receivable account',
       }),
-      this.resolveTerm(tx, companyId, dto.termId),
       Promise.all(dto.details.map((input) => this.resolveDetailLine(tx, companyId, input))),
       Promise.all(dto.journalEntries.map((input) => this.resolveJournalEntry(tx, companyId, input))),
     ]);
 
-    return { details, journalEntries, party, receivableAccount, term };
+    return { details, journalEntries, party, payment, receivableAccount };
   }
 
   private async resolveDetailLine(tx: PrismaWriteClient, companyId: number, input: AcknowledgementReceiptDetailDto): Promise<ResolvedDetailLine> {
@@ -574,30 +554,26 @@ export class AcknowledgementReceiptService {
     await tx.acknowledgementReceiptDetails.deleteMany({ where: { acknowledgementReceiptId } });
     await tx.acknowledgementReceiptDetails.createMany({
       data: details.map(({ input, responsibilityCenter }) => ({
-        amount: roundToDecimal(input.amount, 2),
         branchUnitId,
+        cwtCode: cleanOptional(input.cwtCode),
+        cwtPercent: roundToDecimal(input.cwtPercent, 4),
         companyId,
         description: input.description.trim(),
-        discountAmount: roundToDecimal(input.discountAmount, 2),
-        discountPercent: roundToDecimal(input.discountPercent, 4),
         ewtAmount: roundToDecimal(input.ewtAmount, 2),
-        ewtType: cleanOptional(input.ewtType),
         grossAmount: roundToDecimal(input.grossAmount, 2),
         lineNumber: input.lineNumber,
         netAmount: roundToDecimal(input.netAmount, 2),
         particulars: cleanOptional(input.particulars),
-        quantity: roundToDecimal(input.quantity, 4),
+        partyCodeSnapshot: cleanOptional(input.partyCode),
+        partyNameSnapshot: cleanOptional(input.partyName),
+        referenceNo: cleanOptional(input.referenceNo),
         responsibilityCenterId: responsibilityCenter?.id ?? null,
         responsibilityCenterSnapshot: responsibilityCenter?.name ?? cleanOptional(input.responsibilityCenter),
         acknowledgementReceiptId,
+        totalReceived: roundToDecimal(input.totalReceived, 2),
         vatAmount: roundToDecimal(input.vatAmount, 2),
-        vatInclusive: input.vatInclusive,
+        vatPercent: roundToDecimal(input.vatPercent, 4),
         vatType: cleanOptional(input.vatType),
-        vatable: input.vatable,
-        withEwt: input.withEwt,
-        withWvat: input.withWvat,
-        wvatAmount: roundToDecimal(input.wvatAmount, 2),
-        wvatType: cleanOptional(input.wvatType),
       })),
     });
   }
@@ -719,7 +695,7 @@ export class AcknowledgementReceiptService {
     });
 
     if (sequence?.inputMode !== TransactionNumberInputMode.MANUAL) {
-      throw new BadRequestException('Acknowledgement Receipt transaction number is auto-generated for this branch and cannot be changed manually.');
+      throw new BadRequestException('Acknowledgement receipt transaction number is auto-generated for this branch and cannot be changed manually.');
     }
 
     const sequenceScope = await resolveTransactionNumberScopeForCompanyBranch(tx, {
@@ -787,33 +763,33 @@ export class AcknowledgementReceiptService {
     }
 
     if (!party.partyTypes.some((partyType) => CustomerPartyTypes.has(partyType))) {
-      throw new BadRequestException('Party must be a customer or member for Acknowledgement Receipt.');
+      throw new BadRequestException('Party must be a customer or member for acknowledgement receipt.');
     }
 
     return party;
   }
 
-  private async resolveTerm(tx: PrismaWriteClient, companyId: number, termId?: string | null) {
-    const parsedTermId = parseOptionalPositiveBigIntId(termId, 'termId');
+  private async resolvePaymentType(tx: PrismaWriteClient, companyId: number, paymentId?: string | null): Promise<PaymentType | null> {
+    const parsedPaymentId = parseOptionalPositiveBigIntId(paymentId, 'paymentId');
 
-    if (!parsedTermId) {
+    if (!parsedPaymentId) {
       return null;
     }
 
-    const term = await tx.term.findFirst({
+    const paymentType = await tx.paymentType.findFirst({
       where: {
         companyId,
         deletedAt: null,
-        id: parsedTermId,
-        status: TermStatus.ACTIVE,
+        id: parsedPaymentId,
+        status: PaymentTypeStatus.ACTIVE,
       },
     });
 
-    if (!term) {
-      throw new BadRequestException('Terms must reference an active company term.');
+    if (!paymentType) {
+      throw new BadRequestException('Payment type must reference an active company payment type.');
     }
 
-    return term;
+    return paymentType;
   }
 
   private async resolveResponsibilityCenter(
@@ -866,7 +842,7 @@ export class AcknowledgementReceiptService {
     });
 
     if (existing) {
-      throw new ConflictException('A Acknowledgement Receipt with this transaction number already exists for this branch.');
+      throw new ConflictException('A acknowledgement receipt with this transaction number already exists for this branch.');
     }
   }
 
@@ -920,7 +896,7 @@ export class AcknowledgementReceiptService {
     };
 
     if (!allowedStatuses[currentStatus].includes(targetStatus)) {
-      throw new BadRequestException(`Cannot move Acknowledgement Receipt from ${currentStatus} to ${targetStatus}.`);
+      throw new BadRequestException(`Cannot move acknowledgement receipt from ${currentStatus} to ${targetStatus}.`);
     }
   }
 
@@ -989,7 +965,7 @@ export class AcknowledgementReceiptService {
 
     for (const field of requiredFields) {
       if (dto[field] === undefined || dto[field] === null) {
-        throw new BadRequestException(`Field ${String(field)} is required when updating a Acknowledgement Receipt.`);
+        throw new BadRequestException(`Field ${String(field)} is required when updating a acknowledgement receipt.`);
       }
     }
 
@@ -1003,7 +979,7 @@ export class AcknowledgementReceiptService {
       .replace(/[\s-]+/g, '_');
 
     if (!Object.values(AcknowledgementReceiptStatus).includes(normalized as AcknowledgementReceiptStatus)) {
-      throw new BadRequestException('Invalid Acknowledgement Receipt status.');
+      throw new BadRequestException('Invalid acknowledgement receipt status.');
     }
 
     return normalized as AcknowledgementReceiptStatus;
@@ -1026,19 +1002,6 @@ export class AcknowledgementReceiptService {
       .join(' ');
 
     return cleanOptional(party.partyName) ?? cleanOptional(party.tradeName) ?? cleanOptional(individualName) ?? cleanOptional(fallback) ?? party.partyCodeNo;
-  }
-
-  private getPartyAddress(party: PartyWithAddresses) {
-    const address = party.addresses.find((item) => item.isDefault) ?? party.addresses[0];
-
-    if (!address) {
-      return null;
-    }
-
-    return [address.addressLine1, address.addressLine2, address.barangay, address.cityMunicipality, address.province, address.region]
-      .map(cleanOptional)
-      .filter(Boolean)
-      .join(', ');
   }
 
   private getActiveCompanyId(user: AuthUser) {
@@ -1073,7 +1036,7 @@ export class AcknowledgementReceiptService {
       return;
     }
 
-    throw new ForbiddenException('You do not have permission to manage Acknowledgement Receipts.');
+    throw new ForbiddenException('You do not have permission to manage acknowledgement receipts.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -1111,7 +1074,7 @@ export class AcknowledgementReceiptService {
 
   private throwFriendlyPrismaError(error: unknown) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new ConflictException('A Acknowledgement Receipt with this transaction number already exists for this branch.');
+      throw new ConflictException('A acknowledgement receipt with this transaction number already exists for this branch.');
     }
   }
 }
