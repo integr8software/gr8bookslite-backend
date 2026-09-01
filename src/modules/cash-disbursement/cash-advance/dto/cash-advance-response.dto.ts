@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CashAdvanceStatus } from '@prisma/client';
+import { PaginationMetaDto } from '../../../../common/dto/pagination-meta.dto';
 
 export class CashAdvanceDto {
   @ApiProperty({ example: '1' })
@@ -79,20 +80,8 @@ export class CashAdvanceListResponseDto {
   @ApiProperty({ type: [CashAdvanceDto] })
   data: CashAdvanceDto[];
 
-  @ApiProperty({
-    example: {
-      page: 1,
-      limit: 10,
-      total: 1,
-      totalPages: 1,
-    },
-  })
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  @ApiProperty({ type: PaginationMetaDto })
+  meta: PaginationMetaDto;
 }
 
 export class CashAdvanceSingleResponseDto {

@@ -16,7 +16,3 @@ export const CashVoucherInclude = {
     },
   },
 } satisfies Prisma.CashVoucherInclude;
-
-export type CashVoucherWithPayload = Prisma.CashVoucherGetPayload<{
-  include: typeof CashVoucherInclude;
-}>;

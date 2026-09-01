@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AdvanceToSupplierPaymentType, AdvanceToSupplierStatus } from '@prisma/client';
+import { NavigablePaginationMetaDto } from '../../../../common/dto/pagination-meta.dto';
 
 export class AdvanceToSupplierResponseDto {
   @ApiProperty({ example: '1' })
@@ -82,22 +83,6 @@ export class AdvanceToSupplierListResponseDto {
   @ApiProperty({ type: [AdvanceToSupplierResponseDto] })
   items: AdvanceToSupplierResponseDto[];
 
-  @ApiProperty({
-    example: {
-      page: 1,
-      limit: 10,
-      total: 1,
-      totalPages: 1,
-      hasNextPage: false,
-      hasPreviousPage: false,
-    },
-  })
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
+  @ApiProperty({ type: NavigablePaginationMetaDto })
+  meta: NavigablePaginationMetaDto;
 }

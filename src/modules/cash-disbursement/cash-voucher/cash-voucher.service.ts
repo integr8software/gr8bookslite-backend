@@ -773,7 +773,7 @@ export class CashVoucherService {
   }
 
   private async allocateJournalEntryNumber(tx: Prisma.TransactionClient, companyId: number): Promise<bigint> {
-    await tx.$executeRawUnsafe('SELECT pg_advisory_xact_lock($1::int, $2::int)', JournalEntryNumberAdvisoryLockNamespace, companyId);
+    await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(${JournalEntryNumberAdvisoryLockNamespace}::int, ${companyId}::int)`);
 
     const latest = await tx.journalEntryHeader.findFirst({
       where: { companyId },
