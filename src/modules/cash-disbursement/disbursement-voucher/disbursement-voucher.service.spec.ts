@@ -1,10 +1,10 @@
 import { Prisma } from '@prisma/client';
 import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { CashVoucherService } from './cash-voucher.service';
-import { CashVoucherAccountingService } from './services/cash-voucher-accounting.service';
+import { DisbursementVoucherService } from './disbursement-voucher.service';
+import { DisbursementVoucherAccountingService } from './services/disbursement-voucher-accounting.service';
 
-describe('CashVoucherService', () => {
+describe('DisbursementVoucherService', () => {
   it('locks journal-number allocation with a parameterized query before reading the latest number', async () => {
     let executedQuery: Prisma.Sql | undefined;
     const executeRaw = jest.fn((query: Prisma.Sql): Promise<number> => {
@@ -12,7 +12,7 @@ describe('CashVoucherService', () => {
       return Promise.resolve(1);
     });
     const findFirst = jest.fn<Promise<{ jeno: bigint } | null>, [args: unknown]>().mockResolvedValue({ jeno: 41n });
-    const service = new CashVoucherService({} as PrismaService, {} as CompanyCurrencyService, {} as CashVoucherAccountingService);
+    const service = new DisbursementVoucherService({} as PrismaService, {} as CompanyCurrencyService, {} as DisbursementVoucherAccountingService);
     const serviceInternals = service as unknown as {
       allocateJournalEntryNumber: (tx: Prisma.TransactionClient, companyId: number) => Promise<bigint>;
     };

@@ -260,6 +260,8 @@ model Company {
   advancesToSuppliers               AdvanceToSupplier[]
   cashVouchers                      CashVoucher[]
   cashVoucherDetails                CashVoucherDetail[]
+  disbursementVouchers              DisbursementVoucher[]
+  disbursementVoucherDetails        DisbursementVoucherDetail[]
   pettyCashVouchers                 PettyCashVoucher[]
   pettyCashFunds                    PettyCashFund[]
   pettyCashFundDetails              PettyCashFundDetail[]
@@ -322,6 +324,8 @@ model CompanyUnit {
   provisionalReceiptDetails         ProvisionalReceiptDetails[]
   cashVouchers                      CashVoucher[]
   cashVoucherDetails                CashVoucherDetail[]
+  disbursementVouchers              DisbursementVoucher[]
+  disbursementVoucherDetails        DisbursementVoucherDetail[]
   pettyCashVouchers                 PettyCashVoucher[]
   pettyCashFunds                    PettyCashFund[]
   pettyCashFundDetails              PettyCashFundDetail[]
@@ -864,6 +868,8 @@ model ChartAccount {
   advancesToSuppliers                    AdvanceToSupplier[]
   cashVouchers                           CashVoucher[]
   cashVoucherDetails                     CashVoucherDetail[]
+  disbursementVouchers                   DisbursementVoucher[]
+  disbursementVoucherDetails             DisbursementVoucherDetail[]
   pettyCashVouchers                      PettyCashVoucher[]
   pettyCashFunds                         PettyCashFund[]
   pettyCashReplenishments                PettyCashReplenishment[]
@@ -1261,6 +1267,7 @@ model ResponsibilityCenter {
   acknowledgementReceiptDetails     AcknowledgementReceiptDetails[]
   provisionalReceiptDetails         ProvisionalReceiptDetails[]
   cashVoucherDetails                CashVoucherDetail[]
+  disbursementVoucherDetails        DisbursementVoucherDetail[]
   pettyCashVouchers                 PettyCashVoucher[]
   pettyCashFunds                    PettyCashFund[]
   pettyCashFundDetails              PettyCashFundDetail[]
@@ -1380,6 +1387,8 @@ model Party {
   advancesToSuppliers                 AdvanceToSupplier[]
   cashVouchers                        CashVoucher[]
   cashVoucherDetails                  CashVoucherDetail[]
+  disbursementVouchers                DisbursementVoucher[]
+  disbursementVoucherDetails          DisbursementVoucherDetail[]
   pettyCashVouchers                   PettyCashVoucher[]
   pettyCashFunds                      PettyCashFund[]
   pettyCashFundDetails                PettyCashFundDetail[]
@@ -1761,6 +1770,115 @@ model CashVoucherDetail {
   @@index([partyId], map: "cash_voucher_details_party_id_idx")
   @@index([accountId], map: "cash_voucher_details_account_id_idx")
   @@map("cash_voucher_details")
+}
+
+model DisbursementVoucher {
+  id              BigInt  @id @default(autoincrement())
+  companyId       Int     @map("company_id")
+  branchUnitId    Int?    @map("branch_unit_id")
+  partyId         BigInt? @map("party_id")
+  creditAccountId BigInt? @map("credit_account_id")
+
+  voucherNo          String    @map("voucher_no") @db.VarChar(80)
+  voucherDate        DateTime  @map("voucher_date") @db.Date
+  paymentDueDate     DateTime? @map("payment_due_date") @db.Date
+  referenceNo        String?   @map("reference_no") @db.VarChar(120)
+  referenceModule    String?   @map("reference_module") @db.VarChar(80)
+  voucherReferenceNo String?   @map("voucher_reference_no") @db.VarChar(120)
+  invoiceReferenceNo String?   @map("invoice_reference_no") @db.VarChar(120)
+
+  paymentMethod    String  @map("payment_method") @db.VarChar(50)
+  disbursementType String? @map("disbursement_type") @db.VarChar(100)
+  paymentDetails   Json?   @map("payment_details")
+  attachments      Json?
+
+  partyCodeSnapshot String  @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot String  @map("party_name_snapshot") @db.VarChar(255)
+  projectCode       String? @map("project_code") @db.VarChar(80)
+  projectName       String? @map("project_name") @db.VarChar(255)
+  preparedBy        String? @map("prepared_by") @db.VarChar(255)
+
+  currencyCode String  @default("PHP") @map("currency_code") @db.VarChar(10)
+  exchangeRate Decimal @default(1.00) @map("exchange_rate") @db.Decimal(18, 6)
+  amount       Decimal @default(0) @db.Decimal(18, 2)
+  remarks      String? @db.VarChar(500)
+
+  status DisbursementVoucherStatus @default(DRAFT)
+
+  createdByUserId     Int?      @map("created_by_user_id")
+  updatedByUserId     Int?      @map("updated_by_user_id")
+  approvedByUserId    Int?      @map("approved_by_user_id")
+  approvedAt          DateTime? @map("approved_at")
+  disapprovedByUserId Int?      @map("disapproved_by_user_id")
+  disapprovedAt       DateTime? @map("disapproved_at")
+  cancelledByUserId   Int?      @map("cancelled_by_user_id")
+  cancelledAt         DateTime? @map("cancelled_at")
+  postedByUserId      Int?      @map("posted_by_user_id")
+  postedAt            DateTime? @map("posted_at")
+  deletedAt           DateTime? @map("deleted_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  company       Company                       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit    CompanyUnit?                  @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party         Party?                        @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  creditAccount ChartAccount?                 @relation(fields: [creditAccountId], references: [id], onDelete: SetNull)
+  details       DisbursementVoucherDetail[]
+
+  @@unique([companyId, voucherNo], map: "disbursement_vouchers_company_voucher_no_key")
+  @@index([companyId, status], map: "disbursement_vouchers_company_status_idx")
+  @@index([companyId, voucherDate], map: "disbursement_vouchers_company_voucher_date_idx")
+  @@index([partyId], map: "disbursement_vouchers_party_id_idx")
+  @@map("disbursement_vouchers")
+}
+
+model DisbursementVoucherDetail {
+  id                           BigInt    @id @default(autoincrement())
+  voucherId                    BigInt    @map("voucher_id")
+  companyId                    Int       @map("company_id")
+  branchUnitId                 Int?      @map("branch_unit_id")
+  partyId                      BigInt?   @map("party_id")
+  lineNumber                   Int       @map("line_number")
+  accountId                    BigInt?   @map("account_id")
+  accountCodeSnapshot          String    @map("account_code_snapshot") @db.VarChar(80)
+  accountTitleSnapshot         String    @map("account_title_snapshot") @db.VarChar(255)
+  particulars                  String?   @db.VarChar(500)
+  remarks                      String?   @db.VarChar(500)
+  debit                        Decimal   @default(0) @db.Decimal(18, 2)
+  credit                       Decimal   @default(0) @db.Decimal(18, 2)
+  grossAmount                  Decimal   @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  netAmount                    Decimal   @default(0) @map("net_amount") @db.Decimal(18, 2)
+  vatType                      String?   @map("vat_type") @db.VarChar(80)
+  vatCode                      String?   @map("vat_code") @db.VarChar(80)
+  vatPercent                   Decimal   @default(0) @map("vat_percent") @db.Decimal(8, 4)
+  vatAmount                    Decimal   @default(0) @map("vat_amount") @db.Decimal(18, 2)
+  ewtCode                      String?   @map("ewt_code") @db.VarChar(80)
+  ewtPercent                   Decimal   @default(0) @map("ewt_percent") @db.Decimal(8, 4)
+  ewtAmount                    Decimal   @default(0) @map("ewt_amount") @db.Decimal(18, 2)
+  disburseAmount               Decimal   @default(0) @map("disburse_amount") @db.Decimal(18, 2)
+  partyCodeSnapshot            String?   @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot            String?   @map("party_name_snapshot") @db.VarChar(255)
+  responsibilityCenterId       BigInt?   @map("responsibility_center_id")
+  responsibilityCenterSnapshot String?   @map("responsibility_center_snapshot") @db.VarChar(150)
+  refId                        String?   @map("ref_id") @db.VarChar(120)
+  checkDate                    DateTime? @map("check_date") @db.Date
+  checkNo                      String?   @map("check_no") @db.VarChar(80)
+  checkStatus                  String?   @map("check_status") @db.VarChar(50)
+  createdAt                    DateTime  @default(now()) @map("created_at")
+  updatedAt                    DateTime  @updatedAt @map("updated_at")
+
+  voucher              DisbursementVoucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  company              Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit           CompanyUnit?        @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party                Party?              @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  account              ChartAccount?       @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  responsibilityCenter ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
+
+  @@unique([voucherId, lineNumber], map: "disbursement_voucher_details_voucher_line_key")
+  @@index([companyId], map: "disbursement_voucher_details_company_idx")
+  @@index([partyId], map: "disbursement_voucher_details_party_id_idx")
+  @@index([accountId], map: "disbursement_voucher_details_account_id_idx")
+  @@map("disbursement_voucher_details")
 }
 
 model PettyCashVoucher {
@@ -3911,6 +4029,16 @@ enum AdvanceToSupplierPaymentType {
 }
 
 enum CashVoucherStatus {
+  DRAFT
+  FOR_APPROVAL
+  APPROVED
+  POSTED
+  DISAPPROVED
+  CANCELLED
+  CLOSED
+}
+
+enum DisbursementVoucherStatus {
   DRAFT
   FOR_APPROVAL
   APPROVED

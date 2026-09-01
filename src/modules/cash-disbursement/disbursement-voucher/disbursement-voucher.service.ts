@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  CashVoucherStatus,
+  DisbursementVoucherStatus,
   ChartAccount,
   ChartAccountStatus,
   CompanyUnitType,
@@ -27,18 +27,18 @@ import {
   resolveTransactionNumberScopeForCompanyBranch,
   suggestTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
-import { CashVoucherDetailDto } from './dto/cash-voucher-detail.dto';
-import { CreateCashVoucherDto } from './dto/create-cash-voucher.dto';
-import { GetCashVoucherListQueryDto } from './dto/get-cash-voucher-list-query.dto';
+import { DisbursementVoucherDetailDto } from './dto/disbursement-voucher-detail.dto';
+import { CreateDisbursementVoucherDto } from './dto/create-disbursement-voucher.dto';
+import { GetDisbursementVoucherListQueryDto } from './dto/get-disbursement-voucher-list-query.dto';
 import { JournalEntryDto } from './dto/journal-entry.dto';
-import { UpdateCashVoucherDto } from './dto/update-cash-voucher.dto';
-import { UpdateCashVoucherStatusDto } from './dto/update-cash-voucher-status.dto';
-import { mapCashVoucher } from './mappers/cash-voucher.mapper';
-import { CashVoucherInclude } from './prisma/cash-voucher.include';
-import { CashVoucherAccountingService, CashVoucherReferenceType } from './services/cash-voucher-accounting.service';
-export const CashVoucherModuleCode = 'CV';
-import type { CashVoucherJournalEntry, CashVoucherWithDetails } from './types/cash-voucher-with-details.type';
-import { roundCurrency } from './utils/cash-voucher-totals.util';
+import { UpdateDisbursementVoucherDto } from './dto/update-disbursement-voucher.dto';
+import { UpdateDisbursementVoucherStatusDto } from './dto/update-disbursement-voucher-status.dto';
+import { mapDisbursementVoucher } from './mappers/disbursement-voucher.mapper';
+import { DisbursementVoucherInclude } from './prisma/disbursement-voucher.include';
+import { DisbursementVoucherAccountingService, DisbursementVoucherReferenceType } from './services/disbursement-voucher-accounting.service';
+export const DisbursementVoucherModuleCode = 'DV';
+import type { DisbursementVoucherJournalEntry, DisbursementVoucherWithDetails } from './types/disbursement-voucher-with-details.type';
+import { roundCurrency } from './utils/disbursement-voucher-totals.util';
 
 const JournalEntryNumberAdvisoryLockNamespace = 7082;
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
@@ -53,7 +53,7 @@ type ResolvedVoucherReferences = {
 
 type ResolvedDetailLine = {
   account: ChartAccount | null;
-  input: CashVoucherDetailDto;
+  input: DisbursementVoucherDetailDto;
   party: PartyWithAddresses | null;
   responsibilityCenter: ResponsibilityCenter | null;
 };
@@ -66,14 +66,14 @@ type ResolvedJournalEntry = {
 };
 
 @Injectable()
-export class CashVoucherService {
+export class DisbursementVoucherService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly companyCurrencyService: CompanyCurrencyService,
-    private readonly accountingService: CashVoucherAccountingService,
+    private readonly accountingService: DisbursementVoucherAccountingService,
   ) {}
 
-  async findAll(user: AuthUser, query: GetCashVoucherListQueryDto) {
+  async findAll(user: AuthUser, query: GetDisbursementVoucherListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.VIEW);
@@ -86,14 +86,14 @@ export class CashVoucherService {
     const orderBy = this.buildOrderBy(query);
 
     const [records, total, statistics] = await Promise.all([
-      this.prisma.cashVoucher.findMany({
+      this.prisma.disbursementVoucher.findMany({
         where,
-        include: CashVoucherInclude,
+        include: DisbursementVoucherInclude,
         orderBy,
         skip,
         take: limit,
       }),
-      this.prisma.cashVoucher.count({ where }),
+      this.prisma.disbursementVoucher.count({ where }),
       this.getStatistics(companyId, branchUnitId),
     ]);
 
@@ -143,7 +143,7 @@ export class CashVoucherService {
     const suggestion = await suggestTransactionNumberForCompanyBranch(this.prisma, {
       branchUnitId,
       companyId,
-      moduleCode: CashVoucherModuleCode,
+      moduleCode: DisbursementVoucherModuleCode,
       isIssued: (transactionNo, context) => this.isTransactionNoIssued(this.prisma, companyId, branchUnitId, transactionNo, context.scope),
     });
 
@@ -154,13 +154,13 @@ export class CashVoucherService {
     };
   }
 
-  async create(user: AuthUser, dto: CreateCashVoucherDto) {
+  async create(user: AuthUser, dto: CreateDisbursementVoucherDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
-    const targetStatus = dto.status || CashVoucherStatus.DRAFT;
+    const targetStatus = dto.status || DisbursementVoucherStatus.DRAFT;
 
     if (this.requiresSubmissionValidation(targetStatus)) {
       this.validateSubmittedHeader(dto);
@@ -184,7 +184,7 @@ export class CashVoucherService {
           requestedTransactionNo: dto.voucherNo || dto.transactionNo,
         });
 
-        const created = await tx.cashVoucher.create({
+        const created = await tx.disbursementVoucher.create({
           data: {
             companyId,
             branchUnitId,
@@ -197,8 +197,10 @@ export class CashVoucherService {
             referenceModule: cleanOptional(dto.referenceModule),
             voucherReferenceNo: cleanOptional(dto.voucherReferenceNo),
             invoiceReferenceNo: cleanOptional(dto.invoiceReferenceNo),
-            paymentMethod: cleanOptional(dto.paymentMethod) || 'Cash',
+            paymentMethod: cleanOptional(dto.paymentMethod) || '',
             disbursementType: cleanOptional(dto.disbursementType) || 'Vendor Payment',
+            paymentDetails: toJsonInput(dto.paymentDetails),
+            attachments: toJsonInput(dto.attachments),
             partyCodeSnapshot: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
             partyNameSnapshot: references.party ? this.getPartyName(references.party, dto.partyName) : dto.partyName?.trim() || '',
             projectCode: cleanOptional(dto.projectCode) ?? cleanOptional(dto.costCenter),
@@ -211,7 +213,7 @@ export class CashVoucherService {
             status: targetStatus,
             createdByUserId: user.id ? Number(user.id) : null,
           },
-          include: CashVoucherInclude,
+          include: DisbursementVoucherInclude,
         });
 
         await this.replaceDetails(tx, created.id, companyId, branchUnitId, references.details);
@@ -226,9 +228,9 @@ export class CashVoucherService {
           references.journalEntries,
         );
 
-        const saved = await tx.cashVoucher.findUniqueOrThrow({
+        const saved = await tx.disbursementVoucher.findUniqueOrThrow({
           where: { id: created.id },
-          include: CashVoucherInclude,
+          include: DisbursementVoucherInclude,
         });
 
         return (await this.attachJournalEntries([saved], tx))[0];
@@ -238,7 +240,7 @@ export class CashVoucherService {
       const permissions = this.getPermissions(user, companyId);
 
       return {
-        message: 'Cash Voucher created successfully.',
+        message: 'Disbursement Voucher created successfully.',
         data: mapped,
         voucher: mapped,
         permissions,
@@ -249,15 +251,15 @@ export class CashVoucherService {
     }
   }
 
-  async update(user: AuthUser, id: string, dto: UpdateCashVoucherDto) {
+  async update(user: AuthUser, id: string, dto: UpdateDisbursementVoucherDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     this.ensureCan(user, companyId, PermissionAction.UPDATE);
     const voucherId = parsePositiveBigIntId(id);
     const current = await this.findVoucherOrThrow(companyId, voucherId);
 
-    if (current.status !== CashVoucherStatus.DRAFT && current.status !== CashVoucherStatus.FOR_APPROVAL) {
-      throw new BadRequestException('Only draft or for approval cash vouchers can be edited.');
+    if (current.status !== DisbursementVoucherStatus.DRAFT && current.status !== DisbursementVoucherStatus.FOR_APPROVAL) {
+      throw new BadRequestException('Only draft or for approval disbursement vouchers can be edited.');
     }
 
     const branchUnitId = current.branchUnitId ?? (await this.resolveBranchUnitId(companyId, dto.branchUnitId));
@@ -309,7 +311,7 @@ export class CashVoucherService {
           requestedTransactionNo: dto.voucherNo || dto.transactionNo,
         });
 
-        await tx.cashVoucher.update({
+        await tx.disbursementVoucher.update({
           where: { id: voucherId },
           data: {
             partyId: references.party !== undefined ? (references.party?.id ?? null) : current.partyId,
@@ -321,8 +323,10 @@ export class CashVoucherService {
             referenceModule: dto.referenceModule !== undefined ? cleanOptional(dto.referenceModule) : current.referenceModule,
             voucherReferenceNo: dto.voucherReferenceNo !== undefined ? cleanOptional(dto.voucherReferenceNo) : current.voucherReferenceNo,
             invoiceReferenceNo: dto.invoiceReferenceNo !== undefined ? cleanOptional(dto.invoiceReferenceNo) : current.invoiceReferenceNo,
-            paymentMethod: dto.paymentMethod !== undefined ? cleanOptional(dto.paymentMethod) || 'Cash' : current.paymentMethod,
+            paymentMethod: dto.paymentMethod !== undefined ? cleanOptional(dto.paymentMethod) || '' : current.paymentMethod,
             disbursementType: dto.disbursementType !== undefined ? cleanOptional(dto.disbursementType) : current.disbursementType,
+            paymentDetails: toJsonInput(dto.paymentDetails !== undefined ? dto.paymentDetails : current.paymentDetails),
+            attachments: toJsonInput(dto.attachments !== undefined ? dto.attachments : current.attachments),
             partyCodeSnapshot: dto.partyCode ? dto.partyCode.trim() : references.party?.partyCodeNo || current.partyCodeSnapshot,
             partyNameSnapshot: dto.partyName
               ? dto.partyName.trim()
@@ -361,9 +365,9 @@ export class CashVoucherService {
           );
         }
 
-        const saved = await tx.cashVoucher.findUniqueOrThrow({
+        const saved = await tx.disbursementVoucher.findUniqueOrThrow({
           where: { id: voucherId },
-          include: CashVoucherInclude,
+          include: DisbursementVoucherInclude,
         });
 
         return (await this.attachJournalEntries([saved], tx))[0];
@@ -373,7 +377,7 @@ export class CashVoucherService {
       const permissions = this.getPermissions(user, companyId);
 
       return {
-        message: 'Cash Voucher updated successfully.',
+        message: 'Disbursement Voucher updated successfully.',
         data: mapped,
         voucher: mapped,
         permissions,
@@ -384,11 +388,11 @@ export class CashVoucherService {
     }
   }
 
-  async updateStatus(user: AuthUser, id: string, dto: UpdateCashVoucherStatusDto) {
+  async updateStatus(user: AuthUser, id: string, dto: UpdateDisbursementVoucherStatusDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
     const targetStatus = this.normalizeStatus(dto.status);
-    const requiredAction = targetStatus === CashVoucherStatus.CANCELLED ? PermissionAction.CANCEL : PermissionAction.UPDATE;
+    const requiredAction = targetStatus === DisbursementVoucherStatus.CANCELLED ? PermissionAction.CANCEL : PermissionAction.UPDATE;
 
     this.ensureCan(user, companyId, requiredAction);
     const voucherId = parsePositiveBigIntId(id);
@@ -397,14 +401,18 @@ export class CashVoucherService {
     if (current.status === targetStatus) {
       const mapped = (await this.mapWithAuditUsers([current]))[0];
       return {
-        message: 'Cash Voucher status is already up to date.',
+        message: 'Disbursement Voucher status is already up to date.',
         data: mapped,
         voucher: mapped,
         permissions: this.getPermissions(user, companyId),
       };
     }
 
-    if (targetStatus === CashVoucherStatus.FOR_APPROVAL || targetStatus === CashVoucherStatus.APPROVED || targetStatus === CashVoucherStatus.POSTED) {
+    if (
+      targetStatus === DisbursementVoucherStatus.FOR_APPROVAL ||
+      targetStatus === DisbursementVoucherStatus.APPROVED ||
+      targetStatus === DisbursementVoucherStatus.POSTED
+    ) {
       this.validateSubmittedHeader({
         partyCode: current.partyCodeSnapshot,
         partyName: current.partyNameSnapshot,
@@ -418,36 +426,36 @@ export class CashVoucherService {
 
     const now = new Date();
     const userId = user.id ? Number(user.id) : null;
-    const auditData: Prisma.CashVoucherUpdateInput = {
+    const auditData: Prisma.DisbursementVoucherUpdateInput = {
       status: targetStatus,
       updatedByUserId: userId,
     };
 
-    if (targetStatus === CashVoucherStatus.APPROVED) {
+    if (targetStatus === DisbursementVoucherStatus.APPROVED) {
       auditData.approvedByUserId = userId;
       auditData.approvedAt = now;
-    } else if (targetStatus === CashVoucherStatus.POSTED || targetStatus === CashVoucherStatus.CLOSED) {
+    } else if (targetStatus === DisbursementVoucherStatus.POSTED || targetStatus === DisbursementVoucherStatus.CLOSED) {
       auditData.postedByUserId = userId;
       auditData.postedAt = now;
-    } else if (targetStatus === CashVoucherStatus.DISAPPROVED) {
+    } else if (targetStatus === DisbursementVoucherStatus.DISAPPROVED) {
       auditData.disapprovedByUserId = userId;
       auditData.disapprovedAt = now;
-    } else if (targetStatus === CashVoucherStatus.CANCELLED) {
+    } else if (targetStatus === DisbursementVoucherStatus.CANCELLED) {
       auditData.cancelledByUserId = userId;
       auditData.cancelledAt = now;
     }
 
-    const voucher = await this.prisma.cashVoucher.update({
+    const voucher = await this.prisma.disbursementVoucher.update({
       where: { id: voucherId },
       data: auditData,
-      include: CashVoucherInclude,
+      include: DisbursementVoucherInclude,
     });
 
     const saved = (await this.attachJournalEntries([voucher]))[0];
     const mapped = (await this.mapWithAuditUsers([saved]))[0];
 
     return {
-      message: 'Cash Voucher status updated successfully.',
+      message: 'Disbursement Voucher status updated successfully.',
       data: mapped,
       voucher: mapped,
       permissions: this.getPermissions(user, companyId),
@@ -460,38 +468,38 @@ export class CashVoucherService {
     this.ensureCan(user, companyId, PermissionAction.CANCEL);
     const voucherId = parsePositiveBigIntId(id);
 
-    const existing = await this.prisma.cashVoucher.findFirst({
+    const existing = await this.prisma.disbursementVoucher.findFirst({
       where: { id: voucherId, companyId, deletedAt: null },
     });
 
     if (!existing) {
-      throw new NotFoundException('Cash Voucher record not found.');
+      throw new NotFoundException('Disbursement Voucher record not found.');
     }
 
     const userId = user.id ? Number(user.id) : null;
     const now = new Date();
 
-    await this.prisma.cashVoucher.update({
+    await this.prisma.disbursementVoucher.update({
       where: { id: voucherId },
       data: {
         deletedAt: now,
-        status: CashVoucherStatus.CANCELLED,
+        status: DisbursementVoucherStatus.CANCELLED,
         cancelledByUserId: userId,
         cancelledAt: now,
         updatedByUserId: userId,
       },
     });
 
-    return { message: 'Cash Voucher record cancelled successfully.' };
+    return { message: 'Disbursement Voucher record cancelled successfully.' };
   }
 
-  private buildListWhere(companyId: number, branchUnitId?: number, query: GetCashVoucherListQueryDto = {}): Prisma.CashVoucherWhereInput {
+  private buildListWhere(companyId: number, branchUnitId?: number, query: GetDisbursementVoucherListQueryDto = {}): Prisma.DisbursementVoucherWhereInput {
     const search = query.search?.trim();
     const startDate = query.documentDateFrom || query.startDate;
     const endDate = query.documentDateTo || query.endDate;
     const dateFrom = startDate ? new Date(startDate) : undefined;
     const dateTo = endDate ? new Date(endDate) : undefined;
-    const searchConditions: Prisma.CashVoucherWhereInput[] = [];
+    const searchConditions: Prisma.DisbursementVoucherWhereInput[] = [];
 
     if (query.amountFrom !== undefined && query.amountTo !== undefined && query.amountFrom > query.amountTo) {
       throw new BadRequestException('Amount from cannot be greater than amount to.');
@@ -536,7 +544,7 @@ export class CashVoucherService {
     };
   }
 
-  private buildOrderBy(query: GetCashVoucherListQueryDto): Prisma.CashVoucherOrderByWithRelationInput[] {
+  private buildOrderBy(query: GetDisbursementVoucherListQueryDto): Prisma.DisbursementVoucherOrderByWithRelationInput[] {
     const sortBy = query.sortBy ?? 'voucherDate';
     const sortDirection = query.sortDirection ?? query.sortOrder ?? 'desc';
     const field = (() => {
@@ -566,36 +574,36 @@ export class CashVoucherService {
   }
 
   private async getStatistics(companyId: number, branchUnitId?: number) {
-    const baseWhere: Prisma.CashVoucherWhereInput = {
+    const baseWhere: Prisma.DisbursementVoucherWhereInput = {
       companyId,
       deletedAt: null,
       ...(branchUnitId ? { branchUnitId } : {}),
     };
 
-    const counts = await this.prisma.cashVoucher.groupBy({
+    const counts = await this.prisma.disbursementVoucher.groupBy({
       by: ['status'],
       where: baseWhere,
       _count: { id: true },
     });
 
-    const countsMap = new Map<CashVoucherStatus, number>();
+    const countsMap = new Map<DisbursementVoucherStatus, number>();
     for (const item of counts) {
       countsMap.set(item.status, item._count.id);
     }
 
-    const totalVouchers = await this.prisma.cashVoucher.count({ where: baseWhere });
+    const totalVouchers = await this.prisma.disbursementVoucher.count({ where: baseWhere });
 
     return {
       totalVouchers,
-      draftVouchers: countsMap.get(CashVoucherStatus.DRAFT) ?? 0,
-      forApprovalVouchers: countsMap.get(CashVoucherStatus.FOR_APPROVAL) ?? 0,
-      postedVouchers: (countsMap.get(CashVoucherStatus.POSTED) ?? 0) + (countsMap.get(CashVoucherStatus.CLOSED) ?? 0),
-      disapprovedVouchers: countsMap.get(CashVoucherStatus.DISAPPROVED) ?? 0,
-      cancelledVouchers: countsMap.get(CashVoucherStatus.CANCELLED) ?? 0,
+      draftVouchers: countsMap.get(DisbursementVoucherStatus.DRAFT) ?? 0,
+      forApprovalVouchers: countsMap.get(DisbursementVoucherStatus.FOR_APPROVAL) ?? 0,
+      postedVouchers: (countsMap.get(DisbursementVoucherStatus.POSTED) ?? 0) + (countsMap.get(DisbursementVoucherStatus.CLOSED) ?? 0),
+      disapprovedVouchers: countsMap.get(DisbursementVoucherStatus.DISAPPROVED) ?? 0,
+      cancelledVouchers: countsMap.get(DisbursementVoucherStatus.CANCELLED) ?? 0,
     };
   }
 
-  private async mapWithAuditUsers(records: CashVoucherWithDetails[]) {
+  private async mapWithAuditUsers(records: DisbursementVoucherWithDetails[]) {
     const userIds = new Set<number>();
     for (const record of records) {
       if (record.createdByUserId) userIds.add(record.createdByUserId);
@@ -607,31 +615,31 @@ export class CashVoucherService {
     }
 
     const userNames = await resolveAuditUserNames(this.prisma, Array.from(userIds));
-    return records.map((record) => mapCashVoucher(record, userNames));
+    return records.map((record) => mapDisbursementVoucher(record, userNames));
   }
 
   private async findVoucherOrThrow(companyId: number, id: bigint, branchUnitId?: number) {
-    const voucher = await this.prisma.cashVoucher.findFirst({
+    const voucher = await this.prisma.disbursementVoucher.findFirst({
       where: {
         id,
         companyId,
         deletedAt: null,
         ...(branchUnitId ? { branchUnitId } : {}),
       },
-      include: CashVoucherInclude,
+      include: DisbursementVoucherInclude,
     });
 
     if (!voucher) {
-      throw new NotFoundException('Cash Voucher record not found.');
+      throw new NotFoundException('Disbursement Voucher record not found.');
     }
 
     return (await this.attachJournalEntries([voucher]))[0];
   }
 
-  private async attachJournalEntries<T extends Prisma.CashVoucherGetPayload<{ include: typeof CashVoucherInclude }>>(
+  private async attachJournalEntries<T extends Prisma.DisbursementVoucherGetPayload<{ include: typeof DisbursementVoucherInclude }>>(
     vouchers: T[],
     tx: PrismaWriteClient = this.prisma,
-  ): Promise<Array<T & { journalEntries: CashVoucherJournalEntry[] }>> {
+  ): Promise<Array<T & { journalEntries: DisbursementVoucherJournalEntry[] }>> {
     if (vouchers.length === 0) {
       return [];
     }
@@ -641,7 +649,7 @@ export class CashVoucherService {
         referenceId: {
           in: vouchers.map((voucher) => voucher.id),
         },
-        referenceType: CashVoucherReferenceType,
+        referenceType: DisbursementVoucherReferenceType,
       },
       include: {
         details: {
@@ -653,7 +661,7 @@ export class CashVoucherService {
       orderBy: [{ referenceId: 'asc' }],
     });
 
-    const journalEntriesByReferenceId = new Map<string, CashVoucherJournalEntry[]>();
+    const journalEntriesByReferenceId = new Map<string, DisbursementVoucherJournalEntry[]>();
 
     for (const header of journalEntryHeaders) {
       const entries = header.details.map((entry) => ({
@@ -676,7 +684,7 @@ export class CashVoucherService {
   }
 
   private async replaceDetails(tx: Prisma.TransactionClient, voucherId: bigint, companyId: number, branchUnitId: number | null, details: ResolvedDetailLine[]) {
-    await tx.cashVoucherDetail.deleteMany({
+    await tx.disbursementVoucherDetail.deleteMany({
       where: { voucherId },
     });
 
@@ -684,7 +692,7 @@ export class CashVoucherService {
       return;
     }
 
-    await tx.cashVoucherDetail.createMany({
+    await tx.disbursementVoucherDetail.createMany({
       data: details.map((line, index) => ({
         voucherId,
         companyId,
@@ -734,7 +742,7 @@ export class CashVoucherService {
       where: {
         companyId,
         referenceId: voucherId,
-        referenceType: CashVoucherReferenceType,
+        referenceType: DisbursementVoucherReferenceType,
       },
     });
 
@@ -755,7 +763,7 @@ export class CashVoucherService {
         jeno,
         particulars,
         referenceId: voucherId,
-        referenceType: CashVoucherReferenceType,
+        referenceType: DisbursementVoucherReferenceType,
         transactionDate: new Date(),
         totalCredit: new Prisma.Decimal(String(roundCurrency(totalCredit))),
         totalDebit: new Prisma.Decimal(String(roundCurrency(totalDebit))),
@@ -794,7 +802,7 @@ export class CashVoucherService {
     return (latest?.jeno ?? 0n) + 1n;
   }
 
-  private async normalizeVoucherInput(companyId: number, dto: Partial<CreateCashVoucherDto>) {
+  private async normalizeVoucherInput(companyId: number, dto: Partial<CreateDisbursementVoucherDto>) {
     const currencyCode = cleanCurrencyCode(dto.currencyCode || dto.currency) || (await this.companyCurrencyService.getBaseCurrencyCode(companyId)) || 'PHP';
     const exchangeRate = Number(dto.exchangeRate || dto.fxRate || 1.0);
     const voucherDateStr = dto.voucherDate || dto.documentDate || new Date().toISOString().slice(0, 10);
@@ -819,7 +827,7 @@ export class CashVoucherService {
   private async resolveVoucherReferences(
     tx: PrismaWriteClient,
     companyId: number,
-    dto: Partial<CreateCashVoucherDto>,
+    dto: Partial<CreateDisbursementVoucherDto>,
     options: { requireDetailAccounts?: boolean } = {},
   ): Promise<ResolvedVoucherReferences> {
     let party: PartyWithAddresses | null = null;
@@ -998,7 +1006,7 @@ export class CashVoucherService {
     const transactionNumber = await resolveTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
-      moduleCode: CashVoucherModuleCode,
+      moduleCode: DisbursementVoucherModuleCode,
       requestedTransactionNumber: cleanOptional(requestedTransactionNo),
       isIssued: (transactionNo, context) => this.isTransactionNoIssued(tx, companyId, branchUnitId, transactionNo, context.scope),
     });
@@ -1030,7 +1038,7 @@ export class CashVoucherService {
     const sequenceScope = await resolveTransactionNumberScopeForCompanyBranch(tx, {
       branchUnitId,
       companyId,
-      moduleCode: CashVoucherModuleCode,
+      moduleCode: DisbursementVoucherModuleCode,
     });
 
     const isDuplicate = await this.isTransactionNoIssued(tx, companyId, branchUnitId, normalizedRequested, sequenceScope.scope, excludedVoucherId);
@@ -1050,7 +1058,7 @@ export class CashVoucherService {
     scope: 'all' | 'branch' = 'branch',
     excludedVoucherId?: bigint,
   ) {
-    const existing = await tx.cashVoucher.findFirst({
+    const existing = await tx.disbursementVoucher.findFirst({
       where: {
         companyId,
         ...(scope === 'branch' && branchUnitId ? { branchUnitId } : {}),
@@ -1086,36 +1094,40 @@ export class CashVoucherService {
     return branch.id;
   }
 
-  private normalizeStatus(statusInput?: string): CashVoucherStatus {
+  private normalizeStatus(statusInput?: string): DisbursementVoucherStatus {
     if (!statusInput?.trim()) {
-      return CashVoucherStatus.DRAFT;
+      return DisbursementVoucherStatus.DRAFT;
     }
 
     const normalized = statusInput
       .trim()
       .toUpperCase()
       .replace(/[\s-]+/g, '_');
-    if (normalized === 'FOR_APPROVAL' || normalized === 'FORAPPROVAL') return CashVoucherStatus.FOR_APPROVAL;
-    if (normalized === 'APPROVED') return CashVoucherStatus.APPROVED;
-    if (normalized === 'POSTED') return CashVoucherStatus.POSTED;
-    if (normalized === 'DISAPPROVED') return CashVoucherStatus.DISAPPROVED;
-    if (normalized === 'CANCELLED' || normalized === 'CANCELED') return CashVoucherStatus.CANCELLED;
-    if (normalized === 'CLOSED') return CashVoucherStatus.CLOSED;
+    if (normalized === 'FOR_APPROVAL' || normalized === 'FORAPPROVAL') return DisbursementVoucherStatus.FOR_APPROVAL;
+    if (normalized === 'APPROVED') return DisbursementVoucherStatus.APPROVED;
+    if (normalized === 'POSTED') return DisbursementVoucherStatus.POSTED;
+    if (normalized === 'DISAPPROVED') return DisbursementVoucherStatus.DISAPPROVED;
+    if (normalized === 'CANCELLED' || normalized === 'CANCELED') return DisbursementVoucherStatus.CANCELLED;
+    if (normalized === 'CLOSED') return DisbursementVoucherStatus.CLOSED;
 
-    return CashVoucherStatus.DRAFT;
+    return DisbursementVoucherStatus.DRAFT;
   }
 
-  private requiresSubmissionValidation(status: CashVoucherStatus) {
-    return status !== CashVoucherStatus.DRAFT && status !== CashVoucherStatus.CANCELLED && status !== CashVoucherStatus.DISAPPROVED;
+  private requiresSubmissionValidation(status: DisbursementVoucherStatus) {
+    return status !== DisbursementVoucherStatus.DRAFT && status !== DisbursementVoucherStatus.CANCELLED && status !== DisbursementVoucherStatus.DISAPPROVED;
   }
 
-  private validateSubmittedHeader(dto: Pick<Partial<CreateCashVoucherDto>, 'partyCode' | 'partyName'>) {
+  private validateSubmittedHeader(dto: Pick<Partial<CreateDisbursementVoucherDto>, 'partyCode' | 'partyName' | 'paymentMethod'>) {
     if (!dto.partyCode?.trim()) {
       throw new BadRequestException('Party code is required before submission.');
     }
 
     if (!dto.partyName?.trim()) {
       throw new BadRequestException('Party name is required before submission.');
+    }
+
+    if (!dto.paymentMethod?.trim()) {
+      throw new BadRequestException('Payment method is required before submission.');
     }
   }
 
@@ -1172,11 +1184,11 @@ export class CashVoucherService {
       return;
     }
 
-    if (user.companyId === companyId && user.permissions.includes(`${CashVoucherModuleCode}:${action}`)) {
+    if (user.companyId === companyId && user.permissions.includes(`${DisbursementVoucherModuleCode}:${action}`)) {
       return;
     }
 
-    throw new ForbiddenException('You do not have permission to manage cash vouchers.');
+    throw new ForbiddenException('You do not have permission to manage disbursement vouchers.');
   }
 
   private getPermissions(user: AuthUser, companyId: number) {
@@ -1197,7 +1209,7 @@ export class CashVoucherService {
       return true;
     }
 
-    return user.companyId === companyId && user.permissions.includes(`${CashVoucherModuleCode}:${action}`);
+    return user.companyId === companyId && user.permissions.includes(`${DisbursementVoucherModuleCode}:${action}`);
   }
 
   private hasReservedRoleAccess(user: AuthUser, companyId: number) {
@@ -1215,8 +1227,15 @@ export class CashVoucherService {
   private throwFriendlyPrismaError(error: unknown): void {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
-        throw new ConflictException('A Cash Voucher with this transaction number already exists.');
+        throw new ConflictException('A Disbursement Voucher with this transaction number already exists.');
       }
     }
   }
+}
+
+function toJsonInput(value: unknown): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return Prisma.JsonNull;
+
+  return value;
 }

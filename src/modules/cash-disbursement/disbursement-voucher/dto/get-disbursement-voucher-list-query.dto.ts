@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
-export const CashVoucherSortFields = [
+export const DisbursementVoucherSortFields = [
   'voucherDate',
   'documentDate',
   'transactionNo',
@@ -16,9 +16,9 @@ export const CashVoucherSortFields = [
   'status',
 ] as const;
 
-export type CashVoucherSortField = (typeof CashVoucherSortFields)[number];
+export type DisbursementVoucherSortField = (typeof DisbursementVoucherSortFields)[number];
 
-export class GetCashVoucherListQueryDto {
+export class GetDisbursementVoucherListQueryDto {
   @ApiPropertyOptional({ description: 'Page number', default: 1, minimum: 1 })
   @Type(() => Number)
   @IsInt()
@@ -88,12 +88,12 @@ export class GetCashVoucherListQueryDto {
 
   @ApiPropertyOptional({
     description: 'Field to sort by',
-    enum: CashVoucherSortFields,
+    enum: DisbursementVoucherSortFields,
     default: 'voucherDate',
   })
-  @IsIn(CashVoucherSortFields)
+  @IsIn(DisbursementVoucherSortFields)
   @IsOptional()
-  sortBy?: CashVoucherSortField;
+  sortBy?: DisbursementVoucherSortField;
 
   @ApiPropertyOptional({ description: 'Sort direction', enum: ['asc', 'desc'], default: 'desc' })
   @IsIn(['asc', 'desc'])

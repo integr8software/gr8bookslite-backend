@@ -16473,7 +16473,20 @@
             "description": "Field to sort by",
             "schema": {
               "default": "voucherDate",
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "voucherDate",
+                "documentDate",
+                "transactionNo",
+                "voucherNo",
+                "partyName",
+                "partyCode",
+                "currency",
+                "amount",
+                "createdAt",
+                "updatedAt",
+                "status"
+              ]
             }
           },
           {
@@ -16686,7 +16699,20 @@
             "description": "Field to sort by",
             "schema": {
               "default": "voucherDate",
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "voucherDate",
+                "documentDate",
+                "transactionNo",
+                "voucherNo",
+                "partyName",
+                "partyCode",
+                "currency",
+                "amount",
+                "createdAt",
+                "updatedAt",
+                "status"
+              ]
             }
           },
           {
@@ -16872,7 +16898,20 @@
             "description": "Field to sort by",
             "schema": {
               "default": "voucherDate",
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "voucherDate",
+                "documentDate",
+                "transactionNo",
+                "voucherNo",
+                "partyName",
+                "partyCode",
+                "currency",
+                "amount",
+                "createdAt",
+                "updatedAt",
+                "status"
+              ]
             }
           },
           {
@@ -17098,6 +17137,796 @@
         "summary": "Update cash voucher status",
         "tags": [
           "Cash Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/disbursement-voucher": {
+      "get": {
+        "operationId": "DisbursementVoucherController_findAll_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "default": 50,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "description": "Branch Unit ID filter",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Free-text search (voucherNo, partyName, partyCode, remarks)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Party Code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start Date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "End Date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "description": "Document Date From (alias for startDate)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "description": "Document Date To (alias for endDate)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "description": "Minimum Amount",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "description": "Maximum Amount",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {
+              "default": "voucherDate",
+              "type": "string",
+              "enum": [
+                "voucherDate",
+                "documentDate",
+                "transactionNo",
+                "voucherNo",
+                "partyName",
+                "partyCode",
+                "currency",
+                "amount",
+                "createdAt",
+                "updatedAt",
+                "status"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction alias",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementVoucherListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated list of disbursement voucher records",
+        "tags": [
+          "Disbursement Voucher"
+        ]
+      },
+      "post": {
+        "operationId": "DisbursementVoucherController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDisbursementVoucherDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementVoucherSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create new disbursement voucher record",
+        "tags": [
+          "Disbursement Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/disbursement-voucher/transaction-number": {
+      "get": {
+        "operationId": "DisbursementVoucherController_suggestTransactionNumber_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "default": 50,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "description": "Branch Unit ID filter",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Free-text search (voucherNo, partyName, partyCode, remarks)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Party Code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start Date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "End Date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "description": "Document Date From (alias for startDate)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "description": "Document Date To (alias for endDate)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "description": "Minimum Amount",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "description": "Maximum Amount",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {
+              "default": "voucherDate",
+              "type": "string",
+              "enum": [
+                "voucherDate",
+                "documentDate",
+                "transactionNo",
+                "voucherNo",
+                "partyName",
+                "partyCode",
+                "currency",
+                "amount",
+                "createdAt",
+                "updatedAt",
+                "status"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction alias",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disbursement Voucher transaction number retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get auto-suggested transaction number sequence",
+        "tags": [
+          "Disbursement Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/disbursement-voucher/{id}": {
+      "get": {
+        "operationId": "DisbursementVoucherController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "default": 50,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "description": "Branch Unit ID filter",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Free-text search (voucherNo, partyName, partyCode, remarks)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Party Code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start Date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "End Date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateFrom",
+            "required": false,
+            "in": "query",
+            "description": "Document Date From (alias for startDate)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentDateTo",
+            "required": false,
+            "in": "query",
+            "description": "Document Date To (alias for endDate)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountFrom",
+            "required": false,
+            "in": "query",
+            "description": "Minimum Amount",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "amountTo",
+            "required": false,
+            "in": "query",
+            "description": "Maximum Amount",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {
+              "default": "voucherDate",
+              "type": "string",
+              "enum": [
+                "voucherDate",
+                "documentDate",
+                "transactionNo",
+                "voucherNo",
+                "partyName",
+                "partyCode",
+                "currency",
+                "amount",
+                "createdAt",
+                "updatedAt",
+                "status"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction alias",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementVoucherSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get single disbursement voucher details by ID",
+        "tags": [
+          "Disbursement Voucher"
+        ]
+      },
+      "put": {
+        "operationId": "DisbursementVoucherController_updatePut_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDisbursementVoucherDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementVoucherSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update existing disbursement voucher record",
+        "tags": [
+          "Disbursement Voucher"
+        ]
+      },
+      "patch": {
+        "operationId": "DisbursementVoucherController_updatePatch_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDisbursementVoucherDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementVoucherSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Patch existing disbursement voucher record",
+        "tags": [
+          "Disbursement Voucher"
+        ]
+      },
+      "delete": {
+        "operationId": "DisbursementVoucherController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Disbursement Voucher record cancelled successfully."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel/soft-delete disbursement voucher record",
+        "tags": [
+          "Disbursement Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/disbursement-voucher/{id}/status": {
+      "patch": {
+        "operationId": "DisbursementVoucherController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDisbursementVoucherStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementVoucherSingleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update disbursement voucher status",
+        "tags": [
+          "Disbursement Voucher"
         ]
       }
     },
@@ -40718,6 +41547,47 @@
           "createdAt"
         ]
       },
+      "NavigablePaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 10,
+            "minimum": 1
+          },
+          "total": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "example": false
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage"
+        ]
+      },
       "AdvanceToSupplierListResponseDto": {
         "type": "object",
         "properties": {
@@ -40728,35 +41598,7 @@
             }
           },
           "meta": {
-            "type": "object",
-            "properties": {
-              "page": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              },
-              "totalPages": {
-                "type": "number"
-              },
-              "hasNextPage": {
-                "type": "boolean"
-              },
-              "hasPreviousPage": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "page",
-              "limit",
-              "total",
-              "totalPages",
-              "hasNextPage",
-              "hasPreviousPage"
-            ]
+            "$ref": "#/components/schemas/NavigablePaginationMetaDto"
           }
         },
         "required": [
@@ -41161,6 +42003,37 @@
           "createdAt"
         ]
       },
+      "PaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 10,
+            "minimum": 1
+          },
+          "total": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
       "CashAdvanceListResponseDto": {
         "type": "object",
         "properties": {
@@ -41171,27 +42044,7 @@
             }
           },
           "meta": {
-            "type": "object",
-            "properties": {
-              "page": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              },
-              "totalPages": {
-                "type": "number"
-              }
-            },
-            "required": [
-              "page",
-              "limit",
-              "total",
-              "totalPages"
-            ]
+            "$ref": "#/components/schemas/PaginationMetaDto"
           }
         },
         "required": [
@@ -42897,6 +43750,1217 @@
         }
       },
       "UpdateCashVoucherStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "New voucher status",
+            "example": "For Approval"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "DisbursementVoucherDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Detail Primary Key ID",
+            "example": "1"
+          },
+          "lineNumber": {
+            "type": "number",
+            "description": "Line Number",
+            "example": 1
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Account ID",
+            "example": "1"
+          },
+          "accountCode": {
+            "type": "string",
+            "description": "Account Code",
+            "example": "6001010000"
+          },
+          "accountTitle": {
+            "type": "string",
+            "description": "Account Title",
+            "example": "Office Supplies Expense"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "description": "Particulars",
+            "example": "Office supplies for HQ"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Monthly supplies replenishment"
+          },
+          "debit": {
+            "type": "number",
+            "description": "Debit Amount",
+            "example": 5000
+          },
+          "credit": {
+            "type": "number",
+            "description": "Credit Amount",
+            "example": 0
+          },
+          "grossAmount": {
+            "type": "number",
+            "description": "Gross Amount",
+            "example": 5000
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net Amount",
+            "example": 4464.29
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT Type / Label",
+            "example": "VAT Inclusive"
+          },
+          "vatCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT Code",
+            "example": "VAT-IN"
+          },
+          "vatPercent": {
+            "type": "number",
+            "description": "VAT Percent",
+            "example": 12
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "VAT Amount",
+            "example": 535.71
+          },
+          "ewtCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "EWT Code",
+            "example": "WI158"
+          },
+          "ewtPercent": {
+            "type": "number",
+            "description": "EWT Percent",
+            "example": 1
+          },
+          "ewtAmount": {
+            "type": "number",
+            "description": "EWT Amount",
+            "example": 44.64
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Disburse Amount",
+            "example": 4955.36
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party Code",
+            "example": "SUP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party Name",
+            "example": "National Bookstore"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility Center ID",
+            "example": "1"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility Center Name / Snapshot",
+            "example": "Admin Dept"
+          },
+          "refId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reference ID / No",
+            "example": "REF-001"
+          },
+          "checkDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Check Date (YYYY-MM-DD)",
+            "example": "2026-06-11"
+          },
+          "checkNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Check Number",
+            "example": "CHK-123456"
+          },
+          "checkStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Check Status",
+            "example": "Cleared"
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "accountCode",
+          "accountTitle",
+          "debit",
+          "credit",
+          "grossAmount",
+          "netAmount",
+          "vatPercent",
+          "vatAmount",
+          "ewtPercent",
+          "ewtAmount",
+          "disburseAmount"
+        ]
+      },
+      "DisbursementVoucherRecordResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Disbursement Voucher ID",
+            "example": "1"
+          },
+          "branchUnitId": {
+            "type": "number",
+            "nullable": true,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
+          "voucherNo": {
+            "type": "string",
+            "description": "Voucher Sequence Number",
+            "example": "DV-2026-000001"
+          },
+          "voucherDate": {
+            "type": "string",
+            "description": "Voucher Date (YYYY-MM-DD)",
+            "example": "2026-06-11"
+          },
+          "paymentDueDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment Due Date (YYYY-MM-DD)",
+            "example": "2026-06-11"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reference No",
+            "example": "REF-001"
+          },
+          "referenceModule": {
+            "type": "string",
+            "nullable": true,
+            "description": "Source Reference Module",
+            "example": "Accounts Payable Voucher"
+          },
+          "voucherReferenceNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Voucher Reference No",
+            "example": "APV-2026-0001"
+          },
+          "invoiceReferenceNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoice Reference No",
+            "example": "INV-2026-0001"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "description": "Payment Method",
+            "example": "Check"
+          },
+          "disbursementType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Disbursement Type",
+            "example": "Vendor Payment"
+          },
+          "paymentDetails": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Payment-specific bank, check, transfer, or payee fields"
+          },
+          "attachments": {
+            "type": "array",
+            "nullable": true,
+            "description": "Voucher attachment metadata",
+            "items": {
+              "type": "object"
+            }
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party Primary Key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "description": "Party Code",
+            "example": "SUP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "description": "Party Name",
+            "example": "National Bookstore"
+          },
+          "creditAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Credit Chart Account ID",
+            "example": "1"
+          },
+          "costCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cost Center / Project Code",
+            "example": "CC-01"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project Code",
+            "example": "PRJ-01"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project Name",
+            "example": "Main Office Expansion"
+          },
+          "preparedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Prepared By Name",
+            "example": "John Doe"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency Code",
+            "example": "PHP"
+          },
+          "fxRate": {
+            "type": "number",
+            "description": "Exchange Rate",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "description": "Total Voucher Amount",
+            "example": 5000
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Disbursement for supplies"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "APPROVED",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
+            ],
+            "type": "string",
+            "description": "Status",
+            "example": "DRAFT"
+          },
+          "details": {
+            "description": "Details / Line items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisbursementVoucherDetailResponseDto"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Created By User Name",
+            "example": "System Administrator"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Created Timestamp",
+            "example": "2026-06-11T08:30:00.000Z"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated By User Name",
+            "example": "System Administrator"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated Timestamp",
+            "example": "2026-06-11T08:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "voucherNo",
+          "voucherDate",
+          "paymentMethod",
+          "partyCode",
+          "partyName",
+          "currency",
+          "fxRate",
+          "amount",
+          "status",
+          "details",
+          "createdAt"
+        ]
+      },
+      "DisbursementVoucherPaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "description": "Current Page",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per Page",
+            "example": 20
+          },
+          "total": {
+            "type": "number",
+            "description": "Total Records Count",
+            "example": 50
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total Pages Count",
+            "example": 3
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "DisbursementVoucherStatisticsDto": {
+        "type": "object",
+        "properties": {
+          "totalVouchers": {
+            "type": "number",
+            "description": "Total Vouchers Count",
+            "example": 10
+          },
+          "draftVouchers": {
+            "type": "number",
+            "description": "Draft Vouchers Count",
+            "example": 2
+          },
+          "forApprovalVouchers": {
+            "type": "number",
+            "description": "For Approval Vouchers Count",
+            "example": 3
+          },
+          "postedVouchers": {
+            "type": "number",
+            "description": "Posted Vouchers Count",
+            "example": 4
+          },
+          "disapprovedVouchers": {
+            "type": "number",
+            "description": "Disapproved Vouchers Count",
+            "example": 0
+          },
+          "cancelledVouchers": {
+            "type": "number",
+            "description": "Cancelled Vouchers Count",
+            "example": 1
+          }
+        },
+        "required": [
+          "totalVouchers",
+          "draftVouchers",
+          "forApprovalVouchers",
+          "postedVouchers",
+          "disapprovedVouchers",
+          "cancelledVouchers"
+        ]
+      },
+      "DisbursementVoucherListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "List of Disbursement Vouchers",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisbursementVoucherRecordResponseDto"
+            }
+          },
+          "meta": {
+            "description": "Pagination Metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisbursementVoucherPaginationMetaDto"
+              }
+            ]
+          },
+          "statistics": {
+            "description": "Voucher Status Statistics",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisbursementVoucherStatisticsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "DisbursementVoucherSingleResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Disbursement Voucher Record",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisbursementVoucherRecordResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "DisbursementVoucherDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Line Detail ID",
+            "example": "1"
+          },
+          "lineNumber": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Line Number (1-indexed)",
+            "example": 1
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Account ID",
+            "example": "1"
+          },
+          "accountCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Account Code",
+            "example": "6001010000"
+          },
+          "accountTitle": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Account Title / Name",
+            "example": "Office Supplies Expense"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Particulars",
+            "example": "Office supplies for HQ"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Remarks",
+            "example": "Monthly supplies replenishment"
+          },
+          "debit": {
+            "type": "number",
+            "description": "Debit Amount",
+            "example": 5000
+          },
+          "credit": {
+            "type": "number",
+            "description": "Credit Amount",
+            "example": 0
+          },
+          "grossAmount": {
+            "type": "number",
+            "description": "Gross Amount",
+            "example": 5000
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net Amount",
+            "example": 4464.29
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "VAT Type / Label",
+            "example": "VAT Inclusive"
+          },
+          "vatCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "VAT Code",
+            "example": "VAT-IN"
+          },
+          "vatPercent": {
+            "type": "number",
+            "description": "VAT Percent",
+            "example": 12
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "VAT Amount",
+            "example": 535.71
+          },
+          "ewtCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "EWT Code",
+            "example": "WI158"
+          },
+          "ewtPercent": {
+            "type": "number",
+            "description": "EWT Percent",
+            "example": 1
+          },
+          "ewtAmount": {
+            "type": "number",
+            "description": "EWT Amount",
+            "example": 44.64
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Disburse Amount",
+            "example": 4955.36
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Party Code",
+            "example": "SUP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Party Name",
+            "example": "National Bookstore"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility Center ID",
+            "example": "1"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150,
+            "description": "Responsibility Center Name / Snapshot",
+            "example": "Admin Dept"
+          },
+          "refId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Reference ID / No",
+            "example": "REF-001"
+          },
+          "checkDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Check Date (YYYY-MM-DD)",
+            "example": "2026-06-11"
+          },
+          "checkNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Check Number",
+            "example": "CHK-123456"
+          },
+          "checkStatus": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 50,
+            "description": "Check Status",
+            "example": "Cleared"
+          }
+        },
+        "required": [
+          "lineNumber"
+        ]
+      },
+      "CreateDisbursementVoucherDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Transaction / Voucher Sequence No",
+            "example": "DV-2026-000001"
+          },
+          "voucherNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Voucher No (alias for transactionNo)",
+            "example": "DV-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "Document Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
+          },
+          "voucherDate": {
+            "type": "string",
+            "description": "Voucher Date (alias for documentDate)",
+            "example": "2026-06-11"
+          },
+          "dueDate": {
+            "type": "string",
+            "description": "Payment Due Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
+          },
+          "paymentDueDate": {
+            "type": "string",
+            "description": "Payment Due Date (alias for dueDate)",
+            "example": "2026-06-11"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "description": "Party Primary Key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Party Code (Vendor/Employee/Customer)",
+            "example": "SUP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Party Name",
+            "example": "National Bookstore"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Party Address snapshot",
+            "example": "123 Main St, Manila"
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Contact Person snapshot",
+            "example": "Jane Doe"
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "description": "Contact Number snapshot",
+            "example": "09123456789"
+          },
+          "creditAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "description": "Chart Account Primary Key ID (Cash/Bank Credit Account)",
+            "example": "1"
+          },
+          "creditAccountCode": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Credit Account Code",
+            "example": "1001010000"
+          },
+          "creditAccountTitle": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Credit Account Title",
+            "example": "Cash on Hand"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Reference No",
+            "example": "REF-001"
+          },
+          "referenceModule": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Source Reference Module",
+            "example": "Accounts Payable Voucher"
+          },
+          "voucherReferenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Voucher Reference No",
+            "example": "APV-2026-0001"
+          },
+          "invoiceReferenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Invoice Reference No",
+            "example": "INV-2026-0001"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 50,
+            "description": "Payment Method",
+            "example": "Check"
+          },
+          "paymentDetails": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Payment-specific bank, check, transfer, or payee fields"
+          },
+          "attachments": {
+            "type": "array",
+            "nullable": true,
+            "description": "Voucher attachment metadata",
+            "items": {
+              "type": "object"
+            }
+          },
+          "disbursementType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "description": "Disbursement Type",
+            "example": "Vendor Payment"
+          },
+          "costCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Cost Center snapshot",
+            "example": "CC-01"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Project Code",
+            "example": "PRJ-01"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Project Name",
+            "example": "Main Office Expansion"
+          },
+          "preparedBy": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Prepared By Name",
+            "example": "John Doe"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10,
+            "description": "Currency Code",
+            "example": "PHP",
+            "default": "PHP"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10,
+            "description": "Currency Code (alias)",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001,
+            "description": "Exchange Rate",
+            "example": 1,
+            "default": 1
+          },
+          "fxRate": {
+            "type": "number",
+            "minimum": 0.000001,
+            "description": "FX Rate (alias for exchangeRate)",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "description": "Total Voucher Amount",
+            "example": 5000
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Remarks / Memo",
+            "example": "Disbursement for supplies"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "APPROVED",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
+            ],
+            "type": "string",
+            "description": "Voucher Status",
+            "default": "DRAFT"
+          },
+          "details": {
+            "description": "Voucher Line Entries / Details",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisbursementVoucherDetailDto"
+            }
+          },
+          "journalEntries": {
+            "description": "Journal Entries",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalEntryDto"
+            }
+          }
+        }
+      },
+      "UpdateDisbursementVoucherDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Branch Unit ID",
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Transaction / Voucher Sequence No",
+            "example": "DV-2026-000001"
+          },
+          "voucherNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Voucher No (alias for transactionNo)",
+            "example": "DV-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "Document Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
+          },
+          "voucherDate": {
+            "type": "string",
+            "description": "Voucher Date (alias for documentDate)",
+            "example": "2026-06-11"
+          },
+          "dueDate": {
+            "type": "string",
+            "description": "Payment Due Date in YYYY-MM-DD format",
+            "example": "2026-06-11"
+          },
+          "paymentDueDate": {
+            "type": "string",
+            "description": "Payment Due Date (alias for dueDate)",
+            "example": "2026-06-11"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "description": "Party Primary Key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Party Code (Vendor/Employee/Customer)",
+            "example": "SUP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Party Name",
+            "example": "National Bookstore"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Party Address snapshot",
+            "example": "123 Main St, Manila"
+          },
+          "contactPerson": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Contact Person snapshot",
+            "example": "Jane Doe"
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "description": "Contact Number snapshot",
+            "example": "09123456789"
+          },
+          "creditAccountId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "description": "Chart Account Primary Key ID (Cash/Bank Credit Account)",
+            "example": "1"
+          },
+          "creditAccountCode": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Credit Account Code",
+            "example": "1001010000"
+          },
+          "creditAccountTitle": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Credit Account Title",
+            "example": "Cash on Hand"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Reference No",
+            "example": "REF-001"
+          },
+          "referenceModule": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Source Reference Module",
+            "example": "Accounts Payable Voucher"
+          },
+          "voucherReferenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Voucher Reference No",
+            "example": "APV-2026-0001"
+          },
+          "invoiceReferenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Invoice Reference No",
+            "example": "INV-2026-0001"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 50,
+            "description": "Payment Method",
+            "example": "Check"
+          },
+          "paymentDetails": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Payment-specific bank, check, transfer, or payee fields"
+          },
+          "attachments": {
+            "type": "array",
+            "nullable": true,
+            "description": "Voucher attachment metadata",
+            "items": {
+              "type": "object"
+            }
+          },
+          "disbursementType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "description": "Disbursement Type",
+            "example": "Vendor Payment"
+          },
+          "costCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Cost Center snapshot",
+            "example": "CC-01"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Project Code",
+            "example": "PRJ-01"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Project Name",
+            "example": "Main Office Expansion"
+          },
+          "preparedBy": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Prepared By Name",
+            "example": "John Doe"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10,
+            "description": "Currency Code",
+            "example": "PHP",
+            "default": "PHP"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10,
+            "description": "Currency Code (alias)",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0.000001,
+            "description": "Exchange Rate",
+            "example": 1,
+            "default": 1
+          },
+          "fxRate": {
+            "type": "number",
+            "minimum": 0.000001,
+            "description": "FX Rate (alias for exchangeRate)",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "description": "Total Voucher Amount",
+            "example": 5000
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Remarks / Memo",
+            "example": "Disbursement for supplies"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "APPROVED",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
+            ],
+            "type": "string",
+            "description": "Voucher Status",
+            "default": "DRAFT"
+          },
+          "details": {
+            "description": "Voucher Line Entries / Details",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisbursementVoucherDetailDto"
+            }
+          },
+          "journalEntries": {
+            "description": "Journal Entries",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalEntryDto"
+            }
+          }
+        }
+      },
+      "UpdateDisbursementVoucherStatusDto": {
         "type": "object",
         "properties": {
           "status": {
