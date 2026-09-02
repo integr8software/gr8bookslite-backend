@@ -4,10 +4,7 @@ import { PermissionAction } from '../../../../common/enums/permission-action.enu
 import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { GetServiceMaintenanceListQueryDto } from '../dto/get-service-maintenance-list-query.dto';
-import {
-  accountGroupHasTag,
-  ServiceRevenueAccountGroupTag,
-} from '../utils/service-maintenance-account.util';
+import { accountGroupHasTag, ServiceRevenueAccountGroupTag } from '../utils/service-maintenance-account.util';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../../common/utils/module-access.util';
 import { ensureModuleAction } from '../../../../common/utils/module-permissions.util';
@@ -51,6 +48,7 @@ export class ServicesLookupService {
       select: {
         id: true,
         serviceName: true,
+        serviceType: true,
         status: true,
       },
       orderBy: [{ serviceName: 'asc' }, { id: 'asc' }],
@@ -60,6 +58,7 @@ export class ServicesLookupService {
       id: service.id.toString(),
       serviceName: service.serviceName,
       name: service.serviceName,
+      serviceType: service.serviceType,
       status: service.status,
     }));
   }
@@ -78,14 +77,16 @@ export class ServicesLookupService {
       orderBy: [{ accountCode: 'asc' }],
     });
 
-    return accounts.filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag)).map((account) => ({
-      id: account.id.toString(),
-      accountNumber: account.accountCode,
-      accountName: account.accountTitle,
-      description: account.description ?? '',
-      accountType: account.accountType ?? '',
-      accountCategory: account.accountLevel === ChartAccountLevel.SPECIFIC ? 'Detail' : 'Header',
-      status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
-    }));
+    return accounts
+      .filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag))
+      .map((account) => ({
+        id: account.id.toString(),
+        accountNumber: account.accountCode,
+        accountName: account.accountTitle,
+        description: account.description ?? '',
+        accountType: account.accountType ?? '',
+        accountCategory: account.accountLevel === ChartAccountLevel.SPECIFIC ? 'Detail' : 'Header',
+        status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
+      }));
   }
 }

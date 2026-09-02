@@ -41,11 +41,14 @@ import { validateEnvironment } from './config/environment';
 import { ApprovalManagementModule } from './modules/system-administration/approval-management/approval-management.module';
 import { ApproverSetupsModule } from './modules/system-administration/approver-setups/approver-setups.module';
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
+import { FieldManagementModule } from './modules/system-administration/field-management/field-management.module';
 import { StorageModule } from './storage/storage.module';
 import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.module';
 import { AccountsPayableModule } from './modules/accounts-payable/accounts-payable.module';
 import { GeneralJournalModule } from './modules/general-journal/general-journal.module';
 import { SalesModule } from './modules/sales/sales.module';
+import { CashReceiptModule } from './modules/cash-receipt/cash-receipt.module';
+import { CashDisbursementModule } from './modules/cash-disbursement/cash-disbursement.module';
 import { ReferenceModule } from './modules/reference/reference.module';
 
 @Module({
@@ -102,10 +105,13 @@ import { ReferenceModule } from './modules/reference/reference.module';
     ApprovalManagementModule,
     ApproverSetupsModule,
     TransactionNumberSequencesModule,
+    FieldManagementModule,
     UserSidebarModule,
     AccountsPayableModule,
     GeneralJournalModule,
     SalesModule,
+    CashReceiptModule,
+    CashDisbursementModule,
     ReferenceModule,
     AiAssistantModule,
   ],

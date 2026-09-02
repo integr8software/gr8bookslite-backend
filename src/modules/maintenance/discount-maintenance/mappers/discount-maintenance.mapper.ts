@@ -14,7 +14,7 @@ export function mapDiscount(discount: DiscountWithAccount, userNames: Map<number
     chartAccountId: discount.chartAccountId.toString(),
     accountCode: discount.chartAccount.accountCode,
     accountTitle: discount.chartAccount.accountTitle,
-    accountGroupPath: discount.type === DiscountType.PURCHASE ? 'Cost of Sales > Purchase Discount' : 'Sales > Sales Discount',
+    accountGroupPath: discount.type === DiscountType.PURCHASES ? 'Cost of Sales > Purchase Discount' : 'Sales > Sales Discount',
     createdBy: discount.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(discount.createdByUserId) ?? null),
     createdAt: discount.createdAt,
     updatedBy: (discount.updatedByUserId && userNames.get(discount.updatedByUserId)) ?? null,

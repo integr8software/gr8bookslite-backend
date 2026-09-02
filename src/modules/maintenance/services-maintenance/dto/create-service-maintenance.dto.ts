@@ -1,12 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
-import { ChartAccountStatus, ServiceAccountSetupMode } from '@prisma/client';
+import { ChartAccountStatus, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
 
 export class CreateServiceMaintenanceDto {
   @ApiProperty({ maxLength: 150 })
   @IsString()
   @MaxLength(150)
   serviceName!: string;
+
+  @ApiProperty({ enum: ServiceMaintenanceType })
+  @IsEnum(ServiceMaintenanceType)
+  serviceType!: ServiceMaintenanceType;
 
   @ApiPropertyOptional({ maxLength: 500, nullable: true })
   @IsOptional()

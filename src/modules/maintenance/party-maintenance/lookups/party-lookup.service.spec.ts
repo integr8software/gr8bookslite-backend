@@ -5,6 +5,9 @@ import { PartyLookupService } from './party-lookup.service';
 
 describe('PartyLookupService', () => {
   const prisma = {
+    cashAdvance: {
+      groupBy: jest.fn(),
+    },
     party: {
       findMany: jest.fn(),
     },
@@ -31,6 +34,7 @@ describe('PartyLookupService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    prisma.cashAdvance.groupBy.mockResolvedValue([]);
     prisma.party.findMany.mockResolvedValue([basicParty]);
   });
 
@@ -87,8 +91,30 @@ describe('PartyLookupService', () => {
         name: 'Ada M. Lovelace',
         cashAdvanceLimit: '1500.5',
         cashAdvanceBalance: '1500.5',
+        totalCashAdvance: '0.00',
+        availableCashAdvance: '1500.50',
       }),
     ]);
+  });
+
+  it('includes active cash advance totals and the remaining available amount', async () => {
+    prisma.cashAdvance.groupBy.mockResolvedValue([
+      {
+        partyId: 51n,
+        _sum: { amount: new Prisma.Decimal('400.25') },
+      },
+    ]);
+
+    const result = await service.findOptions({ companyId: 11, query: {} });
+
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        cashAdvanceLimit: '1500.5',
+        totalCashAdvance: '400.25',
+        availableCashAdvance: '1100.25',
+        cashAdvanceBalance: '1100.25',
+      }),
+    );
   });
 
   it('returns empty cash advance values when no limit is configured', async () => {

@@ -20,7 +20,8 @@ export class MasterPlanAndPackagesService {
   }
 
   async createPlan(dto: CreateMasterPlanAndPackageDto) {
-    const normalizedCode = this.normalizeCode(dto.code);
+    const normalizedCode = await this.resolvePlanCode(dto.code, dto.name);
+    const resolvedScope = this.resolveScope(dto);
     const normalizedSystemCodes = this.normalizeCodes(dto.systemCodes);
     const normalizedPrices = this.normalizePrices(dto.prices);
     const normalizedUsageRules = this.normalizeUsageRules(dto.usageRules);
@@ -45,19 +46,6 @@ export class MasterPlanAndPackagesService {
       throw new BadRequestException('Monthly and yearly prices are required.');
     }
 
-    const existingPlan = await this.prisma.subscriptionPlan.findUnique({
-      where: {
-        code: normalizedCode,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (existingPlan) {
-      throw new BadRequestException('A plan with this code already exists.');
-    }
-
     const isActive = dto.status === SubscriptionPlanStatus.ACTIVE;
     const plan = await this.prisma.subscriptionPlan.create({
       data: {
@@ -65,9 +53,10 @@ export class MasterPlanAndPackagesService {
         name: dto.name.trim(),
         description: dto.description?.trim() || null,
         currency: 'PHP',
-        scope: dto.scope,
+        scope: resolvedScope,
         status: dto.status,
         trialDays: dto.trialDays,
+        trialPriceInCents: dto.trialPriceInCents ?? 0,
         isActive,
         prices: {
           create: normalizedPrices.map((price) => ({
@@ -111,6 +100,62 @@ export class MasterPlanAndPackagesService {
     };
   }
 
+  private async resolvePlanCode(providedCode: string | null | undefined, name: string): Promise<string> {
+    if (providedCode?.trim()) {
+      const normalized = this.normalizeCode(providedCode);
+      const existingPlan = await this.prisma.subscriptionPlan.findUnique({
+        where: { code: normalized },
+        select: { id: true },
+      });
+      if (existingPlan) {
+        throw new BadRequestException('A plan with this code already exists.');
+      }
+      return normalized;
+    }
+
+    const baseCode = this.slugifyToCode(name);
+    let candidateCode = baseCode;
+    let counter = 1;
+    while (true) {
+      const existing = await this.prisma.subscriptionPlan.findUnique({
+        where: { code: candidateCode },
+        select: { id: true },
+      });
+      if (!existing) {
+        return candidateCode;
+      }
+      counter += 1;
+      candidateCode = `${baseCode}_${counter}`;
+    }
+  }
+
+  private resolveScope(dto: CreateMasterPlanAndPackageDto) {
+    if (dto.scopes && dto.scopes.length > 0) {
+      if (
+        dto.scopes.includes('ALL') ||
+        (dto.scopes.includes('ONBOARDING') && dto.scopes.includes('ADDITIONAL_COMPANY'))
+      ) {
+        return 'ALL';
+      }
+      if (dto.scopes.includes('ONBOARDING')) {
+        return 'ONBOARDING';
+      }
+      if (dto.scopes.includes('ADDITIONAL_COMPANY')) {
+        return 'ADDITIONAL_COMPANY';
+      }
+    }
+    return dto.scope ?? 'ALL';
+  }
+
+  private slugifyToCode(value: string) {
+    const slug = value
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    return slug || 'PLAN';
+  }
+
   private normalizeCode(code: string) {
     return code.trim().toUpperCase().replace(/\s+/g, '_');
   }
@@ -133,11 +178,13 @@ export class MasterPlanAndPackagesService {
     return [...uniquePrices.values()];
   }
 
-  private normalizeUsageRules(usageRules: CreateMasterPlanAndPackageDto['usageRules']) {
+  private normalizeUsageRules(usageRules?: CreateMasterPlanAndPackageDto['usageRules']) {
+    if (!usageRules || usageRules.length === 0) return [];
     return [...new Map(usageRules.map((rule) => [rule.metric, rule])).values()];
   }
 
-  private normalizeDiscountTiers(discountTiers: CreateMasterPlanAndPackageDto['discountTiers']) {
+  private normalizeDiscountTiers(discountTiers?: CreateMasterPlanAndPackageDto['discountTiers']) {
+    if (!discountTiers || discountTiers.length === 0) return [];
     return [...discountTiers].sort((left, right) => left.metric.localeCompare(right.metric) || left.thresholdCount - right.thresholdCount);
   }
 }

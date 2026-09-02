@@ -36,6 +36,8 @@ export function mapSubscriptionPlan(plan: SubscriptionPlan | OnboardingSubscript
     name: plan.name,
     description: plan.description,
     trialDays: plan.trialDays,
+    trialPriceInCents: plan.trialPriceInCents,
+    trialPriceDisplay: formatPhpAmount(plan.trialPriceInCents),
     pricing: {
       currency: 'PHP',
       monthly: {

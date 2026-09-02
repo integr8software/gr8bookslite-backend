@@ -9,7 +9,12 @@ import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateChartAccountDto } from '../chart-of-accounts/dto/create-chart-account.dto';
 import { assertCanCreateAccountLevel, generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
-import { findSystemAccountGroupOrThrow, mergeAccountGroupTags, SystemAccountGroups, SystemAccountGroupTags } from '../chart-of-accounts/utils/system-account-groups.util';
+import {
+  findSystemAccountGroupOrThrow,
+  mergeAccountGroupTags,
+  SystemAccountGroups,
+  SystemAccountGroupTags,
+} from '../chart-of-accounts/utils/system-account-groups.util';
 import { DefaultAccountOptionQueryDto } from './dto/default-account-option-query.dto';
 import { CreateDefaultAccountTemplateDto } from './dto/create-default-account-template.dto';
 import { GetDefaultAccountTemplateListQueryDto } from './dto/get-default-account-template-list-query.dto';

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChartAccountLevel, ChartAccountStatus, ServiceAccountSetupMode } from '@prisma/client';
+import { ChartAccountLevel, ChartAccountStatus, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
 
 export class ServiceMaintenanceResponseDto {
   @ApiProperty()
@@ -7,6 +7,9 @@ export class ServiceMaintenanceResponseDto {
 
   @ApiProperty()
   serviceName!: string;
+
+  @ApiProperty({ enum: ServiceMaintenanceType })
+  serviceType!: ServiceMaintenanceType;
 
   @ApiProperty({ nullable: true })
   description!: string | null;
@@ -51,6 +54,9 @@ export class ServiceMaintenanceOptionResponseDto {
 
   @ApiProperty()
   name!: string;
+
+  @ApiProperty({ enum: ServiceMaintenanceType })
+  serviceType!: ServiceMaintenanceType;
 
   @ApiProperty({ enum: ChartAccountStatus })
   status!: ChartAccountStatus;

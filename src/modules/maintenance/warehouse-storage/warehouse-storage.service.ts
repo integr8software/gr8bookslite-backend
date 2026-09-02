@@ -28,9 +28,6 @@ export class WarehouseStorageService {
   }
 
   private hasPermission(user: AuthUser, action: PermissionAction) {
-    return (
-      user.permissions.includes(`${WarehouseStorageModuleCode}:${action}`) ||
-      user.permissions.includes(`${LegacyWarehouseStorageModuleCode}:${action}`)
-    );
+    return user.permissions.includes(`${WarehouseStorageModuleCode}:${action}`) || user.permissions.includes(`${LegacyWarehouseStorageModuleCode}:${action}`);
   }
 }

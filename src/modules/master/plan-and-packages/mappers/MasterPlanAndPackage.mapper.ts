@@ -47,6 +47,7 @@ export function mapMasterPlanAndPackage(plan: MasterPlanAndPackageRecord) {
     scope: plan.scope,
     status: plan.status,
     trialDays: plan.trialDays,
+    trialPriceInCents: plan.trialPriceInCents,
     isActive: plan.isActive,
     pricing: {
       monthlyBasePriceInCents: monthlyPrice?.priceInCents ?? 0,

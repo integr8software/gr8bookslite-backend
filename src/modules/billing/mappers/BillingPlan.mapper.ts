@@ -37,6 +37,7 @@ export function mapBillingPlan(plan: SubscriptionPlan | BillingPlanRecord) {
     currency: plan.currency,
     scope: plan.scope,
     trialDays: plan.trialDays,
+    trialPriceInCents: plan.trialPriceInCents,
     pricing: {
       monthly: {
         amountInCents: priceSummary.monthlyPriceInCents,

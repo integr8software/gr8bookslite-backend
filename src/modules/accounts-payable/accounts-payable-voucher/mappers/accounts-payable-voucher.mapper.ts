@@ -49,7 +49,7 @@ export function mapAccountsPayableVoucher(voucher: AccountsPayableVoucherWithDet
       totalAmountDue: Number(detail.totalAmountDue),
       partyCode: detail.partyCodeSnapshot ?? null,
       partyName: detail.partyNameSnapshot ?? null,
-      particulars: detail.particulars ?? null,
+      particulars: getTaxCleanedParticulars(detail.particulars, detail.vat, detail.ewt),
       responsibilityCenterId: detail.responsibilityCenterId?.toString() ?? null,
       responsibilityCenter: detail.responsibilityCenterSnapshot ?? null,
       referenceNo: detail.referenceNo ?? null,
@@ -64,7 +64,7 @@ export function mapAccountsPayableVoucher(voucher: AccountsPayableVoucherWithDet
       accountTitle: entry.accountTitleSnapshot,
       currencyCode: entry.currencyCode,
       exchangeRate: Number(entry.exchangeRate),
-      particulars: entry.particulars ?? null,
+      particulars: getTaxCleanedParticulars(entry.particulars, entry.vatType, entry.atcCode),
       debit: Number(entry.debit),
       credit: Number(entry.credit),
       vatType: entry.vatType ?? null,
@@ -84,4 +84,24 @@ export function mapAccountsPayableVoucher(voucher: AccountsPayableVoucherWithDet
 
 function toDateValue(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+function getTaxCleanedParticulars(particulars: string | null | undefined, vatTypeOrCode: string | null | undefined, ewtOrAtcCode: string | null | undefined) {
+  const normalizedParticulars = particulars?.trim() ?? '';
+
+  if (!normalizedParticulars) {
+    return null;
+  }
+
+  const hasSelectedTax = Boolean(vatTypeOrCode?.trim() || ewtOrAtcCode?.trim());
+
+  if (hasSelectedTax && isGeneratedTaxParticulars(normalizedParticulars)) {
+    return null;
+  }
+
+  return normalizedParticulars;
+}
+
+function isGeneratedTaxParticulars(value: string) {
+  return /^(input vat|ewt)(\s+-\s+.*)?$/i.test(value.trim());
 }

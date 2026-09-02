@@ -89,7 +89,7 @@ export class OnboardingService {
     const plans = await this.prisma.subscriptionPlan.findMany({
       where: {
         isActive: true,
-        scope: SubscriptionPlanScope.ONBOARDING,
+        scope: { in: [SubscriptionPlanScope.ONBOARDING, SubscriptionPlanScope.ALL] },
         status: SubscriptionPlanStatus.ACTIVE,
       },
       include: {
@@ -197,7 +197,12 @@ export class OnboardingService {
       },
     });
 
-    if (!plan || !plan.isActive || plan.scope !== SubscriptionPlanScope.ONBOARDING || plan.status !== SubscriptionPlanStatus.ACTIVE) {
+    if (
+      !plan ||
+      !plan.isActive ||
+      (plan.scope !== SubscriptionPlanScope.ONBOARDING && plan.scope !== SubscriptionPlanScope.ALL) ||
+      plan.status !== SubscriptionPlanStatus.ACTIVE
+    ) {
       throw new BadRequestException('Selected subscription plan is invalid.');
     }
 

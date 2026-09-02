@@ -1,5 +1,5 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -15,6 +15,7 @@ export class WarehouseStorageController {
   constructor(private readonly warehouseStorageService: WarehouseStorageService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get list of warehouse storage records' })
   @ApiOkResponse({ description: 'Warehouse storage list retrieved.' })
   findAll(@CurrentUser() user: AuthUser) {
     return this.warehouseStorageService.findAll(user);

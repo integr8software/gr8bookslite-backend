@@ -632,7 +632,7 @@ export class ChartOfAccountsService {
       branch: cleanOptional(linkedDetails?.branch) ?? null,
       accountNumber: linkedDetails?.accountNumber?.trim() ?? '',
       accountName: dto.accountTitle.trim(),
-      accountType: cleanOptional(linkedDetails?.accountType) ?? null,
+      accountType: linkedDetails?.accountType ?? null,
       seriesStart: cleanOptional(linkedDetails?.seriesStart) ?? null,
       seriesEnd: cleanOptional(linkedDetails?.seriesEnd) ?? null,
       seriesDigits: linkedDetails?.seriesDigits,

@@ -1,4 +1,4 @@
-import { ChartAccountStatus } from '@prisma/client';
+import { ChartAccountStatus, ServiceMaintenanceType } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { ServicesMaintenanceService } from './services-maintenance.service';
 
@@ -16,13 +16,10 @@ describe('ServicesMaintenanceService service options', () => {
   it('returns active services using the backend service name', async () => {
     const { prisma, service } = createService();
     prisma.serviceMaintenance.findMany.mockResolvedValue([
-      { id: 18n, serviceName: 'Equipment Installation', status: ChartAccountStatus.ACTIVE },
+      { id: 18n, serviceName: 'Equipment Installation', serviceType: ServiceMaintenanceType.SALES, status: ChartAccountStatus.ACTIVE },
     ]);
 
-    const result = await service.findOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' installation ' },
-    );
+    const result = await service.findOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, { search: ' installation ' });
 
     expect(prisma.serviceMaintenance.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -40,6 +37,7 @@ describe('ServicesMaintenanceService service options', () => {
           id: '18',
           serviceName: 'Equipment Installation',
           name: 'Equipment Installation',
+          serviceType: ServiceMaintenanceType.SALES,
           status: ChartAccountStatus.ACTIVE,
         },
       ],

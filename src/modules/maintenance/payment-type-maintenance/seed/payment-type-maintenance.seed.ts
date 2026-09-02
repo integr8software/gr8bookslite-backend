@@ -46,6 +46,12 @@ export const PaymentTypeMaintenanceSeedRecords = [
     classification: PaymentTypeClassification.DIGITAL_WALLET,
     sortOrder: 70,
   },
+  {
+    name: 'Debit Memo',
+    description: 'Payment settlement through debit memo.',
+    classification: PaymentTypeClassification.DEBIT_MEMO,
+    sortOrder: 80,
+  },
 ] as const;
 
 export async function seedCompanyPaymentTypeMaintenanceDefaults(tx: PaymentTypeWriteClient, companyId: number) {

@@ -24,9 +24,7 @@ describe('ItemVariationsService variation options', () => {
         requiredOnItem: true,
         affectsStock: true,
         status: ItemAttributeStatus.ACTIVE,
-        values: [
-          { id: 31n, label: 'Large', isUsed: true, status: ItemAttributeValueStatus.ACTIVE },
-        ],
+        values: [{ id: 31n, label: 'Large', isUsed: true, status: ItemAttributeValueStatus.ACTIVE }],
       },
     ]);
 

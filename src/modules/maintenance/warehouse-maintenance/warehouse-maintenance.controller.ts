@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -25,30 +25,35 @@ export class WarehouseMaintenanceController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get paginated list of warehouse records' })
   @ApiOkResponse({ type: WarehouseListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetWarehouseListQueryDto) {
     return this.warehouseMaintenanceService.findAll(user, query);
   }
 
   @Get('options')
+  @ApiOperation({ summary: 'Get warehouse options' })
   @ApiOkResponse({ type: WarehouseOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: WarehouseLookupQueryDto) {
     return this.warehouseLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get warehouse details by ID' })
   @ApiOkResponse({ type: WarehouseContainerResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.warehouseMaintenanceService.findOne(user, id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a warehouse record' })
   @ApiCreatedResponse({ type: SaveWarehouseResponseDto })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateWarehouseDto) {
     return this.warehouseMaintenanceService.create(user, dto);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a warehouse record' })
   @ApiOkResponse({ type: SaveWarehouseResponseDto })
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateWarehouseDto) {
     return this.warehouseMaintenanceService.update(user, id, dto);

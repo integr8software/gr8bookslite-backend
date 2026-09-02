@@ -32,15 +32,7 @@ export class DefaultAccountLookupService {
     };
   }
 
-  async findDefaultAccountOptions({
-    companyId,
-    query,
-    type,
-  }: {
-    companyId: number;
-    query: DefaultAccountOptionQueryDto;
-    type?: DefaultAccountTemplateType;
-  }) {
+  async findDefaultAccountOptions({ companyId, query, type }: { companyId: number; query: DefaultAccountOptionQueryDto; type?: DefaultAccountTemplateType }) {
     const where = this.buildDefaultAccountOptionWhere(companyId, query, type);
     const defaultAccounts = await this.prisma.defaultAccount.findMany({
       where,
@@ -112,13 +104,15 @@ export class DefaultAccountLookupService {
     });
     const accountById = new Map(accounts.map((account) => [account.id, account]));
 
-    return accounts.filter((account) => isDescendantOrSelf(account.id, root.id, accountById)).map((account) => ({
-      id: account.id.toString(),
-      accountCode: account.accountCode,
-      accountTitle: account.accountTitle,
-      accountLevel: account.accountLevel,
-      parentAccountId: account.parentAccountId?.toString() ?? null,
-    }));
+    return accounts
+      .filter((account) => isDescendantOrSelf(account.id, root.id, accountById))
+      .map((account) => ({
+        id: account.id.toString(),
+        accountCode: account.accountCode,
+        accountTitle: account.accountTitle,
+        accountLevel: account.accountLevel,
+        parentAccountId: account.parentAccountId?.toString() ?? null,
+      }));
   }
 
   private buildDefaultAccountOptionWhere(
@@ -172,4 +166,3 @@ function isDescendantOrSelf(
 
   return false;
 }
-

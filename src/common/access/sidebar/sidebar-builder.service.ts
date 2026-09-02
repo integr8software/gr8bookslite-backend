@@ -19,7 +19,11 @@ export class SidebarBuilder {
     const permissionSet = new Set(permissions);
     const hasAdminModuleAccess = membership.role === MembershipRole.ADMIN;
     const enabledModules = this.entitlementService.getEnabledModules(membership);
-    const permittedEnabledModules = this.entitlementService.getPermittedEnabledModules(enabledModules, permissionSet, hasAdminModuleAccess);
+    const permittedEnabledModules = this.entitlementService.getPermittedEnabledModules(
+      enabledModules,
+      permissionSet,
+      hasAdminModuleAccess,
+    );
     const fallbackItems = permittedEnabledModules.map((item) => this.buildFallbackUserModuleItem(item.module));
     const branchIds = this.getAccessibleBranchIds(membership);
     const systemSidebarItems = this.getActiveSystemSidebarItems(membership);
@@ -27,6 +31,8 @@ export class SidebarBuilder {
 
     return { items: byBranch[0]?.items ?? fallbackItems, byBranch };
   }
+
+
 
   private getAccessibleBranchIds(membership: SidebarMembershipSource): number[] {
     const defaultBranchIds =
