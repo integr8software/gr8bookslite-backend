@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { ChartAccountStatus, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
@@ -17,6 +18,7 @@ export class GetServiceMaintenanceListQueryDto {
   @IsEnum(ServiceAccountSetupMode)
   accountSetupMode?: ServiceAccountSetupMode;
 
+  @ApiPropertyOptional({ enum: ServiceMaintenanceType, description: 'Filter by service type' })
   @IsOptional()
   @IsEnum(ServiceMaintenanceType)
   serviceType?: ServiceMaintenanceType;
@@ -34,6 +36,7 @@ export class GetServiceMaintenanceListQueryDto {
   @Max(500)
   limit?: number;
 
+  @ApiPropertyOptional({ enum: ['serviceName', 'serviceType', 'status', 'accountSetupMode', 'createdAt', 'updatedAt'], description: 'Sort by field', default: 'serviceName' })
   @IsOptional()
   @IsIn(['serviceName', 'serviceType', 'status', 'accountSetupMode', 'createdAt', 'updatedAt'])
   sortBy?: 'serviceName' | 'serviceType' | 'status' | 'accountSetupMode' | 'createdAt' | 'updatedAt';

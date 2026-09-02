@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { Prisma, ServiceAccountSetupMode } from '@prisma/client';
 import { cleanOptional, normalizeIdentityValue } from '../../../../common/utils/string-normalization.util';
 import { CreateServiceMaintenanceDto } from '../dto/create-service-maintenance.dto';
@@ -81,10 +81,4 @@ export function toUpdateServiceMaintenanceData(dto: UpdateServiceMaintenanceDto,
 
 export function getServiceMaintenanceIdentityKey(serviceName: string) {
   return normalizeIdentityValue(serviceName);
-}
-
-export function ensureNoDuplicateServiceName(existingName: string | undefined, nextName: string) {
-  if (existingName && getServiceMaintenanceIdentityKey(existingName) === getServiceMaintenanceIdentityKey(nextName)) {
-    throw new ConflictException('A service with this name already exists.');
-  }
 }

@@ -120,19 +120,12 @@ export class CreatePettyCashFundDto {
   @MaxLength(500)
   remarks?: string;
 
-  @ApiPropertyOptional({
-    description: 'Initial Status',
-    enum: PettyCashFundStatus,
-    default: PettyCashFundStatus.DRAFT,
-  })
+  @ApiPropertyOptional({ description: 'Initial Status', enum: PettyCashFundStatus, default: PettyCashFundStatus.DRAFT })
   @IsOptional()
   @IsEnum(PettyCashFundStatus)
   status?: PettyCashFundStatus;
 
-  @ApiPropertyOptional({
-    description: 'Petty Cash Fund Details',
-    type: [PettyCashFundDetailDto],
-  })
+  @ApiPropertyOptional({ description: 'Petty Cash Fund Details', type: [PettyCashFundDetailDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

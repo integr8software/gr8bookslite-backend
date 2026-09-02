@@ -120,19 +120,12 @@ export class CreatePettyCashReplenishmentDto {
   @MaxLength(500)
   remarks?: string;
 
-  @ApiPropertyOptional({
-    description: 'Initial Status',
-    enum: PettyCashReplenishmentStatus,
-    default: PettyCashReplenishmentStatus.DRAFT,
-  })
+  @ApiPropertyOptional({ description: 'Initial Status', enum: PettyCashReplenishmentStatus, default: PettyCashReplenishmentStatus.DRAFT })
   @IsOptional()
   @IsEnum(PettyCashReplenishmentStatus)
   status?: PettyCashReplenishmentStatus;
 
-  @ApiPropertyOptional({
-    description: 'Petty Cash Replenishment Details',
-    type: [PettyCashReplenishmentDetailDto],
-  })
+  @ApiPropertyOptional({ description: 'Petty Cash Replenishment Details', type: [PettyCashReplenishmentDetailDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

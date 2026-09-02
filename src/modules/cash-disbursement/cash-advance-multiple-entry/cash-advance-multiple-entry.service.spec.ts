@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CashAdvanceStatus } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateCashAdvanceMultipleEntryDto } from './dto/cash-advance-multiple-entry.dto';
-import { CashAdvanceMultipleEntryService } from './cash-advance-multiple-entry.service';
+import { CashAdvanceMultipleEntryService, getBatchTransNo } from './cash-advance-multiple-entry.service';
 
 type CashAdvanceMultipleEntryServiceInternals = {
   isSubmittedStatus: (status: CashAdvanceStatus) => boolean;
@@ -36,5 +36,11 @@ describe('CashAdvanceMultipleEntryService', () => {
         items: [{ partyCode: 'EMP-001', partyName: 'Employee', amount: '0.00' }],
       }),
     ).toThrow(BadRequestException);
+  });
+
+  it('resolves line transaction numbers to the parent CAME transaction number', () => {
+    expect(getBatchTransNo('CAME-000001-L001')).toBe('CAME-000001');
+    expect(getBatchTransNo('CAME-000001-L002')).toBe('CAME-000001');
+    expect(getBatchTransNo('CAME-2026-000001-L002')).toBe('CAME-2026-000001');
   });
 });

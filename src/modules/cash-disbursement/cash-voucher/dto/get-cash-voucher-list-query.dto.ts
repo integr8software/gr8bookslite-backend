@@ -86,11 +86,7 @@ export class GetCashVoucherListQueryDto {
   @IsOptional()
   amountTo?: number;
 
-  @ApiPropertyOptional({
-    description: 'Field to sort by',
-    enum: CashVoucherSortFields,
-    default: 'voucherDate',
-  })
+  @ApiPropertyOptional({ description: 'Field to sort by', enum: CashVoucherSortFields, default: 'voucherDate' })
   @IsIn(CashVoucherSortFields)
   @IsOptional()
   sortBy?: CashVoucherSortField;

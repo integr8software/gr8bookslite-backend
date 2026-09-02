@@ -191,11 +191,7 @@ export class CreatePettyCashVoucherDto {
   @MaxLength(500)
   remarks?: string;
 
-  @ApiPropertyOptional({
-    description: 'Initial Status',
-    enum: PettyCashVoucherStatus,
-    default: PettyCashVoucherStatus.DRAFT,
-  })
+  @ApiPropertyOptional({ description: 'Initial Status', enum: PettyCashVoucherStatus, default: PettyCashVoucherStatus.DRAFT })
   @IsOptional()
   @IsEnum(PettyCashVoucherStatus)
   status?: PettyCashVoucherStatus;

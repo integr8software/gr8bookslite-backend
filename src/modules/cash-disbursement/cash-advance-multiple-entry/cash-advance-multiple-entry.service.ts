@@ -17,7 +17,7 @@ import {
 } from './dto/cash-advance-multiple-entry.dto';
 
 const BatchPrefix = 'CAME-';
-const BatchTransNoPattern = /^(CAME-\d{4}-\d{6})/;
+const BatchTransNoPattern = /^(CAME-(?:\d{4}-)?\d{6})/;
 const CashAdvanceMultipleEntryModuleCode = 'CAME';
 
 type CashAdvanceBatchRow = Prisma.CashAdvanceGetPayload<{
@@ -465,7 +465,7 @@ export class CashAdvanceMultipleEntryService {
   }
 }
 
-function getBatchTransNo(value: string) {
+export function getBatchTransNo(value: string) {
   const match = value.trim().match(BatchTransNoPattern);
   return match ? match[1] : value.trim();
 }

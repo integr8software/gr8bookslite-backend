@@ -6763,6 +6763,37 @@
         "operationId": "ServicesMaintenanceController_findAll_v1",
         "parameters": [
           {
+            "name": "serviceType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by service type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PURCHASES",
+                "SALES"
+              ]
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "default": "serviceName",
+              "type": "string",
+              "enum": [
+                "serviceName",
+                "serviceType",
+                "status",
+                "accountSetupMode",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
             "name": "search",
             "required": false,
             "in": "query",
@@ -6796,18 +6827,6 @@
             }
           },
           {
-            "name": "serviceType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "SALES",
-                "PURCHASES"
-              ]
-            }
-          },
-          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -6824,22 +6843,6 @@
               "minimum": 1,
               "maximum": 500,
               "type": "number"
-            }
-          },
-          {
-            "name": "sortBy",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "serviceName",
-                "serviceType",
-                "status",
-                "accountSetupMode",
-                "createdAt",
-                "updatedAt"
-              ]
             }
           },
           {
@@ -6918,6 +6921,37 @@
         "operationId": "ServicesMaintenanceController_findOptions_v1",
         "parameters": [
           {
+            "name": "serviceType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by service type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PURCHASES",
+                "SALES"
+              ]
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "default": "serviceName",
+              "type": "string",
+              "enum": [
+                "serviceName",
+                "serviceType",
+                "status",
+                "accountSetupMode",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
             "name": "search",
             "required": false,
             "in": "query",
@@ -6951,18 +6985,6 @@
             }
           },
           {
-            "name": "serviceType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "SALES",
-                "PURCHASES"
-              ]
-            }
-          },
-          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -6979,22 +7001,6 @@
               "minimum": 1,
               "maximum": 500,
               "type": "number"
-            }
-          },
-          {
-            "name": "sortBy",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "serviceName",
-                "serviceType",
-                "status",
-                "accountSetupMode",
-                "createdAt",
-                "updatedAt"
-              ]
             }
           },
           {

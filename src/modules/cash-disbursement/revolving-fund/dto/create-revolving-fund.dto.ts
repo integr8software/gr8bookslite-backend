@@ -120,19 +120,12 @@ export class CreateRevolvingFundDto {
   @MaxLength(500)
   remarks?: string;
 
-  @ApiPropertyOptional({
-    description: 'Initial Status',
-    enum: RevolvingFundStatus,
-    default: RevolvingFundStatus.DRAFT,
-  })
+  @ApiPropertyOptional({ description: 'Initial Status', enum: RevolvingFundStatus, default: RevolvingFundStatus.DRAFT })
   @IsOptional()
   @IsEnum(RevolvingFundStatus)
   status?: RevolvingFundStatus;
 
-  @ApiPropertyOptional({
-    description: 'Revolving Fund Details',
-    type: [RevolvingFundDetailDto],
-  })
+  @ApiPropertyOptional({ description: 'Revolving Fund Details', type: [RevolvingFundDetailDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

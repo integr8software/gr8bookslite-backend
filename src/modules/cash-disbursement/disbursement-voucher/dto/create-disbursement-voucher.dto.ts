@@ -129,11 +129,7 @@ export class CreateDisbursementVoucherDto {
   @MaxLength(50)
   paymentMethod?: string | null;
 
-  @ApiPropertyOptional({
-    description: 'Payment-specific bank, check, transfer, or payee fields',
-    type: 'object',
-    additionalProperties: true,
-  })
+  @ApiPropertyOptional({ description: 'Payment-specific bank, check, transfer, or payee fields', type: 'object', additionalProperties: true })
   @IsObject()
   @IsOptional()
   paymentDetails?: Record<string, string | boolean | undefined> | null;

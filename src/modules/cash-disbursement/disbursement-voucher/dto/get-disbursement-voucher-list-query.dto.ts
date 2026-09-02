@@ -86,11 +86,7 @@ export class GetDisbursementVoucherListQueryDto {
   @IsOptional()
   amountTo?: number;
 
-  @ApiPropertyOptional({
-    description: 'Field to sort by',
-    enum: DisbursementVoucherSortFields,
-    default: 'voucherDate',
-  })
+  @ApiPropertyOptional({ description: 'Field to sort by', enum: DisbursementVoucherSortFields, default: 'voucherDate' })
   @IsIn(DisbursementVoucherSortFields)
   @IsOptional()
   sortBy?: DisbursementVoucherSortField;
