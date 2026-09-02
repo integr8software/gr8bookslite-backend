@@ -213,8 +213,8 @@ export class PartyLookupService {
       vendorAdvanceAccount: party.vendorAdvanceAccountId?.toString() ?? '',
       employeeAdvanceAccount: party.employeeAdvanceAccountId?.toString() ?? '',
       employeePayableAccount: party.employeePayableAccountId?.toString() ?? '',
-      cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
-      cashAdvanceBalance: party.cashAdvanceLimit?.toString() ?? '',
+      cashAdvanceLimit: basicOption.cashAdvanceLimit,
+      cashAdvanceBalance: basicOption.cashAdvanceBalance,
       accountingAccounts: {
         defaultReceivableAccount: this.mapChartAccountSummary(party.defaultReceivableAccount),
         customerAdvanceAccount: this.mapChartAccountSummary(party.customerAdvanceAccount),

@@ -35,6 +35,11 @@ export class CashAdvanceMultipleEntryItemDto {
   @IsOptional()
   particulars?: string;
 
+  @ApiPropertyOptional({ example: 'Remarks' })
+  @IsString()
+  @IsOptional()
+  remarks?: string;
+
   @ApiPropertyOptional({ example: 'Operations' })
   @IsString()
   @IsOptional()

@@ -1,4 +1,4 @@
-import { ChartAccountStatus, Prisma, ServiceAccountSetupMode } from '@prisma/client';
+import { ChartAccountStatus, Prisma, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
 import { PrismaService } from '../../../../prisma/prisma.service';
 
 type ServiceMaintenanceWriteClient = PrismaService | Prisma.TransactionClient;
@@ -6,6 +6,7 @@ type ServiceMaintenanceWriteClient = PrismaService | Prisma.TransactionClient;
 export const ServicesMaintenanceSeedRecords = [
   {
     serviceName: 'Service Revenue',
+    serviceType: ServiceMaintenanceType.SALES,
     description: 'Default service revenue record used by Services Maintenance.',
     revenueAccountCode: '4020000001',
   },
@@ -52,6 +53,7 @@ export async function seedCompanyServicesMaintenanceDefaults(tx: ServiceMaintena
         },
       },
       update: {
+        serviceType: service.serviceType,
         description: service.description,
         revenueCoaId: revenueAccount.id,
         accountSetupMode: ServiceAccountSetupMode.EXISTING,
@@ -62,6 +64,7 @@ export async function seedCompanyServicesMaintenanceDefaults(tx: ServiceMaintena
       create: {
         companyId,
         serviceName: service.serviceName,
+        serviceType: service.serviceType,
         description: service.description,
         revenueCoaId: revenueAccount.id,
         accountSetupMode: ServiceAccountSetupMode.EXISTING,

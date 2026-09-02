@@ -282,7 +282,7 @@ export class CashAdvanceMultipleEntryService {
           currencyCode: dto.currency?.trim() || 'PHP',
           exchangeRate: new Prisma.Decimal((dto.exchangeRate || '1.0000').replaceAll(',', '').trim() || '1.0000'),
           amount: new Prisma.Decimal((item.amount || '0.00').replaceAll(',', '').trim() || '0.00'),
-          remarks: cleanOptional(item.particulars) || cleanOptional(dto.remarks),
+          remarks: cleanOptional(item.particulars) || cleanOptional(item.remarks) || cleanOptional(dto.remarks),
           status,
           createdByUserId: user.id,
         },
