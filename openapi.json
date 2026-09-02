@@ -42391,6 +42391,10 @@
             "type": "string",
             "example": "Travel advance"
           },
+          "remarks": {
+            "type": "string",
+            "example": "Remarks"
+          },
           "responsibilityCenter": {
             "type": "string",
             "example": "Operations"
