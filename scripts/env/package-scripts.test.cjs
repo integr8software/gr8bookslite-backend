@@ -98,13 +98,15 @@ test('seed scripts separate reference data, fixtures, and admin bootstrap', () =
       scripts[`db:seed:reference:${environment}`],
       /seed-reference\.ts/,
     );
+    assert.match(
+      scripts[`db:bootstrap-admin:${environment}`],
+      /bootstrap-admin\.ts/,
+    );
   }
 
+  assert.match(scripts['db:bootstrap-admin:current'], /bootstrap-admin\.ts/);
   assert.match(scripts['db:seed:fixtures:local'], /seed-local-fixtures\.ts/);
-  assert.match(scripts['db:bootstrap-admin:local'], /bootstrap-admin\.ts/);
-
   assert.equal(scripts['db:seed:fixtures:shared'], undefined);
-  assert.equal(scripts['db:bootstrap-admin:shared'], undefined);
 });
 
 test('safe provisioning scripts are available without full db seed aliases', () => {

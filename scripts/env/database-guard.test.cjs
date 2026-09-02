@@ -195,6 +195,10 @@ test('allows safe infrastructure seeds remotely but keeps full seed blocked', ()
       'prisma/scripts/repair-company-bootstrap.ts',
       'repair:company-bootstrap',
     ],
+    [
+      'prisma/scripts/bootstrap-admin.ts',
+      'bootstrap:admin',
+    ],
   ]) {
     assert.equal(
       assertDatabaseEnvironment(sharedEnvironment, ['ts-node', script])
@@ -290,7 +294,7 @@ test('requires explicit production opt-in for migration resolve', () => {
   );
 });
 
-test('allows fixtures and admin bootstrap locally but rejects them remotely', () => {
+test('allows fixtures locally but rejects them remotely', () => {
   const localEnvironment = environment('local', 'localhost', 'gr8booksneo_dev');
   const sharedEnvironment = environment(
     'shared-dev',
@@ -298,18 +302,14 @@ test('allows fixtures and admin bootstrap locally but rejects them remotely', ()
     'gr8booksneo_shared_dev',
   );
 
-  for (const command of [
-    ['ts-node', 'prisma/scripts/seed-local-fixtures.ts'],
-    ['ts-node', 'prisma/scripts/bootstrap-admin.ts'],
-  ]) {
-    assert.doesNotThrow(() =>
-      assertDatabaseEnvironment(localEnvironment, command),
-    );
-    assert.throws(
-      () => assertDatabaseEnvironment(sharedEnvironment, command),
-      /forbidden when APP_ENV=shared-dev/,
-    );
-  }
+  const command = ['ts-node', 'prisma/scripts/seed-local-fixtures.ts'];
+  assert.doesNotThrow(() =>
+    assertDatabaseEnvironment(localEnvironment, command),
+  );
+  assert.throws(
+    () => assertDatabaseEnvironment(sharedEnvironment, command),
+    /forbidden when APP_ENV=shared-dev/,
+  );
 });
 
 test('allows production application startup without migration confirmation', () => {
