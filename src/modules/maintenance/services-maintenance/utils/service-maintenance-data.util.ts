@@ -78,7 +78,3 @@ export function toUpdateServiceMaintenanceData(dto: UpdateServiceMaintenanceDto,
     ...(dto.status !== undefined ? { status: dto.status } : {}),
   } satisfies Prisma.ServiceMaintenanceUpdateInput;
 }
-
-export function getServiceMaintenanceIdentityKey(serviceName: string) {
-  return normalizeIdentityValue(serviceName);
-}
