@@ -22,15 +22,7 @@ export class TermsLookupService {
     };
   }
 
-  async findOptions({
-    companyId,
-    search,
-    dateMode,
-  }: {
-    companyId: number;
-    search?: string;
-    dateMode?: TermLookupQueryDto['dateMode'];
-  }) {
+  async findOptions({ companyId, search, dateMode }: { companyId: number; search?: string; dateMode?: TermLookupQueryDto['dateMode'] }) {
     const normalizedSearch = search?.trim();
     const terms = await this.prisma.term.findMany({
       where: {
@@ -58,5 +50,4 @@ export class TermsLookupService {
       status: term.status,
     }));
   }
-
 }

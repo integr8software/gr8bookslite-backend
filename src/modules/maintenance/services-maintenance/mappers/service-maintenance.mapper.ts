@@ -6,6 +6,7 @@ export function mapServiceMaintenance(service: ServiceMaintenancePayload, userNa
   return {
     id: service.id.toString(),
     serviceName: service.serviceName,
+    serviceType: service.serviceType,
     description: service.description ?? '',
     status: service.status,
     accountSetupMode: service.accountSetupMode,

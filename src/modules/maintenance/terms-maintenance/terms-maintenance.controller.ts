@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -26,36 +26,42 @@ export class TermsMaintenanceController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get paginated list of term records' })
   @ApiOkResponse({ type: TermListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetTermListQueryDto) {
     return this.termsMaintenanceService.findAll(user, query);
   }
 
   @Get('options')
+  @ApiOperation({ summary: 'Get term options' })
   @ApiOkResponse({ type: TermLookupResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: TermLookupQueryDto) {
     return this.termsLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get term details by ID' })
   @ApiOkResponse({ type: TermContainerResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.termsMaintenanceService.findOne(user, id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a term record' })
   @ApiCreatedResponse({ type: SaveTermResponseDto })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateTermDto) {
     return this.termsMaintenanceService.create(user, dto);
   }
 
   @Post('import')
+  @ApiOperation({ summary: 'Import term records' })
   @ApiCreatedResponse({ type: ImportTermsResponseDto })
   importTerms(@CurrentUser() user: AuthUser, @Body() dto: ImportTermsDto) {
     return this.termsMaintenanceService.importTerms(user, dto);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a term record' })
   @ApiOkResponse({ type: SaveTermResponseDto })
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateTermDto) {
     return this.termsMaintenanceService.update(user, id, dto);

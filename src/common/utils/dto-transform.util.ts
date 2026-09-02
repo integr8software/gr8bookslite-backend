@@ -33,3 +33,20 @@ export function normalizeOptionalQueryString(value: unknown) {
 
   return String(value);
 }
+
+export function normalizeNumberStringInput(value: unknown): unknown {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  if (typeof value === 'number' || typeof value === 'bigint') {
+    return String(value);
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.replaceAll(',', '').trim();
+    return normalized === '' ? undefined : normalized;
+  }
+
+  return value;
+}

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ChartAccountStatus, PartyClassification, PartyStatus, PartyType, Prisma } from '@prisma/client';
+import { CashAdvanceStatus, ChartAccountStatus, PartyClassification, PartyStatus, PartyType, Prisma } from '@prisma/client';
 import { PermissionAction } from '../../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../../common/utils/module-access.util';
@@ -38,6 +38,7 @@ export class PartyLookupService {
   async findOptions({ companyId, query }: { companyId: number; query: PartyOptionsQueryDto }) {
     const partyTypes = this.parsePartyOptionTypes(query.partyTypes ?? query.partyType);
     const where = this.buildOptionsWhere(companyId, partyTypes, query);
+    const activeCashAdvanceByParty = await this.findActiveCashAdvanceByParty(companyId);
 
     if (this.shouldIncludeCompleteOptionDetails(query)) {
       const parties = await this.prisma.party.findMany({
@@ -46,7 +47,7 @@ export class PartyLookupService {
         orderBy: [{ partyName: 'asc' }, { lastName: 'asc' }, { firstName: 'asc' }, { partyCodeNo: 'asc' }],
       });
 
-      return parties.map((party) => this.mapCompletePartyOption(party));
+      return parties.map((party) => this.mapCompletePartyOption(party, activeCashAdvanceByParty.get(party.id.toString()) ?? 0));
     }
 
     const parties = await this.prisma.party.findMany({
@@ -71,7 +72,7 @@ export class PartyLookupService {
       },
     });
 
-    return parties.map((party) => this.mapBasicPartyOption(party));
+    return parties.map((party) => this.mapBasicPartyOption(party, activeCashAdvanceByParty.get(party.id.toString()) ?? 0));
   }
 
   async findAccountingOptions({ companyId }: { companyId: number }) {
@@ -148,23 +149,28 @@ export class PartyLookupService {
     return query.detail === 'complete' || query.includeDetails === 'true';
   }
 
-  private mapBasicPartyOption(party: {
-    classification: PartyClassification;
-    contactNo: string | null;
-    contactPerson: string | null;
-    email: string | null;
-    firstName: string | null;
-    id: bigint;
-    lastName: string | null;
-    middleName: string | null;
-    partyCodeNo: string;
-    partyName: string | null;
-    partyTypes: PartyType[];
-    status: PartyStatus;
-    cashAdvanceLimit: Prisma.Decimal | null;
-    suffixName: string | null;
-    tradeName: string | null;
-  }) {
+  private mapBasicPartyOption(
+    party: {
+      classification: PartyClassification;
+      contactNo: string | null;
+      contactPerson: string | null;
+      email: string | null;
+      firstName: string | null;
+      id: bigint;
+      lastName: string | null;
+      middleName: string | null;
+      partyCodeNo: string;
+      partyName: string | null;
+      partyTypes: PartyType[];
+      status: PartyStatus;
+      cashAdvanceLimit: Prisma.Decimal | null;
+      suffixName: string | null;
+      tradeName: string | null;
+    },
+    totalCashAdvance: number,
+  ) {
+    const cashAdvanceLimit = party.cashAdvanceLimit === null ? null : Number(party.cashAdvanceLimit);
+
     return {
       id: party.id.toString(),
       partyCodeNo: party.partyCodeNo,
@@ -176,12 +182,14 @@ export class PartyLookupService {
       contactNo: party.contactNo ?? '',
       status: party.status,
       cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
-      cashAdvanceBalance: party.cashAdvanceLimit?.toString() ?? '',
+      totalCashAdvance: totalCashAdvance.toFixed(2),
+      availableCashAdvance: cashAdvanceLimit === null ? '' : Math.max(0, cashAdvanceLimit - totalCashAdvance).toFixed(2),
+      cashAdvanceBalance: cashAdvanceLimit === null ? '' : Math.max(0, cashAdvanceLimit - totalCashAdvance).toString(),
     };
   }
 
-  private mapCompletePartyOption(party: PartyWithDetails) {
-    const basicOption = this.mapBasicPartyOption(party);
+  private mapCompletePartyOption(party: PartyWithDetails, totalCashAdvance: number) {
+    const basicOption = this.mapBasicPartyOption(party, totalCashAdvance);
 
     return {
       ...basicOption,
@@ -205,8 +213,8 @@ export class PartyLookupService {
       vendorAdvanceAccount: party.vendorAdvanceAccountId?.toString() ?? '',
       employeeAdvanceAccount: party.employeeAdvanceAccountId?.toString() ?? '',
       employeePayableAccount: party.employeePayableAccountId?.toString() ?? '',
-      cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
-      cashAdvanceBalance: party.cashAdvanceLimit?.toString() ?? '',
+      cashAdvanceLimit: basicOption.cashAdvanceLimit,
+      cashAdvanceBalance: basicOption.cashAdvanceBalance,
       accountingAccounts: {
         defaultReceivableAccount: this.mapChartAccountSummary(party.defaultReceivableAccount),
         customerAdvanceAccount: this.mapChartAccountSummary(party.customerAdvanceAccount),
@@ -228,6 +236,22 @@ export class PartyLookupService {
       defaultSalesWvatTaxSourceKey: party.defaultSalesWvatTaxSourceKey ?? '',
       landline: party.landline ?? '',
     };
+  }
+
+  private async findActiveCashAdvanceByParty(companyId: number) {
+    const activeAdvances = await this.prisma.cashAdvance.groupBy({
+      by: ['partyId'],
+      where: {
+        companyId,
+        deletedAt: null,
+        status: { in: [CashAdvanceStatus.FOR_APPROVAL, CashAdvanceStatus.APPROVED, CashAdvanceStatus.POSTED] },
+      },
+      _sum: { amount: true },
+    });
+
+    return new Map(
+      activeAdvances.flatMap((advance) => (advance.partyId === null ? [] : [[advance.partyId.toString(), Number(advance._sum.amount ?? 0)] as const])),
+    );
   }
 
   private mapChartAccountSummary(account: PartyWithDetails['defaultReceivableAccount']) {

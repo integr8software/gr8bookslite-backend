@@ -27,10 +27,11 @@ describe('DiscountMaintenanceService discount options', () => {
       },
     ]);
 
-    const result = await service.findOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' senior ', type: DiscountType.SALES, valueType: DiscountValueType.PERCENTAGE },
-    );
+    const result = await service.findOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, {
+      search: ' senior ',
+      type: DiscountType.SALES,
+      valueType: DiscountValueType.PERCENTAGE,
+    });
 
     expect(prisma.discount.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

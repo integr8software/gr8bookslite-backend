@@ -360,6 +360,12 @@ export class PartyOptionResponseDto {
   @ApiPropertyOptional({ description: 'Available cash advance balance for the employee.' })
   cashAdvanceBalance?: string;
 
+  @ApiPropertyOptional({ description: 'Total active cash advances for the party.' })
+  totalCashAdvance?: string;
+
+  @ApiPropertyOptional({ description: 'Cash advance limit remaining after active advances.' })
+  availableCashAdvance?: string;
+
   @ApiPropertyOptional({ nullable: true })
   partyEntityType?: string | null;
 

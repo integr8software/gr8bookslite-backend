@@ -15,14 +15,9 @@ describe('TermsMaintenanceService term options', () => {
 
   it('returns active day-based payment terms scoped to the company', async () => {
     const { prisma, service } = createService();
-    prisma.term.findMany.mockResolvedValue([
-      { id: 3n, name: 'Net 30', dateMode: TermDateMode.DAY, period: 30, status: TermStatus.ACTIVE },
-    ]);
+    prisma.term.findMany.mockResolvedValue([{ id: 3n, name: 'Net 30', dateMode: TermDateMode.DAY, period: 30, status: TermStatus.ACTIVE }]);
 
-    const result = await service.findOptions(
-      { companyId: 11, role: AppRole.SUPER_ADMIN } as never,
-      { search: ' net ', dateMode: TermDateMode.DAY },
-    );
+    const result = await service.findOptions({ companyId: 11, role: AppRole.SUPER_ADMIN } as never, { search: ' net ', dateMode: TermDateMode.DAY });
 
     expect(prisma.term.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

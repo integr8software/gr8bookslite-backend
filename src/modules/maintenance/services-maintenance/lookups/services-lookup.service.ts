@@ -48,6 +48,7 @@ export class ServicesLookupService {
       select: {
         id: true,
         serviceName: true,
+        serviceType: true,
         status: true,
       },
       orderBy: [{ serviceName: 'asc' }, { id: 'asc' }],
@@ -57,6 +58,7 @@ export class ServicesLookupService {
       id: service.id.toString(),
       serviceName: service.serviceName,
       name: service.serviceName,
+      serviceType: service.serviceType,
       status: service.status,
     }));
   }

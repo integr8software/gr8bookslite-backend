@@ -48,6 +48,7 @@ import { AccountsPayableModule } from './modules/accounts-payable/accounts-payab
 import { GeneralJournalModule } from './modules/general-journal/general-journal.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { CashReceiptModule } from './modules/cash-receipt/cash-receipt.module';
+import { CashDisbursementModule } from './modules/cash-disbursement/cash-disbursement.module';
 import { ReferenceModule } from './modules/reference/reference.module';
 
 @Module({
@@ -110,6 +111,7 @@ import { ReferenceModule } from './modules/reference/reference.module';
     GeneralJournalModule,
     SalesModule,
     CashReceiptModule,
+    CashDisbursementModule,
     ReferenceModule,
     AiAssistantModule,
   ],

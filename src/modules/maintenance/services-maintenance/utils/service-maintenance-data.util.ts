@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { Prisma, ServiceAccountSetupMode } from '@prisma/client';
 import { cleanOptional, normalizeIdentityValue } from '../../../../common/utils/string-normalization.util';
 import { CreateServiceMaintenanceDto } from '../dto/create-service-maintenance.dto';
@@ -13,6 +13,7 @@ export function buildServiceMaintenanceListWhere(companyId: number, query: GetSe
     deletedAt: null,
     ...(query.status ? { status: query.status } : {}),
     ...(query.accountSetupMode ? { accountSetupMode: query.accountSetupMode } : {}),
+    ...(query.serviceType ? { serviceType: query.serviceType } : {}),
     ...(search
       ? {
           OR: [
@@ -58,6 +59,7 @@ export function resolveServiceRevenueAccountTitle(serviceName: string) {
 export function toCreateServiceMaintenanceData(dto: CreateServiceMaintenanceDto, revenueCoaId: bigint, isGeneratedRevenueAccount: boolean) {
   return {
     serviceName: dto.serviceName.trim(),
+    serviceType: dto.serviceType,
     description: cleanOptional(dto.description),
     accountSetupMode: dto.accountSetupMode,
     revenueCoaId,
@@ -68,20 +70,11 @@ export function toCreateServiceMaintenanceData(dto: CreateServiceMaintenanceDto,
 export function toUpdateServiceMaintenanceData(dto: UpdateServiceMaintenanceDto, revenueCoaId?: bigint, isGeneratedRevenueAccount?: boolean) {
   return {
     ...(dto.serviceName !== undefined ? { serviceName: dto.serviceName.trim() } : {}),
+    ...(dto.serviceType !== undefined ? { serviceType: dto.serviceType } : {}),
     ...(dto.description !== undefined ? { description: cleanOptional(dto.description) } : {}),
     ...(dto.accountSetupMode !== undefined ? { accountSetupMode: dto.accountSetupMode } : {}),
     ...(revenueCoaId !== undefined ? { revenueCoaId } : {}),
     ...(isGeneratedRevenueAccount !== undefined ? { isGeneratedRevenueAccount } : {}),
     ...(dto.status !== undefined ? { status: dto.status } : {}),
   } satisfies Prisma.ServiceMaintenanceUpdateInput;
-}
-
-export function getServiceMaintenanceIdentityKey(serviceName: string) {
-  return normalizeIdentityValue(serviceName);
-}
-
-export function ensureNoDuplicateServiceName(existingName: string | undefined, nextName: string) {
-  if (existingName && getServiceMaintenanceIdentityKey(existingName) === getServiceMaintenanceIdentityKey(nextName)) {
-    throw new ConflictException('A service with this name already exists.');
-  }
 }

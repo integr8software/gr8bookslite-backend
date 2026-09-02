@@ -1,0 +1,52 @@
+import { PettyCashVoucherResponseDto } from '../dto/petty-cash-voucher-response.dto';
+import { PettyCashVoucherWithDetails } from '../types/petty-cash-voucher-with-details.type';
+
+export class PettyCashVoucherMapper {
+  static toResponseDto(record: PettyCashVoucherWithDetails): PettyCashVoucherResponseDto {
+    return {
+      id: record.id.toString(),
+      companyId: record.companyId,
+      branchUnitId: record.branchUnitId,
+      voucherNo: record.voucherNo,
+      transactionNo: record.voucherNo,
+      documentDate: record.documentDate.toISOString().slice(0, 10),
+      partyId: record.partyId?.toString() ?? null,
+      partyCodeSnapshot: record.partyCodeSnapshot,
+      partyNameSnapshot: record.partyNameSnapshot,
+      partyCode: record.party?.partyCodeNo ?? record.partyCodeSnapshot,
+      partyName: record.party?.partyName ?? record.partyNameSnapshot,
+      creditAccountId: record.creditAccountId?.toString() ?? null,
+      accountId: record.creditAccountId?.toString() ?? null,
+      accountCodeSnapshot: record.accountCodeSnapshot,
+      accountTitleSnapshot: record.accountTitleSnapshot,
+      accountCode: record.creditAccount?.accountCode ?? record.accountCodeSnapshot,
+      accountTitle: record.creditAccount?.accountTitle ?? record.accountTitleSnapshot,
+      responsibilityCenterId: record.responsibilityCenterId?.toString() ?? null,
+      responsibilityCenterCodeSnapshot: record.responsibilityCenterCodeSnapshot,
+      responsibilityCenterSnapshot: record.responsibilityCenterSnapshot,
+      responsibilityCenterCode: record.responsibilityCenter?.code ?? record.responsibilityCenterCodeSnapshot,
+      responsibilityCenter: record.responsibilityCenter?.name ?? record.responsibilityCenterSnapshot,
+      projectCode: record.projectCode,
+      projectName: record.projectName,
+      currencyCode: record.currencyCode,
+      currency: record.currencyCode,
+      exchangeRate: Number(record.exchangeRate),
+      amount: Number(record.amount),
+      grossAmount: Number(record.grossAmount),
+      netAmount: Number(record.netAmount),
+      vatType: record.vatType,
+      vatable: record.vatable,
+      vatRate: record.vatRate,
+      vatPercent: Number(record.vatPercent),
+      vatAmount: Number(record.vatAmount),
+      ewtCode: record.ewtCode,
+      ewtRate: record.ewtRate,
+      ewtPercent: Number(record.ewtPercent),
+      ewtAmount: Number(record.ewtAmount),
+      remarks: record.remarks,
+      status: record.status,
+      createdAt: record.createdAt.toISOString(),
+      updatedAt: record.updatedAt.toISOString(),
+    };
+  }
+}

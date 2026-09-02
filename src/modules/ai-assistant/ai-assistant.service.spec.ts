@@ -11,8 +11,8 @@ describe('AiAssistantService', () => {
   const user = {
     id: 42,
     companyId: 1,
-    enabledModules: ['APV', 'DVMR', 'PR', 'SI', 'TM'],
-    permissions: ['APV:view', 'DVMR:view', 'PR:view', 'PR:create', 'SI:view', 'TM:view', 'TM:create', 'TM:update'],
+    enabledModules: ['APV', 'BBU', 'DVMR', 'FA', 'PR', 'SI', 'TM'],
+    permissions: ['APV:view', 'BBU:view', 'DVMR:view', 'FA:view', 'PR:view', 'PR:create', 'SI:view', 'TM:view', 'TM:create', 'TM:update'],
   } as AuthUser;
   const createService = (apiKey?: string) => {
     const accessControlService = {
@@ -53,6 +53,8 @@ describe('AiAssistantService', () => {
     expect(response.message).toContain('Accounts Payable:\n• Accounts Payable Voucher');
     expect(response.message).toContain('Sales:\n• Sales Invoice');
     expect(response.message).toContain('Purchasing:\n• Purchase Request');
+    expect(response.message).toContain('Others:\n• Fixed Asset\n• Beginning Balance Uploader');
+    expect(response.message.indexOf('Purchasing:')).toBeLessThan(response.message.indexOf('Others:'));
     expect(response.message).not.toContain('Dashboard');
   });
 

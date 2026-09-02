@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -23,24 +23,28 @@ export class ItemCategoryController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get list of item category records' })
   @ApiOkResponse({ type: ItemCategoryListResponseDto })
   findAll(@CurrentUser() user: AuthUser) {
     return this.itemCategoryService.findAll(user);
   }
 
   @Get('options')
+  @ApiOperation({ summary: 'Get item category options' })
   @ApiOkResponse({ type: ItemCategoryOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser) {
     return this.itemCategoryLookupService.findOptionsForCompanyUser(user);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create an item category record' })
   @ApiCreatedResponse({ type: SaveItemCategoryResponseDto })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateItemCategoryDto) {
     return this.itemCategoryService.create(user, dto);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update an item category record' })
   @ApiOkResponse({ type: SaveItemCategoryResponseDto })
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateItemCategoryDto) {
     return this.itemCategoryService.update(user, id, dto);
