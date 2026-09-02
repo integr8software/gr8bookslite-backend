@@ -10,6 +10,7 @@ const COMMON_READ_OPERATIONS = [
 ];
 const SAFE_INFRASTRUCTURE_SEED_OPERATIONS = [
   'backfill:legacy-saas-access',
+  'bootstrap:admin',
   'provision:platform',
   'repair:legacy-company-subscriptions',
   'repair:company-bootstrap',
@@ -22,7 +23,6 @@ const ENVIRONMENT_RULES = {
     allowedOperations: [
       ...COMMON_APPLICATION_OPERATIONS,
       ...COMMON_READ_OPERATIONS,
-      'bootstrap:admin',
       'maintenance',
       'prisma:db:seed',
       'prisma:migrate:dev',
@@ -80,6 +80,10 @@ const ENVIRONMENT_RULES = {
         value: 'true',
       },
       'backfill:legacy-saas-access': {
+        variable: 'ALLOW_PRODUCTION_SAFE_SEED',
+        value: 'true',
+      },
+      'bootstrap:admin': {
         variable: 'ALLOW_PRODUCTION_SAFE_SEED',
         value: 'true',
       },
