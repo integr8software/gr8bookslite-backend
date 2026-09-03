@@ -9,7 +9,7 @@ describe('ServicesLookupService', () => {
       { id: 14n, serviceName: 'Consulting', serviceType: ServiceMaintenanceType.SALES, status: ChartAccountStatus.ACTIVE },
     ]);
 
-    const result = await service.findOptions({ companyId: 11, search: ' consult ' });
+    const result = await service.findOptions({ companyId: 11, search: ' consult ', serviceType: ServiceMaintenanceType.SALES });
 
     expect(prisma.serviceMaintenance.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -17,6 +17,7 @@ describe('ServicesLookupService', () => {
           companyId: 11,
           deletedAt: null,
           status: ChartAccountStatus.ACTIVE,
+          serviceType: ServiceMaintenanceType.SALES,
           serviceName: { contains: 'consult', mode: 'insensitive' },
         },
       }),
