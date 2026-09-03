@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -16,6 +16,7 @@ import { UpdateAcknowledgementReceiptDto } from './dto/update-acknowledgement-re
 import { AcknowledgementReceiptService } from './acknowledgement-receipt.service';
 
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 @ApiTags('Acknowledgement Receipt')
 @Controller({
   path: 'cash-receipt/acknowledgement-receipt',
