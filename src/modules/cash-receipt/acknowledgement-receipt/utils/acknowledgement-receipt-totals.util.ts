@@ -1,4 +1,3 @@
-import type { AcknowledgementReceiptDetails } from '@prisma/client';
 import type { AcknowledgementReceiptDetailDto } from '../dto/acknowledgement-receipt-detail.dto';
 import type { AcknowledgementReceiptJournalEntryDto } from '../dto/acknowledgement-receipt-journal-entry.dto';
 import type { AcknowledgementReceiptJournalEntry } from '../types/acknowledgement-receipt-with-details.type';
@@ -20,10 +19,6 @@ export function getAcknowledgementReceiptDetailTotals(details: AcknowledgementRe
     }),
     { grossAmount: 0, netAmount: 0, vatAmount: 0 },
   );
-}
-
-export function getPersistedAcknowledgementReceiptDetailGross(details: AcknowledgementReceiptDetails[]) {
-  return roundCurrency(details.reduce((sum, detail) => sum + Number(detail.grossAmount), 0));
 }
 
 export function getJournalEntryTotals(journalEntries: Array<AcknowledgementReceiptJournalEntryDto | AcknowledgementReceiptJournalEntry>) {
