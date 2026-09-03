@@ -7039,6 +7039,137 @@
         ]
       }
     },
+    "/api/v1/maintenance/financial-management/services-maintenance/options/{type}": {
+      "get": {
+        "operationId": "ServicesMaintenanceController_findOptionsByType_v1",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by service type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PURCHASES",
+                "SALES"
+              ]
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "default": "serviceName",
+              "type": "string",
+              "enum": [
+                "serviceName",
+                "serviceType",
+                "status",
+                "accountSetupMode",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountSetupMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AUTO",
+                "EXISTING"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceMaintenanceOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get service options by type",
+        "tags": [
+          "Services Maintenance"
+        ]
+      }
+    },
     "/api/v1/maintenance/financial-management/services-maintenance/account-options": {
       "get": {
         "operationId": "ServicesMaintenanceController_getAccountOptions_v1",
