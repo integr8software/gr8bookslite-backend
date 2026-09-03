@@ -20027,6 +20027,221 @@
           "Revolving Fund Replenishment"
         ]
       }
+    },
+    "/api/v1/purchasing/purchase-request": {
+      "get": {
+        "operationId": "PurchaseRequestController_findAll_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase requests retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Purchase Request"
+        ]
+      },
+      "post": {
+        "operationId": "PurchaseRequestController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePurchaseRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Purchase request created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Purchase Request"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-request/purchase-types": {
+      "get": {
+        "operationId": "PurchaseRequestController_findPurchaseTypes_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Purchase request types retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestTypesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Purchase Request"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-request/{id}": {
+      "get": {
+        "operationId": "PurchaseRequestController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase request retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Purchase Request"
+        ]
+      },
+      "patch": {
+        "operationId": "PurchaseRequestController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePurchaseRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Purchase request updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Purchase Request"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-request/{id}/status": {
+      "patch": {
+        "operationId": "PurchaseRequestController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePurchaseRequestStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Purchase request status updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Purchase Request"
+        ]
+      }
     }
   },
   "info": {
@@ -48867,6 +49082,509 @@
             "type": "string",
             "description": "Target Revolving Fund Replenishment status",
             "example": "APPROVED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "PurchaseRequestEntryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceMaintenanceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          },
+          "qty": {
+            "type": "number"
+          },
+          "lotNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "cost": {
+            "type": "number"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "qty",
+          "cost"
+        ]
+      },
+      "PurchaseRequestResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "branchUnitId": {
+            "type": "number"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "transNo": {
+            "type": "string"
+          },
+          "prDate": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string"
+          },
+          "partyCode": {
+            "type": "string"
+          },
+          "partyName": {
+            "type": "string"
+          },
+          "purchaseType": {
+            "type": "string"
+          },
+          "vendorAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "forDepartment": {
+            "type": "string",
+            "nullable": true
+          },
+          "bomNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestEntryResponseDto"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "branchUnitId",
+          "branchName",
+          "transNo",
+          "prDate",
+          "partyId",
+          "partyCode",
+          "partyName",
+          "purchaseType",
+          "currency",
+          "exchangeRate",
+          "status",
+          "items",
+          "createdAt"
+        ]
+      },
+      "PurchaseRequestPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "PurchaseRequestListResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseRequests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestResponseDto"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PurchaseRequestPaginationResponseDto"
+          }
+        },
+        "required": [
+          "purchaseRequests",
+          "pagination"
+        ]
+      },
+      "PurchaseRequestTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "status"
+        ]
+      },
+      "PurchaseRequestTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestTypeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "purchaseTypes"
+        ]
+      },
+      "PurchaseRequestContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseRequest": {
+            "$ref": "#/components/schemas/PurchaseRequestResponseDto"
+          }
+        },
+        "required": [
+          "purchaseRequest"
+        ]
+      },
+      "PurchaseRequestItemDto": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
+          "serviceMaintenanceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "qty": {
+            "type": "number",
+            "minimum": 0
+          },
+          "lotNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "cost": {
+            "type": "number",
+            "minimum": 0
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          }
+        }
+      },
+      "CreatePurchaseRequestDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "prDate": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "purchaseType": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "vendorAddress": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10,
+            "default": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0,
+            "default": 1
+          },
+          "forDepartment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "bomNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestItemDto"
+            }
+          }
+        },
+        "required": [
+          "transNo",
+          "prDate",
+          "purchaseType",
+          "items"
+        ]
+      },
+      "UpdatePurchaseRequestDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "prDate": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "purchaseType": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "vendorAddress": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10,
+            "default": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0,
+            "default": 1
+          },
+          "forDepartment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "bomNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestItemDto"
+            }
+          }
+        }
+      },
+      "UpdatePurchaseRequestStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED"
+            ],
+            "type": "string"
           }
         },
         "required": [
