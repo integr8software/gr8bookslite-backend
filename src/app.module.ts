@@ -50,6 +50,7 @@ import { SalesModule } from './modules/sales/sales.module';
 import { CashReceiptModule } from './modules/cash-receipt/cash-receipt.module';
 import { CashDisbursementModule } from './modules/cash-disbursement/cash-disbursement.module';
 import { ReferenceModule } from './modules/reference/reference.module';
+import { PurchasingModule } from './modules/purchasing/purchasing.module';
 
 @Module({
   imports: [
@@ -112,6 +113,7 @@ import { ReferenceModule } from './modules/reference/reference.module';
     SalesModule,
     CashReceiptModule,
     CashDisbursementModule,
+    PurchasingModule,
     ReferenceModule,
     AiAssistantModule,
   ],
