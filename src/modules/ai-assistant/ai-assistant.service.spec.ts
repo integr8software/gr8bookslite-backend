@@ -58,6 +58,39 @@ describe('AiAssistantService', () => {
     expect(response.message).not.toContain('Dashboard');
   });
 
+  it('lists modules for a requested business area without repeating the area heading', async () => {
+    const cashDisbursementModuleCodes = ['CV', 'DV', 'CA', 'CAME', 'PCV', 'PCF', 'PCR', 'RF', 'RFR', 'RFP', 'ATS', 'RT'];
+    const response = await createService().chat(
+      {
+        ...user,
+        enabledModules: cashDisbursementModuleCodes,
+        permissions: cashDisbursementModuleCodes.map((moduleCode) => `${moduleCode}:view`),
+      },
+      { message: 'what are the modules under Cash Disbursement?' },
+    );
+
+    expect(response.action).toBeNull();
+    expect(response.message.match(/Cash Disbursement/g)).toHaveLength(1);
+    expect(response.message).toBe(
+      [
+        'Modules available under Cash Disbursement:',
+        '',
+        '• Cash Voucher',
+        '• Disbursement Voucher',
+        '• Cash Advance',
+        '• Cash Advance Multiple Entry',
+        '• Petty Cash Voucher',
+        '• Petty Cash Fund',
+        '• Petty Cash Replenishment',
+        '• Revolving Fund',
+        '• Revolving Fund Replenishment',
+        '• Request For Payment',
+        '• Advances To Suppliers',
+        '• Recurring Transactions',
+      ].join('\n'),
+    );
+  });
+
   it('normalizes generated responses that shorten the product name', async () => {
     jest.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,

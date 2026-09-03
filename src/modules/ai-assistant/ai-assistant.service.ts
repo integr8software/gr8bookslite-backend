@@ -22,7 +22,7 @@ import {
   AiAssistantTranscriptionJobResponseDto,
   AiAssistantTranscriptionResponseDto,
 } from './dto/ai-assistant-response.dto';
-import { AiModuleProfiles, findAiModuleProfile, getAiModulePromptProfiles } from './catalog/ai-module-profile.registry';
+import { AiModuleProfiles, findAiModuleProfile, getAiModulePromptProfiles, normalizeSearchText } from './catalog/ai-module-profile.registry';
 import { AiToolAuthorizerService } from './tools/ai-tool-authorizer.service';
 import { AiToolExecutorService } from './tools/ai-tool-executor.service';
 import type { UploadedAiAssistantAudioFile } from './types/uploaded-ai-assistant-audio-file.type';
@@ -52,6 +52,10 @@ const MODULE_LIST_AREA_ORDER = [
   'Others',
 ] as const;
 const MODULE_LIST_AREA_SORT_INDEX = new Map<string, number>(MODULE_LIST_AREA_ORDER.map((area, index) => [area, index]));
+const MODULE_LIST_AREA_SEARCH_INDEX = MODULE_LIST_AREA_ORDER.map((area) => ({
+  area,
+  normalizedArea: normalizeSearchText(area),
+}));
 const VOICE_TRANSCRIPTION_QUEUE_NAME = 'neo-ai-voice-transcription';
 const SUPPORTED_TRANSCRIPTION_AUDIO_TYPES = new Set([
   'audio/webm',
@@ -139,7 +143,7 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (this.isModuleListIntent(dto.message)) {
-      return this.createModuleListResponse(user);
+      return this.createModuleListResponse(user, this.findRequestedModuleListArea(dto.message));
     }
 
     const apiKey = this.configService.get<string>('GEMINI_API_KEY')?.trim();
@@ -659,15 +663,26 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     return (
       /\b(?:list|show)\b.*\bmodules?\b/.test(normalized) ||
       /\b(?:what|which)\b.*\bmodules?\b.*\b(?:know|support|available|access|help)\b/.test(normalized) ||
-      /\b(?:available|accessible|supported)\s+modules?\b/.test(normalized)
+      /\b(?:available|accessible|supported)\s+modules?\b/.test(normalized) ||
+      /\bmodules?\s+(?:under|in|for)\b/.test(normalized)
     );
   }
 
-  private createModuleListResponse(user: AuthUser): AiAssistantChatResponseDto {
+  private findRequestedModuleListArea(message: string) {
+    const normalized = ` ${normalizeSearchText(message)} `;
+
+    return MODULE_LIST_AREA_SEARCH_INDEX.find(({ normalizedArea }) => normalized.includes(` ${normalizedArea} `))?.area;
+  }
+
+  private createModuleListResponse(user: AuthUser, requestedArea?: string): AiAssistantChatResponseDto {
     const accessibleModuleCodes = this.toolAuthorizer.getAccessibleModuleCodes(user);
     const modulesByArea = new Map<string, string[]>();
 
     for (const profile of AiModuleProfiles) {
+      if (requestedArea && profile.area !== requestedArea) {
+        continue;
+      }
+
       if (!accessibleModuleCodes.has(profile.moduleCode)) {
         continue;
       }
@@ -678,6 +693,13 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (modulesByArea.size === 0) {
+      if (requestedArea) {
+        return {
+          message: `No ${requestedArea} modules are currently available in your selected company and access context.`,
+          action: null,
+        };
+      }
+
       return {
         message: 'No modules are currently available in your selected company and access context.',
         action: null,
@@ -692,6 +714,16 @@ export class AiAssistantService implements OnModuleInit, OnModuleDestroy {
         return leftIndex - rightIndex || left.area.localeCompare(right.area);
       })
       .map(({ area, modules }) => `${area}:\n${modules.map((module) => `• ${module}`).join('\n')}`);
+
+    if (requestedArea) {
+      return {
+        message: `Modules available under ${requestedArea}:\n\n${modulesByArea
+          .get(requestedArea)
+          ?.map((module) => `• ${module}`)
+          .join('\n')}`,
+        action: null,
+      };
+    }
 
     return {
       message: `Here are the modules available to you, grouped by area:\n\n${groups.join('\n\n')}\n\nAsk me to explain or open any module.`,
