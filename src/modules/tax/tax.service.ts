@@ -3,11 +3,121 @@ import { MembershipStatus, Prisma, TaxPostingEvent } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { TaxDefaultAccountOptionClassification } from './dto/tax-default-account-options-query.dto';
 import { TaxListQueryDto } from './dto/tax-list-query.dto';
 import { mapTax, mapTaxAutocomplete } from './mappers/tax-code.mapper';
 import type { TaxCompanyAccountMapping, TaxWithPostingRules } from './types/tax-prisma-payload.type';
 
 const TaxModuleCode = 'TXM';
+
+const TaxDefaultAccountOptionGroups: Array<{
+  classification: TaxDefaultAccountOptionClassification;
+  label: string;
+  transactionType?: string;
+  taxTypes: string[];
+  officialAtcCodePrefix?: string;
+}> = [
+  {
+    classification: 'output-sales',
+    label: 'Output and Sales',
+    transactionType: 'Sales',
+    taxTypes: ['OUTPUT VAT'],
+  },
+  {
+    classification: 'input-importation',
+    label: 'Input and Importation',
+    transactionType: 'Importation',
+    taxTypes: ['INPUT VAT'],
+  },
+  {
+    classification: 'input-purchases',
+    label: 'Input and Purchases',
+    transactionType: 'Purchases',
+    taxTypes: ['INPUT VAT'],
+  },
+  {
+    classification: 'input-all',
+    label: 'Input and All Types',
+    taxTypes: ['INPUT VAT'],
+  },
+  {
+    classification: 'purchase-ewt',
+    label: 'Purchase Expanded Withholding Tax',
+    transactionType: 'Purchases',
+    taxTypes: ['EWT'],
+  },
+  {
+    classification: 'purchase-fwt',
+    label: 'Purchase Final Withholding Tax',
+    transactionType: 'Purchases',
+    taxTypes: ['FWT'],
+  },
+  {
+    classification: 'purchase-wvat',
+    label: 'Purchase VAT Withholding',
+    transactionType: 'Purchases',
+    taxTypes: ['EWT', 'WVAT'],
+    officialAtcCodePrefix: 'WV',
+  },
+  {
+    classification: 'sales-cwt',
+    label: 'Sales Creditable Withholding Tax',
+    transactionType: 'Sales',
+    taxTypes: ['CWT'],
+  },
+  {
+    classification: 'sales-wvat',
+    label: 'Sales VAT Withholding',
+    transactionType: 'Sales',
+    taxTypes: ['WVAT'],
+  },
+];
+
+const PartyDefaultClassifications = [
+  {
+    key: 'defaultPurchaseInputVatTaxSourceKey',
+    label: 'Purchase Input VAT',
+    transactionType: 'Purchases',
+    taxTypes: ['INPUT VAT'],
+  },
+  {
+    key: 'defaultPurchaseEwtTaxSourceKey',
+    label: 'Purchase Expanded Withholding Tax',
+    transactionType: 'Purchases',
+    taxTypes: ['EWT'],
+  },
+  {
+    key: 'defaultPurchaseFwtTaxSourceKey',
+    label: 'Purchase Final Withholding Tax',
+    transactionType: 'Purchases',
+    taxTypes: ['FWT'],
+  },
+  {
+    key: 'defaultPurchaseWvatTaxSourceKey',
+    label: 'Purchase VAT Withholding',
+    transactionType: 'Purchases',
+    taxTypes: ['EWT', 'WVAT'],
+    officialAtcCodePrefix: 'WV',
+  },
+  {
+    key: 'defaultSalesOutputVatTaxSourceKey',
+    label: 'Sales Output VAT',
+    transactionType: 'Sales',
+    taxTypes: ['OUTPUT VAT'],
+  },
+  {
+    key: 'defaultSalesCwtTaxSourceKey',
+    label: 'Sales Creditable Withholding Tax',
+    transactionType: 'Sales',
+    taxTypes: ['CWT'],
+  },
+  {
+    key: 'defaultSalesWvatTaxSourceKey',
+    label: 'Sales VAT Withholding',
+    transactionType: 'Sales',
+    taxTypes: ['WVAT'],
+  },
+] as const;
 
 @Injectable()
 export class TaxService {
@@ -167,51 +277,58 @@ export class TaxService {
 
   listPartyDefaultClassifications() {
     return {
-      classifications: [
-        {
-          key: 'defaultPurchaseInputVatTaxSourceKey',
-          label: 'Purchase Input VAT',
-          transactionType: 'Purchases',
-          taxTypes: ['INPUT VAT'],
+      classifications: PartyDefaultClassifications.map((classification) => ({ ...classification })),
+    };
+  }
+
+  async listTaxDefaultAccountOptions(user: AuthUser, classification?: TaxDefaultAccountOptionClassification) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+
+    const selectedGroups = classification
+      ? TaxDefaultAccountOptionGroups.filter((group) => group.classification === classification)
+      : TaxDefaultAccountOptionGroups;
+
+    const taxes = await this.prisma.tax.findMany({
+      where: {
+        status: 'ACTIVE',
+        OR: selectedGroups.map((group) => ({
+          transactionType: group.transactionType,
+          taxType: {
+            in: group.taxTypes,
+          },
+          officialAtcCode: group.officialAtcCodePrefix
+            ? {
+                startsWith: group.officialAtcCodePrefix,
+              }
+            : undefined,
+        })),
+      },
+      include: {
+        postingRules: {
+          where: {
+            isActive: true,
+            postingEvent: TaxPostingEvent.RECOGNITION,
+          },
+          orderBy: [{ transactionScope: 'asc' }, { priority: 'asc' }, { accountRole: 'asc' }],
         },
-        {
-          key: 'defaultPurchaseEwtTaxSourceKey',
-          label: 'Purchase Expanded Withholding Tax',
-          transactionType: 'Purchases',
-          taxTypes: ['EWT'],
-        },
-        {
-          key: 'defaultPurchaseFwtTaxSourceKey',
-          label: 'Purchase Final Withholding Tax',
-          transactionType: 'Purchases',
-          taxTypes: ['FWT'],
-        },
-        {
-          key: 'defaultPurchaseWvatTaxSourceKey',
-          label: 'Purchase VAT Withholding',
-          transactionType: 'Purchases',
-          taxTypes: ['EWT', 'WVAT'],
-          officialAtcCodePrefix: 'WV',
-        },
-        {
-          key: 'defaultSalesOutputVatTaxSourceKey',
-          label: 'Sales Output VAT',
-          transactionType: 'Sales',
-          taxTypes: ['OUTPUT VAT'],
-        },
-        {
-          key: 'defaultSalesCwtTaxSourceKey',
-          label: 'Sales Creditable Withholding Tax',
-          transactionType: 'Sales',
-          taxTypes: ['CWT'],
-        },
-        {
-          key: 'defaultSalesWvatTaxSourceKey',
-          label: 'Sales VAT Withholding',
-          transactionType: 'Sales',
-          taxTypes: ['WVAT'],
-        },
-      ],
+      },
+      orderBy: [{ transactionType: 'asc' }, { taxType: 'asc' }, { sortOrder: 'asc' }, { taxCode: 'asc' }, { taxDescription: 'asc' }],
+    });
+
+    const accountRoles = [...new Set(taxes.flatMap((tax) => tax.postingRules.map((rule) => rule.accountRole)))];
+    const accountMappings = await this.findCompanyTaxAccountMappings(companyId, accountRoles);
+    const mappedTaxes = taxes.map((tax) => this.mapTaxWithDefaultAccounts(tax, accountMappings));
+    const groups = selectedGroups.map((group) => ({
+      classification: group.classification,
+      label: group.label,
+      options: mappedTaxes.filter((tax) => this.isTaxInDefaultAccountOptionGroup(tax, group)).map((tax) => this.mapTaxDefaultAccountOption(tax)),
+    }));
+
+    return {
+      companyId,
+      groups,
+      options: groups.flatMap((group) => group.options),
     };
   }
 
@@ -267,6 +384,34 @@ export class TaxService {
       ...mappedTax,
       postingAccounts,
       defaultTaxAccounts: postingAccounts,
+    };
+  }
+
+  private isTaxInDefaultAccountOptionGroup(tax: ReturnType<TaxService['mapTaxWithDefaultAccounts']>, group: (typeof TaxDefaultAccountOptionGroups)[number]) {
+    return (
+      (!group.transactionType || tax.transactionType === group.transactionType) &&
+      group.taxTypes.includes(tax.taxType) &&
+      (!group.officialAtcCodePrefix || tax.officialAtcCode?.startsWith(group.officialAtcCodePrefix))
+    );
+  }
+
+  private mapTaxDefaultAccountOption(tax: ReturnType<TaxService['mapTaxWithDefaultAccounts']>) {
+    const defaultAccount = tax.defaultTaxAccounts[0];
+
+    return {
+      sourceKey: tax.sourceKey,
+      transactionType: tax.transactionType,
+      taxType: tax.taxType,
+      taxCode: tax.taxCode,
+      displayCode: tax.officialAtcCode || tax.taxCode,
+      taxDescription: tax.taxDescription,
+      natureOfIncome: tax.natureOfIncome,
+      taxRate: tax.taxRate,
+      taxExempt: tax.taxExempt,
+      defaultAccountRole: defaultAccount?.accountRole ?? null,
+      defaultAccountCode: defaultAccount?.chartAccount?.accountCode ?? null,
+      defaultAccountTitle: defaultAccount?.chartAccount?.accountTitle ?? null,
+      status: tax.status,
     };
   }
 

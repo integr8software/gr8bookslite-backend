@@ -8349,9 +8349,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get list of tax records",
         "tags": [
           "Tax"
         ]
@@ -8476,9 +8489,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxAutocompleteResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax autocomplete options",
         "tags": [
           "Tax"
         ]
@@ -8490,9 +8516,22 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxTransactionTypesResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax transaction types",
         "tags": [
           "Tax"
         ]
@@ -8504,9 +8543,22 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxTypesResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax types",
         "tags": [
           "Tax"
         ]
@@ -8518,9 +8570,69 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyDefaultClassificationsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get party tax default classifications",
+        "tags": [
+          "Tax"
+        ]
+      }
+    },
+    "/api/v1/tax/default-account-options": {
+      "get": {
+        "operationId": "TaxController_listTaxDefaultAccountOptions_v1",
+        "parameters": [
+          {
+            "name": "classification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "output-sales",
+                "input-importation",
+                "input-purchases",
+                "input-all",
+                "purchase-ewt",
+                "purchase-fwt",
+                "purchase-wvat",
+                "sales-cwt",
+                "sales-wvat"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxDefaultAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax options with default account titles by classification",
         "tags": [
           "Tax"
         ]
@@ -8645,9 +8757,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxDefaultAccountsListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax records with default account mappings",
         "tags": [
           "Tax"
         ]
@@ -8668,9 +8793,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxDefaultAccountsContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax record with default account mappings by source key",
         "tags": [
           "Tax"
         ]
@@ -8691,9 +8829,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax record by source key",
         "tags": [
           "Tax"
         ]
@@ -9917,137 +10068,6 @@
         },
         "tags": [
           "Field Management"
-        ]
-      }
-    },
-    "/api/v1/companies/{companyId}/user-sidebar/customization": {
-      "get": {
-        "operationId": "UserSidebarController_getCustomization_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
-        ]
-      },
-      "put": {
-        "operationId": "UserSidebarController_save_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {}
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveUserSidebarDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
-        ]
-      }
-    },
-    "/api/v1/companies/{companyId}/user-sidebar/reset": {
-      "post": {
-        "operationId": "UserSidebarController_reset_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "applyScope",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
         ]
       }
     },
@@ -14446,6 +14466,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14455,6 +14476,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14464,6 +14486,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -14472,6 +14495,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -14495,6 +14519,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -14503,6 +14529,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -14511,6 +14539,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -14519,6 +14548,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -14566,6 +14596,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "List acknowledgement receipts",
         "tags": [
           "Acknowledgement Receipt"
@@ -14596,6 +14631,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Create a acknowledgement receipt",
         "tags": [
           "Acknowledgement Receipt"
@@ -14612,6 +14652,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14621,6 +14662,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14630,6 +14672,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -14638,6 +14681,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -14661,6 +14705,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -14669,6 +14715,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -14677,6 +14725,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -14685,6 +14734,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -14732,6 +14782,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Suggest a acknowledgement receipt transaction number",
         "tags": [
           "Acknowledgement Receipt"
@@ -14756,6 +14811,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14765,6 +14821,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14774,6 +14831,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -14782,6 +14840,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -14805,6 +14864,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -14813,6 +14874,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -14821,6 +14884,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -14829,6 +14893,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -14876,6 +14941,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get a acknowledgement receipt",
         "tags": [
           "Acknowledgement Receipt"
@@ -14915,6 +14985,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update a acknowledgement receipt",
         "tags": [
           "Acknowledgement Receipt"
@@ -14956,6 +15031,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update a acknowledgement receipt status",
         "tags": [
           "Acknowledgement Receipt"
@@ -14972,6 +15052,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14981,6 +15062,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14990,6 +15072,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -14998,6 +15081,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -15021,6 +15105,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -15029,6 +15115,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -15037,6 +15125,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -15045,6 +15134,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -15092,6 +15182,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "List provisional receipts",
         "tags": [
           "Provisional Receipt"
@@ -15122,6 +15217,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Create a provisional receipt",
         "tags": [
           "Provisional Receipt"
@@ -15138,6 +15238,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -15147,6 +15248,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -15156,6 +15258,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -15164,6 +15267,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -15187,6 +15291,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -15195,6 +15301,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -15203,6 +15311,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -15211,6 +15320,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -15258,6 +15368,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Suggest a provisional receipt transaction number",
         "tags": [
           "Provisional Receipt"
@@ -15282,6 +15397,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -15291,6 +15407,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -15300,6 +15417,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -15308,6 +15426,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -15331,6 +15450,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -15339,6 +15460,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -15347,6 +15470,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -15355,6 +15479,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -15402,6 +15527,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get a provisional receipt",
         "tags": [
           "Provisional Receipt"
@@ -15441,6 +15571,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update a provisional receipt",
         "tags": [
           "Provisional Receipt"
@@ -15482,6 +15617,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update a provisional receipt status",
         "tags": [
           "Provisional Receipt"
@@ -20080,6 +20220,12 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List purchase requests",
         "tags": [
           "Purchase Request"
         ]
@@ -20109,6 +20255,12 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a purchase request",
         "tags": [
           "Purchase Request"
         ]
@@ -20130,6 +20282,12 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List supported purchase request types",
         "tags": [
           "Purchase Request"
         ]
@@ -20160,6 +20318,12 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a purchase request",
         "tags": [
           "Purchase Request"
         ]
@@ -20198,6 +20362,12 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a purchase request",
         "tags": [
           "Purchase Request"
         ]
@@ -20238,6 +20408,12 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update purchase request status",
         "tags": [
           "Purchase Request"
         ]
@@ -30976,6 +31152,580 @@
           "status"
         ]
       },
+      "TaxResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "taxDescription": {
+            "type": "string"
+          },
+          "taxRate": {
+            "type": "string"
+          },
+          "taxExempt": {
+            "type": "boolean"
+          },
+          "taxAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "atc": {
+            "type": "string",
+            "nullable": true
+          },
+          "officialAtcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "natureOfIncome": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sourceKey",
+          "transactionType",
+          "taxType",
+          "taxCode",
+          "taxDescription",
+          "taxRate",
+          "taxExempt",
+          "taxAlias",
+          "atc",
+          "officialAtcCode",
+          "natureOfIncome",
+          "sortOrder",
+          "status"
+        ]
+      },
+      "TaxListResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxResponseDto"
+            }
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxResponseDto"
+            }
+          }
+        },
+        "required": [
+          "taxCodes",
+          "taxes"
+        ]
+      },
+      "TaxAutocompleteOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tax": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          },
+          "taxCode": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          }
+        },
+        "required": [
+          "label",
+          "description",
+          "tax",
+          "taxCode"
+        ]
+      },
+      "TaxAutocompleteResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxAutocompleteOptionResponseDto"
+            }
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxAutocompleteOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "taxCodes",
+          "taxes"
+        ]
+      },
+      "TaxTransactionTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "transactionTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "transactionTypes"
+        ]
+      },
+      "TaxTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "taxTypes"
+        ]
+      },
+      "PartyDefaultClassificationResponseDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "officialAtcCodePrefix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "transactionType",
+          "taxTypes"
+        ]
+      },
+      "PartyDefaultClassificationsResponseDto": {
+        "type": "object",
+        "properties": {
+          "classifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyDefaultClassificationResponseDto"
+            }
+          }
+        },
+        "required": [
+          "classifications"
+        ]
+      },
+      "TaxDefaultAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "sourceKey": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "displayCode": {
+            "type": "string"
+          },
+          "taxDescription": {
+            "type": "string"
+          },
+          "natureOfIncome": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxRate": {
+            "type": "string"
+          },
+          "taxExempt": {
+            "type": "boolean"
+          },
+          "defaultAccountRole": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultAccountCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultAccountTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceKey",
+          "transactionType",
+          "taxType",
+          "taxCode",
+          "displayCode",
+          "taxDescription",
+          "natureOfIncome",
+          "taxRate",
+          "taxExempt",
+          "defaultAccountRole",
+          "defaultAccountCode",
+          "defaultAccountTitle",
+          "status"
+        ]
+      },
+      "TaxDefaultAccountOptionGroupResponseDto": {
+        "type": "object",
+        "properties": {
+          "classification": {
+            "type": "string",
+            "enum": [
+              "output-sales",
+              "input-importation",
+              "input-purchases",
+              "input-all",
+              "purchase-ewt",
+              "purchase-fwt",
+              "purchase-wvat",
+              "sales-cwt",
+              "sales-wvat"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDefaultAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "classification",
+          "label",
+          "options"
+        ]
+      },
+      "TaxDefaultAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDefaultAccountOptionGroupResponseDto"
+            }
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDefaultAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "companyId",
+          "groups",
+          "options"
+        ]
+      },
+      "TaxDefaultChartAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "accountNature": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "accountCode",
+          "accountTitle",
+          "accountType",
+          "accountNature",
+          "status",
+          "isPostingAccount"
+        ]
+      },
+      "TaxPostingAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "transactionScope": {
+            "enum": [
+              "SALE",
+              "PURCHASE",
+              "BOTH"
+            ],
+            "type": "string"
+          },
+          "postingEvent": {
+            "enum": [
+              "RECOGNITION",
+              "SETTLEMENT",
+              "REFUND",
+              "REVERSAL",
+              "ADJUSTMENT"
+            ],
+            "type": "string"
+          },
+          "accountRole": {
+            "type": "string"
+          },
+          "entrySide": {
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "amountSource": {
+            "enum": [
+              "TAX_AMOUNT",
+              "RECOVERABLE_AMOUNT",
+              "WITHHELD_AMOUNT"
+            ],
+            "type": "string"
+          },
+          "priority": {
+            "type": "number"
+          },
+          "companyAccountMappingId": {
+            "type": "string",
+            "nullable": true
+          },
+          "chartAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxDefaultChartAccountResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "transactionScope",
+          "postingEvent",
+          "accountRole",
+          "entrySide",
+          "amountSource",
+          "priority",
+          "companyAccountMappingId",
+          "chartAccount"
+        ]
+      },
+      "TaxWithDefaultAccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "taxDescription": {
+            "type": "string"
+          },
+          "taxRate": {
+            "type": "string"
+          },
+          "taxExempt": {
+            "type": "boolean"
+          },
+          "taxAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "atc": {
+            "type": "string",
+            "nullable": true
+          },
+          "officialAtcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "natureOfIncome": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "postingAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxPostingAccountResponseDto"
+            }
+          },
+          "defaultTaxAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxPostingAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "sourceKey",
+          "transactionType",
+          "taxType",
+          "taxCode",
+          "taxDescription",
+          "taxRate",
+          "taxExempt",
+          "taxAlias",
+          "atc",
+          "officialAtcCode",
+          "natureOfIncome",
+          "sortOrder",
+          "status",
+          "postingAccounts",
+          "defaultTaxAccounts"
+        ]
+      },
+      "TaxDefaultAccountsListResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "taxCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+            }
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+            }
+          }
+        },
+        "required": [
+          "companyId",
+          "taxCodes",
+          "taxes"
+        ]
+      },
+      "TaxDefaultAccountsContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "tax": {
+            "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+          },
+          "taxCode": {
+            "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+          }
+        },
+        "required": [
+          "companyId",
+          "tax",
+          "taxCode"
+        ]
+      },
+      "TaxContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "tax": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          },
+          "taxCode": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          }
+        },
+        "required": [
+          "tax",
+          "taxCode"
+        ]
+      },
       "WarehouseBranchResponseDto": {
         "type": "object",
         "properties": {
@@ -32546,85 +33296,6 @@
         "required": [
           "label",
           "fieldKey"
-        ]
-      },
-      "UserSidebarTreeItemDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "label": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 500
-          },
-          "itemType": {
-            "type": "string",
-            "enum": [
-              "SECTION",
-              "CONTAINER",
-              "LINK"
-            ]
-          },
-          "moduleId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "iconName": {
-            "type": "string"
-          },
-          "isHidden": {
-            "type": "boolean"
-          },
-          "isPinned": {
-            "type": "boolean"
-          },
-          "isCollapsed": {
-            "type": "boolean"
-          },
-          "children": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
-            }
-          }
-        },
-        "required": [
-          "key",
-          "label",
-          "itemType",
-          "children"
-        ]
-      },
-      "SaveUserSidebarDto": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "number",
-            "minimum": 0
-          },
-          "applyScope": {
-            "enum": [
-              "CURRENT_BRANCH",
-              "ALL_BRANCHES"
-            ],
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
-            }
-          }
-        },
-        "required": [
-          "version",
-          "items"
         ]
       },
       "AiAssistantQueuedTranscriptionResponseDto": {
@@ -40578,98 +41249,122 @@
       "CreateAcknowledgementReceiptDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "example": "AR-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "AR-REF-0001"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "SOA-0001"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "CUST-001"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
           "paymentId": {
             "type": "string",
             "nullable": true,
             "maxLength": 40,
             "example": "1"
           },
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "maxLength": 10,
+            "example": "PHP"
           },
           "exchangeRate": {
             "type": "number",
-            "minimum": 0.000001
+            "minimum": 0.000001,
+            "example": 1
           },
           "netAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 44000
           },
           "vatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 6000
           },
           "wvatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "ewtAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 1000
           },
           "discountAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "grossAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 50000
           },
           "receivableAccountId": {
             "type": "string",
             "nullable": true,
-            "maxLength": 40
+            "maxLength": 40,
+            "example": "1"
           },
           "receivableAccountCode": {
             "type": "string",
-            "maxLength": 20
+            "maxLength": 20,
+            "example": "1100000000"
           },
           "receivableAccountTitle": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Accounts Receivable"
           },
           "remarks": {
             "type": "string",
             "nullable": true,
-            "maxLength": 500
+            "maxLength": 500,
+            "example": "Partial collection for September billing."
           },
           "details": {
             "minItems": 1,
@@ -40727,98 +41422,122 @@
       "UpdateAcknowledgementReceiptDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "example": "AR-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "AR-REF-0001"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "SOA-0001"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "CUST-001"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
           "paymentId": {
             "type": "string",
             "nullable": true,
             "maxLength": 40,
             "example": "1"
           },
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "maxLength": 10,
+            "example": "PHP"
           },
           "exchangeRate": {
             "type": "number",
-            "minimum": 0.000001
+            "minimum": 0.000001,
+            "example": 1
           },
           "netAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 44000
           },
           "vatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 6000
           },
           "wvatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "ewtAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 1000
           },
           "discountAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "grossAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 50000
           },
           "receivableAccountId": {
             "type": "string",
             "nullable": true,
-            "maxLength": 40
+            "maxLength": 40,
+            "example": "1"
           },
           "receivableAccountCode": {
             "type": "string",
-            "maxLength": 20
+            "maxLength": 20,
+            "example": "1100000000"
           },
           "receivableAccountTitle": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Accounts Receivable"
           },
           "remarks": {
             "type": "string",
             "nullable": true,
-            "maxLength": 500
+            "maxLength": 500,
+            "example": "Partial collection for September billing."
           },
           "details": {
             "minItems": 1,
@@ -41512,98 +42231,122 @@
       "CreateProvisionalReceiptDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "example": "PVR-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "PVR-REF-0001"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "SOA-0001"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "CUST-001"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
           "paymentId": {
             "type": "string",
             "nullable": true,
             "maxLength": 40,
             "example": "1"
           },
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "maxLength": 10,
+            "example": "PHP"
           },
           "exchangeRate": {
             "type": "number",
-            "minimum": 0.000001
+            "minimum": 0.000001,
+            "example": 1
           },
           "netAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 44000
           },
           "vatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 6000
           },
           "wvatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "ewtAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 1000
           },
           "discountAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "grossAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 50000
           },
           "receivableAccountId": {
             "type": "string",
             "nullable": true,
-            "maxLength": 40
+            "maxLength": 40,
+            "example": "1"
           },
           "receivableAccountCode": {
             "type": "string",
-            "maxLength": 20
+            "maxLength": 20,
+            "example": "1100000000"
           },
           "receivableAccountTitle": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Accounts Receivable"
           },
           "remarks": {
             "type": "string",
             "nullable": true,
-            "maxLength": 500
+            "maxLength": 500,
+            "example": "Partial collection for September billing."
           },
           "details": {
             "minItems": 1,
@@ -41661,98 +42404,122 @@
       "UpdateProvisionalReceiptDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "example": "PVR-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "PVR-REF-0001"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "SOA-0001"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "CUST-001"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
           "paymentId": {
             "type": "string",
             "nullable": true,
             "maxLength": 40,
             "example": "1"
           },
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "maxLength": 10,
+            "example": "PHP"
           },
           "exchangeRate": {
             "type": "number",
-            "minimum": 0.000001
+            "minimum": 0.000001,
+            "example": 1
           },
           "netAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 44000
           },
           "vatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 6000
           },
           "wvatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "ewtAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 1000
           },
           "discountAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "grossAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 50000
           },
           "receivableAccountId": {
             "type": "string",
             "nullable": true,
-            "maxLength": 40
+            "maxLength": 40,
+            "example": "1"
           },
           "receivableAccountCode": {
             "type": "string",
-            "maxLength": 20
+            "maxLength": 20,
+            "example": "1100000000"
           },
           "receivableAccountTitle": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Accounts Receivable"
           },
           "remarks": {
             "type": "string",
             "nullable": true,
-            "maxLength": 500
+            "maxLength": 500,
+            "example": "Partial collection for September billing."
           },
           "details": {
             "minItems": 1,

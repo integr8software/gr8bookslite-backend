@@ -4,19 +4,49 @@
 
 Use this API when a caller needs tax codes together with the active company's default Chart of Accounts posting account for each tax posting rule.
 
-The standard tax endpoints return authenticated tax reference data only. They do not resolve company-specific posting accounts unless the caller uses the default-account endpoints below.
+The standard tax endpoints return authenticated tax reference data only. They do not resolve company-specific posting accounts unless the caller uses the default-account endpoints below. Repeated frontend dropdowns should use the dedicated default-account option route so tax groups and account titles stay owned by the backend.
 
 All tax endpoints are authenticated. `TaxController` is guarded with `JwtAuthGuard`, and `TaxModule` imports `AuthModule` plus `AccessControlModule` for the guard dependencies. No tax lookup, autocomplete, metadata, source-key, or default-account endpoint should be marked `@Public()`.
 
 ## Endpoints
 
-### `GET /v1/tax-default-accounts`
+### `GET /api/v1/tax/default-account-options`
+
+Returns dedicated repeated-use tax option groups with default account titles.
+
+Authentication is required. The company is resolved from the authenticated user's active `companyId`.
+
+Optional query:
+
+- `classification`
+
+Supported classifications:
+
+| Classification      | Label                             | Backing Filter                                                                         |
+| ------------------- | --------------------------------- | -------------------------------------------------------------------------------------- |
+| `output-sales`      | Output and Sales                  | `transactionType = Sales`, `taxType = OUTPUT VAT`                                      |
+| `input-importation` | Input and Importation             | `transactionType = Importation`, `taxType = INPUT VAT`                                 |
+| `input-purchases`   | Input and Purchases               | `transactionType = Purchases`, `taxType = INPUT VAT`                                   |
+| `input-all`         | Input and All Types               | `taxType = INPUT VAT`                                                                  |
+| `purchase-ewt`      | Purchase Expanded Withholding Tax | `transactionType = Purchases`, `taxType = EWT`                                         |
+| `purchase-fwt`      | Purchase Final Withholding Tax    | `transactionType = Purchases`, `taxType = FWT`                                         |
+| `purchase-wvat`     | Purchase VAT Withholding          | `transactionType = Purchases`, `taxType in EWT/WVAT`, `officialAtcCode starts with WV` |
+| `sales-cwt`         | Sales Creditable Withholding Tax  | `transactionType = Sales`, `taxType = CWT`                                             |
+| `sales-wvat`        | Sales VAT Withholding             | `transactionType = Sales`, `taxType = WVAT`                                            |
+
+Example:
+
+```http
+GET /api/v1/tax/default-account-options?classification=purchase-ewt
+```
+
+### `GET /api/v1/tax-default-accounts`
 
 Returns tax codes with resolved company default tax posting accounts.
 
 Authentication is required. The company is resolved from the authenticated user's active `companyId`.
 
-Query parameters are the same as `GET /v1/tax`:
+Query parameters are the same as `GET /api/v1/tax`:
 
 - `query`
 - `transactionType`
@@ -25,9 +55,11 @@ Query parameters are the same as `GET /v1/tax`:
 - `officialAtcCode`
 - `status`
 - `taxExempt`
+- `sortBy`
+- `sortDirection`
 - `limit`
 
-### `GET /v1/tax-default-accounts/:sourceKey`
+### `GET /api/v1/tax-default-accounts/:sourceKey`
 
 Returns one tax code with resolved company default tax posting accounts.
 
@@ -35,14 +67,64 @@ Authentication is required. The company is resolved from the authenticated user'
 
 Related authenticated reference endpoints:
 
-- `GET /v1/tax`
-- `GET /v1/tax/autocomplete`
-- `GET /v1/tax/transaction-types`
-- `GET /v1/tax/tax-types`
-- `GET /v1/tax/party-default-classifications`
-- `GET /v1/tax/:sourceKey`
+- `GET /api/v1/tax`
+- `GET /api/v1/tax/autocomplete`
+- `GET /api/v1/tax/transaction-types`
+- `GET /api/v1/tax/tax-types`
+- `GET /api/v1/tax/party-default-classifications`
+- `GET /api/v1/tax/:sourceKey`
 
 ## Response Shape
+
+Default account option response:
+
+```json
+{
+  "companyId": 11,
+  "groups": [
+    {
+      "classification": "purchase-ewt",
+      "label": "Purchase Expanded Withholding Tax",
+      "options": [
+        {
+          "sourceKey": "PH-TAX-0092",
+          "transactionType": "Purchases",
+          "taxType": "EWT",
+          "taxCode": "WC 160",
+          "displayCode": "WC 160",
+          "taxDescription": "WC 160 | Income Payment Made by Top Withholding Agents to Their Local/Resident Supplier of Services",
+          "natureOfIncome": "Income Payment Made by Top Withholding Agents to Their Local/Resident Supplier of Services",
+          "taxRate": "2",
+          "taxExempt": false,
+          "defaultAccountRole": "EXPANDED_WITHHOLDING_TAX_ACCOUNT",
+          "defaultAccountCode": "2010002002",
+          "defaultAccountTitle": "Expanded Withholding Tax",
+          "status": "ACTIVE"
+        }
+      ]
+    }
+  ],
+  "options": [
+    {
+      "sourceKey": "PH-TAX-0092",
+      "transactionType": "Purchases",
+      "taxType": "EWT",
+      "taxCode": "WC 160",
+      "displayCode": "WC 160",
+      "taxDescription": "WC 160 | Income Payment Made by Top Withholding Agents to Their Local/Resident Supplier of Services",
+      "natureOfIncome": "Income Payment Made by Top Withholding Agents to Their Local/Resident Supplier of Services",
+      "taxRate": "2",
+      "taxExempt": false,
+      "defaultAccountRole": "EXPANDED_WITHHOLDING_TAX_ACCOUNT",
+      "defaultAccountCode": "2010002002",
+      "defaultAccountTitle": "Expanded Withholding Tax",
+      "status": "ACTIVE"
+    }
+  ]
+}
+```
+
+Use `groups` when a screen needs named option groups. Use `options` when a caller requested one classification and wants a flat list.
 
 List response:
 
@@ -77,7 +159,7 @@ List response:
           "chartAccount": {
             "id": "101",
             "accountCode": "2010002011",
-            "accountTitle": "Input Tax",
+            "accountTitle": "Input VAT",
             "accountType": "LIABILITY",
             "accountNature": "DEBIT",
             "status": "ACTIVE",
@@ -97,7 +179,7 @@ List response:
           "chartAccount": {
             "id": "101",
             "accountCode": "2010002011",
-            "accountTitle": "Input Tax",
+            "accountTitle": "Input VAT",
             "accountType": "LIABILITY",
             "accountNature": "DEBIT",
             "status": "ACTIVE",
@@ -140,13 +222,40 @@ If a posting rule exists but the company mapping is missing, the rule is still r
 
 Company bootstrap seeds these TXM posting mappings:
 
-- `INPUT_TAX_ACCOUNT`
-- `OUTPUT_VAT_ACCOUNT`
-- `DEFERRED_VAT_ACCOUNT`
-- `EXPANDED_WITHHOLDING_TAX_ACCOUNT`
-- `CREDITABLE_WITHHOLDING_TAX_ACCOUNT`
-- `WITHHOLDING_VATABLE_TAX_ACCOUNT`
-- `FINAL_WITHHOLDING_TAX_ACCOUNT`
+| Role                                 | Default Account Code | Default Account Title      |
+| ------------------------------------ | -------------------- | -------------------------- |
+| `INPUT_TAX_ACCOUNT`                  | `2010002011`         | Input VAT                  |
+| `OUTPUT_VAT_ACCOUNT`                 | `2010002005`         | Output VAT                 |
+| `DEFERRED_VAT_ACCOUNT`               | `2010002004`         | Deferred VAT               |
+| `EXPANDED_WITHHOLDING_TAX_ACCOUNT`   | `2010002002`         | Expanded Withholding Tax   |
+| `CREDITABLE_WITHHOLDING_TAX_ACCOUNT` | `2010002001`         | Creditable Withholding Tax |
+| `WITHHOLDING_VATABLE_TAX_ACCOUNT`    | `2010002009`         | Withholding VAT            |
+| `FINAL_WITHHOLDING_TAX_ACCOUNT`      | `2010002003`         | Final Withholding Tax      |
+
+## Frontend Lookup Rules
+
+- Use `GET /api/v1/tax/default-account-options` for repeated selector groups.
+- Use `input-purchases` for purchase VAT dropdowns in Cash Disbursement.
+- Use `purchase-ewt` for EWT dropdowns in Cash Disbursement.
+- Use `output-sales`, `sales-cwt`, and `sales-wvat` for sales-side defaults.
+- Do not hardcode VAT/EWT/CWT/WVAT option rows in frontend mock data.
+- Read `defaultAccountTitle` from the API when a UI or generated accounting row needs the tax account title.
+
+## OpenAPI and Generated Client
+
+All tax routes must have Swagger response DTOs so Orval generates typed frontend functions instead of `void`.
+
+After changing routes or response shapes:
+
+```bash
+npm run openapi:generate
+```
+
+Then from `gr8bookslite-frontend`:
+
+```bash
+npm run api:generate
+```
 
 ## Files
 
