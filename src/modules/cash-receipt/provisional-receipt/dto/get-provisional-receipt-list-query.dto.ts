@@ -2,6 +2,19 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
+const ProvisionalReceiptSortByOptions = [
+  'transactionNo',
+  'documentDate',
+  'customerName',
+  'receiptNo',
+  'referenceNo',
+  'grossAmount',
+  'status',
+  'createdAt',
+  'updatedAt',
+] as const;
+const SortDirectionOptions = ['asc', 'desc'] as const;
+
 export class GetProvisionalReceiptListQueryDto {
   @ApiPropertyOptional({ example: 1, minimum: 1 })
   @IsOptional()
@@ -56,15 +69,13 @@ export class GetProvisionalReceiptListQueryDto {
   @IsNumber()
   amountTo?: number;
 
-  @ApiPropertyOptional({
-    enum: ['transactionNo', 'documentDate', 'customerName', 'receiptNo', 'referenceNo', 'grossAmount', 'status', 'createdAt', 'updatedAt'],
-  })
+  @ApiPropertyOptional({ enum: ProvisionalReceiptSortByOptions })
   @IsOptional()
-  @IsIn(['transactionNo', 'documentDate', 'customerName', 'receiptNo', 'referenceNo', 'grossAmount', 'status', 'createdAt', 'updatedAt'])
+  @IsIn(ProvisionalReceiptSortByOptions)
   sortBy?: string;
 
-  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @ApiPropertyOptional({ enum: SortDirectionOptions })
   @IsOptional()
-  @IsIn(['asc', 'desc'])
+  @IsIn(SortDirectionOptions)
   sortDirection?: 'asc' | 'desc';
 }
