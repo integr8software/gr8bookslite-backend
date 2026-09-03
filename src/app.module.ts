@@ -43,7 +43,6 @@ import { ApproverSetupsModule } from './modules/system-administration/approver-s
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
 import { FieldManagementModule } from './modules/system-administration/field-management/field-management.module';
 import { StorageModule } from './storage/storage.module';
-import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.module';
 import { AccountsPayableModule } from './modules/accounts-payable/accounts-payable.module';
 import { GeneralJournalModule } from './modules/general-journal/general-journal.module';
 import { SalesModule } from './modules/sales/sales.module';
@@ -107,7 +106,6 @@ import { PurchasingModule } from './modules/purchasing/purchasing.module';
     ApproverSetupsModule,
     TransactionNumberSequencesModule,
     FieldManagementModule,
-    UserSidebarModule,
     AccountsPayableModule,
     GeneralJournalModule,
     SalesModule,

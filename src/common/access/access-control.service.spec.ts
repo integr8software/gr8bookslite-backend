@@ -50,19 +50,9 @@ describe('AccessControlService', () => {
     ).toBe(false);
   });
 
-  it('resolves active company access from plan defaults and user preference deltas', async () => {
+  it('resolves active company access from plan defaults', async () => {
     const membership = buildMembership({
       planModules: [buildEnabledModule(5, 'TM', 'Terms Maintenance')],
-      sidebarPreferences: [
-        {
-          branchUnitId: 10,
-          itemKey: 'module-tm',
-          isHidden: false,
-          sortOrder: 0,
-          isPinned: true,
-          isCollapsed: false,
-        },
-      ],
     });
     const service = createAccessControlService({
       user: buildResolvedUser(),
@@ -86,7 +76,6 @@ describe('AccessControlService', () => {
       expect.objectContaining({
         key: 'module-tm',
         moduleCode: 'TM',
-        isPinned: true,
       }),
     );
     expect(authUser.userModules.byBranch[0]).toEqual(
@@ -98,7 +87,6 @@ describe('AccessControlService', () => {
       expect.objectContaining({
         key: 'module-tm',
         moduleCode: 'TM',
-        isPinned: true,
       }),
     );
   });
@@ -272,11 +260,9 @@ function buildResolvedUser() {
 
 function buildMembership({
   planModules = [],
-  sidebarPreferences = [],
   subscriptions,
 }: {
   planModules?: Array<ReturnType<typeof buildEnabledModule>>;
-  sidebarPreferences?: unknown[];
   subscriptions?: unknown[];
 }) {
   const planSubscriptions =
@@ -310,7 +296,6 @@ function buildMembership({
     permissionOverrides: [],
     company: {
       units: [{ id: 10 }],
-      sidebarPreferences,
       subscriptions: planSubscriptions,
     },
   };

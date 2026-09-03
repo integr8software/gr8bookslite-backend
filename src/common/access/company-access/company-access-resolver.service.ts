@@ -145,11 +145,6 @@ export class CompanyAccessResolver {
                 id: 'asc',
               },
             },
-            sidebarPreferences: {
-              where: {
-                userId,
-              },
-            },
           },
         },
         companyRole: {

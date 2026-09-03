@@ -80,11 +80,6 @@ export type MembershipAccessRecord = Prisma.MembershipGetPayload<{
             id: 'asc';
           };
         };
-        sidebarPreferences: {
-          where: {
-            userId: number;
-          };
-        };
       };
     };
     companyRole: {
