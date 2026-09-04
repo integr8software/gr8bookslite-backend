@@ -31388,6 +31388,9 @@
           "taxDescription": {
             "type": "string"
           },
+          "sortOrder": {
+            "type": "number"
+          },
           "natureOfIncome": {
             "type": "string",
             "nullable": true
@@ -31421,6 +31424,7 @@
           "taxCode",
           "displayCode",
           "taxDescription",
+          "sortOrder",
           "natureOfIncome",
           "taxRate",
           "taxExempt",

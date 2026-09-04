@@ -283,6 +283,7 @@ describe('TaxService', () => {
             displayCode: 'WC 160',
             taxDescription: 'WC 160 | Income Payment Made by Top Withholding Agents to Their Local/Resident Supplier of Services',
             natureOfIncome: 'Income Payment Made by Top Withholding Agents to Their Local/Resident Supplier of Services',
+            sortOrder: 10,
             taxRate: '2',
             taxExempt: false,
             defaultAccountRole: 'EXPANDED_WITHHOLDING_TAX_ACCOUNT',

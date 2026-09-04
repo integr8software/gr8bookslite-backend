@@ -313,7 +313,7 @@ export class TaxService {
           orderBy: [{ transactionScope: 'asc' }, { priority: 'asc' }, { accountRole: 'asc' }],
         },
       },
-      orderBy: [{ transactionType: 'asc' }, { taxType: 'asc' }, { sortOrder: 'asc' }, { taxCode: 'asc' }, { taxDescription: 'asc' }],
+      orderBy: [{ transactionType: 'asc' }, { taxType: 'asc' }, { sortOrder: 'desc' }, { taxDescription: 'asc' }, { taxCode: 'asc' }],
     });
 
     const accountRoles = [...new Set(taxes.flatMap((tax) => tax.postingRules.map((rule) => rule.accountRole)))];
@@ -405,6 +405,7 @@ export class TaxService {
       taxCode: tax.taxCode,
       displayCode: tax.officialAtcCode || tax.taxCode,
       taxDescription: tax.taxDescription,
+      sortOrder: tax.sortOrder,
       natureOfIncome: tax.natureOfIncome,
       taxRate: tax.taxRate,
       taxExempt: tax.taxExempt,
@@ -477,6 +478,6 @@ export class TaxService {
       return [{ [query.sortBy]: query.sortDirection ?? 'asc' }, { id: 'asc' }];
     }
 
-    return [{ transactionType: 'asc' }, { taxType: 'asc' }, { sortOrder: 'asc' }, { taxCode: 'asc' }, { taxDescription: 'asc' }];
+    return [{ transactionType: 'asc' }, { taxType: 'asc' }, { sortOrder: 'desc' }, { taxDescription: 'asc' }, { taxCode: 'asc' }];
   }
 }

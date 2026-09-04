@@ -214,6 +214,9 @@ export class TaxDefaultAccountOptionResponseDto {
   @ApiProperty()
   taxDescription!: string;
 
+  @ApiProperty()
+  sortOrder!: number;
+
   @ApiProperty({ nullable: true })
   natureOfIncome!: string | null;
 
