@@ -113,6 +113,9 @@ export class ApprovalTransactionApproverResponseDto {
 
   @ApiProperty({ required: false, nullable: true })
   approvedAt!: Date | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  remarks!: string | null;
 }
 
 export class ApprovalTransactionResponseDto {
@@ -127,6 +130,9 @@ export class ApprovalTransactionResponseDto {
 
   @ApiProperty()
   referenceNo!: string;
+
+  @ApiProperty()
+  remarks!: string;
 
   @ApiProperty()
   ruleId!: string;

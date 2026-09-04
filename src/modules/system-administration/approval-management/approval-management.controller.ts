@@ -13,6 +13,7 @@ import {
   ApprovalWorkflowsResponseDto,
   UpsertApprovalWorkflowResponseDto,
 } from './dto/approval-management-response.dto';
+import { ApprovalTransactionActionDto } from './dto/approval-transaction-action.dto';
 import { UpsertApprovalWorkflowDto } from './dto/upsert-approval-workflow.dto';
 
 @UseGuards(JwtAuthGuard)
@@ -61,11 +62,7 @@ export class ApprovalManagementController {
   @ApiParam({ name: 'moduleCode', type: String })
   @ApiBody({ type: UpsertApprovalWorkflowDto })
   @ApiOkResponse({ type: UpsertApprovalWorkflowResponseDto })
-  upsertWorkflow(
-    @CurrentUser() user: AuthUser,
-    @Param('moduleCode') moduleCode: string,
-    @Body() dto: UpsertApprovalWorkflowDto,
-  ) {
+  upsertWorkflow(@CurrentUser() user: AuthUser, @Param('moduleCode') moduleCode: string, @Body() dto: UpsertApprovalWorkflowDto) {
     return this.approvalManagement.upsertWorkflow(user, moduleCode, dto);
   }
 
@@ -105,12 +102,10 @@ export class ApprovalManagementController {
   })
   @ApiOperation({ summary: 'Approve an approval transaction' })
   @ApiParam({ name: 'transactionId', type: String })
+  @ApiBody({ type: ApprovalTransactionActionDto })
   @ApiOkResponse({ type: ApprovalTransactionResponseDto })
-  approveTransaction(
-    @CurrentUser() user: AuthUser,
-    @Param('transactionId') transactionId: string,
-  ) {
-    return this.approvalManagement.approveTransaction(user, transactionId);
+  approveTransaction(@CurrentUser() user: AuthUser, @Param('transactionId') transactionId: string, @Body() dto: ApprovalTransactionActionDto) {
+    return this.approvalManagement.approveTransaction(user, transactionId, dto);
   }
 
   @Post('transactions/:transactionId/disapprove')
@@ -122,11 +117,9 @@ export class ApprovalManagementController {
   })
   @ApiOperation({ summary: 'Disapprove an approval transaction' })
   @ApiParam({ name: 'transactionId', type: String })
+  @ApiBody({ type: ApprovalTransactionActionDto })
   @ApiOkResponse({ type: ApprovalTransactionResponseDto })
-  disapproveTransaction(
-    @CurrentUser() user: AuthUser,
-    @Param('transactionId') transactionId: string,
-  ) {
-    return this.approvalManagement.disapproveTransaction(user, transactionId);
+  disapproveTransaction(@CurrentUser() user: AuthUser, @Param('transactionId') transactionId: string, @Body() dto: ApprovalTransactionActionDto) {
+    return this.approvalManagement.disapproveTransaction(user, transactionId, dto);
   }
 }
