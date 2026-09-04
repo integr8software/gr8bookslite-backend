@@ -90,7 +90,11 @@ export const AccountingSidebarTemplate = [
     key: 'general-journal',
     label: 'General Journal',
     iconName: 'journal',
-    children: [link('general-journal-journal-voucher', 'JV', 'journal')],
+    children: [
+      link('general-journal-journal-voucher', 'JV', 'journal'),
+      link('general-journal-debit-memo', 'DM', 'journal', 'Debit Memo'),
+      link('general-journal-credit-memo', 'CM', 'journal', 'Credit Memo'),
+    ],
   },
   {
     itemType: 'SECTION',
@@ -190,8 +194,6 @@ export const AccountingAndInventorySidebarTemplate = [
     label: 'Sales',
     iconName: 'sales',
     children: [
-      link('sales-debit-memo', 'DM', 'sales'),
-      link('sales-credit-memo', 'CM', 'sales'),
       link('sales-sales-quotation', 'SQ', 'sales'),
       link('sales-sales-order', 'SO', 'sales'),
       link('sales-sales-invoice', 'SI', 'sales'),
