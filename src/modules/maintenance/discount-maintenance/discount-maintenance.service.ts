@@ -137,9 +137,14 @@ export class DiscountMaintenanceService {
         });
       });
 
+      const mappedDiscount = (await this.mapDiscountsWithAuditUsers([discount]))[0];
+      const message = mappedDiscount.accountCode
+        ? `Discount created successfully. Saved with Account Code - Account Title: ${mappedDiscount.accountCode} - ${mappedDiscount.accountTitle}.`
+        : 'Discount created successfully.';
+
       return {
-        message: 'Discount created successfully.',
-        discount: (await this.mapDiscountsWithAuditUsers([discount]))[0],
+        message,
+        discount: mappedDiscount,
       };
     } catch (error) {
       throwConflictOnPrismaUniqueError(error, 'A discount with this name already exists.');

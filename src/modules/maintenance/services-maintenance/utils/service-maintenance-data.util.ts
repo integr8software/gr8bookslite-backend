@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { Prisma, ServiceAccountSetupMode } from '@prisma/client';
+import { Prisma, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
 import { cleanOptional, normalizeIdentityValue } from '../../../../common/utils/string-normalization.util';
 import { CreateServiceMaintenanceDto } from '../dto/create-service-maintenance.dto';
 import { GetServiceMaintenanceListQueryDto } from '../dto/get-service-maintenance-list-query.dto';
@@ -48,7 +48,17 @@ export function validateServiceMaintenanceInput(dto: CreateServiceMaintenanceDto
   }
 
   if (dto.accountSetupMode === ServiceAccountSetupMode.EXISTING && !dto.revenueCoaId?.trim()) {
-    throw new BadRequestException('Revenue account is required when selecting an existing account.');
+    throw new BadRequestException('Account is required when selecting an existing account.');
+  }
+
+  if (
+    dto.serviceType === ServiceMaintenanceType.PURCHASES &&
+    dto.accountSetupMode === ServiceAccountSetupMode.AUTO &&
+    dto.expenseParentCoaId !== undefined &&
+    dto.expenseParentCoaId !== null &&
+    !dto.expenseParentCoaId.trim()
+  ) {
+    throw new BadRequestException('Expense type is required for purchase of service.');
   }
 }
 

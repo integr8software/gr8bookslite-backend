@@ -30348,6 +30348,10 @@
           "revenueCoaId": {
             "type": "string",
             "nullable": true
+          },
+          "expenseParentCoaId": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -30405,6 +30409,10 @@
             "type": "string"
           },
           "revenueCoaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "expenseParentCoaId": {
             "type": "string",
             "nullable": true
           }

@@ -31,4 +31,9 @@ export class CreateServiceMaintenanceDto {
   @ValidateIf((dto: CreateServiceMaintenanceDto) => dto.accountSetupMode === ServiceAccountSetupMode.EXISTING)
   @IsString()
   revenueCoaId?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  expenseParentCoaId?: string | null;
 }

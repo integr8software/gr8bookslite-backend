@@ -76,6 +76,20 @@ export class BankMasterfileSupportService {
     return normalizedAccountCode;
   }
 
+  async isAccountCodeTaken(companyId: number, accountCode: string, tx: BankMasterfilePrismaClient = this.prisma) {
+    const normalizedAccountCode = accountCode.trim();
+    const existingAccount = await tx.chartAccount.findFirst({
+      where: {
+        companyId,
+        accountCode: normalizedAccountCode,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    return Boolean(existingAccount);
+  }
+
   async ensureBankAccountAvailable(companyId: number, dto: CreateBankAccountDto | UpdateBankAccountDto, excludedBankAccountId?: bigint) {
     if (!dto.bankName || !dto.accountNumber) {
       return;

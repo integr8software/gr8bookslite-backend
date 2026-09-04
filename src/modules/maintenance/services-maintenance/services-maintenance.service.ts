@@ -1,11 +1,12 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, ServiceAccountSetupMode } from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, Prisma, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { generateNextAccountCodeFromSiblings } from '../chart-of-accounts/utils/chart-account-code.util';
 import { CreateServiceMaintenanceDto } from './dto/create-service-maintenance.dto';
 import { GetServiceMaintenanceListQueryDto } from './dto/get-service-maintenance-list-query.dto';
 import { UpdateServiceMaintenanceStatusDto } from './dto/update-service-maintenance-status.dto';
@@ -21,9 +22,10 @@ import {
   toUpdateServiceMaintenanceData,
   validateServiceMaintenanceInput,
 } from './utils/service-maintenance-data.util';
+import { accountGroupHasTag } from '../chart-of-accounts/utils/system-account-groups.util';
 import {
-  accountGroupHasTag,
   buildServiceRevenueAccountGroupTags,
+  findSelectableServiceAccountOrThrow,
   findSelectableServiceRevenueAccountOrThrow,
   findServiceRevenueParentOrThrow,
   generateNextServiceRevenueAccountCode,
@@ -160,8 +162,8 @@ export class ServicesMaintenanceService {
         const requestedStatus = dto.status ?? ChartAccountStatus.ACTIVE;
         const revenueAccount =
           dto.accountSetupMode === ServiceAccountSetupMode.EXISTING
-            ? await findSelectableServiceRevenueAccountOrThrow(companyId, dto.revenueCoaId ?? '', tx)
-            : await this.createGeneratedRevenueAccount(companyId, serviceName, requestedStatus, tx, user.id);
+            ? await findSelectableServiceAccountOrThrow(companyId, dto.revenueCoaId ?? '', dto.serviceType, tx)
+            : await this.createGeneratedAccount(companyId, serviceName, dto.serviceType, dto.expenseParentCoaId, requestedStatus, tx, user.id);
 
         return tx.serviceMaintenance.create({
           data: {
@@ -175,9 +177,15 @@ export class ServicesMaintenanceService {
         });
       }, MaintenanceTransactionOptions);
 
+      const mappedService = (await mapServicesMaintenanceWithAuditUsers(this.prisma, [service]))[0];
+      const message =
+        dto.accountSetupMode === ServiceAccountSetupMode.AUTO && mappedService.revenueAccountCode
+          ? `Service created successfully. Saved with Account Code - Account Title: ${mappedService.revenueAccountCode} - ${mappedService.revenueAccountTitle}.`
+          : 'Service created successfully.';
+
       return {
-        message: 'Service created successfully.',
-        service: (await mapServicesMaintenanceWithAuditUsers(this.prisma, [service]))[0],
+        message,
+        service: mappedService,
       };
     } catch (error) {
       throwConflictOnPrismaUniqueError(error, 'A service with this name already exists.');
@@ -202,20 +210,21 @@ export class ServicesMaintenanceService {
       const service = await this.prisma.$transaction(async (tx) => {
         const requestedStatus = dto.status ?? currentService.status;
         const nextSetupMode = dto.accountSetupMode ?? currentService.accountSetupMode;
+        const nextServiceType = dto.serviceType ?? currentService.serviceType;
         let revenueCoaId: bigint | undefined;
         let isGeneratedRevenueAccount: boolean | undefined;
 
         if (nextSetupMode === ServiceAccountSetupMode.EXISTING) {
           if (currentService.isGeneratedRevenueAccount && dto.revenueCoaId === undefined) {
-            throw new BadRequestException('Select an existing revenue account before changing account setup.');
+            throw new BadRequestException('Select an existing account before changing account setup.');
           }
 
           const revenueAccount =
             dto.revenueCoaId !== undefined
-              ? await findSelectableServiceRevenueAccountOrThrow(companyId, dto.revenueCoaId ?? '', tx)
+              ? await findSelectableServiceAccountOrThrow(companyId, dto.revenueCoaId ?? '', nextServiceType, tx)
               : currentService.revenueCoa;
 
-          await this.ensureSelectedRevenueAccountIsValid(companyId, revenueAccount.id, tx);
+          await this.ensureSelectedAccountIsValid(companyId, revenueAccount.id, nextServiceType, tx);
           revenueCoaId = revenueAccount.id;
           isGeneratedRevenueAccount = false;
         }
@@ -234,7 +243,7 @@ export class ServicesMaintenanceService {
               },
             });
           } else {
-            const generatedAccount = await this.createGeneratedRevenueAccount(companyId, nextServiceName, requestedStatus, tx, user.id);
+            const generatedAccount = await this.createGeneratedAccount(companyId, nextServiceName, nextServiceType, dto.expenseParentCoaId, requestedStatus, tx, user.id);
             revenueCoaId = generatedAccount.id;
             isGeneratedRevenueAccount = true;
           }
@@ -319,13 +328,55 @@ export class ServicesMaintenanceService {
     };
   }
 
-  private async createGeneratedRevenueAccount(
+  private async createGeneratedAccount(
     companyId: number,
     serviceName: string,
+    serviceType: ServiceMaintenanceType,
+    expenseParentCoaId: string | null | undefined,
     status: ChartAccountStatus,
     tx: ServicesMaintenancePrismaClient,
     userId: number,
   ) {
+    if (serviceType === ServiceMaintenanceType.PURCHASES) {
+      if (!expenseParentCoaId?.trim()) {
+        throw new BadRequestException('Expense type is required to automatically generate an account for purchase of service.');
+      }
+      const parentId = parsePositiveBigIntId(expenseParentCoaId);
+      const parent = await tx.chartAccount.findFirst({
+        where: {
+          id: parentId,
+          companyId,
+          accountType: ChartAccountType.EXPENSE,
+          status: ChartAccountStatus.ACTIVE,
+          deletedAt: null,
+          isPostingAccount: false,
+        },
+      });
+      if (!parent) {
+        throw new BadRequestException('Expense parent account not found or is inactive.');
+      }
+      const accountCode = await this.generateNextAccountCode(companyId, parent.id, parent.accountCode, ChartAccountLevel.SPECIFIC, tx);
+
+      return tx.chartAccount.create({
+        data: {
+          companyId,
+          parentAccountId: parent.id,
+          accountCode,
+          accountTitle: resolveServiceRevenueAccountTitle(serviceName),
+          accountLevel: ChartAccountLevel.SPECIFIC,
+          accountType: ChartAccountType.EXPENSE,
+          accountNature: AccountNature.DEBIT,
+          accountGroup: (parent.accountGroup as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+          statementSection: parent.statementSection,
+          reportAlias: parent.reportAlias,
+          isPostingAccount: true,
+          status,
+          deletedAt: status === ChartAccountStatus.INACTIVE ? new Date() : null,
+          whoCreated: String(userId),
+        },
+      });
+    }
+
     const parent = await findServiceRevenueParentOrThrow(companyId, tx);
     const accountCode = await generateNextServiceRevenueAccountCode(companyId, parent.id, parent.accountCode, tx);
 
@@ -346,6 +397,30 @@ export class ServicesMaintenanceService {
         deletedAt: status === ChartAccountStatus.INACTIVE ? new Date() : null,
         whoCreated: String(userId),
       },
+    });
+  }
+
+  private async generateNextAccountCode(
+    companyId: number,
+    parentAccountId: bigint,
+    parentAccountCode: string,
+    accountLevel: ChartAccountLevel,
+    tx: ServicesMaintenancePrismaClient,
+  ) {
+    const siblings = await tx.chartAccount.findMany({
+      where: {
+        companyId,
+        parentAccountId,
+        accountLevel,
+      },
+      select: { accountCode: true },
+      orderBy: { accountCode: 'asc' },
+    });
+
+    return generateNextAccountCodeFromSiblings({
+      parentCode: parentAccountCode,
+      accountLevel,
+      siblingCodes: siblings.map((sibling) => sibling.accountCode),
     });
   }
 
@@ -376,8 +451,13 @@ export class ServicesMaintenanceService {
       }));
   }
 
-  private async ensureSelectedRevenueAccountIsValid(companyId: number, revenueCoaId: bigint, tx: ServicesMaintenancePrismaClient) {
-    await findSelectableServiceRevenueAccountOrThrow(companyId, revenueCoaId.toString(), tx);
+  private async ensureSelectedAccountIsValid(
+    companyId: number,
+    revenueCoaId: bigint,
+    serviceType: ServiceMaintenanceType,
+    tx: ServicesMaintenancePrismaClient,
+  ) {
+    await findSelectableServiceAccountOrThrow(companyId, revenueCoaId.toString(), serviceType, tx);
   }
 
   private async getStatistics(companyId: number) {

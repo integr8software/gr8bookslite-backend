@@ -161,9 +161,11 @@ export class DefaultAccountService {
       });
 
       return {
-        message: 'Expense sub account created successfully.',
+        message: `Expense sub account created successfully. Saved with Account Code - Account Title: ${account.accountCode} - ${account.accountTitle}.`,
         account: {
           id: account.id.toString(),
+          accountCode: account.accountCode,
+          accountTitle: account.accountTitle,
         },
       };
     } catch (error) {
@@ -209,9 +211,15 @@ export class DefaultAccountService {
         });
       }, MaintenanceTransactionOptions);
 
+      const mappedAccount = (await this.mapDefaultAccountsWithAuditUsers([template]))[0];
+      const firstGenerated = mappedAccount.generatedAccounts?.[0];
+      const message = firstGenerated
+        ? `Default account created successfully. Saved with Account Code - Account Title: ${firstGenerated.accountCode} - ${firstGenerated.accountTitle}.`
+        : 'Default account created successfully.';
+
       return {
-        message: 'Default account created successfully.',
-        defaultAccount: (await this.mapDefaultAccountsWithAuditUsers([template]))[0],
+        message,
+        defaultAccount: mappedAccount,
       };
     } catch (error) {
       throwConflictOnPrismaUniqueError(error, 'Default Account Name already exists for this type.');
