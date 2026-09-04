@@ -272,6 +272,8 @@ model Company {
   revolvingFundReplenishmentDetails RevolvingFundReplenishmentDetail[]
   purchaseRequests                  PurchaseRequest[]
   purchaseRequestEntries            PurchaseRequestEntry[]
+  purchaseOrders                    PurchaseOrder[]
+  purchaseOrderEntries              PurchaseOrderEntry[]
 
   @@index([createdByUserId])
   @@map("companies")
@@ -337,6 +339,8 @@ model CompanyUnit {
   revolvingFundReplenishmentDetails RevolvingFundReplenishmentDetail[]
   purchaseRequests                  PurchaseRequest[]
   purchaseRequestEntries            PurchaseRequestEntry[]
+  purchaseOrders                    PurchaseOrder[]
+  purchaseOrderEntries              PurchaseOrderEntry[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -959,6 +963,7 @@ model ServiceMaintenance {
   company                   Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
   revenueCoa                ChartAccount            @relation("ServiceMaintenanceRevenueCoa", fields: [revenueCoaId], references: [id], onDelete: Restrict)
   purchaseRequestEntries    PurchaseRequestEntry[]
+  purchaseOrderEntries      PurchaseOrderEntry[]
 
   @@unique([companyId, serviceName], map: "services_maintenance_company_service_name_unique")
   @@index([companyId], map: "services_maintenance_company_id_idx")
@@ -987,6 +992,7 @@ model Term {
   billingInvoices         BillingInvoice[]
   billings                Billing[]
   billingStatements       BillingStatement[]
+  purchaseOrders          PurchaseOrder[]
 
   @@index([companyId], map: "terms_company_id_idx")
   @@index([companyId, status], map: "terms_company_status_idx")
@@ -1260,6 +1266,8 @@ model ResponsibilityCenter {
   revolvingFundReplenishmentDetails RevolvingFundReplenishmentDetail[]
   purchaseRequestProjects           PurchaseRequest[]                  @relation("PurchaseRequestProject")
   purchaseRequestEntries            PurchaseRequestEntry[]
+  purchaseOrderProjects             PurchaseOrder[]                    @relation("PurchaseOrderProject")
+  purchaseOrderEntries              PurchaseOrderEntry[]
 
   @@unique([companyId, code], map: "responsibility_centers_company_code_key")
   @@unique([companyId, name], map: "responsibility_centers_company_name_key")
@@ -1390,6 +1398,7 @@ model Party {
   billings                            Billing[]
   billingStatements                   BillingStatement[]
   purchaseRequests                    PurchaseRequest[]
+  purchaseOrders                      PurchaseOrder[]
 
   @@unique([companyId, partyCodeNo], map: "parties_company_code_key")
   @@index([companyId], map: "parties_company_id_idx")
@@ -1484,6 +1493,7 @@ model PurchaseRequest {
   party               Party                  @relation(fields: [partyId], references: [id], onDelete: Restrict)
   project             ResponsibilityCenter?  @relation("PurchaseRequestProject", fields: [projectId], references: [id], onDelete: Restrict)
   entries             PurchaseRequestEntry[]
+  purchaseOrders      PurchaseOrder[]
 
   @@unique([companyId, branchUnitId, transNo], map: "purchase_request_company_branch_trans_no_key")
   @@index([companyId, status], map: "purchase_request_company_status_idx")
@@ -1517,6 +1527,7 @@ model PurchaseRequestEntry {
   branchUnit               CompanyUnit           @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
   responsibilityCenter     ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: Restrict)
   serviceMaintenance       ServiceMaintenance?   @relation(fields: [serviceMaintenanceId], references: [id], onDelete: Restrict)
+  purchaseOrderEntries     PurchaseOrderEntry[]
 
   @@unique([purchaseRequestId, lineNo], map: "purchase_request_entries_request_line_no_key")
   @@index([companyId], map: "purchase_request_entries_company_id_idx")
@@ -1525,6 +1536,112 @@ model PurchaseRequestEntry {
   @@index([serviceMaintenanceId], map: "purchase_request_entries_service_maintenance_id_idx")
   @@index([itemId], map: "purchase_request_entries_item_id_idx")
   @@map("purchase_request_entries")
+}
+
+model PurchaseOrder {
+  id                  BigInt                @id @default(autoincrement())
+  companyId           Int                   @map("company_id")
+  branchUnitId        Int                   @map("branch_unit_id")
+  partyId             BigInt                @map("party_id")
+  projectId           BigInt?               @map("project_id")
+  termId              BigInt?               @map("term_id")
+  purchaseRequestId   BigInt?               @map("purchase_request_id")
+  purchaseType        String                @map("purchase_type") @db.VarChar(20)
+  transNo             String                @map("trans_no") @db.VarChar(80)
+  poDate              DateTime              @map("po_date") @db.Date
+  dateNeeded          DateTime?             @map("date_needed") @db.Date
+  partyCodeSnapshot   String                @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot   String                @map("party_name_snapshot") @db.VarChar(255)
+  addressSnapshot     String?               @map("address_snapshot") @db.VarChar(500)
+  emailSnapshot       String?               @map("email_snapshot") @db.VarChar(255)
+  contactNoSnapshot   String?               @map("contact_no_snapshot") @db.VarChar(80)
+  projectCodeSnapshot String?               @map("project_code_snapshot") @db.VarChar(80)
+  projectNameSnapshot String?               @map("project_name_snapshot") @db.VarChar(255)
+  termNameSnapshot    String?               @map("term_name_snapshot") @db.VarChar(150)
+  currencyCode        String                @default("PHP") @map("currency_code") @db.VarChar(10)
+  exchangeRate        Decimal               @default(1) @map("exchange_rate") @db.Decimal(18, 6)
+  remarks             String?               @db.VarChar(500)
+  status              PurchaseOrderStatus   @default(DRAFT)
+  createdByUserId     Int?                  @map("created_by_user_id")
+  updatedByUserId     Int?                  @map("updated_by_user_id")
+  postedByUserId      Int?                  @map("posted_by_user_id")
+  postedAt            DateTime?             @map("posted_at")
+  disapprovedByUserId Int?                  @map("disapproved_by_user_id")
+  disapprovedAt       DateTime?             @map("disapproved_at")
+  cancelledByUserId   Int?                  @map("cancelled_by_user_id")
+  cancelledAt         DateTime?             @map("cancelled_at")
+  deletedAt           DateTime?             @map("deleted_at")
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime?             @map("updated_at")
+  company             Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit          CompanyUnit           @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party               Party                 @relation(fields: [partyId], references: [id], onDelete: Restrict)
+  project             ResponsibilityCenter? @relation("PurchaseOrderProject", fields: [projectId], references: [id], onDelete: Restrict)
+  term                Term?                 @relation(fields: [termId], references: [id], onDelete: Restrict)
+  purchaseRequest     PurchaseRequest?      @relation(fields: [purchaseRequestId], references: [id], onDelete: Restrict)
+  entries             PurchaseOrderEntry[]
+
+  @@unique([companyId, branchUnitId, transNo], map: "purchase_order_company_branch_trans_no_key")
+  @@index([companyId, status], map: "purchase_order_company_status_idx")
+  @@index([branchUnitId], map: "purchase_order_branch_unit_id_idx")
+  @@index([partyId], map: "purchase_order_party_id_idx")
+  @@index([projectId], map: "purchase_order_project_id_idx")
+  @@index([termId], map: "purchase_order_term_id_idx")
+  @@index([purchaseRequestId], map: "purchase_order_purchase_request_id_idx")
+  @@map("purchase_order")
+}
+
+model PurchaseOrderEntry {
+  id                       BigInt                @id @default(autoincrement())
+  purchaseOrderId          BigInt                @map("purchase_order_id")
+  companyId                Int                   @map("company_id")
+  branchUnitId             Int                   @map("branch_unit_id")
+  purchaseRequestEntryId   BigInt?               @map("purchase_request_entry_id")
+  responsibilityCenterId   BigInt?               @map("responsibility_center_id")
+  serviceMaintenanceId     BigInt?               @map("service_maintenance_id")
+  itemId                   String?               @map("item_id") @db.VarChar(100)
+  lineNo                   Int                   @map("line_no")
+  itemCode                 String?               @map("item_code") @db.VarChar(80)
+  barcode                  String?               @db.VarChar(80)
+  description              String                @db.VarChar(255)
+  color                    String?               @db.VarChar(80)
+  brand                    String?               @db.VarChar(80)
+  size                     String?               @db.VarChar(80)
+  model                    String?               @db.VarChar(80)
+  uom                      String?               @db.VarChar(40)
+  lotNo                    String?               @map("lot_no") @db.VarChar(80)
+  prQty                    Decimal               @default(0) @map("pr_qty") @db.Decimal(18, 6)
+  poQty                    Decimal               @map("po_qty") @db.Decimal(18, 6)
+  price                    Decimal               @default(0) @db.Decimal(18, 4)
+  grossAmount              Decimal               @default(0) @map("gross_amount") @db.Decimal(18, 4)
+  discountRate             Decimal               @default(0) @map("discount_rate") @db.Decimal(9, 4)
+  discountAmount           Decimal               @default(0) @map("discount_amount") @db.Decimal(18, 4)
+  grossAfterDiscount       Decimal               @default(0) @map("gross_after_discount") @db.Decimal(18, 4)
+  vatAmount                Decimal               @default(0) @map("vat_amount") @db.Decimal(18, 4)
+  vatable                  Boolean               @default(false)
+  vatInclusive             Boolean               @default(false) @map("vat_inclusive")
+  netOfVatAmount           Decimal               @default(0) @map("net_of_vat_amount") @db.Decimal(18, 4)
+  netAmount                Decimal               @default(0) @map("net_amount") @db.Decimal(18, 4)
+  prNoSnapshot             String?               @map("pr_no_snapshot") @db.VarChar(80)
+  canvassNoSnapshot        String?               @map("canvass_no_snapshot") @db.VarChar(80)
+  responsibilityCenterName String?               @map("responsibility_center_name") @db.VarChar(150)
+  createdAt                DateTime              @default(now()) @map("created_at")
+  updatedAt                DateTime?             @map("updated_at")
+  purchaseOrder            PurchaseOrder         @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  company                  Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit               CompanyUnit           @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  purchaseRequestEntry     PurchaseRequestEntry? @relation(fields: [purchaseRequestEntryId], references: [id], onDelete: Restrict)
+  responsibilityCenter     ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: Restrict)
+  serviceMaintenance       ServiceMaintenance?   @relation(fields: [serviceMaintenanceId], references: [id], onDelete: Restrict)
+
+  @@unique([purchaseOrderId, lineNo], map: "purchase_order_entries_order_line_no_key")
+  @@index([companyId], map: "purchase_order_entries_company_id_idx")
+  @@index([branchUnitId], map: "purchase_order_entries_branch_unit_id_idx")
+  @@index([purchaseRequestEntryId], map: "purchase_order_entries_pr_entry_id_idx")
+  @@index([responsibilityCenterId], map: "purchase_order_entries_rc_id_idx")
+  @@index([serviceMaintenanceId], map: "purchase_order_entries_service_id_idx")
+  @@index([itemId], map: "purchase_order_entries_item_id_idx")
+  @@map("purchase_order_entries")
 }
 
 model AccountsPayableVoucher {
@@ -4066,6 +4183,14 @@ enum PartyStatus {
 }
 
 enum PurchaseRequestStatus {
+  DRAFT
+  FOR_APPROVAL
+  POSTED
+  DISAPPROVED
+  CANCELLED
+}
+
+enum PurchaseOrderStatus {
   DRAFT
   FOR_APPROVAL
   POSTED

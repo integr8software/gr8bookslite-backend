@@ -20287,6 +20287,221 @@
           "Purchase Request"
         ]
       }
+    },
+    "/api/v1/purchasing/purchase-order": {
+      "get": {
+        "operationId": "PurchaseOrderController_findAll_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List purchase orders",
+        "tags": [
+          "Purchase Order"
+        ]
+      },
+      "post": {
+        "operationId": "PurchaseOrderController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePurchaseOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a purchase order",
+        "tags": [
+          "Purchase Order"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-order/{id}": {
+      "get": {
+        "operationId": "PurchaseOrderController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a purchase order",
+        "tags": [
+          "Purchase Order"
+        ]
+      },
+      "patch": {
+        "operationId": "PurchaseOrderController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePurchaseOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a purchase order",
+        "tags": [
+          "Purchase Order"
+        ]
+      },
+      "delete": {
+        "operationId": "PurchaseOrderController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a purchase order",
+        "tags": [
+          "Purchase Order"
+        ]
+      }
     }
   },
   "info": {
@@ -49670,6 +49885,633 @@
         "required": [
           "status"
         ]
+      },
+      "PurchaseOrderEntryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "purchaseRequestEntryId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceMaintenanceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "size": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          },
+          "lotNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "prQty": {
+            "type": "number"
+          },
+          "poQty": {
+            "type": "number"
+          },
+          "price": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "discountRate": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAfterDiscount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "netOfVatAmount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "canvassNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "prQty",
+          "poQty",
+          "price",
+          "grossAmount",
+          "discountRate",
+          "discountAmount",
+          "grossAfterDiscount",
+          "vatAmount",
+          "vatable",
+          "vatInclusive",
+          "netOfVatAmount",
+          "netAmount"
+        ]
+      },
+      "PurchaseOrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "branchUnitId": {
+            "type": "number"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string"
+          },
+          "partyCode": {
+            "type": "string"
+          },
+          "partyName": {
+            "type": "string"
+          },
+          "purchaseType": {
+            "type": "string"
+          },
+          "transNo": {
+            "type": "string"
+          },
+          "poDate": {
+            "type": "string"
+          },
+          "dateNeeded": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "termsOfPayment": {
+            "type": "string",
+            "nullable": true
+          },
+          "purchaseRequestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderEntryResponseDto"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "branchUnitId",
+          "branchName",
+          "partyId",
+          "partyCode",
+          "partyName",
+          "purchaseType",
+          "transNo",
+          "poDate",
+          "currency",
+          "exchangeRate",
+          "status",
+          "items",
+          "createdAt"
+        ]
+      },
+      "PurchaseOrderPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "PurchaseOrderListResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseOrders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderResponseDto"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PurchaseOrderPaginationResponseDto"
+          }
+        },
+        "required": [
+          "purchaseOrders",
+          "pagination"
+        ]
+      },
+      "PurchaseOrderContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseOrder": {
+            "$ref": "#/components/schemas/PurchaseOrderResponseDto"
+          }
+        },
+        "required": [
+          "purchaseOrder"
+        ]
+      },
+      "PurchaseOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "purchaseRequestEntryId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceMaintenanceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "color": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "size": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "model": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "lotNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "prQty": {
+            "type": "number",
+            "minimum": 0
+          },
+          "poQty": {
+            "type": "number",
+            "minimum": 0
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discountRate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discountAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "canvassNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          }
+        },
+        "required": [
+          "description",
+          "prQty",
+          "poQty",
+          "price"
+        ]
+      },
+      "CreatePurchaseOrderDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "poDate": {
+            "type": "string"
+          },
+          "dateNeeded": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "purchaseType": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "emailAddress": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "termsOfPayment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "purchaseRequestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10,
+            "default": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0,
+            "default": 1
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderItemDto"
+            }
+          }
+        },
+        "required": [
+          "transNo",
+          "poDate",
+          "purchaseType",
+          "items"
+        ]
+      },
+      "UpdatePurchaseOrderDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "poDate": {
+            "type": "string"
+          },
+          "dateNeeded": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "purchaseType": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "emailAddress": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "termsOfPayment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "purchaseRequestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10,
+            "default": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0,
+            "default": 1
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderItemDto"
+            }
+          }
+        }
       }
     }
   }
