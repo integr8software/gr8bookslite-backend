@@ -9631,6 +9631,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalTransactionActionDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -9667,6 +9677,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalTransactionActionDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -32889,6 +32909,10 @@
             "format": "date-time",
             "type": "string",
             "nullable": true
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -32911,6 +32935,9 @@
             "type": "string"
           },
           "referenceNo": {
+            "type": "string"
+          },
+          "remarks": {
             "type": "string"
           },
           "ruleId": {
@@ -32956,6 +32983,7 @@
           "moduleScope",
           "moduleName",
           "referenceNo",
+          "remarks",
           "ruleId",
           "ruleName",
           "amount",
@@ -32979,6 +33007,16 @@
         "required": [
           "transactions"
         ]
+      },
+      "ApprovalTransactionActionDto": {
+        "type": "object",
+        "properties": {
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          }
+        }
       },
       "CreateApproverSetupDto": {
         "type": "object",

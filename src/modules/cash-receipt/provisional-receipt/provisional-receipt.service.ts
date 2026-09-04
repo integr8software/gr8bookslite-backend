@@ -14,6 +14,7 @@ import {
   ResponsibilityCenter,
   ResponsibilityCenterStatus,
   ProvisionalReceiptStatus,
+  TermStatus,
   TransactionNumberInputMode,
 } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
@@ -487,7 +488,7 @@ export class ProvisionalReceiptService {
           ...detail,
           currencyCode: header.currencyCode,
           exchangeRate: header.exchangeRate,
-          particulars: detail.particulars ?? header.particulars,
+          particulars: detail.particulars ?? header.remarks,
           referenceId: header.referenceId,
           referenceNo: header.referenceNo,
           referenceType: header.referenceType,
@@ -610,7 +611,7 @@ export class ProvisionalReceiptService {
         currencyCode,
         exchangeRate,
         jeno,
-        particulars: cleanOptional(journalEntries[0]?.input.particulars),
+        remarks: cleanOptional(journalEntries[0]?.input.particulars),
         referenceId: provisionalReceiptId,
         referenceNo: cleanOptional(journalEntries[0]?.input.refNo),
         referenceType: ProvisionalReceiptReferenceType,
