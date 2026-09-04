@@ -1006,7 +1006,7 @@ function compareApprovalRules(first: ApprovalRulePayload, second: ApprovalRulePa
 }
 
 function getApprovalRuleOrder(rule: ApprovalRulePayload) {
-  const match = /(?:condition|route)\s*(\d+)/i.exec(rule.routeName);
+  const match = rule.routeName.match(/(?:condition|route)\s*(\d+)/i);
   const sequence = match ? Number(match[1]) : Number.NaN;
 
   return Number.isFinite(sequence) ? sequence : Number.MAX_SAFE_INTEGER;
