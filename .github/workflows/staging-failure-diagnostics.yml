@@ -1,0 +1,156 @@
+name: Backend Staging Failure Diagnostics
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy Backend Staging
+      - Backend Staging Post-Deploy Health
+    types:
+      - completed
+
+jobs:
+  collect-diagnostics:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+
+    runs-on:
+      - self-hosted
+      - Windows
+      - X64
+
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Collect staging failure diagnostics
+        id: diagnostics
+        run: |
+          $ErrorActionPreference = "Continue"
+
+          $diagnosticsRoot = Join-Path $env:RUNNER_TEMP "gr8booksneo-staging-failure-diagnostics"
+          $backendRoot = "I:\Gr8BooksNeo\apps\backend-shared-dev"
+          $pm2App = "gr8booksneo-backend-shared-dev"
+          $healthUrl = "http://127.0.0.1:3002/api/v1/health"
+
+          if (Test-Path -LiteralPath $diagnosticsRoot) {
+            Remove-Item -LiteralPath $diagnosticsRoot -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Path $diagnosticsRoot -Force | Out-Null
+
+          $summaryPath = Join-Path $diagnosticsRoot "summary.txt"
+          $pm2StatusPath = Join-Path $diagnosticsRoot "pm2-status.txt"
+          $pm2DescribePath = Join-Path $diagnosticsRoot "pm2-describe.txt"
+          $pm2LogsPath = Join-Path $diagnosticsRoot "pm2-logs.txt"
+          $gitStatePath = Join-Path $diagnosticsRoot "git-state.txt"
+          $healthPath = Join-Path $diagnosticsRoot "health-check.txt"
+
+          @(
+            "Gr8BooksNeo Backend Staging Failure Diagnostics"
+            "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss K')"
+            "Upstream workflow: ${{ github.event.workflow_run.name }}"
+            "Upstream conclusion: ${{ github.event.workflow_run.conclusion }}"
+            "Upstream run ID: ${{ github.event.workflow_run.id }}"
+            "Upstream run attempt: ${{ github.event.workflow_run.run_attempt }}"
+            "Upstream branch: ${{ github.event.workflow_run.head_branch }}"
+            "Upstream commit: ${{ github.event.workflow_run.head_sha }}"
+            "Runner: $env:RUNNER_NAME"
+          ) | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+
+          try {
+            pm2 status 2>&1 |
+              Out-String |
+              Set-Content -LiteralPath $pm2StatusPath -Encoding UTF8
+          }
+          catch {
+            "Unable to collect pm2 status: $($_.Exception.Message)" |
+              Set-Content -LiteralPath $pm2StatusPath -Encoding UTF8
+          }
+
+          try {
+            pm2 describe $pm2App 2>&1 |
+              Out-String |
+              Set-Content -LiteralPath $pm2DescribePath -Encoding UTF8
+          }
+          catch {
+            "Unable to describe PM2 app '$pm2App': $($_.Exception.Message)" |
+              Set-Content -LiteralPath $pm2DescribePath -Encoding UTF8
+          }
+
+          try {
+            pm2 logs $pm2App --lines 150 --nostream 2>&1 |
+              Out-String |
+              Set-Content -LiteralPath $pm2LogsPath -Encoding UTF8
+          }
+          catch {
+            "Unable to collect PM2 logs for '$pm2App': $($_.Exception.Message)" |
+              Set-Content -LiteralPath $pm2LogsPath -Encoding UTF8
+          }
+
+          if (Test-Path -LiteralPath $backendRoot -PathType Container) {
+            Push-Location $backendRoot
+
+            try {
+              @(
+                "Repository: $backendRoot"
+                ""
+                "HEAD:"
+                (git rev-parse HEAD 2>&1 | Out-String).Trim()
+                ""
+                "Branch:"
+                (git branch --show-current 2>&1 | Out-String).Trim()
+                ""
+                "Status:"
+                (git status --short 2>&1 | Out-String).TrimEnd()
+                ""
+                "Latest commit:"
+                (git log -1 --oneline 2>&1 | Out-String).Trim()
+              ) | Set-Content -LiteralPath $gitStatePath -Encoding UTF8
+            }
+            catch {
+              "Unable to collect repository state: $($_.Exception.Message)" |
+                Set-Content -LiteralPath $gitStatePath -Encoding UTF8
+            }
+            finally {
+              Pop-Location
+            }
+          }
+          else {
+            "Backend staging directory was not found: $backendRoot" |
+              Set-Content -LiteralPath $gitStatePath -Encoding UTF8
+          }
+
+          try {
+            $response = Invoke-RestMethod `
+              -Uri $healthUrl `
+              -Method Get `
+              -TimeoutSec 10
+
+            @(
+              "URL: $healthUrl"
+              "Request: succeeded"
+              ""
+              ($response | ConvertTo-Json -Depth 10)
+            ) | Set-Content -LiteralPath $healthPath -Encoding UTF8
+          }
+          catch {
+            @(
+              "URL: $healthUrl"
+              "Request: failed"
+              "Error: $($_.Exception.Message)"
+            ) | Set-Content -LiteralPath $healthPath -Encoding UTF8
+          }
+
+          "diagnostics_path=$diagnosticsRoot" >> $env:GITHUB_OUTPUT
+
+          Write-Host "Failure diagnostics collected at: $diagnosticsRoot"
+          Write-Host "No environment variables or secret values were intentionally collected."
+
+      - name: Upload staging failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-staging-failure-diagnostics-${{ github.event.workflow_run.id }}-${{ github.run_attempt }}
+          path: ${{ steps.diagnostics.outputs.diagnostics_path }}
+          if-no-files-found: error
+          retention-days: 14
