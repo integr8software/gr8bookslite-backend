@@ -132,6 +132,7 @@ model ApprovalTransactionApprover {
   sequence      Int
   status        String              @default("Pending")
   approvedAt    DateTime?           @map("approved_at")
+  remarks       String?             @db.VarChar(500)
   transaction   ApprovalTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -3172,7 +3173,7 @@ model JournalEntryHeader {
   transactionDate DateTime             @map("transaction_date")
   currencyCode    String               @map("currency_code") @db.VarChar(10)
   exchangeRate    Decimal              @default(1) @map("exchange_rate") @db.Decimal(18, 6)
-  particulars     String?              @db.VarChar(500)
+  remarks         String?              @db.VarChar(500)
   totalDebit      Decimal              @default(0) @map("total_debit") @db.Decimal(18, 2)
   totalCredit     Decimal              @default(0) @map("total_credit") @db.Decimal(18, 2)
   status          String               @default("Draft") @db.VarChar(20)
