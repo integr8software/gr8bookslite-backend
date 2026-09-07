@@ -51,7 +51,7 @@ describe('PurchaseOrderService business logic', () => {
 
   it('calculates percentage discount and exclusive VAT totals on the server', async () => {
     const { buildEntries } = createService();
-    const [entry] = await buildEntries(7, 3, [createItem({ poQty: 2, price: 100, discountRate: 10, vatAmount: 21.6 })], 'Goods');
+    const [entry] = await buildEntries(7, 3, [createItem({ poQty: 2, price: 100, discountRate: 10, vatable: true })], 'Goods');
 
     expect(Number(entry.grossAmount)).toBe(200);
     expect(Number(entry.discountAmount)).toBe(20);
@@ -62,7 +62,7 @@ describe('PurchaseOrderService business logic', () => {
 
   it('subtracts VAT from net-of-VAT while preserving an inclusive line total', async () => {
     const { buildEntries } = createService();
-    const [entry] = await buildEntries(7, 3, [createItem({ poQty: 2, price: 100, discountAmount: 20, vatAmount: 19.29, vatInclusive: true })], 'Services');
+    const [entry] = await buildEntries(7, 3, [createItem({ poQty: 2, price: 100, discountRate: 10, vatable: true, vatInclusive: true })], 'Services');
 
     expect(Number(entry.grossAfterDiscount)).toBe(180);
     expect(Number(entry.netOfVatAmount)).toBeCloseTo(160.71);
