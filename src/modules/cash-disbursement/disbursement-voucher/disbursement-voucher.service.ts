@@ -22,6 +22,7 @@ import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AccountsPayableVoucherCopySourceService } from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
 import {
   resolveTransactionNumberForCompanyBranch,
   resolveTransactionNumberScopeForCompanyBranch,
@@ -71,6 +72,7 @@ export class DisbursementVoucherService {
     private readonly prisma: PrismaService,
     private readonly companyCurrencyService: CompanyCurrencyService,
     private readonly accountingService: DisbursementVoucherAccountingService,
+    private readonly accountsPayableVoucherCopySourceService: AccountsPayableVoucherCopySourceService,
   ) {}
 
   async findAll(user: AuthUser, query: GetDisbursementVoucherListQueryDto) {
@@ -182,6 +184,16 @@ export class DisbursementVoucherService {
           branchUnitId,
           companyId,
           requestedTransactionNo: dto.voucherNo || dto.transactionNo,
+        });
+        await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details: dto.details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: dto.referenceModule,
+          target: 'disbursement-voucher',
         });
 
         const created = await tx.disbursementVoucher.create({
@@ -309,6 +321,17 @@ export class DisbursementVoucherService {
           currentTransactionNo: current.voucherNo,
           excludedVoucherId: voucherId,
           requestedTransactionNo: dto.voucherNo || dto.transactionNo,
+        });
+        await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details: dto.details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule: dto.referenceModule ?? current.referenceModule,
+          target: 'disbursement-voucher',
         });
 
         await tx.disbursementVoucher.update({

@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AccountsPayableVoucherCopySourceService } from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
 import { DisbursementVoucherService } from './disbursement-voucher.service';
 import { DisbursementVoucherAccountingService } from './services/disbursement-voucher-accounting.service';
 
@@ -12,7 +13,12 @@ describe('DisbursementVoucherService', () => {
       return Promise.resolve(1);
     });
     const findFirst = jest.fn<Promise<{ jeno: bigint } | null>, [args: unknown]>().mockResolvedValue({ jeno: 41n });
-    const service = new DisbursementVoucherService({} as PrismaService, {} as CompanyCurrencyService, {} as DisbursementVoucherAccountingService);
+    const service = new DisbursementVoucherService(
+      {} as PrismaService,
+      {} as CompanyCurrencyService,
+      {} as DisbursementVoucherAccountingService,
+      {} as AccountsPayableVoucherCopySourceService,
+    );
     const serviceInternals = service as unknown as {
       allocateJournalEntryNumber: (tx: Prisma.TransactionClient, companyId: number) => Promise<bigint>;
     };

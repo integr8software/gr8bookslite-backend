@@ -4,6 +4,9 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AccountsPayableVoucherService } from './accounts-payable-voucher.service';
+import { AccountsPayableVoucherCopySourceService } from './copy-from/accounts-payable-voucher-copy-source.service';
+import { AccountsPayableVoucherCopyFromCandidatesResponseDto } from './copy-from/dto/accounts-payable-voucher-copy-from-candidate.dto';
+import { GetAccountsPayableVoucherCopyFromCandidatesQueryDto } from './copy-from/dto/get-accounts-payable-voucher-copy-from-candidates-query.dto';
 import { CreateAccountsPayableVoucherDto } from './dto/create-accounts-payable-voucher.dto';
 import { GetAccountsPayableVoucherListQueryDto } from './dto/get-accounts-payable-voucher-list-query.dto';
 import { UpdateAccountsPayableVoucherDto } from './dto/update-accounts-payable-voucher.dto';
@@ -20,6 +23,7 @@ export class AccountsPayableVoucherController {
   constructor(
     private readonly accountsPayableVoucherService: AccountsPayableVoucherService,
     private readonly accountsPayableVoucherLookupService: AccountsPayableVoucherLookupService,
+    private readonly accountsPayableVoucherCopySourceService: AccountsPayableVoucherCopySourceService,
   ) {}
 
   @Get()
@@ -68,6 +72,12 @@ export class AccountsPayableVoucherController {
   @ApiOkResponse({ description: 'Accounts payable voucher payable account options retrieved.' })
   findPayableAccountOptions(@CurrentUser() user: AuthUser) {
     return this.accountsPayableVoucherLookupService.findPayableAccounts(user);
+  }
+
+  @Get('copy-from/candidates')
+  @ApiOkResponse({ description: 'Available accounts payable vouchers for Copy From.', type: AccountsPayableVoucherCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetAccountsPayableVoucherCopyFromCandidatesQueryDto) {
+    return this.accountsPayableVoucherCopySourceService.findCandidates(user, query);
   }
 
   @Get(':id')

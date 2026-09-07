@@ -22,6 +22,7 @@ import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AccountsPayableVoucherCopySourceService } from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
 import {
   resolveTransactionNumberForCompanyBranch,
   resolveTransactionNumberScopeForCompanyBranch,
@@ -71,6 +72,7 @@ export class CashVoucherService {
     private readonly prisma: PrismaService,
     private readonly companyCurrencyService: CompanyCurrencyService,
     private readonly accountingService: CashVoucherAccountingService,
+    private readonly accountsPayableVoucherCopySourceService: AccountsPayableVoucherCopySourceService,
   ) {}
 
   async findAll(user: AuthUser, query: GetCashVoucherListQueryDto) {
@@ -261,6 +263,16 @@ export class CashVoucherService {
           companyId,
           requestedTransactionNo: dto.voucherNo || dto.transactionNo,
         });
+        await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details: dto.details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: dto.referenceModule,
+          target: 'cash-voucher',
+        });
 
         const created = await tx.cashVoucher.create({
           data: {
@@ -385,6 +397,17 @@ export class CashVoucherService {
           currentTransactionNo: current.voucherNo,
           excludedVoucherId: voucherId,
           requestedTransactionNo: dto.voucherNo || dto.transactionNo,
+        });
+        await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details: dto.details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule: dto.referenceModule ?? current.referenceModule,
+          target: 'cash-voucher',
         });
 
         await tx.cashVoucher.update({
