@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BillingCycle, SubscriptionStatus } from '@prisma/client';
+import { BillingCycle, BillingMode, SubscriptionStatus } from '@prisma/client';
 
 export class OnboardingPlanPriceSummaryResponseDto {
   @ApiProperty()
@@ -209,6 +209,9 @@ export class OnboardingDraftResponseDto {
   @ApiProperty({ enum: BillingCycle, nullable: true })
   billingCycle!: BillingCycle | null;
 
+  @ApiPropertyOptional({ enum: BillingMode, nullable: true })
+  billingMode?: BillingMode | null;
+
   @ApiProperty({ nullable: true })
   cardholderName!: string | null;
 
@@ -265,6 +268,9 @@ export class OnboardingBillingResponseDto {
 
   @ApiProperty({ enum: BillingCycle, nullable: true })
   billingCycle!: BillingCycle | null;
+
+  @ApiPropertyOptional({ enum: BillingMode, nullable: true })
+  billingMode?: BillingMode | null;
 
   @ApiProperty({ nullable: true })
   cardholderName!: string | null;

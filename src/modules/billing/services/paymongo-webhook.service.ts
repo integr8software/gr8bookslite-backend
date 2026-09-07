@@ -184,6 +184,7 @@ export class PaymongoWebhookService {
         latestPaymentIntentId: readProviderString(latestInvoicePaymentIntent?.id) ?? subscription.latestPaymentIntentId,
         nextBillingAt: readProviderUnixDate(attributes.next_billing_schedule) ?? subscription.nextBillingAt,
         startsAt: readProviderUnixDate(attributes.created_at) ?? subscription.startsAt,
+        trialEndsAt: readProviderUnixDate(attributes.trial_end) ?? subscription.trialEndsAt,
         canceledAt: readProviderUnixDate(attributes.cancelled_at) ?? subscription.canceledAt,
         currentPeriodStartAt: readProviderUnixDate(attributes.current_billing_period_start) ?? subscription.currentPeriodStartAt,
         rawProviderPayload: event.payload as Prisma.InputJsonValue,

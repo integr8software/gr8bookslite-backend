@@ -25,8 +25,6 @@ export function mapWorkspaceUserMemberships(memberships: WorkspaceUserMembership
       companyRoleId: membership.companyRoleId,
     };
 
-
-
     if (current) {
       current.companyAssignments.push(assignment);
       continue;

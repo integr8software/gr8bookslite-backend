@@ -11,6 +11,7 @@ Available agent docs:
 - `domains/address-api.md`
 - `guides/ARCHITECTURE_MODULARITY_GUIDE.md`
 - `guides/BACKEND_INTEGRATION_GUIDE.md`
+- `guides/TRANSACTION_MODULE_BACKEND_INTEGRATION_GUIDE.md`
 - `domains/TAX_MAINTENANCE_GLOBAL_ARCHITECTURE.md`
 
 Recommended ownership:
@@ -29,6 +30,8 @@ Recommended ownership:
   Covers backend/frontend folder placement, reusable utilities, mappers, types, strategies, loading boundaries, and anti-redundancy rules for agents.
 - `guides/BACKEND_INTEGRATION_GUIDE.md`
   Covers backend-to-frontend API integration contracts, DTOs, mappers, tenant-scoped query keys, seed/provision requirements, mock-data removal, and verification.
+- `guides/TRANSACTION_MODULE_BACKEND_INTEGRATION_GUIDE.md`
+  Authoritative recipe and blueprint for implementing backend integration for new transaction modules (Prisma schema, DTOs, sequence engine, GL balancing, master snapshots, approvals, and Orval pipeline).
 - `domains/TAX_MAINTENANCE_GLOBAL_ARCHITECTURE.md`
   Covers global jurisdiction-aware Tax definitions, effective rates, posting rules, company-owned account mappings, multi-tax calculation, and immutable transaction snapshots.
 

@@ -5,6 +5,7 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/transaction-number-suggestion-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CashVoucherService } from './cash-voucher.service';
+import { CashVoucherDefaultAccountsResponseDto } from './dto/cash-voucher-default-accounts-response.dto';
 import { CashVoucherListResponseDto, CashVoucherSingleResponseDto } from './dto/cash-voucher-response.dto';
 import { CreateCashVoucherDto } from './dto/create-cash-voucher.dto';
 import { GetCashVoucherListQueryDto } from './dto/get-cash-voucher-list-query.dto';
@@ -33,6 +34,13 @@ export class CashVoucherController {
   @ApiOkResponse({ description: 'Cash Voucher transaction number retrieved.', type: TransactionNumberSuggestionResponseDto })
   suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query() query: GetCashVoucherListQueryDto) {
     return this.cashVoucherService.suggestTransactionNumber(user, query.branchUnitId);
+  }
+
+  @Get('default-accounts')
+  @ApiOperation({ summary: 'Get default accounts for cash voucher (Cash on Hand)' })
+  @ApiOkResponse({ type: CashVoucherDefaultAccountsResponseDto })
+  getDefaultAccounts(@CurrentUser() user: AuthUser) {
+    return this.cashVoucherService.getDefaultAccounts(user);
   }
 
   @Get(':id')

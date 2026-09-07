@@ -43,5 +43,3 @@ export class WorkspaceUserAssignmentDto {
   @IsInt()
   companyRoleId?: number | null;
 }
-
-

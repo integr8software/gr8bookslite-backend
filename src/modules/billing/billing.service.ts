@@ -62,11 +62,7 @@ export class BillingService {
         const plans = await this.prisma.subscriptionPlan.findMany({
           where: {
             isActive: true,
-            ...(normalizedScope
-              ? normalizedScope === SubscriptionPlanScope.ALL
-                ? {}
-                : { scope: { in: [normalizedScope, SubscriptionPlanScope.ALL] } }
-              : {}),
+            ...(normalizedScope ? (normalizedScope === SubscriptionPlanScope.ALL ? {} : { scope: { in: [normalizedScope, SubscriptionPlanScope.ALL] } }) : {}),
           },
           include: {
             prices: {
@@ -574,6 +570,15 @@ export class BillingService {
           latestInvoiceExternalId: readProviderString(latestInvoice?.id),
           latestPaymentIntentId: readProviderString(latestPaymentIntent?.id),
           startsAt: readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? new Date(),
+          trialEndsAt:
+            plan.trialDays > 0
+              ? readProviderUnixDate(remoteSubscriptionAttributes.trial_end) ??
+                readProviderUnixDate(remoteSubscriptionAttributes.next_billing_schedule) ??
+                this.addBillingInterval(readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? new Date(), {
+                  intervalCount: plan.trialDays,
+                  intervalUnit: 'DAY',
+                })
+              : null,
           currentPeriodStartAt: readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? null,
           nextBillingAt: readProviderUnixDate(remoteSubscriptionAttributes.next_billing_schedule),
           rawProviderPayload: remoteSubscription as Prisma.InputJsonValue,
@@ -1049,7 +1054,7 @@ export class BillingService {
     }
   }
 
-  private addBillingInterval(start: Date, input: { intervalCount: number; intervalUnit: 'DAY' | 'MONTH' | 'YEAR' }) {
+  addBillingInterval(start: Date, input: { intervalCount: number; intervalUnit: 'DAY' | 'MONTH' | 'YEAR' }) {
     const end = new Date(start);
 
     if (input.intervalUnit === 'DAY') {

@@ -1,6 +1,16 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AccessScopeLevel, CompanyStatus, CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SubscriptionStatus, SystemRole, UserStatus } from '@prisma/client';
+import {
+  AccessScopeLevel,
+  CompanyStatus,
+  CompanyUnitType,
+  MembershipRole,
+  MembershipStatus,
+  Prisma,
+  SubscriptionStatus,
+  SystemRole,
+  UserStatus,
+} from '@prisma/client';
 
 import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -354,11 +364,7 @@ export class WorkspaceUsersService {
       }
 
       const latestSub = company.subscriptions?.[0];
-      if (
-        latestSub &&
-        latestSub.status !== SubscriptionStatus.ACTIVE &&
-        latestSub.status !== SubscriptionStatus.TRIALING
-      ) {
+      if (latestSub && latestSub.status !== SubscriptionStatus.ACTIVE && latestSub.status !== SubscriptionStatus.TRIALING) {
         throw new BadRequestException(
           `Cannot assign users to company ${company.name} because its subscription is ${latestSub.status.toLowerCase().replace('_', ' ')}.`,
         );
@@ -366,7 +372,6 @@ export class WorkspaceUsersService {
     }
 
     const units = await this.prisma.companyUnit.findMany({
-
       where: {
         id: { in: assignments.flatMap(({ unitIds }) => unitIds) },
         isActive: true,
@@ -477,8 +482,6 @@ export class WorkspaceUsersService {
       });
     }
   }
-
-
 
   private async findUserMemberships(userId: number) {
     return this.prisma.membership.findMany({
