@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Party, PartyStatus, Prisma, ResponsibilityCenterCategory, ResponsibilityCenterStatus } from '@prisma/client';
+import { ChartAccountStatus, Party, PartyStatus, Prisma, ResponsibilityCenterCategory, ResponsibilityCenterStatus } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';

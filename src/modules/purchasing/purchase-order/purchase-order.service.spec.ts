@@ -59,7 +59,7 @@ describe('PurchaseOrderService business logic', () => {
 
   it('subtracts VAT from net-of-VAT while preserving an inclusive line total', async () => {
     const { buildEntries } = createService();
-    const [entry] = await buildEntries(7, 3, [createItem({ poQty: 2, price: 100, discountAmount: 20, vatAmount: 19.29, vatInclusive: true })], 'Services');
+    const [entry] = await buildEntries(7, 3, [createItem({ poQty: 2, price: 100, discountAmount: 20, vatAmount: 19.29, vatInclusive: true })], 'Goods');
 
     expect(Number(entry.grossAfterDiscount)).toBe(180);
     expect(Number(entry.netOfVatAmount)).toBeCloseTo(160.71);
@@ -119,6 +119,35 @@ describe('PurchaseOrderService business logic', () => {
         serviceMaintenanceId: 15n,
       }),
     );
+  });
+
+  it('requires Services lines to select an active Service Maintenance record', async () => {
+    const { buildEntries, serviceMaintenanceFindFirst } = createService();
+
+    await expect(buildEntries(7, 3, [createItem()], 'Services')).rejects.toThrow(
+      new BadRequestException('Select a valid service from Service Maintenance.'),
+    );
+    expect(serviceMaintenanceFindFirst).not.toHaveBeenCalled();
+  });
+
+  it('clears item-only values when saving a Services line', async () => {
+    const { buildEntries, serviceMaintenanceFindFirst } = createService();
+    serviceMaintenanceFindFirst.mockResolvedValue({ id: 15n });
+
+    const [entry] = await buildEntries(
+      7,
+      3,
+      [createItem({ serviceMaintenanceId: '15', itemId: 'item-1', itemCode: 'ITM-1001', barcode: '480123', uom: 'PC' })],
+      'Services',
+    );
+
+    expect(entry).toEqual(expect.objectContaining({
+      serviceMaintenanceId: 15n,
+      itemId: null,
+      itemCode: null,
+      barcode: null,
+      uom: null,
+    }));
   });
 });
 
