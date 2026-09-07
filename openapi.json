@@ -17090,6 +17090,33 @@
         ]
       }
     },
+    "/api/v1/cash-disbursement/cash-voucher/default-accounts": {
+      "get": {
+        "operationId": "CashVoucherController_getDefaultAccounts_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashVoucherDefaultAccountsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get default accounts for cash voucher (Cash on Hand)",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
     "/api/v1/cash-disbursement/cash-voucher/{id}": {
       "get": {
         "operationId": "CashVoucherController_findOne_v1",
@@ -44292,6 +44319,55 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "CashVoucherDefaultAccountDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "Chart Account ID",
+            "example": "10"
+          },
+          "accountCode": {
+            "type": "string",
+            "description": "Account Code",
+            "example": "1010101001"
+          },
+          "accountTitle": {
+            "type": "string",
+            "description": "Account Title",
+            "example": "Cash On Hand"
+          }
+        },
+        "required": [
+          "accountId",
+          "accountCode",
+          "accountTitle"
+        ]
+      },
+      "CashVoucherDefaultAccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultCashAccount": {
+            "description": "Default Cash on Hand Account for Cash Voucher",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashVoucherDefaultAccountDto"
+              }
+            ]
+          },
+          "creditAccount": {
+            "description": "Default settlement credit account (synonym for defaultCashAccount in CV)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashVoucherDefaultAccountDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "defaultCashAccount"
         ]
       },
       "CashVoucherSingleResponseDto": {
