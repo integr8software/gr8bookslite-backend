@@ -35,7 +35,6 @@ export const WorkspaceUserMembershipInclude = {
       },
     },
   },
-
 } satisfies Prisma.MembershipInclude;
 
 export type WorkspaceUserMembershipRecord = Prisma.MembershipGetPayload<{

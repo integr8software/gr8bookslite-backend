@@ -56,4 +56,3 @@ export class ItemsController {
     return this.items.upsertPricing(user, id, dto);
   }
 }
-

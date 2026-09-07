@@ -1,5 +1,13 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, Prisma, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
+import {
+  AccountNature,
+  ChartAccountLevel,
+  ChartAccountStatus,
+  ChartAccountType,
+  Prisma,
+  ServiceAccountSetupMode,
+  ServiceMaintenanceType,
+} from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { MaintenanceTransactionOptions } from '../../../common/constants/transaction.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
@@ -243,7 +251,15 @@ export class ServicesMaintenanceService {
               },
             });
           } else {
-            const generatedAccount = await this.createGeneratedAccount(companyId, nextServiceName, nextServiceType, dto.expenseParentCoaId, requestedStatus, tx, user.id);
+            const generatedAccount = await this.createGeneratedAccount(
+              companyId,
+              nextServiceName,
+              nextServiceType,
+              dto.expenseParentCoaId,
+              requestedStatus,
+              tx,
+              user.id,
+            );
             revenueCoaId = generatedAccount.id;
             isGeneratedRevenueAccount = true;
           }

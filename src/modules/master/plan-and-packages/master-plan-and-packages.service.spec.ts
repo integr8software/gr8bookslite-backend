@@ -71,7 +71,7 @@ describe('MasterPlanAndPackagesService', () => {
       ],
       usageRules: [],
       discountTiers: [],
-    } as never);
+    });
 
     expect(prisma.subscriptionPlan.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -85,9 +85,7 @@ describe('MasterPlanAndPackagesService', () => {
   });
 
   it('resolves unique code with suffix when collision occurs', async () => {
-    prisma.subscriptionPlan.findUnique
-      .mockResolvedValueOnce({ id: 1 })
-      .mockResolvedValueOnce(null);
+    prisma.subscriptionPlan.findUnique.mockResolvedValueOnce({ id: 1 }).mockResolvedValueOnce(null);
 
     prisma.subscriptionPlan.create.mockImplementation((args) => ({
       id: 11,
@@ -130,7 +128,7 @@ describe('MasterPlanAndPackagesService', () => {
       ],
       usageRules: [],
       discountTiers: [],
-    } as never);
+    });
 
     expect(prisma.subscriptionPlan.create).toHaveBeenCalledWith(
       expect.objectContaining({

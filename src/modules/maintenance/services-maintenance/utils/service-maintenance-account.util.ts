@@ -71,10 +71,7 @@ export async function findSelectableServiceAccountOrThrow(
       throw new BadRequestException('Selected account for purchase of service must be an active posting expense account.');
     }
   } else {
-    if (
-      account.accountType !== ChartAccountType.REVENUE ||
-      !accountGroupHasTag(account.accountGroup, SystemAccountGroupTags.serviceRevenues)
-    ) {
+    if (account.accountType !== ChartAccountType.REVENUE || !accountGroupHasTag(account.accountGroup, SystemAccountGroupTags.serviceRevenues)) {
       throw new BadRequestException('Selected revenue account must be an active posting account under Service Revenues.');
     }
   }

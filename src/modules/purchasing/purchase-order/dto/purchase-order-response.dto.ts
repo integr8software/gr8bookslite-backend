@@ -62,6 +62,16 @@ export class PurchaseOrderResponseDto {
   @ApiProperty() createdAt!: string;
   @ApiPropertyOptional({ nullable: true }) updatedAt!: string | null;
 }
-export class PurchaseOrderContainerResponseDto { @ApiProperty({ type: PurchaseOrderResponseDto }) purchaseOrder!: PurchaseOrderResponseDto; }
-export class PurchaseOrderPaginationResponseDto { @ApiProperty() page!: number; @ApiProperty() limit!: number; @ApiProperty() total!: number; @ApiProperty() totalPages!: number; }
-export class PurchaseOrderListResponseDto { @ApiProperty({ type: [PurchaseOrderResponseDto] }) purchaseOrders!: PurchaseOrderResponseDto[]; @ApiProperty({ type: PurchaseOrderPaginationResponseDto }) pagination!: PurchaseOrderPaginationResponseDto; }
+export class PurchaseOrderContainerResponseDto {
+  @ApiProperty({ type: PurchaseOrderResponseDto }) purchaseOrder!: PurchaseOrderResponseDto;
+}
+export class PurchaseOrderPaginationResponseDto {
+  @ApiProperty() page!: number;
+  @ApiProperty() limit!: number;
+  @ApiProperty() total!: number;
+  @ApiProperty() totalPages!: number;
+}
+export class PurchaseOrderListResponseDto {
+  @ApiProperty({ type: [PurchaseOrderResponseDto] }) purchaseOrders!: PurchaseOrderResponseDto[];
+  @ApiProperty({ type: PurchaseOrderPaginationResponseDto }) pagination!: PurchaseOrderPaginationResponseDto;
+}

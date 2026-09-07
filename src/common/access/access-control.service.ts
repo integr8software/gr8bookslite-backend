@@ -53,8 +53,6 @@ export class AccessControlService {
     return user.permissions.includes(this.buildPermissionKey(permissionCode, action));
   }
 
-
-
   assertCompanyContext(user: AuthUser): void {
     if (user.role === AppRole.SUPER_ADMIN) {
       return;

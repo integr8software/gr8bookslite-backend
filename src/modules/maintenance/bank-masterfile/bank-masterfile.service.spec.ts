@@ -129,19 +129,16 @@ describe('BankMasterfileService create', () => {
 
     const service = new BankMasterfileService(prisma as never, chartAccountBankSyncService as never, support as never);
 
-    const result = await service.create(
-      { companyId: 11, id: 1, role: AppRole.SUPER_ADMIN } as never,
-      {
-        bankName: 'BDO',
-        branch: 'Makati',
-        accountNumber: '123456',
-        accountCode: '1010000001',
-        accountType: 'CHECKING' as never,
-        seriesStart: '1',
-        seriesEnd: '100',
-        seriesDigits: 6,
-      } as never,
-    );
+    const result = await service.create({ companyId: 11, id: 1, role: AppRole.SUPER_ADMIN } as never, {
+      bankName: 'BDO',
+      branch: 'Makati',
+      accountNumber: '123456',
+      accountCode: '1010000001',
+      accountType: 'CHECKING',
+      seriesStart: '1',
+      seriesEnd: '100',
+      seriesDigits: 6,
+    });
 
     expect(support.isAccountCodeTaken).toHaveBeenCalledWith(11, '1010000001', tx);
     expect(support.generateNextCashInBankAccountCode).toHaveBeenCalledWith(11, 100n, '1010000000', tx);

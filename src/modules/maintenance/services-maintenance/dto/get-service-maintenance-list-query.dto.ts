@@ -36,7 +36,11 @@ export class GetServiceMaintenanceListQueryDto {
   @Max(500)
   limit?: number;
 
-  @ApiPropertyOptional({ enum: ['serviceName', 'serviceType', 'status', 'accountSetupMode', 'createdAt', 'updatedAt'], description: 'Sort by field', default: 'serviceName' })
+  @ApiPropertyOptional({
+    enum: ['serviceName', 'serviceType', 'status', 'accountSetupMode', 'createdAt', 'updatedAt'],
+    description: 'Sort by field',
+    default: 'serviceName',
+  })
   @IsOptional()
   @IsIn(['serviceName', 'serviceType', 'status', 'accountSetupMode', 'createdAt', 'updatedAt'])
   sortBy?: 'serviceName' | 'serviceType' | 'status' | 'accountSetupMode' | 'createdAt' | 'updatedAt';

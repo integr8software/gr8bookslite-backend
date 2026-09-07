@@ -24,5 +24,10 @@ export class CreatePurchaseOrderDto {
   @ApiPropertyOptional({ maxLength: 10, default: 'PHP' }) @IsOptional() @IsString() @MaxLength(10) currency?: string;
   @ApiPropertyOptional({ minimum: 0, default: 1 }) @IsOptional() @Type(() => Number) @IsNumber() @Min(0) exchangeRate?: number;
   @ApiPropertyOptional({ maxLength: 500 }) @IsOptional() @IsString() @MaxLength(500) remarks?: string | null;
-  @ApiProperty({ type: [PurchaseOrderItemDto], minItems: 1 }) @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => PurchaseOrderItemDto) items!: PurchaseOrderItemDto[];
+  @ApiProperty({ type: [PurchaseOrderItemDto], minItems: 1 })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => PurchaseOrderItemDto)
+  items!: PurchaseOrderItemDto[];
 }

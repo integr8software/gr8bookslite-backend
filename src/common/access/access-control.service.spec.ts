@@ -258,13 +258,7 @@ function buildResolvedUser() {
   };
 }
 
-function buildMembership({
-  planModules = [],
-  subscriptions,
-}: {
-  planModules?: Array<ReturnType<typeof buildEnabledModule>>;
-  subscriptions?: unknown[];
-}) {
+function buildMembership({ planModules = [], subscriptions }: { planModules?: Array<ReturnType<typeof buildEnabledModule>>; subscriptions?: unknown[] }) {
   const planSubscriptions =
     subscriptions ??
     (planModules.length
