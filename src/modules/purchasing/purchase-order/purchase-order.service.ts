@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Party, PartyStatus, Prisma, ResponsibilityCenterCategory, ResponsibilityCenterStatus } from '@prisma/client';
+import { ChartAccountStatus, Party, PartyStatus, Prisma, ResponsibilityCenterCategory, ResponsibilityCenterStatus } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
@@ -93,6 +93,7 @@ export class PurchaseOrderService {
   }
 
   private async entries(companyId: number, branchUnitId: number, items: PurchaseOrderItemDto[], purchaseType: string, headerPrId?: bigint) {
+    const isServices = purchaseType.trim().toLowerCase() === 'services';
     return Promise.all(items.map(async (item, index) => {
       const prEntryId = parseOptionalPositiveBigIntId(item.purchaseRequestEntryId, 'purchaseRequestEntryId');
       const prEntry = prEntryId ? await this.prisma.purchaseRequestEntry.findFirst({ where: { id: prEntryId, companyId, ...(headerPrId ? { purchaseRequestId: headerPrId } : {}) } }) : null;
@@ -101,11 +102,14 @@ export class PurchaseOrderService {
       const rc = rcId || item.responsibilityCenter ? await this.prisma.responsibilityCenter.findFirst({ where: { companyId, deletedAt: null, ...(rcId ? { id: rcId } : { name: { equals: item.responsibilityCenter?.trim(), mode: 'insensitive' } }) } }) : null;
       if ((rcId || item.responsibilityCenter) && !rc) throw new BadRequestException('Select a valid Responsibility Center.');
       const serviceId = parseOptionalPositiveBigIntId(item.serviceMaintenanceId, 'serviceMaintenanceId');
-      const service = serviceId ? await this.prisma.serviceMaintenance.findFirst({ where: { id: serviceId, companyId, deletedAt: null } }) : null;
-      if (serviceId && !service) throw new BadRequestException('Select a valid service from Service Maintenance.');
+      if (isServices && !serviceId) throw new BadRequestException('Select a valid service from Service Maintenance.');
+      const service = isServices && serviceId
+        ? await this.prisma.serviceMaintenance.findFirst({ where: { id: serviceId, companyId, deletedAt: null, status: ChartAccountStatus.ACTIVE } })
+        : null;
+      if (isServices && !service) throw new BadRequestException('Select a valid service from Service Maintenance.');
       const description = item.description.trim(); if (!description) throw new BadRequestException('Each purchase order line needs a description.');
       const gross = item.poQty * item.price; const rate = item.discountRate ?? 0; const discount = rate > 0 ? gross * rate / 100 : Math.min(item.discountAmount ?? 0, gross); const after = gross - discount; const vat = item.vatAmount ?? 0;
-      return { companyId, branchUnitId, lineNo: index + 1, purchaseRequestEntryId: prEntry?.id ?? null, responsibilityCenterId: rc?.id ?? null, serviceMaintenanceId: service?.id ?? null, itemId: cleanOptional(item.itemId), itemCode: cleanOptional(item.itemCode), barcode: cleanOptional(item.barcode), description, color: cleanOptional(item.color), brand: cleanOptional(item.brand), size: cleanOptional(item.size), model: cleanOptional(item.model), uom: cleanOptional(item.uom), lotNo: cleanOptional(item.lotNo), prQty: new Prisma.Decimal(item.prQty), poQty: new Prisma.Decimal(item.poQty), price: new Prisma.Decimal(item.price), grossAmount: new Prisma.Decimal(gross), discountRate: new Prisma.Decimal(rate), discountAmount: new Prisma.Decimal(discount), grossAfterDiscount: new Prisma.Decimal(after), vatAmount: new Prisma.Decimal(vat), vatable: item.vatable ?? false, vatInclusive: item.vatInclusive ?? false, netOfVatAmount: new Prisma.Decimal(item.vatInclusive ? after - vat : after), netAmount: new Prisma.Decimal(item.vatInclusive ? after : after + vat), prNoSnapshot: cleanOptional(item.prNo), canvassNoSnapshot: cleanOptional(item.canvassNo), responsibilityCenterName: rc?.name ?? cleanOptional(item.responsibilityCenter) };
+      return { companyId, branchUnitId, lineNo: index + 1, purchaseRequestEntryId: prEntry?.id ?? null, responsibilityCenterId: rc?.id ?? null, serviceMaintenanceId: service?.id ?? null, itemId: isServices ? null : cleanOptional(item.itemId), itemCode: isServices ? null : cleanOptional(item.itemCode), barcode: isServices ? null : cleanOptional(item.barcode), description, color: cleanOptional(item.color), brand: cleanOptional(item.brand), size: cleanOptional(item.size), model: cleanOptional(item.model), uom: isServices ? null : cleanOptional(item.uom), lotNo: cleanOptional(item.lotNo), prQty: new Prisma.Decimal(item.prQty), poQty: new Prisma.Decimal(item.poQty), price: new Prisma.Decimal(item.price), grossAmount: new Prisma.Decimal(gross), discountRate: new Prisma.Decimal(rate), discountAmount: new Prisma.Decimal(discount), grossAfterDiscount: new Prisma.Decimal(after), vatAmount: new Prisma.Decimal(vat), vatable: item.vatable ?? false, vatInclusive: item.vatInclusive ?? false, netOfVatAmount: new Prisma.Decimal(item.vatInclusive ? after - vat : after), netAmount: new Prisma.Decimal(item.vatInclusive ? after : after + vat), prNoSnapshot: cleanOptional(item.prNo), canvassNoSnapshot: cleanOptional(item.canvassNo), responsibilityCenterName: rc?.name ?? cleanOptional(item.responsibilityCenter) };
     }));
   }
 
