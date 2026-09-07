@@ -1,6 +1,222 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/maintenance/items": {
+      "get": {
+        "operationId": "ItemsController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBasicInfoListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      },
+      "post": {
+        "operationId": "ItemsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemBasicInfoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBasicInfoResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      }
+    },
+    "/api/v1/maintenance/items/{id}": {
+      "get": {
+        "operationId": "ItemsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBasicInfoResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      },
+      "patch": {
+        "operationId": "ItemsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemBasicInfoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBasicInfoResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      }
+    },
+    "/api/v1/maintenance/items/{id}/pricing": {
+      "get": {
+        "operationId": "ItemsController_getPricing_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemPricingResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      },
+      "put": {
+        "operationId": "ItemsController_upsertPricing_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertItemPricingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemPricingResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      }
+    },
     "/api/v1/storage/internal/upload": {
       "post": {
         "operationId": "VpsStorageInternalController_upload_v1",
@@ -20699,6 +20915,322 @@
       }
     },
     "schemas": {
+      "ItemBasicInfoResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "skuCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "barcode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "categoryId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "unitOfMeasurementId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "externalReferenceCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "tags": {
+            "uniqueItems": true,
+            "maxItems": 50,
+            "description": "JSON array of unique tag strings.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "unitOfMeasurementSymbol": {
+            "type": "string"
+          },
+          "responsibilityCenterName": {
+            "type": "string"
+          },
+          "costPrice": {
+            "type": "number"
+          },
+          "sellingPrice": {
+            "type": "number"
+          },
+          "suggestedPrice": {
+            "type": "number"
+          },
+          "taxTreatment": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "categoryId",
+          "unitOfMeasurementId",
+          "id",
+          "categoryName",
+          "unitOfMeasurementSymbol",
+          "responsibilityCenterName"
+        ]
+      },
+      "ItemBasicInfoListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemBasicInfoResponseDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "CreateItemBasicInfoDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "skuCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "barcode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "categoryId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "unitOfMeasurementId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "externalReferenceCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "tags": {
+            "uniqueItems": true,
+            "maxItems": 50,
+            "description": "JSON array of unique tag strings.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "categoryId",
+          "unitOfMeasurementId"
+        ]
+      },
+      "UpdateItemBasicInfoDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "skuCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "barcode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "categoryId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "unitOfMeasurementId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "externalReferenceCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "tags": {
+            "uniqueItems": true,
+            "maxItems": 50,
+            "description": "JSON array of unique tag strings.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "ItemPricingResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "sellingPrice": {
+            "type": "number"
+          },
+          "suggestedPrice": {
+            "type": "number"
+          },
+          "taxTreatment": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "cost",
+          "sellingPrice",
+          "suggestedPrice"
+        ]
+      },
+      "UpsertItemPricingDto": {
+        "type": "object",
+        "properties": {
+          "cost": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "sellingPrice": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "suggestedPrice": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "taxTreatment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          }
+        }
+      },
       "RegisterDto": {
         "type": "object",
         "properties": {
