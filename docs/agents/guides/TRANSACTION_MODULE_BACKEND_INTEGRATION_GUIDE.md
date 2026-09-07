@@ -420,25 +420,452 @@ export class CashAdvanceController {
 }
 ```
 
-### 6.1 Shared Lookup Ownership
+### 6.1 Shared vs. Workflow Lookup Ownership Matrix
 
-Do not add a transaction-local lookup endpoint when the selector is already owned by a shared Maintenance or Tax API. Transaction modules may expose workflow-specific lookups, but generic master-data selectors should be reused.
+Do not add a transaction-local lookup endpoint when the selector is already owned by a shared Maintenance or Tax API. Transaction modules may expose workflow-specific lookups (such as eligible prior document references or unliquidated balances), but generic master-data selectors should be reused.
 
-Use these boundaries:
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      LOOKUP ARCHITECTURAL RESOLUTION FLOW                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 1. Generic Master Data  │ Shared Maintenance API (e.g., /maintenance/parties)│
+│ 2. Workflow-Specific    │ Transaction Lookup API (e.g., /ca/unliquidated)    │
+│ 3. Orval Pipeline       │ openapi.json ➔ Typed TanStack Query Hooks          │
+│ 4. Frontend Action Page │ Dedicated Hook: use<Module>DetailsLookups(values)  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-| Lookup need | Preferred owner | When transaction-local is allowed |
+| Lookup Need | Preferred Owner | Endpoint / Service | When Transaction-Local is Allowed |
+| --- | --- | --- | --- |
+| **Parties, vendors, customers, employees** | Party Maintenance lookup API | `GET /api/v1/maintenance/party-maintenance/options` (`usePartyLookup`) | Only when the option payload requires workflow-only balances, credit limits, or document restrictions. |
+| **Posting chart accounts** | Chart of Accounts lookup API | `GET /api/v1/maintenance/chart-of-accounts/options/posting` (`usePostingAccountLookup`) | Only when account eligibility depends strictly on the transaction workflow (e.g. advances-to-suppliers account filtering). |
+| **Responsibility centers & projects** | Responsibility Center lookup API | `GET /api/v1/maintenance/responsibility-center/options` (`useResponsibilityCenterLookup`) | Only when hierarchy or branch eligibility is workflow-specific. |
+| **Terms, payment types, units, discounts** | Existing Maintenance lookup API | `GET /api/v1/maintenance/<module>/options` | Only when the module needs additional workflow-calculated metadata. |
+| **VAT, EWT, CWT, WVAT, FWT codes & rates** | Tax API | `GET /api/v1/tax/alphanumeric-tax-codes` (`useAlphanumericTaxCodeOptions`) | Never duplicate tax rows in transaction controllers. |
+| **Tax default account titles & codes** | Tax Default Account API | `GET /api/v1/tax/default-account-options` (`useTaxDefaultAccountOptionGroups`) | Add a new Tax classification for repeated-use groups instead of hardcoding account defaults. |
+| **Transaction numbers** | Transaction module API | `GET /api/v1/<domain>/<submodule>/suggest-transaction-number` | Workflow-specific sequential series per branch. |
+| **Copy-from sources & eligible balances** | Transaction module API | `GET /api/v1/<domain>/<submodule>/copy-from-options` | Depends on transaction lifecycle status, remaining unliquidated balances, or prior document references. |
+
+---
+
+### 6.2 Standard Canonical Lookup Response Formats & DTOs
+
+Every dropdown or selector option returned by the backend must conform to consistent, strongly-typed JSON contracts that cleanly populate frontend dropdown primitives (`AppLookupDropdown` / `AppAdvancedDropdown`).
+
+#### 1. Standard Base Lookup Option (`LookupOptionDto`)
+For generic masterfile options (e.g. Terms, Units, Payment Types, Categories):
+```typescript
+export class LookupOptionDto {
+  @ApiProperty({ example: '101', description: 'String-serialized BigInt identifier' })
+  id: string;
+
+  @ApiPropertyOptional({ example: 'TERM-30', description: 'Unique alphanumeric identifier' })
+  code?: string;
+
+  @ApiProperty({ example: '30 Days Net', description: 'Primary human-readable display title' })
+  name: string;
+
+  @ApiProperty({ example: 'TERM-30', description: 'Dropdown display label (usually code or name)' })
+  label: string;
+
+  @ApiProperty({ example: '101', description: 'Dropdown selection key value' })
+  value: string;
+
+  @ApiPropertyOptional({ example: 'Standard net 30 payment terms', description: 'Secondary descriptive text' })
+  description?: string;
+
+  @ApiPropertyOptional({ example: 'ACTIVE', enum: ['ACTIVE', 'INACTIVE'] })
+  status?: string;
+}
+```
+
+#### 2. Standard Party Lookup Option (`PartyLookupOptionDto`)
+Returned by `GET /api/v1/maintenance/party-maintenance/options?detail=complete`:
+```typescript
+export class PartyLookupOptionDto {
+  @ApiProperty({ example: '42' })
+  id: string;
+
+  @ApiProperty({ example: '42' })
+  partyId: string;
+
+  @ApiProperty({ example: 'VEND-001' })
+  partyCode: string;
+
+  @ApiProperty({ example: 'VEND-001' })
+  partyCodeNo: string;
+
+  @ApiProperty({ example: 'Acme Corporation' })
+  partyName: string;
+
+  @ApiProperty({ example: 'Acme Corporation' })
+  name: string;
+
+  @ApiProperty({ example: 'VEND-001' })
+  label: string;
+
+  @ApiProperty({ example: 'VEND-001' })
+  value: string;
+
+  @ApiPropertyOptional({ example: 'Acme Corporation' })
+  description?: string;
+
+  @ApiProperty({ enum: ['CORPORATE', 'INDIVIDUAL'] })
+  classification: string;
+
+  @ApiProperty({ isArray: true, example: ['VENDOR'] })
+  partyTypes: string[];
+
+  @ApiPropertyOptional({ example: '2010', description: 'Default AP/AR chart of account ID' })
+  defaultPayableAccount?: string;
+
+  @ApiPropertyOptional({ example: '5', description: 'Default payment term ID' })
+  termId?: string;
+
+  @ApiPropertyOptional({ example: 'VAT-IN-12', description: 'Default tax source key for input VAT' })
+  defaultPurchaseInputVatTaxSourceKey?: string;
+
+  @ApiPropertyOptional({ example: 'WI010', description: 'Default tax source key for EWT' })
+  defaultPurchaseEwtTaxSourceKey?: string;
+
+  @ApiPropertyOptional({ example: '123-456-789-000' })
+  tin?: string;
+}
+```
+
+#### 3. Standard Posting Chart of Accounts Option (`PostingAccountLookupOptionDto`)
+Returned by `GET /api/v1/maintenance/chart-of-accounts/options/posting`:
+```typescript
+export class PostingAccountLookupOptionDto {
+  @ApiProperty({ example: '15' })
+  id: string;
+
+  @ApiProperty({ example: '15' })
+  accountId: string;
+
+  @ApiProperty({ example: '1010-001' })
+  accountCode: string;
+
+  @ApiProperty({ example: 'Cash on Hand - General Fund' })
+  accountTitle: string;
+
+  @ApiProperty({ example: 'Cash on Hand - General Fund' })
+  name: string;
+
+  @ApiProperty({ example: '1010-001' })
+  label: string;
+
+  @ApiProperty({ example: '1010-001' })
+  value: string;
+
+  @ApiPropertyOptional({ example: 'Cash on Hand - General Fund' })
+  description?: string;
+
+  @ApiProperty({ enum: ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'] })
+  accountType: string;
+
+  @ApiProperty({ enum: ['DEBIT', 'CREDIT'] })
+  accountNature: string;
+}
+```
+
+#### 4. Standard Responsibility Center Option (`ResponsibilityCenterLookupOptionDto`)
+Returned by `GET /api/v1/maintenance/responsibility-center/options`:
+```typescript
+export class ResponsibilityCenterLookupOptionDto {
+  @ApiProperty({ example: '8' })
+  id: string;
+
+  @ApiProperty({ example: '8' })
+  centerId: string;
+
+  @ApiProperty({ example: 'CC-010' })
+  code: string;
+
+  @ApiProperty({ example: 'Administration Department' })
+  name: string;
+
+  @ApiProperty({ example: 'CC-010' })
+  label: string;
+
+  @ApiProperty({ example: 'CC-010' })
+  value: string;
+
+  @ApiPropertyOptional({ example: 'Administration Department' })
+  description?: string;
+
+  @ApiPropertyOptional({ example: 'Cost Center', description: 'Distinguishes Cost Centers from Projects' })
+  typeName?: string;
+}
+```
+
+#### 5. Standard Document Copy-From Option (`CopyFromRecordDto`)
+Returned by transaction copy-from endpoints (e.g. `GET /api/v1/cash-disbursement/cash-voucher/copy-from-options`):
+```typescript
+export class CopyFromRecordDto {
+  @ApiProperty({ example: '77' })
+  id: string;
+
+  @ApiProperty({ example: 'Purchase Order', description: 'Source document classification' })
+  source: string;
+
+  @ApiProperty({ example: 'PO-2026-0012' })
+  sourceNo: string;
+
+  @ApiProperty({ example: '2026-09-01' })
+  documentDate: string;
+
+  @ApiPropertyOptional({ example: 'VEND-001' })
+  partyCode?: string;
+
+  @ApiProperty({ example: 'Acme Corporation' })
+  partyName: string;
+
+  @ApiProperty({ example: '15000.00', description: 'Available or net remaining document amount' })
+  amount: string;
+
+  @ApiPropertyOptional({ example: 'Office furniture procurement' })
+  remarks?: string;
+}
+```
+
+---
+
+### 6.3 Backend Lookup Service Implementation Pattern
+
+When a transaction module needs a workflow-specific lookup (e.g. `AccountsPayableVoucherLookupService`), implement it under `src/modules/<domain>/<submodule>/services/<submodule>-lookup.service.ts`:
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../../prisma/prisma.service';
+import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
+import { getActiveCompanyId, ensureActiveCompanyAccess } from '../../../../common/utils/module-access.util';
+import { PurchaseOrderStatus } from '@prisma/client';
+
+@Injectable()
+export class CashVoucherLookupService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Returns eligible approved/posted Purchase Orders ready to be copied into a Cash Voucher.
+   * Enforces company scoping, soft-delete exclusion, and whitelisted projection.
+   */
+  async findEligiblePurchaseOrders(user: AuthUser) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+
+    const orders = await this.prisma.purchaseOrder.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: PurchaseOrderStatus.POSTED,
+        // Only orders not fully disbursed
+      },
+      select: {
+        id: true,
+        transNo: true,
+        documentDate: true,
+        partyCodeSnapshot: true,
+        partyNameSnapshot: true,
+        amount: true,
+        remarks: true,
+      },
+      orderBy: [{ documentDate: 'desc' }, { id: 'desc' }],
+      take: 100,
+    });
+
+    return {
+      items: orders.map((po) => ({
+        id: po.id.toString(),
+        source: 'Purchase Order',
+        sourceNo: po.transNo,
+        documentDate: po.documentDate.toISOString().slice(0, 10),
+        partyCode: po.partyCodeSnapshot,
+        partyName: po.partyNameSnapshot,
+        amount: po.amount.toString(),
+        remarks: po.remarks ?? '',
+      })),
+    };
+  }
+}
+```
+
+#### Mandatory Backend Lookup Rules:
+1. **Always Scope by Active Company**: `where: { companyId, deletedAt: null }`. Never execute unscoped queries.
+2. **Filter by Active Status**: By default return `status: ACTIVE` (or `POSTED` for reference transactions).
+3. **Whitelisted Field Projection**: Use Prisma `select` to specify only the fields needed by the selector. Never return:
+   - Passwords, password hashes, or salt tokens.
+   - Internal audit trails or user identifiers unless specifically requested by an authorized audit tool.
+   - Banking credentials or confidential commercial details without explicit module permission checks.
+4. **Serialize BigInt Identifiers**: Always convert Prisma `BigInt` IDs to strings (`id.toString()`) before returning JSON.
+
+---
+
+### 6.4 Frontend Integration Architecture: Dedicated Details Lookups Hook
+
+Frontend transaction action pages (`add`, `edit`, `view`) require multiple lookups (Party, Account, Responsibility Center, Projects). Instead of repetitive `Promise.all` / `useEffect` blocks or deprecated generic global hooks, **every transaction module implements a dedicated details lookup hook**:
+
+```text
+app/src/hooks/modules/<domain>/<submodule>/use<Module>DetailsLookups.ts
+```
+
+#### Implementation Pattern:
+```typescript
+'use client';
+
+import { useMemo } from 'react';
+import { usePartyLookup } from '@/app/src/hooks/modules/party-management/usePartyLookup';
+import { usePostingAccountLookup } from '@/app/src/hooks/modules/financial-maintenance/charts-of-accounts/useChartOfAccountsLookup';
+import { useResponsibilityCenterLookup } from '@/app/src/hooks/modules/financial-maintenance/responsibility-center/useResponsibilityCenterLookup';
+import type { AdvancesToSuppliersFormValues } from '@/app/src/types/modules/cash-disbursement/advances-to-suppliers/AdvancesToSuppliersTypes';
+import type { PartyLookupOption } from '@/app/src/types/modules/party-management/PartyLookupTypes';
+import type { PostingAccountLookupOption } from '@/app/src/types/modules/financial-maintenance/charts-of-accounts/ChartOfAccountsLookupTypes';
+import type { ResponsibilityCenterLookupOption } from '@/app/src/types/modules/financial-maintenance/responsibility-center/ResponsibilityCenterLookupTypes';
+
+export type AdvancesToSuppliersLookupValues = Pick<
+  AdvancesToSuppliersFormValues,
+  'accountCode' | 'accountTitle' | 'partyCode' | 'partyName' | 'projectCode' | 'projectName' | 'responsibilityCenter' | 'responsibilityCenterCode'
+>;
+
+export function useAdvancesToSuppliersDetailsLookups(values: AdvancesToSuppliersLookupValues) {
+  // 1. Fetch live master data via TanStack Query domain hooks
+  const partyQuery = usePartyLookup({ detail: 'complete' });
+  const accountQuery = usePostingAccountLookup();
+  const responsibilityCenterQuery = useResponsibilityCenterLookup();
+
+  // 2. Memoize and prepend fallback option if the current value is not in the live list (preserves Edit/View of historical records)
+  const partyOptions = useMemo<PartyLookupOption[]>(() => {
+    const options = [...(partyQuery.data ?? [])];
+    if (values.partyCode && !options.some((opt) => opt.value === values.partyCode || opt.label === values.partyCode)) {
+      options.unshift({
+        partyId: values.partyCode,
+        partyCode: values.partyCode,
+        partyName: values.partyName || values.partyCode,
+        name: values.partyName || values.partyCode,
+        label: values.partyCode,
+        value: values.partyCode,
+        description: values.partyName,
+      });
+    }
+    return options;
+  }, [partyQuery.data, values.partyCode, values.partyName]);
+
+  // 3. Apply workflow-specific filtering (e.g. filter advance/deposit accounts)
+  const accountOptions = useMemo<PostingAccountLookupOption[]>(() => {
+    const accounts = accountQuery.data ?? [];
+    const advanceAccounts = accounts.filter((account) => {
+      const title = String(account.accountTitle ?? account.name ?? '').toLowerCase();
+      return title.includes('advance') || title.includes('supplier') || title.includes('deposit');
+    });
+    const base = advanceAccounts.length > 0 ? advanceAccounts : accounts;
+    const options = [...base];
+
+    if (values.accountCode && !options.some((opt) => opt.value === values.accountCode || opt.label === values.accountCode)) {
+      options.unshift({
+        accountId: values.accountCode,
+        accountCode: values.accountCode,
+        accountTitle: values.accountTitle || values.accountCode,
+        name: values.accountTitle || values.accountCode,
+        label: values.accountCode,
+        value: values.accountCode,
+        description: values.accountTitle,
+      });
+    }
+    return options;
+  }, [accountQuery.data, values.accountCode, values.accountTitle]);
+
+  // 4. Segregate Cost Centers vs Projects from Responsibility Centers
+  const responsibilityCenterOptions = useMemo<ResponsibilityCenterLookupOption[]>(() => {
+    const base = (responsibilityCenterQuery.data ?? []).filter((opt) => !opt.name?.toLowerCase().includes('project'));
+    const options = [...base];
+    if (values.responsibilityCenterCode && !options.some((opt) => opt.value === values.responsibilityCenterCode || opt.label === values.responsibilityCenterCode)) {
+      options.unshift({
+        centerId: values.responsibilityCenterCode,
+        code: values.responsibilityCenterCode,
+        name: values.responsibilityCenter || values.responsibilityCenterCode,
+        label: values.responsibilityCenterCode,
+        value: values.responsibilityCenterCode,
+        description: values.responsibilityCenter,
+      });
+    }
+    return options;
+  }, [responsibilityCenterQuery.data, values.responsibilityCenter, values.responsibilityCenterCode]);
+
+  const projectOptions = useMemo<ResponsibilityCenterLookupOption[]>(() => {
+    const projectCenters = (responsibilityCenterQuery.data ?? []).filter((opt) => Boolean(opt.name?.toLowerCase().includes('project')));
+    const base = projectCenters.length > 0 ? projectCenters : (responsibilityCenterQuery.data ?? []);
+    const options = [...base];
+    if (values.projectCode && !options.some((opt) => opt.value === values.projectCode || opt.label === values.projectCode)) {
+      options.unshift({
+        centerId: values.projectCode,
+        code: values.projectCode,
+        name: values.projectName || values.projectCode,
+        label: values.projectCode,
+        value: values.projectCode,
+        description: values.projectName,
+      });
+    }
+    return options;
+  }, [responsibilityCenterQuery.data, values.projectCode, values.projectName]);
+
+  // 5. Expose granular and composite loading states
+  const isPartyLookupLoading = partyQuery.isLoading;
+  const isAccountLookupLoading = accountQuery.isLoading;
+  const isResponsibilityCenterLookupLoading = responsibilityCenterQuery.isLoading;
+  const isLookupLoading = isPartyLookupLoading || isAccountLookupLoading || isResponsibilityCenterLookupLoading;
+
+  return {
+    accountOptions,
+    isAccountLookupLoading,
+    isLookupLoading,
+    isPartyLookupLoading,
+    isProjectLookupLoading: isResponsibilityCenterLookupLoading,
+    isResponsibilityCenterLookupLoading,
+    partyOptions,
+    projectOptions,
+    responsibilityCenterOptions,
+  };
+}
+```
+
+#### Consumption in `use<Module>ActionPage.ts`:
+The action page simply calls the dedicated lookup hook:
+```typescript
+export function useAdvancesToSuppliersActionPage(options: { mode: AdvancesToSuppliersActionMode }) {
+  const [values, setValues] = useState<AdvancesToSuppliersFormValues>(...);
+
+  // One clean hook call supplies all options and loading flags:
+  const {
+    accountOptions,
+    isLookupLoading,
+    partyOptions,
+    projectOptions,
+    responsibilityCenterOptions,
+  } = useAdvancesToSuppliersDetailsLookups(values);
+
+  return {
+    accountOptions,
+    isLookupLoading,
+    partyOptions,
+    projectOptions,
+    responsibilityCenterOptions,
+    // ...form handlers
+  };
+}
+```
+
+---
+
+### 6.5 Prohibited Lookup Anti-Patterns
+
+| Prohibited Anti-Pattern | Why It Breaks the Architecture | Required Correct Approach |
 | --- | --- | --- |
-| Parties, vendors, customers, employees | Party Maintenance lookup API | Only when the option payload includes workflow-only balances, eligibility, or document-specific restrictions. |
-| Posting accounts and account options | Chart of Accounts or Default Account lookup API | Only when account eligibility depends on the transaction workflow. |
-| Responsibility centers | Responsibility Center lookup API | Only when hierarchy or branch eligibility is workflow-specific. |
-| Terms, payment types, services, warehouses, units, discounts | Existing Maintenance lookup API | Only when the module needs additional workflow-calculated metadata. |
-| VAT, EWT, CWT, WVAT, FWT codes and rates | Tax API | Do not duplicate tax rows in transaction controllers. |
-| Tax default account titles and codes | `GET /api/v1/tax/default-account-options` | Add a new Tax classification for repeated-use groups instead of hardcoding account defaults. |
-| Transaction numbers, copy-from sources, available balances | Transaction module API | These are workflow-specific and remain transaction-owned. |
-
-Frontend consumers should wrap shared lookup APIs in shared services and hooks when more than one module uses the same selector. See the frontend guide at `gr8bookslite-frontend/docs/shared-frontend-lookup-services.md`.
-
-Do not create frontend constants for default chart account codes or titles such as Input VAT, Output VAT, Expanded Withholding Tax, Cash on Hand, or Cash in Bank. Resolve those through the relevant API and preserve existing record values only as edit/view compatibility options.
+| **Mock fallback dropdown rows** | Masks backend integration failures and pollutes production UI with fake data. | If live lookups fail, let the query show an empty dropdown or loading state; never inject static dummy vendors or accounts. |
+| **Hardcoding account constants** | Violates BIR compliance; account codes differ across tenant chart of accounts. | Query `GET /api/v1/tax/default-account-options` or `usePostingAccountLookup()`. Never write `const InputVatCode = '1010'`. |
+| **Duplicate service wrappers** | Redundant functions (`fetchAdvancesToSuppliersPartyOptions`) clutter service files. | Consume standard domain lookup hooks (`usePartyLookup`, `usePostingAccountLookup`) directly within the dedicated details lookup hook. |
+| **Calling full CRUD list endpoints for dropdowns** | Over-fetches megabytes of audit trails, addresses, and relations, slowing down page loads. | Call lightweight `/options` endpoints (`GET /options` or `detail=basic`). |
+| **Omitting historical value unshift** | Editing old documents whose masterfile record was archived/renamed will display a blank dropdown. | Always check `options.some(...)` and `unshift` the snapshot value from the current transaction form values. |
+| **Missing `companyId` scoping** | Critical multi-tenant security vulnerability leaking master data between companies. | Enforce `where: { companyId, deletedAt: null }` in every backend Prisma lookup query. |
 
 ---
 
@@ -786,6 +1213,7 @@ Verify frontend wiring against this checklist:
   - `app/(modules)/<domain>/<submodule>/view/[id]/page.tsx` (View / Approve / Post)
 - [ ] **React Query Hooks**: Form and List components consume generated `useGet<Module>List`, `useCreate<Module>`, `useUpdate<Module>`, and `useUpdate<Module>Status`.
 - [ ] **Shared Lookup Services**: Reuse shared frontend lookup services/hooks for Maintenance and Tax selectors before adding module-local lookup code.
+- [ ] **Dedicated Details Lookups Hook**: Implement a dedicated `use<Module>DetailsLookups(values)` hook for each transaction action page that bundles domain TanStack Query lookups, handles unshift preservation for edit/view values, and eliminates manual `Promise.all` / `useEffect` state.
 - [ ] **Mock Data Elimination**: Remove all static mock arrays (`mockData.ts`) and ensure all dropdowns and records load from the live API. Static options are allowed only for true UI enums such as Yes/No or fixed workflow states.
 - [ ] **Tax Defaults**: Party tax defaults use shared tax helpers under `app/src/data/shared/tax`; tax default account titles/codes use the Tax default-account API, never hardcoded frontend account constants.
 - [ ] **Cache Invalidation**: On successful mutation, invalidate queries using the base path:
