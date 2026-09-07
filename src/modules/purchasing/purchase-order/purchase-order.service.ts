@@ -384,3 +384,7 @@ export class PurchaseOrderService {
     return p.partyName || p.tradeName || [p.firstName, p.middleName, p.lastName, p.suffixName].filter(Boolean).join(' ') || p.partyCodeNo;
   }
 }
+
+function roundMoney(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}

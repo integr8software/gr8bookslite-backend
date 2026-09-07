@@ -48,7 +48,7 @@ describe('PurchaseOrderService business logic', () => {
 
   it('calculates percentage discount and exclusive VAT totals on the server', async () => {
     const { buildEntries } = createService();
-    const [entry] = await buildEntries(7, 3, [createItem({ poQty: 2, price: 100, discountRate: 10, vatAmount: 21.6 })], 'Goods');
+    const [entry] = await buildEntries(7, 3, [createItem({ poQty: 2, price: 100, discountRate: 10, vatable: true })], 'Goods');
 
     expect(Number(entry.grossAmount)).toBe(200);
     expect(Number(entry.discountAmount)).toBe(20);
