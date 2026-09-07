@@ -12,15 +12,9 @@ export class CashVoucherDefaultAccountDto {
 }
 
 export class CashVoucherDefaultAccountsResponseDto {
-  @ApiProperty({
-    description: 'Default Cash on Hand Account for Cash Voucher',
-    type: CashVoucherDefaultAccountDto,
-  })
+  @ApiProperty({ type: () => CashVoucherDefaultAccountDto, description: 'Default Cash on Hand Account for Cash Voucher' })
   defaultCashAccount: CashVoucherDefaultAccountDto;
 
-  @ApiPropertyOptional({
-    description: 'Default settlement credit account (synonym for defaultCashAccount in CV)',
-    type: CashVoucherDefaultAccountDto,
-  })
+  @ApiPropertyOptional({ type: () => CashVoucherDefaultAccountDto, description: 'Default settlement credit account (synonym for defaultCashAccount in CV)' })
   creditAccount?: CashVoucherDefaultAccountDto;
 }
