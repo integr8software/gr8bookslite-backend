@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ItemsModule } from './modules/maintenance/items/items.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -53,6 +54,7 @@ import { PurchasingModule } from './modules/purchasing/purchasing.module';
 
 @Module({
   imports: [
+    ItemsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       validate: validateEnvironment,
