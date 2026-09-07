@@ -22,4 +22,3 @@ export type UserWithMemberships = Prisma.UserGetPayload<{
     };
   };
 }>;
-

@@ -8565,9 +8565,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get list of tax records",
         "tags": [
           "Tax"
         ]
@@ -8692,9 +8705,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxAutocompleteResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax autocomplete options",
         "tags": [
           "Tax"
         ]
@@ -8706,9 +8732,22 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxTransactionTypesResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax transaction types",
         "tags": [
           "Tax"
         ]
@@ -8720,9 +8759,22 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxTypesResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax types",
         "tags": [
           "Tax"
         ]
@@ -8734,9 +8786,69 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyDefaultClassificationsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get party tax default classifications",
+        "tags": [
+          "Tax"
+        ]
+      }
+    },
+    "/api/v1/tax/default-account-options": {
+      "get": {
+        "operationId": "TaxController_listTaxDefaultAccountOptions_v1",
+        "parameters": [
+          {
+            "name": "classification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "output-sales",
+                "input-importation",
+                "input-purchases",
+                "input-all",
+                "purchase-ewt",
+                "purchase-fwt",
+                "purchase-wvat",
+                "sales-cwt",
+                "sales-wvat"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxDefaultAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax options with default account titles by classification",
         "tags": [
           "Tax"
         ]
@@ -8861,9 +8973,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxDefaultAccountsListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax records with default account mappings",
         "tags": [
           "Tax"
         ]
@@ -8884,9 +9009,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxDefaultAccountsContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax record with default account mappings by source key",
         "tags": [
           "Tax"
         ]
@@ -8907,9 +9045,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax record by source key",
         "tags": [
           "Tax"
         ]
@@ -17150,6 +17301,33 @@
           }
         ],
         "summary": "Get auto-suggested transaction number sequence",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-voucher/default-accounts": {
+      "get": {
+        "operationId": "CashVoucherController_getDefaultAccounts_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashVoucherDefaultAccountsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get default accounts for cash voucher (Cash on Hand)",
         "tags": [
           "Cash Voucher"
         ]
@@ -30964,6 +31142,10 @@
           "revenueCoaId": {
             "type": "string",
             "nullable": true
+          },
+          "expenseParentCoaId": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -31021,6 +31203,10 @@
             "type": "string"
           },
           "revenueCoaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "expenseParentCoaId": {
             "type": "string",
             "nullable": true
           }
@@ -31766,6 +31952,584 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "TaxResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "taxDescription": {
+            "type": "string"
+          },
+          "taxRate": {
+            "type": "string"
+          },
+          "taxExempt": {
+            "type": "boolean"
+          },
+          "taxAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "atc": {
+            "type": "string",
+            "nullable": true
+          },
+          "officialAtcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "natureOfIncome": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sourceKey",
+          "transactionType",
+          "taxType",
+          "taxCode",
+          "taxDescription",
+          "taxRate",
+          "taxExempt",
+          "taxAlias",
+          "atc",
+          "officialAtcCode",
+          "natureOfIncome",
+          "sortOrder",
+          "status"
+        ]
+      },
+      "TaxListResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxResponseDto"
+            }
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxResponseDto"
+            }
+          }
+        },
+        "required": [
+          "taxCodes",
+          "taxes"
+        ]
+      },
+      "TaxAutocompleteOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tax": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          },
+          "taxCode": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          }
+        },
+        "required": [
+          "label",
+          "description",
+          "tax",
+          "taxCode"
+        ]
+      },
+      "TaxAutocompleteResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxAutocompleteOptionResponseDto"
+            }
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxAutocompleteOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "taxCodes",
+          "taxes"
+        ]
+      },
+      "TaxTransactionTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "transactionTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "transactionTypes"
+        ]
+      },
+      "TaxTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "taxTypes"
+        ]
+      },
+      "PartyDefaultClassificationResponseDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "officialAtcCodePrefix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "transactionType",
+          "taxTypes"
+        ]
+      },
+      "PartyDefaultClassificationsResponseDto": {
+        "type": "object",
+        "properties": {
+          "classifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyDefaultClassificationResponseDto"
+            }
+          }
+        },
+        "required": [
+          "classifications"
+        ]
+      },
+      "TaxDefaultAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "sourceKey": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "displayCode": {
+            "type": "string"
+          },
+          "taxDescription": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "natureOfIncome": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxRate": {
+            "type": "string"
+          },
+          "taxExempt": {
+            "type": "boolean"
+          },
+          "defaultAccountRole": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultAccountCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultAccountTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceKey",
+          "transactionType",
+          "taxType",
+          "taxCode",
+          "displayCode",
+          "taxDescription",
+          "sortOrder",
+          "natureOfIncome",
+          "taxRate",
+          "taxExempt",
+          "defaultAccountRole",
+          "defaultAccountCode",
+          "defaultAccountTitle",
+          "status"
+        ]
+      },
+      "TaxDefaultAccountOptionGroupResponseDto": {
+        "type": "object",
+        "properties": {
+          "classification": {
+            "type": "string",
+            "enum": [
+              "output-sales",
+              "input-importation",
+              "input-purchases",
+              "input-all",
+              "purchase-ewt",
+              "purchase-fwt",
+              "purchase-wvat",
+              "sales-cwt",
+              "sales-wvat"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDefaultAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "classification",
+          "label",
+          "options"
+        ]
+      },
+      "TaxDefaultAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDefaultAccountOptionGroupResponseDto"
+            }
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDefaultAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "companyId",
+          "groups",
+          "options"
+        ]
+      },
+      "TaxDefaultChartAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "accountNature": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "accountCode",
+          "accountTitle",
+          "accountType",
+          "accountNature",
+          "status",
+          "isPostingAccount"
+        ]
+      },
+      "TaxPostingAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "transactionScope": {
+            "enum": [
+              "SALE",
+              "PURCHASE",
+              "BOTH"
+            ],
+            "type": "string"
+          },
+          "postingEvent": {
+            "enum": [
+              "RECOGNITION",
+              "SETTLEMENT",
+              "REFUND",
+              "REVERSAL",
+              "ADJUSTMENT"
+            ],
+            "type": "string"
+          },
+          "accountRole": {
+            "type": "string"
+          },
+          "entrySide": {
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "amountSource": {
+            "enum": [
+              "TAX_AMOUNT",
+              "RECOVERABLE_AMOUNT",
+              "WITHHELD_AMOUNT"
+            ],
+            "type": "string"
+          },
+          "priority": {
+            "type": "number"
+          },
+          "companyAccountMappingId": {
+            "type": "string",
+            "nullable": true
+          },
+          "chartAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxDefaultChartAccountResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "transactionScope",
+          "postingEvent",
+          "accountRole",
+          "entrySide",
+          "amountSource",
+          "priority",
+          "companyAccountMappingId",
+          "chartAccount"
+        ]
+      },
+      "TaxWithDefaultAccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "taxDescription": {
+            "type": "string"
+          },
+          "taxRate": {
+            "type": "string"
+          },
+          "taxExempt": {
+            "type": "boolean"
+          },
+          "taxAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "atc": {
+            "type": "string",
+            "nullable": true
+          },
+          "officialAtcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "natureOfIncome": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "postingAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxPostingAccountResponseDto"
+            }
+          },
+          "defaultTaxAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxPostingAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "sourceKey",
+          "transactionType",
+          "taxType",
+          "taxCode",
+          "taxDescription",
+          "taxRate",
+          "taxExempt",
+          "taxAlias",
+          "atc",
+          "officialAtcCode",
+          "natureOfIncome",
+          "sortOrder",
+          "status",
+          "postingAccounts",
+          "defaultTaxAccounts"
+        ]
+      },
+      "TaxDefaultAccountsListResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "taxCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+            }
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+            }
+          }
+        },
+        "required": [
+          "companyId",
+          "taxCodes",
+          "taxes"
+        ]
+      },
+      "TaxDefaultAccountsContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "tax": {
+            "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+          },
+          "taxCode": {
+            "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+          }
+        },
+        "required": [
+          "companyId",
+          "tax",
+          "taxCode"
+        ]
+      },
+      "TaxContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "tax": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          },
+          "taxCode": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          }
+        },
+        "required": [
+          "tax",
+          "taxCode"
         ]
       },
       "WarehouseBranchResponseDto": {
@@ -44302,6 +45066,55 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "CashVoucherDefaultAccountDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "Chart Account ID",
+            "example": "10"
+          },
+          "accountCode": {
+            "type": "string",
+            "description": "Account Code",
+            "example": "1010101001"
+          },
+          "accountTitle": {
+            "type": "string",
+            "description": "Account Title",
+            "example": "Cash On Hand"
+          }
+        },
+        "required": [
+          "accountId",
+          "accountCode",
+          "accountTitle"
+        ]
+      },
+      "CashVoucherDefaultAccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultCashAccount": {
+            "description": "Default Cash on Hand Account for Cash Voucher",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashVoucherDefaultAccountDto"
+              }
+            ]
+          },
+          "creditAccount": {
+            "description": "Default settlement credit account (synonym for defaultCashAccount in CV)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashVoucherDefaultAccountDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "defaultCashAccount"
         ]
       },
       "CashVoucherSingleResponseDto": {

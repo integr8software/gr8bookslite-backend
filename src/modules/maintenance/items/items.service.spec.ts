@@ -73,27 +73,21 @@ describe('ItemsService', () => {
       const { prisma, service } = createService();
       prisma.itemCategory.findFirst.mockResolvedValue(null);
 
-      await expect(
-        callPrivate(service, 'validateReferences', 10, { categoryId: '5' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(callPrivate(service, 'validateReferences', 10, { categoryId: '5' })).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when UOM does not exist or is inactive', async () => {
       const { prisma, service } = createService();
       prisma.unitOfMeasurement.findFirst.mockResolvedValue({ id: 3n, status: 'INACTIVE' });
 
-      await expect(
-        callPrivate(service, 'validateReferences', 10, { unitOfMeasurementId: '3' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(callPrivate(service, 'validateReferences', 10, { unitOfMeasurementId: '3' })).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when responsibility center is inactive', async () => {
       const { prisma, service } = createService();
       prisma.responsibilityCenter.findFirst.mockResolvedValue({ id: 7n, status: 'INACTIVE' });
 
-      await expect(
-        callPrivate(service, 'validateReferences', 10, { responsibilityCenterId: '7' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(callPrivate(service, 'validateReferences', 10, { responsibilityCenterId: '7' })).rejects.toThrow(BadRequestException);
     });
   });
 

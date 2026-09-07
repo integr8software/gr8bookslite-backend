@@ -48,7 +48,15 @@ export class AccountsPayableVoucherAccountingService {
     };
   }
 
-  validatePersistedPayload({ amount, details, journalEntries }: { amount: number; details: AccountsPayableVoucherDetails[]; journalEntries: AccountsPayableVoucherJournalEntry[] }) {
+  validatePersistedPayload({
+    amount,
+    details,
+    journalEntries,
+  }: {
+    amount: number;
+    details: AccountsPayableVoucherDetails[];
+    journalEntries: AccountsPayableVoucherJournalEntry[];
+  }) {
     if (details.length === 0) {
       throw new BadRequestException('Add at least one APV detail row before approval.');
     }

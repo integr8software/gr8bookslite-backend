@@ -65,7 +65,7 @@ export const AccountingSidebarTemplate = [
     iconName: 'cashOut',
     children: [
       link('cash-disbursement-cash-voucher', 'CV', 'cashOut'),
-      link('cash-disbursement-disbursement-voucher', 'DV', 'fileCheck'),
+      link('cash-disbursement-disbursement-voucher', 'DV', 'cashOut'),
       link('cash-disbursement-cash-advance', 'CA', 'cashOut'),
       link('cash-disbursement-cash-advance-multiple-entry', 'CAME', 'cashOut'),
       link('cash-disbursement-petty-cash-voucher', 'PCV', 'cashOut'),
@@ -73,7 +73,7 @@ export const AccountingSidebarTemplate = [
       link('cash-disbursement-petty-cash-replenishment', 'PCR', 'cashOut'),
       link('cash-disbursement-revolving-fund', 'RF', 'cashOut'),
       link('cash-disbursement-revolving-fund-replenishment', 'RFR', 'cashOut'),
-      link('cash-disbursement-request-for-payment', 'RFP', 'fileCheck'),
+      link('cash-disbursement-request-for-payment', 'RFP', 'cashOut'),
       link('cash-disbursement-advances-to-suppliers', 'ATS', 'cashOut'),
       link('cash-disbursement-recurring-transactions', 'RT', 'cashOut'),
     ],

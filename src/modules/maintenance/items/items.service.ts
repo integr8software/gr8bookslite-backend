@@ -40,13 +40,22 @@ export class ItemsService {
     await this.validateReferences(companyId, dto);
     await this.validateCode(companyId, dto.code);
     try {
-      return mapItem(await this.prisma.itemBasicInfo.create({ data: {
-        ...dto, companyId, code: dto.code.trim(), name: dto.name.trim(),
-        categoryId: parsePositiveBigIntId(dto.categoryId),
-        unitOfMeasurementId: parsePositiveBigIntId(dto.unitOfMeasurementId),
-        responsibilityCenterId: dto.responsibilityCenterId ? parsePositiveBigIntId(dto.responsibilityCenterId) : null,
-        tags: dto.tags ?? [], createdByUserId: user.id,
-      }, include }));
+      return mapItem(
+        await this.prisma.itemBasicInfo.create({
+          data: {
+            ...dto,
+            companyId,
+            code: dto.code.trim(),
+            name: dto.name.trim(),
+            categoryId: parsePositiveBigIntId(dto.categoryId),
+            unitOfMeasurementId: parsePositiveBigIntId(dto.unitOfMeasurementId),
+            responsibilityCenterId: dto.responsibilityCenterId ? parsePositiveBigIntId(dto.responsibilityCenterId) : null,
+            tags: dto.tags ?? [],
+            createdByUserId: user.id,
+          },
+          include,
+        }),
+      );
     } catch (error) {
       throwConflictOnPrismaUniqueError(error, 'An item with this code already exists.');
       throw error;
@@ -60,13 +69,25 @@ export class ItemsService {
     await this.validateReferences(companyId, dto, existing);
     if (dto.code !== undefined) await this.validateCode(companyId, dto.code, itemId);
     try {
-      return mapItem(await this.prisma.itemBasicInfo.update({ where: { id: itemId, companyId }, data: {
-        ...dto,
-        categoryId: dto.categoryId === undefined ? undefined : parsePositiveBigIntId(dto.categoryId),
-        unitOfMeasurementId: dto.unitOfMeasurementId === undefined ? undefined : parsePositiveBigIntId(dto.unitOfMeasurementId),
-        responsibilityCenterId: dto.responsibilityCenterId === undefined ? undefined : dto.responsibilityCenterId === null ? null : parsePositiveBigIntId(dto.responsibilityCenterId),
-        updatedByUserId: user.id, updatedAt: new Date(),
-      }, include }));
+      return mapItem(
+        await this.prisma.itemBasicInfo.update({
+          where: { id: itemId, companyId },
+          data: {
+            ...dto,
+            categoryId: dto.categoryId === undefined ? undefined : parsePositiveBigIntId(dto.categoryId),
+            unitOfMeasurementId: dto.unitOfMeasurementId === undefined ? undefined : parsePositiveBigIntId(dto.unitOfMeasurementId),
+            responsibilityCenterId:
+              dto.responsibilityCenterId === undefined
+                ? undefined
+                : dto.responsibilityCenterId === null
+                  ? null
+                  : parsePositiveBigIntId(dto.responsibilityCenterId),
+            updatedByUserId: user.id,
+            updatedAt: new Date(),
+          },
+          include,
+        }),
+      );
     } catch (error) {
       throwConflictOnPrismaUniqueError(error, 'An item with this code already exists.');
       throw error;
@@ -105,7 +126,7 @@ export class ItemsService {
     const cost = dto.cost !== undefined ? dto.cost : 0;
     const sellingPrice = dto.sellingPrice !== undefined ? dto.sellingPrice : 0;
     const suggestedPrice = dto.suggestedPrice !== undefined ? dto.suggestedPrice : 0;
-    const taxTreatment = dto.taxTreatment !== undefined ? (dto.taxTreatment?.trim() || null) : undefined;
+    const taxTreatment = dto.taxTreatment !== undefined ? dto.taxTreatment?.trim() || null : undefined;
 
     const pricing = await this.prisma.itemPricing.upsert({
       where: {
@@ -143,7 +164,9 @@ export class ItemsService {
 
   private async validateCode(companyId: number, code: string, excludedId?: bigint) {
     if (!code.trim()) throw new BadRequestException('Item code is required.');
-    const duplicate = await this.prisma.itemBasicInfo.findFirst({ where: { companyId, id: excludedId ? { not: excludedId } : undefined, code: { equals: code.trim(), mode: 'insensitive' } } });
+    const duplicate = await this.prisma.itemBasicInfo.findFirst({
+      where: { companyId, id: excludedId ? { not: excludedId } : undefined, code: { equals: code.trim(), mode: 'insensitive' } },
+    });
     if (duplicate) throw new ConflictException('An item with this code already exists.');
   }
 
@@ -151,29 +174,41 @@ export class ItemsService {
     if (dto.categoryId !== undefined) {
       const id = parsePositiveBigIntId(dto.categoryId);
       const record = await this.prisma.itemCategory.findFirst({ where: { id, companyId, deletedAt: null } });
-      if (!record || (record.status !== 'ACTIVE' && existing?.categoryId !== id)) throw new BadRequestException('Select an active category in the current company.');
+      if (!record || (record.status !== 'ACTIVE' && existing?.categoryId !== id))
+        throw new BadRequestException('Select an active category in the current company.');
     }
     if (dto.unitOfMeasurementId !== undefined) {
       const id = parsePositiveBigIntId(dto.unitOfMeasurementId);
       const record = await this.prisma.unitOfMeasurement.findFirst({ where: { id, companyId, deletedAt: null } });
-      if (!record || (record.status !== 'ACTIVE' && existing?.unitOfMeasurementId !== id)) throw new BadRequestException('Select an active unit of measurement in the current company.');
+      if (!record || (record.status !== 'ACTIVE' && existing?.unitOfMeasurementId !== id))
+        throw new BadRequestException('Select an active unit of measurement in the current company.');
     }
     if (dto.responsibilityCenterId != null) {
       const id = parsePositiveBigIntId(dto.responsibilityCenterId);
       const record = await this.prisma.responsibilityCenter.findFirst({ where: { id, companyId, deletedAt: null } });
-      if (!record || (record.status !== 'ACTIVE' && existing?.responsibilityCenterId !== id)) throw new BadRequestException('Select an active responsibility center in the current company.');
+      if (!record || (record.status !== 'ACTIVE' && existing?.responsibilityCenterId !== id))
+        throw new BadRequestException('Select an active responsibility center in the current company.');
     }
   }
 }
 
 function mapItem(item: Item): ItemBasicInfoResponseDto {
   return {
-    id: item.id.toString(), code: item.code, skuCode: item.skuCode ?? '', name: item.name,
-    barcode: item.barcode ?? '', categoryId: item.categoryId.toString(), categoryName: item.category.name,
-    unitOfMeasurementId: item.unitOfMeasurementId.toString(), unitOfMeasurementSymbol: item.unitOfMeasurement.symbol,
-    brand: item.brand ?? '', model: item.model ?? '', externalReferenceCode: item.externalReferenceCode ?? '',
+    id: item.id.toString(),
+    code: item.code,
+    skuCode: item.skuCode ?? '',
+    name: item.name,
+    barcode: item.barcode ?? '',
+    categoryId: item.categoryId.toString(),
+    categoryName: item.category.name,
+    unitOfMeasurementId: item.unitOfMeasurementId.toString(),
+    unitOfMeasurementSymbol: item.unitOfMeasurement.symbol,
+    brand: item.brand ?? '',
+    model: item.model ?? '',
+    externalReferenceCode: item.externalReferenceCode ?? '',
     responsibilityCenterId: item.responsibilityCenterId?.toString() ?? null,
-    responsibilityCenterName: item.responsibilityCenter?.name ?? '', description: item.description ?? '',
+    responsibilityCenterName: item.responsibilityCenter?.name ?? '',
+    description: item.description ?? '',
     tags: Array.isArray(item.tags) ? item.tags.filter((tag): tag is string => typeof tag === 'string') : [],
     status: item.status as ItemBasicInfoStatus,
     costPrice: item.pricing ? Number(item.pricing.cost) : 0,

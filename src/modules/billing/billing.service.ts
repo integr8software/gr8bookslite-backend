@@ -62,11 +62,7 @@ export class BillingService {
         const plans = await this.prisma.subscriptionPlan.findMany({
           where: {
             isActive: true,
-            ...(normalizedScope
-              ? normalizedScope === SubscriptionPlanScope.ALL
-                ? {}
-                : { scope: { in: [normalizedScope, SubscriptionPlanScope.ALL] } }
-              : {}),
+            ...(normalizedScope ? (normalizedScope === SubscriptionPlanScope.ALL ? {} : { scope: { in: [normalizedScope, SubscriptionPlanScope.ALL] } }) : {}),
           },
           include: {
             prices: {
