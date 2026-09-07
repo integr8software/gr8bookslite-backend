@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SubscriptionPlanScope, SubscriptionPlanStatus, SubscriptionStatus } from '@prisma/client';
+import { BillingMode, BillingProvider, CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SubscriptionPlanScope, SubscriptionPlanStatus, SubscriptionStatus } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
@@ -151,6 +151,7 @@ export class OnboardingService {
         ? {
             plan: draft.subscriptionPlan ? mapSubscriptionPlan(draft.subscriptionPlan) : null,
             billingCycle: draft.billingCycle,
+            billingMode: draft.paymentMethodReference === 'MANUAL' ? BillingMode.MANUAL : (draft.cardLast4 ? BillingMode.AUTO : null),
             cardholderName: draft.cardholderName,
             billingEmail: draft.billingEmail,
             billingAddress: draft.billingAddress,
@@ -281,6 +282,118 @@ export class OnboardingService {
       throw new BadRequestException('Complete company details before setting up billing.');
     }
 
+    if (dto.billingMode === BillingMode.MANUAL) {
+      const startsAt = new Date();
+      const trialDays = existingDraft.subscriptionPlan.trialDays || 15;
+      const trialEndsAt = this.billingService.addBillingInterval(startsAt, {
+        intervalCount: trialDays,
+        intervalUnit: 'DAY',
+      });
+      const planPrice = existingDraft.subscriptionPlan.prices.find((price) => price.billingCycle === existingDraft.billingCycle);
+
+      const existingSubscription = await this.prisma.companySubscription.findFirst({
+        where: {
+          companyId: existingDraft.provisionedCompanyId,
+          subscriptionPlanId: existingDraft.subscriptionPlan.id,
+          billingCycle: existingDraft.billingCycle,
+        },
+        orderBy: [{ startsAt: 'desc' }, { createdAt: 'desc' }],
+      });
+
+      if (existingSubscription) {
+        await this.prisma.companySubscription.update({
+          where: { id: existingSubscription.id },
+          data: {
+            subscriptionPlanPriceId: planPrice?.id ?? null,
+            billingMode: BillingMode.MANUAL,
+            autoRenew: false,
+            billingProvider: BillingProvider.PAYMONGO,
+            status: SubscriptionStatus.TRIALING,
+            startsAt,
+            trialEndsAt,
+            nextBillingAt: trialEndsAt,
+            endsAt: trialEndsAt,
+            rawProviderPayload: {
+              billingMode: BillingMode.MANUAL,
+              trialDays,
+              note: 'Onboarding free trial with manual payment renewal',
+            },
+          },
+        });
+      } else {
+        await this.prisma.companySubscription.create({
+          data: {
+            companyId: existingDraft.provisionedCompanyId,
+            subscriptionPlanId: existingDraft.subscriptionPlan.id,
+            subscriptionPlanPriceId: planPrice?.id ?? null,
+            billingCycle: existingDraft.billingCycle,
+            billingMode: BillingMode.MANUAL,
+            autoRenew: false,
+            billingProvider: BillingProvider.PAYMONGO,
+            status: SubscriptionStatus.TRIALING,
+            startsAt,
+            trialEndsAt,
+            nextBillingAt: trialEndsAt,
+            endsAt: trialEndsAt,
+            rawProviderPayload: {
+              billingMode: BillingMode.MANUAL,
+              trialDays,
+              note: 'Onboarding free trial with manual payment renewal',
+            },
+          },
+        });
+      }
+
+      const normalizedManualEmail = dto.billingEmail ? (normalizeEmail(dto.billingEmail) as string) : null;
+
+      const updatedDraft = await this.prisma.userOnboardingDraft.update({
+        where: {
+          userId: user.id,
+        },
+        data: {
+          cardholderName: null,
+          billingEmail: normalizedManualEmail,
+          billingAddress: null,
+          cardLast4: null,
+          cardBrand: null,
+          cardExpiryMonth: null,
+          cardExpiryYear: null,
+          paymentMethodReference: 'MANUAL',
+          billingCompletedAt: new Date(),
+        },
+        include: {
+          subscriptionPlan: {
+            include: subscriptionPlanInclude,
+          },
+        },
+      });
+
+      return {
+        message: 'Free trial billing preference saved for onboarding.',
+        billing: {
+          planCode: updatedDraft.subscriptionPlan?.code ?? null,
+          billingCycle: updatedDraft.billingCycle,
+          billingMode: BillingMode.MANUAL,
+          cardholderName: null,
+          billingEmail: updatedDraft.billingEmail,
+          billingAddress: null,
+          cardBrand: null,
+          cardLast4: null,
+          cardExpiryMonth: null,
+          cardExpiryYear: null,
+          plan: updatedDraft.subscriptionPlan ? mapSubscriptionPlan(updatedDraft.subscriptionPlan) : null,
+          trialDays: updatedDraft.subscriptionPlan?.trialDays ?? 15,
+        },
+        paymentIntent: null,
+        paymentSetupState: 'ready_for_confirmation',
+        nextStep: 'REVIEW_DETAILS',
+      };
+    }
+
+    if (!dto.paymentMethodId || !dto.cardholderName || !dto.billingAddress || !dto.cardLast4 || !dto.cardBrand) {
+      throw new BadRequestException('Card details and payment method are required for auto renewal.');
+    }
+
     const normalizedEmail = normalizeEmail(dto.billingEmail) as string;
 
     const preparedSubscription = await this.billingService.prepareCompanySubscription({
@@ -325,6 +438,7 @@ export class OnboardingService {
       billing: {
         planCode: updatedDraft.subscriptionPlan?.code ?? null,
         billingCycle: updatedDraft.billingCycle,
+        billingMode: BillingMode.AUTO,
         cardholderName: updatedDraft.cardholderName,
         billingEmail: updatedDraft.billingEmail,
         billingAddress: updatedDraft.billingAddress,
