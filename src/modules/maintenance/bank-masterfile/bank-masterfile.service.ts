@@ -159,9 +159,21 @@ export class BankMasterfileService {
     try {
       const bankAccount = await this.prisma.$transaction(async (tx) => {
         const cashInBankAccount = await this.support.findCashInBankParentOrThrow(companyId, tx);
-        const accountCode = dto.accountCode?.trim()
-          ? await this.support.validateManualAccountCode(companyId, dto.accountCode, tx)
-          : await this.support.generateNextCashInBankAccountCode(companyId, cashInBankAccount.id, cashInBankAccount.accountCode, tx);
+        const indicatedAccountCode = dto.accountCode?.trim();
+        const indicatedAccountName = dto.accountName?.trim();
+
+        let accountCode: string;
+        if (indicatedAccountCode) {
+          const isTaken = await this.support.isAccountCodeTaken(companyId, indicatedAccountCode, tx);
+          if (!isTaken) {
+            accountCode = indicatedAccountCode;
+          } else {
+            accountCode = await this.support.generateNextCashInBankAccountCode(companyId, cashInBankAccount.id, cashInBankAccount.accountCode, tx);
+          }
+        } else {
+          accountCode = await this.support.generateNextCashInBankAccountCode(companyId, cashInBankAccount.id, cashInBankAccount.accountCode, tx);
+        }
+
         const accountName = resolveBankAccountName(dto);
         const requestedStatus = dto.status ?? ChartAccountStatus.ACTIVE;
         await this.support.ensureBankAccountAvailable(companyId, dto);
@@ -224,8 +236,14 @@ export class BankMasterfileService {
         });
       }, MaintenanceTransactionOptions);
 
+      const savedAccountCode = bankAccount.coa?.accountCode ?? '';
+      const savedAccountTitle = bankAccount.coa?.accountTitle ?? bankAccount.accountName;
+      const message = savedAccountCode
+        ? `Bank account created successfully. Saved with Account Code - Account Title: ${savedAccountCode} - ${savedAccountTitle}.`
+        : 'Bank account created successfully.';
+
       return {
-        message: 'Bank account created successfully.',
+        message,
         bankAccount: (await mapBankAccountsWithAuditUsers(this.prisma, [bankAccount]))[0],
       };
     } catch (error) {

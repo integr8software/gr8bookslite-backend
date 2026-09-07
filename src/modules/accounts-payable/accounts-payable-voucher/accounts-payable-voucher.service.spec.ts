@@ -33,9 +33,7 @@ describe('AccountsPayableVoucherService', () => {
       expect(() => service.ensureStatusTransitionAllowed(currentStatus, targetStatus)).not.toThrow();
     }
 
-    expect(() => service.ensureStatusTransitionAllowed(AccountsPayableVoucherStatus.CLOSED, AccountsPayableVoucherStatus.DRAFT)).toThrow(
-      BadRequestException,
-    );
+    expect(() => service.ensureStatusTransitionAllowed(AccountsPayableVoucherStatus.CLOSED, AccountsPayableVoucherStatus.DRAFT)).toThrow(BadRequestException);
     expect(() => service.ensureStatusTransitionAllowed(AccountsPayableVoucherStatus.DISAPPROVED, AccountsPayableVoucherStatus.CLOSED)).toThrow(
       BadRequestException,
     );

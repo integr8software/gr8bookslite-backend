@@ -57,7 +57,6 @@ export const WorkspaceCompanyListInclude = {
   },
 } satisfies Prisma.CompanyInclude;
 
-
 export const WorkspaceCompanyDetailsInclude = {
   ...WorkspaceCompanyListInclude,
   units: {

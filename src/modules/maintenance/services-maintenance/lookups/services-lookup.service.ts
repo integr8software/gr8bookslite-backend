@@ -4,7 +4,8 @@ import { PermissionAction } from '../../../../common/enums/permission-action.enu
 import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { GetServiceMaintenanceListQueryDto } from '../dto/get-service-maintenance-list-query.dto';
-import { accountGroupHasTag, ServiceRevenueAccountGroupTag } from '../utils/service-maintenance-account.util';
+import { accountGroupHasTag } from '../../chart-of-accounts/utils/system-account-groups.util';
+import { ServiceRevenueAccountGroupTag } from '../utils/service-maintenance-account.util';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../../common/utils/module-access.util';
 import { ensureModuleAction } from '../../../../common/utils/module-permissions.util';
@@ -70,8 +71,7 @@ export class ServicesLookupService {
       where: {
         companyId,
         accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.REVENUE,
-        accountNature: AccountNature.CREDIT,
+        accountType: { in: [ChartAccountType.REVENUE, ChartAccountType.EXPENSE] },
         status: ChartAccountStatus.ACTIVE,
         deletedAt: null,
         isPostingAccount: true,
@@ -80,7 +80,11 @@ export class ServicesLookupService {
     });
 
     return accounts
-      .filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag))
+      .filter(
+        (account) =>
+          (account.accountType === ChartAccountType.REVENUE && accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag)) ||
+          account.accountType === ChartAccountType.EXPENSE,
+      )
       .map((account) => ({
         id: account.id.toString(),
         accountNumber: account.accountCode,

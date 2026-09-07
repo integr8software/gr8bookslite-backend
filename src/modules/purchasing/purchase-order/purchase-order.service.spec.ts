@@ -12,10 +12,7 @@ type BuildEntries = (
   purchaseRequestId?: bigint,
 ) => Promise<Array<Record<string, unknown>>>;
 
-type ResolveReferences = (
-  companyId: number,
-  dto: CreatePurchaseOrderDto,
-) => Promise<{ term: { id: bigint; name: string } | null; purchaseType: string }>;
+type ResolveReferences = (companyId: number, dto: CreatePurchaseOrderDto) => Promise<{ term: { id: bigint; name: string } | null; purchaseType: string }>;
 
 describe('PurchaseOrderService business logic', () => {
   function createService() {
@@ -113,12 +110,7 @@ describe('PurchaseOrderService business logic', () => {
     responsibilityCenterFindFirst.mockResolvedValue({ id: 12n, name: 'Operations' });
     serviceMaintenanceFindFirst.mockResolvedValue({ id: 15n });
 
-    const [entry] = await buildEntries(
-      7,
-      3,
-      [createItem({ responsibilityCenterId: '12', serviceMaintenanceId: '15' })],
-      'Services',
-    );
+    const [entry] = await buildEntries(7, 3, [createItem({ responsibilityCenterId: '12', serviceMaintenanceId: '15' })], 'Services');
 
     expect(entry).toEqual(
       expect.objectContaining({
