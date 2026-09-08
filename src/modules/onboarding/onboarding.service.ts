@@ -283,6 +283,11 @@ export class OnboardingService {
     }
 
     if (dto.billingMode === BillingMode.MANUAL) {
+      const trialPriceInCents = existingDraft.subscriptionPlan.trialPriceInCents || 0;
+      if (trialPriceInCents > 0) {
+        throw new BadRequestException('This plan requires trial payment checkout before saving billing details.');
+      }
+
       const startsAt = new Date();
       const trialDays = existingDraft.subscriptionPlan.trialDays || 15;
       const trialEndsAt = this.billingService.addBillingInterval(startsAt, {
