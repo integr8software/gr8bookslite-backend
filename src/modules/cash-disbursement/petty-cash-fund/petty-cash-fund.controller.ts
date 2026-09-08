@@ -5,6 +5,8 @@ import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/tran
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { CreatePettyCashFundDto } from './dto/create-petty-cash-fund.dto';
+import { PettyCashFundCopyFromCandidatesResponseDto } from './copy-from/dto/petty-cash-fund-copy-from-candidate.dto';
+import { GetPettyCashFundCopyFromCandidatesQueryDto } from './copy-from/dto/get-petty-cash-fund-copy-from-candidates-query.dto';
 import { GetPettyCashFundListQueryDto } from './dto/get-petty-cash-fund-list-query.dto';
 import { PettyCashFundListResponseDto, PettyCashFundResponseDto } from './dto/petty-cash-fund-response.dto';
 import { UpdatePettyCashFundDto } from './dto/update-petty-cash-fund.dto';
@@ -34,6 +36,13 @@ export class PettyCashFundController {
   @ApiOkResponse({ type: PettyCashFundListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetPettyCashFundListQueryDto) {
     return this.service.findAll(user, query);
+  }
+
+  @Get('copy-from/candidates')
+  @ApiOperation({ summary: 'List available Petty Cash Funds for Petty Cash Replenishment Copy From' })
+  @ApiOkResponse({ description: 'Available Petty Cash Funds for Copy From.', type: PettyCashFundCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetPettyCashFundCopyFromCandidatesQueryDto) {
+    return this.service.findCopyFromCandidates(user, query);
   }
 
   @Get(':id')

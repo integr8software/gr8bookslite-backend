@@ -153,9 +153,9 @@ export class PettyCashVoucherPaginationMetaDto {
 }
 
 export class PettyCashVoucherListResponseDto {
-  @ApiProperty({ type: [PettyCashVoucherResponseDto] })
+  @ApiProperty({ type: () => [PettyCashVoucherResponseDto] })
   items: PettyCashVoucherResponseDto[];
 
-  @ApiProperty({ type: PettyCashVoucherPaginationMetaDto })
+  @ApiProperty({ type: () => PettyCashVoucherPaginationMetaDto })
   meta: PettyCashVoucherPaginationMetaDto;
 }

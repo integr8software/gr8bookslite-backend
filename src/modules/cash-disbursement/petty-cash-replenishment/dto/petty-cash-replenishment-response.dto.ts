@@ -90,7 +90,7 @@ export class PettyCashReplenishmentResponseDto {
   @ApiProperty({ description: 'Status', enum: PettyCashReplenishmentStatus, example: PettyCashReplenishmentStatus.DRAFT })
   status: PettyCashReplenishmentStatus;
 
-  @ApiPropertyOptional({ description: 'Replenishment Details', type: [PettyCashReplenishmentDetailDto] })
+  @ApiPropertyOptional({ description: 'Replenishment Details', type: () => [PettyCashReplenishmentDetailDto] })
   details?: PettyCashReplenishmentDetailDto[];
 
   @ApiProperty({ description: 'Created At', example: '2026-05-21T08:00:00.000Z' })
@@ -121,9 +121,9 @@ export class PettyCashReplenishmentPaginationMetaDto {
 }
 
 export class PettyCashReplenishmentListResponseDto {
-  @ApiProperty({ type: [PettyCashReplenishmentResponseDto] })
+  @ApiProperty({ type: () => [PettyCashReplenishmentResponseDto] })
   items: PettyCashReplenishmentResponseDto[];
 
-  @ApiProperty({ type: PettyCashReplenishmentPaginationMetaDto })
+  @ApiProperty({ type: () => PettyCashReplenishmentPaginationMetaDto })
   meta: PettyCashReplenishmentPaginationMetaDto;
 }

@@ -2,6 +2,9 @@ import { Prisma } from '@prisma/client';
 import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AccountsPayableVoucherCopySourceService } from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
+import { AdvanceToSupplierCopySourceService } from '../advances-to-suppliers/copy-from/advance-to-supplier-copy-source.service';
+import { PettyCashReplenishmentCopySourceService } from '../petty-cash-replenishment/copy-from/petty-cash-replenishment-copy-source.service';
+import { RevolvingFundReplenishmentCopySourceService } from '../revolving-fund-replenishment/copy-from/revolving-fund-replenishment-copy-source.service';
 import { DisbursementVoucherService } from './disbursement-voucher.service';
 import { DisbursementVoucherAccountingService } from './services/disbursement-voucher-accounting.service';
 
@@ -18,6 +21,9 @@ describe('DisbursementVoucherService', () => {
       {} as CompanyCurrencyService,
       {} as DisbursementVoucherAccountingService,
       {} as AccountsPayableVoucherCopySourceService,
+      {} as AdvanceToSupplierCopySourceService,
+      {} as PettyCashReplenishmentCopySourceService,
+      {} as RevolvingFundReplenishmentCopySourceService,
     );
     const serviceInternals = service as unknown as {
       allocateJournalEntryNumber: (tx: Prisma.TransactionClient, companyId: number) => Promise<bigint>;

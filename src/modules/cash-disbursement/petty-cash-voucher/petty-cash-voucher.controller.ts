@@ -5,6 +5,8 @@ import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/tran
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { CreatePettyCashVoucherDto } from './dto/create-petty-cash-voucher.dto';
+import { PettyCashVoucherCopyFromCandidatesResponseDto } from './copy-from/dto/petty-cash-voucher-copy-from-candidate.dto';
+import { GetPettyCashVoucherCopyFromCandidatesQueryDto } from './copy-from/dto/get-petty-cash-voucher-copy-from-candidates-query.dto';
 import { GetPettyCashVoucherListQueryDto } from './dto/get-petty-cash-voucher-list-query.dto';
 import { PettyCashVoucherListResponseDto, PettyCashVoucherResponseDto } from './dto/petty-cash-voucher-response.dto';
 import { UpdatePettyCashVoucherDto } from './dto/update-petty-cash-voucher.dto';
@@ -34,6 +36,13 @@ export class PettyCashVoucherController {
   @ApiOkResponse({ type: PettyCashVoucherListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetPettyCashVoucherListQueryDto) {
     return this.service.findAll(user, query);
+  }
+
+  @Get('copy-from/candidates')
+  @ApiOperation({ summary: 'List available Petty Cash Vouchers for Petty Cash Replenishment Copy From' })
+  @ApiOkResponse({ description: 'Available Petty Cash Vouchers for Copy From.', type: PettyCashVoucherCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetPettyCashVoucherCopyFromCandidatesQueryDto) {
+    return this.service.findCopyFromCandidates(user, query);
   }
 
   @Get(':id')

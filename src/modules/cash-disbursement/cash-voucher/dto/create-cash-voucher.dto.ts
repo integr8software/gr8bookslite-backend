@@ -202,14 +202,14 @@ export class CreateCashVoucherDto {
   @IsOptional()
   status?: CashVoucherStatus;
 
-  @ApiPropertyOptional({ description: 'Voucher Line Entries / Details', type: [CashVoucherDetailDto] })
+  @ApiPropertyOptional({ description: 'Voucher Line Entries / Details', type: () => [CashVoucherDetailDto] })
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => CashVoucherDetailDto)
   details?: CashVoucherDetailDto[];
 
-  @ApiPropertyOptional({ description: 'Journal Entries', type: [JournalEntryDto] })
+  @ApiPropertyOptional({ description: 'Journal Entries', type: () => [JournalEntryDto] })
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })

@@ -182,14 +182,14 @@ export class CreateCashAdvanceMultipleEntryDto {
   @IsOptional()
   status?: CashAdvanceStatus;
 
-  @ApiPropertyOptional({ type: [CashAdvanceMultipleEntryItemDto] })
+  @ApiPropertyOptional({ type: () => [CashAdvanceMultipleEntryItemDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CashAdvanceMultipleEntryItemDto)
   @IsOptional()
   items?: CashAdvanceMultipleEntryItemDto[];
 
-  @ApiPropertyOptional({ type: [CashAdvanceMultipleEntryAccountingEntryDto] })
+  @ApiPropertyOptional({ type: () => [CashAdvanceMultipleEntryAccountingEntryDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CashAdvanceMultipleEntryAccountingEntryDto)

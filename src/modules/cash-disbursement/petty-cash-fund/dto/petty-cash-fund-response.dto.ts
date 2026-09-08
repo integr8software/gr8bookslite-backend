@@ -90,7 +90,7 @@ export class PettyCashFundResponseDto {
   @ApiProperty({ description: 'Status', enum: PettyCashFundStatus, example: PettyCashFundStatus.DRAFT })
   status: PettyCashFundStatus;
 
-  @ApiPropertyOptional({ description: 'Fund Details', type: [PettyCashFundDetailDto] })
+  @ApiPropertyOptional({ description: 'Fund Details', type: () => [PettyCashFundDetailDto] })
   details?: PettyCashFundDetailDto[];
 
   @ApiProperty({ description: 'Created At', example: '2026-05-21T08:00:00.000Z' })
@@ -121,9 +121,9 @@ export class PettyCashFundPaginationMetaDto {
 }
 
 export class PettyCashFundListResponseDto {
-  @ApiProperty({ type: [PettyCashFundResponseDto] })
+  @ApiProperty({ type: () => [PettyCashFundResponseDto] })
   items: PettyCashFundResponseDto[];
 
-  @ApiProperty({ type: PettyCashFundPaginationMetaDto })
+  @ApiProperty({ type: () => PettyCashFundPaginationMetaDto })
   meta: PettyCashFundPaginationMetaDto;
 }

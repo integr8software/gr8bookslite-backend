@@ -16174,6 +16174,107 @@
         ]
       }
     },
+    "/api/v1/cash-disbursement/advances-to-suppliers/copy-from/candidates": {
+      "get": {
+        "operationId": "AdvancesToSuppliersController_findCopyFromCandidates_v1",
+        "parameters": [
+          {
+            "name": "target",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "cash-voucher",
+              "type": "string",
+              "enum": [
+                "cash-voucher",
+                "disbursement-voucher"
+              ]
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "description": "Branch Unit ID",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "description": "Supplier party primary key ID",
+            "schema": {
+              "example": "1",
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "description": "Supplier party code",
+            "schema": {
+              "example": "SUP-0001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by ATS number, PO reference, supplier, project, or remarks",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "example": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available Advances to Suppliers for Copy From.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvanceToSupplierCopyFromCandidatesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available Advances to Suppliers for voucher Copy From",
+        "tags": [
+          "Advances To Suppliers"
+        ]
+      }
+    },
     "/api/v1/cash-disbursement/advances-to-suppliers/{id}": {
       "get": {
         "operationId": "AdvancesToSuppliersController_findOne_v1",
@@ -18853,6 +18954,89 @@
         ]
       }
     },
+    "/api/v1/cash-disbursement/petty-cash-voucher/copy-from/candidates": {
+      "get": {
+        "operationId": "PettyCashVoucherController_findCopyFromCandidates_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 40,
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available Petty Cash Vouchers for Copy From.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PettyCashVoucherCopyFromCandidatesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available Petty Cash Vouchers for Petty Cash Replenishment Copy From",
+        "tags": [
+          "Petty Cash Voucher"
+        ]
+      }
+    },
     "/api/v1/cash-disbursement/petty-cash-voucher/{id}": {
       "get": {
         "operationId": "PettyCashVoucherController_findOne_v1",
@@ -19235,6 +19419,89 @@
           }
         ],
         "summary": "Create a new Petty Cash Fund",
+        "tags": [
+          "Petty Cash Fund"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/petty-cash-fund/copy-from/candidates": {
+      "get": {
+        "operationId": "PettyCashFundController_findCopyFromCandidates_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 40,
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available Petty Cash Funds for Copy From.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PettyCashFundCopyFromCandidatesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available Petty Cash Funds for Petty Cash Replenishment Copy From",
         "tags": [
           "Petty Cash Fund"
         ]
@@ -19627,6 +19894,101 @@
         ]
       }
     },
+    "/api/v1/cash-disbursement/petty-cash-replenishment/copy-from/candidates": {
+      "get": {
+        "operationId": "PettyCashReplenishmentController_findCopyFromCandidates_v1",
+        "parameters": [
+          {
+            "name": "target",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "cash-voucher",
+                "disbursement-voucher"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 40,
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available Petty Cash Replenishments for Copy From.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PettyCashReplenishmentCopyFromCandidatesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available Petty Cash Replenishments for voucher Copy From",
+        "tags": [
+          "Petty Cash Replenishment"
+        ]
+      }
+    },
     "/api/v1/cash-disbursement/petty-cash-replenishment/{id}": {
       "get": {
         "operationId": "PettyCashReplenishmentController_findOne_v1",
@@ -20014,6 +20376,89 @@
         ]
       }
     },
+    "/api/v1/cash-disbursement/revolving-fund/copy-from/candidates": {
+      "get": {
+        "operationId": "RevolvingFundController_findCopyFromCandidates_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 40,
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available Revolving Funds for Copy From.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevolvingFundCopyFromCandidatesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available Revolving Funds for replenishment Copy From",
+        "tags": [
+          "Revolving Fund"
+        ]
+      }
+    },
     "/api/v1/cash-disbursement/revolving-fund/{id}": {
       "get": {
         "operationId": "RevolvingFundController_findOne_v1",
@@ -20396,6 +20841,101 @@
           }
         ],
         "summary": "Create a new Revolving Fund Replenishment",
+        "tags": [
+          "Revolving Fund Replenishment"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/revolving-fund-replenishment/copy-from/candidates": {
+      "get": {
+        "operationId": "RevolvingFundReplenishmentController_findCopyFromCandidates_v1",
+        "parameters": [
+          {
+            "name": "target",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "cash-voucher",
+                "disbursement-voucher"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 40,
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available Revolving Fund Replenishments for Copy From.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevolvingFundReplenishmentCopyFromCandidatesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available Revolving Fund Replenishments for voucher Copy From",
         "tags": [
           "Revolving Fund Replenishment"
         ]
@@ -20802,6 +21342,94 @@
         "summary": "Update purchase request status",
         "tags": [
           "Purchase Request"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-order/copy-from/candidates": {
+      "get": {
+        "operationId": "PurchaseOrderController_findCopyFromCandidates_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "description": "Branch Unit ID",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "description": "Supplier party primary key ID",
+            "schema": {
+              "example": "1",
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "description": "Supplier party code",
+            "schema": {
+              "example": "SUP-0001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by PO number, supplier, project, or remarks",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "example": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available Purchase Orders for Copy From.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderCopyFromCandidatesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available Purchase Orders for Advances to Suppliers Copy From",
+        "tags": [
+          "Purchase Order"
         ]
       }
     },
@@ -44079,6 +44707,220 @@
           "meta"
         ]
       },
+      "AdvanceToSupplierCopyFromCandidateDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "ATS-2026-000001"
+          },
+          "lineNumber": {
+            "type": "number",
+            "example": 1
+          },
+          "accountCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "104-100"
+          },
+          "accountTitle": {
+            "type": "string",
+            "nullable": true,
+            "example": "Advances to Suppliers"
+          },
+          "grossAmount": {
+            "type": "number",
+            "example": 30000
+          },
+          "amount": {
+            "type": "number",
+            "example": 30000
+          },
+          "consumptionAmount": {
+            "type": "number",
+            "example": 30000
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "example": "Supplier advance for PO-2026-000001"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "example": "Purchasing"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "example": "PO:PO-2026-000001"
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "grossAmount",
+          "amount",
+          "consumptionAmount"
+        ]
+      },
+      "AdvanceToSupplierCopyFromCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "source": {
+            "type": "string",
+            "example": "Advances to Suppliers"
+          },
+          "sourceNo": {
+            "type": "string",
+            "example": "ATS-2026-000001"
+          },
+          "transactionNo": {
+            "type": "string",
+            "example": "ATS-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-08"
+          },
+          "branchUnitId": {
+            "type": "number",
+            "nullable": true,
+            "example": 1
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "example": "SUP-0001"
+          },
+          "partyName": {
+            "type": "string",
+            "example": "ABC Supplier"
+          },
+          "currency": {
+            "type": "string",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "example": 1
+          },
+          "grossAmount": {
+            "type": "number",
+            "example": 30000
+          },
+          "consumedGrossAmount": {
+            "type": "number",
+            "example": 5000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "example": 25000
+          },
+          "amount": {
+            "type": "number",
+            "example": 30000
+          },
+          "consumedAmount": {
+            "type": "number",
+            "example": 5000
+          },
+          "availableAmount": {
+            "type": "number",
+            "example": 25000
+          },
+          "poReference": {
+            "type": "string",
+            "nullable": true,
+            "example": "PO:PO-2026-000001"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "PRJ-001"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Branch Renovation"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "example": "Supplier advance"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdvanceToSupplierCopyFromCandidateDetailDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "sourceNo",
+          "transactionNo",
+          "documentDate",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "grossAmount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
+          "amount",
+          "consumedAmount",
+          "availableAmount",
+          "details"
+        ]
+      },
+      "AdvanceToSupplierCopyFromCandidatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdvanceToSupplierCopyFromCandidateDto"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "page",
+              "limit",
+              "total",
+              "totalPages"
+            ]
+          }
+        },
+        "required": [
+          "records",
+          "pagination"
+        ]
+      },
       "CreateAdvanceToSupplierDto": {
         "type": "object",
         "properties": {
@@ -47829,6 +48671,196 @@
           "meta"
         ]
       },
+      "PettyCashVoucherCopyFromCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Petty Cash Voucher ID",
+            "example": "1"
+          },
+          "transactionNo": {
+            "type": "string",
+            "description": "Petty Cash Voucher transaction number",
+            "example": "PCV-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "Document date in YYYY-MM-DD format",
+            "example": "2026-09-07"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party primary key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "description": "Party code snapshot",
+            "example": "EMP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "description": "Party name snapshot",
+            "example": "John Doe"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "description": "Exchange rate",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "description": "Original gross amount",
+            "example": 5000
+          },
+          "consumedGrossAmount": {
+            "type": "number",
+            "description": "Gross amount already copied to active Petty Cash Replenishments",
+            "example": 3000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "description": "Remaining gross amount available to copy",
+            "example": 2000
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Original disburse amount",
+            "example": 4850
+          },
+          "consumedAmount": {
+            "type": "number",
+            "description": "Disburse amount already copied to active Petty Cash Replenishments",
+            "example": 2910
+          },
+          "availableAmount": {
+            "type": "number",
+            "description": "Remaining disburse amount available to copy",
+            "example": 1940
+          },
+          "accountCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default account code",
+            "example": "1010101000"
+          },
+          "accountTitle": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default account title",
+            "example": "Petty Cash Fund"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center ID",
+            "example": "1"
+          },
+          "responsibilityCenterCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center code",
+            "example": "RC-001"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center name",
+            "example": "Admin Dept"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project code",
+            "example": "PRJ-01"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project name",
+            "example": "Main Office Expansion"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Office supplies expense"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source module display name",
+            "example": "Petty Cash Voucher"
+          },
+          "sourceNo": {
+            "type": "string",
+            "description": "Source transaction number",
+            "example": "PCV-2026-000001"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "amount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
+          "disburseAmount",
+          "consumedAmount",
+          "availableAmount",
+          "source",
+          "sourceNo"
+        ]
+      },
+      "PettyCashVoucherCopyFromCandidatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "description": "Available PCV records",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PettyCashVoucherCopyFromCandidateDto"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "page",
+              "limit",
+              "total",
+              "totalPages"
+            ]
+          }
+        },
+        "required": [
+          "records",
+          "pagination"
+        ]
+      },
       "CreatePettyCashVoucherDto": {
         "type": "object",
         "properties": {
@@ -48698,6 +49730,325 @@
           "meta"
         ]
       },
+      "PettyCashFundCopyFromCandidateDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Petty Cash Fund detail line ID",
+            "example": "1"
+          },
+          "lineNumber": {
+            "type": "number",
+            "description": "Source line number",
+            "example": 1
+          },
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "description": "Petty cash line date",
+            "example": "2026-09-07"
+          },
+          "supplierCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier code snapshot",
+            "example": "SUP-001"
+          },
+          "supplierName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier name snapshot",
+            "example": "Anna Supplies"
+          },
+          "grossAmount": {
+            "type": "number",
+            "description": "Gross amount",
+            "example": 5000
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net amount",
+            "example": 4400
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT type/code",
+            "example": "Input VAT"
+          },
+          "vatPercent": {
+            "type": "number",
+            "description": "VAT percent",
+            "example": 12
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "VAT amount",
+            "example": 600
+          },
+          "ewtCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "EWT code",
+            "example": "WC100"
+          },
+          "ewtPercent": {
+            "type": "number",
+            "description": "EWT percent",
+            "example": 2
+          },
+          "ewtAmount": {
+            "type": "number",
+            "description": "EWT amount",
+            "example": 100
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Disburse amount",
+            "example": 4900
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "description": "Particulars",
+            "example": "Office supplies"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Receipt A"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center ID",
+            "example": "1"
+          },
+          "responsibilityCenterCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center code",
+            "example": "RC-001"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center name",
+            "example": "Admin Dept"
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "grossAmount",
+          "netAmount",
+          "vatPercent",
+          "vatAmount",
+          "ewtPercent",
+          "ewtAmount",
+          "disburseAmount"
+        ]
+      },
+      "PettyCashFundCopyFromCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Petty Cash Fund ID",
+            "example": "1"
+          },
+          "transactionNo": {
+            "type": "string",
+            "description": "Petty Cash Fund transaction number",
+            "example": "PCF-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "Document date in YYYY-MM-DD format",
+            "example": "2026-09-07"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party primary key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "description": "Party code snapshot",
+            "example": "EMP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "description": "Party name snapshot",
+            "example": "John Doe"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "description": "Exchange rate",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "description": "Original gross amount",
+            "example": 5000
+          },
+          "consumedGrossAmount": {
+            "type": "number",
+            "description": "Gross amount already copied to active Petty Cash Replenishments",
+            "example": 3000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "description": "Remaining gross amount available to copy",
+            "example": 2000
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Original disburse amount",
+            "example": 4850
+          },
+          "consumedAmount": {
+            "type": "number",
+            "description": "Disburse amount already copied to active Petty Cash Replenishments",
+            "example": 2910
+          },
+          "availableAmount": {
+            "type": "number",
+            "description": "Remaining disburse amount available to copy",
+            "example": 1940
+          },
+          "accountCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default account code",
+            "example": "1010101000"
+          },
+          "accountTitle": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default account title",
+            "example": "Petty Cash Fund"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center ID",
+            "example": "1"
+          },
+          "responsibilityCenterCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center code",
+            "example": "RC-001"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center name",
+            "example": "Admin Dept"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project code",
+            "example": "PRJ-01"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project name",
+            "example": "Main Office Expansion"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Initial fund"
+          },
+          "details": {
+            "description": "PCF detail lines to copy into Petty Cash Replenishment",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PettyCashFundCopyFromCandidateDetailDto"
+            }
+          },
+          "source": {
+            "type": "string",
+            "description": "Source module display name",
+            "example": "Petty Cash Fund"
+          },
+          "sourceNo": {
+            "type": "string",
+            "description": "Source transaction number",
+            "example": "PCF-2026-000001"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "amount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
+          "disburseAmount",
+          "consumedAmount",
+          "availableAmount",
+          "details",
+          "source",
+          "sourceNo"
+        ]
+      },
+      "PettyCashFundCopyFromCandidatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "description": "Available PCF records",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PettyCashFundCopyFromCandidateDto"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "page",
+              "limit",
+              "total",
+              "totalPages"
+            ]
+          }
+        },
+        "required": [
+          "records",
+          "pagination"
+        ]
+      },
       "CreatePettyCashFundDto": {
         "type": "object",
         "properties": {
@@ -49424,6 +50775,301 @@
         "required": [
           "items",
           "meta"
+        ]
+      },
+      "PettyCashReplenishmentCopyFromCandidateDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Petty Cash Replenishment detail line ID",
+            "example": "1"
+          },
+          "lineNumber": {
+            "type": "number",
+            "description": "Source line number",
+            "example": 1
+          },
+          "pettyCashDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Petty cash source date",
+            "example": "2026-09-07"
+          },
+          "pettyCashNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Petty cash source number",
+            "example": "PCV:PCV-2026-000001"
+          },
+          "supplierCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier code snapshot",
+            "example": "SUP-001"
+          },
+          "supplierName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier name snapshot",
+            "example": "Anna Supplies"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Gross amount",
+            "example": 5000
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net amount",
+            "example": 4400
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT type/code",
+            "example": "Input VAT"
+          },
+          "vatPercent": {
+            "type": "number",
+            "description": "VAT percent",
+            "example": 12
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "VAT amount",
+            "example": 600
+          },
+          "ewtCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "EWT code",
+            "example": "WC100"
+          },
+          "ewtPercent": {
+            "type": "number",
+            "description": "EWT percent",
+            "example": 2
+          },
+          "ewtAmount": {
+            "type": "number",
+            "description": "EWT amount",
+            "example": 100
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Disburse amount for this line",
+            "example": 4900
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "description": "Detail particulars",
+            "example": "Office supplies"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center ID",
+            "example": "1"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center snapshot",
+            "example": "Admin Dept"
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "amount",
+          "netAmount",
+          "vatPercent",
+          "vatAmount",
+          "ewtPercent",
+          "ewtAmount",
+          "disburseAmount"
+        ]
+      },
+      "PettyCashReplenishmentCopyFromCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Petty Cash Replenishment ID",
+            "example": "1"
+          },
+          "transactionNo": {
+            "type": "string",
+            "description": "Petty Cash Replenishment transaction number",
+            "example": "PCR-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "Document date in YYYY-MM-DD format",
+            "example": "2026-09-07"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party primary key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "description": "Party code snapshot",
+            "example": "EMP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "description": "Party name snapshot",
+            "example": "John Doe"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "description": "Exchange rate",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "description": "Original gross amount",
+            "example": 5000
+          },
+          "consumedAmount": {
+            "type": "number",
+            "description": "Disburse amount already copied to active Cash/Disbursement Vouchers",
+            "example": 2910
+          },
+          "availableAmount": {
+            "type": "number",
+            "description": "Remaining disburse amount available to copy",
+            "example": 1940
+          },
+          "consumedGrossAmount": {
+            "type": "number",
+            "description": "Gross amount already copied to active Cash/Disbursement Vouchers",
+            "example": 3000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "description": "Remaining gross amount available to copy",
+            "example": 2000
+          },
+          "creditAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default account ID",
+            "example": "1"
+          },
+          "creditAccountCode": {
+            "type": "string",
+            "description": "Default account code",
+            "example": "1010101000"
+          },
+          "creditAccountTitle": {
+            "type": "string",
+            "description": "Default account title",
+            "example": "Petty Cash Fund"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project code",
+            "example": "PRJ-01"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project name",
+            "example": "Main Office Expansion"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Replenishment payment"
+          },
+          "details": {
+            "description": "PCR detail lines to copy into the target voucher",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PettyCashReplenishmentCopyFromCandidateDetailDto"
+            }
+          },
+          "source": {
+            "type": "string",
+            "description": "Source module display name",
+            "example": "Petty Cash Replenishment"
+          },
+          "sourceNo": {
+            "type": "string",
+            "description": "Source transaction number",
+            "example": "PCR-2026-000001"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "amount",
+          "consumedAmount",
+          "availableAmount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
+          "creditAccountCode",
+          "creditAccountTitle",
+          "details",
+          "source",
+          "sourceNo"
+        ]
+      },
+      "PettyCashReplenishmentCopyFromCandidatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "description": "Available PCR records",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PettyCashReplenishmentCopyFromCandidateDto"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "page",
+              "limit",
+              "total",
+              "totalPages"
+            ]
+          }
+        },
+        "required": [
+          "records",
+          "pagination"
         ]
       },
       "CreatePettyCashReplenishmentDto": {
@@ -50165,6 +51811,325 @@
           "meta"
         ]
       },
+      "RevolvingFundCopyFromCandidateDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Revolving Fund detail line ID",
+            "example": "1"
+          },
+          "lineNumber": {
+            "type": "number",
+            "description": "Source line number",
+            "example": 1
+          },
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "description": "Revolving fund line date",
+            "example": "2026-09-07"
+          },
+          "supplierCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier code snapshot",
+            "example": "SUP-001"
+          },
+          "supplierName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier name snapshot",
+            "example": "Anna Supplies"
+          },
+          "grossAmount": {
+            "type": "number",
+            "description": "Gross amount",
+            "example": 5000
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net amount",
+            "example": 4400
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT type/code",
+            "example": "Input VAT"
+          },
+          "vatPercent": {
+            "type": "number",
+            "description": "VAT percent",
+            "example": 12
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "VAT amount",
+            "example": 600
+          },
+          "ewtCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "EWT code",
+            "example": "WC100"
+          },
+          "ewtPercent": {
+            "type": "number",
+            "description": "EWT percent",
+            "example": 2
+          },
+          "ewtAmount": {
+            "type": "number",
+            "description": "EWT amount",
+            "example": 100
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Disburse amount",
+            "example": 4900
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "description": "Particulars",
+            "example": "Office supplies"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Receipt A"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center ID",
+            "example": "1"
+          },
+          "responsibilityCenterCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center code",
+            "example": "RC-001"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center name",
+            "example": "Admin Dept"
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "grossAmount",
+          "netAmount",
+          "vatPercent",
+          "vatAmount",
+          "ewtPercent",
+          "ewtAmount",
+          "disburseAmount"
+        ]
+      },
+      "RevolvingFundCopyFromCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Revolving Fund ID",
+            "example": "1"
+          },
+          "transactionNo": {
+            "type": "string",
+            "description": "Revolving Fund transaction number",
+            "example": "RF-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "Document date in YYYY-MM-DD format",
+            "example": "2026-09-07"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party primary key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "description": "Party code snapshot",
+            "example": "EMP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "description": "Party name snapshot",
+            "example": "John Doe"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "description": "Exchange rate",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "description": "Original gross amount",
+            "example": 5000
+          },
+          "consumedGrossAmount": {
+            "type": "number",
+            "description": "Gross amount already copied to active Revolving Fund Replenishments",
+            "example": 3000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "description": "Remaining gross amount available to copy",
+            "example": 2000
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Original disburse amount",
+            "example": 4850
+          },
+          "consumedAmount": {
+            "type": "number",
+            "description": "Disburse amount already copied to active Revolving Fund Replenishments",
+            "example": 2910
+          },
+          "availableAmount": {
+            "type": "number",
+            "description": "Remaining disburse amount available to copy",
+            "example": 1940
+          },
+          "accountCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default account code",
+            "example": "1010102000"
+          },
+          "accountTitle": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default account title",
+            "example": "Revolving Fund"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center ID",
+            "example": "1"
+          },
+          "responsibilityCenterCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center code",
+            "example": "RC-001"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center name",
+            "example": "Admin Dept"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project code",
+            "example": "PRJ-01"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project name",
+            "example": "Main Office Expansion"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Initial fund"
+          },
+          "details": {
+            "description": "RF detail lines to copy into Revolving Fund Replenishment",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RevolvingFundCopyFromCandidateDetailDto"
+            }
+          },
+          "source": {
+            "type": "string",
+            "description": "Source module display name",
+            "example": "Revolving Fund"
+          },
+          "sourceNo": {
+            "type": "string",
+            "description": "Source transaction number",
+            "example": "RF-2026-000001"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "amount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
+          "disburseAmount",
+          "consumedAmount",
+          "availableAmount",
+          "details",
+          "source",
+          "sourceNo"
+        ]
+      },
+      "RevolvingFundCopyFromCandidatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "description": "Available RF records",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RevolvingFundCopyFromCandidateDto"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "page",
+              "limit",
+              "total",
+              "totalPages"
+            ]
+          }
+        },
+        "required": [
+          "records",
+          "pagination"
+        ]
+      },
       "CreateRevolvingFundDto": {
         "type": "object",
         "properties": {
@@ -50891,6 +52856,301 @@
         "required": [
           "items",
           "meta"
+        ]
+      },
+      "RevolvingFundReplenishmentCopyFromCandidateDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Revolving Fund Replenishment detail line ID",
+            "example": "1"
+          },
+          "lineNumber": {
+            "type": "number",
+            "description": "Source line number",
+            "example": 1
+          },
+          "revolvingFundDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Revolving fund source date",
+            "example": "2026-09-07"
+          },
+          "revolvingFundNo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Revolving fund source number",
+            "example": "RF:RF-2026-000001"
+          },
+          "supplierCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier code snapshot",
+            "example": "SUP-001"
+          },
+          "supplierName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier name snapshot",
+            "example": "Anna Supplies"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Gross amount",
+            "example": 5000
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net amount",
+            "example": 4400
+          },
+          "vatType": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT type/code",
+            "example": "Input VAT"
+          },
+          "vatPercent": {
+            "type": "number",
+            "description": "VAT percent",
+            "example": 12
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "VAT amount",
+            "example": 600
+          },
+          "ewtCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "EWT code",
+            "example": "WC100"
+          },
+          "ewtPercent": {
+            "type": "number",
+            "description": "EWT percent",
+            "example": 2
+          },
+          "ewtAmount": {
+            "type": "number",
+            "description": "EWT amount",
+            "example": 100
+          },
+          "disburseAmount": {
+            "type": "number",
+            "description": "Disburse amount for this line",
+            "example": 4900
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "description": "Detail particulars",
+            "example": "Office supplies"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center ID",
+            "example": "1"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Responsibility center snapshot",
+            "example": "Admin Dept"
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "amount",
+          "netAmount",
+          "vatPercent",
+          "vatAmount",
+          "ewtPercent",
+          "ewtAmount",
+          "disburseAmount"
+        ]
+      },
+      "RevolvingFundReplenishmentCopyFromCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Revolving Fund Replenishment ID",
+            "example": "1"
+          },
+          "transactionNo": {
+            "type": "string",
+            "description": "Revolving Fund Replenishment transaction number",
+            "example": "RFR-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "Document date in YYYY-MM-DD format",
+            "example": "2026-09-07"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party primary key ID",
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "description": "Party code snapshot",
+            "example": "EMP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "description": "Party name snapshot",
+            "example": "John Doe"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "description": "Exchange rate",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "description": "Original gross amount",
+            "example": 5000
+          },
+          "consumedAmount": {
+            "type": "number",
+            "description": "Disburse amount already copied to active Cash/Disbursement Vouchers",
+            "example": 2910
+          },
+          "availableAmount": {
+            "type": "number",
+            "description": "Remaining disburse amount available to copy",
+            "example": 1940
+          },
+          "consumedGrossAmount": {
+            "type": "number",
+            "description": "Gross amount already copied to active Cash/Disbursement Vouchers",
+            "example": 3000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "description": "Remaining gross amount available to copy",
+            "example": 2000
+          },
+          "creditAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default account ID",
+            "example": "1"
+          },
+          "creditAccountCode": {
+            "type": "string",
+            "description": "Default account code",
+            "example": "1010102000"
+          },
+          "creditAccountTitle": {
+            "type": "string",
+            "description": "Default account title",
+            "example": "Revolving Fund"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project code",
+            "example": "PRJ-01"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Project name",
+            "example": "Main Office Expansion"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remarks",
+            "example": "Replenishment payment"
+          },
+          "details": {
+            "description": "RFR detail lines to copy into the target voucher",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RevolvingFundReplenishmentCopyFromCandidateDetailDto"
+            }
+          },
+          "source": {
+            "type": "string",
+            "description": "Source module display name",
+            "example": "Revolving Fund Replenishment"
+          },
+          "sourceNo": {
+            "type": "string",
+            "description": "Source transaction number",
+            "example": "RFR-2026-000001"
+          }
+        },
+        "required": [
+          "id",
+          "transactionNo",
+          "documentDate",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "amount",
+          "consumedAmount",
+          "availableAmount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
+          "creditAccountCode",
+          "creditAccountTitle",
+          "details",
+          "source",
+          "sourceNo"
+        ]
+      },
+      "RevolvingFundReplenishmentCopyFromCandidatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "description": "Available RFR records",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RevolvingFundReplenishmentCopyFromCandidateDto"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "page",
+              "limit",
+              "total",
+              "totalPages"
+            ]
+          }
+        },
+        "required": [
+          "records",
+          "pagination"
         ]
       },
       "CreateRevolvingFundReplenishmentDto": {
@@ -51702,6 +53962,225 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "PurchaseOrderCopyFromCandidateDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "lineNumber": {
+            "type": "number",
+            "example": 1
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ITM-0001"
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "ITEM-001"
+          },
+          "description": {
+            "type": "string",
+            "example": "Office chairs"
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true,
+            "example": "PCS"
+          },
+          "quantity": {
+            "type": "number",
+            "example": 10
+          },
+          "price": {
+            "type": "number",
+            "example": 1500
+          },
+          "grossAmount": {
+            "type": "number",
+            "example": 15000
+          },
+          "amount": {
+            "type": "number",
+            "example": 15000
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "example": "Administration"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "example": "1"
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "description",
+          "quantity",
+          "price",
+          "grossAmount",
+          "amount"
+        ]
+      },
+      "PurchaseOrderCopyFromCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "source": {
+            "type": "string",
+            "example": "Purchase Order"
+          },
+          "sourceNo": {
+            "type": "string",
+            "example": "PO-2026-000001"
+          },
+          "transactionNo": {
+            "type": "string",
+            "example": "PO-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-08"
+          },
+          "branchUnitId": {
+            "type": "number",
+            "example": 1
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "example": "1"
+          },
+          "partyCode": {
+            "type": "string",
+            "example": "SUP-0001"
+          },
+          "partyName": {
+            "type": "string",
+            "example": "ABC Supplier"
+          },
+          "currency": {
+            "type": "string",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "example": 1
+          },
+          "grossAmount": {
+            "type": "number",
+            "example": 50000
+          },
+          "consumedGrossAmount": {
+            "type": "number",
+            "example": 15000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "example": 35000
+          },
+          "amount": {
+            "type": "number",
+            "example": 50000
+          },
+          "consumedAmount": {
+            "type": "number",
+            "example": 15000
+          },
+          "availableAmount": {
+            "type": "number",
+            "example": 35000
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "PRJ-001"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Branch Renovation"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "example": "Supplier advance"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderCopyFromCandidateDetailDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "sourceNo",
+          "transactionNo",
+          "documentDate",
+          "branchUnitId",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "grossAmount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
+          "amount",
+          "consumedAmount",
+          "availableAmount",
+          "details"
+        ]
+      },
+      "PurchaseOrderCopyFromCandidatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderCopyFromCandidateDto"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "page",
+              "limit",
+              "total",
+              "totalPages"
+            ]
+          }
+        },
+        "required": [
+          "records",
+          "pagination"
         ]
       },
       "PurchaseOrderEntryResponseDto": {

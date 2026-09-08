@@ -77,10 +77,10 @@ export class CashAdvanceDto {
 }
 
 export class CashAdvanceListResponseDto {
-  @ApiProperty({ type: [CashAdvanceDto] })
+  @ApiProperty({ type: () => [CashAdvanceDto] })
   data: CashAdvanceDto[];
 
-  @ApiProperty({ type: PaginationMetaDto })
+  @ApiProperty({ type: () => PaginationMetaDto })
   meta: PaginationMetaDto;
 }
 
@@ -88,6 +88,6 @@ export class CashAdvanceSingleResponseDto {
   @ApiProperty({ example: 'Cash advance operation successfully completed.' })
   message: string;
 
-  @ApiProperty({ type: CashAdvanceDto })
+  @ApiProperty({ type: () => CashAdvanceDto })
   data: CashAdvanceDto;
 }

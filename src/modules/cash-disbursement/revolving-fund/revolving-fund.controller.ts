@@ -5,6 +5,8 @@ import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/tran
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { CreateRevolvingFundDto } from './dto/create-revolving-fund.dto';
+import { RevolvingFundCopyFromCandidatesResponseDto } from './copy-from/dto/revolving-fund-copy-from-candidate.dto';
+import { GetRevolvingFundCopyFromCandidatesQueryDto } from './copy-from/dto/get-revolving-fund-copy-from-candidates-query.dto';
 import { GetRevolvingFundListQueryDto } from './dto/get-revolving-fund-list-query.dto';
 import { RevolvingFundListResponseDto, RevolvingFundResponseDto } from './dto/revolving-fund-response.dto';
 import { UpdateRevolvingFundDto } from './dto/update-revolving-fund.dto';
@@ -34,6 +36,13 @@ export class RevolvingFundController {
   @ApiOkResponse({ type: RevolvingFundListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetRevolvingFundListQueryDto) {
     return this.service.findAll(user, query);
+  }
+
+  @Get('copy-from/candidates')
+  @ApiOperation({ summary: 'List available Revolving Funds for replenishment Copy From' })
+  @ApiOkResponse({ description: 'Available Revolving Funds for Copy From.', type: RevolvingFundCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetRevolvingFundCopyFromCandidatesQueryDto) {
+    return this.service.findCopyFromCandidates(user, query);
   }
 
   @Get(':id')

@@ -80,9 +80,9 @@ export class AdvanceToSupplierResponseDto {
 }
 
 export class AdvanceToSupplierListResponseDto {
-  @ApiProperty({ type: [AdvanceToSupplierResponseDto] })
+  @ApiProperty({ type: () => [AdvanceToSupplierResponseDto] })
   items: AdvanceToSupplierResponseDto[];
 
-  @ApiProperty({ type: NavigablePaginationMetaDto })
+  @ApiProperty({ type: () => NavigablePaginationMetaDto })
   meta: NavigablePaginationMetaDto;
 }

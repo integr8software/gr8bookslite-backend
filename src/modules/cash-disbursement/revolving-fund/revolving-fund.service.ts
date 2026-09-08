@@ -1,5 +1,14 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChartAccount, CompanyUnitType, Party, PartyAddress, RevolvingFundStatus, Prisma, ResponsibilityCenter } from '@prisma/client';
+import {
+  ChartAccount,
+  CompanyUnitType,
+  Party,
+  PartyAddress,
+  RevolvingFundReplenishmentStatus,
+  RevolvingFundStatus,
+  Prisma,
+  ResponsibilityCenter,
+} from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -7,6 +16,7 @@ import { CompanyCurrencyService } from '../../../common/currency/company-currenc
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 import { ensureModuleAction } from '../../../common/utils/module-permissions.util';
+import { roundMoney } from '../../../common/utils/money.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -14,6 +24,7 @@ import {
   suggestTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
 import { CreateRevolvingFundDto } from './dto/create-revolving-fund.dto';
+import { GetRevolvingFundCopyFromCandidatesQueryDto } from './copy-from/dto/get-revolving-fund-copy-from-candidates-query.dto';
 import { GetRevolvingFundListQueryDto } from './dto/get-revolving-fund-list-query.dto';
 import { RevolvingFundDetailDto } from './dto/revolving-fund-detail.dto';
 import { UpdateRevolvingFundDto } from './dto/update-revolving-fund.dto';
@@ -21,6 +32,7 @@ import { UpdateRevolvingFundStatusDto } from './dto/update-revolving-fund-status
 import { RevolvingFundMapper } from './mappers/revolving-fund.mapper';
 import { RevolvingFundInclude } from './prisma/revolving-fund.include';
 export const RevolvingFundModuleCode = 'RF';
+export const RevolvingFundCopySourceLabel = 'Revolving Fund';
 
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
@@ -102,6 +114,124 @@ export class RevolvingFundService {
       branchUnitId: resolvedBranchId,
       inputMode: suggestion.inputMode,
       transactionNo: suggestion.transactionNumber,
+    };
+  }
+
+  async findCopyFromCandidates(user: AuthUser, query: GetRevolvingFundCopyFromCandidatesQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, RevolvingFundModuleCode, PermissionAction.VIEW, 'You do not have permission to view RevolvingFund records.');
+
+    const page = query.page ?? DefaultPage;
+    const limit = query.limit ?? DefaultLimit;
+    const skip = (page - 1) * limit;
+    const search = cleanOptional(query.search);
+    const partyId = query.partyId ? parsePositiveBigIntId(query.partyId, 'partyId') : null;
+    const partyCode = cleanOptional(query.partyCode);
+    const branchUnitId = query.branchUnitId;
+    const where: Prisma.RevolvingFundWhereInput = {
+      companyId,
+      deletedAt: null,
+      status: { in: [RevolvingFundStatus.APPROVED, RevolvingFundStatus.POSTED] },
+      ...(branchUnitId ? { branchUnitId } : {}),
+      ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
+      ...(search
+        ? {
+            OR: [
+              { transactionNo: { contains: search, mode: 'insensitive' } },
+              { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
+              { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
+              { remarks: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [records, total] = await Promise.all([
+      this.prisma.revolvingFund.findMany({
+        where,
+        include: { details: { orderBy: { lineNumber: 'asc' } } },
+        orderBy: [{ documentDate: 'desc' }, { id: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.revolvingFund.count({ where }),
+    ]);
+    const consumedAmounts = await this.getReplenishmentConsumedAmounts(
+      records.map((record) => ({ id: record.id.toString(), transactionNo: record.transactionNo })),
+      companyId,
+    );
+
+    const candidates = records
+      .map((record) => {
+        const sourceId = record.id.toString();
+        const consumedGrossAmount = consumedAmounts.gross.get(sourceId) ?? 0;
+        const consumedAmount = consumedAmounts.disburse.get(sourceId) ?? 0;
+        const amount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.grossAmount || detail.amount || 0), 0));
+        const disburseAmount = roundMoney(
+          record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0), 0),
+        );
+        const availableGrossAmount = roundMoney(amount - consumedGrossAmount);
+        const availableAmount = roundMoney(disburseAmount - consumedAmount);
+
+        return {
+          accountCode: record.accountCodeSnapshot,
+          accountTitle: record.accountTitleSnapshot,
+          amount,
+          availableAmount,
+          availableGrossAmount,
+          consumedAmount,
+          consumedGrossAmount,
+          currency: record.currencyCode,
+          details: record.details.map((detail) => ({
+            date: detail.date ? detail.date.toISOString().slice(0, 10) : null,
+            disburseAmount: Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0),
+            ewtAmount: Number(detail.ewtAmount),
+            ewtCode: detail.ewtCode,
+            ewtPercent: Number(detail.ewtPercent),
+            grossAmount: Number(detail.grossAmount || detail.amount || 0),
+            id: detail.id.toString(),
+            lineNumber: detail.lineNumber,
+            netAmount: Number(detail.netAmount),
+            particulars: detail.particulars,
+            remarks: detail.remarks,
+            responsibilityCenter: detail.responsibilityCenterSnapshot,
+            responsibilityCenterCode: detail.responsibilityCenterCodeSnapshot,
+            responsibilityCenterId: detail.responsibilityCenterId?.toString() ?? null,
+            supplierCode: detail.supplierCodeSnapshot,
+            supplierName: detail.supplierNameSnapshot,
+            vatAmount: Number(detail.vatAmount),
+            vatPercent: Number(detail.vatPercent),
+            vatType: detail.vatType,
+          })),
+          disburseAmount,
+          documentDate: record.documentDate.toISOString().slice(0, 10),
+          exchangeRate: Number(record.exchangeRate),
+          id: sourceId,
+          partyCode: record.partyCodeSnapshot,
+          partyId: record.partyId?.toString() ?? null,
+          partyName: record.partyNameSnapshot,
+          projectCode: record.projectCode,
+          projectName: record.projectName,
+          remarks: record.remarks,
+          responsibilityCenter: record.responsibilityCenterSnapshot,
+          responsibilityCenterCode: record.responsibilityCenterCodeSnapshot,
+          responsibilityCenterId: record.responsibilityCenterId?.toString() ?? null,
+          source: RevolvingFundCopySourceLabel,
+          sourceNo: record.transactionNo,
+          transactionNo: record.transactionNo,
+        };
+      })
+      .filter((record) => record.availableGrossAmount > 0 && record.availableAmount > 0);
+
+    return {
+      records: candidates,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
     };
   }
 
@@ -432,6 +562,59 @@ export class RevolvingFundService {
     }
   }
 
+  private async getReplenishmentConsumedAmounts(sources: Array<{ id: string; transactionNo: string }>, companyId: number) {
+    const consumed = {
+      disburse: new Map<string, number>(),
+      gross: new Map<string, number>(),
+    };
+    if (sources.length === 0) {
+      return consumed;
+    }
+
+    const sourceIdByReference = new Map<string, string>();
+    for (const source of sources) {
+      sourceIdByReference.set(source.id, source.id);
+      sourceIdByReference.set(formatRevolvingFundReference(source.transactionNo), source.id);
+      sourceIdByReference.set(source.transactionNo, source.id);
+    }
+
+    const details = await this.prisma.revolvingFundReplenishmentDetail.findMany({
+      where: {
+        companyId,
+        revolvingFundNo: { in: [...sourceIdByReference.keys()] },
+        replenishment: {
+          deletedAt: null,
+          status: {
+            in: [
+              RevolvingFundReplenishmentStatus.DRAFT,
+              RevolvingFundReplenishmentStatus.FOR_APPROVAL,
+              RevolvingFundReplenishmentStatus.APPROVED,
+              RevolvingFundReplenishmentStatus.POSTED,
+            ],
+          },
+        },
+      },
+      select: { amount: true, disburseAmount: true, revolvingFundNo: true },
+    });
+
+    for (const detail of details) {
+      const reference = cleanOptional(detail.revolvingFundNo);
+      if (!reference) {
+        continue;
+      }
+
+      const sourceId = sourceIdByReference.get(reference);
+      if (!sourceId) {
+        continue;
+      }
+
+      consumed.gross.set(sourceId, roundMoney((consumed.gross.get(sourceId) ?? 0) + Number(detail.amount || 0)));
+      consumed.disburse.set(sourceId, roundMoney((consumed.disburse.get(sourceId) ?? 0) + Number(detail.disburseAmount || detail.amount || 0)));
+    }
+
+    return consumed;
+  }
+
   private buildListWhere(companyId: number, branchUnitId: number | null, query: GetRevolvingFundListQueryDto): Prisma.RevolvingFundWhereInput {
     const where: Prisma.RevolvingFundWhereInput = {
       companyId,
@@ -567,4 +750,8 @@ export class RevolvingFundService {
 
     return unit.id;
   }
+}
+
+export function formatRevolvingFundReference(transactionNo: string) {
+  return `RF:${transactionNo.trim()}`;
 }

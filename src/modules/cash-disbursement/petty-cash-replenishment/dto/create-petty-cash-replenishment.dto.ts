@@ -125,7 +125,7 @@ export class CreatePettyCashReplenishmentDto {
   @IsEnum(PettyCashReplenishmentStatus)
   status?: PettyCashReplenishmentStatus;
 
-  @ApiPropertyOptional({ description: 'Petty Cash Replenishment Details', type: [PettyCashReplenishmentDetailDto] })
+  @ApiPropertyOptional({ description: 'Petty Cash Replenishment Details', type: () => [PettyCashReplenishmentDetailDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

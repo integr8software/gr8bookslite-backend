@@ -125,7 +125,7 @@ export class CreateRevolvingFundDto {
   @IsEnum(RevolvingFundStatus)
   status?: RevolvingFundStatus;
 
-  @ApiPropertyOptional({ description: 'Revolving Fund Details', type: [RevolvingFundDetailDto] })
+  @ApiPropertyOptional({ description: 'Revolving Fund Details', type: () => [RevolvingFundDetailDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

@@ -26,6 +26,9 @@ import {
   AccountsPayableVoucherCopySourceLabel,
   AccountsPayableVoucherCopySourceService,
 } from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
+import { AdvanceToSupplierCopySourceService } from '../advances-to-suppliers/copy-from/advance-to-supplier-copy-source.service';
+import { PettyCashReplenishmentCopySourceService } from '../petty-cash-replenishment/copy-from/petty-cash-replenishment-copy-source.service';
+import { RevolvingFundReplenishmentCopySourceService } from '../revolving-fund-replenishment/copy-from/revolving-fund-replenishment-copy-source.service';
 import {
   resolveTransactionNumberForCompanyBranch,
   resolveTransactionNumberScopeForCompanyBranch,
@@ -76,6 +79,9 @@ export class CashVoucherService {
     private readonly companyCurrencyService: CompanyCurrencyService,
     private readonly accountingService: CashVoucherAccountingService,
     private readonly accountsPayableVoucherCopySourceService: AccountsPayableVoucherCopySourceService,
+    private readonly advanceToSupplierCopySourceService: AdvanceToSupplierCopySourceService,
+    private readonly pettyCashReplenishmentCopySourceService: PettyCashReplenishmentCopySourceService,
+    private readonly revolvingFundReplenishmentCopySourceService: RevolvingFundReplenishmentCopySourceService,
   ) {}
 
   async findAll(user: AuthUser, query: GetCashVoucherListQueryDto) {
@@ -244,12 +250,7 @@ export class CashVoucherService {
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
     const targetStatus = dto.status || CashVoucherStatus.DRAFT;
-    const details = this.normalizeAccountsPayableVoucherCopiedDetails(
-      dto.details ?? [],
-      normalized.amount,
-      dto.referenceModule,
-      dto.voucherReferenceNo,
-    );
+    const details = this.normalizeAccountsPayableVoucherCopiedDetails(dto.details ?? [], normalized.amount, dto.referenceModule, dto.voucherReferenceNo);
     const effectiveDto = { ...dto, details };
 
     if (this.requiresSubmissionValidation(targetStatus)) {
@@ -274,6 +275,36 @@ export class CashVoucherService {
           requestedTransactionNo: effectiveDto.voucherNo || effectiveDto.transactionNo,
         });
         await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.advanceToSupplierCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.pettyCashReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.revolvingFundReplenishmentCopySourceService.validateCopiedDetails(tx, {
           branchUnitId,
           companyId,
           currencyCode: normalized.currencyCode,
@@ -417,6 +448,39 @@ export class CashVoucherService {
           requestedTransactionNo: effectiveDto.voucherNo || effectiveDto.transactionNo,
         });
         await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.advanceToSupplierCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.pettyCashReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.revolvingFundReplenishmentCopySourceService.validateCopiedDetails(tx, {
           branchUnitId,
           companyId,
           currencyCode: normalized.currencyCode,
@@ -978,11 +1042,7 @@ export class CashVoucherService {
     return Boolean(cleanOptional(detail.refId)) && isSourceDetailRow(detail);
   }
 
-  private isAccountsPayableVoucherCopyPayload(
-    details: CashVoucherDetailDto[],
-    referenceModule?: string | null,
-    voucherReferenceNo?: string | null,
-  ) {
+  private isAccountsPayableVoucherCopyPayload(details: CashVoucherDetailDto[], referenceModule?: string | null, voucherReferenceNo?: string | null) {
     const normalizedReferenceModule = cleanOptional(referenceModule)?.toLowerCase();
     if (normalizedReferenceModule === AccountsPayableVoucherCopySourceLabel.toLowerCase()) {
       return true;

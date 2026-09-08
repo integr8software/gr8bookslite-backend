@@ -160,7 +160,7 @@ export class CashVoucherRecordResponseDto {
   @ApiProperty({ description: 'Status', enum: CashVoucherStatus, example: CashVoucherStatus.DRAFT })
   status: CashVoucherStatus;
 
-  @ApiProperty({ description: 'Details / Line items', type: [CashVoucherDetailResponseDto] })
+  @ApiProperty({ description: 'Details / Line items', type: () => [CashVoucherDetailResponseDto] })
   details: CashVoucherDetailResponseDto[];
 
   @ApiPropertyOptional({ description: 'Created By User Name', example: 'System Administrator' })
@@ -211,17 +211,17 @@ export class CashVoucherPaginationMetaDto {
 }
 
 export class CashVoucherListResponseDto {
-  @ApiProperty({ description: 'List of Cash Vouchers', type: [CashVoucherRecordResponseDto] })
+  @ApiProperty({ description: 'List of Cash Vouchers', type: () => [CashVoucherRecordResponseDto] })
   data: CashVoucherRecordResponseDto[];
 
-  @ApiProperty({ description: 'Pagination Metadata', type: CashVoucherPaginationMetaDto })
+  @ApiProperty({ description: 'Pagination Metadata', type: () => CashVoucherPaginationMetaDto })
   meta: CashVoucherPaginationMetaDto;
 
-  @ApiPropertyOptional({ description: 'Voucher Status Statistics', type: CashVoucherStatisticsDto })
+  @ApiPropertyOptional({ description: 'Voucher Status Statistics', type: () => CashVoucherStatisticsDto })
   statistics?: CashVoucherStatisticsDto;
 }
 
 export class CashVoucherSingleResponseDto {
-  @ApiProperty({ description: 'Cash Voucher Record', type: CashVoucherRecordResponseDto })
+  @ApiProperty({ description: 'Cash Voucher Record', type: () => CashVoucherRecordResponseDto })
   data: CashVoucherRecordResponseDto;
 }

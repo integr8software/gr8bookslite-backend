@@ -125,7 +125,7 @@ export class CreatePettyCashFundDto {
   @IsEnum(PettyCashFundStatus)
   status?: PettyCashFundStatus;
 
-  @ApiPropertyOptional({ description: 'Petty Cash Fund Details', type: [PettyCashFundDetailDto] })
+  @ApiPropertyOptional({ description: 'Petty Cash Fund Details', type: () => [PettyCashFundDetailDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
