@@ -1,15 +1,16 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { AppRole } from '../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ApproverSetupsService } from './approver-setups.service';
 import type { CreateApproverSetupDto } from './dto/create-approver-setup.dto';
 
 describe('ApproverSetupsService', () => {
-  const user: AuthUser = {
+  const user = {
     id: 1,
     companyId: 7,
-    role: 'ADMIN',
-  };
+    role: AppRole.ADMIN,
+  } as AuthUser;
 
   const createValidDto = (overrides: Partial<CreateApproverSetupDto> = {}): CreateApproverSetupDto => ({
     approverCondition: 'Any one approver',
