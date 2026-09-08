@@ -307,6 +307,7 @@ export class PurchaseOrderService {
   }
 
   private async entries(companyId: number, branchUnitId: number, items: PurchaseOrderItemDto[], purchaseType: string, headerPrId?: bigint) {
+    const isServices = purchaseType.trim().toLowerCase() === 'services';
     return Promise.all(
       items.map(async (item, index) => {
         const prEntryId = parseOptionalPositiveBigIntId(item.purchaseRequestEntryId, 'purchaseRequestEntryId');
@@ -323,6 +324,9 @@ export class PurchaseOrderService {
             : null;
         if ((rcId || item.responsibilityCenter) && !rc) throw new BadRequestException('Select a valid Responsibility Center.');
         const serviceId = parseOptionalPositiveBigIntId(item.serviceMaintenanceId, 'serviceMaintenanceId');
+        if (isServices && !serviceId) {
+          throw new BadRequestException('Select a valid service from Service Maintenance.');
+        }
         const service = serviceId ? await this.prisma.serviceMaintenance.findFirst({ where: { id: serviceId, companyId, deletedAt: null } }) : null;
         if (serviceId && !service) throw new BadRequestException('Select a valid service from Service Maintenance.');
         const description = item.description.trim();
@@ -331,7 +335,16 @@ export class PurchaseOrderService {
         const rate = item.discountRate ?? 0;
         const discount = rate > 0 ? (gross * rate) / 100 : Math.min(item.discountAmount ?? 0, gross);
         const after = gross - discount;
-        const vat = item.vatAmount ?? 0;
+        const vatable = item.vatable ?? false;
+        const vatInclusive = item.vatInclusive ?? false;
+        const vat =
+          item.vatAmount != null
+            ? item.vatAmount
+            : vatable
+              ? vatInclusive
+                ? roundMoney(after - after / 1.12)
+                : roundMoney(after * 0.12)
+              : 0;
         return {
           companyId,
           branchUnitId,
@@ -339,16 +352,16 @@ export class PurchaseOrderService {
           purchaseRequestEntryId: prEntry?.id ?? null,
           responsibilityCenterId: rc?.id ?? null,
           serviceMaintenanceId: service?.id ?? null,
-          itemId: cleanOptional(item.itemId),
-          itemCode: cleanOptional(item.itemCode),
-          barcode: cleanOptional(item.barcode),
+          itemId: isServices ? null : cleanOptional(item.itemId),
+          itemCode: isServices ? null : cleanOptional(item.itemCode),
+          barcode: isServices ? null : cleanOptional(item.barcode),
           description,
-          color: cleanOptional(item.color),
-          brand: cleanOptional(item.brand),
-          size: cleanOptional(item.size),
-          model: cleanOptional(item.model),
-          uom: cleanOptional(item.uom),
-          lotNo: cleanOptional(item.lotNo),
+          color: isServices ? null : cleanOptional(item.color),
+          brand: isServices ? null : cleanOptional(item.brand),
+          size: isServices ? null : cleanOptional(item.size),
+          model: isServices ? null : cleanOptional(item.model),
+          uom: isServices ? null : cleanOptional(item.uom),
+          lotNo: isServices ? null : cleanOptional(item.lotNo),
           prQty: new Prisma.Decimal(item.prQty),
           poQty: new Prisma.Decimal(item.poQty),
           price: new Prisma.Decimal(item.price),
@@ -357,10 +370,10 @@ export class PurchaseOrderService {
           discountAmount: new Prisma.Decimal(discount),
           grossAfterDiscount: new Prisma.Decimal(after),
           vatAmount: new Prisma.Decimal(vat),
-          vatable: item.vatable ?? false,
-          vatInclusive: item.vatInclusive ?? false,
-          netOfVatAmount: new Prisma.Decimal(item.vatInclusive ? after - vat : after),
-          netAmount: new Prisma.Decimal(item.vatInclusive ? after : after + vat),
+          vatable,
+          vatInclusive,
+          netOfVatAmount: new Prisma.Decimal(vatInclusive ? after - vat : after),
+          netAmount: new Prisma.Decimal(vatInclusive ? after : after + vat),
           prNoSnapshot: cleanOptional(item.prNo),
           canvassNoSnapshot: cleanOptional(item.canvassNo),
           responsibilityCenterName: rc?.name ?? cleanOptional(item.responsibilityCenter),

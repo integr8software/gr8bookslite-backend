@@ -277,6 +277,10 @@ export class AdvanceToSupplierCopySourceService {
     await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(${lockKey})`);
   }
 
+  getCopiedVoucherDetailAmounts(details: CopiedVoucherDetailInput[] = []) {
+    return getAdvanceToSupplierCopiedDetailAmounts(details);
+  }
+
   async getVoucherConsumedAmounts(
     tx: PrismaWriteClient,
     companyId: number,

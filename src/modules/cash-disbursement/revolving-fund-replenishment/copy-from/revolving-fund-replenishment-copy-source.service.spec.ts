@@ -8,15 +8,6 @@ import {
 
 describe('RevolvingFundReplenishmentCopySourceService', () => {
   const service = new RevolvingFundReplenishmentCopySourceService({} as PrismaService);
-  const getCopiedVoucherDetailAmounts = (
-    service as unknown as {
-      getCopiedVoucherDetailAmounts: (details: Array<Record<string, unknown>>) => Array<{
-        reference: string;
-        grossAmount: number;
-        disburseAmount: number;
-      }>;
-    }
-  ).getCopiedVoucherDetailAmounts.bind(service);
 
   it('formats RFR reference correctly', () => {
     expect(formatRevolvingFundReplenishmentReference('RFR-2026-0001')).toBe('RFR:RFR-2026-0001');
@@ -32,7 +23,7 @@ describe('RevolvingFundReplenishmentCopySourceService', () => {
   });
 
   it('extracts copied voucher detail amounts and ignores generated rows', () => {
-    const allocations = getCopiedVoucherDetailAmounts([
+    const allocations = service.getCopiedVoucherDetailAmounts([
       { refId: 'RFR:RFR-2026-0001', grossAmount: 8000, disburseAmount: 8000 },
       { refId: 'RFR:RFR-2026-0001', grossAmount: 2000, disburseAmount: 2000 },
       { id: 'auto-ewt', accountTitle: 'Expanded Withholding Tax', debit: 0, credit: 100 },

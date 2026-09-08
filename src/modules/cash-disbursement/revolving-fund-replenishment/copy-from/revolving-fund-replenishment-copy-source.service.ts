@@ -304,7 +304,7 @@ export class RevolvingFundReplenishmentCopySourceService {
     }
   }
 
-  private getCopiedVoucherDetailAmounts(details: CopiedVoucherDetailInput[] = []) {
+  getCopiedVoucherDetailAmounts(details: CopiedVoucherDetailInput[] = []) {
     const amountsByReference = new Map<string, { grossAmount: number; disburseAmount: number }>();
     for (const detail of details) {
       if (isGeneratedTargetDetailRow(detail)) {

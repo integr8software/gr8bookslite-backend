@@ -8,15 +8,6 @@ import {
 
 describe('PettyCashReplenishmentCopySourceService', () => {
   const service = new PettyCashReplenishmentCopySourceService({} as PrismaService);
-  const getCopiedVoucherDetailAmounts = (
-    service as unknown as {
-      getCopiedVoucherDetailAmounts: (details: Array<Record<string, unknown>>) => Array<{
-        reference: string;
-        grossAmount: number;
-        disburseAmount: number;
-      }>;
-    }
-  ).getCopiedVoucherDetailAmounts.bind(service);
 
   it('formats PCR reference correctly', () => {
     expect(formatPettyCashReplenishmentReference('PCR-2026-0001')).toBe('PCR:PCR-2026-0001');
@@ -32,7 +23,7 @@ describe('PettyCashReplenishmentCopySourceService', () => {
   });
 
   it('extracts copied voucher detail amounts and ignores generated rows', () => {
-    const allocations = getCopiedVoucherDetailAmounts([
+    const allocations = service.getCopiedVoucherDetailAmounts([
       { refId: 'PCR:PCR-2026-0001', grossAmount: 4000, disburseAmount: 3800 },
       { refId: 'PCR:PCR-2026-0001', grossAmount: 2000, disburseAmount: 1900 },
       { id: 'auto-cash', accountTitle: 'Cash on Hand', debit: 0, credit: 5700 },
