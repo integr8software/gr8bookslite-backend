@@ -166,7 +166,7 @@ Candidate response:
 
 ```typescript
 type CopyFromCandidateRecord = {
-  id: string;
+  id: string; // Opaque selection identity; never render as Reference No
   source: string;
   sourceNo: string;
   documentDate: string;
@@ -174,7 +174,10 @@ type CopyFromCandidateRecord = {
   partyCode?: string;
   partyName?: string;
   currency: string;
-  originalAmount?: string;
+  grossAmount?: string;
+  consumedGrossAmount?: string;
+  availableGrossAmount?: string;
+  amount?: string;
   consumedAmount?: string;
   availableAmount?: string;
   originalQuantity?: string;
@@ -193,17 +196,9 @@ type CopyFromSourceDetailRecord = {
   accountId?: string;
   accountCode?: string;
   accountTitle?: string;
-  expenseType?: string;
+  grossAmount?: string;
   amount?: string;
-  netAmount?: string;
-  vatType?: string;
-  vatCode?: string;
-  vatPercent?: string;
-  vatAmount?: string;
-  ewtCode?: string;
-  ewtPercent?: string;
-  ewtAmount?: string;
-  disburseAmount?: string;
+  consumptionAmount?: string;
   partyId?: string;
   partyCode?: string;
   partyName?: string;
@@ -211,6 +206,7 @@ type CopyFromSourceDetailRecord = {
   responsibilityCenterId?: string;
   responsibilityCenter?: string;
   referenceNo?: string;
+  extra?: Record<string, string | number | boolean | null>;
 };
 ```
 
@@ -231,7 +227,10 @@ type CopyFromWorkflowFieldDefinition = {
     | 'partyCode'
     | 'partyName'
     | 'currency'
-    | 'originalAmount'
+    | 'grossAmount'
+    | 'consumedGrossAmount'
+    | 'availableGrossAmount'
+    | 'amount'
     | 'consumedAmount'
     | 'availableAmount'
     | 'originalQuantity'
@@ -411,7 +410,7 @@ async function assertSourceAmountAvailableForTarget(
 ) {
   const source = await tx.<sourceModel>.findFirst({
     where: {
-      id: input.sourceId,
+      transactionNo: parsePublicSourceReference(input.sourceReference),
       companyId: input.companyId,
       branchUnitId: input.branchUnitId,
       deletedAt: null,
@@ -419,6 +418,7 @@ async function assertSourceAmountAvailableForTarget(
     },
     select: {
       id: true,
+      transactionNo: true,
       partyId: true,
       partyCodeSnapshot: true,
       partyNameSnapshot: true,
@@ -441,7 +441,7 @@ async function assertSourceAmountAvailableForTarget(
 
   const consumed = await tx.<targetSourceAllocationModel>.aggregate({
     where: {
-      sourceId: input.sourceId,
+      sourceId: source.id,
       target: {
         companyId: input.companyId,
         deletedAt: null,
@@ -457,7 +457,7 @@ async function assertSourceAmountAvailableForTarget(
 
   if (input.requestedAmount.gt(availableAmount)) {
     throw new BadRequestException(
-      `Source transaction ${source.id.toString()} has only ${availableAmount.toFixed(2)} available.`,
+      `Source transaction ${source.transactionNo} has only ${availableAmount.toFixed(2)} available.`,
     );
   }
 }
@@ -511,16 +511,18 @@ If the existing target detail table already has stable source reference and amou
 
 Required target detail fields:
 
-- `refId` stores the source primary key, not the display transaction number.
-- `grossAmount` or equivalent stores the gross amount consumed from the source.
-- `grossAmount`, `vatAmount`, `ewtAmount`, and `netAmount` may store accounting/tax presentation amounts, but they must not be the only source-consumption basis when the source balance is payable amount.
+- `refId` stores a public stable reference such as `<source-code>:<transactionNo>`. Do not expose an internal database primary key in user-facing Data Entry or newly saved references.
+- The backend resolves the public reference within company and branch scope before locking and validating the source record.
+- `grossAmount` stores the gross amount consumed from the source.
+- `consumptionAmount` or a workflow-defined equivalent stores the amount consumed from the workflow's `amount` balance.
+- `vatAmount`, `ewtAmount`, and `netAmount` remain accounting and tax presentation values.
 - Target header `referenceModule` identifies the copied source module.
 
 Availability must be calculated from active target detail rows:
 
 ```typescript
-availableGrossAmount = source.grossAmount - sum(activeTargetDetails.grossAmount where refId = source.id)
-availableAmount = source.totalPayable - sum(activeTargetDetails.disburseAmount where refId = source.id)
+availableGrossAmount = source.grossAmount - sum(activeTargetDetails.grossAmount where refId = source.publicReference)
+availableAmount = source.amount - sum(activeTargetDetails.consumptionAmount where refId = source.publicReference)
 ```
 
 Cancelled, disapproved, deleted, or edited-away target rows must not consume source availability.
@@ -543,11 +545,14 @@ For selected Party Name:
 
 For partial amount flows:
 
-- Default copied amount to the source available amount.
-- Allow the user to reduce the copied amount when partial amount consumption is allowed.
-- Never allow the user to enter more than available amount.
+- Declare the balance basis explicitly when gross and the workflow-defined amount differ.
+- Display `availableGrossAmount` when the Copy From Amount column represents gross value.
+- Use `availableAmount` for the remaining workflow-defined amount.
+- Allow the user to reduce the copied amount when partial consumption is allowed, and scale all related amount fields from one declared ratio.
+- Never allow either consumption amount to exceed its corresponding available balance.
 - If source detail lines include tax data, copy the source detail line fields first, then scale the amounts proportionally when the source is only partially available.
-- Save the source primary key on every copied target detail row so the backend can recalculate remaining balance without reading display reference text.
+- Save the public source reference on every copied target detail row. Resolve it to the source record on the backend within tenant and branch scope.
+- Disable a source already present in the current target and reject a stale Apply attempt for that same source.
 
 For partial quantity flows:
 
@@ -567,131 +572,112 @@ Before releasing a Copy From workflow, verify all items below.
 - Cancelled, disapproved, deleted, or superseded targets do not consume source availability.
 - Edited targets exclude their own previous allocations when recalculating availability.
 - Backend validation uses stable IDs or codes, not Party Name text alone.
+- User-facing and persisted references use public transaction references rather than internal database IDs.
+- The frontend disables sources already added to the current target and guards Apply against stale duplicate selections.
+- The backend groups all submitted rows and legacy/public aliases by resolved source before validating total consumption.
 - Frontend filtering mirrors backend rules but is not treated as authority.
 - Tests cover race/stale-data behavior by attempting to save more than the remaining amount or quantity.
 
-## 13. Accounts Payable Voucher to Cash/Disbursement Voucher
+## 13. Dual Amount Workflow
 
-This workflow uses the standard structure: the source owns candidate availability, and the target owns Apply behavior.
+Use this structure when `<source-module>` and `<target-module>` track both a gross amount and a second workflow-defined amount. The second amount may represent an expense, disbursement, settlement, net value, or another module-specific basis.
 
 | Property | Rule |
 | --- | --- |
-| Source | Accounts Payable Voucher |
-| Target | Cash Voucher or Disbursement Voucher |
-| Selection mode | Multiple |
-| Consumption type | Header amount balance |
-| Party restriction | Same party required when the target header has Party Name. Empty Party Name may show all available APVs, but selected APVs must still share one party. |
-| Currency restriction | Same currency required. |
-| Branch restriction | Same active branch required. |
-| New allocation table | Not required for the current schema because CV/DV detail rows already store `refId`, tax amounts, and `disburseAmount`. |
+| Source | `<source-module>` |
+| Target | `<target-module>` |
+| Selection mode | Declared by the workflow as `single` or `multiple`. |
+| Consumption type | Header dual amount balance. |
+| Party restriction | Declared by the workflow. If enabled, selected sources must share the target party. |
+| Currency restriction | Declared by the workflow. |
+| Branch restriction | Same active branch unless the workflow explicitly allows otherwise. |
+| Allocation storage | A separate table is optional when target details already store public `refId`, `grossAmount`, and the workflow consumption amount. |
 
-### Candidate Rules
+### Amount Semantics
 
-The APV candidate endpoint must return only copyable APVs:
-
-- Same company and active branch.
-- Not deleted.
-- Approved/posted APV status only.
-- Same party when the target passed a party filter.
-- `availableAmount > 0`.
-
-The APV candidate must include both header balance fields and detail lines:
+Do not give the generic contract a field tied to one business process. Declare what `amount` means in each `<source-module> + <target-module>` workflow.
 
 ```typescript
-type AccountsPayableVoucherCopyCandidate = {
-  id: string; // APV primary key
+type <SourceCopyCandidate> = {
+  id: string; // Opaque selection identity; never display in Data Entry
   transactionNo: string;
   partyId?: string;
-  partyCode: string;
-  partyName: string;
-  currency: string;
-  exchangeRate: number;
-  amount: number; // Original gross amount: sum(details.amount)
-  consumedGrossAmount: number; // Gross already copied to active targets
-  availableGrossAmount: number; // Remaining gross amount
-  consumedAmount: number; // Payable/disburse amount already copied
-  availableAmount: number; // Remaining payable/disburse amount
-  totalPayable: number; // Original payable amount after VAT/EWT deductions
-  details: Array<{
-    id: string;
-    lineNumber: number;
-    expenseAccountId?: string;
-    expenseAccountCode: string;
-    expenseType: string;
-    amount: number;
-    netAmount: number;
-    vat?: string;
-    vatPercent: number;
-    vatAmount: number;
-    ewt?: string;
-    ewtPercent: number;
-    ewtAmount: number;
-    totalAmountDue: number;
-    particulars?: string;
-    responsibilityCenterId?: string;
-    responsibilityCenter?: string;
-    referenceNo?: string;
-  }>;
+  partyCode?: string;
+  partyName?: string;
+  currency?: string;
+  exchangeRate?: number;
+
+  grossAmount: number;
+  consumedGrossAmount: number;
+  availableGrossAmount: number;
+
+  amount: number; // Workflow-defined amount
+  consumedAmount: number;
+  availableAmount: number;
+
+  details: <SourceDetail>[];
 };
 ```
 
+The workflow definition must name the business meaning of `amount` and the target detail field used to persist its consumption:
+
+```typescript
+type <DualAmountDefinition> = {
+  amountMeaning: '<expense | disbursement | settlement | net | other>';
+  sourceGrossField: '<source-gross-field>';
+  sourceAmountField: '<source-amount-field>';
+  targetGrossField: 'grossAmount';
+  targetAmountField: '<target-consumption-field>';
+};
+```
+
+The candidate endpoint returns only sources whose required available balance is greater than zero. A workflow that consumes both balances requires both `availableGrossAmount > 0` and `availableAmount > 0`.
+
 ### Apply Mapping
 
-When APV is copied into CV/DV:
+When `<source-module>` is copied into `<target-module>`:
 
-- Target header `referenceModule` becomes `Accounts Payable Voucher`.
-- Target header `voucherReferenceNo` stores `APV:<transactionNo>` for display.
-- Target party, currency, exchange rate, project, and remarks are copied only when the target header is empty.
-- Target detail `refId` stores the public reference `APV:<transactionNo>`. Existing numeric references remain readable for backward compatibility but must not be created by new clients.
-- Target detail expense/account fields come from the APV detail line.
-- Target detail VAT Type comes from the APV detail VAT field.
-- Target detail EWT Code comes from the APV detail EWT field.
-- Target detail amount fields come from the APV detail amounts.
-- Target detail `disburseAmount` or equivalent payable amount comes from APV detail `totalAmountDue`.
+- Set target `referenceModule` to the configured `<source-module>` identifier.
+- Format the public reference as `<source-code>:<transactionNo>`.
+- Store the public reference in the target header reference and every copied target detail `refId`.
+- Never display or persist the candidate `id` as Data Entry Reference No.
+- Preserve target header values when already populated; otherwise copy configured party, currency, project, and remark fields.
+- Copy configured source detail fields into target detail fields.
+- Use `availableGrossAmount` in the Copy From Amount column when that column represents gross value.
+- Disable a source already represented by an editable target detail and label it `Already added`.
+- Reject a stale Apply attempt that includes a source already added to the current target.
 
 Example:
 
 ```typescript
-target.referenceModule = 'Accounts Payable Voucher';
-target.voucherReferenceNo = `APV:${apv.transactionNo}`;
+target.referenceModule = '<source-module>';
+target.referenceNo = `<source-code>:${source.transactionNo}`;
 
-targetDetail.refId = `APV:${apv.transactionNo}`;
-targetDetail.accountCode = apvDetail.expenseAccountCode;
-targetDetail.accountTitle = apvDetail.expenseType;
-targetDetail.grossAmount = apvDetail.amount;
-targetDetail.netAmount = apvDetail.netAmount;
-targetDetail.vatCode = apvDetail.vat;
-targetDetail.vatAmount = apvDetail.vatAmount;
-targetDetail.ewtCode = apvDetail.ewt;
-targetDetail.ewtAmount = apvDetail.ewtAmount;
-targetDetail.disburseAmount = apvDetail.totalAmountDue;
+targetDetail.refId = `<source-code>:${source.transactionNo}`;
+targetDetail.grossAmount = sourceDetail.<source-gross-field>;
+targetDetail.<target-consumption-field> = sourceDetail.<source-amount-field>;
 ```
 
-The Copy From response must keep gross and payable amounts separate:
+If gross amount is 5000 and the workflow-defined amount is 4850, copying 3000 gross proportionally consumes 2910 of the workflow-defined amount. The next candidate response returns `availableGrossAmount = 2000` and `availableAmount = 1940`.
 
-- `amount` is the original APV gross amount from the sum of APV detail `amount`.
-- `availableGrossAmount` is the gross amount still available to copy.
-- `totalPayable` is the original APV payable amount after VAT/EWT deductions.
-- `availableAmount` is the payable/disburse amount still available.
+When proportional copying is used, calculate one ratio from gross availability and apply it consistently to gross, workflow amount, tax, net, and other related amount fields. A dedicated allocation UI may replace proportional scaling when users must choose exact line amounts.
 
-If APV gross amount is 5000 and total payable is 4850, copying 3000 gross proportionally consumes 2910 payable. The next Copy From response must show `availableGrossAmount = 2000` and `availableAmount = 1940`. If the APV has multiple detail lines and only a partial gross amount is available, the frontend should scale gross, VAT, EWT, net, and payable detail amounts by the same gross availability ratio unless a dedicated allocation UI lets the user choose exact line amounts.
-
-The CV/DV voucher amount must match the payable amount being disbursed now. For example, an APV with gross amount 5000 and total payable 4850 can produce a CV/DV payment of 4850 while consuming 5000 gross, leaving both available balances at zero.
-
-At submission, derive `<target>.amount` from the sum of editable detail `disburseAmount` values. Do not submit a cached gross total as the payment amount. Exclude generated accounting counterparts from this sum. Backend partial-payment normalization and accounting validation must identify the same source detail rows, including older payloads without generated row IDs. Keep the equality check between the submitted payment amount and its detail total; check the remaining `<source>` balance separately inside the save transaction.
+At submission, derive `<target-module>.amount` from the target detail field declared by `targetAmountField`. Exclude generated accounting counterpart rows. Validate the submitted target amount against the same detail total, then validate both remaining source balances inside the save transaction.
 
 ### Save-Time Guard
 
-CV/DV create and update must validate copied APV rows inside the database transaction:
+Create and update for `<target-module>` must validate copied `<source-module>` rows inside the database transaction:
 
-- Lock each referenced APV before checking remaining balance.
-- Re-read APV status, company, branch, party, currency, and amount.
-- Sum existing active CV/DV details where `referenceModule = Accounts Payable Voucher` and `refId = apv.id`.
-- Use `grossAmount` as the APV consumption amount. Keep `disburseAmount` as the current CV/DV payment after deductions.
-- Exclude the current CV/DV when editing.
-- Reject saves that exceed the current remaining APV amount.
+- Resolve `<source-code>:<transactionNo>` within current company and branch scope.
+- Lock each resolved source before checking remaining balances.
+- Re-read source status, scope, party, currency, gross amount, and workflow-defined amount.
+- Sum existing active target details by public `refId` and include configured legacy references when required.
+- Use `grossAmount` for gross consumption and `targetAmountField` for workflow amount consumption.
+- Aggregate all submitted rows and legacy/public aliases by resolved source before comparing totals.
+- Exclude the current target when editing.
+- Reject saves that exceed either `availableGrossAmount` or `availableAmount`.
 
-This prevents double-vouchering even if two users open the same APV, stale browser data is submitted, or someone bypasses the frontend.
+This prevents duplicate consumption when users have stale browser data, save concurrently, or bypass the frontend.
 
 ## 14. Best Recommendation
 
