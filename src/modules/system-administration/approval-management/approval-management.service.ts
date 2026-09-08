@@ -495,6 +495,49 @@ export class ApprovalManagementService {
       rulesByScope.set(rule.moduleScope, [...(rulesByScope.get(rule.moduleScope) ?? []), rule]);
     }
 
+    for (const scope of scopes) {
+      if (!rulesByScope.has(scope) || rulesByScope.get(scope)!.length === 0) {
+        const defaultSetup = await this.prisma.approverSetup.findFirst({
+          where: {
+            companyId,
+            moduleScope: scope,
+            status: 'Active',
+          },
+          include: {
+            approvers: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        });
+
+        if (defaultSetup && defaultSetup.approvers.length > 0) {
+          const moduleInfo = await this.prisma.module.findFirst({
+            where: { code: scope },
+            select: { name: true },
+          });
+
+          const createdRule = await db.approvalRule.create({
+            data: {
+              amount: '',
+              amountRule: 'greaterThan',
+              approverSetupId: defaultSetup.id,
+              companyId,
+              description: 'Default approval rule from approver setup',
+              moduleName: moduleInfo?.name ?? scope,
+              moduleScope: scope,
+              routeName: defaultSetup.levelName || 'Default Route',
+              ruleType: 'default',
+              status: 'Active',
+            },
+            include: ApprovalRuleInclude,
+          });
+
+          rulesByScope.set(scope, [createdRule as ApprovalRulePayload]);
+        }
+      }
+    }
+
     return rulesByScope;
   }
 
@@ -899,6 +942,7 @@ type ApprovalManagementPrismaClient = {
     update: (args: Record<string, unknown>) => Promise<unknown>;
   };
   approverSetup: {
+    findFirst: (args: Record<string, unknown>) => Promise<Record<string, unknown> | null>;
     findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
   };
   approverSetupUser: {
@@ -1298,6 +1342,7 @@ function mapApprovalContext(context: ApprovalContext, currentUserId: number) {
     moduleScope: context.header.referenceType,
     moduleName: context.rule.moduleName || context.header.referenceType,
     referenceNo: context.displayReferenceNo,
+    referenceId: context.header.referenceId.toString(),
     remarks: context.header.remarks?.trim() ?? '',
     requestedAt: context.header.createdAt ?? context.header.transactionDate,
     ruleId: context.rule.id,

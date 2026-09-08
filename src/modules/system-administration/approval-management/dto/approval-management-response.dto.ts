@@ -131,6 +131,9 @@ export class ApprovalTransactionResponseDto {
   @ApiProperty()
   referenceNo!: string;
 
+  @ApiProperty({ required: false })
+  referenceId?: string;
+
   @ApiProperty()
   remarks!: string;
 
