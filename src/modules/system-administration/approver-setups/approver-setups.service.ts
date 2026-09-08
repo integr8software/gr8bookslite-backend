@@ -55,29 +55,75 @@ export class ApproverSetupsService {
   async create(user: AuthUser, dto: CreateApproverSetupDto): Promise<CreateApproverSetupResponse> {
     const companyId = this.getCompanyContext(user);
     const approverUserIds = await this.getValidApproverUserIds(companyId, dto.approverUserIds);
+    const moduleScope = dto.moduleScope.trim();
+    const type = dto.type.trim();
 
-    const setup = await this.prisma.$transaction(async (tx) =>
-      tx.approverSetup.create({
+    const existing = await this.prisma.approverSetup.findFirst({
+      where: {
+        companyId,
+        moduleScope,
+        type,
+      },
+    });
+
+    if (existing) {
+      throw new BadRequestException(`Approver setup for module "${moduleScope}" with type "${type}" already exists.`);
+    }
+
+    const setup = await this.prisma.$transaction(async (tx) => {
+      const createdSetup = await tx.approverSetup.create({
         data: {
           companyId,
           approverCondition: dto.approverCondition.trim(),
           levelName: dto.levelName.trim(),
-          type: dto.type.trim(),
+          type,
           status: dto.status.trim(),
           level: dto.level ?? null,
-          moduleScope: dto.moduleScope.trim(),
+          moduleScope,
           validUntil: getApproverSetupValidUntil(dto),
           approvers: {
             create: approverUserIds.map((userId, index) => ({
               userId,
               sequence: index + 1,
-              moduleScope: dto.moduleScope.trim(),
+              moduleScope,
             })),
           },
         },
         include: ApproverSetupInclude,
-      }),
-    );
+      });
+
+      const existingRule = await tx.approvalRule.findFirst({
+        where: {
+          companyId,
+          moduleScope,
+          status: 'Active',
+        },
+      });
+
+      if (!existingRule) {
+        const moduleInfo = await tx.module.findFirst({
+          where: { code: moduleScope },
+          select: { name: true },
+        });
+
+        await tx.approvalRule.create({
+          data: {
+            amount: '',
+            amountRule: 'greaterThan',
+            approverSetupId: createdSetup.id,
+            companyId,
+            description: 'Default approval rule from approver setup',
+            moduleName: moduleInfo?.name ?? moduleScope,
+            moduleScope,
+            routeName: createdSetup.levelName || 'Default Route',
+            ruleType: 'default',
+            status: 'Active',
+          },
+        });
+      }
+
+      return createdSetup;
+    });
 
     return {
       message: 'Approver setup created.',
@@ -89,6 +135,21 @@ export class ApproverSetupsService {
     const companyId = this.getCompanyContext(user);
     const approverUserIds = await this.getValidApproverUserIds(companyId, dto.approverUserIds);
     await this.assertSetupBelongsToCompany(companyId, setupId);
+    const moduleScope = dto.moduleScope.trim();
+    const type = dto.type.trim();
+
+    const duplicate = await this.prisma.approverSetup.findFirst({
+      where: {
+        companyId,
+        moduleScope,
+        type,
+        id: { not: setupId },
+      },
+    });
+
+    if (duplicate) {
+      throw new BadRequestException(`Approver setup for module "${moduleScope}" with type "${type}" already exists.`);
+    }
 
     const setup = await this.prisma.$transaction(async (tx) => {
       await tx.approverSetupUser.deleteMany({
@@ -104,16 +165,16 @@ export class ApproverSetupsService {
         data: {
           approverCondition: dto.approverCondition.trim(),
           levelName: dto.levelName.trim(),
-          type: dto.type.trim(),
+          type,
           status: dto.status.trim(),
           level: dto.level ?? null,
-          moduleScope: dto.moduleScope.trim(),
+          moduleScope,
           validUntil: getApproverSetupValidUntil(dto),
           approvers: {
             create: approverUserIds.map((userId, index) => ({
               userId,
               sequence: index + 1,
-              moduleScope: dto.moduleScope.trim(),
+              moduleScope,
             })),
           },
         },
