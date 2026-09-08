@@ -182,7 +182,35 @@ type CopyFromCandidateRecord = {
   availableQuantity?: string;
   remarks?: string;
   disabledReason?: string;
+  details?: CopyFromSourceDetailRecord[];
   extra?: Record<string, string | number | boolean | null>;
+};
+
+type CopyFromSourceDetailRecord = {
+  id: string;
+  lineNumber: number;
+  sourceLineId?: string;
+  accountId?: string;
+  accountCode?: string;
+  accountTitle?: string;
+  expenseType?: string;
+  amount?: string;
+  netAmount?: string;
+  vatType?: string;
+  vatCode?: string;
+  vatPercent?: string;
+  vatAmount?: string;
+  ewtCode?: string;
+  ewtPercent?: string;
+  ewtAmount?: string;
+  disburseAmount?: string;
+  partyId?: string;
+  partyCode?: string;
+  partyName?: string;
+  particulars?: string;
+  responsibilityCenterId?: string;
+  responsibilityCenter?: string;
+  referenceNo?: string;
 };
 ```
 
@@ -460,6 +488,8 @@ quantity     Decimal     @db.Decimal(18, 6)
 
 ### Amount Balance
 
+Preferred when the schema needs a clean many-to-many allocation ledger:
+
 ```prisma
 model <TargetSourceAllocation> {
   id             BigInt  @id @default(autoincrement())
@@ -476,6 +506,24 @@ model <TargetSourceAllocation> {
 ```
 
 This makes `<SourceModule>` 5000, `<TargetModule>` 3000, remaining 2000 easy to query and safe under concurrency.
+
+If the existing target detail table already has stable source reference and amount fields, a new allocation table is not required for the first implementation. In that case, the target detail table itself is the allocation ledger.
+
+Required target detail fields:
+
+- `refId` stores the source primary key, not the display transaction number.
+- `grossAmount` or equivalent stores the gross amount consumed from the source.
+- `grossAmount`, `vatAmount`, `ewtAmount`, and `netAmount` may store accounting/tax presentation amounts, but they must not be the only source-consumption basis when the source balance is payable amount.
+- Target header `referenceModule` identifies the copied source module.
+
+Availability must be calculated from active target detail rows:
+
+```typescript
+availableGrossAmount = source.grossAmount - sum(activeTargetDetails.grossAmount where refId = source.id)
+availableAmount = source.totalPayable - sum(activeTargetDetails.disburseAmount where refId = source.id)
+```
+
+Cancelled, disapproved, deleted, or edited-away target rows must not consume source availability.
 
 ## 11. Frontend Apply Contract
 
@@ -498,6 +546,8 @@ For partial amount flows:
 - Default copied amount to the source available amount.
 - Allow the user to reduce the copied amount when partial amount consumption is allowed.
 - Never allow the user to enter more than available amount.
+- If source detail lines include tax data, copy the source detail line fields first, then scale the amounts proportionally when the source is only partially available.
+- Save the source primary key on every copied target detail row so the backend can recalculate remaining balance without reading display reference text.
 
 For partial quantity flows:
 
@@ -520,7 +570,130 @@ Before releasing a Copy From workflow, verify all items below.
 - Frontend filtering mirrors backend rules but is not treated as authority.
 - Tests cover race/stale-data behavior by attempting to save more than the remaining amount or quantity.
 
-## 13. Best Recommendation
+## 13. Accounts Payable Voucher to Cash/Disbursement Voucher
+
+This workflow uses the standard structure: the source owns candidate availability, and the target owns Apply behavior.
+
+| Property | Rule |
+| --- | --- |
+| Source | Accounts Payable Voucher |
+| Target | Cash Voucher or Disbursement Voucher |
+| Selection mode | Multiple |
+| Consumption type | Header amount balance |
+| Party restriction | Same party required when the target header has Party Name. Empty Party Name may show all available APVs, but selected APVs must still share one party. |
+| Currency restriction | Same currency required. |
+| Branch restriction | Same active branch required. |
+| New allocation table | Not required for the current schema because CV/DV detail rows already store `refId`, tax amounts, and `disburseAmount`. |
+
+### Candidate Rules
+
+The APV candidate endpoint must return only copyable APVs:
+
+- Same company and active branch.
+- Not deleted.
+- Approved/posted APV status only.
+- Same party when the target passed a party filter.
+- `availableAmount > 0`.
+
+The APV candidate must include both header balance fields and detail lines:
+
+```typescript
+type AccountsPayableVoucherCopyCandidate = {
+  id: string; // APV primary key
+  transactionNo: string;
+  partyId?: string;
+  partyCode: string;
+  partyName: string;
+  currency: string;
+  exchangeRate: number;
+  amount: number; // Original gross amount: sum(details.amount)
+  consumedGrossAmount: number; // Gross already copied to active targets
+  availableGrossAmount: number; // Remaining gross amount
+  consumedAmount: number; // Payable/disburse amount already copied
+  availableAmount: number; // Remaining payable/disburse amount
+  totalPayable: number; // Original payable amount after VAT/EWT deductions
+  details: Array<{
+    id: string;
+    lineNumber: number;
+    expenseAccountId?: string;
+    expenseAccountCode: string;
+    expenseType: string;
+    amount: number;
+    netAmount: number;
+    vat?: string;
+    vatPercent: number;
+    vatAmount: number;
+    ewt?: string;
+    ewtPercent: number;
+    ewtAmount: number;
+    totalAmountDue: number;
+    particulars?: string;
+    responsibilityCenterId?: string;
+    responsibilityCenter?: string;
+    referenceNo?: string;
+  }>;
+};
+```
+
+### Apply Mapping
+
+When APV is copied into CV/DV:
+
+- Target header `referenceModule` becomes `Accounts Payable Voucher`.
+- Target header `voucherReferenceNo` stores `APV:<transactionNo>` for display.
+- Target party, currency, exchange rate, project, and remarks are copied only when the target header is empty.
+- Target detail `refId` stores the public reference `APV:<transactionNo>`. Existing numeric references remain readable for backward compatibility but must not be created by new clients.
+- Target detail expense/account fields come from the APV detail line.
+- Target detail VAT Type comes from the APV detail VAT field.
+- Target detail EWT Code comes from the APV detail EWT field.
+- Target detail amount fields come from the APV detail amounts.
+- Target detail `disburseAmount` or equivalent payable amount comes from APV detail `totalAmountDue`.
+
+Example:
+
+```typescript
+target.referenceModule = 'Accounts Payable Voucher';
+target.voucherReferenceNo = `APV:${apv.transactionNo}`;
+
+targetDetail.refId = `APV:${apv.transactionNo}`;
+targetDetail.accountCode = apvDetail.expenseAccountCode;
+targetDetail.accountTitle = apvDetail.expenseType;
+targetDetail.grossAmount = apvDetail.amount;
+targetDetail.netAmount = apvDetail.netAmount;
+targetDetail.vatCode = apvDetail.vat;
+targetDetail.vatAmount = apvDetail.vatAmount;
+targetDetail.ewtCode = apvDetail.ewt;
+targetDetail.ewtAmount = apvDetail.ewtAmount;
+targetDetail.disburseAmount = apvDetail.totalAmountDue;
+```
+
+The Copy From response must keep gross and payable amounts separate:
+
+- `amount` is the original APV gross amount from the sum of APV detail `amount`.
+- `availableGrossAmount` is the gross amount still available to copy.
+- `totalPayable` is the original APV payable amount after VAT/EWT deductions.
+- `availableAmount` is the payable/disburse amount still available.
+
+If APV gross amount is 5000 and total payable is 4850, copying 3000 gross proportionally consumes 2910 payable. The next Copy From response must show `availableGrossAmount = 2000` and `availableAmount = 1940`. If the APV has multiple detail lines and only a partial gross amount is available, the frontend should scale gross, VAT, EWT, net, and payable detail amounts by the same gross availability ratio unless a dedicated allocation UI lets the user choose exact line amounts.
+
+The CV/DV voucher amount must match the payable amount being disbursed now. For example, an APV with gross amount 5000 and total payable 4850 can produce a CV/DV payment of 4850 while consuming 5000 gross, leaving both available balances at zero.
+
+At submission, derive `<target>.amount` from the sum of editable detail `disburseAmount` values. Do not submit a cached gross total as the payment amount. Exclude generated accounting counterparts from this sum. Backend partial-payment normalization and accounting validation must identify the same source detail rows, including older payloads without generated row IDs. Keep the equality check between the submitted payment amount and its detail total; check the remaining `<source>` balance separately inside the save transaction.
+
+### Save-Time Guard
+
+CV/DV create and update must validate copied APV rows inside the database transaction:
+
+- Lock each referenced APV before checking remaining balance.
+- Re-read APV status, company, branch, party, currency, and amount.
+- Sum existing active CV/DV details where `referenceModule = Accounts Payable Voucher` and `refId = apv.id`.
+- Use `grossAmount` as the APV consumption amount. Keep `disburseAmount` as the current CV/DV payment after deductions.
+- Exclude the current CV/DV when editing.
+- Reject saves that exceed the current remaining APV amount.
+
+This prevents double-vouchering even if two users open the same APV, stale browser data is submitted, or someone bypasses the frontend.
+
+## 14. Best Recommendation
 
 Build Copy From as a workflow contract, not as one generic frontend feature.
 

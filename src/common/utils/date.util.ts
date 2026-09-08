@@ -21,6 +21,10 @@ export function getUtcToday() {
   return parseUtcDateOnly(new Date().toISOString());
 }
 
+export function toDateValue(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 function invalidDate(fieldName: string) {
   return new BadRequestException(`${fieldName} must be a valid ISO date.`);
 }
