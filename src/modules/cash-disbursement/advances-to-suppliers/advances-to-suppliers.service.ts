@@ -130,7 +130,6 @@ export class AdvancesToSuppliersService {
         partyCodeSnapshot: references.party?.partyCodeNo ?? partyCode,
         partyNameSnapshot: references.party?.partyName ?? dto.partyName?.trim() ?? '',
         accountCodeSnapshot: references.creditAccount?.accountCode ?? accountCode,
-        poReference: dto.poReference?.trim() ?? '',
         totalPoAmount: this.toDecimal(dto.totalPoAmount, '0.00'),
         amount: this.toDecimal(dto.advancePaymentAmount, '0.00'),
       });
@@ -203,7 +202,6 @@ export class AdvancesToSuppliersService {
         partyCodeSnapshot: references.party?.partyCodeNo ?? dto.partyCode ?? existing.partyCodeSnapshot,
         partyNameSnapshot: references.party?.partyName ?? dto.partyName ?? existing.partyNameSnapshot,
         accountCodeSnapshot: references.creditAccount?.accountCode ?? dto.accountCode ?? existing.accountCodeSnapshot,
-        poReference: dto.poReference ?? existing.poReference,
         totalPoAmount: dto.totalPoAmount ? this.toDecimal(dto.totalPoAmount, '0.00') : existing.totalPoAmount,
         amount: dto.advancePaymentAmount ? this.toDecimal(dto.advancePaymentAmount, '0.00') : existing.amount,
       });
@@ -408,7 +406,6 @@ export class AdvancesToSuppliersService {
     partyCodeSnapshot: string | null;
     partyNameSnapshot: string | null;
     accountCodeSnapshot: string | null;
-    poReference: string | null;
     totalPoAmount: Prisma.Decimal;
     amount: Prisma.Decimal;
   }) {
@@ -417,9 +414,6 @@ export class AdvancesToSuppliersService {
     }
     if (!record.accountCodeSnapshot?.trim()) {
       throw new BadRequestException('Select a default account before submitting this Advances to Suppliers record.');
-    }
-    if (!record.poReference?.trim()) {
-      throw new BadRequestException('Select a PO reference before submitting this Advances to Suppliers record.');
     }
     if (Number(record.totalPoAmount) <= 0) {
       throw new BadRequestException('Enter a total PO amount greater than zero before submitting this Advances to Suppliers record.');
