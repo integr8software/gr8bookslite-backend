@@ -79,10 +79,10 @@ export class CashAdvanceCopySourceService {
       ...(branchUnitId ? { branchUnitId } : {}),
       ...(partyId
         ? { partyId }
-        : partyName
-          ? { partyNameSnapshot: { equals: partyName, mode: 'insensitive' } }
-          : partyCode
-            ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } }
+        : partyCode
+          ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } }
+          : partyName
+            ? { partyNameSnapshot: { equals: partyName, mode: 'insensitive' } }
             : {}),
       ...(search
         ? {

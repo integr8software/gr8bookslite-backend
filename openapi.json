@@ -22212,6 +22212,15 @@
       "ItemBasicInfoResponseDto": {
         "type": "object",
         "properties": {
+          "suppliers": {
+            "maxItems": 100,
+            "default": [],
+            "description": "Replace all supplier rows. Nonempty lists require exactly one default.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemSupplierResponseDto"
+            }
+          },
           "code": {
             "type": "string",
             "maxLength": 50
@@ -22328,6 +22337,14 @@
       "CreateItemBasicInfoDto": {
         "type": "object",
         "properties": {
+          "suppliers": {
+            "maxItems": 100,
+            "description": "Replace all supplier rows. Nonempty lists require exactly one default.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemSupplierDto"
+            }
+          },
           "code": {
             "type": "string",
             "maxLength": 50
@@ -22401,6 +22418,14 @@
       "UpdateItemBasicInfoDto": {
         "type": "object",
         "properties": {
+          "suppliers": {
+            "maxItems": 100,
+            "description": "Replace all supplier rows. Nonempty lists require exactly one default.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemSupplierDto"
+            }
+          },
           "code": {
             "type": "string",
             "maxLength": 50
@@ -55659,6 +55684,80 @@
             }
           }
         }
+      },
+      "ItemSupplierResponseDto": {
+        "type": "object",
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "Vendor party ID."
+          },
+          "supplierCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "leadTime": {
+            "type": "string",
+            "maxLength": 50,
+            "pattern": "^(?:\\d+(?:\\.\\d+)? (?:days|weeks|months))?$",
+            "example": "3 days"
+          },
+          "cost": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999999999.99
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "supplierName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "supplierId",
+          "cost",
+          "isDefault",
+          "id",
+          "supplierName"
+        ]
+      },
+      "ItemSupplierDto": {
+        "type": "object",
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "Vendor party ID."
+          },
+          "supplierCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "leadTime": {
+            "type": "string",
+            "maxLength": 50,
+            "pattern": "^(?:\\d+(?:\\.\\d+)? (?:days|weeks|months))?$",
+            "example": "3 days"
+          },
+          "cost": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999999999.99
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "supplierId",
+          "cost",
+          "isDefault"
+        ]
       }
     }
   }

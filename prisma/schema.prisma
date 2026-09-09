@@ -1323,6 +1323,7 @@ model ResponsibilityCenterType {
 }
 
 model Party {
+  itemSuppliers ItemSupplier[]
   id                                  BigInt                             @id @default(autoincrement())
   companyId                           Int                                @map("company_id")
   termId                              BigInt?                            @map("term_id")
@@ -1488,6 +1489,7 @@ model ItemBasicInfo {
   unitOfMeasurement      UnitOfMeasurement     @relation(fields: [unitOfMeasurementId], references: [id], onDelete: Restrict)
   responsibilityCenter   ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: Restrict)
   pricing                ItemPricing?
+  suppliers              ItemSupplier[]
 
   @@unique([companyId, code], map: "item_basic_info_company_code_key")
   @@index([companyId, status], map: "item_basic_info_company_status_idx")
@@ -4464,4 +4466,20 @@ enum RevolvingFundReplenishmentStatus {
 enum ItemBasicInfoStatus {
   ACTIVE
   INACTIVE
+}
+
+model ItemSupplier {
+  id BigInt @id @default(autoincrement())
+  itemId BigInt @map("item_id")
+  supplierId BigInt @map("supplier_id")
+  supplierCode String @default("") @map("supplier_code") @db.VarChar(100)
+  leadTime String @default("") @map("lead_time") @db.VarChar(50)
+  cost Decimal @db.Decimal(14, 2)
+  isDefault Boolean @default(false) @map("is_default")
+  sortOrder Int @default(0) @map("sort_order")
+  item ItemBasicInfo @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplier Party @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  @@unique([itemId, supplierId])
+  @@index([supplierId])
+  @@map("item_suppliers")
 }
