@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { ArrayMaxSize, ArrayUnique, IsArray, IsEnum, IsNotEmpty, IsString, Matches, MaxLength, ValidateIf } from 'class-validator';
+import { ItemSupplierDto, ItemSupplierResponseDto } from './item-supplier.dto';
+import { Type, Transform } from 'class-transformer';
+import { ArrayMaxSize, ArrayUnique, IsArray, IsEnum, IsNotEmpty, IsString, Matches, MaxLength, ValidateIf, ValidateNested } from 'class-validator';
 
 export enum ItemBasicInfoStatus {
   ACTIVE = 'ACTIVE',
@@ -9,6 +10,14 @@ export enum ItemBasicInfoStatus {
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
 export class CreateItemBasicInfoDto {
+  @ApiPropertyOptional({ type: [ItemSupplierDto], maxItems: 100, description: 'Replace all supplier rows. Nonempty lists require exactly one default.' })
+  @ValidateIf((_o, value) => value !== undefined)
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
+  @Type(() => ItemSupplierDto)
+  suppliers?: ItemSupplierDto[];
+
   @ApiProperty({ maxLength: 50 })
   @Transform(trim)
   @IsString()
@@ -101,6 +110,7 @@ export class CreateItemBasicInfoDto {
 export class UpdateItemBasicInfoDto extends PartialType(CreateItemBasicInfoDto, { skipNullProperties: false }) {}
 
 export class ItemBasicInfoResponseDto extends CreateItemBasicInfoDto {
+  @ApiProperty({ type: [ItemSupplierResponseDto] }) suppliers: ItemSupplierResponseDto[] = [];
   @ApiProperty() id!: string;
   @ApiProperty() categoryName!: string;
   @ApiProperty() unitOfMeasurementSymbol!: string;
