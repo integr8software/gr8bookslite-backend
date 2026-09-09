@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ItemSupplierDto } from './dto/item-supplier.dto';
 import { Prisma } from '@prisma/client';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -10,7 +11,13 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateItemBasicInfoDto, UpdateItemBasicInfoDto, ItemBasicInfoResponseDto, ItemBasicInfoStatus } from './dto/item-basic-info.dto';
 import { UpsertItemPricingDto, ItemPricingResponseDto } from './dto/item-pricing.dto';
 
-const include = { category: true, unitOfMeasurement: true, responsibilityCenter: true, pricing: true } as const;
+const include = {
+  category: true,
+  unitOfMeasurement: true,
+  responsibilityCenter: true,
+  pricing: true,
+  suppliers: { orderBy: { sortOrder: 'asc' }, include: { supplier: true } },
+} as const;
 type Item = Prisma.ItemBasicInfoGetPayload<{ include: typeof include }>;
 
 @Injectable()
@@ -39,11 +46,13 @@ export class ItemsService {
     const companyId = await this.authorize(user, PermissionAction.CREATE);
     await this.validateReferences(companyId, dto);
     await this.validateCode(companyId, dto.code);
+    await this.validateSuppliers(companyId, dto.suppliers);
     try {
       return mapItem(
         await this.prisma.itemBasicInfo.create({
           data: {
             ...dto,
+            suppliers: dto.suppliers ? { create: supplierData(dto.suppliers) } : undefined,
             companyId,
             code: dto.code.trim(),
             name: dto.name.trim(),
@@ -68,12 +77,14 @@ export class ItemsService {
     const existing = await this.findOrThrow(companyId, itemId);
     await this.validateReferences(companyId, dto, existing);
     if (dto.code !== undefined) await this.validateCode(companyId, dto.code, itemId);
+    await this.validateSuppliers(companyId, dto.suppliers);
     try {
       return mapItem(
         await this.prisma.itemBasicInfo.update({
           where: { id: itemId, companyId },
           data: {
             ...dto,
+            suppliers: dto.suppliers === undefined ? undefined : { deleteMany: {}, create: supplierData(dto.suppliers) },
             categoryId: dto.categoryId === undefined ? undefined : parsePositiveBigIntId(dto.categoryId),
             unitOfMeasurementId: dto.unitOfMeasurementId === undefined ? undefined : parsePositiveBigIntId(dto.unitOfMeasurementId),
             responsibilityCenterId:
@@ -156,6 +167,15 @@ export class ItemsService {
     return mapPricing(pricing);
   }
 
+  private async validateSuppliers(companyId: number, rows?: ItemSupplierDto[]) {
+    if (rows === undefined) return;
+    if (rows.length && rows.filter((row) => row.isDefault).length !== 1) throw new BadRequestException('Choose exactly one default supplier.');
+    const ids = rows.map((row) => parsePositiveBigIntId(row.supplierId));
+    if (new Set(ids).size !== ids.length) throw new BadRequestException('Remove duplicate suppliers.');
+    const count = await this.prisma.party.count({ where: { id: { in: ids }, companyId, deletedAt: null, status: 'ACTIVE', partyTypes: { has: 'VENDOR' } } });
+    if (count !== ids.length) throw new BadRequestException('Select active vendor suppliers in the current company.');
+  }
+
   private async findOrThrow(companyId: number, id: bigint) {
     const item = await this.prisma.itemBasicInfo.findFirst({ where: { id, companyId, deletedAt: null }, include });
     if (!item) throw new NotFoundException('Item not found.');
@@ -194,6 +214,15 @@ export class ItemsService {
 
 function mapItem(item: Item): ItemBasicInfoResponseDto {
   return {
+    suppliers: item.suppliers.map((row) => ({
+      id: row.id.toString(),
+      supplierName: row.supplier.partyName || [row.supplier.firstName, row.supplier.lastName].filter(Boolean).join(' '),
+      supplierId: row.supplierId.toString(),
+      supplierCode: row.supplierCode,
+      leadTime: row.leadTime,
+      cost: Number(row.cost),
+      isDefault: row.isDefault,
+    })),
     id: item.id.toString(),
     code: item.code,
     skuCode: item.skuCode ?? '',
@@ -228,4 +257,15 @@ function mapPricing(pricing: Prisma.ItemPricingGetPayload<object>): ItemPricingR
     taxTreatment: pricing.taxTreatment ?? null,
     updatedAt: pricing.updatedAt ? pricing.updatedAt.toISOString() : null,
   };
+}
+
+function supplierData(rows: ItemSupplierDto[]) {
+  return rows.map((row, sortOrder) => ({
+    supplierId: parsePositiveBigIntId(row.supplierId),
+    supplierCode: row.supplierCode ?? '',
+    leadTime: row.leadTime ?? '',
+    cost: row.cost,
+    isDefault: row.isDefault,
+    sortOrder,
+  }));
 }
