@@ -2,7 +2,9 @@ import { Prisma } from '@prisma/client';
 import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AccountsPayableVoucherCopySourceService } from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
+import { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
 import { AdvanceToSupplierCopySourceService } from '../advances-to-suppliers/copy-from/advance-to-supplier-copy-source.service';
+import { CashAdvanceCopySourceService } from '../cash-advance/copy-from/cash-advance-copy-source.service';
 import { PettyCashReplenishmentCopySourceService } from '../petty-cash-replenishment/copy-from/petty-cash-replenishment-copy-source.service';
 import { RevolvingFundReplenishmentCopySourceService } from '../revolving-fund-replenishment/copy-from/revolving-fund-replenishment-copy-source.service';
 import { DisbursementVoucherService } from './disbursement-voucher.service';
@@ -22,6 +24,8 @@ describe('DisbursementVoucherService', () => {
       {} as DisbursementVoucherAccountingService,
       {} as AccountsPayableVoucherCopySourceService,
       {} as AdvanceToSupplierCopySourceService,
+      {} as CashAdvanceCopySourceService,
+      {} as JournalVoucherCopySourceService,
       {} as PettyCashReplenishmentCopySourceService,
       {} as RevolvingFundReplenishmentCopySourceService,
     );

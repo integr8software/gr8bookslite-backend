@@ -5,6 +5,9 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/transaction-number-suggestion-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CashAdvanceService } from './cash-advance.service';
+import { CashAdvanceCopySourceService } from './copy-from/cash-advance-copy-source.service';
+import { CashAdvanceCopyFromCandidatesResponseDto } from './copy-from/dto/cash-advance-copy-from-candidate.dto';
+import { GetCashAdvanceCopyFromCandidatesQueryDto } from './copy-from/dto/get-cash-advance-copy-from-candidates-query.dto';
 import { CashAdvanceListResponseDto, CashAdvanceSingleResponseDto } from './dto/cash-advance-response.dto';
 import { CreateCashAdvanceDto } from './dto/create-cash-advance.dto';
 import { GetCashAdvanceListQueryDto } from './dto/get-cash-advance-list-query.dto';
@@ -19,7 +22,10 @@ import { UpdateCashAdvanceDto } from './dto/update-cash-advance.dto';
   version: '1',
 })
 export class CashAdvanceController {
-  constructor(private readonly cashAdvanceService: CashAdvanceService) {}
+  constructor(
+    private readonly cashAdvanceService: CashAdvanceService,
+    private readonly cashAdvanceCopySourceService: CashAdvanceCopySourceService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get paginated list of cash advance records' })
@@ -34,6 +40,13 @@ export class CashAdvanceController {
   @ApiOkResponse({ description: 'Cash Advance transaction number retrieved.', type: TransactionNumberSuggestionResponseDto })
   suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query('branchUnitId') branchUnitId?: string) {
     return this.cashAdvanceService.suggestTransactionNumber(user, branchUnitId);
+  }
+
+  @Get('copy-from/candidates')
+  @ApiOperation({ summary: 'Get available Employee Advances for voucher Copy From' })
+  @ApiOkResponse({ description: 'Available Employee Advances for Copy From.', type: CashAdvanceCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetCashAdvanceCopyFromCandidatesQueryDto) {
+    return this.cashAdvanceCopySourceService.findCandidates(user, query);
   }
 
   @Get(':id')

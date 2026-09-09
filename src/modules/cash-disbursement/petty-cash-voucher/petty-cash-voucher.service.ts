@@ -129,27 +129,38 @@ export class PettyCashVoucherService {
     const partyId = query.partyId ? parsePositiveBigIntId(query.partyId, 'partyId') : null;
     const partyCode = cleanOptional(query.partyCode);
     const branchUnitId = query.branchUnitId;
+    const partyFilter: Prisma.PettyCashVoucherWhereInput | null = partyId
+      ? { partyId }
+      : partyCode
+        ? {
+            OR: [
+              { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } },
+              { party: { partyCodeNo: { equals: partyCode, mode: 'insensitive' } } },
+            ],
+          }
+        : null;
+    const searchFilter: Prisma.PettyCashVoucherWhereInput | null = search
+      ? {
+          OR: [
+            { voucherNo: { contains: search, mode: 'insensitive' } },
+            { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
+            { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
+            { remarks: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : null;
     const where: Prisma.PettyCashVoucherWhereInput = {
       companyId,
       deletedAt: null,
       status: PettyCashVoucherStatus.POSTED,
       ...(branchUnitId ? { branchUnitId } : {}),
-      ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
-      ...(search
-        ? {
-            OR: [
-              { voucherNo: { contains: search, mode: 'insensitive' } },
-              { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
-              { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
-              { remarks: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
+      ...(partyFilter || searchFilter ? { AND: [partyFilter, searchFilter].filter(Boolean) as Prisma.PettyCashVoucherWhereInput[] } : {}),
     };
 
     const [records, total] = await Promise.all([
       this.prisma.pettyCashVoucher.findMany({
         where,
+        include: { party: true },
         orderBy: [{ documentDate: 'desc' }, { id: 'desc' }],
         skip,
         take: limit,
@@ -184,9 +195,9 @@ export class PettyCashVoucherService {
           disburseAmount,
           exchangeRate: Number(record.exchangeRate),
           id: sourceId,
-          partyCode: record.partyCodeSnapshot,
+          partyCode: record.party?.partyCodeNo ?? record.partyCodeSnapshot,
           partyId: record.partyId?.toString() ?? null,
-          partyName: record.partyNameSnapshot,
+          partyName: record.party?.partyName ?? record.partyNameSnapshot,
           projectCode: record.projectCode,
           projectName: record.projectName,
           remarks: record.remarks,

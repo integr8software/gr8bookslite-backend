@@ -20,6 +20,12 @@ export class RevolvingFundCopyFromCandidateDetailDto {
   @ApiProperty({ description: 'Gross amount', example: 5000 })
   grossAmount: number;
 
+  @ApiProperty({ description: 'Gross amount already copied to active Revolving Fund Replenishments for this detail line', example: 3000 })
+  consumedGrossAmount: number;
+
+  @ApiProperty({ description: 'Remaining gross amount available to copy for this detail line', example: 2000 })
+  availableGrossAmount: number;
+
   @ApiProperty({ description: 'Net amount', example: 4400 })
   netAmount: number;
 
@@ -43,6 +49,12 @@ export class RevolvingFundCopyFromCandidateDetailDto {
 
   @ApiProperty({ description: 'Disburse amount', example: 4900 })
   disburseAmount: number;
+
+  @ApiProperty({ description: 'Disburse amount already copied to active Revolving Fund Replenishments for this detail line', example: 2850 })
+  consumedAmount: number;
+
+  @ApiProperty({ description: 'Remaining disburse amount available to copy for this detail line', example: 2050 })
+  availableAmount: number;
 
   @ApiPropertyOptional({ description: 'Particulars', example: 'Office supplies' })
   particulars?: string | null;

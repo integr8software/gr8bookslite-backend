@@ -10511,12 +10511,16 @@
               "type": "string",
               "enum": [
                 "DRAFT",
+                "FOR_APPROVAL",
                 "APPROVED",
+                "POSTED",
                 "DISAPPROVED",
                 "CLOSED",
                 "CANCELLED",
                 "Draft",
+                "For Approval",
                 "Approved",
+                "Posted",
                 "Disapproved",
                 "Closed",
                 "Cancelled"
@@ -10668,12 +10672,16 @@
               "type": "string",
               "enum": [
                 "DRAFT",
+                "FOR_APPROVAL",
                 "APPROVED",
+                "POSTED",
                 "DISAPPROVED",
                 "CLOSED",
                 "CANCELLED",
                 "Draft",
+                "For Approval",
                 "Approved",
+                "Posted",
                 "Disapproved",
                 "Closed",
                 "Cancelled"
@@ -10910,6 +10918,15 @@
             }
           },
           {
+            "name": "partyName",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 160,
+              "type": "string"
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -10984,12 +11001,16 @@
               "type": "string",
               "enum": [
                 "DRAFT",
+                "FOR_APPROVAL",
                 "APPROVED",
+                "POSTED",
                 "DISAPPROVED",
                 "CLOSED",
                 "CANCELLED",
                 "Draft",
+                "For Approval",
                 "Approved",
+                "Posted",
                 "Disapproved",
                 "Closed",
                 "Cancelled"
@@ -11462,6 +11483,104 @@
             "bearer": []
           }
         ],
+        "tags": [
+          "Journal Voucher"
+        ]
+      }
+    },
+    "/api/v1/general-journal/journal-voucher/copy-from/candidates": {
+      "get": {
+        "operationId": "JournalVoucherController_findCopyFromCandidates_v1",
+        "parameters": [
+          {
+            "name": "target",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "official-receipt",
+                "acknowledgement-receipt",
+                "accounts-payable-voucher",
+                "cash-voucher",
+                "disbursement-voucher"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyName",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 160,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available Journal Voucher lines for Copy From.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalVoucherCopyFromCandidatesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available Journal Voucher lines for Copy From",
         "tags": [
           "Journal Voucher"
         ]
@@ -16223,6 +16342,16 @@
             }
           },
           {
+            "name": "partyName",
+            "required": false,
+            "in": "query",
+            "description": "Supplier party name filter",
+            "schema": {
+              "example": "ABC Supplier",
+              "type": "string"
+            }
+          },
+          {
             "name": "search",
             "required": false,
             "in": "query",
@@ -16504,7 +16633,7 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "Status filter (DRAFT, FOR_APPROVAL, APPROVED, DISAPPROVED, POSTED, CANCELLED)",
+            "description": "Status filter (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)",
             "schema": {
               "type": "string"
             }
@@ -16650,6 +16779,110 @@
           }
         ],
         "summary": "Suggest a cash advance transaction number",
+        "tags": [
+          "Cash Advance"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-advance/copy-from/candidates": {
+      "get": {
+        "operationId": "CashAdvanceController_findCopyFromCandidates_v1",
+        "parameters": [
+          {
+            "name": "target",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "cash-voucher",
+                "disbursement-voucher"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "partyId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 40,
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyName",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 160,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available Employee Advances for Copy From.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAdvanceCopyFromCandidatesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get available Employee Advances for voucher Copy From",
         "tags": [
           "Cash Advance"
         ]
@@ -16895,7 +17128,7 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, or CANCELLED",
+            "description": "DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, or CANCELLED",
             "schema": {
               "type": "string"
             }
@@ -17161,7 +17394,7 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)",
             "schema": {
               "type": "string"
             }
@@ -17387,7 +17620,7 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)",
             "schema": {
               "type": "string"
             }
@@ -17557,6 +17790,113 @@
         ]
       }
     },
+    "/api/v1/cash-disbursement/cash-voucher/account-title-options": {
+      "get": {
+        "operationId": "CashVoucherController_findAccountTitleOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUB3",
+                "SUB1",
+                "SUB2",
+                "MAJOR",
+                "SPECIFIC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASSET",
+                "EXPENSE",
+                "REVENUE",
+                "LIABILITY",
+                "EQUITY"
+              ]
+            }
+          },
+          {
+            "name": "accountNature",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBIT",
+                "CREDIT"
+              ]
+            }
+          },
+          {
+            "name": "postingOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get cash voucher account title options",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
     "/api/v1/cash-disbursement/cash-voucher/{id}": {
       "get": {
         "operationId": "CashVoucherController_findOne_v1",
@@ -17613,7 +17953,7 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)",
             "schema": {
               "type": "string"
             }
@@ -17978,7 +18318,7 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)",
             "schema": {
               "type": "string"
             }
@@ -18204,7 +18544,7 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)",
             "schema": {
               "type": "string"
             }
@@ -18347,6 +18687,113 @@
         ]
       }
     },
+    "/api/v1/cash-disbursement/disbursement-voucher/account-title-options": {
+      "get": {
+        "operationId": "DisbursementVoucherController_findAccountTitleOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountLevel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUB3",
+                "SUB1",
+                "SUB2",
+                "MAJOR",
+                "SPECIFIC"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASSET",
+                "EXPENSE",
+                "REVENUE",
+                "LIABILITY",
+                "EQUITY"
+              ]
+            }
+          },
+          {
+            "name": "accountNature",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBIT",
+                "CREDIT"
+              ]
+            }
+          },
+          {
+            "name": "postingOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "parentAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get disbursement voucher account title options",
+        "tags": [
+          "Disbursement Voucher"
+        ]
+      }
+    },
     "/api/v1/cash-disbursement/disbursement-voucher/{id}": {
       "get": {
         "operationId": "DisbursementVoucherController_findOne_v1",
@@ -18403,7 +18850,7 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)",
+            "description": "Filter by Status (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)",
             "schema": {
               "type": "string"
             }
@@ -18804,10 +19251,10 @@
               "enum": [
                 "DRAFT",
                 "FOR_APPROVAL",
-                "APPROVED",
                 "POSTED",
                 "DISAPPROVED",
-                "CANCELLED"
+                "CANCELLED",
+                "CLOSED"
               ]
             }
           },
@@ -18962,8 +19409,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search term across transaction number, party, or remarks",
             "schema": {
               "maxLength": 120,
+              "example": "PCV-2026",
               "type": "string"
             }
           },
@@ -18971,8 +19420,10 @@
             "name": "branchUnitId",
             "required": false,
             "in": "query",
+            "description": "Branch unit ID filter",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -18980,8 +19431,10 @@
             "name": "partyId",
             "required": false,
             "in": "query",
+            "description": "Party primary key ID",
             "schema": {
               "maxLength": 40,
+              "example": "1",
               "type": "string"
             }
           },
@@ -18989,8 +19442,10 @@
             "name": "partyCode",
             "required": false,
             "in": "query",
+            "description": "Party code filter",
             "schema": {
               "maxLength": 80,
+              "example": "EMP-001",
               "type": "string"
             }
           },
@@ -18998,8 +19453,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -19007,9 +19465,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Limit per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 10,
+              "example": 10,
               "type": "number"
             }
           }
@@ -19274,10 +19735,10 @@
               "enum": [
                 "DRAFT",
                 "FOR_APPROVAL",
-                "APPROVED",
                 "POSTED",
                 "DISAPPROVED",
-                "CANCELLED"
+                "CANCELLED",
+                "CLOSED"
               ]
             }
           },
@@ -19432,8 +19893,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search term across transaction number, party, or remarks",
             "schema": {
               "maxLength": 120,
+              "example": "PCF-2026",
               "type": "string"
             }
           },
@@ -19441,8 +19904,10 @@
             "name": "branchUnitId",
             "required": false,
             "in": "query",
+            "description": "Branch unit ID filter",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -19450,8 +19915,10 @@
             "name": "partyId",
             "required": false,
             "in": "query",
+            "description": "Party primary key ID",
             "schema": {
               "maxLength": 40,
+              "example": "1",
               "type": "string"
             }
           },
@@ -19459,8 +19926,10 @@
             "name": "partyCode",
             "required": false,
             "in": "query",
+            "description": "Party code filter",
             "schema": {
               "maxLength": 80,
+              "example": "EMP-001",
               "type": "string"
             }
           },
@@ -19468,8 +19937,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -19477,9 +19949,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Limit per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 10,
+              "example": 10,
               "type": "number"
             }
           }
@@ -19744,10 +20219,10 @@
               "enum": [
                 "DRAFT",
                 "FOR_APPROVAL",
-                "APPROVED",
                 "POSTED",
                 "DISAPPROVED",
-                "CANCELLED"
+                "CANCELLED",
+                "CLOSED"
               ]
             }
           },
@@ -19902,7 +20377,9 @@
             "name": "target",
             "required": true,
             "in": "query",
+            "description": "Target voucher type",
             "schema": {
+              "example": "cash-voucher",
               "type": "string",
               "enum": [
                 "cash-voucher",
@@ -19914,8 +20391,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search term across transaction number, party, or remarks",
             "schema": {
               "maxLength": 120,
+              "example": "PCR-2026",
               "type": "string"
             }
           },
@@ -19923,8 +20402,10 @@
             "name": "branchUnitId",
             "required": false,
             "in": "query",
+            "description": "Branch unit ID filter",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -19932,8 +20413,10 @@
             "name": "partyId",
             "required": false,
             "in": "query",
+            "description": "Party primary key ID",
             "schema": {
               "maxLength": 40,
+              "example": "1",
               "type": "string"
             }
           },
@@ -19941,8 +20424,21 @@
             "name": "partyCode",
             "required": false,
             "in": "query",
+            "description": "Party code filter",
             "schema": {
               "maxLength": 80,
+              "example": "EMP-001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyName",
+            "required": false,
+            "in": "query",
+            "description": "Party name filter",
+            "schema": {
+              "maxLength": 160,
+              "example": "Juan Dela Cruz",
               "type": "string"
             }
           },
@@ -19950,8 +20446,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -19959,9 +20458,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Limit per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 10,
+              "example": 10,
               "type": "number"
             }
           }
@@ -20226,10 +20728,10 @@
               "enum": [
                 "DRAFT",
                 "FOR_APPROVAL",
-                "APPROVED",
                 "POSTED",
                 "DISAPPROVED",
-                "CANCELLED"
+                "CANCELLED",
+                "CLOSED"
               ]
             }
           },
@@ -20384,8 +20886,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search term across transaction number, party, or remarks",
             "schema": {
               "maxLength": 120,
+              "example": "RF-2026",
               "type": "string"
             }
           },
@@ -20393,8 +20897,10 @@
             "name": "branchUnitId",
             "required": false,
             "in": "query",
+            "description": "Branch unit ID filter",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -20402,8 +20908,10 @@
             "name": "partyId",
             "required": false,
             "in": "query",
+            "description": "Party primary key ID",
             "schema": {
               "maxLength": 40,
+              "example": "1",
               "type": "string"
             }
           },
@@ -20411,8 +20919,10 @@
             "name": "partyCode",
             "required": false,
             "in": "query",
+            "description": "Party code filter",
             "schema": {
               "maxLength": 80,
+              "example": "EMP-001",
               "type": "string"
             }
           },
@@ -20420,8 +20930,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -20429,9 +20942,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Limit per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 10,
+              "example": 10,
               "type": "number"
             }
           }
@@ -20696,10 +21212,10 @@
               "enum": [
                 "DRAFT",
                 "FOR_APPROVAL",
-                "APPROVED",
                 "POSTED",
                 "DISAPPROVED",
-                "CANCELLED"
+                "CANCELLED",
+                "CLOSED"
               ]
             }
           },
@@ -20854,7 +21370,9 @@
             "name": "target",
             "required": true,
             "in": "query",
+            "description": "Target voucher type",
             "schema": {
+              "example": "cash-voucher",
               "type": "string",
               "enum": [
                 "cash-voucher",
@@ -20866,8 +21384,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search term across transaction number, party, or remarks",
             "schema": {
               "maxLength": 120,
+              "example": "RFR-2026",
               "type": "string"
             }
           },
@@ -20875,8 +21395,10 @@
             "name": "branchUnitId",
             "required": false,
             "in": "query",
+            "description": "Branch unit ID filter",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -20884,8 +21406,10 @@
             "name": "partyId",
             "required": false,
             "in": "query",
+            "description": "Party primary key ID",
             "schema": {
               "maxLength": 40,
+              "example": "1",
               "type": "string"
             }
           },
@@ -20893,8 +21417,21 @@
             "name": "partyCode",
             "required": false,
             "in": "query",
+            "description": "Party code filter",
             "schema": {
               "maxLength": 80,
+              "example": "EMP-001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "partyName",
+            "required": false,
+            "in": "query",
+            "description": "Party name filter",
+            "schema": {
+              "maxLength": 160,
+              "example": "Juan Dela Cruz",
               "type": "string"
             }
           },
@@ -20902,8 +21439,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -20911,9 +21451,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Limit per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 10,
+              "example": 10,
               "type": "number"
             }
           }
@@ -34493,6 +35036,9 @@
           "referenceNo": {
             "type": "string"
           },
+          "referenceId": {
+            "type": "string"
+          },
           "remarks": {
             "type": "string"
           },
@@ -36087,12 +36633,16 @@
           "status": {
             "enum": [
               "DRAFT",
+              "FOR_APPROVAL",
               "APPROVED",
+              "POSTED",
               "DISAPPROVED",
               "CLOSED",
               "CANCELLED",
               "Draft",
+              "For Approval",
               "Approved",
+              "Posted",
               "Disapproved",
               "Closed",
               "Cancelled"
@@ -36107,6 +36657,160 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "JournalVoucherCopyFromCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "JV:JV-000001:L1"
+          },
+          "source": {
+            "type": "string",
+            "example": "Journal Voucher"
+          },
+          "sourceNo": {
+            "type": "string",
+            "example": "JV-000001"
+          },
+          "transactionNo": {
+            "type": "string",
+            "example": "JV-000001"
+          },
+          "lineNumber": {
+            "type": "number",
+            "example": 1
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-09"
+          },
+          "branchUnitId": {
+            "type": "number",
+            "example": 1
+          },
+          "currency": {
+            "type": "string",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "example": 1
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "PTY-0001"
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Juan Dela Cruz"
+          },
+          "accountCode": {
+            "type": "string",
+            "example": "1130-CA"
+          },
+          "accountTitle": {
+            "type": "string",
+            "example": "Employee Advance"
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "example": "Liquidation of employee advance"
+          },
+          "refNo": {
+            "type": "string",
+            "nullable": true,
+            "example": "CA:CA-000001"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "example": "Admin"
+          },
+          "amount": {
+            "type": "number",
+            "example": 1200
+          },
+          "consumedAmount": {
+            "type": "number",
+            "example": 200
+          },
+          "availableAmount": {
+            "type": "number",
+            "example": 1000
+          },
+          "side": {
+            "enum": [
+              "debit",
+              "credit"
+            ],
+            "type": "string",
+            "example": "debit"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "sourceNo",
+          "transactionNo",
+          "lineNumber",
+          "documentDate",
+          "branchUnitId",
+          "currency",
+          "exchangeRate",
+          "partyCode",
+          "partyName",
+          "accountCode",
+          "accountTitle",
+          "particulars",
+          "refNo",
+          "responsibilityCenter",
+          "amount",
+          "consumedAmount",
+          "availableAmount",
+          "side"
+        ]
+      },
+      "JournalVoucherCopyFromCandidatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalVoucherCopyFromCandidateDto"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number"
+              },
+              "page": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "totalPages": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "limit",
+              "page",
+              "total",
+              "totalPages"
+            ]
+          }
+        },
+        "required": [
+          "records",
+          "pagination"
         ]
       },
       "JournalVoucherLineDto": {
@@ -44602,10 +45306,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
-              "DISAPPROVED",
               "POSTED",
-              "CANCELLED"
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "example": "DRAFT"
@@ -44883,6 +45587,37 @@
           "details"
         ]
       },
+      "PaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 10,
+            "minimum": 1
+          },
+          "total": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
       "AdvanceToSupplierCopyFromCandidatesResponseDto": {
         "type": "object",
         "properties": {
@@ -44893,26 +45628,11 @@
             }
           },
           "pagination": {
-            "type": "object",
-            "properties": {
-              "page": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              },
-              "totalPages": {
-                "type": "number"
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginationMetaDto"
               }
-            },
-            "required": [
-              "page",
-              "limit",
-              "total",
-              "totalPages"
             ]
           }
         },
@@ -45037,10 +45757,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
-              "DISAPPROVED",
               "POSTED",
-              "CANCELLED"
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "example": "DRAFT"
@@ -45166,10 +45886,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
-              "DISAPPROVED",
               "POSTED",
-              "CANCELLED"
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "example": "DRAFT"
@@ -45183,10 +45903,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
-              "DISAPPROVED",
               "POSTED",
-              "CANCELLED"
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "example": "FOR_APPROVAL"
@@ -45280,10 +46000,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
-              "DISAPPROVED",
               "POSTED",
-              "CANCELLED"
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "example": "DRAFT"
@@ -45318,37 +46038,6 @@
           "createdAt"
         ]
       },
-      "PaginationMetaDto": {
-        "type": "object",
-        "properties": {
-          "page": {
-            "type": "number",
-            "example": 1,
-            "minimum": 1
-          },
-          "limit": {
-            "type": "number",
-            "example": 10,
-            "minimum": 1
-          },
-          "total": {
-            "type": "number",
-            "example": 1,
-            "minimum": 0
-          },
-          "totalPages": {
-            "type": "number",
-            "example": 1,
-            "minimum": 0
-          }
-        },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
-        ]
-      },
       "CashAdvanceListResponseDto": {
         "type": "object",
         "properties": {
@@ -45365,6 +46054,200 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "CashAdvanceCopyFromCandidateDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "lineNumber": {
+            "type": "number",
+            "example": 1
+          },
+          "accountCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "1130-CA"
+          },
+          "accountTitle": {
+            "type": "string",
+            "nullable": true,
+            "example": "Cash Advance - Employees"
+          },
+          "amount": {
+            "type": "number",
+            "example": 2500
+          },
+          "grossAmount": {
+            "type": "number",
+            "example": 2500
+          },
+          "consumptionAmount": {
+            "type": "number",
+            "example": 2500
+          },
+          "particulars": {
+            "type": "string",
+            "nullable": true,
+            "example": "Travel advance"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "example": "Operations"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "example": "CA:CA-2026-000001"
+          }
+        },
+        "required": [
+          "id",
+          "lineNumber",
+          "amount",
+          "grossAmount",
+          "consumptionAmount"
+        ]
+      },
+      "CashAdvanceCopyFromCandidateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1"
+          },
+          "source": {
+            "type": "string",
+            "example": "Employee Advance"
+          },
+          "sourceNo": {
+            "type": "string",
+            "example": "CA-2026-000001"
+          },
+          "transactionNo": {
+            "type": "string",
+            "example": "CA-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-09"
+          },
+          "branchUnitId": {
+            "type": "number",
+            "nullable": true,
+            "example": 12
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "example": "17"
+          },
+          "partyCode": {
+            "type": "string",
+            "example": "EMP-001"
+          },
+          "partyName": {
+            "type": "string",
+            "example": "Juan Dela Cruz"
+          },
+          "currency": {
+            "type": "string",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "example": 5000
+          },
+          "consumedAmount": {
+            "type": "number",
+            "example": 2000
+          },
+          "availableAmount": {
+            "type": "number",
+            "example": 3000
+          },
+          "grossAmount": {
+            "type": "number",
+            "example": 5000
+          },
+          "consumedGrossAmount": {
+            "type": "number",
+            "example": 2000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "example": 3000
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "CC-001"
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Operations"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "example": "Travel advance"
+          },
+          "referencePrefix": {
+            "type": "string",
+            "example": "CA"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashAdvanceCopyFromCandidateDetailDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "sourceNo",
+          "transactionNo",
+          "documentDate",
+          "partyCode",
+          "partyName",
+          "currency",
+          "exchangeRate",
+          "amount",
+          "consumedAmount",
+          "availableAmount",
+          "grossAmount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
+          "referencePrefix",
+          "details"
+        ]
+      },
+      "CashAdvanceCopyFromCandidatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashAdvanceCopyFromCandidateDto"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetaDto"
+          }
+        },
+        "required": [
+          "records",
+          "pagination"
         ]
       },
       "CashAdvanceSingleResponseDto": {
@@ -45609,10 +46492,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
-              "DISAPPROVED",
               "POSTED",
-              "CANCELLED"
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "example": "FOR_APPROVAL"
@@ -45774,10 +46657,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
-              "DISAPPROVED",
               "POSTED",
-              "CANCELLED"
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "example": "DRAFT"
@@ -45865,10 +46748,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
-              "DISAPPROVED",
               "POSTED",
-              "CANCELLED"
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "example": "DRAFT"
@@ -45897,10 +46780,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
-              "DISAPPROVED",
               "POSTED",
-              "CANCELLED"
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "example": "FOR_APPROVAL"
@@ -46221,7 +47104,6 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
               "CANCELLED",
@@ -46846,7 +47728,6 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
               "CANCELLED",
@@ -47091,7 +47972,6 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
               "CANCELLED",
@@ -47455,7 +48335,6 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
               "CANCELLED",
@@ -48044,7 +48923,6 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
               "CANCELLED",
@@ -48302,7 +49180,6 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
               "CANCELLED",
@@ -48567,10 +49444,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Status",
@@ -48833,26 +49710,11 @@
             }
           },
           "pagination": {
-            "type": "object",
-            "properties": {
-              "page": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              },
-              "totalPages": {
-                "type": "number"
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginationMetaDto"
               }
-            },
-            "required": [
-              "page",
-              "limit",
-              "total",
-              "totalPages"
             ]
           }
         },
@@ -49057,10 +49919,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -49267,10 +50129,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -49285,14 +50147,14 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Target Petty Cash Voucher status",
-            "example": "APPROVED"
+            "example": "POSTED"
           }
         },
         "required": [
@@ -49626,10 +50488,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Status",
@@ -49766,6 +50628,16 @@
             "description": "Gross amount",
             "example": 5000
           },
+          "consumedGrossAmount": {
+            "type": "number",
+            "description": "Gross amount already copied to active Petty Cash Replenishments for this detail line",
+            "example": 3000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "description": "Remaining gross amount available to copy for this detail line",
+            "example": 2000
+          },
           "netAmount": {
             "type": "number",
             "description": "Net amount",
@@ -49808,6 +50680,16 @@
             "description": "Disburse amount",
             "example": 4900
           },
+          "consumedAmount": {
+            "type": "number",
+            "description": "Disburse amount already copied to active Petty Cash Replenishments for this detail line",
+            "example": 2850
+          },
+          "availableAmount": {
+            "type": "number",
+            "description": "Remaining disburse amount available to copy for this detail line",
+            "example": 2050
+          },
           "particulars": {
             "type": "string",
             "nullable": true,
@@ -49843,12 +50725,16 @@
           "id",
           "lineNumber",
           "grossAmount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
           "netAmount",
           "vatPercent",
           "vatAmount",
           "ewtPercent",
           "ewtAmount",
-          "disburseAmount"
+          "disburseAmount",
+          "consumedAmount",
+          "availableAmount"
         ]
       },
       "PettyCashFundCopyFromCandidateDto": {
@@ -50021,26 +50907,11 @@
             }
           },
           "pagination": {
-            "type": "object",
-            "properties": {
-              "page": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              },
-              "totalPages": {
-                "type": "number"
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginationMetaDto"
               }
-            },
-            "required": [
-              "page",
-              "limit",
-              "total",
-              "totalPages"
             ]
           }
         },
@@ -50173,10 +51044,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -50318,10 +51189,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -50343,14 +51214,14 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Target Petty Cash Fund status",
-            "example": "APPROVED"
+            "example": "POSTED"
           }
         },
         "required": [
@@ -50673,10 +51544,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Status",
@@ -51044,26 +51915,11 @@
             }
           },
           "pagination": {
-            "type": "object",
-            "properties": {
-              "page": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              },
-              "totalPages": {
-                "type": "number"
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginationMetaDto"
               }
-            },
-            "required": [
-              "page",
-              "limit",
-              "total",
-              "totalPages"
             ]
           }
         },
@@ -51196,10 +52052,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -51341,10 +52197,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -51366,14 +52222,14 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Target Petty Cash Replenishment status",
-            "example": "APPROVED"
+            "example": "POSTED"
           }
         },
         "required": [
@@ -51707,10 +52563,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Status",
@@ -51847,6 +52703,16 @@
             "description": "Gross amount",
             "example": 5000
           },
+          "consumedGrossAmount": {
+            "type": "number",
+            "description": "Gross amount already copied to active Revolving Fund Replenishments for this detail line",
+            "example": 3000
+          },
+          "availableGrossAmount": {
+            "type": "number",
+            "description": "Remaining gross amount available to copy for this detail line",
+            "example": 2000
+          },
           "netAmount": {
             "type": "number",
             "description": "Net amount",
@@ -51889,6 +52755,16 @@
             "description": "Disburse amount",
             "example": 4900
           },
+          "consumedAmount": {
+            "type": "number",
+            "description": "Disburse amount already copied to active Revolving Fund Replenishments for this detail line",
+            "example": 2850
+          },
+          "availableAmount": {
+            "type": "number",
+            "description": "Remaining disburse amount available to copy for this detail line",
+            "example": 2050
+          },
           "particulars": {
             "type": "string",
             "nullable": true,
@@ -51924,12 +52800,16 @@
           "id",
           "lineNumber",
           "grossAmount",
+          "consumedGrossAmount",
+          "availableGrossAmount",
           "netAmount",
           "vatPercent",
           "vatAmount",
           "ewtPercent",
           "ewtAmount",
-          "disburseAmount"
+          "disburseAmount",
+          "consumedAmount",
+          "availableAmount"
         ]
       },
       "RevolvingFundCopyFromCandidateDto": {
@@ -52102,26 +52982,11 @@
             }
           },
           "pagination": {
-            "type": "object",
-            "properties": {
-              "page": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              },
-              "totalPages": {
-                "type": "number"
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginationMetaDto"
               }
-            },
-            "required": [
-              "page",
-              "limit",
-              "total",
-              "totalPages"
             ]
           }
         },
@@ -52254,10 +53119,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -52399,10 +53264,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -52424,14 +53289,14 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Target Revolving Fund status",
-            "example": "APPROVED"
+            "example": "POSTED"
           }
         },
         "required": [
@@ -52754,10 +53619,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Status",
@@ -53125,26 +53990,11 @@
             }
           },
           "pagination": {
-            "type": "object",
-            "properties": {
-              "page": {
-                "type": "number"
-              },
-              "limit": {
-                "type": "number"
-              },
-              "total": {
-                "type": "number"
-              },
-              "totalPages": {
-                "type": "number"
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaginationMetaDto"
               }
-            },
-            "required": [
-              "page",
-              "limit",
-              "total",
-              "totalPages"
             ]
           }
         },
@@ -53277,10 +54127,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -53422,10 +54272,10 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
             "description": "Initial Status",
@@ -53447,13 +54297,13 @@
             "enum": [
               "DRAFT",
               "FOR_APPROVAL",
-              "APPROVED",
               "POSTED",
               "DISAPPROVED",
-              "CANCELLED"
+              "CANCELLED",
+              "CLOSED"
             ],
             "type": "string",
-            "example": "APPROVED",
+            "example": "POSTED",
             "description": "Target Revolving Fund Replenishment status"
           }
         },

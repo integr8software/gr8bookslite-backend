@@ -26,7 +26,9 @@ import {
   AccountsPayableVoucherCopySourceLabel,
   AccountsPayableVoucherCopySourceService,
 } from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
+import { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
 import { AdvanceToSupplierCopySourceService } from '../advances-to-suppliers/copy-from/advance-to-supplier-copy-source.service';
+import { CashAdvanceCopySourceService } from '../cash-advance/copy-from/cash-advance-copy-source.service';
 import { PettyCashReplenishmentCopySourceService } from '../petty-cash-replenishment/copy-from/petty-cash-replenishment-copy-source.service';
 import { RevolvingFundReplenishmentCopySourceService } from '../revolving-fund-replenishment/copy-from/revolving-fund-replenishment-copy-source.service';
 import {
@@ -82,6 +84,8 @@ export class CashVoucherService {
     private readonly accountingService: CashVoucherAccountingService,
     private readonly accountsPayableVoucherCopySourceService: AccountsPayableVoucherCopySourceService,
     private readonly advanceToSupplierCopySourceService: AdvanceToSupplierCopySourceService,
+    private readonly cashAdvanceCopySourceService: CashAdvanceCopySourceService,
+    private readonly journalVoucherCopySourceService: JournalVoucherCopySourceService,
     private readonly pettyCashReplenishmentCopySourceService: PettyCashReplenishmentCopySourceService,
     private readonly revolvingFundReplenishmentCopySourceService: RevolvingFundReplenishmentCopySourceService,
   ) {}
@@ -310,6 +314,24 @@ export class CashVoucherService {
           referenceModule: effectiveDto.referenceModule,
           target: 'cash-voucher',
         });
+        await this.cashAdvanceCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          target: 'cash-voucher',
+        });
         await this.pettyCashReplenishmentCopySourceService.validateCopiedDetails(tx, {
           branchUnitId,
           companyId,
@@ -483,6 +505,26 @@ export class CashVoucherService {
           partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
           partyId: references.party?.id ?? current.partyId,
           referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.cashAdvanceCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currentTargetId: voucherId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
           target: 'cash-voucher',
         });
         await this.pettyCashReplenishmentCopySourceService.validateCopiedDetails(tx, {

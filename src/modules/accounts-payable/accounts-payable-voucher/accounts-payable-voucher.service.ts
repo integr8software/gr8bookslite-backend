@@ -27,6 +27,7 @@ import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
 import {
   findTransactionNumberForCompanyBranch,
   resolveTransactionNumberScopeForCompanyBranch,
@@ -79,6 +80,7 @@ export class AccountsPayableVoucherService {
     private readonly prisma: PrismaService,
     private readonly companyCurrencyService: CompanyCurrencyService,
     private readonly accountingService: AccountsPayableVoucherAccountingService,
+    private readonly journalVoucherCopySourceService: JournalVoucherCopySourceService,
   ) {}
 
   async findAll(user: AuthUser, query: GetAccountsPayableVoucherListQueryDto) {
@@ -169,6 +171,14 @@ export class AccountsPayableVoucherService {
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
         const references = await this.resolveVoucherReferences(tx, companyId, dto);
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details: dto.details,
+          partyCode: references.party.partyCodeNo,
+          target: 'accounts-payable-voucher',
+        });
         const transactionNo = await this.resolveTransactionNumberForCreate(tx, {
           branchUnitId,
           companyId,
@@ -265,6 +275,15 @@ export class AccountsPayableVoucherService {
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
         const references = await this.resolveVoucherReferences(tx, companyId, dto);
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currentTargetId: apvId,
+          currencyCode: normalized.currencyCode,
+          details: dto.details,
+          partyCode: references.party.partyCodeNo,
+          target: 'accounts-payable-voucher',
+        });
         const transactionNo = await this.resolveTransactionNumberForUpdate(tx, {
           branchUnitId,
           companyId,

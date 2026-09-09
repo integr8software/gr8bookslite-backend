@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { AccountsPayableVoucherStatus, Prisma } from '@prisma/client';
 import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
 import { AccountsPayableVoucherService } from './accounts-payable-voucher.service';
 import { AccountsPayableVoucherAccountingService } from './services/accounts-payable-voucher-accounting.service';
 
@@ -16,6 +17,7 @@ describe('AccountsPayableVoucherService', () => {
     {} as PrismaService,
     {} as CompanyCurrencyService,
     {} as AccountsPayableVoucherAccountingService,
+    {} as JournalVoucherCopySourceService,
   ) as unknown as AccountsPayableVoucherServiceInternals;
 
   it('allows only APV lifecycle transitions supported by the workflow', () => {

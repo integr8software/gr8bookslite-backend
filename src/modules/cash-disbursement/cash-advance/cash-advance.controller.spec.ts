@@ -2,6 +2,7 @@ import { PATH_METADATA } from '@nestjs/common/constants';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { CashAdvanceController } from './cash-advance.controller';
 import { CashAdvanceService } from './cash-advance.service';
+import { CashAdvanceCopySourceService } from './copy-from/cash-advance-copy-source.service';
 
 describe('CashAdvanceController', () => {
   const service = {
@@ -14,7 +15,10 @@ describe('CashAdvanceController', () => {
     updateStatus: jest.fn(),
     submitApproval: jest.fn(),
   };
-  const controller = new CashAdvanceController(service as unknown as CashAdvanceService);
+  const copySourceService = {
+    findCandidates: jest.fn(),
+  };
+  const controller = new CashAdvanceController(service as unknown as CashAdvanceService, copySourceService as unknown as CashAdvanceCopySourceService);
   const user = { id: 1, companyId: 2 } as AuthUser;
 
   beforeEach(() => jest.clearAllMocks());

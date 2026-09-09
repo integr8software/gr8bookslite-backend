@@ -36,6 +36,10 @@ export const PettyCashFundCopySourceLabel = 'Petty Cash Fund';
 
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
 
+function getPettyCashFundDetailConsumptionKey(sourceId: string, supplierCode?: string | null, supplierName?: string | null) {
+  return [sourceId, cleanOptional(supplierCode)?.toLowerCase() ?? '', cleanOptional(supplierName)?.toLowerCase() ?? ''].join(':');
+}
+
 @Injectable()
 export class PettyCashFundService {
   constructor(
@@ -129,35 +133,45 @@ export class PettyCashFundService {
     const partyId = query.partyId ? parsePositiveBigIntId(query.partyId, 'partyId') : null;
     const partyCode = cleanOptional(query.partyCode);
     const branchUnitId = query.branchUnitId;
+    const partyFilter: Prisma.PettyCashFundWhereInput | null = partyId
+      ? { partyId }
+      : partyCode
+        ? {
+            OR: [
+              { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } },
+              { party: { partyCodeNo: { equals: partyCode, mode: 'insensitive' } } },
+            ],
+          }
+        : null;
+    const searchFilter: Prisma.PettyCashFundWhereInput | null = search
+      ? {
+          OR: [
+            { transactionNo: { contains: search, mode: 'insensitive' } },
+            { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
+            { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
+            { remarks: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : null;
     const where: Prisma.PettyCashFundWhereInput = {
       companyId,
       deletedAt: null,
       status: PettyCashFundStatus.POSTED,
       ...(branchUnitId ? { branchUnitId } : {}),
-      ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
-      ...(search
-        ? {
-            OR: [
-              { transactionNo: { contains: search, mode: 'insensitive' } },
-              { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
-              { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
-              { remarks: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
+      ...(partyFilter || searchFilter ? { AND: [partyFilter, searchFilter].filter(Boolean) as Prisma.PettyCashFundWhereInput[] } : {}),
     };
 
     const [records, total] = await Promise.all([
       this.prisma.pettyCashFund.findMany({
         where,
-        include: { details: { orderBy: { lineNumber: 'asc' } } },
+        include: { party: true, details: { orderBy: { lineNumber: 'asc' } } },
         orderBy: [{ documentDate: 'desc' }, { id: 'desc' }],
         skip,
         take: limit,
       }),
       this.prisma.pettyCashFund.count({ where }),
     ]);
-    const consumedAmounts = await this.getReplenishmentConsumedAmounts(
+    const consumedDetailAmounts = await this.getReplenishmentConsumedDetailAmounts(
       records.map((record) => ({ id: record.id.toString(), transactionNo: record.transactionNo })),
       companyId,
     );
@@ -165,31 +179,36 @@ export class PettyCashFundService {
     const candidates = records
       .map((record) => {
         const sourceId = record.id.toString();
-        const consumedGrossAmount = consumedAmounts.gross.get(sourceId) ?? 0;
-        const consumedAmount = consumedAmounts.disburse.get(sourceId) ?? 0;
-        const amount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.grossAmount || detail.amount || 0), 0));
-        const disburseAmount = roundMoney(
-          record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0), 0),
-        );
-        const availableGrossAmount = roundMoney(amount - consumedGrossAmount);
-        const availableAmount = roundMoney(disburseAmount - consumedAmount);
+        const allDetails = record.details.map((detail) => {
+          const detailGrossAmount = Number(detail.grossAmount || detail.amount || 0);
+          const detailDisburseAmount = Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0);
+          const consumptionKey = getPettyCashFundDetailConsumptionKey(sourceId, detail.supplierCodeSnapshot, detail.supplierNameSnapshot);
+          const remainingConsumedDetail = consumedDetailAmounts.get(consumptionKey) ?? {
+            gross: 0,
+            disburse: 0,
+          };
+          const consumedDetail = {
+            gross: roundMoney(Math.min(detailGrossAmount, remainingConsumedDetail.gross)),
+            disburse: roundMoney(Math.min(detailDisburseAmount, remainingConsumedDetail.disburse)),
+          };
+          consumedDetailAmounts.set(consumptionKey, {
+            gross: roundMoney(remainingConsumedDetail.gross - consumedDetail.gross),
+            disburse: roundMoney(remainingConsumedDetail.disburse - consumedDetail.disburse),
+          });
+          const availableGrossAmount = roundMoney(detailGrossAmount - consumedDetail.gross);
+          const availableAmount = roundMoney(detailDisburseAmount - consumedDetail.disburse);
 
-        return {
-          accountCode: record.accountCodeSnapshot,
-          accountTitle: record.accountTitleSnapshot,
-          amount,
-          availableAmount,
-          availableGrossAmount,
-          consumedAmount,
-          consumedGrossAmount,
-          currency: record.currencyCode,
-          details: record.details.map((detail) => ({
+          return {
             date: detail.date ? detail.date.toISOString().slice(0, 10) : null,
-            disburseAmount: Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0),
+            disburseAmount: detailDisburseAmount,
+            consumedAmount: consumedDetail.disburse,
+            availableAmount,
             ewtAmount: Number(detail.ewtAmount),
             ewtCode: detail.ewtCode,
             ewtPercent: Number(detail.ewtPercent),
-            grossAmount: Number(detail.grossAmount || detail.amount || 0),
+            grossAmount: detailGrossAmount,
+            consumedGrossAmount: consumedDetail.gross,
+            availableGrossAmount,
             id: detail.id.toString(),
             lineNumber: detail.lineNumber,
             netAmount: Number(detail.netAmount),
@@ -203,14 +222,35 @@ export class PettyCashFundService {
             vatAmount: Number(detail.vatAmount),
             vatPercent: Number(detail.vatPercent),
             vatType: detail.vatType,
-          })),
+          };
+        });
+        const details = allDetails.filter((detail) => detail.availableGrossAmount > 0 && detail.availableAmount > 0);
+        const amount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.grossAmount || detail.amount || 0), 0));
+        const disburseAmount = roundMoney(
+          record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0), 0),
+        );
+        const consumedGrossAmount = roundMoney(allDetails.reduce((sum, detail) => sum + detail.consumedGrossAmount, 0));
+        const consumedAmount = roundMoney(allDetails.reduce((sum, detail) => sum + detail.consumedAmount, 0));
+        const availableGrossAmount = roundMoney(details.reduce((sum, detail) => sum + detail.availableGrossAmount, 0));
+        const availableAmount = roundMoney(details.reduce((sum, detail) => sum + detail.availableAmount, 0));
+
+        return {
+          accountCode: record.accountCodeSnapshot,
+          accountTitle: record.accountTitleSnapshot,
+          amount,
+          availableAmount,
+          availableGrossAmount,
+          consumedAmount,
+          consumedGrossAmount,
+          currency: record.currencyCode,
+          details,
           disburseAmount,
           documentDate: record.documentDate.toISOString().slice(0, 10),
           exchangeRate: Number(record.exchangeRate),
           id: sourceId,
-          partyCode: record.partyCodeSnapshot,
+          partyCode: record.party?.partyCodeNo ?? record.partyCodeSnapshot,
           partyId: record.partyId?.toString() ?? null,
-          partyName: record.partyNameSnapshot,
+          partyName: record.party?.partyName ?? record.partyNameSnapshot,
           projectCode: record.projectCode,
           projectName: record.projectName,
           remarks: record.remarks,
@@ -222,7 +262,7 @@ export class PettyCashFundService {
           transactionNo: record.transactionNo,
         };
       })
-      .filter((record) => record.availableGrossAmount > 0 && record.availableAmount > 0);
+      .filter((record) => record.availableGrossAmount > 0 && record.availableAmount > 0 && record.details.length > 0);
 
     return {
       records: candidates,
@@ -482,8 +522,8 @@ export class PettyCashFundService {
       const grossAmount = line.grossAmount ?? amount;
       const vatAmount = line.vatAmount ?? 0;
       const ewtAmount = line.ewtAmount ?? 0;
-      const netAmount = line.netAmount ?? grossAmount - ewtAmount;
-      const disburseAmount = line.disburseAmount ?? amount;
+      const netAmount = line.netAmount ?? grossAmount - vatAmount;
+      const disburseAmount = line.disburseAmount ?? grossAmount - ewtAmount;
 
       let detailPartyId: bigint | null = null;
       if (line.partyId) {
@@ -555,7 +595,6 @@ export class PettyCashFundService {
               PettyCashReplenishmentStatus.DRAFT,
               PettyCashReplenishmentStatus.FOR_APPROVAL,
               PettyCashReplenishmentStatus.POSTED,
-              PettyCashReplenishmentStatus.POSTED,
             ],
           },
         },
@@ -576,6 +615,65 @@ export class PettyCashFundService {
 
       consumed.gross.set(sourceId, roundMoney((consumed.gross.get(sourceId) ?? 0) + Number(detail.amount || 0)));
       consumed.disburse.set(sourceId, roundMoney((consumed.disburse.get(sourceId) ?? 0) + Number(detail.disburseAmount || detail.amount || 0)));
+    }
+
+    return consumed;
+  }
+
+  private async getReplenishmentConsumedDetailAmounts(sources: Array<{ id: string; transactionNo: string }>, companyId: number) {
+    const consumed = new Map<string, { gross: number; disburse: number }>();
+    if (sources.length === 0) {
+      return consumed;
+    }
+
+    const sourceIdByReference = new Map<string, string>();
+    for (const source of sources) {
+      sourceIdByReference.set(source.id, source.id);
+      sourceIdByReference.set(formatPettyCashFundReference(source.transactionNo), source.id);
+      sourceIdByReference.set(source.transactionNo, source.id);
+    }
+
+    const details = await this.prisma.pettyCashReplenishmentDetail.findMany({
+      where: {
+        companyId,
+        pettyCashNo: { in: [...sourceIdByReference.keys()] },
+        replenishment: {
+          deletedAt: null,
+          status: {
+            in: [
+              PettyCashReplenishmentStatus.DRAFT,
+              PettyCashReplenishmentStatus.FOR_APPROVAL,
+              PettyCashReplenishmentStatus.POSTED,
+            ],
+          },
+        },
+      },
+      select: {
+        amount: true,
+        disburseAmount: true,
+        pettyCashNo: true,
+        supplierCodeSnapshot: true,
+        supplierNameSnapshot: true,
+      },
+    });
+
+    for (const detail of details) {
+      const reference = cleanOptional(detail.pettyCashNo);
+      if (!reference) {
+        continue;
+      }
+
+      const sourceId = sourceIdByReference.get(reference);
+      if (!sourceId) {
+        continue;
+      }
+
+      const key = getPettyCashFundDetailConsumptionKey(sourceId, detail.supplierCodeSnapshot, detail.supplierNameSnapshot);
+      const current = consumed.get(key) ?? { gross: 0, disburse: 0 };
+      consumed.set(key, {
+        gross: roundMoney(current.gross + Number(detail.amount || 0)),
+        disburse: roundMoney(current.disburse + Number(detail.disburseAmount || detail.amount || 0)),
+      });
     }
 
     return consumed;

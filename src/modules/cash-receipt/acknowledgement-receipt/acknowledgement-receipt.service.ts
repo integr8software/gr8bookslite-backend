@@ -25,6 +25,7 @@ import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
 import {
   findTransactionNumberForCompanyBranch,
   resolveTransactionNumberForCompanyBranch,
@@ -65,6 +66,7 @@ export class AcknowledgementReceiptService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accountingService: AcknowledgementReceiptAccountingService,
+    private readonly journalVoucherCopySourceService: JournalVoucherCopySourceService,
   ) {}
 
   async findAll(user: AuthUser, query: GetAcknowledgementReceiptListQueryDto) {
@@ -152,6 +154,14 @@ export class AcknowledgementReceiptService {
     try {
       const receipt = await this.prisma.$transaction(async (tx) => {
         const references = await this.resolveReceiptReferences(tx, companyId, dto);
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details: dto.details,
+          partyCode: references.party?.partyCodeNo ?? dto.customerCode,
+          target: 'acknowledgement-receipt',
+        });
         const transactionNo = await this.resolveTransactionNumberForCreate(tx, {
           branchUnitId,
           companyId,
@@ -240,6 +250,15 @@ export class AcknowledgementReceiptService {
     try {
       const receipt = await this.prisma.$transaction(async (tx) => {
         const references = await this.resolveReceiptReferences(tx, companyId, fullDto);
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId: current.branchUnitId,
+          companyId,
+          currentTargetId: acknowledgementReceiptId,
+          currencyCode: normalized.currencyCode,
+          details: fullDto.details,
+          partyCode: references.party?.partyCodeNo ?? fullDto.customerCode,
+          target: 'acknowledgement-receipt',
+        });
         const transactionNo = await this.resolveTransactionNumberForUpdate(tx, {
           branchUnitId: current.branchUnitId,
           companyId,

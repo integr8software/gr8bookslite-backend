@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { PaymentTypeStatus } from '@prisma/client';
 import type { PaymentType } from '@prisma/client';
 import type { PrismaService } from '../../../prisma/prisma.service';
+import type { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
 import { OfficialReceiptService } from './official-receipt.service';
 import type { OfficialReceiptAccountingService } from './services/official-receipt-accounting.service';
 
@@ -10,7 +11,7 @@ describe('OfficialReceiptService payment type resolution', () => {
   const prisma = {
     paymentType: { findFirst },
   } as unknown as PrismaService;
-  const service = new OfficialReceiptService(prisma, {} as OfficialReceiptAccountingService);
+  const service = new OfficialReceiptService(prisma, {} as OfficialReceiptAccountingService, {} as JournalVoucherCopySourceService);
 
   beforeEach(() => {
     findFirst.mockReset();

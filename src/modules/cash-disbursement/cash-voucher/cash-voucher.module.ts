@@ -4,7 +4,9 @@ import { CompanyCurrencyModule } from '../../../common/currency/company-currency
 import { PrismaModule } from '../../../prisma/prisma.module';
 import { AuthModule } from '../../auth/auth.module';
 import { AccountsPayableVoucherModule } from '../../accounts-payable/accounts-payable-voucher/accounts-payable-voucher.module';
+import { JournalVoucherModule } from '../../general-journal/journal-voucher/journal-voucher.module';
 import { AdvancesToSuppliersModule } from '../advances-to-suppliers/advances-to-suppliers.module';
+import { CashAdvanceModule } from '../cash-advance/cash-advance.module';
 import { PettyCashReplenishmentModule } from '../petty-cash-replenishment/petty-cash-replenishment.module';
 import { RevolvingFundReplenishmentModule } from '../revolving-fund-replenishment/revolving-fund-replenishment.module';
 import { TablePreferencesModule } from '../../table-preferences/table-preferences.module';
@@ -20,7 +22,9 @@ import { CashVoucherAccountingService } from './services/cash-voucher-accounting
     AccessControlModule,
     AuthModule,
     AccountsPayableVoucherModule,
+    JournalVoucherModule,
     AdvancesToSuppliersModule,
+    CashAdvanceModule,
     PettyCashReplenishmentModule,
     RevolvingFundReplenishmentModule,
     TablePreferencesModule,

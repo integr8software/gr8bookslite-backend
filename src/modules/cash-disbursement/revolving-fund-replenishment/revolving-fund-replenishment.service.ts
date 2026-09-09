@@ -47,7 +47,6 @@ const ActiveRevolvingFundReplenishmentStatuses = [
   RevolvingFundReplenishmentStatus.DRAFT,
   RevolvingFundReplenishmentStatus.FOR_APPROVAL,
   RevolvingFundReplenishmentStatus.POSTED,
-  RevolvingFundReplenishmentStatus.POSTED,
 ];
 
 @Injectable()
@@ -481,8 +480,8 @@ export class RevolvingFundReplenishmentService {
       const amount = line.amount ?? line.disburseAmount ?? 0;
       const vatAmount = line.vatAmount ?? 0;
       const ewtAmount = line.ewtAmount ?? 0;
-      const netAmount = line.netAmount ?? amount - ewtAmount;
-      const disburseAmount = line.disburseAmount ?? amount;
+      const netAmount = line.netAmount ?? amount - vatAmount;
+      const disburseAmount = line.disburseAmount ?? amount - ewtAmount;
 
       let detailPartyId: bigint | null = null;
       if (line.partyId) {

@@ -3,6 +3,7 @@ import { PaymentTypeStatus } from '@prisma/client';
 import type { PaymentType, Prisma } from '@prisma/client';
 import type { AcknowledgementReceiptDetailDto } from './dto/acknowledgement-receipt-detail.dto';
 import type { PrismaService } from '../../../prisma/prisma.service';
+import type { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
 import { AcknowledgementReceiptService } from './acknowledgement-receipt.service';
 import type { AcknowledgementReceiptAccountingService } from './services/acknowledgement-receipt-accounting.service';
 
@@ -11,7 +12,7 @@ describe('AcknowledgementReceiptService payment type resolution', () => {
   const prisma = {
     paymentType: { findFirst },
   } as unknown as PrismaService;
-  const service = new AcknowledgementReceiptService(prisma, {} as AcknowledgementReceiptAccountingService);
+  const service = new AcknowledgementReceiptService(prisma, {} as AcknowledgementReceiptAccountingService, {} as JournalVoucherCopySourceService);
 
   beforeEach(() => {
     findFirst.mockReset();
@@ -51,7 +52,11 @@ describe('AcknowledgementReceiptService payment type resolution', () => {
 });
 
 describe('AcknowledgementReceiptService entry persistence', () => {
-  const service = new AcknowledgementReceiptService({} as PrismaService, {} as AcknowledgementReceiptAccountingService);
+  const service = new AcknowledgementReceiptService(
+    {} as PrismaService,
+    {} as AcknowledgementReceiptAccountingService,
+    {} as JournalVoucherCopySourceService,
+  );
 
   it('stores each collection item and its hidden columns in AcknowledgementReceiptDetails', async () => {
     const createMany = jest.fn().mockResolvedValue({ count: 1 });
