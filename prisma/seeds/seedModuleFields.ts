@@ -23,6 +23,7 @@ const ModuleDirectoryHints: Record<string, string[]> = {
   BM: ['financial-maintenance/bank-masterfile'],
   SM: ['financial-maintenance/services-maintenance'],
   PM: ['party-management'],
+  PJM: ['project-maintenance'],
   I: ['item-management/items'],
   IB: ['item-management/item-bundles'],
   IC: ['item-management/item-category'],
@@ -186,7 +187,6 @@ function discoverModuleFields(moduleCode: string, moduleName: string): ModuleFie
             });
           }
         }
-
       }
     }
   }

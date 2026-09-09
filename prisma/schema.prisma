@@ -221,6 +221,7 @@ model Company {
   defaultAccounts                   DefaultAccount[]
   serviceMaintenances               ServiceMaintenance[]
   terms                             Term[]
+  projects                          ProjectMaintenance[]
   itemAttributes                    ItemAttribute[]
   itemCategories                    ItemCategory[]
   unitOfMeasurements                UnitOfMeasurement[]
@@ -1001,6 +1002,25 @@ model Term {
   @@map("terms")
 }
 
+model ProjectMaintenance {
+  id                 BigInt                   @id @default(autoincrement())
+  companyId          Int                      @map("company_id")
+  projectName        String                   @map("project_name") @db.VarChar(150)
+  projectDescription String?                  @map("project_description") @db.VarChar(500)
+  status             ProjectMaintenanceStatus @default(ACTIVE)
+  createdByUserId    Int?                     @map("created_by_user_id")
+  updatedByUserId    Int?                     @map("updated_by_user_id")
+  deletedAt          DateTime?                @map("deleted_at")
+  createdAt          DateTime                 @default(now()) @map("created_at")
+  updatedAt          DateTime?                @map("updated_at")
+  company            Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, projectName], map: "project_maintenance_company_project_name_key")
+  @@index([companyId], map: "project_maintenance_company_id_idx")
+  @@index([companyId, status], map: "project_maintenance_company_status_idx")
+  @@map("project_maintenance")
+}
+
 model ItemAttribute {
   id              BigInt               @id @default(autoincrement())
   companyId       Int                  @map("company_id")
@@ -1323,7 +1343,7 @@ model ResponsibilityCenterType {
 }
 
 model Party {
-  itemSuppliers ItemSupplier[]
+  itemSuppliers                       ItemSupplier[]
   id                                  BigInt                             @id @default(autoincrement())
   companyId                           Int                                @map("company_id")
   termId                              BigInt?                            @map("term_id")
@@ -4085,6 +4105,11 @@ enum TermStatus {
   INACTIVE
 }
 
+enum ProjectMaintenanceStatus {
+  ACTIVE
+  INACTIVE
+}
+
 enum ItemAttributeUsage {
   ITEM_DETAIL
   STOCK_CLASSIFICATION
@@ -4469,16 +4494,17 @@ enum ItemBasicInfoStatus {
 }
 
 model ItemSupplier {
-  id BigInt @id @default(autoincrement())
-  itemId BigInt @map("item_id")
-  supplierId BigInt @map("supplier_id")
-  supplierCode String @default("") @map("supplier_code") @db.VarChar(100)
-  leadTime String @default("") @map("lead_time") @db.VarChar(50)
-  cost Decimal @db.Decimal(14, 2)
-  isDefault Boolean @default(false) @map("is_default")
-  sortOrder Int @default(0) @map("sort_order")
-  item ItemBasicInfo @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  supplier Party @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  id           BigInt        @id @default(autoincrement())
+  itemId       BigInt        @map("item_id")
+  supplierId   BigInt        @map("supplier_id")
+  supplierCode String        @default("") @map("supplier_code") @db.VarChar(100)
+  leadTime     String        @default("") @map("lead_time") @db.VarChar(50)
+  cost         Decimal       @db.Decimal(14, 2)
+  isDefault    Boolean       @default(false) @map("is_default")
+  sortOrder    Int           @default(0) @map("sort_order")
+  item         ItemBasicInfo @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplier     Party         @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+
   @@unique([itemId, supplierId])
   @@index([supplierId])
   @@map("item_suppliers")

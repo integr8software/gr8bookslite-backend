@@ -51,6 +51,12 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: MaintenanceRegistry,
   },
   {
+    code: 'PJM',
+    name: 'Project Maintenance',
+    icon: 'folder',
+    type: MaintenanceRegistry,
+  },
+  {
     code: 'I',
     name: 'Items',
     icon: 'package',

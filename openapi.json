@@ -4285,6 +4285,215 @@
         ]
       }
     },
+    "/api/v1/maintenance/project-maintenance": {
+      "get": {
+        "operationId": "ProjectMaintenanceController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "projectName",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMaintenanceListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated list of project records",
+        "tags": [
+          "Project Maintenance"
+        ]
+      },
+      "post": {
+        "operationId": "ProjectMaintenanceController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectMaintenanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveProjectMaintenanceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a project record",
+        "tags": [
+          "Project Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/project-maintenance/{id}": {
+      "get": {
+        "operationId": "ProjectMaintenanceController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMaintenanceContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get project details by ID",
+        "tags": [
+          "Project Maintenance"
+        ]
+      },
+      "patch": {
+        "operationId": "ProjectMaintenanceController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectMaintenanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveProjectMaintenanceResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a project record",
+        "tags": [
+          "Project Maintenance"
+        ]
+      }
+    },
     "/api/v1/maintenance/item-variations": {
       "get": {
         "operationId": "ItemVariationsController_findAll_v1",
@@ -22209,6 +22418,47 @@
       }
     },
     "schemas": {
+      "ItemSupplierResponseDto": {
+        "type": "object",
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "Vendor party ID."
+          },
+          "supplierCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "leadTime": {
+            "type": "string",
+            "maxLength": 50,
+            "pattern": "^(?:\\d+(?:\\.\\d+)? (?:days|weeks|months))?$",
+            "example": "3 days"
+          },
+          "cost": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999999999.99
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "supplierName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "supplierId",
+          "cost",
+          "isDefault",
+          "id",
+          "supplierName"
+        ]
+      },
       "ItemBasicInfoResponseDto": {
         "type": "object",
         "properties": {
@@ -22332,6 +22582,39 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "ItemSupplierDto": {
+        "type": "object",
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "Vendor party ID."
+          },
+          "supplierCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "leadTime": {
+            "type": "string",
+            "maxLength": 50,
+            "pattern": "^(?:\\d+(?:\\.\\d+)? (?:days|weeks|months))?$",
+            "example": "3 days"
+          },
+          "cost": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999999999.99
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "supplierId",
+          "cost",
+          "isDefault"
         ]
       },
       "CreateItemBasicInfoDto": {
@@ -28039,6 +28322,221 @@
           "period": {
             "type": "number",
             "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "ProjectMaintenanceResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "projectDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "projectName",
+          "projectDescription",
+          "status",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "ProjectMaintenanceStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalProjects": {
+            "type": "number"
+          },
+          "activeProjects": {
+            "type": "number"
+          },
+          "inactiveProjects": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalProjects",
+          "activeProjects",
+          "inactiveProjects"
+        ]
+      },
+      "ProjectMaintenancePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "ProjectMaintenancePermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canExport"
+        ]
+      },
+      "ProjectMaintenanceListResponseDto": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectMaintenanceResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/ProjectMaintenanceStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/ProjectMaintenancePaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ProjectMaintenancePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "projects",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "ProjectMaintenanceContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ProjectMaintenanceResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/ProjectMaintenancePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "project",
+          "permissions"
+        ]
+      },
+      "CreateProjectMaintenanceDto": {
+        "type": "object",
+        "properties": {
+          "projectName": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "projectDescription": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectName"
+        ]
+      },
+      "SaveProjectMaintenanceResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectMaintenanceResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "project"
+        ]
+      },
+      "UpdateProjectMaintenanceDto": {
+        "type": "object",
+        "properties": {
+          "projectName": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "projectDescription": {
+            "type": "string",
+            "maxLength": 500
           },
           "status": {
             "enum": [
@@ -55684,80 +56182,6 @@
             }
           }
         }
-      },
-      "ItemSupplierResponseDto": {
-        "type": "object",
-        "properties": {
-          "supplierId": {
-            "type": "string",
-            "pattern": "^[1-9][0-9]*$",
-            "description": "Vendor party ID."
-          },
-          "supplierCode": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "leadTime": {
-            "type": "string",
-            "maxLength": 50,
-            "pattern": "^(?:\\d+(?:\\.\\d+)? (?:days|weeks|months))?$",
-            "example": "3 days"
-          },
-          "cost": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 999999999999.99
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "id": {
-            "type": "string"
-          },
-          "supplierName": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "supplierId",
-          "cost",
-          "isDefault",
-          "id",
-          "supplierName"
-        ]
-      },
-      "ItemSupplierDto": {
-        "type": "object",
-        "properties": {
-          "supplierId": {
-            "type": "string",
-            "pattern": "^[1-9][0-9]*$",
-            "description": "Vendor party ID."
-          },
-          "supplierCode": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "leadTime": {
-            "type": "string",
-            "maxLength": 50,
-            "pattern": "^(?:\\d+(?:\\.\\d+)? (?:days|weeks|months))?$",
-            "example": "3 days"
-          },
-          "cost": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 999999999999.99
-          },
-          "isDefault": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "supplierId",
-          "cost",
-          "isDefault"
-        ]
       }
     }
   }

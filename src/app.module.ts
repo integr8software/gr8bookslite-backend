@@ -24,6 +24,7 @@ import { BranchUsersModule } from './modules/company/branch-users/branch-users.m
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { TermsMaintenanceModule } from './modules/maintenance/terms-maintenance/terms-maintenance.module';
+import { ProjectMaintenanceModule } from './modules/maintenance/project-maintenance/project-maintenance.module';
 import { ItemVariationsModule } from './modules/maintenance/item-variations/item-variations.module';
 import { ItemCategoryModule } from './modules/maintenance/item-category/item-category.module';
 import { UnitOfMeasurementModule } from './modules/maintenance/unit-of-measurement/unit-of-measurement.module';
@@ -90,6 +91,7 @@ import { PurchasingModule } from './modules/purchasing/purchasing.module';
     FormSignatoriesModule,
     ChartOfAccountsModule,
     TermsMaintenanceModule,
+    ProjectMaintenanceModule,
     ItemVariationsModule,
     ItemCategoryModule,
     UnitOfMeasurementModule,

@@ -124,10 +124,7 @@ export const AccountingSidebarTemplate = [
         key: 'system-administration-user-management',
         label: 'User Management',
         iconName: 'users',
-        children: [
-          link('system-administration-users', 'U', 'users'),
-          link('system-administration-user-role', 'UR', 'security', 'User Role'),
-        ],
+        children: [link('system-administration-users', 'U', 'users'), link('system-administration-user-role', 'UR', 'security', 'User Role')],
       },
       link('system-administration-audit-trail', 'AT', 'activity'),
       link('system-administration-transaction-number-setup', 'TNS', 'receipt'),
@@ -144,6 +141,7 @@ export const AccountingAndInventorySidebarTemplate = [
   AccountingSidebarTemplate[0],
   AccountingSidebarTemplate[1],
   link('party-management', 'PM', 'users'),
+  link('project-maintenance', 'PJM', 'folder'),
   {
     itemType: 'SECTION',
     key: 'item-management',
