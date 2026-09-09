@@ -1323,6 +1323,7 @@ model ResponsibilityCenterType {
 }
 
 model Party {
+  itemSuppliers ItemSupplier[]
   id                                  BigInt                             @id @default(autoincrement())
   companyId                           Int                                @map("company_id")
   termId                              BigInt?                            @map("term_id")
@@ -4405,6 +4406,7 @@ enum RevolvingFundReplenishmentStatus {
 }
 
 model ItemBasicInfo {
+  suppliers ItemSupplier[]
   id BigInt @id @default(autoincrement())
   companyId Int @map("company_id")
   code String @map("item_code") @db.VarChar(50)
@@ -4464,4 +4466,20 @@ model ItemPricing {
 enum ItemBasicInfoStatus {
   ACTIVE
   INACTIVE
+}
+
+model ItemSupplier {
+  id BigInt @id @default(autoincrement())
+  itemId BigInt @map("item_id")
+  supplierId BigInt @map("supplier_id")
+  supplierCode String @default("") @map("supplier_code") @db.VarChar(100)
+  leadTime String @default("") @map("lead_time") @db.VarChar(50)
+  cost Decimal @db.Decimal(14, 2)
+  isDefault Boolean @default(false) @map("is_default")
+  sortOrder Int @default(0) @map("sort_order")
+  item ItemBasicInfo @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplier Party @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  @@unique([itemId, supplierId])
+  @@index([supplierId])
+  @@map("item_suppliers")
 }
