@@ -19,7 +19,7 @@ describe('CashAdvanceService', () => {
 
   it('treats only submitted statuses as requiring complete data', () => {
     expect(service.isSubmittedStatus(CashAdvanceStatus.FOR_APPROVAL)).toBe(true);
-    expect(service.isSubmittedStatus(CashAdvanceStatus.APPROVED)).toBe(true);
+    expect(service.isSubmittedStatus(CashAdvanceStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(CashAdvanceStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(CashAdvanceStatus.DRAFT)).toBe(false);
     expect(service.isSubmittedStatus(CashAdvanceStatus.CANCELLED)).toBe(false);

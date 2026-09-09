@@ -32,7 +32,10 @@ import { UpdateRevolvingFundReplenishmentStatusDto } from './dto/update-revolvin
 import { RevolvingFundReplenishmentMapper } from './mappers/revolving-fund-replenishment.mapper';
 import { RevolvingFundReplenishmentInclude } from './prisma/revolving-fund-replenishment.include';
 
-export { RevolvingFundReplenishmentCopySourceLabel, formatRevolvingFundReplenishmentReference } from './copy-from/revolving-fund-replenishment-copy-source.service';
+export {
+  RevolvingFundReplenishmentCopySourceLabel,
+  formatRevolvingFundReplenishmentReference,
+} from './copy-from/revolving-fund-replenishment-copy-source.service';
 
 export const RevolvingFundReplenishmentModuleCode = 'RFR';
 
@@ -43,7 +46,7 @@ const RevolvingFundSourceAllocationLockNamespace = 7095n;
 const ActiveRevolvingFundReplenishmentStatuses = [
   RevolvingFundReplenishmentStatus.DRAFT,
   RevolvingFundReplenishmentStatus.FOR_APPROVAL,
-  RevolvingFundReplenishmentStatus.APPROVED,
+  RevolvingFundReplenishmentStatus.POSTED,
   RevolvingFundReplenishmentStatus.POSTED,
 ];
 
@@ -139,7 +142,6 @@ export class RevolvingFundReplenishmentService {
       transactionNo: suggestion.transactionNumber,
     };
   }
-
 
   async create(user: AuthUser, dto: CreateRevolvingFundReplenishmentDto) {
     const companyId = getActiveCompanyId(user);
@@ -369,15 +371,14 @@ export class RevolvingFundReplenishmentService {
       updatedByUserId: user.id,
     };
 
-    if (dto.status === RevolvingFundReplenishmentStatus.APPROVED) {
+    if (dto.status === RevolvingFundReplenishmentStatus.POSTED) {
       statusData.approvedByUserId = user.id;
       statusData.approvedAt = now;
+      statusData.postedByUserId = user.id;
+      statusData.postedAt = now;
     } else if (dto.status === RevolvingFundReplenishmentStatus.DISAPPROVED) {
       statusData.disapprovedByUserId = user.id;
       statusData.disapprovedAt = now;
-    } else if (dto.status === RevolvingFundReplenishmentStatus.POSTED) {
-      statusData.postedByUserId = user.id;
-      statusData.postedAt = now;
     } else if (dto.status === RevolvingFundReplenishmentStatus.CANCELLED) {
       statusData.cancelledByUserId = user.id;
       statusData.cancelledAt = now;
@@ -424,13 +425,8 @@ export class RevolvingFundReplenishmentService {
     return { success: true, message: `RevolvingFundReplenishment #${id} deleted successfully.` };
   }
 
-
   private isSubmittedStatus(status: RevolvingFundReplenishmentStatus) {
-    return (
-      status === RevolvingFundReplenishmentStatus.FOR_APPROVAL ||
-      status === RevolvingFundReplenishmentStatus.APPROVED ||
-      status === RevolvingFundReplenishmentStatus.POSTED
-    );
+    return status === RevolvingFundReplenishmentStatus.FOR_APPROVAL || status === RevolvingFundReplenishmentStatus.POSTED;
   }
 
   private assertRevolvingFundReplenishmentReady(record: {
@@ -608,7 +604,7 @@ export class RevolvingFundReplenishmentService {
       if (allocation.disburseAmount > availableAmount) {
         throw new BadRequestException(`RF ${allocation.transactionNo} only has ${availableAmount.toFixed(2)} disburse amount remaining.`);
       }
-      if (record.status !== RevolvingFundStatus.APPROVED && record.status !== RevolvingFundStatus.POSTED) {
+      if (record.status !== RevolvingFundStatus.POSTED) {
         throw new BadRequestException(`RF ${allocation.transactionNo} is not available for replenishment copying.`);
       }
     }
@@ -687,7 +683,6 @@ export class RevolvingFundReplenishmentService {
 
     return consumed;
   }
-
 
   private async lockAllocation(tx: Prisma.TransactionClient, namespace: bigint, sourceId: bigint) {
     const lockKey = (namespace << 32n) + sourceId;
@@ -834,4 +829,3 @@ export class RevolvingFundReplenishmentService {
     return unit.id;
   }
 }
-

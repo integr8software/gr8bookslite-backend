@@ -27,6 +27,11 @@ export class GetAdvanceToSupplierCopyFromCandidatesQueryDto {
   @IsString()
   partyCode?: string;
 
+  @ApiPropertyOptional({ description: 'Supplier party name filter', example: 'ABC Supplier' })
+  @IsOptional()
+  @IsString()
+  partyName?: string;
+
   @ApiPropertyOptional({ description: 'Search by ATS number, PO reference, supplier, project, or remarks' })
   @IsOptional()
   @IsString()

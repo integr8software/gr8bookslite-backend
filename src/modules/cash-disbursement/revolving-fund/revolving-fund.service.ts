@@ -132,7 +132,7 @@ export class RevolvingFundService {
     const where: Prisma.RevolvingFundWhereInput = {
       companyId,
       deletedAt: null,
-      status: { in: [RevolvingFundStatus.APPROVED, RevolvingFundStatus.POSTED] },
+      status: RevolvingFundStatus.POSTED,
       ...(branchUnitId ? { branchUnitId } : {}),
       ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
       ...(search
@@ -426,15 +426,14 @@ export class RevolvingFundService {
       updatedByUserId: user.id,
     };
 
-    if (dto.status === RevolvingFundStatus.APPROVED) {
+    if (dto.status === RevolvingFundStatus.POSTED) {
       statusData.approvedByUserId = user.id;
       statusData.approvedAt = now;
+      statusData.postedByUserId = user.id;
+      statusData.postedAt = now;
     } else if (dto.status === RevolvingFundStatus.DISAPPROVED) {
       statusData.disapprovedByUserId = user.id;
       statusData.disapprovedAt = now;
-    } else if (dto.status === RevolvingFundStatus.POSTED) {
-      statusData.postedByUserId = user.id;
-      statusData.postedAt = now;
     } else if (dto.status === RevolvingFundStatus.CANCELLED) {
       statusData.cancelledByUserId = user.id;
       statusData.cancelledAt = now;
@@ -476,7 +475,7 @@ export class RevolvingFundService {
   }
 
   private isSubmittedStatus(status: RevolvingFundStatus) {
-    return status === RevolvingFundStatus.FOR_APPROVAL || status === RevolvingFundStatus.APPROVED || status === RevolvingFundStatus.POSTED;
+    return status === RevolvingFundStatus.FOR_APPROVAL || status === RevolvingFundStatus.POSTED;
   }
 
   private assertRevolvingFundReady(record: {
@@ -588,7 +587,7 @@ export class RevolvingFundService {
             in: [
               RevolvingFundReplenishmentStatus.DRAFT,
               RevolvingFundReplenishmentStatus.FOR_APPROVAL,
-              RevolvingFundReplenishmentStatus.APPROVED,
+              RevolvingFundReplenishmentStatus.POSTED,
               RevolvingFundReplenishmentStatus.POSTED,
             ],
           },

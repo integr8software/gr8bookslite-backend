@@ -176,8 +176,8 @@ model AuthSessionHandoff {
 // =========================================================
 
 model Company {
-  itemBasicInfos ItemBasicInfo[]
-  itemPricings   ItemPricing[]
+  itemBasicInfos                    ItemBasicInfo[]
+  itemPricings                      ItemPricing[]
   id                                Int                                @id @default(autoincrement())
   name                              String
   slug                              String                             @unique
@@ -1045,7 +1045,7 @@ model ItemAttributeValue {
 }
 
 model ItemCategory {
-  itemBasicInfos ItemBasicInfo[]
+  itemBasicInfos             ItemBasicInfo[]
   id                         BigInt                          @id @default(autoincrement())
   companyId                  Int                             @map("company_id")
   parentId                   BigInt?                         @map("parent_id")
@@ -1151,7 +1151,7 @@ model WarehouseAccess {
 }
 
 model UnitOfMeasurement {
-  itemBasicInfos ItemBasicInfo[]
+  itemBasicInfos  ItemBasicInfo[]
   id              BigInt                        @id @default(autoincrement())
   companyId       Int                           @map("company_id")
   name            String                        @db.VarChar(150)
@@ -1227,7 +1227,7 @@ model Discount {
 }
 
 model ResponsibilityCenter {
-  itemBasicInfos ItemBasicInfo[]
+  itemBasicInfos                    ItemBasicInfo[]
   id                                BigInt                             @id @default(autoincrement())
   companyId                         Int                                @map("company_id")
   typeId                            BigInt                             @map("type_id")
@@ -1460,6 +1460,64 @@ model PartyAddress {
 
   @@index([partyId], map: "party_addresses_party_id_idx")
   @@map("party_addresses")
+}
+
+model ItemBasicInfo {
+  id                     BigInt                @id @default(autoincrement())
+  companyId              Int                   @map("company_id")
+  code                   String                @map("item_code") @db.VarChar(50)
+  skuCode                String?               @map("sku_code") @db.VarChar(100)
+  name                   String                @map("item_name") @db.VarChar(150)
+  barcode                String?               @db.VarChar(100)
+  categoryId             BigInt                @map("category_id")
+  unitOfMeasurementId    BigInt                @map("unit_of_measurement_id")
+  brand                  String?               @db.VarChar(150)
+  model                  String?               @db.VarChar(150)
+  externalReferenceCode  String?               @map("external_reference_code") @db.VarChar(100)
+  responsibilityCenterId BigInt?               @map("responsibility_center_id")
+  description            String?               @db.VarChar(500)
+  tags                   Json                  @default("[]")
+  status                 ItemBasicInfoStatus   @default(ACTIVE)
+  createdByUserId        Int?                  @map("created_by_user_id")
+  updatedByUserId        Int?                  @map("updated_by_user_id")
+  createdAt              DateTime              @default(now()) @map("created_at")
+  updatedAt              DateTime?             @map("updated_at")
+  deletedAt              DateTime?             @map("deleted_at")
+  company                Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category               ItemCategory          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  unitOfMeasurement      UnitOfMeasurement     @relation(fields: [unitOfMeasurementId], references: [id], onDelete: Restrict)
+  responsibilityCenter   ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: Restrict)
+  pricing                ItemPricing?
+
+  @@unique([companyId, code], map: "item_basic_info_company_code_key")
+  @@index([companyId, status], map: "item_basic_info_company_status_idx")
+  @@index([categoryId])
+  @@index([unitOfMeasurementId])
+  @@index([responsibilityCenterId])
+  @@map("item_basic_info")
+}
+
+model ItemPricing {
+  id              BigInt    @id @default(autoincrement())
+  companyId       Int       @map("company_id")
+  itemId          BigInt    @unique @map("item_id")
+  cost            Decimal   @default(0) @db.Decimal(18, 4)
+  sellingPrice    Decimal   @default(0) @map("selling_price") @db.Decimal(18, 4)
+  suggestedPrice  Decimal   @default(0) @map("suggested_price") @db.Decimal(18, 4)
+  taxTreatment    String?   @map("tax_treatment") @db.VarChar(100)
+  createdByUserId Int?      @map("created_by_user_id")
+  updatedByUserId Int?      @map("updated_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  item    ItemBasicInfo @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, itemId], map: "item_pricing_company_item_id_key")
+  @@index([itemId])
+  @@index([companyId])
+  @@map("item_pricing")
 }
 
 model PurchaseRequest {
@@ -4205,28 +4263,29 @@ enum PurchaseOrderStatus {
 
 enum AccountsPayableVoucherStatus {
   DRAFT
-  APPROVED
+  FOR_APPROVAL
+  POSTED
   DISAPPROVED
-  CLOSED
   CANCELLED
+  CLOSED
 }
 
 enum CashAdvanceStatus {
   DRAFT
   FOR_APPROVAL
-  APPROVED
-  DISAPPROVED
   POSTED
+  DISAPPROVED
   CANCELLED
+  CLOSED
 }
 
 enum AdvanceToSupplierStatus {
   DRAFT
   FOR_APPROVAL
-  APPROVED
-  DISAPPROVED
   POSTED
+  DISAPPROVED
   CANCELLED
+  CLOSED
 }
 
 enum AdvanceToSupplierPaymentType {
@@ -4237,7 +4296,6 @@ enum AdvanceToSupplierPaymentType {
 enum CashVoucherStatus {
   DRAFT
   FOR_APPROVAL
-  APPROVED
   POSTED
   DISAPPROVED
   CANCELLED
@@ -4247,7 +4305,6 @@ enum CashVoucherStatus {
 enum DisbursementVoucherStatus {
   DRAFT
   FOR_APPROVAL
-  APPROVED
   POSTED
   DISAPPROVED
   CANCELLED
@@ -4362,103 +4419,46 @@ enum TaxAmountSource {
 enum PettyCashVoucherStatus {
   DRAFT
   FOR_APPROVAL
-  APPROVED
   POSTED
   DISAPPROVED
   CANCELLED
+  CLOSED
 }
 
 enum PettyCashFundStatus {
   DRAFT
   FOR_APPROVAL
-  APPROVED
   POSTED
   DISAPPROVED
   CANCELLED
+  CLOSED
 }
 
 enum PettyCashReplenishmentStatus {
   DRAFT
   FOR_APPROVAL
-  APPROVED
   POSTED
   DISAPPROVED
   CANCELLED
+  CLOSED
 }
 
 enum RevolvingFundStatus {
   DRAFT
   FOR_APPROVAL
-  APPROVED
   POSTED
   DISAPPROVED
   CANCELLED
+  CLOSED
 }
 
 enum RevolvingFundReplenishmentStatus {
   DRAFT
   FOR_APPROVAL
-  APPROVED
   POSTED
   DISAPPROVED
   CANCELLED
-}
-
-model ItemBasicInfo {
-  id BigInt @id @default(autoincrement())
-  companyId Int @map("company_id")
-  code String @map("item_code") @db.VarChar(50)
-  skuCode String? @map("sku_code") @db.VarChar(100)
-  name String @map("item_name") @db.VarChar(150)
-  barcode String? @db.VarChar(100)
-  categoryId BigInt @map("category_id")
-  unitOfMeasurementId BigInt @map("unit_of_measurement_id")
-  brand String? @db.VarChar(150)
-  model String? @db.VarChar(150)
-  externalReferenceCode String? @map("external_reference_code") @db.VarChar(100)
-  responsibilityCenterId BigInt? @map("responsibility_center_id")
-  description String? @db.VarChar(500)
-  tags Json @default("[]")
-  status ItemBasicInfoStatus @default(ACTIVE)
-  createdByUserId Int? @map("created_by_user_id")
-  updatedByUserId Int? @map("updated_by_user_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime? @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  category ItemCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  unitOfMeasurement UnitOfMeasurement @relation(fields: [unitOfMeasurementId], references: [id], onDelete: Restrict)
-  responsibilityCenter ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: Restrict)
-  pricing              ItemPricing?
-  @@unique([companyId, code], map: "item_basic_info_company_code_key")
-  @@index([companyId, status], map: "item_basic_info_company_status_idx")
-  @@index([categoryId])
-  @@index([unitOfMeasurementId])
-  @@index([responsibilityCenterId])
-  @@map("item_basic_info")
-}
-
-model ItemPricing {
-  id              BigInt         @id @default(autoincrement())
-  companyId       Int            @map("company_id")
-  itemId          BigInt         @unique @map("item_id")
-  cost            Decimal        @default(0) @db.Decimal(18, 4)
-  sellingPrice    Decimal        @default(0) @map("selling_price") @db.Decimal(18, 4)
-  suggestedPrice  Decimal        @default(0) @map("suggested_price") @db.Decimal(18, 4)
-  taxTreatment    String?        @map("tax_treatment") @db.VarChar(100)
-  createdByUserId Int?           @map("created_by_user_id")
-  updatedByUserId Int?           @map("updated_by_user_id")
-  createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime?      @map("updated_at")
-  deletedAt       DateTime?      @map("deleted_at")
-
-  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  item            ItemBasicInfo  @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@unique([companyId, itemId], map: "item_pricing_company_item_id_key")
-  @@index([itemId])
-  @@index([companyId])
-  @@map("item_pricing")
+  CLOSED
 }
 
 enum ItemBasicInfoStatus {

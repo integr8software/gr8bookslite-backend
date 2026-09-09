@@ -38,6 +38,7 @@ import {
 import { DisbursementVoucherDetailDto } from './dto/disbursement-voucher-detail.dto';
 import { CreateDisbursementVoucherDto } from './dto/create-disbursement-voucher.dto';
 import { GetDisbursementVoucherListQueryDto } from './dto/get-disbursement-voucher-list-query.dto';
+import { GetChartAccountListQueryDto } from '../../maintenance/chart-of-accounts/dto/get-chart-account-list-query.dto';
 import { JournalEntryDto } from './dto/journal-entry.dto';
 import { UpdateDisbursementVoucherDto } from './dto/update-disbursement-voucher.dto';
 import { UpdateDisbursementVoucherStatusDto } from './dto/update-disbursement-voucher-status.dto';
@@ -47,6 +48,7 @@ import { DisbursementVoucherAccountingService, DisbursementVoucherReferenceType,
 export const DisbursementVoucherModuleCode = 'DV';
 import type { DisbursementVoucherJournalEntry, DisbursementVoucherWithDetails } from './types/disbursement-voucher-with-details.type';
 import { roundCurrency } from './utils/disbursement-voucher-totals.util';
+import { findCashDisbursementAccountTitleOptions } from '../shared/cash-disbursement-account-title-options.util';
 
 const JournalEntryNumberAdvisoryLockNamespace = 7082;
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
@@ -127,6 +129,20 @@ export class DisbursementVoucherService {
       pagination,
       statistics,
       permissions,
+    };
+  }
+
+  async findAccountTitleOptions(user: AuthUser, query: GetChartAccountListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    this.ensureCan(user, companyId, PermissionAction.VIEW);
+
+    return {
+      accounts: await findCashDisbursementAccountTitleOptions({
+        companyId,
+        prisma: this.prisma,
+        query,
+      }),
     };
   }
 
@@ -514,11 +530,7 @@ export class DisbursementVoucherService {
       };
     }
 
-    if (
-      targetStatus === DisbursementVoucherStatus.FOR_APPROVAL ||
-      targetStatus === DisbursementVoucherStatus.APPROVED ||
-      targetStatus === DisbursementVoucherStatus.POSTED
-    ) {
+    if (targetStatus === DisbursementVoucherStatus.FOR_APPROVAL || targetStatus === DisbursementVoucherStatus.POSTED) {
       this.validateSubmittedHeader({
         partyCode: current.partyCodeSnapshot,
         partyName: current.partyNameSnapshot,
@@ -537,10 +549,9 @@ export class DisbursementVoucherService {
       updatedByUserId: userId,
     };
 
-    if (targetStatus === DisbursementVoucherStatus.APPROVED) {
+    if (targetStatus === DisbursementVoucherStatus.POSTED) {
       auditData.approvedByUserId = userId;
       auditData.approvedAt = now;
-    } else if (targetStatus === DisbursementVoucherStatus.POSTED || targetStatus === DisbursementVoucherStatus.CLOSED) {
       auditData.postedByUserId = userId;
       auditData.postedAt = now;
     } else if (targetStatus === DisbursementVoucherStatus.DISAPPROVED) {
@@ -703,7 +714,7 @@ export class DisbursementVoucherService {
       totalVouchers,
       draftVouchers: countsMap.get(DisbursementVoucherStatus.DRAFT) ?? 0,
       forApprovalVouchers: countsMap.get(DisbursementVoucherStatus.FOR_APPROVAL) ?? 0,
-      postedVouchers: (countsMap.get(DisbursementVoucherStatus.POSTED) ?? 0) + (countsMap.get(DisbursementVoucherStatus.CLOSED) ?? 0),
+      postedVouchers: countsMap.get(DisbursementVoucherStatus.POSTED) ?? 0,
       disapprovedVouchers: countsMap.get(DisbursementVoucherStatus.DISAPPROVED) ?? 0,
       cancelledVouchers: countsMap.get(DisbursementVoucherStatus.CANCELLED) ?? 0,
     };
@@ -1279,12 +1290,10 @@ export class DisbursementVoucherService {
       .toUpperCase()
       .replace(/[\s-]+/g, '_');
     if (normalized === 'FOR_APPROVAL' || normalized === 'FORAPPROVAL') return DisbursementVoucherStatus.FOR_APPROVAL;
-    if (normalized === 'APPROVED') return DisbursementVoucherStatus.APPROVED;
+    if (normalized === 'APPROVED') return DisbursementVoucherStatus.POSTED;
     if (normalized === 'POSTED') return DisbursementVoucherStatus.POSTED;
     if (normalized === 'DISAPPROVED') return DisbursementVoucherStatus.DISAPPROVED;
     if (normalized === 'CANCELLED' || normalized === 'CANCELED') return DisbursementVoucherStatus.CANCELLED;
-    if (normalized === 'CLOSED') return DisbursementVoucherStatus.CLOSED;
-
     return DisbursementVoucherStatus.DRAFT;
   }
 

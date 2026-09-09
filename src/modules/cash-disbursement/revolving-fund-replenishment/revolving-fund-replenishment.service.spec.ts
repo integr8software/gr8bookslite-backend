@@ -27,7 +27,7 @@ describe('RevolvingFundReplenishmentService', () => {
 
   it('treats only submitted statuses as requiring complete data', () => {
     expect(service.isSubmittedStatus(RevolvingFundReplenishmentStatus.FOR_APPROVAL)).toBe(true);
-    expect(service.isSubmittedStatus(RevolvingFundReplenishmentStatus.APPROVED)).toBe(true);
+    expect(service.isSubmittedStatus(RevolvingFundReplenishmentStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(RevolvingFundReplenishmentStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(RevolvingFundReplenishmentStatus.DRAFT)).toBe(false);
     expect(service.isSubmittedStatus(RevolvingFundReplenishmentStatus.CANCELLED)).toBe(false);

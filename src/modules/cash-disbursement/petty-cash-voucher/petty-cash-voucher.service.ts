@@ -132,7 +132,7 @@ export class PettyCashVoucherService {
     const where: Prisma.PettyCashVoucherWhereInput = {
       companyId,
       deletedAt: null,
-      status: { in: [PettyCashVoucherStatus.APPROVED, PettyCashVoucherStatus.POSTED] },
+      status: PettyCashVoucherStatus.POSTED,
       ...(branchUnitId ? { branchUnitId } : {}),
       ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
       ...(search
@@ -427,15 +427,14 @@ export class PettyCashVoucherService {
       updatedByUserId: user.id,
     };
 
-    if (dto.status === PettyCashVoucherStatus.APPROVED) {
+    if (dto.status === PettyCashVoucherStatus.POSTED) {
       statusData.approvedByUserId = user.id;
       statusData.approvedAt = now;
+      statusData.postedByUserId = user.id;
+      statusData.postedAt = now;
     } else if (dto.status === PettyCashVoucherStatus.DISAPPROVED) {
       statusData.disapprovedByUserId = user.id;
       statusData.disapprovedAt = now;
-    } else if (dto.status === PettyCashVoucherStatus.POSTED) {
-      statusData.postedByUserId = user.id;
-      statusData.postedAt = now;
     } else if (dto.status === PettyCashVoucherStatus.CANCELLED) {
       statusData.cancelledByUserId = user.id;
       statusData.cancelledAt = now;
@@ -483,7 +482,7 @@ export class PettyCashVoucherService {
   }
 
   private isSubmittedStatus(status: PettyCashVoucherStatus) {
-    return status === PettyCashVoucherStatus.FOR_APPROVAL || status === PettyCashVoucherStatus.APPROVED || status === PettyCashVoucherStatus.POSTED;
+    return status === PettyCashVoucherStatus.FOR_APPROVAL || status === PettyCashVoucherStatus.POSTED;
   }
 
   private async getReplenishmentConsumedAmounts(sources: Array<{ id: string; transactionNo: string }>, companyId: number) {
@@ -512,7 +511,7 @@ export class PettyCashVoucherService {
             in: [
               PettyCashReplenishmentStatus.DRAFT,
               PettyCashReplenishmentStatus.FOR_APPROVAL,
-              PettyCashReplenishmentStatus.APPROVED,
+              PettyCashReplenishmentStatus.POSTED,
               PettyCashReplenishmentStatus.POSTED,
             ],
           },

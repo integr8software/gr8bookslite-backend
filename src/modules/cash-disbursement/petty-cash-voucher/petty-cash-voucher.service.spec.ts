@@ -20,7 +20,7 @@ describe('PettyCashVoucherService', () => {
 
   it('treats only submitted statuses as requiring complete data', () => {
     expect(service.isSubmittedStatus(PettyCashVoucherStatus.FOR_APPROVAL)).toBe(true);
-    expect(service.isSubmittedStatus(PettyCashVoucherStatus.APPROVED)).toBe(true);
+    expect(service.isSubmittedStatus(PettyCashVoucherStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(PettyCashVoucherStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(PettyCashVoucherStatus.DRAFT)).toBe(false);
     expect(service.isSubmittedStatus(PettyCashVoucherStatus.CANCELLED)).toBe(false);

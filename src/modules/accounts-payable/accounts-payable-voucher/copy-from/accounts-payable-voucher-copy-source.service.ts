@@ -18,21 +18,9 @@ export const AccountsPayableVoucherCopySourceLabel = 'Accounts Payable Voucher';
 
 const AccountsPayableVoucherModuleCode = 'APV';
 const AccountsPayableVoucherAllocationLockNamespace = 7091n;
-const ActiveCashVoucherStatuses = [
-  CashVoucherStatus.DRAFT,
-  CashVoucherStatus.FOR_APPROVAL,
-  CashVoucherStatus.APPROVED,
-  CashVoucherStatus.POSTED,
-  CashVoucherStatus.CLOSED,
-];
-const ActiveDisbursementVoucherStatuses = [
-  DisbursementVoucherStatus.DRAFT,
-  DisbursementVoucherStatus.FOR_APPROVAL,
-  DisbursementVoucherStatus.APPROVED,
-  DisbursementVoucherStatus.POSTED,
-  DisbursementVoucherStatus.CLOSED,
-];
-const CopyableAccountsPayableVoucherStatuses: AccountsPayableVoucherStatus[] = [AccountsPayableVoucherStatus.APPROVED, AccountsPayableVoucherStatus.CLOSED];
+const ActiveCashVoucherStatuses = [CashVoucherStatus.DRAFT, CashVoucherStatus.FOR_APPROVAL, CashVoucherStatus.POSTED];
+const ActiveDisbursementVoucherStatuses = [DisbursementVoucherStatus.DRAFT, DisbursementVoucherStatus.FOR_APPROVAL, DisbursementVoucherStatus.POSTED];
+const CopyableAccountsPayableVoucherStatuses: AccountsPayableVoucherStatus[] = [AccountsPayableVoucherStatus.POSTED];
 
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
 
@@ -79,6 +67,7 @@ export class AccountsPayableVoucherCopySourceService {
     const skip = (page - 1) * limit;
     const search = cleanOptional(query.search);
     const partyCode = cleanOptional(query.partyCode);
+    const partyName = cleanOptional(query.partyName);
     const partyId = query.partyId ? parsePositiveBigIntId(query.partyId, 'partyId') : null;
     const branchUnitId = query.branchUnitId;
     const where: Prisma.AccountsPayableVoucherWhereInput = {
@@ -86,7 +75,13 @@ export class AccountsPayableVoucherCopySourceService {
       deletedAt: null,
       status: { in: CopyableAccountsPayableVoucherStatuses },
       ...(branchUnitId ? { branchUnitId } : {}),
-      ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
+      ...(partyId
+        ? { partyId }
+        : partyName
+          ? { partyNameSnapshot: { equals: partyName, mode: 'insensitive' } }
+          : partyCode
+            ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } }
+            : {}),
       ...(search
         ? {
             OR: [
@@ -127,8 +122,11 @@ export class AccountsPayableVoucherCopySourceService {
       .map((record) => {
         const consumedGrossAmount = consumedAmounts.gross.get(record.apvId.toString()) ?? 0;
         const consumedAmount = consumedAmounts.payable.get(record.apvId.toString()) ?? 0;
-        const amount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.amount), 0));
-        const totalPayable = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.totalAmountDue), 0));
+        const detailAmount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.amount), 0));
+        const detailPayable = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.totalAmountDue), 0));
+        const headerAmount = roundMoney(Number(record.amount));
+        const amount = detailAmount > 0 ? detailAmount : headerAmount;
+        const totalPayable = detailPayable > 0 ? detailPayable : headerAmount;
         const availableGrossAmount = roundMoney(amount - consumedGrossAmount);
         const availableAmount = roundMoney(totalPayable - consumedAmount);
 
@@ -307,8 +305,11 @@ export class AccountsPayableVoucherCopySourceService {
       const apvId = apv.apvId.toString();
       const consumedGrossAmount = consumedAmounts.gross.get(apvId) ?? 0;
       const consumedAmount = consumedAmounts.payable.get(apvId) ?? 0;
-      const sourceGrossAmount = roundMoney(apv.details.reduce((sum, detail) => sum + Number(detail.amount), 0));
-      const sourcePayableAmount = roundMoney(apv.details.reduce((sum, detail) => sum + Number(detail.totalAmountDue), 0));
+      const detailGrossAmount = roundMoney(apv.details.reduce((sum, detail) => sum + Number(detail.amount), 0));
+      const detailPayableAmount = roundMoney(apv.details.reduce((sum, detail) => sum + Number(detail.totalAmountDue), 0));
+      const headerAmount = roundMoney(Number(apv.amount));
+      const sourceGrossAmount = detailGrossAmount > 0 ? detailGrossAmount : headerAmount;
+      const sourcePayableAmount = detailPayableAmount > 0 ? detailPayableAmount : headerAmount;
       const availableGrossAmount = roundMoney(sourceGrossAmount - consumedGrossAmount);
       const availableAmount = roundMoney(sourcePayableAmount - consumedAmount);
       if (allocation.grossAmount > availableGrossAmount) {

@@ -157,7 +157,7 @@ export class AccountsPayableVoucherService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
-    const saveStatus = AccountsPayableVoucherStatus.APPROVED;
+    const saveStatus = AccountsPayableVoucherStatus.FOR_APPROVAL;
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       details: dto.details,
@@ -197,8 +197,6 @@ export class AccountsPayableVoucherService {
             projectName: cleanOptional(dto.projectName),
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
-            approvedAt: new Date(),
-            approvedByUserId: user.id,
             status: saveStatus,
             termId: references.term.id,
             transactionNo,
@@ -245,7 +243,7 @@ export class AccountsPayableVoucherService {
     const apvId = parsePositiveBigIntId(id);
     const current = await this.findVoucherOrThrow(companyId, apvId);
 
-    if (current.status !== AccountsPayableVoucherStatus.DRAFT && current.status !== AccountsPayableVoucherStatus.APPROVED) {
+    if (current.status !== AccountsPayableVoucherStatus.DRAFT && current.status !== AccountsPayableVoucherStatus.FOR_APPROVAL) {
       throw new BadRequestException('Only draft or for-approval AP vouchers can be edited.');
     }
 
@@ -255,7 +253,7 @@ export class AccountsPayableVoucherService {
 
     const branchUnitId = current.branchUnitId;
     const normalized = await this.normalizeVoucherInput(companyId, dto);
-    const saveStatus = AccountsPayableVoucherStatus.APPROVED;
+    const saveStatus = AccountsPayableVoucherStatus.FOR_APPROVAL;
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       details: dto.details,
@@ -355,7 +353,7 @@ export class AccountsPayableVoucherService {
 
     this.ensureStatusTransitionAllowed(current.status, targetStatus);
 
-    if (targetStatus === AccountsPayableVoucherStatus.APPROVED) {
+    if (targetStatus === AccountsPayableVoucherStatus.POSTED) {
       this.accountingService.validatePersistedPayload({
         amount: Number(current.amount),
         details: current.details,
@@ -467,9 +465,9 @@ export class AccountsPayableVoucherService {
           const count = group._count._all;
 
           statistics.totalVouchers += count;
-          if (group.status === AccountsPayableVoucherStatus.APPROVED) statistics.forApprovalVouchers += count;
+          if (group.status === AccountsPayableVoucherStatus.FOR_APPROVAL) statistics.forApprovalVouchers += count;
           if (group.status === AccountsPayableVoucherStatus.CANCELLED) statistics.cancelledVouchers += count;
-          if (group.status === AccountsPayableVoucherStatus.CLOSED) statistics.postedVouchers += count;
+          if (group.status === AccountsPayableVoucherStatus.POSTED) statistics.postedVouchers += count;
           if (group.status === AccountsPayableVoucherStatus.DISAPPROVED) statistics.disapprovedVouchers += count;
           if (group.status === AccountsPayableVoucherStatus.DRAFT) statistics.draftVouchers += count;
         }
@@ -1033,12 +1031,13 @@ export class AccountsPayableVoucherService {
 
   private ensureStatusTransitionAllowed(currentStatus: AccountsPayableVoucherStatus, targetStatus: AccountsPayableVoucherStatus) {
     const allowedStatuses: Record<AccountsPayableVoucherStatus, AccountsPayableVoucherStatus[]> = {
-      [AccountsPayableVoucherStatus.APPROVED]: [AccountsPayableVoucherStatus.DRAFT, AccountsPayableVoucherStatus.CLOSED],
+      [AccountsPayableVoucherStatus.FOR_APPROVAL]: [AccountsPayableVoucherStatus.DRAFT, AccountsPayableVoucherStatus.POSTED],
       [AccountsPayableVoucherStatus.CANCELLED]: [AccountsPayableVoucherStatus.DRAFT],
       [AccountsPayableVoucherStatus.CLOSED]: [],
+      [AccountsPayableVoucherStatus.POSTED]: [AccountsPayableVoucherStatus.FOR_APPROVAL, AccountsPayableVoucherStatus.CLOSED],
       [AccountsPayableVoucherStatus.DISAPPROVED]: [AccountsPayableVoucherStatus.DRAFT],
       [AccountsPayableVoucherStatus.DRAFT]: [
-        AccountsPayableVoucherStatus.APPROVED,
+        AccountsPayableVoucherStatus.FOR_APPROVAL,
         AccountsPayableVoucherStatus.CANCELLED,
         AccountsPayableVoucherStatus.DISAPPROVED,
       ],
@@ -1052,10 +1051,10 @@ export class AccountsPayableVoucherService {
   private getStatusAuditData(targetStatus: AccountsPayableVoucherStatus, userId: number): Prisma.AccountsPayableVoucherUncheckedUpdateInput {
     const now = new Date();
 
-    if (targetStatus === AccountsPayableVoucherStatus.APPROVED) {
+    if (targetStatus === AccountsPayableVoucherStatus.FOR_APPROVAL) {
       return {
-        approvedAt: now,
-        approvedByUserId: userId,
+        approvedAt: null,
+        approvedByUserId: null,
         cancelledAt: null,
         cancelledByUserId: null,
         closedAt: null,
@@ -1091,6 +1090,19 @@ export class AccountsPayableVoucherService {
       };
     }
 
+    if (targetStatus === AccountsPayableVoucherStatus.POSTED) {
+      return {
+        approvedAt: now,
+        approvedByUserId: userId,
+        cancelledAt: null,
+        cancelledByUserId: null,
+        closedAt: null,
+        closedByUserId: null,
+        disapprovedAt: null,
+        disapprovedByUserId: null,
+      };
+    }
+
     if (targetStatus === AccountsPayableVoucherStatus.CLOSED) {
       return {
         closedAt: now,
@@ -1115,20 +1127,21 @@ export class AccountsPayableVoucherService {
       .trim()
       .toUpperCase()
       .replace(/[\s-]+/g, '_');
+    const legacyNormalized = normalized === 'APPROVED' ? 'POSTED' : normalized;
 
-    if (!Object.values(AccountsPayableVoucherStatus).includes(normalized as AccountsPayableVoucherStatus)) {
+    if (!Object.values(AccountsPayableVoucherStatus).includes(legacyNormalized as AccountsPayableVoucherStatus)) {
       throw new BadRequestException('Invalid APV status.');
     }
 
-    return normalized as AccountsPayableVoucherStatus;
+    return legacyNormalized as AccountsPayableVoucherStatus;
   }
 
   private getJournalEntryStatus(status: AccountsPayableVoucherStatus) {
-    if (status === AccountsPayableVoucherStatus.APPROVED) {
+    if (status === AccountsPayableVoucherStatus.FOR_APPROVAL) {
       return 'For Approval';
     }
 
-    if (status === AccountsPayableVoucherStatus.CLOSED) {
+    if (status === AccountsPayableVoucherStatus.POSTED) {
       return 'Posted';
     }
 

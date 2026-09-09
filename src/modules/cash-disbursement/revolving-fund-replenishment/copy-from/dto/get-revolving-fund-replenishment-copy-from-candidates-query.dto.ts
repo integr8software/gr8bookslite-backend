@@ -37,6 +37,12 @@ export class GetRevolvingFundReplenishmentCopyFromCandidatesQueryDto {
   @MaxLength(80)
   partyCode?: string;
 
+  @ApiPropertyOptional({ description: 'Party name filter', example: 'Juan Dela Cruz' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  partyName?: string;
+
   @ApiPropertyOptional({ description: 'Page number', default: 1, example: 1 })
   @IsOptional()
   @Transform(({ value }) => toOptionalInt(value))

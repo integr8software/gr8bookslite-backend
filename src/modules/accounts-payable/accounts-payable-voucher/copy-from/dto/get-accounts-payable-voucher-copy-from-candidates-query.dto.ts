@@ -32,6 +32,11 @@ export class GetAccountsPayableVoucherCopyFromCandidatesQueryDto {
   partyCode?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  partyName?: string;
+
+  @IsOptional()
   @Transform(({ value }) => toOptionalInt(value))
   @IsInt()
   @Min(1)

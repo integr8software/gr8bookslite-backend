@@ -25,7 +25,6 @@ export const PurchaseOrderCopySourceLabel = 'Purchase Order';
 const ActiveAdvanceToSupplierStatuses = [
   AdvanceToSupplierStatus.DRAFT,
   AdvanceToSupplierStatus.FOR_APPROVAL,
-  AdvanceToSupplierStatus.APPROVED,
   AdvanceToSupplierStatus.POSTED,
 ];
 
@@ -337,14 +336,7 @@ export class PurchaseOrderService {
         const after = gross - discount;
         const vatable = item.vatable ?? false;
         const vatInclusive = item.vatInclusive ?? false;
-        const vat =
-          item.vatAmount != null
-            ? item.vatAmount
-            : vatable
-              ? vatInclusive
-                ? roundMoney(after - after / 1.12)
-                : roundMoney(after * 0.12)
-              : 0;
+        const vat = item.vatAmount != null ? item.vatAmount : vatable ? (vatInclusive ? roundMoney(after - after / 1.12) : roundMoney(after * 0.12)) : 0;
         return {
           companyId,
           branchUnitId,

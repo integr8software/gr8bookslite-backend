@@ -25,7 +25,7 @@ describe('PettyCashReplenishmentService', () => {
 
   it('treats only submitted statuses as requiring complete data', () => {
     expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.FOR_APPROVAL)).toBe(true);
-    expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.APPROVED)).toBe(true);
+    expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.DRAFT)).toBe(false);
     expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.CANCELLED)).toBe(false);

@@ -25,7 +25,7 @@ describe('PettyCashFundService', () => {
 
   it('treats only submitted statuses as requiring complete data', () => {
     expect(service.isSubmittedStatus(PettyCashFundStatus.FOR_APPROVAL)).toBe(true);
-    expect(service.isSubmittedStatus(PettyCashFundStatus.APPROVED)).toBe(true);
+    expect(service.isSubmittedStatus(PettyCashFundStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(PettyCashFundStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(PettyCashFundStatus.DRAFT)).toBe(false);
     expect(service.isSubmittedStatus(PettyCashFundStatus.CANCELLED)).toBe(false);

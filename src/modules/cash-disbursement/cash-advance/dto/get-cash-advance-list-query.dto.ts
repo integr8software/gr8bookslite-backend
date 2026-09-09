@@ -23,7 +23,7 @@ export class GetCashAdvanceListQueryDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'Status filter (DRAFT, FOR_APPROVAL, APPROVED, DISAPPROVED, POSTED, CANCELLED)' })
+  @ApiPropertyOptional({ description: 'Status filter (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)' })
   @IsOptional()
   @IsString()
   status?: string;

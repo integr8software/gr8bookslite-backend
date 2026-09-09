@@ -132,7 +132,7 @@ export class PettyCashFundService {
     const where: Prisma.PettyCashFundWhereInput = {
       companyId,
       deletedAt: null,
-      status: { in: [PettyCashFundStatus.APPROVED, PettyCashFundStatus.POSTED] },
+      status: PettyCashFundStatus.POSTED,
       ...(branchUnitId ? { branchUnitId } : {}),
       ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
       ...(search
@@ -426,15 +426,14 @@ export class PettyCashFundService {
       updatedByUserId: user.id,
     };
 
-    if (dto.status === PettyCashFundStatus.APPROVED) {
+    if (dto.status === PettyCashFundStatus.POSTED) {
       statusData.approvedByUserId = user.id;
       statusData.approvedAt = now;
+      statusData.postedByUserId = user.id;
+      statusData.postedAt = now;
     } else if (dto.status === PettyCashFundStatus.DISAPPROVED) {
       statusData.disapprovedByUserId = user.id;
       statusData.disapprovedAt = now;
-    } else if (dto.status === PettyCashFundStatus.POSTED) {
-      statusData.postedByUserId = user.id;
-      statusData.postedAt = now;
     } else if (dto.status === PettyCashFundStatus.CANCELLED) {
       statusData.cancelledByUserId = user.id;
       statusData.cancelledAt = now;
@@ -555,7 +554,7 @@ export class PettyCashFundService {
             in: [
               PettyCashReplenishmentStatus.DRAFT,
               PettyCashReplenishmentStatus.FOR_APPROVAL,
-              PettyCashReplenishmentStatus.APPROVED,
+              PettyCashReplenishmentStatus.POSTED,
               PettyCashReplenishmentStatus.POSTED,
             ],
           },
@@ -583,7 +582,7 @@ export class PettyCashFundService {
   }
 
   private isSubmittedStatus(status: PettyCashFundStatus) {
-    return status === PettyCashFundStatus.FOR_APPROVAL || status === PettyCashFundStatus.APPROVED || status === PettyCashFundStatus.POSTED;
+    return status === PettyCashFundStatus.FOR_APPROVAL || status === PettyCashFundStatus.POSTED;
   }
 
   private assertPettyCashFundReady(record: {

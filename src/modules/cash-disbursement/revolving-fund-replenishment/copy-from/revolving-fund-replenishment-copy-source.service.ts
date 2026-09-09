@@ -16,21 +16,9 @@ export const RevolvingFundReplenishmentCopySourceLabel = 'Revolving Fund Repleni
 export const RevolvingFundReplenishmentAllocationLockNamespace = 7094n;
 const RevolvingFundReplenishmentModuleCode = 'RFR';
 
-const ActiveCashVoucherStatuses = [
-  CashVoucherStatus.DRAFT,
-  CashVoucherStatus.FOR_APPROVAL,
-  CashVoucherStatus.APPROVED,
-  CashVoucherStatus.POSTED,
-  CashVoucherStatus.CLOSED,
-];
+const ActiveCashVoucherStatuses = [CashVoucherStatus.DRAFT, CashVoucherStatus.FOR_APPROVAL, CashVoucherStatus.POSTED];
 
-const ActiveDisbursementVoucherStatuses = [
-  DisbursementVoucherStatus.DRAFT,
-  DisbursementVoucherStatus.FOR_APPROVAL,
-  DisbursementVoucherStatus.APPROVED,
-  DisbursementVoucherStatus.POSTED,
-  DisbursementVoucherStatus.CLOSED,
-];
+const ActiveDisbursementVoucherStatuses = [DisbursementVoucherStatus.DRAFT, DisbursementVoucherStatus.FOR_APPROVAL, DisbursementVoucherStatus.POSTED];
 
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
 
@@ -84,13 +72,20 @@ export class RevolvingFundReplenishmentCopySourceService {
     const search = cleanOptional(query.search);
     const partyId = query.partyId ? parsePositiveBigIntId(query.partyId, 'partyId') : null;
     const partyCode = cleanOptional(query.partyCode);
+    const partyName = cleanOptional(query.partyName);
     const branchUnitId = query.branchUnitId;
     const where: Prisma.RevolvingFundReplenishmentWhereInput = {
       companyId,
       deletedAt: null,
-      status: { in: [RevolvingFundReplenishmentStatus.APPROVED, RevolvingFundReplenishmentStatus.POSTED] },
+      status: RevolvingFundReplenishmentStatus.POSTED,
       ...(branchUnitId ? { branchUnitId } : {}),
-      ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
+      ...(partyId
+        ? { partyId }
+        : partyName
+          ? { partyNameSnapshot: { equals: partyName, mode: 'insensitive' } }
+          : partyCode
+            ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } }
+            : {}),
       ...(search
         ? {
             OR: [
@@ -125,8 +120,11 @@ export class RevolvingFundReplenishmentCopySourceService {
         const sourceId = record.id.toString();
         const consumedGrossAmount = consumedAmounts.gross.get(sourceId) ?? 0;
         const consumedAmount = consumedAmounts.disburse.get(sourceId) ?? 0;
-        const amount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.amount), 0));
-        const disburseAmount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || 0), 0));
+        const detailAmount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.amount), 0));
+        const detailDisburseAmount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || 0), 0));
+        const headerAmount = roundMoney(Number(record.amount));
+        const amount = detailAmount > 0 ? detailAmount : headerAmount;
+        const disburseAmount = detailDisburseAmount > 0 ? detailDisburseAmount : headerAmount;
         const availableGrossAmount = roundMoney(amount - consumedGrossAmount);
         const availableAmount = roundMoney(disburseAmount - consumedAmount);
 
@@ -226,6 +224,7 @@ export class RevolvingFundReplenishmentCopySourceService {
         deletedAt: null,
       },
       select: {
+        amount: true,
         branchUnitId: true,
         currencyCode: true,
         details: { select: { amount: true, disburseAmount: true } },
@@ -272,7 +271,7 @@ export class RevolvingFundReplenishmentCopySourceService {
 
     for (const allocation of resolvedAllocations.values()) {
       const { record } = allocation;
-      if (record.status !== RevolvingFundReplenishmentStatus.APPROVED && record.status !== RevolvingFundReplenishmentStatus.POSTED) {
+      if (record.status !== RevolvingFundReplenishmentStatus.POSTED) {
         throw new BadRequestException(`RFR ${record.transactionNo} is not available for voucher copying.`);
       }
       if (input.branchUnitId && record.branchUnitId !== input.branchUnitId) {
@@ -291,8 +290,11 @@ export class RevolvingFundReplenishmentCopySourceService {
       const sourceId = record.id.toString();
       const consumedGrossAmount = consumedAmounts.gross.get(sourceId) ?? 0;
       const consumedAmount = consumedAmounts.disburse.get(sourceId) ?? 0;
-      const sourceGrossAmount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.amount), 0));
-      const sourceDisburseAmount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || 0), 0));
+      const detailGrossAmount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.amount), 0));
+      const detailDisburseAmount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || 0), 0));
+      const headerAmount = roundMoney(Number(record.amount));
+      const sourceGrossAmount = detailGrossAmount > 0 ? detailGrossAmount : headerAmount;
+      const sourceDisburseAmount = detailDisburseAmount > 0 ? detailDisburseAmount : headerAmount;
       const availableGrossAmount = roundMoney(sourceGrossAmount - consumedGrossAmount);
       const availableAmount = roundMoney(sourceDisburseAmount - consumedAmount);
       if (allocation.grossAmount > availableGrossAmount) {

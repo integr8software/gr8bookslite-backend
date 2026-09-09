@@ -45,7 +45,6 @@ const PettyCashSourceAllocationLockNamespace = 7093n;
 const ActivePettyCashReplenishmentStatuses = [
   PettyCashReplenishmentStatus.DRAFT,
   PettyCashReplenishmentStatus.FOR_APPROVAL,
-  PettyCashReplenishmentStatus.APPROVED,
   PettyCashReplenishmentStatus.POSTED,
 ];
 
@@ -141,7 +140,6 @@ export class PettyCashReplenishmentService {
       transactionNo: suggestion.transactionNumber,
     };
   }
-
 
   async create(user: AuthUser, dto: CreatePettyCashReplenishmentDto) {
     const companyId = getActiveCompanyId(user);
@@ -371,15 +369,14 @@ export class PettyCashReplenishmentService {
       updatedByUserId: user.id,
     };
 
-    if (dto.status === PettyCashReplenishmentStatus.APPROVED) {
+    if (dto.status === PettyCashReplenishmentStatus.POSTED) {
       statusData.approvedByUserId = user.id;
       statusData.approvedAt = now;
+      statusData.postedByUserId = user.id;
+      statusData.postedAt = now;
     } else if (dto.status === PettyCashReplenishmentStatus.DISAPPROVED) {
       statusData.disapprovedByUserId = user.id;
       statusData.disapprovedAt = now;
-    } else if (dto.status === PettyCashReplenishmentStatus.POSTED) {
-      statusData.postedByUserId = user.id;
-      statusData.postedAt = now;
     } else if (dto.status === PettyCashReplenishmentStatus.CANCELLED) {
       statusData.cancelledByUserId = user.id;
       statusData.cancelledAt = now;
@@ -426,11 +423,8 @@ export class PettyCashReplenishmentService {
     return { success: true, message: `PettyCashReplenishment #${id} deleted successfully.` };
   }
 
-
   private isSubmittedStatus(status: PettyCashReplenishmentStatus) {
-    return (
-      status === PettyCashReplenishmentStatus.FOR_APPROVAL || status === PettyCashReplenishmentStatus.APPROVED || status === PettyCashReplenishmentStatus.POSTED
-    );
+    return status === PettyCashReplenishmentStatus.FOR_APPROVAL || status === PettyCashReplenishmentStatus.POSTED;
   }
 
   private assertPettyCashReplenishmentReady(record: {
@@ -613,7 +607,7 @@ export class PettyCashReplenishmentService {
                 currencyCode: record.currencyCode,
                 disburseAmount: roundMoney(Number(record.netAmount)),
                 grossAmount: roundMoney(Number(record.grossAmount)),
-                isAvailable: record.status === PettyCashVoucherStatus.APPROVED || record.status === PettyCashVoucherStatus.POSTED,
+                isAvailable: record.status === PettyCashVoucherStatus.POSTED,
                 partyCodeSnapshot: record.partyCodeSnapshot,
                 partyId: record.partyId,
               };
@@ -628,7 +622,7 @@ export class PettyCashReplenishmentService {
                   record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0), 0),
                 ),
                 grossAmount: roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.grossAmount || detail.amount || 0), 0)),
-                isAvailable: record.status === PettyCashFundStatus.APPROVED || record.status === PettyCashFundStatus.POSTED,
+                isAvailable: record.status === PettyCashFundStatus.POSTED,
                 partyCodeSnapshot: record.partyCodeSnapshot,
                 partyId: record.partyId,
               };
@@ -742,7 +736,6 @@ export class PettyCashReplenishmentService {
 
     return consumed;
   }
-
 
   private async lockAllocation(tx: Prisma.TransactionClient, namespace: bigint, sourceId: bigint) {
     const lockKey = (namespace << 32n) + sourceId;
@@ -889,4 +882,3 @@ export class PettyCashReplenishmentService {
     return unit.id;
   }
 }
-

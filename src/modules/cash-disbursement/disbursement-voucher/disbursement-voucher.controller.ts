@@ -6,8 +6,10 @@ import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/tran
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { DisbursementVoucherService } from './disbursement-voucher.service';
 import { DisbursementVoucherListResponseDto, DisbursementVoucherSingleResponseDto } from './dto/disbursement-voucher-response.dto';
+import { ChartAccountOptionsResponseDto } from '../../maintenance/chart-of-accounts/dto/chart-account-response.dto';
 import { CreateDisbursementVoucherDto } from './dto/create-disbursement-voucher.dto';
 import { GetDisbursementVoucherListQueryDto } from './dto/get-disbursement-voucher-list-query.dto';
+import { GetChartAccountListQueryDto } from '../../maintenance/chart-of-accounts/dto/get-chart-account-list-query.dto';
 import { UpdateDisbursementVoucherStatusDto } from './dto/update-disbursement-voucher-status.dto';
 import { UpdateDisbursementVoucherDto } from './dto/update-disbursement-voucher.dto';
 
@@ -33,6 +35,13 @@ export class DisbursementVoucherController {
   @ApiOkResponse({ description: 'Disbursement Voucher transaction number retrieved.', type: TransactionNumberSuggestionResponseDto })
   suggestTransactionNumber(@CurrentUser() user: AuthUser, @Query() query: GetDisbursementVoucherListQueryDto) {
     return this.disbursementVoucherService.suggestTransactionNumber(user, query.branchUnitId);
+  }
+
+  @Get('account-title-options')
+  @ApiOperation({ summary: 'Get disbursement voucher account title options' })
+  @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
+  findAccountTitleOptions(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
+    return this.disbursementVoucherService.findAccountTitleOptions(user, query);
   }
 
   @Get(':id')

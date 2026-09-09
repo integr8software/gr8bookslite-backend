@@ -244,7 +244,7 @@ export class PartyLookupService {
       where: {
         companyId,
         deletedAt: null,
-        status: { in: [CashAdvanceStatus.FOR_APPROVAL, CashAdvanceStatus.APPROVED, CashAdvanceStatus.POSTED] },
+        status: { in: [CashAdvanceStatus.FOR_APPROVAL, CashAdvanceStatus.POSTED, CashAdvanceStatus.POSTED] },
       },
       _sum: { amount: true },
     });

@@ -20,7 +20,7 @@ describe('AdvancesToSuppliersService', () => {
 
   it('treats only submitted statuses as requiring complete data', () => {
     expect(service.isSubmittedStatus(AdvanceToSupplierStatus.FOR_APPROVAL)).toBe(true);
-    expect(service.isSubmittedStatus(AdvanceToSupplierStatus.APPROVED)).toBe(true);
+    expect(service.isSubmittedStatus(AdvanceToSupplierStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(AdvanceToSupplierStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(AdvanceToSupplierStatus.DRAFT)).toBe(false);
     expect(service.isSubmittedStatus(AdvanceToSupplierStatus.CANCELLED)).toBe(false);

@@ -1,11 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  AdvanceToSupplierPaymentType,
-  AdvanceToSupplierStatus,
-  CompanyUnitType,
-  Prisma,
-  PurchaseOrderStatus,
-} from '@prisma/client';
+import { AdvanceToSupplierPaymentType, AdvanceToSupplierStatus, CompanyUnitType, Prisma, PurchaseOrderStatus } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
@@ -32,7 +26,7 @@ const PurchaseOrderAllocationLockNamespace = 7096n;
 const ActiveAdvanceToSupplierStatuses = [
   AdvanceToSupplierStatus.DRAFT,
   AdvanceToSupplierStatus.FOR_APPROVAL,
-  AdvanceToSupplierStatus.APPROVED,
+  AdvanceToSupplierStatus.POSTED,
   AdvanceToSupplierStatus.POSTED,
 ];
 
@@ -296,7 +290,7 @@ export class AdvancesToSuppliersService {
         data: {
           status: dto.status,
           updatedByUserId: user.id,
-          ...(dto.status === AdvanceToSupplierStatus.APPROVED ? { approvedByUserId: user.id, approvedAt: actionDate } : {}),
+          ...(dto.status === AdvanceToSupplierStatus.POSTED ? { approvedByUserId: user.id, approvedAt: actionDate } : {}),
           ...(dto.status === AdvanceToSupplierStatus.POSTED ? { postedByUserId: user.id, postedAt: actionDate } : {}),
           ...(dto.status === AdvanceToSupplierStatus.DISAPPROVED ? { disapprovedByUserId: user.id, disapprovedAt: actionDate } : {}),
           ...(dto.status === AdvanceToSupplierStatus.CANCELLED ? { cancelledByUserId: user.id, cancelledAt: actionDate } : {}),
@@ -407,7 +401,7 @@ export class AdvancesToSuppliersService {
   }
 
   private isSubmittedStatus(status: AdvanceToSupplierStatus) {
-    return status === AdvanceToSupplierStatus.FOR_APPROVAL || status === AdvanceToSupplierStatus.APPROVED || status === AdvanceToSupplierStatus.POSTED;
+    return status === AdvanceToSupplierStatus.FOR_APPROVAL || status === AdvanceToSupplierStatus.POSTED;
   }
 
   private assertAdvanceToSupplierReady(record: {
@@ -599,4 +593,3 @@ function parsePurchaseOrderReference(reference: string) {
 
   return transactionNo;
 }
-

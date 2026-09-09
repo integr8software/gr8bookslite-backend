@@ -7,8 +7,10 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CashVoucherService } from './cash-voucher.service';
 import { CashVoucherDefaultAccountsResponseDto } from './dto/cash-voucher-default-accounts-response.dto';
 import { CashVoucherListResponseDto, CashVoucherSingleResponseDto } from './dto/cash-voucher-response.dto';
+import { ChartAccountOptionsResponseDto } from '../../maintenance/chart-of-accounts/dto/chart-account-response.dto';
 import { CreateCashVoucherDto } from './dto/create-cash-voucher.dto';
 import { GetCashVoucherListQueryDto } from './dto/get-cash-voucher-list-query.dto';
+import { GetChartAccountListQueryDto } from '../../maintenance/chart-of-accounts/dto/get-chart-account-list-query.dto';
 import { UpdateCashVoucherStatusDto } from './dto/update-cash-voucher-status.dto';
 import { UpdateCashVoucherDto } from './dto/update-cash-voucher.dto';
 
@@ -41,6 +43,13 @@ export class CashVoucherController {
   @ApiOkResponse({ type: CashVoucherDefaultAccountsResponseDto })
   getDefaultAccounts(@CurrentUser() user: AuthUser) {
     return this.cashVoucherService.getDefaultAccounts(user);
+  }
+
+  @Get('account-title-options')
+  @ApiOperation({ summary: 'Get cash voucher account title options' })
+  @ApiOkResponse({ type: ChartAccountOptionsResponseDto })
+  findAccountTitleOptions(@CurrentUser() user: AuthUser, @Query() query: GetChartAccountListQueryDto) {
+    return this.cashVoucherService.findAccountTitleOptions(user, query);
   }
 
   @Get(':id')

@@ -15,26 +15,11 @@ import { GetAdvanceToSupplierCopyFromCandidatesQueryDto } from './dto/get-advanc
 export const AdvanceToSupplierCopySourceLabel = 'Advances to Suppliers';
 export const PurchaseOrderAllocationLockNamespace = 7092n;
 
-const ActiveCashVoucherStatuses = [
-  CashVoucherStatus.DRAFT,
-  CashVoucherStatus.FOR_APPROVAL,
-  CashVoucherStatus.APPROVED,
-  CashVoucherStatus.POSTED,
-  CashVoucherStatus.CLOSED,
-];
+const ActiveCashVoucherStatuses = [CashVoucherStatus.DRAFT, CashVoucherStatus.FOR_APPROVAL, CashVoucherStatus.POSTED];
 
-const ActiveDisbursementVoucherStatuses = [
-  DisbursementVoucherStatus.DRAFT,
-  DisbursementVoucherStatus.FOR_APPROVAL,
-  DisbursementVoucherStatus.APPROVED,
-  DisbursementVoucherStatus.POSTED,
-  DisbursementVoucherStatus.CLOSED,
-];
+const ActiveDisbursementVoucherStatuses = [DisbursementVoucherStatus.DRAFT, DisbursementVoucherStatus.FOR_APPROVAL, DisbursementVoucherStatus.POSTED];
 
-const CopyableAdvanceToSupplierStatuses: AdvanceToSupplierStatus[] = [
-  AdvanceToSupplierStatus.APPROVED,
-  AdvanceToSupplierStatus.POSTED,
-];
+const CopyableAdvanceToSupplierStatuses: AdvanceToSupplierStatus[] = [AdvanceToSupplierStatus.POSTED];
 
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
 
@@ -76,12 +61,19 @@ export class AdvanceToSupplierCopySourceService {
     const search = cleanOptional(query.search);
     const partyId = query.partyId ? parsePositiveBigIntId(query.partyId, 'partyId') : null;
     const partyCode = cleanOptional(query.partyCode);
+    const partyName = cleanOptional(query.partyName);
     const where: Prisma.AdvanceToSupplierWhereInput = {
       companyId,
       deletedAt: null,
       status: { in: CopyableAdvanceToSupplierStatuses },
       ...(query.branchUnitId ? { branchUnitId: query.branchUnitId } : {}),
-      ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
+      ...(partyId
+        ? { partyId }
+        : partyName
+          ? { partyNameSnapshot: { equals: partyName, mode: 'insensitive' } }
+          : partyCode
+            ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } }
+            : {}),
       ...(search
         ? {
             OR: [

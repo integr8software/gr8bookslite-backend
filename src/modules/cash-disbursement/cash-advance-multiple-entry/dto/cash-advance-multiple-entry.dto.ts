@@ -227,7 +227,7 @@ export class GetCashAdvanceMultipleEntryListQueryDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, or CANCELLED' })
+  @ApiPropertyOptional({ description: 'DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, or CANCELLED' })
   @IsOptional()
   @IsString()
   status?: string;

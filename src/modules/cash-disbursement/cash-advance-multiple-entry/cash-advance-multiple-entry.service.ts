@@ -403,7 +403,7 @@ export class CashAdvanceMultipleEntryService {
   }
 
   private isSubmittedStatus(status: CashAdvanceStatus) {
-    return status === CashAdvanceStatus.FOR_APPROVAL || status === CashAdvanceStatus.APPROVED || status === CashAdvanceStatus.POSTED;
+    return status === CashAdvanceStatus.FOR_APPROVAL || status === CashAdvanceStatus.POSTED;
   }
 
   private assertCashAdvanceMultipleEntryDtoReady(dto: CreateCashAdvanceMultipleEntryDto) {
