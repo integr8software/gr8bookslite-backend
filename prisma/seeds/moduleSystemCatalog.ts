@@ -65,7 +65,7 @@ export const AccountingSidebarTemplate = [
     iconName: 'cashOut',
     children: [
       link('cash-disbursement-cash-voucher', 'CV', 'cashOut'),
-      link('cash-disbursement-disbursement-voucher', 'DV', 'fileCheck'),
+      link('cash-disbursement-disbursement-voucher', 'DV', 'cashOut'),
       link('cash-disbursement-cash-advance', 'CA', 'cashOut'),
       link('cash-disbursement-cash-advance-multiple-entry', 'CAME', 'cashOut'),
       link('cash-disbursement-petty-cash-voucher', 'PCV', 'cashOut'),
@@ -73,7 +73,7 @@ export const AccountingSidebarTemplate = [
       link('cash-disbursement-petty-cash-replenishment', 'PCR', 'cashOut'),
       link('cash-disbursement-revolving-fund', 'RF', 'cashOut'),
       link('cash-disbursement-revolving-fund-replenishment', 'RFR', 'cashOut'),
-      link('cash-disbursement-request-for-payment', 'RFP', 'fileCheck'),
+      link('cash-disbursement-request-for-payment', 'RFP', 'cashOut'),
       link('cash-disbursement-advances-to-suppliers', 'ATS', 'cashOut'),
       link('cash-disbursement-recurring-transactions', 'RT', 'cashOut'),
     ],
@@ -90,7 +90,11 @@ export const AccountingSidebarTemplate = [
     key: 'general-journal',
     label: 'General Journal',
     iconName: 'journal',
-    children: [link('general-journal-journal-voucher', 'JV', 'journal')],
+    children: [
+      link('general-journal-journal-voucher', 'JV', 'journal'),
+      link('general-journal-debit-memo', 'DM', 'journal', 'Debit Memo'),
+      link('general-journal-credit-memo', 'CM', 'journal', 'Credit Memo'),
+    ],
   },
   {
     itemType: 'SECTION',
@@ -190,8 +194,6 @@ export const AccountingAndInventorySidebarTemplate = [
     label: 'Sales',
     iconName: 'sales',
     children: [
-      link('sales-debit-memo', 'DM', 'sales'),
-      link('sales-credit-memo', 'CM', 'sales'),
       link('sales-sales-quotation', 'SQ', 'sales'),
       link('sales-sales-order', 'SO', 'sales'),
       link('sales-sales-invoice', 'SI', 'sales'),

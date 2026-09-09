@@ -20,17 +20,6 @@ export type SidebarEntitledModule = {
   module: SidebarEnabledModule;
 };
 
-export type SidebarPreferenceRow = {
-  branchUnitId: number;
-  itemKey: string;
-  parentItemKey: string | null;
-  hasParentOverride: boolean;
-  isHidden: boolean;
-  sortOrder: number | null;
-  isPinned: boolean;
-  isCollapsed: boolean;
-};
-
 export type SidebarSystemTemplateRow = {
   id: number;
   parentId: number | null;
@@ -55,7 +44,6 @@ export type SidebarMembershipSource = {
   permissionOverrides?: Array<unknown>;
   company: {
     units: Array<{ id: number }>;
-    sidebarPreferences: SidebarPreferenceRow[];
     subscriptions: Array<{
       plan: {
         systems: Array<{

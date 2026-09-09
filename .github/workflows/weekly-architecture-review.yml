@@ -1,0 +1,127 @@
+name: Weekly Backend Architecture Review
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Monday 09:00 Asia/Manila = Monday 01:00 UTC
+    - cron: "0 1 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  backend-architecture-review:
+    name: Backend weekly architecture review
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout backend develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Checkout QA automation
+        uses: actions/checkout@v4
+        with:
+          repository: integr8software/gr8booksneo-automation
+          ref: develop
+          path: qa-automation
+          token: ${{ secrets.QA_AUTOMATION_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install automation dependencies
+        shell: pwsh
+        run: |
+          Set-Location "$env:GITHUB_WORKSPACE\qa-automation"
+          npm ci
+
+      - name: Run backend architecture analyzer
+        shell: pwsh
+        run: |
+          $outputDir = Join-Path $env:GITHUB_WORKSPACE "reports\weekly-architecture"
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+
+          node "$env:GITHUB_WORKSPACE\qa-automation\scripts\architecture\analyze-backend-architecture.mjs" `
+            --repository-root "$env:GITHUB_WORKSPACE" `
+            --output "$outputDir\backend-architecture-results.json"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Backend architecture analyzer failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Generate backend architecture Excel report
+        shell: pwsh
+        run: |
+          $outputDir = Join-Path $env:GITHUB_WORKSPACE "reports\weekly-architecture"
+
+          node "$env:GITHUB_WORKSPACE\qa-automation\scripts\architecture\generate-backend-architecture-excel.mjs" `
+            --repository-root "$env:GITHUB_WORKSPACE" `
+            --input "$outputDir\backend-architecture-results.json" `
+            --output "$outputDir\Backend-Weekly-Architecture.xlsx"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Backend architecture Excel generator failed with exit code $LASTEXITCODE."
+          }
+
+          $excel = Join-Path $outputDir "Backend-Weekly-Architecture.xlsx"
+          if (-not (Test-Path -LiteralPath $excel -PathType Leaf)) {
+            throw "Expected Excel report was not generated: $excel"
+          }
+
+          if ((Get-Item -LiteralPath $excel).Length -le 0) {
+            throw "Generated Excel report is empty: $excel"
+          }
+
+      - name: Write weekly architecture summary
+        if: always()
+        shell: pwsh
+        run: |
+          $jsonPath = Join-Path $env:GITHUB_WORKSPACE "reports\weekly-architecture\backend-architecture-results.json"
+          $excelPath = Join-Path $env:GITHUB_WORKSPACE "reports\weekly-architecture\Backend-Weekly-Architecture.xlsx"
+
+          "## Backend Weekly Architecture Review" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          "**Mode:** Advisory only — this scheduled review does not block PRs or merges." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+          if (Test-Path -LiteralPath $jsonPath) {
+            $report = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json
+
+            "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            "- Files scanned: $($report.filesScanned)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            "- Architecture findings: $($report.architectureFindingCount)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            "- Blocker-class: $($report.counts.blocker)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            "- Warnings: $($report.counts.warning)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            "- Excel report: $(if (Test-Path -LiteralPath $excelPath) { 'Generated' } else { 'Unavailable' })" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+            if ($report.findings.Count -gt 0) {
+              "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+              "### Architecture findings" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+              "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+              foreach ($finding in $report.findings) {
+                $location = if ($finding.line) { "$($finding.file):$($finding.line)" } else { $finding.file }
+                "- **$($finding.severity)** — ``$location`` — $($finding.finding)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+              }
+            }
+          }
+          else {
+            "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            "Architecture JSON was not generated." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          }
+
+      - name: Upload backend weekly architecture artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-weekly-architecture-${{ github.run_number }}
+          path: |
+            reports/weekly-architecture/backend-architecture-results.json
+            reports/weekly-architecture/Backend-Weekly-Architecture.xlsx
+          if-no-files-found: warn
+          retention-days: 30

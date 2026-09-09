@@ -38,7 +38,6 @@ model User {
   createdCompanies             Company[]                     @relation("CompanyCreatedBy")
   tablePreferences             UserTablePreference[]
   warehouseAccess              WarehouseAccess[]
-  sidebarPreferences           UserSidebarPreference[]
   approverSetups               ApproverSetupUser[]
   approvalTransactionApprovers ApprovalTransactionApprover[]
 
@@ -133,6 +132,7 @@ model ApprovalTransactionApprover {
   sequence      Int
   status        String              @default("Pending")
   approvedAt    DateTime?           @map("approved_at")
+  remarks       String?             @db.VarChar(500)
   transaction   ApprovalTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -176,6 +176,8 @@ model AuthSessionHandoff {
 // =========================================================
 
 model Company {
+  itemBasicInfos ItemBasicInfo[]
+  itemPricings   ItemPricing[]
   id                                Int                                @id @default(autoincrement())
   name                              String
   slug                              String                             @unique
@@ -211,7 +213,6 @@ model Company {
   billingPaymentAttempts            BillingPaymentAttempt[]
   memberships                       Membership[]
   roles                             CompanyRole[]
-  sidebarPreferences                UserSidebarPreference[]
   units                             CompanyUnit[]
   formSignatorySetups               FormSignatorySetup[]
   chartAccounts                     ChartAccount[]
@@ -271,6 +272,10 @@ model Company {
   revolvingFundDetails              RevolvingFundDetail[]
   revolvingFundReplenishments       RevolvingFundReplenishment[]
   revolvingFundReplenishmentDetails RevolvingFundReplenishmentDetail[]
+  purchaseRequests                  PurchaseRequest[]
+  purchaseRequestEntries            PurchaseRequestEntry[]
+  purchaseOrders                    PurchaseOrder[]
+  purchaseOrderEntries              PurchaseOrderEntry[]
 
   @@index([createdByUserId])
   @@map("companies")
@@ -299,7 +304,6 @@ model CompanyUnit {
   membershipAccess                  MembershipUnitAccess[]
   formSignatorySetups               FormSignatorySetup[]
   transactionNumbers                TransactionNumberSequence[]
-  sidebarPreferences                UserSidebarPreference[]
   roles                             CompanyRole[]
   warehouseBranches                 WarehouseBranch[]
   accountsPayableVouchers           AccountsPayableVoucher[]
@@ -335,6 +339,10 @@ model CompanyUnit {
   revolvingFundDetails              RevolvingFundDetail[]
   revolvingFundReplenishments       RevolvingFundReplenishment[]
   revolvingFundReplenishmentDetails RevolvingFundReplenishmentDetail[]
+  purchaseRequests                  PurchaseRequest[]
+  purchaseRequestEntries            PurchaseRequestEntry[]
+  purchaseOrders                    PurchaseOrder[]
+  purchaseOrderEntries              PurchaseOrderEntry[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -603,29 +611,6 @@ model MembershipPermission {
   @@index([permissionId])
   @@index([membershipCompanyId])
   @@map("membership_permissions")
-}
-
-model UserSidebarPreference {
-  id                Int         @id @default(autoincrement())
-  companyId         Int         @map("company_id")
-  branchUnitId      Int         @map("branch_unit_id")
-  userId            Int         @map("user_id")
-  itemKey           String      @map("item_key") @db.VarChar(160)
-  parentItemKey     String?     @map("parent_item_key") @db.VarChar(160)
-  hasParentOverride Boolean     @default(false) @map("has_parent_override")
-  isHidden          Boolean     @default(false) @map("is_hidden")
-  sortOrder         Int?        @map("sort_order")
-  isPinned          Boolean     @default(false) @map("is_pinned")
-  isCollapsed       Boolean     @default(false) @map("is_collapsed")
-  createdAt         DateTime    @default(now()) @map("created_at")
-  updatedAt         DateTime    @updatedAt @map("updated_at")
-  company           Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit        CompanyUnit @relation(fields: [branchUnitId], references: [id], onDelete: Cascade)
-  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([companyId, branchUnitId, userId, itemKey], map: "user_sidebar_preferences_scope_item_uq")
-  @@index([userId, companyId, branchUnitId], map: "user_sidebar_preferences_scope_idx")
-  @@map("user_sidebar_preferences")
 }
 
 model AuditLog {
@@ -979,6 +964,8 @@ model ServiceMaintenance {
   deletedAt                 DateTime?               @map("deleted_at")
   company                   Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
   revenueCoa                ChartAccount            @relation("ServiceMaintenanceRevenueCoa", fields: [revenueCoaId], references: [id], onDelete: Restrict)
+  purchaseRequestEntries    PurchaseRequestEntry[]
+  purchaseOrderEntries      PurchaseOrderEntry[]
 
   @@unique([companyId, serviceName], map: "services_maintenance_company_service_name_unique")
   @@index([companyId], map: "services_maintenance_company_id_idx")
@@ -1007,6 +994,7 @@ model Term {
   billingInvoices         BillingInvoice[]
   billings                Billing[]
   billingStatements       BillingStatement[]
+  purchaseOrders          PurchaseOrder[]
 
   @@index([companyId], map: "terms_company_id_idx")
   @@index([companyId, status], map: "terms_company_status_idx")
@@ -1057,6 +1045,7 @@ model ItemAttributeValue {
 }
 
 model ItemCategory {
+  itemBasicInfos ItemBasicInfo[]
   id                         BigInt                          @id @default(autoincrement())
   companyId                  Int                             @map("company_id")
   parentId                   BigInt?                         @map("parent_id")
@@ -1162,6 +1151,7 @@ model WarehouseAccess {
 }
 
 model UnitOfMeasurement {
+  itemBasicInfos ItemBasicInfo[]
   id              BigInt                        @id @default(autoincrement())
   companyId       Int                           @map("company_id")
   name            String                        @db.VarChar(150)
@@ -1237,6 +1227,7 @@ model Discount {
 }
 
 model ResponsibilityCenter {
+  itemBasicInfos ItemBasicInfo[]
   id                                BigInt                             @id @default(autoincrement())
   companyId                         Int                                @map("company_id")
   typeId                            BigInt                             @map("type_id")
@@ -1278,6 +1269,10 @@ model ResponsibilityCenter {
   revolvingFundDetails              RevolvingFundDetail[]
   revolvingFundReplenishments       RevolvingFundReplenishment[]
   revolvingFundReplenishmentDetails RevolvingFundReplenishmentDetail[]
+  purchaseRequestProjects           PurchaseRequest[]                  @relation("PurchaseRequestProject")
+  purchaseRequestEntries            PurchaseRequestEntry[]
+  purchaseOrderProjects             PurchaseOrder[]                    @relation("PurchaseOrderProject")
+  purchaseOrderEntries              PurchaseOrderEntry[]
 
   @@unique([companyId, code], map: "responsibility_centers_company_code_key")
   @@unique([companyId, name], map: "responsibility_centers_company_name_key")
@@ -1407,6 +1402,8 @@ model Party {
   billingInvoices                     BillingInvoice[]
   billings                            Billing[]
   billingStatements                   BillingStatement[]
+  purchaseRequests                    PurchaseRequest[]
+  purchaseOrders                      PurchaseOrder[]
 
   @@unique([companyId, partyCodeNo], map: "parties_company_code_key")
   @@index([companyId], map: "parties_company_id_idx")
@@ -1463,6 +1460,193 @@ model PartyAddress {
 
   @@index([partyId], map: "party_addresses_party_id_idx")
   @@map("party_addresses")
+}
+
+model PurchaseRequest {
+  id                  BigInt                 @id @default(autoincrement())
+  companyId           Int                    @map("company_id")
+  branchUnitId        Int                    @map("branch_unit_id")
+  partyId             BigInt                 @map("party_id")
+  projectId           BigInt?                @map("project_id")
+  purchaseType        String                 @map("purchase_type") @db.VarChar(20)
+  transNo             String                 @map("trans_no") @db.VarChar(80)
+  prDate              DateTime               @map("pr_date") @db.Date
+  partyCodeSnapshot   String                 @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot   String                 @map("party_name_snapshot") @db.VarChar(255)
+  vendorAddress       String?                @map("vendor_address") @db.VarChar(500)
+  projectCodeSnapshot String?                @map("project_code_snapshot") @db.VarChar(80)
+  projectNameSnapshot String?                @map("project_name_snapshot") @db.VarChar(255)
+  currencyCode        String                 @default("PHP") @map("currency_code") @db.VarChar(10)
+  exchangeRate        Decimal                @default(1) @map("exchange_rate") @db.Decimal(18, 6)
+  forDepartment       String?                @map("for_department") @db.VarChar(150)
+  bomNo               String?                @map("bom_no") @db.VarChar(80)
+  remarks             String?                @db.VarChar(500)
+  status              PurchaseRequestStatus  @default(DRAFT)
+  createdByUserId     Int?                   @map("created_by_user_id")
+  updatedByUserId     Int?                   @map("updated_by_user_id")
+  postedByUserId      Int?                   @map("posted_by_user_id")
+  postedAt            DateTime?              @map("posted_at")
+  disapprovedByUserId Int?                   @map("disapproved_by_user_id")
+  disapprovedAt       DateTime?              @map("disapproved_at")
+  cancelledByUserId   Int?                   @map("cancelled_by_user_id")
+  cancelledAt         DateTime?              @map("cancelled_at")
+  deletedAt           DateTime?              @map("deleted_at")
+  createdAt           DateTime               @default(now()) @map("created_at")
+  updatedAt           DateTime?              @map("updated_at")
+  company             Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit          CompanyUnit            @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party               Party                  @relation(fields: [partyId], references: [id], onDelete: Restrict)
+  project             ResponsibilityCenter?  @relation("PurchaseRequestProject", fields: [projectId], references: [id], onDelete: Restrict)
+  entries             PurchaseRequestEntry[]
+  purchaseOrders      PurchaseOrder[]
+
+  @@unique([companyId, branchUnitId, transNo], map: "purchase_request_company_branch_trans_no_key")
+  @@index([companyId, status], map: "purchase_request_company_status_idx")
+  @@index([branchUnitId], map: "purchase_request_branch_unit_id_idx")
+  @@index([partyId], map: "purchase_request_party_id_idx")
+  @@index([projectId], map: "purchase_request_project_id_idx")
+  @@map("purchase_request")
+}
+
+model PurchaseRequestEntry {
+  id                       BigInt                @id @default(autoincrement())
+  purchaseRequestId        BigInt                @map("purchase_request_id")
+  companyId                Int                   @map("company_id")
+  branchUnitId             Int                   @map("branch_unit_id")
+  responsibilityCenterId   BigInt?               @map("responsibility_center_id")
+  serviceMaintenanceId     BigInt?               @map("service_maintenance_id")
+  itemId                   String?               @map("item_id") @db.VarChar(100)
+  lineNo                   Int                   @map("line_no")
+  itemCode                 String?               @map("item_code") @db.VarChar(80)
+  barcode                  String?               @db.VarChar(80)
+  description              String                @db.VarChar(255)
+  uom                      String?               @db.VarChar(40)
+  qty                      Decimal               @db.Decimal(18, 6)
+  lotNo                    String?               @map("lot_no") @db.VarChar(80)
+  cost                     Decimal               @default(0) @db.Decimal(18, 2)
+  responsibilityCenterName String?               @map("responsibility_center_name") @db.VarChar(150)
+  createdAt                DateTime              @default(now()) @map("created_at")
+  updatedAt                DateTime?             @map("updated_at")
+  purchaseRequest          PurchaseRequest       @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+  company                  Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit               CompanyUnit           @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  responsibilityCenter     ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: Restrict)
+  serviceMaintenance       ServiceMaintenance?   @relation(fields: [serviceMaintenanceId], references: [id], onDelete: Restrict)
+  purchaseOrderEntries     PurchaseOrderEntry[]
+
+  @@unique([purchaseRequestId, lineNo], map: "purchase_request_entries_request_line_no_key")
+  @@index([companyId], map: "purchase_request_entries_company_id_idx")
+  @@index([branchUnitId], map: "purchase_request_entries_branch_unit_id_idx")
+  @@index([responsibilityCenterId], map: "purchase_request_entries_rc_id_idx")
+  @@index([serviceMaintenanceId], map: "purchase_request_entries_service_maintenance_id_idx")
+  @@index([itemId], map: "purchase_request_entries_item_id_idx")
+  @@map("purchase_request_entries")
+}
+
+model PurchaseOrder {
+  id                  BigInt                @id @default(autoincrement())
+  companyId           Int                   @map("company_id")
+  branchUnitId        Int                   @map("branch_unit_id")
+  partyId             BigInt                @map("party_id")
+  projectId           BigInt?               @map("project_id")
+  termId              BigInt?               @map("term_id")
+  purchaseRequestId   BigInt?               @map("purchase_request_id")
+  purchaseType        String                @map("purchase_type") @db.VarChar(20)
+  transNo             String                @map("trans_no") @db.VarChar(80)
+  poDate              DateTime              @map("po_date") @db.Date
+  dateNeeded          DateTime?             @map("date_needed") @db.Date
+  partyCodeSnapshot   String                @map("party_code_snapshot") @db.VarChar(80)
+  partyNameSnapshot   String                @map("party_name_snapshot") @db.VarChar(255)
+  addressSnapshot     String?               @map("address_snapshot") @db.VarChar(500)
+  emailSnapshot       String?               @map("email_snapshot") @db.VarChar(255)
+  contactNoSnapshot   String?               @map("contact_no_snapshot") @db.VarChar(80)
+  projectCodeSnapshot String?               @map("project_code_snapshot") @db.VarChar(80)
+  projectNameSnapshot String?               @map("project_name_snapshot") @db.VarChar(255)
+  termNameSnapshot    String?               @map("term_name_snapshot") @db.VarChar(150)
+  currencyCode        String                @default("PHP") @map("currency_code") @db.VarChar(10)
+  exchangeRate        Decimal               @default(1) @map("exchange_rate") @db.Decimal(18, 6)
+  remarks             String?               @db.VarChar(500)
+  status              PurchaseOrderStatus   @default(DRAFT)
+  createdByUserId     Int?                  @map("created_by_user_id")
+  updatedByUserId     Int?                  @map("updated_by_user_id")
+  postedByUserId      Int?                  @map("posted_by_user_id")
+  postedAt            DateTime?             @map("posted_at")
+  disapprovedByUserId Int?                  @map("disapproved_by_user_id")
+  disapprovedAt       DateTime?             @map("disapproved_at")
+  cancelledByUserId   Int?                  @map("cancelled_by_user_id")
+  cancelledAt         DateTime?             @map("cancelled_at")
+  deletedAt           DateTime?             @map("deleted_at")
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime?             @map("updated_at")
+  company             Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit          CompanyUnit           @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party               Party                 @relation(fields: [partyId], references: [id], onDelete: Restrict)
+  project             ResponsibilityCenter? @relation("PurchaseOrderProject", fields: [projectId], references: [id], onDelete: Restrict)
+  term                Term?                 @relation(fields: [termId], references: [id], onDelete: Restrict)
+  purchaseRequest     PurchaseRequest?      @relation(fields: [purchaseRequestId], references: [id], onDelete: Restrict)
+  entries             PurchaseOrderEntry[]
+
+  @@unique([companyId, branchUnitId, transNo], map: "purchase_order_company_branch_trans_no_key")
+  @@index([companyId, status], map: "purchase_order_company_status_idx")
+  @@index([branchUnitId], map: "purchase_order_branch_unit_id_idx")
+  @@index([partyId], map: "purchase_order_party_id_idx")
+  @@index([projectId], map: "purchase_order_project_id_idx")
+  @@index([termId], map: "purchase_order_term_id_idx")
+  @@index([purchaseRequestId], map: "purchase_order_purchase_request_id_idx")
+  @@map("purchase_order")
+}
+
+model PurchaseOrderEntry {
+  id                       BigInt                @id @default(autoincrement())
+  purchaseOrderId          BigInt                @map("purchase_order_id")
+  companyId                Int                   @map("company_id")
+  branchUnitId             Int                   @map("branch_unit_id")
+  purchaseRequestEntryId   BigInt?               @map("purchase_request_entry_id")
+  responsibilityCenterId   BigInt?               @map("responsibility_center_id")
+  serviceMaintenanceId     BigInt?               @map("service_maintenance_id")
+  itemId                   String?               @map("item_id") @db.VarChar(100)
+  lineNo                   Int                   @map("line_no")
+  itemCode                 String?               @map("item_code") @db.VarChar(80)
+  barcode                  String?               @db.VarChar(80)
+  description              String                @db.VarChar(255)
+  color                    String?               @db.VarChar(80)
+  brand                    String?               @db.VarChar(80)
+  size                     String?               @db.VarChar(80)
+  model                    String?               @db.VarChar(80)
+  uom                      String?               @db.VarChar(40)
+  lotNo                    String?               @map("lot_no") @db.VarChar(80)
+  prQty                    Decimal               @default(0) @map("pr_qty") @db.Decimal(18, 6)
+  poQty                    Decimal               @map("po_qty") @db.Decimal(18, 6)
+  price                    Decimal               @default(0) @db.Decimal(18, 4)
+  grossAmount              Decimal               @default(0) @map("gross_amount") @db.Decimal(18, 4)
+  discountRate             Decimal               @default(0) @map("discount_rate") @db.Decimal(9, 4)
+  discountAmount           Decimal               @default(0) @map("discount_amount") @db.Decimal(18, 4)
+  grossAfterDiscount       Decimal               @default(0) @map("gross_after_discount") @db.Decimal(18, 4)
+  vatAmount                Decimal               @default(0) @map("vat_amount") @db.Decimal(18, 4)
+  vatable                  Boolean               @default(false)
+  vatInclusive             Boolean               @default(false) @map("vat_inclusive")
+  netOfVatAmount           Decimal               @default(0) @map("net_of_vat_amount") @db.Decimal(18, 4)
+  netAmount                Decimal               @default(0) @map("net_amount") @db.Decimal(18, 4)
+  prNoSnapshot             String?               @map("pr_no_snapshot") @db.VarChar(80)
+  canvassNoSnapshot        String?               @map("canvass_no_snapshot") @db.VarChar(80)
+  responsibilityCenterName String?               @map("responsibility_center_name") @db.VarChar(150)
+  createdAt                DateTime              @default(now()) @map("created_at")
+  updatedAt                DateTime?             @map("updated_at")
+  purchaseOrder            PurchaseOrder         @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  company                  Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit               CompanyUnit           @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  purchaseRequestEntry     PurchaseRequestEntry? @relation(fields: [purchaseRequestEntryId], references: [id], onDelete: Restrict)
+  responsibilityCenter     ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: Restrict)
+  serviceMaintenance       ServiceMaintenance?   @relation(fields: [serviceMaintenanceId], references: [id], onDelete: Restrict)
+
+  @@unique([purchaseOrderId, lineNo], map: "purchase_order_entries_order_line_no_key")
+  @@index([companyId], map: "purchase_order_entries_company_id_idx")
+  @@index([branchUnitId], map: "purchase_order_entries_branch_unit_id_idx")
+  @@index([purchaseRequestEntryId], map: "purchase_order_entries_pr_entry_id_idx")
+  @@index([responsibilityCenterId], map: "purchase_order_entries_rc_id_idx")
+  @@index([serviceMaintenanceId], map: "purchase_order_entries_service_id_idx")
+  @@index([itemId], map: "purchase_order_entries_item_id_idx")
+  @@map("purchase_order_entries")
 }
 
 model AccountsPayableVoucher {
@@ -1820,10 +2004,10 @@ model DisbursementVoucher {
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
-  company       Company                       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit    CompanyUnit?                  @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
-  party         Party?                        @relation(fields: [partyId], references: [id], onDelete: SetNull)
-  creditAccount ChartAccount?                 @relation(fields: [creditAccountId], references: [id], onDelete: SetNull)
+  company       Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit    CompanyUnit?                @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party         Party?                      @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  creditAccount ChartAccount?               @relation(fields: [creditAccountId], references: [id], onDelete: SetNull)
   details       DisbursementVoucherDetail[]
 
   @@unique([companyId, voucherNo], map: "disbursement_vouchers_company_voucher_no_key")
@@ -1868,11 +2052,11 @@ model DisbursementVoucherDetail {
   createdAt                    DateTime  @default(now()) @map("created_at")
   updatedAt                    DateTime  @updatedAt @map("updated_at")
 
-  voucher              DisbursementVoucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
-  company              Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit           CompanyUnit?        @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
-  party                Party?              @relation(fields: [partyId], references: [id], onDelete: SetNull)
-  account              ChartAccount?       @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  voucher              DisbursementVoucher   @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit           CompanyUnit?          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party                Party?                @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  account              ChartAccount?         @relation(fields: [accountId], references: [id], onDelete: SetNull)
   responsibilityCenter ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
 
   @@unique([voucherId, lineNumber], map: "disbursement_voucher_details_voucher_line_key")
@@ -3111,7 +3295,7 @@ model JournalEntryHeader {
   transactionDate DateTime             @map("transaction_date")
   currencyCode    String               @map("currency_code") @db.VarChar(10)
   exchangeRate    Decimal              @default(1) @map("exchange_rate") @db.Decimal(18, 6)
-  particulars     String?              @db.VarChar(500)
+  remarks         String?              @db.VarChar(500)
   totalDebit      Decimal              @default(0) @map("total_debit") @db.Decimal(18, 2)
   totalCredit     Decimal              @default(0) @map("total_credit") @db.Decimal(18, 2)
   status          String               @default("Draft") @db.VarChar(20)
@@ -4003,6 +4187,22 @@ enum PartyStatus {
   INACTIVE
 }
 
+enum PurchaseRequestStatus {
+  DRAFT
+  FOR_APPROVAL
+  POSTED
+  DISAPPROVED
+  CANCELLED
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  FOR_APPROVAL
+  POSTED
+  DISAPPROVED
+  CANCELLED
+}
+
 enum AccountsPayableVoucherStatus {
   DRAFT
   APPROVED
@@ -4202,4 +4402,66 @@ enum RevolvingFundReplenishmentStatus {
   POSTED
   DISAPPROVED
   CANCELLED
+}
+
+model ItemBasicInfo {
+  id BigInt @id @default(autoincrement())
+  companyId Int @map("company_id")
+  code String @map("item_code") @db.VarChar(50)
+  skuCode String? @map("sku_code") @db.VarChar(100)
+  name String @map("item_name") @db.VarChar(150)
+  barcode String? @db.VarChar(100)
+  categoryId BigInt @map("category_id")
+  unitOfMeasurementId BigInt @map("unit_of_measurement_id")
+  brand String? @db.VarChar(150)
+  model String? @db.VarChar(150)
+  externalReferenceCode String? @map("external_reference_code") @db.VarChar(100)
+  responsibilityCenterId BigInt? @map("responsibility_center_id")
+  description String? @db.VarChar(500)
+  tags Json @default("[]")
+  status ItemBasicInfoStatus @default(ACTIVE)
+  createdByUserId Int? @map("created_by_user_id")
+  updatedByUserId Int? @map("updated_by_user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category ItemCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  unitOfMeasurement UnitOfMeasurement @relation(fields: [unitOfMeasurementId], references: [id], onDelete: Restrict)
+  responsibilityCenter ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: Restrict)
+  pricing              ItemPricing?
+  @@unique([companyId, code], map: "item_basic_info_company_code_key")
+  @@index([companyId, status], map: "item_basic_info_company_status_idx")
+  @@index([categoryId])
+  @@index([unitOfMeasurementId])
+  @@index([responsibilityCenterId])
+  @@map("item_basic_info")
+}
+
+model ItemPricing {
+  id              BigInt         @id @default(autoincrement())
+  companyId       Int            @map("company_id")
+  itemId          BigInt         @unique @map("item_id")
+  cost            Decimal        @default(0) @db.Decimal(18, 4)
+  sellingPrice    Decimal        @default(0) @map("selling_price") @db.Decimal(18, 4)
+  suggestedPrice  Decimal        @default(0) @map("suggested_price") @db.Decimal(18, 4)
+  taxTreatment    String?        @map("tax_treatment") @db.VarChar(100)
+  createdByUserId Int?           @map("created_by_user_id")
+  updatedByUserId Int?           @map("updated_by_user_id")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime?      @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  item            ItemBasicInfo  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, itemId], map: "item_pricing_company_item_id_key")
+  @@index([itemId])
+  @@index([companyId])
+  @@map("item_pricing")
+}
+
+enum ItemBasicInfoStatus {
+  ACTIVE
+  INACTIVE
 }

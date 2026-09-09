@@ -157,6 +157,7 @@ export class AccountsPayableVoucherService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
+    const saveStatus = AccountsPayableVoucherStatus.APPROVED;
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       details: dto.details,
@@ -196,7 +197,9 @@ export class AccountsPayableVoucherService {
             projectName: cleanOptional(dto.projectName),
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
-            status: AccountsPayableVoucherStatus.DRAFT,
+            approvedAt: new Date(),
+            approvedByUserId: user.id,
+            status: saveStatus,
             termId: references.term.id,
             transactionNo,
           },
@@ -213,6 +216,7 @@ export class AccountsPayableVoucherService {
           normalized.exchangeRate,
           cleanOptional(dto.remarks),
           references.journalEntries,
+          saveStatus,
         );
 
         const saved = await tx.accountsPayableVoucher.findUniqueOrThrow({
@@ -241,8 +245,8 @@ export class AccountsPayableVoucherService {
     const apvId = parsePositiveBigIntId(id);
     const current = await this.findVoucherOrThrow(companyId, apvId);
 
-    if (current.status !== AccountsPayableVoucherStatus.DRAFT) {
-      throw new BadRequestException('Only draft AP vouchers can be edited.');
+    if (current.status !== AccountsPayableVoucherStatus.DRAFT && current.status !== AccountsPayableVoucherStatus.APPROVED) {
+      throw new BadRequestException('Only draft or for-approval AP vouchers can be edited.');
     }
 
     if (dto.branchUnitId !== undefined && dto.branchUnitId !== current.branchUnitId) {
@@ -251,6 +255,7 @@ export class AccountsPayableVoucherService {
 
     const branchUnitId = current.branchUnitId;
     const normalized = await this.normalizeVoucherInput(companyId, dto);
+    const saveStatus = AccountsPayableVoucherStatus.APPROVED;
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       details: dto.details,
@@ -290,6 +295,8 @@ export class AccountsPayableVoucherService {
             projectName: cleanOptional(dto.projectName),
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
+            ...(current.status === saveStatus ? {} : this.getStatusAuditData(saveStatus, user.id)),
+            status: saveStatus,
             termId: references.term.id,
             transactionNo,
             updatedByUserId: user.id,
@@ -306,6 +313,7 @@ export class AccountsPayableVoucherService {
           normalized.exchangeRate,
           cleanOptional(dto.remarks),
           references.journalEntries,
+          saveStatus,
         );
 
         const saved = await tx.accountsPayableVoucher.findUniqueOrThrow({
@@ -528,7 +536,7 @@ export class AccountsPayableVoucherService {
         ...entry,
         currencyCode: header.currencyCode,
         exchangeRate: header.exchangeRate,
-        particulars: entry.particulars ?? header.particulars,
+        particulars: entry.particulars ?? header.remarks,
         referenceId: header.referenceId,
         referenceNo: header.referenceNo,
         referenceType: header.referenceType,
@@ -684,6 +692,7 @@ export class AccountsPayableVoucherService {
     exchangeRate: number,
     remarks: string | null,
     journalEntries: ResolvedJournalEntry[],
+    status: AccountsPayableVoucherStatus,
   ) {
     await tx.journalEntryHeader.deleteMany({
       where: {
@@ -709,11 +718,11 @@ export class AccountsPayableVoucherService {
         currencyCode,
         exchangeRate,
         jeno,
-        particulars: remarks,
+        remarks: remarks,
         referenceId: apvId,
         referenceNo: cleanOptional(journalEntries[0]?.input.refNo),
         referenceType: AccountsPayableVoucherReferenceType,
-        status: 'Draft',
+        status: this.getJournalEntryStatus(status),
         totalCredit: totals.credit,
         totalDebit: totals.debit,
         transactionDate: new Date(),
@@ -1112,6 +1121,18 @@ export class AccountsPayableVoucherService {
     }
 
     return normalized as AccountsPayableVoucherStatus;
+  }
+
+  private getJournalEntryStatus(status: AccountsPayableVoucherStatus) {
+    if (status === AccountsPayableVoucherStatus.APPROVED) {
+      return 'For Approval';
+    }
+
+    if (status === AccountsPayableVoucherStatus.CLOSED) {
+      return 'Posted';
+    }
+
+    return status.toLowerCase().replace(/(^|_)([a-z])/g, (_, prefix: string, letter: string) => `${prefix ? ' ' : ''}${letter.toUpperCase()}`);
   }
 
   private normalizePayableType(payableType: string) {

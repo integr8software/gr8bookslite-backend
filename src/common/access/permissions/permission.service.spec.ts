@@ -34,9 +34,7 @@ describe('PermissionService', () => {
       ['cash-disbursement'],
     );
 
-    expect(permissions).toEqual(
-      expect.arrayContaining([`PCR:${PermissionAction.VIEW}`, `PCR:${PermissionAction.CANCEL}`, `PCR:${PermissionAction.UNCANCEL}`]),
-    );
+    expect(permissions).toEqual(expect.arrayContaining([`PCR:${PermissionAction.VIEW}`, `PCR:${PermissionAction.CANCEL}`, `PCR:${PermissionAction.UNCANCEL}`]));
   });
 
   it('filters permissions using the related module instead of code prefixes', () => {

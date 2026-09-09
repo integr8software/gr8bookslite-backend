@@ -62,11 +62,7 @@ export class BillingService {
         const plans = await this.prisma.subscriptionPlan.findMany({
           where: {
             isActive: true,
-            ...(normalizedScope
-              ? normalizedScope === SubscriptionPlanScope.ALL
-                ? {}
-                : { scope: { in: [normalizedScope, SubscriptionPlanScope.ALL] } }
-              : {}),
+            ...(normalizedScope ? (normalizedScope === SubscriptionPlanScope.ALL ? {} : { scope: { in: [normalizedScope, SubscriptionPlanScope.ALL] } }) : {}),
           },
           include: {
             prices: {
@@ -225,11 +221,21 @@ export class BillingService {
           planPriceId: planPrice.id,
           billingCycle: dto.billingCycle,
         });
+    const isPaidTrialOnboarding =
+      dto.purpose === BillingPaymentPurpose.ONBOARDING &&
+      (plan.trialDays ?? 0) > 0 &&
+      (plan.trialPriceInCents ?? 0) > 0;
+
     const periodStart = new Date();
-    const periodEnd = this.addBillingInterval(periodStart, {
-      intervalCount: planPrice.intervalCount,
-      intervalUnit: planPrice.intervalUnit,
-    });
+    const periodEnd = isPaidTrialOnboarding
+      ? this.addBillingInterval(periodStart, {
+          intervalCount: plan.trialDays,
+          intervalUnit: 'DAY',
+        })
+      : this.addBillingInterval(periodStart, {
+          intervalCount: planPrice.intervalCount,
+          intervalUnit: planPrice.intervalUnit,
+        });
     const invoice = await this.ensureManualSubscriptionInvoice({
       companyId: company.id,
       ownerUserId: user.id,
@@ -240,8 +246,10 @@ export class BillingService {
       billingCycle: dto.billingCycle,
       planCode: plan.code,
       planName: plan.name,
-      description: `${plan.name} ${this.getBillingCycleLabel(dto.billingCycle)} manual payment`,
-      amountInCents: planPrice.priceInCents,
+      description: isPaidTrialOnboarding
+        ? `${plan.name} ${plan.trialDays}-day trial manual payment`
+        : `${plan.name} ${this.getBillingCycleLabel(dto.billingCycle)} manual payment`,
+      amountInCents: isPaidTrialOnboarding ? plan.trialPriceInCents : planPrice.priceInCents,
       currency: plan.currency,
       periodStart,
       periodEnd,
@@ -574,6 +582,15 @@ export class BillingService {
           latestInvoiceExternalId: readProviderString(latestInvoice?.id),
           latestPaymentIntentId: readProviderString(latestPaymentIntent?.id),
           startsAt: readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? new Date(),
+          trialEndsAt:
+            plan.trialDays > 0
+              ? readProviderUnixDate(remoteSubscriptionAttributes.trial_end) ??
+                readProviderUnixDate(remoteSubscriptionAttributes.next_billing_schedule) ??
+                this.addBillingInterval(readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? new Date(), {
+                  intervalCount: plan.trialDays,
+                  intervalUnit: 'DAY',
+                })
+              : null,
           currentPeriodStartAt: readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? null,
           nextBillingAt: readProviderUnixDate(remoteSubscriptionAttributes.next_billing_schedule),
           rawProviderPayload: remoteSubscription as Prisma.InputJsonValue,
@@ -1049,7 +1066,7 @@ export class BillingService {
     }
   }
 
-  private addBillingInterval(start: Date, input: { intervalCount: number; intervalUnit: 'DAY' | 'MONTH' | 'YEAR' }) {
+  addBillingInterval(start: Date, input: { intervalCount: number; intervalUnit: 'DAY' | 'MONTH' | 'YEAR' }) {
     const end = new Date(start);
 
     if (input.intervalUnit === 'DAY') {

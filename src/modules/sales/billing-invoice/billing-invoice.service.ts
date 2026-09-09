@@ -1,5 +1,21 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChartAccount, ChartAccountStatus, CompanyUnitType, MembershipRole, MembershipStatus, Party, PartyAddress, PartyStatus, PartyType, Prisma, ResponsibilityCenter, ResponsibilityCenterStatus, BillingInvoiceStatus, Term, TermStatus, TransactionNumberInputMode } from '@prisma/client';
+import {
+  ChartAccount,
+  ChartAccountStatus,
+  CompanyUnitType,
+  MembershipRole,
+  MembershipStatus,
+  Party,
+  PartyAddress,
+  PartyStatus,
+  PartyType,
+  Prisma,
+  ResponsibilityCenter,
+  ResponsibilityCenterStatus,
+  BillingInvoiceStatus,
+  TermStatus,
+  TransactionNumberInputMode,
+} from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
@@ -8,7 +24,12 @@ import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { findTransactionNumberForCompanyBranch, resolveTransactionNumberForCompanyBranch, resolveTransactionNumberScopeForCompanyBranch, suggestTransactionNumberForCompanyBranch } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
+import {
+  findTransactionNumberForCompanyBranch,
+  resolveTransactionNumberForCompanyBranch,
+  resolveTransactionNumberScopeForCompanyBranch,
+  suggestTransactionNumberForCompanyBranch,
+} from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
 import { CreateBillingInvoiceDto } from './dto/create-billing-invoice.dto';
 import { GetBillingInvoiceListQueryDto } from './dto/get-billing-invoice-list-query.dto';
 import { BillingInvoiceDetailDto } from './dto/billing-invoice-detail.dto';
@@ -278,7 +299,15 @@ export class BillingInvoiceService {
         });
 
         await this.replaceDetails(tx, billingInvoiceId, companyId, current.branchUnitId, references.details);
-        await this.replaceJournalEntries(tx, billingInvoiceId, companyId, current.branchUnitId, normalized.currencyCode, normalized.exchangeRate, references.journalEntries);
+        await this.replaceJournalEntries(
+          tx,
+          billingInvoiceId,
+          companyId,
+          current.branchUnitId,
+          normalized.currencyCode,
+          normalized.exchangeRate,
+          references.journalEntries,
+        );
 
         const saved = await tx.billingInvoice.findUniqueOrThrow({ where: { id: billingInvoiceId }, include: BillingInvoiceInclude });
         return (await this.attachJournalEntries([saved], tx))[0];
@@ -477,7 +506,7 @@ export class BillingInvoiceService {
           ...detail,
           currencyCode: header.currencyCode,
           exchangeRate: header.exchangeRate,
-          particulars: detail.particulars ?? header.particulars,
+          particulars: detail.particulars ?? header.remarks,
           referenceId: header.referenceId,
           referenceNo: header.referenceNo,
           referenceType: header.referenceType,
@@ -598,7 +627,7 @@ export class BillingInvoiceService {
         currencyCode,
         exchangeRate,
         jeno,
-        particulars: cleanOptional(journalEntries[0]?.input.particulars),
+        remarks: cleanOptional(journalEntries[0]?.input.particulars),
         referenceId: billingInvoiceId,
         referenceNo: cleanOptional(journalEntries[0]?.input.refNo),
         referenceType: BillingInvoiceReferenceType,
@@ -641,7 +670,10 @@ export class BillingInvoiceService {
     return (latest._max.jeno ?? 0n) + 1n;
   }
 
-  private async resolveTransactionNumberForCreate(tx: Prisma.TransactionClient, { branchUnitId, companyId, requestedTransactionNo }: { branchUnitId: number; companyId: number; requestedTransactionNo?: string | null }) {
+  private async resolveTransactionNumberForCreate(
+    tx: Prisma.TransactionClient,
+    { branchUnitId, companyId, requestedTransactionNo }: { branchUnitId: number; companyId: number; requestedTransactionNo?: string | null },
+  ) {
     return resolveTransactionNumberForCompanyBranch(tx, {
       branchUnitId,
       companyId,
@@ -693,7 +725,11 @@ export class BillingInvoiceService {
     return nextTransactionNo;
   }
 
-  private async resolvePostingAccount(tx: PrismaWriteClient, companyId: number, { accountCode, accountId, label }: { accountCode?: string | null; accountId?: string | null; label: string }) {
+  private async resolvePostingAccount(
+    tx: PrismaWriteClient,
+    companyId: number,
+    { accountCode, accountId, label }: { accountCode?: string | null; accountId?: string | null; label: string },
+  ) {
     const parsedAccountId = parseOptionalPositiveBigIntId(accountId, `${label} ID`);
     const normalizedCode = cleanOptional(accountCode);
 
@@ -803,7 +839,14 @@ export class BillingInvoiceService {
     return center;
   }
 
-  private async ensureTransactionNoAvailable(tx: PrismaWriteClient, companyId: number, branchUnitId: number, transactionNo: string, excludedInvoiceId?: bigint, scope: 'all' | 'branch' = 'branch') {
+  private async ensureTransactionNoAvailable(
+    tx: PrismaWriteClient,
+    companyId: number,
+    branchUnitId: number,
+    transactionNo: string,
+    excludedInvoiceId?: bigint,
+    scope: 'all' | 'branch' = 'branch',
+  ) {
     const existing = await tx.billingInvoice.findFirst({
       where: {
         ...(scope === 'branch' ? { branchUnitId } : {}),
@@ -1044,7 +1087,11 @@ export class BillingInvoiceService {
       return true;
     }
 
-    return user.companyId === companyId && user.membershipStatus === MembershipStatus.ACTIVE && (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN);
+    return (
+      user.companyId === companyId &&
+      user.membershipStatus === MembershipStatus.ACTIVE &&
+      (user.role === AppRole.ADMIN || user.membershipRole === MembershipRole.ADMIN)
+    );
   }
 
   private throwFriendlyPrismaError(error: unknown) {

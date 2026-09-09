@@ -154,6 +154,84 @@ export class CashVoucherService {
     };
   }
 
+  async getDefaultAccounts(user: AuthUser) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    this.ensureCan(user, companyId, PermissionAction.VIEW);
+
+    const mappedAccount = await this.prisma.companyAccountMapping.findFirst({
+      where: {
+        companyId,
+        moduleCode: CashVoucherModuleCode,
+        accountRole: { in: ['DEFAULT_CASH_CREDIT', 'CASH_ON_HAND', 'CREDIT_ACCOUNT'] },
+        chartAccount: {
+          deletedAt: null,
+          status: ChartAccountStatus.ACTIVE,
+          isPostingAccount: true,
+        },
+      },
+      include: {
+        chartAccount: true,
+      },
+    });
+
+    if (mappedAccount?.chartAccount) {
+      const defaultCashAccount = {
+        accountId: mappedAccount.chartAccount.id.toString(),
+        accountCode: mappedAccount.chartAccount.accountCode,
+        accountTitle: mappedAccount.chartAccount.accountTitle,
+      };
+      return {
+        defaultCashAccount,
+        creditAccount: defaultCashAccount,
+      };
+    }
+
+    let account = await this.prisma.chartAccount.findFirst({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: ChartAccountStatus.ACTIVE,
+        isPostingAccount: true,
+        OR: [
+          { accountTitle: { equals: 'Cash on Hand', mode: 'insensitive' } },
+          { accountTitle: { equals: 'Cash in Hand', mode: 'insensitive' } },
+          { accountCode: '1010101001' },
+          { accountTitle: { contains: 'Cash on Hand', mode: 'insensitive' } },
+        ],
+      },
+      orderBy: [{ accountCode: 'asc' }, { id: 'asc' }],
+    });
+
+    if (!account) {
+      account = await this.prisma.chartAccount.findFirst({
+        where: {
+          companyId,
+          deletedAt: null,
+          status: ChartAccountStatus.ACTIVE,
+          isPostingAccount: true,
+          accountCode: { startsWith: '10101' },
+        },
+        orderBy: [{ accountCode: 'asc' }, { id: 'asc' }],
+      });
+    }
+
+    if (!account) {
+      throw new NotFoundException('Default Cash on Hand account not found in Chart of Accounts.');
+    }
+
+    const defaultCashAccount = {
+      accountId: account.id.toString(),
+      accountCode: account.accountCode,
+      accountTitle: account.accountTitle,
+    };
+
+    return {
+      defaultCashAccount,
+      creditAccount: defaultCashAccount,
+    };
+  }
+
   async create(user: AuthUser, dto: CreateCashVoucherDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
@@ -660,7 +738,7 @@ export class CashVoucherService {
         ...entry,
         currencyCode: header.currencyCode,
         exchangeRate: header.exchangeRate,
-        particulars: entry.particulars ?? header.particulars,
+        particulars: entry.particulars ?? header.remarks,
         referenceId: header.referenceId,
         referenceNo: header.referenceNo,
         referenceType: header.referenceType,
@@ -753,7 +831,7 @@ export class CashVoucherService {
         currencyCode,
         exchangeRate: new Prisma.Decimal(String(exchangeRate)),
         jeno,
-        particulars,
+        remarks: particulars,
         referenceId: voucherId,
         referenceType: CashVoucherReferenceType,
         transactionDate: new Date(),

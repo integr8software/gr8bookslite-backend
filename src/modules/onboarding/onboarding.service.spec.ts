@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { BillingCycle, BillingProvider, CompanyStatus, SubscriptionPlanScope, SubscriptionPlanStatus, SubscriptionStatus, TaxpayerType } from '@prisma/client';
+import { BillingCycle, BillingMode, BillingProvider, CompanyStatus, SubscriptionPlanScope, SubscriptionPlanStatus, SubscriptionStatus, TaxpayerType } from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { OnboardingService } from './onboarding.service';
 
@@ -58,6 +58,35 @@ describe('OnboardingService plan-derived module entitlements', () => {
 
     await expect(service.complete(user)).rejects.toThrow(BadRequestException);
   });
+
+  it('saves manual billing preference for free trial and creates a trialing subscription', async () => {
+    const { service, prisma } = createService();
+
+    const response = await service.saveBilling(user, {
+      billingMode: BillingMode.MANUAL,
+    });
+
+    expect(response.billing.billingMode).toBe(BillingMode.MANUAL);
+    expect(response.nextStep).toBe('REVIEW_DETAILS');
+    expect(prisma.companySubscription.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          companyId: 57,
+          billingMode: BillingMode.MANUAL,
+          autoRenew: false,
+          status: SubscriptionStatus.TRIALING,
+        }),
+      }),
+    );
+    expect(prisma.userOnboardingDraft.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          paymentMethodReference: 'MANUAL',
+          billingCompletedAt: expect.any(Date),
+        }),
+      }),
+    );
+  });
 });
 
 function createService({
@@ -86,6 +115,15 @@ function createService({
   const prisma = {
     userOnboardingDraft: {
       findUnique: jest.fn().mockResolvedValue(draft),
+      update: jest.fn().mockImplementation(({ data }) => ({
+        ...draft,
+        ...data,
+      })),
+    },
+    companySubscription: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({ id: 12 }),
+      update: jest.fn().mockResolvedValue({ id: 12 }),
     },
     $transaction: jest.fn((callback: (txClient: typeof tx) => Promise<unknown>) => callback(tx)),
     user: {
@@ -96,9 +134,13 @@ function createService({
     },
   };
 
+  const billingService = {
+    addBillingInterval: jest.fn().mockImplementation((start, { intervalCount }) => new Date(start.getTime() + intervalCount * 86400000)),
+  };
+
   const service = new OnboardingService(
     prisma as never,
-    {} as never,
+    billingService as never,
     {
       moveLogo: jest.fn(),
     } as never,

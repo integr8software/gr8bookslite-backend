@@ -1,6 +1,222 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/maintenance/items": {
+      "get": {
+        "operationId": "ItemsController_findAll_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBasicInfoListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      },
+      "post": {
+        "operationId": "ItemsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemBasicInfoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBasicInfoResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      }
+    },
+    "/api/v1/maintenance/items/{id}": {
+      "get": {
+        "operationId": "ItemsController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBasicInfoResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      },
+      "patch": {
+        "operationId": "ItemsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemBasicInfoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBasicInfoResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      }
+    },
+    "/api/v1/maintenance/items/{id}/pricing": {
+      "get": {
+        "operationId": "ItemsController_getPricing_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemPricingResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      },
+      "put": {
+        "operationId": "ItemsController_upsertPricing_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertItemPricingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemPricingResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Items"
+        ]
+      }
+    },
     "/api/v1/storage/internal/upload": {
       "post": {
         "operationId": "VpsStorageInternalController_upload_v1",
@@ -7039,6 +7255,137 @@
         ]
       }
     },
+    "/api/v1/maintenance/financial-management/services-maintenance/options/{type}": {
+      "get": {
+        "operationId": "ServicesMaintenanceController_findOptionsByType_v1",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by service type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PURCHASES",
+                "SALES"
+              ]
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "default": "serviceName",
+              "type": "string",
+              "enum": [
+                "serviceName",
+                "serviceType",
+                "status",
+                "accountSetupMode",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "accountSetupMode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AUTO",
+                "EXISTING"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceMaintenanceOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get service options by type",
+        "tags": [
+          "Services Maintenance"
+        ]
+      }
+    },
     "/api/v1/maintenance/financial-management/services-maintenance/account-options": {
       "get": {
         "operationId": "ServicesMaintenanceController_getAccountOptions_v1",
@@ -8218,9 +8565,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get list of tax records",
         "tags": [
           "Tax"
         ]
@@ -8345,9 +8705,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxAutocompleteResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax autocomplete options",
         "tags": [
           "Tax"
         ]
@@ -8359,9 +8732,22 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxTransactionTypesResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax transaction types",
         "tags": [
           "Tax"
         ]
@@ -8373,9 +8759,22 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxTypesResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax types",
         "tags": [
           "Tax"
         ]
@@ -8387,9 +8786,69 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyDefaultClassificationsResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get party tax default classifications",
+        "tags": [
+          "Tax"
+        ]
+      }
+    },
+    "/api/v1/tax/default-account-options": {
+      "get": {
+        "operationId": "TaxController_listTaxDefaultAccountOptions_v1",
+        "parameters": [
+          {
+            "name": "classification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "output-sales",
+                "input-importation",
+                "input-purchases",
+                "input-all",
+                "purchase-ewt",
+                "purchase-fwt",
+                "purchase-wvat",
+                "sales-cwt",
+                "sales-wvat"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxDefaultAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax options with default account titles by classification",
         "tags": [
           "Tax"
         ]
@@ -8514,9 +8973,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxDefaultAccountsListResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax records with default account mappings",
         "tags": [
           "Tax"
         ]
@@ -8537,9 +9009,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxDefaultAccountsContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax record with default account mappings by source key",
         "tags": [
           "Tax"
         ]
@@ -8560,9 +9045,22 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxContainerResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tax record by source key",
         "tags": [
           "Tax"
         ]
@@ -9349,6 +9847,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalTransactionActionDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -9385,6 +9893,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalTransactionActionDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -9786,137 +10304,6 @@
         },
         "tags": [
           "Field Management"
-        ]
-      }
-    },
-    "/api/v1/companies/{companyId}/user-sidebar/customization": {
-      "get": {
-        "operationId": "UserSidebarController_getCustomization_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
-        ]
-      },
-      "put": {
-        "operationId": "UserSidebarController_save_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {}
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveUserSidebarDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
-        ]
-      }
-    },
-    "/api/v1/companies/{companyId}/user-sidebar/reset": {
-      "post": {
-        "operationId": "UserSidebarController_reset_v1",
-        "parameters": [
-          {
-            "name": "companyId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "applyScope",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "UserSidebar"
         ]
       }
     },
@@ -14315,6 +14702,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14324,6 +14712,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14333,6 +14722,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -14341,6 +14731,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -14364,6 +14755,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -14372,6 +14765,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -14380,6 +14775,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -14388,6 +14784,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -14435,6 +14832,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "List acknowledgement receipts",
         "tags": [
           "Acknowledgement Receipt"
@@ -14465,6 +14867,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Create a acknowledgement receipt",
         "tags": [
           "Acknowledgement Receipt"
@@ -14481,6 +14888,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14490,6 +14898,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14499,6 +14908,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -14507,6 +14917,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -14530,6 +14941,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -14538,6 +14951,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -14546,6 +14961,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -14554,6 +14970,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -14601,6 +15018,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Suggest a acknowledgement receipt transaction number",
         "tags": [
           "Acknowledgement Receipt"
@@ -14625,6 +15047,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14634,6 +15057,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14643,6 +15067,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -14651,6 +15076,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -14674,6 +15100,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -14682,6 +15110,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -14690,6 +15120,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -14698,6 +15129,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -14745,6 +15177,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get a acknowledgement receipt",
         "tags": [
           "Acknowledgement Receipt"
@@ -14784,6 +15221,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update a acknowledgement receipt",
         "tags": [
           "Acknowledgement Receipt"
@@ -14825,6 +15267,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update a acknowledgement receipt status",
         "tags": [
           "Acknowledgement Receipt"
@@ -14841,6 +15288,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14850,6 +15298,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -14859,6 +15308,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -14867,6 +15317,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -14890,6 +15341,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -14898,6 +15351,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -14906,6 +15361,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -14914,6 +15370,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -14961,6 +15418,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "List provisional receipts",
         "tags": [
           "Provisional Receipt"
@@ -14991,6 +15453,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Create a provisional receipt",
         "tags": [
           "Provisional Receipt"
@@ -15007,6 +15474,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -15016,6 +15484,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -15025,6 +15494,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -15033,6 +15503,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -15056,6 +15527,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -15064,6 +15537,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -15072,6 +15547,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -15080,6 +15556,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -15127,6 +15604,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Suggest a provisional receipt transaction number",
         "tags": [
           "Provisional Receipt"
@@ -15151,6 +15633,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -15160,6 +15643,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -15169,6 +15653,7 @@
             "in": "query",
             "schema": {
               "minimum": 1,
+              "example": 10,
               "type": "number"
             }
           },
@@ -15177,6 +15662,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": "Acme",
               "type": "string"
             }
           },
@@ -15200,6 +15686,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-01",
               "type": "string"
             }
           },
@@ -15208,6 +15696,8 @@
             "required": false,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-09-30",
               "type": "string"
             }
           },
@@ -15216,6 +15706,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 1000,
               "type": "number"
             }
           },
@@ -15224,6 +15715,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "example": 50000,
               "type": "number"
             }
           },
@@ -15271,6 +15763,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get a provisional receipt",
         "tags": [
           "Provisional Receipt"
@@ -15310,6 +15807,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update a provisional receipt",
         "tags": [
           "Provisional Receipt"
@@ -15351,6 +15853,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Update a provisional receipt status",
         "tags": [
           "Provisional Receipt"
@@ -16794,6 +17301,33 @@
           }
         ],
         "summary": "Get auto-suggested transaction number sequence",
+        "tags": [
+          "Cash Voucher"
+        ]
+      }
+    },
+    "/api/v1/cash-disbursement/cash-voucher/default-accounts": {
+      "get": {
+        "operationId": "CashVoucherController_getDefaultAccounts_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashVoucherDefaultAccountsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get default accounts for cash voucher (Cash on Hand)",
         "tags": [
           "Cash Voucher"
         ]
@@ -19896,6 +20430,472 @@
           "Revolving Fund Replenishment"
         ]
       }
+    },
+    "/api/v1/purchasing/purchase-request": {
+      "get": {
+        "operationId": "PurchaseRequestController_findAll_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase requests retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List purchase requests",
+        "tags": [
+          "Purchase Request"
+        ]
+      },
+      "post": {
+        "operationId": "PurchaseRequestController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePurchaseRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Purchase request created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a purchase request",
+        "tags": [
+          "Purchase Request"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-request/purchase-types": {
+      "get": {
+        "operationId": "PurchaseRequestController_findPurchaseTypes_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Purchase request types retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestTypesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List supported purchase request types",
+        "tags": [
+          "Purchase Request"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-request/{id}": {
+      "get": {
+        "operationId": "PurchaseRequestController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase request retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a purchase request",
+        "tags": [
+          "Purchase Request"
+        ]
+      },
+      "patch": {
+        "operationId": "PurchaseRequestController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePurchaseRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Purchase request updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a purchase request",
+        "tags": [
+          "Purchase Request"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-request/{id}/status": {
+      "patch": {
+        "operationId": "PurchaseRequestController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePurchaseRequestStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Purchase request status updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update purchase request status",
+        "tags": [
+          "Purchase Request"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-order": {
+      "get": {
+        "operationId": "PurchaseOrderController_findAll_v1",
+        "parameters": [
+          {
+            "name": "branchUnitId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List purchase orders",
+        "tags": [
+          "Purchase Order"
+        ]
+      },
+      "post": {
+        "operationId": "PurchaseOrderController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePurchaseOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a purchase order",
+        "tags": [
+          "Purchase Order"
+        ]
+      }
+    },
+    "/api/v1/purchasing/purchase-order/{id}": {
+      "get": {
+        "operationId": "PurchaseOrderController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a purchase order",
+        "tags": [
+          "Purchase Order"
+        ]
+      },
+      "patch": {
+        "operationId": "PurchaseOrderController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePurchaseOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a purchase order",
+        "tags": [
+          "Purchase Order"
+        ]
+      },
+      "delete": {
+        "operationId": "PurchaseOrderController_remove_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a purchase order",
+        "tags": [
+          "Purchase Order"
+        ]
+      }
     }
   },
   "info": {
@@ -19915,6 +20915,322 @@
       }
     },
     "schemas": {
+      "ItemBasicInfoResponseDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "skuCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "barcode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "categoryId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "unitOfMeasurementId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "externalReferenceCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "tags": {
+            "uniqueItems": true,
+            "maxItems": 50,
+            "description": "JSON array of unique tag strings.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "unitOfMeasurementSymbol": {
+            "type": "string"
+          },
+          "responsibilityCenterName": {
+            "type": "string"
+          },
+          "costPrice": {
+            "type": "number"
+          },
+          "sellingPrice": {
+            "type": "number"
+          },
+          "suggestedPrice": {
+            "type": "number"
+          },
+          "taxTreatment": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "categoryId",
+          "unitOfMeasurementId",
+          "id",
+          "categoryName",
+          "unitOfMeasurementSymbol",
+          "responsibilityCenterName"
+        ]
+      },
+      "ItemBasicInfoListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemBasicInfoResponseDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "CreateItemBasicInfoDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "skuCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "barcode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "categoryId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "unitOfMeasurementId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "externalReferenceCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "tags": {
+            "uniqueItems": true,
+            "maxItems": 50,
+            "description": "JSON array of unique tag strings.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "categoryId",
+          "unitOfMeasurementId"
+        ]
+      },
+      "UpdateItemBasicInfoDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "skuCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "barcode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "categoryId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "unitOfMeasurementId": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "externalReferenceCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "tags": {
+            "uniqueItems": true,
+            "maxItems": 50,
+            "description": "JSON array of unique tag strings.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "ItemPricingResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "sellingPrice": {
+            "type": "number"
+          },
+          "suggestedPrice": {
+            "type": "number"
+          },
+          "taxTreatment": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "cost",
+          "sellingPrice",
+          "suggestedPrice"
+        ]
+      },
+      "UpsertItemPricingDto": {
+        "type": "object",
+        "properties": {
+          "cost": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "sellingPrice": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "suggestedPrice": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "taxTreatment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          }
+        }
+      },
       "RegisterDto": {
         "type": "object",
         "properties": {
@@ -29826,6 +31142,10 @@
           "revenueCoaId": {
             "type": "string",
             "nullable": true
+          },
+          "expenseParentCoaId": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -29883,6 +31203,10 @@
             "type": "string"
           },
           "revenueCoaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "expenseParentCoaId": {
             "type": "string",
             "nullable": true
           }
@@ -30628,6 +31952,584 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "TaxResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "taxDescription": {
+            "type": "string"
+          },
+          "taxRate": {
+            "type": "string"
+          },
+          "taxExempt": {
+            "type": "boolean"
+          },
+          "taxAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "atc": {
+            "type": "string",
+            "nullable": true
+          },
+          "officialAtcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "natureOfIncome": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sourceKey",
+          "transactionType",
+          "taxType",
+          "taxCode",
+          "taxDescription",
+          "taxRate",
+          "taxExempt",
+          "taxAlias",
+          "atc",
+          "officialAtcCode",
+          "natureOfIncome",
+          "sortOrder",
+          "status"
+        ]
+      },
+      "TaxListResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxResponseDto"
+            }
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxResponseDto"
+            }
+          }
+        },
+        "required": [
+          "taxCodes",
+          "taxes"
+        ]
+      },
+      "TaxAutocompleteOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tax": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          },
+          "taxCode": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          }
+        },
+        "required": [
+          "label",
+          "description",
+          "tax",
+          "taxCode"
+        ]
+      },
+      "TaxAutocompleteResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxAutocompleteOptionResponseDto"
+            }
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxAutocompleteOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "taxCodes",
+          "taxes"
+        ]
+      },
+      "TaxTransactionTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "transactionTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "transactionTypes"
+        ]
+      },
+      "TaxTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "taxTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "taxTypes"
+        ]
+      },
+      "PartyDefaultClassificationResponseDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "officialAtcCodePrefix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "transactionType",
+          "taxTypes"
+        ]
+      },
+      "PartyDefaultClassificationsResponseDto": {
+        "type": "object",
+        "properties": {
+          "classifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyDefaultClassificationResponseDto"
+            }
+          }
+        },
+        "required": [
+          "classifications"
+        ]
+      },
+      "TaxDefaultAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "sourceKey": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "displayCode": {
+            "type": "string"
+          },
+          "taxDescription": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "natureOfIncome": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxRate": {
+            "type": "string"
+          },
+          "taxExempt": {
+            "type": "boolean"
+          },
+          "defaultAccountRole": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultAccountCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultAccountTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceKey",
+          "transactionType",
+          "taxType",
+          "taxCode",
+          "displayCode",
+          "taxDescription",
+          "sortOrder",
+          "natureOfIncome",
+          "taxRate",
+          "taxExempt",
+          "defaultAccountRole",
+          "defaultAccountCode",
+          "defaultAccountTitle",
+          "status"
+        ]
+      },
+      "TaxDefaultAccountOptionGroupResponseDto": {
+        "type": "object",
+        "properties": {
+          "classification": {
+            "type": "string",
+            "enum": [
+              "output-sales",
+              "input-importation",
+              "input-purchases",
+              "input-all",
+              "purchase-ewt",
+              "purchase-fwt",
+              "purchase-wvat",
+              "sales-cwt",
+              "sales-wvat"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDefaultAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "classification",
+          "label",
+          "options"
+        ]
+      },
+      "TaxDefaultAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDefaultAccountOptionGroupResponseDto"
+            }
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDefaultAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "companyId",
+          "groups",
+          "options"
+        ]
+      },
+      "TaxDefaultChartAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "accountNature": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "isPostingAccount": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "accountCode",
+          "accountTitle",
+          "accountType",
+          "accountNature",
+          "status",
+          "isPostingAccount"
+        ]
+      },
+      "TaxPostingAccountResponseDto": {
+        "type": "object",
+        "properties": {
+          "transactionScope": {
+            "enum": [
+              "SALE",
+              "PURCHASE",
+              "BOTH"
+            ],
+            "type": "string"
+          },
+          "postingEvent": {
+            "enum": [
+              "RECOGNITION",
+              "SETTLEMENT",
+              "REFUND",
+              "REVERSAL",
+              "ADJUSTMENT"
+            ],
+            "type": "string"
+          },
+          "accountRole": {
+            "type": "string"
+          },
+          "entrySide": {
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "amountSource": {
+            "enum": [
+              "TAX_AMOUNT",
+              "RECOVERABLE_AMOUNT",
+              "WITHHELD_AMOUNT"
+            ],
+            "type": "string"
+          },
+          "priority": {
+            "type": "number"
+          },
+          "companyAccountMappingId": {
+            "type": "string",
+            "nullable": true
+          },
+          "chartAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxDefaultChartAccountResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "transactionScope",
+          "postingEvent",
+          "accountRole",
+          "entrySide",
+          "amountSource",
+          "priority",
+          "companyAccountMappingId",
+          "chartAccount"
+        ]
+      },
+      "TaxWithDefaultAccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "transactionType": {
+            "type": "string"
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "taxDescription": {
+            "type": "string"
+          },
+          "taxRate": {
+            "type": "string"
+          },
+          "taxExempt": {
+            "type": "boolean"
+          },
+          "taxAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "atc": {
+            "type": "string",
+            "nullable": true
+          },
+          "officialAtcCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "natureOfIncome": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "postingAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxPostingAccountResponseDto"
+            }
+          },
+          "defaultTaxAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxPostingAccountResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "sourceKey",
+          "transactionType",
+          "taxType",
+          "taxCode",
+          "taxDescription",
+          "taxRate",
+          "taxExempt",
+          "taxAlias",
+          "atc",
+          "officialAtcCode",
+          "natureOfIncome",
+          "sortOrder",
+          "status",
+          "postingAccounts",
+          "defaultTaxAccounts"
+        ]
+      },
+      "TaxDefaultAccountsListResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "taxCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+            }
+          },
+          "taxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+            }
+          }
+        },
+        "required": [
+          "companyId",
+          "taxCodes",
+          "taxes"
+        ]
+      },
+      "TaxDefaultAccountsContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "number"
+          },
+          "tax": {
+            "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+          },
+          "taxCode": {
+            "$ref": "#/components/schemas/TaxWithDefaultAccountsResponseDto"
+          }
+        },
+        "required": [
+          "companyId",
+          "tax",
+          "taxCode"
+        ]
+      },
+      "TaxContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "tax": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          },
+          "taxCode": {
+            "$ref": "#/components/schemas/TaxResponseDto"
+          }
+        },
+        "required": [
+          "tax",
+          "taxCode"
         ]
       },
       "WarehouseBranchResponseDto": {
@@ -31781,6 +33683,10 @@
             "format": "date-time",
             "type": "string",
             "nullable": true
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -31803,6 +33709,9 @@
             "type": "string"
           },
           "referenceNo": {
+            "type": "string"
+          },
+          "remarks": {
             "type": "string"
           },
           "ruleId": {
@@ -31848,6 +33757,7 @@
           "moduleScope",
           "moduleName",
           "referenceNo",
+          "remarks",
           "ruleId",
           "ruleName",
           "amount",
@@ -31871,6 +33781,16 @@
         "required": [
           "transactions"
         ]
+      },
+      "ApprovalTransactionActionDto": {
+        "type": "object",
+        "properties": {
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          }
+        }
       },
       "CreateApproverSetupDto": {
         "type": "object",
@@ -32200,85 +34120,6 @@
         "required": [
           "label",
           "fieldKey"
-        ]
-      },
-      "UserSidebarTreeItemDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "label": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 500
-          },
-          "itemType": {
-            "type": "string",
-            "enum": [
-              "SECTION",
-              "CONTAINER",
-              "LINK"
-            ]
-          },
-          "moduleId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "iconName": {
-            "type": "string"
-          },
-          "isHidden": {
-            "type": "boolean"
-          },
-          "isPinned": {
-            "type": "boolean"
-          },
-          "isCollapsed": {
-            "type": "boolean"
-          },
-          "children": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
-            }
-          }
-        },
-        "required": [
-          "key",
-          "label",
-          "itemType",
-          "children"
-        ]
-      },
-      "SaveUserSidebarDto": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "number",
-            "minimum": 0
-          },
-          "applyScope": {
-            "enum": [
-              "CURRENT_BRANCH",
-              "ALL_BRANCHES"
-            ],
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSidebarTreeItemDto"
-            }
-          }
-        },
-        "required": [
-          "version",
-          "items"
         ]
       },
       "AiAssistantQueuedTranscriptionResponseDto": {
@@ -40232,98 +42073,122 @@
       "CreateAcknowledgementReceiptDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "example": "AR-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "AR-REF-0001"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "SOA-0001"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "CUST-001"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
           "paymentId": {
             "type": "string",
             "nullable": true,
             "maxLength": 40,
             "example": "1"
           },
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "maxLength": 10,
+            "example": "PHP"
           },
           "exchangeRate": {
             "type": "number",
-            "minimum": 0.000001
+            "minimum": 0.000001,
+            "example": 1
           },
           "netAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 44000
           },
           "vatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 6000
           },
           "wvatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "ewtAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 1000
           },
           "discountAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "grossAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 50000
           },
           "receivableAccountId": {
             "type": "string",
             "nullable": true,
-            "maxLength": 40
+            "maxLength": 40,
+            "example": "1"
           },
           "receivableAccountCode": {
             "type": "string",
-            "maxLength": 20
+            "maxLength": 20,
+            "example": "1100000000"
           },
           "receivableAccountTitle": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Accounts Receivable"
           },
           "remarks": {
             "type": "string",
             "nullable": true,
-            "maxLength": 500
+            "maxLength": 500,
+            "example": "Partial collection for September billing."
           },
           "details": {
             "minItems": 1,
@@ -40381,98 +42246,122 @@
       "UpdateAcknowledgementReceiptDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "example": "AR-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "AR-REF-0001"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "SOA-0001"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "CUST-001"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
           "paymentId": {
             "type": "string",
             "nullable": true,
             "maxLength": 40,
             "example": "1"
           },
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "maxLength": 10,
+            "example": "PHP"
           },
           "exchangeRate": {
             "type": "number",
-            "minimum": 0.000001
+            "minimum": 0.000001,
+            "example": 1
           },
           "netAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 44000
           },
           "vatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 6000
           },
           "wvatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "ewtAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 1000
           },
           "discountAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "grossAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 50000
           },
           "receivableAccountId": {
             "type": "string",
             "nullable": true,
-            "maxLength": 40
+            "maxLength": 40,
+            "example": "1"
           },
           "receivableAccountCode": {
             "type": "string",
-            "maxLength": 20
+            "maxLength": 20,
+            "example": "1100000000"
           },
           "receivableAccountTitle": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Accounts Receivable"
           },
           "remarks": {
             "type": "string",
             "nullable": true,
-            "maxLength": 500
+            "maxLength": 500,
+            "example": "Partial collection for September billing."
           },
           "details": {
             "minItems": 1,
@@ -41166,98 +43055,122 @@
       "CreateProvisionalReceiptDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "example": "PVR-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "PVR-REF-0001"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "SOA-0001"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "CUST-001"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
           "paymentId": {
             "type": "string",
             "nullable": true,
             "maxLength": 40,
             "example": "1"
           },
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "maxLength": 10,
+            "example": "PHP"
           },
           "exchangeRate": {
             "type": "number",
-            "minimum": 0.000001
+            "minimum": 0.000001,
+            "example": 1
           },
           "netAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 44000
           },
           "vatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 6000
           },
           "wvatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "ewtAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 1000
           },
           "discountAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "grossAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 50000
           },
           "receivableAccountId": {
             "type": "string",
             "nullable": true,
-            "maxLength": 40
+            "maxLength": 40,
+            "example": "1"
           },
           "receivableAccountCode": {
             "type": "string",
-            "maxLength": 20
+            "maxLength": 20,
+            "example": "1100000000"
           },
           "receivableAccountTitle": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Accounts Receivable"
           },
           "remarks": {
             "type": "string",
             "nullable": true,
-            "maxLength": 500
+            "maxLength": 500,
+            "example": "Partial collection for September billing."
           },
           "details": {
             "minItems": 1,
@@ -41315,98 +43228,122 @@
       "UpdateProvisionalReceiptDto": {
         "type": "object",
         "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "transactionNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "example": "PVR-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-09-03",
+            "format": "date"
+          },
+          "receiptNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "PVR-REF-0001"
+          },
+          "referenceNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "example": "SOA-0001"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40,
+            "example": "1"
+          },
+          "customerCode": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "CUST-001"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
+          "billToName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "Acme Corporation"
+          },
           "paymentId": {
             "type": "string",
             "nullable": true,
             "maxLength": 40,
             "example": "1"
           },
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1
-          },
-          "transactionNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 80
-          },
-          "documentDate": {
-            "type": "string"
-          },
-          "dueDate": {
-            "type": "string"
-          },
-          "receiptNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "referenceNo": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 120
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 40
-          },
-          "customerCode": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "customerName": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "billToName": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
           "currency": {
             "type": "string",
-            "maxLength": 10
+            "maxLength": 10,
+            "example": "PHP"
           },
           "exchangeRate": {
             "type": "number",
-            "minimum": 0.000001
+            "minimum": 0.000001,
+            "example": 1
           },
           "netAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 44000
           },
           "vatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 6000
           },
           "wvatAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "ewtAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 1000
           },
           "discountAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 0
           },
           "grossAmount": {
-            "type": "number"
+            "type": "number",
+            "example": 50000
           },
           "receivableAccountId": {
             "type": "string",
             "nullable": true,
-            "maxLength": 40
+            "maxLength": 40,
+            "example": "1"
           },
           "receivableAccountCode": {
             "type": "string",
-            "maxLength": 20
+            "maxLength": 20,
+            "example": "1100000000"
           },
           "receivableAccountTitle": {
             "type": "string",
-            "maxLength": 250
+            "maxLength": 250,
+            "example": "Accounts Receivable"
           },
           "remarks": {
             "type": "string",
             "nullable": true,
-            "maxLength": 500
+            "maxLength": 500,
+            "example": "Partial collection for September billing."
           },
           "details": {
             "minItems": 1,
@@ -43129,6 +45066,55 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "CashVoucherDefaultAccountDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "Chart Account ID",
+            "example": "10"
+          },
+          "accountCode": {
+            "type": "string",
+            "description": "Account Code",
+            "example": "1010101001"
+          },
+          "accountTitle": {
+            "type": "string",
+            "description": "Account Title",
+            "example": "Cash On Hand"
+          }
+        },
+        "required": [
+          "accountId",
+          "accountCode",
+          "accountTitle"
+        ]
+      },
+      "CashVoucherDefaultAccountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultCashAccount": {
+            "description": "Default Cash on Hand Account for Cash Voucher",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashVoucherDefaultAccountDto"
+              }
+            ]
+          },
+          "creditAccount": {
+            "description": "Default settlement credit account (synonym for defaultCashAccount in CV)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashVoucherDefaultAccountDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "defaultCashAccount"
         ]
       },
       "CashVoucherSingleResponseDto": {
@@ -48741,6 +50727,1136 @@
         "required": [
           "status"
         ]
+      },
+      "PurchaseRequestEntryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceMaintenanceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          },
+          "qty": {
+            "type": "number"
+          },
+          "lotNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "cost": {
+            "type": "number"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "qty",
+          "cost"
+        ]
+      },
+      "PurchaseRequestResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "branchUnitId": {
+            "type": "number"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "transNo": {
+            "type": "string"
+          },
+          "prDate": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string"
+          },
+          "partyCode": {
+            "type": "string"
+          },
+          "partyName": {
+            "type": "string"
+          },
+          "purchaseType": {
+            "type": "string"
+          },
+          "vendorAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "forDepartment": {
+            "type": "string",
+            "nullable": true
+          },
+          "bomNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestEntryResponseDto"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "branchUnitId",
+          "branchName",
+          "transNo",
+          "prDate",
+          "partyId",
+          "partyCode",
+          "partyName",
+          "purchaseType",
+          "currency",
+          "exchangeRate",
+          "status",
+          "items",
+          "createdAt"
+        ]
+      },
+      "PurchaseRequestPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "PurchaseRequestListResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseRequests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestResponseDto"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PurchaseRequestPaginationResponseDto"
+          }
+        },
+        "required": [
+          "purchaseRequests",
+          "pagination"
+        ]
+      },
+      "PurchaseRequestTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "status"
+        ]
+      },
+      "PurchaseRequestTypesResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestTypeResponseDto"
+            }
+          }
+        },
+        "required": [
+          "purchaseTypes"
+        ]
+      },
+      "PurchaseRequestContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseRequest": {
+            "$ref": "#/components/schemas/PurchaseRequestResponseDto"
+          }
+        },
+        "required": [
+          "purchaseRequest"
+        ]
+      },
+      "PurchaseRequestItemDto": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
+          "serviceMaintenanceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "qty": {
+            "type": "number",
+            "minimum": 0
+          },
+          "lotNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "cost": {
+            "type": "number",
+            "minimum": 0
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          }
+        }
+      },
+      "CreatePurchaseRequestDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "prDate": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "purchaseType": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "vendorAddress": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10,
+            "default": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0,
+            "default": 1
+          },
+          "forDepartment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "bomNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestItemDto"
+            }
+          }
+        },
+        "required": [
+          "transNo",
+          "prDate",
+          "purchaseType",
+          "items"
+        ]
+      },
+      "UpdatePurchaseRequestDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "prDate": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "purchaseType": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "vendorAddress": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10,
+            "default": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0,
+            "default": 1
+          },
+          "forDepartment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "bomNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestItemDto"
+            }
+          }
+        }
+      },
+      "UpdatePurchaseRequestStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "PurchaseOrderEntryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "purchaseRequestEntryId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceMaintenanceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "size": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true
+          },
+          "lotNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "prQty": {
+            "type": "number"
+          },
+          "poQty": {
+            "type": "number"
+          },
+          "price": {
+            "type": "number"
+          },
+          "grossAmount": {
+            "type": "number"
+          },
+          "discountRate": {
+            "type": "number"
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "grossAfterDiscount": {
+            "type": "number"
+          },
+          "vatAmount": {
+            "type": "number"
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "netOfVatAmount": {
+            "type": "number"
+          },
+          "netAmount": {
+            "type": "number"
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "canvassNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "prQty",
+          "poQty",
+          "price",
+          "grossAmount",
+          "discountRate",
+          "discountAmount",
+          "grossAfterDiscount",
+          "vatAmount",
+          "vatable",
+          "vatInclusive",
+          "netOfVatAmount",
+          "netAmount"
+        ]
+      },
+      "PurchaseOrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "branchUnitId": {
+            "type": "number"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string"
+          },
+          "partyCode": {
+            "type": "string"
+          },
+          "partyName": {
+            "type": "string"
+          },
+          "purchaseType": {
+            "type": "string"
+          },
+          "transNo": {
+            "type": "string"
+          },
+          "poDate": {
+            "type": "string"
+          },
+          "dateNeeded": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "termsOfPayment": {
+            "type": "string",
+            "nullable": true
+          },
+          "purchaseRequestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "type": "number"
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderEntryResponseDto"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "branchUnitId",
+          "branchName",
+          "partyId",
+          "partyCode",
+          "partyName",
+          "purchaseType",
+          "transNo",
+          "poDate",
+          "currency",
+          "exchangeRate",
+          "status",
+          "items",
+          "createdAt"
+        ]
+      },
+      "PurchaseOrderPaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "PurchaseOrderListResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseOrders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderResponseDto"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PurchaseOrderPaginationResponseDto"
+          }
+        },
+        "required": [
+          "purchaseOrders",
+          "pagination"
+        ]
+      },
+      "PurchaseOrderContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "purchaseOrder": {
+            "$ref": "#/components/schemas/PurchaseOrderResponseDto"
+          }
+        },
+        "required": [
+          "purchaseOrder"
+        ]
+      },
+      "PurchaseOrderItemDto": {
+        "type": "object",
+        "properties": {
+          "purchaseRequestEntryId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceMaintenanceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "color": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "size": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "model": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "uom": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 40
+          },
+          "lotNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "prQty": {
+            "type": "number",
+            "minimum": 0
+          },
+          "poQty": {
+            "type": "number",
+            "minimum": 0
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discountRate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discountAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vatable": {
+            "type": "boolean"
+          },
+          "vatInclusive": {
+            "type": "boolean"
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "canvassNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          }
+        },
+        "required": [
+          "description",
+          "prQty",
+          "poQty",
+          "price"
+        ]
+      },
+      "CreatePurchaseOrderDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "poDate": {
+            "type": "string"
+          },
+          "dateNeeded": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "purchaseType": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "emailAddress": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "termsOfPayment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "purchaseRequestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10,
+            "default": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0,
+            "default": 1
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderItemDto"
+            }
+          }
+        },
+        "required": [
+          "transNo",
+          "poDate",
+          "purchaseType",
+          "items"
+        ]
+      },
+      "UpdatePurchaseOrderDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1
+          },
+          "transNo": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "poDate": {
+            "type": "string"
+          },
+          "dateNeeded": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "purchaseType": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "emailAddress": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "contactNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "projectName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "termId": {
+            "type": "string",
+            "nullable": true
+          },
+          "termsOfPayment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "purchaseRequestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "prNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 10,
+            "default": "PHP"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "minimum": 0,
+            "default": 1
+          },
+          "remarks": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "items": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderItemDto"
+            }
+          }
+        }
       }
     }
   }

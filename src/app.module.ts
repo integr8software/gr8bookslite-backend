@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ItemsModule } from './modules/maintenance/items/items.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -43,16 +44,17 @@ import { ApproverSetupsModule } from './modules/system-administration/approver-s
 import { TransactionNumberSequencesModule } from './modules/system-administration/transaction-number-sequences/transaction-number-sequences.module';
 import { FieldManagementModule } from './modules/system-administration/field-management/field-management.module';
 import { StorageModule } from './storage/storage.module';
-import { UserSidebarModule } from './modules/company/user-sidebar/user-sidebar.module';
 import { AccountsPayableModule } from './modules/accounts-payable/accounts-payable.module';
 import { GeneralJournalModule } from './modules/general-journal/general-journal.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { CashReceiptModule } from './modules/cash-receipt/cash-receipt.module';
 import { CashDisbursementModule } from './modules/cash-disbursement/cash-disbursement.module';
 import { ReferenceModule } from './modules/reference/reference.module';
+import { PurchasingModule } from './modules/purchasing/purchasing.module';
 
 @Module({
   imports: [
+    ItemsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       validate: validateEnvironment,
@@ -106,12 +108,12 @@ import { ReferenceModule } from './modules/reference/reference.module';
     ApproverSetupsModule,
     TransactionNumberSequencesModule,
     FieldManagementModule,
-    UserSidebarModule,
     AccountsPayableModule,
     GeneralJournalModule,
     SalesModule,
     CashReceiptModule,
     CashDisbursementModule,
+    PurchasingModule,
     ReferenceModule,
     AiAssistantModule,
   ],

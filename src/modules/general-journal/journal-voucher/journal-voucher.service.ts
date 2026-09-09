@@ -140,6 +140,7 @@ export class JournalVoucherService {
 
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
+    const saveStatus = JournalVoucherStatus.FOR_APPROVAL;
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       exchangeRate: normalized.exchangeRate,
@@ -164,7 +165,9 @@ export class JournalVoucherService {
             documentDate: normalized.documentDate,
             exchangeRate: normalized.exchangeRate,
             remarks: normalized.remarks,
-            status: JournalVoucherStatus.DRAFT,
+            status: saveStatus,
+            submittedAt: new Date(),
+            submittedByUserId: user.id,
             transactionNo,
           },
           include: JournalVoucherInclude,
@@ -178,7 +181,7 @@ export class JournalVoucherService {
           exchangeRate: normalized.exchangeRate,
           lines,
           remarks: normalized.remarks,
-          status: JournalVoucherStatus.DRAFT,
+          status: saveStatus,
           transactionNo,
           voucherId: created.id,
         });
@@ -219,6 +222,7 @@ export class JournalVoucherService {
     }
 
     const normalized = await this.normalizeVoucherInput(companyId, dto);
+    const saveStatus = JournalVoucherStatus.FOR_APPROVAL;
     this.accountingService.validateSubmittedPayload({
       currencyCode: normalized.currencyCode,
       exchangeRate: normalized.exchangeRate,
@@ -243,6 +247,8 @@ export class JournalVoucherService {
             documentDate: normalized.documentDate,
             exchangeRate: normalized.exchangeRate,
             remarks: normalized.remarks,
+            ...(current.status === saveStatus ? {} : this.getStatusAuditData(saveStatus, user.id)),
+            status: saveStatus,
             transactionNo,
             updatedByUserId: user.id,
           },
@@ -256,7 +262,7 @@ export class JournalVoucherService {
           exchangeRate: normalized.exchangeRate,
           lines,
           remarks: normalized.remarks,
-          status: current.status,
+          status: saveStatus,
           transactionNo,
           voucherId,
         });
@@ -480,7 +486,7 @@ export class JournalVoucherService {
             ...entry,
             currencyCode: header.currencyCode,
             exchangeRate: header.exchangeRate,
-            particulars: entry.particulars ?? header.particulars,
+            particulars: entry.particulars ?? header.remarks,
             referenceId: header.referenceId,
             referenceNo: header.referenceNo,
             referenceType: header.referenceType,
@@ -785,7 +791,7 @@ export class JournalVoucherService {
         currencyCode,
         exchangeRate,
         jeno,
-        particulars: remarks,
+        remarks: remarks,
         referenceId: voucherId,
         referenceNo: transactionNo,
         referenceType: JournalVoucherReferenceType,

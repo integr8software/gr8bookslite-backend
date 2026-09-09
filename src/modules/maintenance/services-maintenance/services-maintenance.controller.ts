@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ServiceMaintenanceType } from '@prisma/client';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -43,6 +44,23 @@ export class ServicesMaintenanceController {
   @ApiOkResponse({ type: ServiceMaintenanceOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: GetServiceMaintenanceListQueryDto) {
     return this.servicesLookupService.findOptionsForCompanyUser(user, query);
+  }
+
+  @Get('options/:type')
+  @ApiOperation({ summary: 'Get service options by type' })
+  @ApiOkResponse({ type: ServiceMaintenanceOptionsResponseDto })
+  findOptionsByType(@CurrentUser() user: AuthUser, @Param('type') type: string, @Query() query: GetServiceMaintenanceListQueryDto) {
+    const normalizedType = type.trim().toUpperCase().replace(/-/g, '_');
+    const serviceType = (normalizedType === 'PURCHASE' ? ServiceMaintenanceType.PURCHASES : normalizedType) as ServiceMaintenanceType;
+
+    if (!Object.values(ServiceMaintenanceType).includes(serviceType)) {
+      throw new BadRequestException('Service option type must be purchase, purchases, or sales.');
+    }
+
+    return this.servicesLookupService.findOptionsForCompanyUser(user, {
+      ...query,
+      serviceType,
+    });
   }
 
   @Get('account-options')

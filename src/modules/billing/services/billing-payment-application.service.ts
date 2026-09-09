@@ -106,19 +106,23 @@ export class BillingPaymentApplicationService {
             intervalUnit: lockedAttempt.subscriptionPlanPrice?.intervalUnit ?? 'MONTH',
           });
 
+        const isTrialPayment =
+          lockedAttempt.purpose === BillingPaymentPurpose.ONBOARDING &&
+          Boolean(lockedAttempt.subscriptionInvoice.description?.toLowerCase().includes('trial'));
+
         if (lockedAttempt.companySubscriptionId) {
           await tx.companySubscription.update({
             where: {
               id: lockedAttempt.companySubscriptionId,
             },
             data: {
-              status: SubscriptionStatus.ACTIVE,
+              status: isTrialPayment ? SubscriptionStatus.TRIALING : SubscriptionStatus.ACTIVE,
               billingMode: BillingMode.MANUAL,
               autoRenew: false,
               currentPeriodStartAt: periodStart,
               nextBillingAt: periodEnd,
               endsAt: periodEnd,
-              trialEndsAt: null,
+              trialEndsAt: isTrialPayment ? periodEnd : null,
               externalPaymentMethodId: null,
               latestPaymentIntentId: lockedAttempt.externalPaymentIntentId ?? lockedAttempt.companySubscription?.latestPaymentIntentId,
             },

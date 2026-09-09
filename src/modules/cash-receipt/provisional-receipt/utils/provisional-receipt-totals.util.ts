@@ -1,4 +1,3 @@
-import type { ProvisionalReceiptDetails } from '@prisma/client';
 import type { ProvisionalReceiptDetailDto } from '../dto/provisional-receipt-detail.dto';
 import type { ProvisionalReceiptJournalEntryDto } from '../dto/provisional-receipt-journal-entry.dto';
 import type { ProvisionalReceiptJournalEntry } from '../types/provisional-receipt-with-details.type';
@@ -20,10 +19,6 @@ export function getProvisionalReceiptDetailTotals(details: ProvisionalReceiptDet
     }),
     { grossAmount: 0, netAmount: 0, vatAmount: 0 },
   );
-}
-
-export function getPersistedProvisionalReceiptDetailGross(details: ProvisionalReceiptDetails[]) {
-  return roundCurrency(details.reduce((sum, detail) => sum + Number(detail.grossAmount), 0));
 }
 
 export function getJournalEntryTotals(journalEntries: Array<ProvisionalReceiptJournalEntryDto | ProvisionalReceiptJournalEntry>) {

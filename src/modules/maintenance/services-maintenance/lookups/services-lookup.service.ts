@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType } from '@prisma/client';
+import { AccountNature, ChartAccountLevel, ChartAccountStatus, ChartAccountType, ServiceMaintenanceType } from '@prisma/client';
 import { PermissionAction } from '../../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { GetServiceMaintenanceListQueryDto } from '../dto/get-service-maintenance-list-query.dto';
-import { accountGroupHasTag, ServiceRevenueAccountGroupTag } from '../utils/service-maintenance-account.util';
+import { accountGroupHasTag } from '../../chart-of-accounts/utils/system-account-groups.util';
+import { ServiceRevenueAccountGroupTag } from '../utils/service-maintenance-account.util';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../../common/utils/module-access.util';
 import { ensureModuleAction } from '../../../../common/utils/module-permissions.util';
@@ -14,7 +15,7 @@ const ServicesMaintenanceModuleCode = 'SM';
 export class ServicesLookupService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOptionsForCompanyUser(user: AuthUser, query: Pick<GetServiceMaintenanceListQueryDto, 'search'>) {
+  async findOptionsForCompanyUser(user: AuthUser, query: Pick<GetServiceMaintenanceListQueryDto, 'search' | 'serviceType'>) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
 
@@ -22,6 +23,7 @@ export class ServicesLookupService {
       services: await this.findOptions({
         companyId,
         search: query.search,
+        serviceType: query.serviceType,
       }),
     };
   }
@@ -36,13 +38,14 @@ export class ServicesLookupService {
     };
   }
 
-  async findOptions({ companyId, search }: { companyId: number; search?: string }) {
+  async findOptions({ companyId, search, serviceType }: { companyId: number; search?: string; serviceType?: ServiceMaintenanceType }) {
     const normalizedSearch = search?.trim();
     const services = await this.prisma.serviceMaintenance.findMany({
       where: {
         companyId,
         deletedAt: null,
         status: ChartAccountStatus.ACTIVE,
+        ...(serviceType ? { serviceType } : {}),
         ...(normalizedSearch ? { serviceName: { contains: normalizedSearch, mode: 'insensitive' } } : {}),
       },
       select: {
@@ -68,8 +71,7 @@ export class ServicesLookupService {
       where: {
         companyId,
         accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.REVENUE,
-        accountNature: AccountNature.CREDIT,
+        accountType: { in: [ChartAccountType.REVENUE, ChartAccountType.EXPENSE] },
         status: ChartAccountStatus.ACTIVE,
         deletedAt: null,
         isPostingAccount: true,
@@ -78,7 +80,11 @@ export class ServicesLookupService {
     });
 
     return accounts
-      .filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag))
+      .filter(
+        (account) =>
+          (account.accountType === ChartAccountType.REVENUE && accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag)) ||
+          account.accountType === ChartAccountType.EXPENSE,
+      )
       .map((account) => ({
         id: account.id.toString(),
         accountNumber: account.accountCode,

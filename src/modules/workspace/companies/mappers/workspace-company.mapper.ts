@@ -74,7 +74,6 @@ export function mapWorkspaceCompany(company: WorkspaceCompanyRecord): WorkspaceC
   };
 }
 
-
 export function mapCompanyUnit(unit: CompanyUnit): CompanyUnitResponse {
   return {
     id: unit.id,

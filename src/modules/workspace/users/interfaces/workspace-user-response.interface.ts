@@ -23,8 +23,6 @@ export interface WorkspaceUserCompanyAssignmentResponse {
   companyRoleId: number | null;
 }
 
-
-
 export interface WorkspaceUserResponse {
   id: number;
   name: string;

@@ -1,0 +1,59 @@
+name: Backend Staging Post-Deploy Health
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy Backend Staging
+    types:
+      - completed
+
+jobs:
+  health-check:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    runs-on:
+      - self-hosted
+      - Windows
+      - X64
+
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Verify backend staging health
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $healthUrl = "http://127.0.0.1:3002/api/v1/health"
+          $maxAttempts = 6
+          $delaySeconds = 10
+
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            Write-Host "Health check attempt $attempt of $maxAttempts..."
+
+            try {
+              $response = Invoke-RestMethod `
+                -Uri $healthUrl `
+                -Method Get `
+                -TimeoutSec 10
+
+              if ($response.status -eq "ok") {
+                Write-Host "Backend staging health check passed."
+                Write-Host "Database status: $($response.database.status)"
+                Write-Host "Platform status: $($response.platform.provisionStatus)"
+                exit 0
+              }
+
+              Write-Warning "Backend responded but health status is '$($response.status)'."
+            }
+            catch {
+              Write-Warning "Backend health request failed: $($_.Exception.Message)"
+            }
+
+            if ($attempt -lt $maxAttempts) {
+              Start-Sleep -Seconds $delaySeconds
+            }
+          }
+
+          throw "Backend staging post-deploy health check failed after $maxAttempts attempts."
