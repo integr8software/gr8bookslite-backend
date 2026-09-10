@@ -177,6 +177,24 @@ export class PartyResponseDto {
   termName!: string;
 
   @ApiProperty()
+  defaultResponsibilityCenterId!: string;
+
+  @ApiProperty()
+  defaultResponsibilityCenterName!: string;
+
+  @ApiProperty()
+  defaultPaymentTypeId!: string;
+
+  @ApiProperty()
+  defaultPaymentTypeName!: string;
+
+  @ApiProperty()
+  defaultBank!: string;
+
+  @ApiProperty()
+  defaultBankAccountNo!: string;
+
+  @ApiProperty()
   tin!: string;
 
   @ApiProperty()
@@ -434,6 +452,24 @@ export class PartyOptionResponseDto {
 
   @ApiPropertyOptional()
   termName?: string;
+
+  @ApiPropertyOptional()
+  defaultResponsibilityCenterId?: string;
+
+  @ApiPropertyOptional()
+  defaultResponsibilityCenterName?: string;
+
+  @ApiPropertyOptional()
+  defaultPaymentTypeId?: string;
+
+  @ApiPropertyOptional()
+  defaultPaymentTypeName?: string;
+
+  @ApiPropertyOptional()
+  defaultBank?: string;
+
+  @ApiPropertyOptional()
+  defaultBankAccountNo?: string;
 
   @ApiPropertyOptional()
   tin?: string;

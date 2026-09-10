@@ -26,18 +26,17 @@ describe('AccountsPayableVoucherAccountingService', () => {
         ...overrides,
       }) as AccountsPayableVoucherDetailsDto;
 
-    const createValidJournal = (overrides: Partial<JournalEntryDto> = {}): JournalEntryDto =>
-      ({
-        lineNumber: 1,
-        referenceType: 'APV',
-        accountCode: '5010101001',
-        accountTitle: 'Office Supplies Expense',
-        currencyCode: 'PHP',
-        exchangeRate: 1,
-        debit: 1000,
-        credit: 0,
-        ...overrides,
-      }) as JournalEntryDto;
+    const createValidJournal = (overrides: Partial<JournalEntryDto> = {}): JournalEntryDto => ({
+      lineNumber: 1,
+      referenceType: 'APV',
+      accountCode: '5010101001',
+      accountTitle: 'Office Supplies Expense',
+      currencyCode: 'PHP',
+      exchangeRate: 1,
+      debit: 1000,
+      credit: 0,
+      ...overrides,
+    });
 
     it('returns calculated totals when submitted payload is valid', () => {
       const details = [createValidDetail({ lineNumber: 1, amount: 1000, totalAmountDue: 1000 })];
@@ -68,10 +67,7 @@ describe('AccountsPayableVoucherAccountingService', () => {
           currencyCode: 'PHP',
           details: [],
           exchangeRate: 1,
-          journalEntries: [
-            createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }),
-            createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 }),
-          ],
+          journalEntries: [createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }), createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 })],
           voucherAmount: 1000,
         }),
       ).toThrow(new BadRequestException('Add at least one APV detail row.'));
@@ -84,10 +80,7 @@ describe('AccountsPayableVoucherAccountingService', () => {
           currencyCode: 'PHP',
           details,
           exchangeRate: 1,
-          journalEntries: [
-            createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }),
-            createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 }),
-          ],
+          journalEntries: [createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }), createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 })],
           voucherAmount: 1000,
         }),
       ).toThrow(new BadRequestException('Detail line 1 amount must be non-zero.'));
@@ -100,10 +93,7 @@ describe('AccountsPayableVoucherAccountingService', () => {
           currencyCode: 'PHP',
           details,
           exchangeRate: 1,
-          journalEntries: [
-            createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }),
-            createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 }),
-          ],
+          journalEntries: [createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }), createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 })],
           voucherAmount: 1000,
         }),
       ).toThrow(new BadRequestException('Detail line 1 currency must match the voucher currency.'));
@@ -116,10 +106,7 @@ describe('AccountsPayableVoucherAccountingService', () => {
           currencyCode: 'PHP',
           details,
           exchangeRate: 1,
-          journalEntries: [
-            createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }),
-            createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 }),
-          ],
+          journalEntries: [createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }), createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 })],
           voucherAmount: 1000,
         }),
       ).toThrow(new BadRequestException('Detail line 1 exchange rate must match the voucher exchange rate.'));
@@ -160,10 +147,7 @@ describe('AccountsPayableVoucherAccountingService', () => {
 
     it('throws BadRequestException when a journal line has both debit and credit', () => {
       const details = [createValidDetail()];
-      const journalEntries = [
-        createValidJournal({ lineNumber: 1, debit: 500, credit: 500 }),
-        createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 }),
-      ];
+      const journalEntries = [createValidJournal({ lineNumber: 1, debit: 500, credit: 500 }), createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 })];
 
       expect(() =>
         service.validateSubmittedPayload({
@@ -178,10 +162,7 @@ describe('AccountsPayableVoucherAccountingService', () => {
 
     it('throws BadRequestException when a journal line has neither debit nor credit', () => {
       const details = [createValidDetail()];
-      const journalEntries = [
-        createValidJournal({ lineNumber: 1, debit: 0, credit: 0 }),
-        createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 }),
-      ];
+      const journalEntries = [createValidJournal({ lineNumber: 1, debit: 0, credit: 0 }), createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 })];
 
       expect(() =>
         service.validateSubmittedPayload({
@@ -232,10 +213,7 @@ describe('AccountsPayableVoucherAccountingService', () => {
 
     it('throws BadRequestException when detail totalAmountDue does not match voucherAmount', () => {
       const details = [createValidDetail({ amount: 1000, totalAmountDue: 800 })];
-      const journalEntries = [
-        createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }),
-        createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 }),
-      ];
+      const journalEntries = [createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }), createValidJournal({ lineNumber: 2, debit: 0, credit: 1000 })];
 
       expect(() =>
         service.validateSubmittedPayload({
@@ -250,10 +228,7 @@ describe('AccountsPayableVoucherAccountingService', () => {
 
     it('throws BadRequestException when journal debit and credit do not balance', () => {
       const details = [createValidDetail({ amount: 1000, totalAmountDue: 1000 })];
-      const journalEntries = [
-        createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }),
-        createValidJournal({ lineNumber: 2, debit: 0, credit: 900 }),
-      ];
+      const journalEntries = [createValidJournal({ lineNumber: 1, debit: 1000, credit: 0 }), createValidJournal({ lineNumber: 2, debit: 0, credit: 900 })];
 
       expect(() =>
         service.validateSubmittedPayload({
@@ -268,10 +243,7 @@ describe('AccountsPayableVoucherAccountingService', () => {
 
     it('throws BadRequestException when journal totals do not match detail gross amount', () => {
       const details = [createValidDetail({ amount: 1000, totalAmountDue: 1000 })];
-      const journalEntries = [
-        createValidJournal({ lineNumber: 1, debit: 1200, credit: 0 }),
-        createValidJournal({ lineNumber: 2, debit: 0, credit: 1200 }),
-      ];
+      const journalEntries = [createValidJournal({ lineNumber: 1, debit: 1200, credit: 0 }), createValidJournal({ lineNumber: 2, debit: 0, credit: 1200 })];
 
       expect(() =>
         service.validateSubmittedPayload({

@@ -6,6 +6,13 @@ export const PettyCashVoucherInclude = {
   party: true,
   creditAccount: true,
   responsibilityCenter: true,
+  details: {
+    orderBy: { lineNumber: 'asc' },
+    include: {
+      party: true,
+      responsibilityCenter: true,
+    },
+  },
 } satisfies Prisma.PettyCashVoucherInclude;
 
 export type PettyCashVoucherRecordWithRelations = Prisma.PettyCashVoucherGetPayload<{

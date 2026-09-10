@@ -22,4 +22,11 @@ export const OtherProfiles = defineAiModuleProfiles([
     aliases: ['beginning balances', 'opening balance uploader', 'upload opening balances'],
     summary: 'Uploads and reviews opening balances used to initialize supported accounting records.',
   },
+  {
+    moduleCode: 'PJM',
+    name: 'Project Maintenance',
+    area: 'Project Maintenance',
+    aliases: ['project maintenance', 'projects', 'project master'],
+    summary: 'Maintains company projects, codes, and associated project references.',
+  },
 ]);

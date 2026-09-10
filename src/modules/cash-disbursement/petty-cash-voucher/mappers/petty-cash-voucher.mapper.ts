@@ -1,5 +1,6 @@
+import { PettyCashVoucherDetailDto } from '../dto/petty-cash-voucher-detail.dto';
 import { PettyCashVoucherResponseDto } from '../dto/petty-cash-voucher-response.dto';
-import { PettyCashVoucherWithDetails } from '../types/petty-cash-voucher-with-details.type';
+import { PettyCashVoucherDetailWithRelations, PettyCashVoucherWithDetails } from '../types/petty-cash-voucher-with-details.type';
 
 export class PettyCashVoucherMapper {
   static toResponseDto(record: PettyCashVoucherWithDetails): PettyCashVoucherResponseDto {
@@ -7,8 +8,7 @@ export class PettyCashVoucherMapper {
       id: record.id.toString(),
       companyId: record.companyId,
       branchUnitId: record.branchUnitId,
-      voucherNo: record.voucherNo,
-      transactionNo: record.voucherNo,
+      transactionNo: record.transactionNo,
       documentDate: record.documentDate.toISOString().slice(0, 10),
       partyId: record.partyId?.toString() ?? null,
       partyCodeSnapshot: record.partyCodeSnapshot,
@@ -32,21 +32,44 @@ export class PettyCashVoucherMapper {
       currency: record.currencyCode,
       exchangeRate: Number(record.exchangeRate),
       amount: Number(record.amount),
-      grossAmount: Number(record.grossAmount),
-      netAmount: Number(record.netAmount),
-      vatType: record.vatType,
-      vatable: record.vatable,
-      vatRate: record.vatRate,
-      vatPercent: Number(record.vatPercent),
-      vatAmount: Number(record.vatAmount),
-      ewtCode: record.ewtCode,
-      ewtRate: record.ewtRate,
-      ewtPercent: Number(record.ewtPercent),
-      ewtAmount: Number(record.ewtAmount),
       remarks: record.remarks,
       status: record.status,
+      details: (record.details ?? []).map((detail) => this.toDetailDto(detail)),
       createdAt: record.createdAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
+    };
+  }
+
+  static toDetailDto(detail: PettyCashVoucherDetailWithRelations): PettyCashVoucherDetailDto {
+    return {
+      id: detail.id.toString(),
+      lineNumber: detail.lineNumber,
+      date: detail.date ? detail.date.toISOString().slice(0, 10) : undefined,
+      partyId: detail.partyId?.toString() ?? undefined,
+      supplierCodeSnapshot: detail.supplierCodeSnapshot ?? undefined,
+      supplierNameSnapshot: detail.supplierNameSnapshot ?? undefined,
+      supplierCode: detail.party?.partyCodeNo ?? detail.supplierCodeSnapshot ?? undefined,
+      supplierName: detail.party?.partyName ?? detail.supplierNameSnapshot ?? undefined,
+      orNo: detail.orNo ?? undefined,
+      tinNo: detail.tinNo ?? undefined,
+      particulars: detail.particulars ?? undefined,
+      remarks: detail.remarks ?? undefined,
+      amount: Number(detail.amount),
+      grossAmount: Number(detail.grossAmount),
+      netAmount: Number(detail.netAmount),
+      disburseAmount: Number(detail.disburseAmount),
+      vatType: detail.vatType ?? undefined,
+      vatPercent: Number(detail.vatPercent),
+      vatAmount: Number(detail.vatAmount),
+      ewtCode: detail.ewtCode ?? undefined,
+      ewtPercent: Number(detail.ewtPercent),
+      ewtAmount: Number(detail.ewtAmount),
+      expenseType: detail.expenseType ?? undefined,
+      responsibilityCenterId: detail.responsibilityCenterId?.toString() ?? undefined,
+      responsibilityCenterCodeSnapshot: detail.responsibilityCenterCodeSnapshot ?? undefined,
+      responsibilityCenterSnapshot: detail.responsibilityCenterSnapshot ?? undefined,
+      responsibilityCenterCode: detail.responsibilityCenter?.code ?? detail.responsibilityCenterCodeSnapshot ?? undefined,
+      responsibilityCenter: detail.responsibilityCenter?.name ?? detail.responsibilityCenterSnapshot ?? undefined,
     };
   }
 }

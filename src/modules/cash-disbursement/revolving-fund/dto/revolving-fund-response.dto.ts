@@ -90,7 +90,7 @@ export class RevolvingFundResponseDto {
   @ApiProperty({ description: 'Status', enum: RevolvingFundStatus, example: RevolvingFundStatus.DRAFT })
   status: RevolvingFundStatus;
 
-  @ApiPropertyOptional({ description: 'Fund Details', type: [RevolvingFundDetailDto] })
+  @ApiPropertyOptional({ description: 'Fund Details', type: () => [RevolvingFundDetailDto] })
   details?: RevolvingFundDetailDto[];
 
   @ApiProperty({ description: 'Created At', example: '2026-05-21T08:00:00.000Z' })
@@ -121,9 +121,9 @@ export class RevolvingFundPaginationMetaDto {
 }
 
 export class RevolvingFundListResponseDto {
-  @ApiProperty({ type: [RevolvingFundResponseDto] })
+  @ApiProperty({ type: () => [RevolvingFundResponseDto] })
   items: RevolvingFundResponseDto[];
 
-  @ApiProperty({ type: RevolvingFundPaginationMetaDto })
+  @ApiProperty({ type: () => RevolvingFundPaginationMetaDto })
   meta: RevolvingFundPaginationMetaDto;
 }

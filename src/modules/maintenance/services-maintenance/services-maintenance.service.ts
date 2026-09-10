@@ -34,7 +34,6 @@ import { accountGroupHasTag } from '../chart-of-accounts/utils/system-account-gr
 import {
   buildServiceRevenueAccountGroupTags,
   findSelectableServiceAccountOrThrow,
-  findSelectableServiceRevenueAccountOrThrow,
   findServiceRevenueParentOrThrow,
   generateNextServiceRevenueAccountCode,
   ServiceRevenueAccountGroupTag,

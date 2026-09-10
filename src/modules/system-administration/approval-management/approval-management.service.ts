@@ -1153,7 +1153,7 @@ function getApprovedSourceTransactionData(referenceType: string, userId: number,
     return {
       closedAt: now,
       closedByUserId: userId,
-      status: AccountsPayableVoucherStatus.CLOSED,
+      status: AccountsPayableVoucherStatus.POSTED,
       updatedByUserId: userId,
     };
   }

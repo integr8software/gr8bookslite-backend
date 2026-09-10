@@ -35,7 +35,8 @@ export const AccountingSidebarTemplate = [
     iconName: 'accounting',
     children: [
       link('financial-maintenance-charts-of-accounts', 'COA', 'scale'),
-      link('financial-maintenance-default-accounts', 'DA', 'fileCog'),
+      link('financial-maintenance-disbursement-type', 'DTM', 'fileCog'),
+      link('financial-maintenance-collection-type', 'CTM', 'receipt'),
       link('financial-maintenance-bank-masterfile', 'BM', 'bank'),
       link('financial-maintenance-services-maintenance', 'SM', 'receipt'),
       link('financial-maintenance-payment-type', 'PT', 'creditCard'),
@@ -67,9 +68,7 @@ export const AccountingSidebarTemplate = [
       link('cash-disbursement-cash-voucher', 'CV', 'cashOut'),
       link('cash-disbursement-disbursement-voucher', 'DV', 'cashOut'),
       link('cash-disbursement-cash-advance', 'CA', 'cashOut'),
-      link('cash-disbursement-cash-advance-multiple-entry', 'CAME', 'cashOut'),
       link('cash-disbursement-petty-cash-voucher', 'PCV', 'cashOut'),
-      link('cash-disbursement-petty-cash-fund', 'PCF', 'cashOut'),
       link('cash-disbursement-petty-cash-replenishment', 'PCR', 'cashOut'),
       link('cash-disbursement-revolving-fund', 'RF', 'cashOut'),
       link('cash-disbursement-revolving-fund-replenishment', 'RFR', 'cashOut'),
@@ -105,6 +104,16 @@ export const AccountingSidebarTemplate = [
   },
   {
     itemType: 'SECTION',
+    key: 'approval-management',
+    label: 'Approval Management',
+    iconName: 'shieldCheck',
+    children: [
+      link('system-administration-approval-setup', 'AM', 'shieldCheck', 'Approver Setup'),
+      link('system-administration-approval-transactions', 'AM', 'clipboardCheck', 'Approval Transactions'),
+    ],
+  },
+  {
+    itemType: 'SECTION',
     key: 'system-administration',
     label: 'System Administration',
     iconName: 'settings',
@@ -114,10 +123,7 @@ export const AccountingSidebarTemplate = [
         key: 'system-administration-user-management',
         label: 'User Management',
         iconName: 'users',
-        children: [
-          link('system-administration-users', 'U', 'users'),
-          link('system-administration-user-role', 'UR', 'security', 'User Role'),
-        ],
+        children: [link('system-administration-users', 'U', 'users'), link('system-administration-user-role', 'UR', 'security', 'User Role')],
       },
       link('system-administration-audit-trail', 'AT', 'activity'),
       link('system-administration-transaction-number-setup', 'TNS', 'receipt'),
@@ -128,22 +134,13 @@ export const AccountingSidebarTemplate = [
       link('system-administration-mail-maintenance', 'MM', 'mail'),
     ],
   },
-  {
-    itemType: 'SECTION',
-    key: 'approval-management',
-    label: 'Approval Management',
-    iconName: 'shieldCheck',
-    children: [
-      link('system-administration-approval-setup', 'AM', 'shieldCheck', 'Approver Setup'),
-      link('system-administration-approval-transactions', 'AM', 'clipboardCheck', 'Approval Transactions'),
-    ],
-  },
 ] as const satisfies readonly ModuleSystemSidebarSeedItem[];
 
 export const AccountingAndInventorySidebarTemplate = [
   AccountingSidebarTemplate[0],
   AccountingSidebarTemplate[1],
   link('party-management', 'PM', 'users'),
+  link('project-maintenance', 'PJM', 'folder'),
   {
     itemType: 'SECTION',
     key: 'item-management',

@@ -1,6 +1,12 @@
 import { Prisma } from '@prisma/client';
 import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AccountsPayableVoucherCopySourceService } from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
+import { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
+import { AdvanceToSupplierCopySourceService } from '../advances-to-suppliers/copy-from/advance-to-supplier-copy-source.service';
+import { CashAdvanceCopySourceService } from '../cash-advance/copy-from/cash-advance-copy-source.service';
+import { PettyCashReplenishmentCopySourceService } from '../petty-cash-replenishment/copy-from/petty-cash-replenishment-copy-source.service';
+import { RevolvingFundReplenishmentCopySourceService } from '../revolving-fund-replenishment/copy-from/revolving-fund-replenishment-copy-source.service';
 import { CashVoucherService } from './cash-voucher.service';
 import { CashVoucherAccountingService } from './services/cash-voucher-accounting.service';
 
@@ -12,7 +18,17 @@ describe('CashVoucherService', () => {
       return Promise.resolve(1);
     });
     const findFirst = jest.fn<Promise<{ jeno: bigint } | null>, [args: unknown]>().mockResolvedValue({ jeno: 41n });
-    const service = new CashVoucherService({} as PrismaService, {} as CompanyCurrencyService, {} as CashVoucherAccountingService);
+    const service = new CashVoucherService(
+      {} as PrismaService,
+      {} as CompanyCurrencyService,
+      {} as CashVoucherAccountingService,
+      {} as AccountsPayableVoucherCopySourceService,
+      {} as AdvanceToSupplierCopySourceService,
+      {} as CashAdvanceCopySourceService,
+      {} as JournalVoucherCopySourceService,
+      {} as PettyCashReplenishmentCopySourceService,
+      {} as RevolvingFundReplenishmentCopySourceService,
+    );
     const serviceInternals = service as unknown as {
       allocateJournalEntryNumber: (tx: Prisma.TransactionClient, companyId: number) => Promise<bigint>;
     };

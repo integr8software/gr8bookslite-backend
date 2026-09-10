@@ -1,8 +1,11 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JournalVoucherCopySourceService } from './copy-from/journal-voucher-copy-source.service';
+import { GetJournalVoucherCopyFromCandidatesQueryDto } from './copy-from/dto/get-journal-voucher-copy-from-candidates-query.dto';
+import { JournalVoucherCopyFromCandidatesResponseDto } from './copy-from/dto/journal-voucher-copy-from-candidate.dto';
 import { CreateJournalVoucherDto } from './dto/create-journal-voucher.dto';
 import { GetJournalVoucherListQueryDto } from './dto/get-journal-voucher-list-query.dto';
 import { UpdateJournalVoucherStatusDto } from './dto/update-journal-voucher-status.dto';
@@ -21,6 +24,7 @@ export class JournalVoucherController {
   constructor(
     private readonly journalVoucherService: JournalVoucherService,
     private readonly journalVoucherLookupService: JournalVoucherLookupService,
+    private readonly journalVoucherCopySourceService: JournalVoucherCopySourceService,
   ) {}
 
   @Get()
@@ -39,6 +43,13 @@ export class JournalVoucherController {
   @ApiOkResponse({ description: 'Journal voucher lookup options retrieved.' })
   findLookupOptions(@CurrentUser() user: AuthUser) {
     return this.journalVoucherLookupService.findOptions(user);
+  }
+
+  @Get('copy-from/candidates')
+  @ApiOperation({ summary: 'List available Journal Voucher lines for Copy From' })
+  @ApiOkResponse({ description: 'Available Journal Voucher lines for Copy From.', type: JournalVoucherCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetJournalVoucherCopyFromCandidatesQueryDto) {
+    return this.journalVoucherCopySourceService.findCandidates(user, query);
   }
 
   @Get(':id')

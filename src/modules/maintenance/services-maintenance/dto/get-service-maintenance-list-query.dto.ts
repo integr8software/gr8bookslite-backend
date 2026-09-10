@@ -4,14 +4,7 @@ import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from '
 import { ChartAccountStatus, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
 import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
-export const ServiceMaintenanceSortFields = [
-  'serviceName',
-  'serviceType',
-  'status',
-  'accountSetupMode',
-  'createdAt',
-  'updatedAt',
-] as const;
+export const ServiceMaintenanceSortFields = ['serviceName', 'serviceType', 'status', 'accountSetupMode', 'createdAt', 'updatedAt'] as const;
 
 export type ServiceMaintenanceSortField = (typeof ServiceMaintenanceSortFields)[number];
 

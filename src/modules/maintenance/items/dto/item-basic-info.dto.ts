@@ -124,3 +124,73 @@ export class ItemBasicInfoResponseDto extends CreateItemBasicInfoDto {
 export class ItemBasicInfoListResponseDto {
   @ApiProperty({ type: [ItemBasicInfoResponseDto] }) items!: ItemBasicInfoResponseDto[];
 }
+
+export class ItemBasicInfoOptionResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  code!: string;
+
+  @ApiPropertyOptional()
+  skuCode?: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiPropertyOptional()
+  barcode?: string;
+
+  @ApiProperty()
+  categoryId!: string;
+
+  @ApiProperty()
+  categoryName!: string;
+
+  @ApiProperty()
+  unitOfMeasurementId!: string;
+
+  @ApiProperty()
+  unitOfMeasurementSymbol!: string;
+
+  @ApiPropertyOptional()
+  brand?: string;
+
+  @ApiPropertyOptional()
+  model?: string;
+
+  @ApiPropertyOptional()
+  externalReferenceCode?: string;
+
+  @ApiProperty({ nullable: true })
+  responsibilityCenterId!: string | null;
+
+  @ApiProperty()
+  responsibilityCenterName!: string;
+
+  @ApiPropertyOptional()
+  description?: string;
+
+  @ApiProperty({ type: [String] })
+  tags!: string[];
+
+  @ApiProperty({ enum: ItemBasicInfoStatus })
+  status!: ItemBasicInfoStatus;
+
+  @ApiPropertyOptional({ type: Number })
+  costPrice?: number;
+
+  @ApiPropertyOptional({ type: Number })
+  sellingPrice?: number;
+
+  @ApiPropertyOptional({ type: Number })
+  suggestedPrice?: number;
+
+  @ApiPropertyOptional({ type: String, nullable: true })
+  taxTreatment?: string | null;
+}
+
+export class ItemBasicInfoOptionsResponseDto {
+  @ApiProperty({ type: [ItemBasicInfoOptionResponseDto] })
+  items!: ItemBasicInfoOptionResponseDto[];
+}

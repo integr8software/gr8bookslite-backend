@@ -9,7 +9,6 @@ type AdvancesToSuppliersServiceInternals = {
     partyCodeSnapshot: string | null;
     partyNameSnapshot: string | null;
     accountCodeSnapshot: string | null;
-    poReference: string | null;
     totalPoAmount: Prisma.Decimal;
     amount: Prisma.Decimal;
   }) => void;
@@ -20,19 +19,18 @@ describe('AdvancesToSuppliersService', () => {
 
   it('treats only submitted statuses as requiring complete data', () => {
     expect(service.isSubmittedStatus(AdvanceToSupplierStatus.FOR_APPROVAL)).toBe(true);
-    expect(service.isSubmittedStatus(AdvanceToSupplierStatus.APPROVED)).toBe(true);
+    expect(service.isSubmittedStatus(AdvanceToSupplierStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(AdvanceToSupplierStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(AdvanceToSupplierStatus.DRAFT)).toBe(false);
     expect(service.isSubmittedStatus(AdvanceToSupplierStatus.CANCELLED)).toBe(false);
   });
 
-  it('requires supplier, account, PO reference, and positive amounts before submission', () => {
+  it('requires supplier, account, and positive amounts before submission', () => {
     expect(() =>
       service.assertAdvanceToSupplierReady({
         partyCodeSnapshot: 'SUP-001',
         partyNameSnapshot: 'Supplier',
         accountCodeSnapshot: '1200',
-        poReference: 'PO-001',
         totalPoAmount: new Prisma.Decimal('1000'),
         amount: new Prisma.Decimal('250'),
       }),
@@ -43,7 +41,6 @@ describe('AdvancesToSuppliersService', () => {
         partyCodeSnapshot: '',
         partyNameSnapshot: 'Supplier',
         accountCodeSnapshot: '1200',
-        poReference: 'PO-001',
         totalPoAmount: new Prisma.Decimal('1000'),
         amount: new Prisma.Decimal('250'),
       }),

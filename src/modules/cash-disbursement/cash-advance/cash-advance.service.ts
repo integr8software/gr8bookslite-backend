@@ -2,92 +2,79 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { CashAdvanceStatus, CompanyUnitType, Prisma } from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
-import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
-import { parsePositiveBigIntId } from '../../../common/utils/id.util';
+import { resolveAuditUserNames, SystemGeneratedAuditLabel } from '../../../common/utils/audit-user.util';
 import { cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { TablePreferencesService } from '../../table-preferences/table-preferences.service';
 import {
   resolveTransactionNumberForCompanyBranch,
   suggestTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
-import { CreateCashAdvanceDto } from './dto/create-cash-advance.dto';
-import { GetCashAdvanceListQueryDto } from './dto/get-cash-advance-list-query.dto';
-import { UpdateCashAdvanceStatusDto } from './dto/update-cash-advance-status.dto';
-import { UpdateCashAdvanceDto } from './dto/update-cash-advance.dto';
-import { mapCashAdvance } from './mappers/cash-advance.mapper';
-import { CashAdvanceInclude, CashAdvanceWithPayload } from './prisma/cash-advance.include';
+import { CreateCashAdvanceDto, GetCashAdvanceListQueryDto, UpdateCashAdvanceDto, UpdateCashAdvanceStatusDto } from './dto/cash-advance.dto';
 
+const BatchPrefix = 'CA-';
+const BatchTransNoPattern = /^((?:CA|CAME)-(?:\d{4}-)?\d{6})/;
 const CashAdvanceModuleCode = 'CA';
-const CashAdvanceMultipleEntryPrefix = 'CAME-';
+
+export const CashAdvanceInclude = {
+  party: {
+    select: {
+      id: true,
+      partyCodeNo: true,
+      partyName: true,
+      cashAdvanceLimit: true,
+    },
+  },
+  creditAccount: {
+    select: {
+      id: true,
+      accountCode: true,
+      accountTitle: true,
+    },
+  },
+} satisfies Prisma.CashAdvanceInclude;
+
+type CashAdvanceBatchRow = Prisma.CashAdvanceGetPayload<{
+  include: typeof CashAdvanceInclude;
+}>;
 
 @Injectable()
 export class CashAdvanceService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly tablePreferencesService: TablePreferencesService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: AuthUser, query: GetCashAdvanceListQueryDto) {
     const companyId = this.getActiveCompanyId(user);
     const page = query.page ?? DefaultPage;
     const limit = query.limit ?? DefaultLimit;
-    const skip = (page - 1) * limit;
+    const status = this.normalizeStatus(query.status);
+    const search = query.search?.trim().toLowerCase();
 
-    const where: Prisma.CashAdvanceWhereInput = {
-      companyId,
-      deletedAt: null,
-      NOT: { transNo: { startsWith: CashAdvanceMultipleEntryPrefix } },
-    };
+    const rows = await this.prisma.cashAdvance.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        OR: [{ transNo: { startsWith: BatchPrefix } }, { transNo: { startsWith: 'CAME-' } }],
+        ...(status ? { status } : {}),
+      },
+      include: CashAdvanceInclude,
+      orderBy: [{ createdAt: 'desc' }, { transNo: 'asc' }],
+    });
 
-    if (query.search?.trim()) {
-      const search = query.search.trim();
-      where.OR = [
-        { transNo: { contains: search, mode: 'insensitive' } },
-        { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
-        { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
-        { remarks: { contains: search, mode: 'insensitive' } },
-      ];
-    }
+    const records = (await this.mapGroups(rows))
+      .filter((record) => {
+        if (!search) return true;
 
-    if (query.status?.trim()) {
-      const statusUpper = query.status.trim().toUpperCase();
-      if (Object.values(CashAdvanceStatus).includes(statusUpper as CashAdvanceStatus)) {
-        where.status = statusUpper as CashAdvanceStatus;
-      }
-    }
+        return [record.transNo, record.partyCode, record.partyName, record.accountCode, record.accountTitle, record.costCenter, record.remarks]
+          .join(' ')
+          .toLowerCase()
+          .includes(search);
+      })
+      .sort((left, right) => (right.createdAt ?? '').localeCompare(left.createdAt ?? ''));
 
-    if (query.partyCode?.trim()) {
-      where.partyCodeSnapshot = { equals: query.partyCode.trim(), mode: 'insensitive' };
-    }
-
-    if (query.startDate || query.endDate) {
-      where.documentDate = {};
-      if (query.startDate) where.documentDate.gte = new Date(query.startDate);
-      if (query.endDate) where.documentDate.lte = new Date(query.endDate);
-    }
-
-    const orderByField = query.sortBy || 'createdAt';
-    const sortDirection = query.sortOrder || 'desc';
-    const orderBy: Prisma.CashAdvanceOrderByWithRelationInput = {
-      [orderByField]: sortDirection,
-    };
-
-    const [records, total] = await Promise.all([
-      this.prisma.cashAdvance.findMany({
-        where,
-        include: CashAdvanceInclude,
-        orderBy,
-        skip,
-        take: limit,
-      }),
-      this.prisma.cashAdvance.count({ where }),
-    ]);
-
-    const mapped = await this.mapWithAuditUsers(records);
+    const total = records.length;
+    const data = records.slice((page - 1) * limit, page * limit);
 
     return {
-      data: mapped,
+      data,
       meta: {
         page,
         limit,
@@ -104,17 +91,7 @@ export class CashAdvanceService {
       branchUnitId,
       companyId,
       moduleCode: CashAdvanceModuleCode,
-      isIssued: (transactionNo) =>
-        this.prisma.cashAdvance
-          .count({
-            where: {
-              companyId,
-              transNo: transactionNo,
-              deletedAt: null,
-              NOT: { transNo: { startsWith: CashAdvanceMultipleEntryPrefix } },
-            },
-          })
-          .then((count) => count > 0),
+      isIssued: (transactionNo) => this.isBatchNoIssued(companyId, transactionNo),
     });
 
     return {
@@ -124,209 +101,92 @@ export class CashAdvanceService {
     };
   }
 
-  private async resolveTransactionNoForCreate(dto: CreateCashAdvanceDto, companyId: number, branchUnitId: number) {
-    return resolveTransactionNumberForCompanyBranch(this.prisma, {
-      branchUnitId,
-      companyId,
-      moduleCode: CashAdvanceModuleCode,
-      requestedTransactionNumber: cleanOptional(dto.transNo),
-      isIssued: (transactionNo) =>
-        this.prisma.cashAdvance
-          .count({
-            where: {
-              companyId,
-              transNo: transactionNo,
-              deletedAt: null,
-              NOT: { transNo: { startsWith: CashAdvanceMultipleEntryPrefix } },
-            },
-          })
-          .then((count) => count > 0),
-    });
-  }
-
   async findOne(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
-    const recordId = parsePositiveBigIntId(id);
-    const record = await this.prisma.cashAdvance.findFirst({
-      where: { id: recordId, companyId, deletedAt: null },
-      include: CashAdvanceInclude,
-    });
+    const rows = await this.findBatchRows(companyId, id);
 
-    if (!record) {
+    if (rows.length === 0) {
       throw new NotFoundException('Cash Advance record not found.');
     }
 
-    const mapped = (await this.mapWithAuditUsers([record]))[0];
-    return { data: mapped };
+    const record = (await this.mapGroups(rows))[0];
+    return { data: record };
   }
 
   async create(user: AuthUser, dto: CreateCashAdvanceDto) {
     const companyId = this.getActiveCompanyId(user);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
-
-    const partyCode = dto.partyCode?.trim() ?? '';
-    const accountCode = dto.accountCode?.trim() ?? '';
-    const party = dto.partyId
-      ? await this.prisma.party.findFirst({
-          where: { id: parsePositiveBigIntId(dto.partyId), companyId, deletedAt: null },
-        })
-      : partyCode
-        ? await this.prisma.party.findFirst({
-            where: { companyId, partyCodeNo: partyCode, deletedAt: null },
-          })
-        : null;
-
-    const creditAccount = dto.creditAccountId
-      ? await this.prisma.chartAccount.findFirst({
-          where: { id: parsePositiveBigIntId(dto.creditAccountId), companyId, deletedAt: null },
-        })
-      : accountCode
-        ? await this.prisma.chartAccount.findFirst({
-            where: { companyId, accountCode, deletedAt: null },
-          })
-        : null;
-
-    const transNo = await this.resolveTransactionNoForCreate(dto, companyId, branchUnitId);
-
-    const record = await this.prisma.cashAdvance.create({
-      data: {
-        companyId,
-        branchUnitId,
-        partyId: party?.id ?? null,
-        creditAccountId: creditAccount?.id ?? null,
-        transNo,
-        documentDate: new Date(dto.documentDate),
-        dueDate: dto.documentDate ? new Date(dto.documentDate) : null,
-        partyCodeSnapshot: partyCode,
-        partyNameSnapshot: dto.partyName?.trim() ?? '',
-        accountCodeSnapshot: accountCode,
-        accountTitleSnapshot: cleanOptional(dto.accountTitle) || creditAccount?.accountTitle || null,
-        costCenterSnapshot: cleanOptional(dto.costCenter),
-        costCenterCodeSnapshot: cleanOptional(dto.costCenterCode),
-        projectNameSnapshot: cleanOptional(dto.projectName) ?? cleanOptional(dto.projectRef),
-        projectCodeSnapshot: cleanOptional(dto.projectCode),
-        currencyCode: dto.currency?.trim() || 'PHP',
-        exchangeRate: new Prisma.Decimal(dto.fxRate?.replaceAll(',', '').trim() || '1.0000'),
-        amount: new Prisma.Decimal(dto.amount?.replaceAll(',', '').trim() || '0.00'),
-        remarks: cleanOptional(dto.remarks),
-        status: CashAdvanceStatus.DRAFT,
-        createdByUserId: user.id,
-      },
-      include: CashAdvanceInclude,
+    const transNo = await resolveTransactionNumberForCompanyBranch(this.prisma, {
+      branchUnitId,
+      companyId,
+      moduleCode: CashAdvanceModuleCode,
+      requestedTransactionNumber: cleanOptional(dto.transNo),
+      isIssued: (transactionNo) => this.isBatchNoIssued(companyId, transactionNo),
+    });
+    const existing = await this.prisma.cashAdvance.findFirst({
+      where: { companyId, transNo: { startsWith: transNo }, deletedAt: null },
+      select: { id: true },
     });
 
-    const mapped = (await this.mapWithAuditUsers([record]))[0];
-    return { message: 'Cash Advance created successfully.', data: mapped };
+    if (existing) {
+      throw new BadRequestException('Cash Advance transaction number already exists.');
+    }
+
+    const status = dto.status ?? CashAdvanceStatus.DRAFT;
+    if (this.isSubmittedStatus(status)) {
+      this.assertCashAdvanceDtoReady(dto);
+    }
+
+    await this.createRows(user, companyId, branchUnitId, transNo, dto);
+    return this.findOne(user, transNo);
   }
 
   async update(user: AuthUser, id: string, dto: UpdateCashAdvanceDto) {
     const companyId = this.getActiveCompanyId(user);
-    const recordId = parsePositiveBigIntId(id);
+    const rows = await this.findBatchRows(companyId, id);
 
-    const existing = await this.prisma.cashAdvance.findFirst({
-      where: { id: recordId, companyId, deletedAt: null },
-    });
-
-    if (!existing) {
+    if (rows.length === 0) {
       throw new NotFoundException('Cash Advance record not found.');
     }
-    if (existing.status !== CashAdvanceStatus.DRAFT) {
+
+    if (rows.some((row) => row.status !== CashAdvanceStatus.DRAFT)) {
       throw new BadRequestException('Only Draft Cash Advance records can be updated.');
     }
 
-    const party = dto.partyId
-      ? await this.prisma.party.findFirst({
-          where: { id: parsePositiveBigIntId(dto.partyId), companyId, deletedAt: null },
-        })
-      : dto.partyCode
-        ? await this.prisma.party.findFirst({
-            where: { companyId, partyCodeNo: dto.partyCode.trim(), deletedAt: null },
-          })
-        : null;
-
-    const creditAccount = dto.creditAccountId
-      ? await this.prisma.chartAccount.findFirst({
-          where: { id: parsePositiveBigIntId(dto.creditAccountId), companyId, deletedAt: null },
-        })
-      : dto.accountCode
-        ? await this.prisma.chartAccount.findFirst({
-            where: { companyId, accountCode: dto.accountCode.trim(), deletedAt: null },
-          })
-        : null;
-
-    const updated = await this.prisma.cashAdvance.update({
-      where: { id: recordId },
-      data: {
-        ...(party ? { partyId: party.id } : {}),
-        ...(creditAccount ? { creditAccountId: creditAccount.id } : {}),
-        ...(dto.partyCode ? { partyCodeSnapshot: dto.partyCode.trim() } : {}),
-        ...(dto.partyName ? { partyNameSnapshot: dto.partyName.trim() } : {}),
-        ...(dto.accountCode ? { accountCodeSnapshot: dto.accountCode.trim() } : {}),
-        ...(dto.accountTitle !== undefined ? { accountTitleSnapshot: cleanOptional(dto.accountTitle) } : {}),
-        ...(dto.costCenter !== undefined ? { costCenterSnapshot: cleanOptional(dto.costCenter) } : {}),
-        ...(dto.costCenterCode !== undefined ? { costCenterCodeSnapshot: cleanOptional(dto.costCenterCode) } : {}),
-        ...(dto.projectName !== undefined || dto.projectRef !== undefined
-          ? { projectNameSnapshot: cleanOptional(dto.projectName) ?? cleanOptional(dto.projectRef) }
-          : {}),
-        ...(dto.projectCode !== undefined ? { projectCodeSnapshot: cleanOptional(dto.projectCode) } : {}),
-        ...(dto.currency ? { currencyCode: dto.currency.trim() } : {}),
-        ...(dto.fxRate ? { exchangeRate: new Prisma.Decimal(dto.fxRate.replaceAll(',', '').trim() || '1.0000') } : {}),
-        ...(dto.amount ? { amount: new Prisma.Decimal(dto.amount.replaceAll(',', '').trim() || '0.00') } : {}),
-        ...(dto.documentDate ? { documentDate: new Date(dto.documentDate), dueDate: new Date(dto.documentDate) } : {}),
-        ...(dto.remarks !== undefined ? { remarks: cleanOptional(dto.remarks) } : {}),
-        updatedByUserId: user.id,
-      },
-      include: CashAdvanceInclude,
-    });
-
-    const mapped = (await this.mapWithAuditUsers([updated]))[0];
-    return { message: 'Cash Advance updated successfully.', data: mapped };
-  }
-
-  async remove(user: AuthUser, id: string) {
-    const companyId = this.getActiveCompanyId(user);
-    const recordId = parsePositiveBigIntId(id);
-
-    const existing = await this.prisma.cashAdvance.findFirst({
-      where: { id: recordId, companyId, deletedAt: null },
-    });
-
-    if (!existing) {
-      throw new NotFoundException('Cash Advance record not found.');
+    const batchNo = getBatchTransNo(rows[0].transNo);
+    const status = dto.status ?? CashAdvanceStatus.DRAFT;
+    if (this.isSubmittedStatus(status)) {
+      this.assertCashAdvanceDtoReady(dto);
     }
 
-    await this.prisma.cashAdvance.update({
-      where: { id: recordId },
-      data: {
-        deletedAt: new Date(),
-        status: CashAdvanceStatus.CANCELLED,
-        cancelledByUserId: user.id,
-        cancelledAt: new Date(),
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.cashAdvance.updateMany({
+        where: { companyId, transNo: { startsWith: batchNo }, deletedAt: null },
+        data: { deletedAt: new Date(), updatedByUserId: user.id },
+      });
+      const branchUnitId = rows[0].branchUnitId ?? (await this.resolveBranchUnitId(companyId, dto.branchUnitId));
+      await this.createRows(user, companyId, branchUnitId, batchNo, dto, tx);
     });
 
-    return { message: 'Cash Advance record cancelled successfully.' };
+    return this.findOne(user, batchNo);
   }
 
   async updateStatus(user: AuthUser, id: string, dto: UpdateCashAdvanceStatusDto) {
     const companyId = this.getActiveCompanyId(user);
-    const recordId = parsePositiveBigIntId(id);
-    const existing = await this.prisma.cashAdvance.findFirst({
-      where: { id: recordId, companyId, deletedAt: null },
-      include: CashAdvanceInclude,
-    });
+    const rows = await this.findBatchRows(companyId, id);
 
-    if (!existing) {
+    if (rows.length === 0) {
       throw new NotFoundException('Cash Advance record not found.');
     }
 
     if (this.isSubmittedStatus(dto.status)) {
-      this.assertCashAdvanceReady(existing);
+      this.assertCashAdvanceRowsReady(rows);
     }
 
+    const batchNo = getBatchTransNo(rows[0].transNo);
     const actionDate = new Date();
-    const updated = await this.prisma.cashAdvance.update({
-      where: { id: recordId },
+    await this.prisma.cashAdvance.updateMany({
+      where: { companyId, transNo: { startsWith: batchNo }, deletedAt: null },
       data: {
         status: dto.status,
         updatedByUserId: user.id,
@@ -334,42 +194,239 @@ export class CashAdvanceService {
         ...(dto.status === CashAdvanceStatus.DISAPPROVED ? { disapprovedByUserId: user.id, disapprovedAt: actionDate } : {}),
         ...(dto.status === CashAdvanceStatus.CANCELLED ? { cancelledByUserId: user.id, cancelledAt: actionDate } : {}),
       },
-      include: CashAdvanceInclude,
     });
 
-    const mapped = (await this.mapWithAuditUsers([updated]))[0];
-    return { message: 'Cash Advance status updated successfully.', data: mapped };
+    return this.findOne(user, batchNo);
   }
 
   async submitApproval(user: AuthUser, id: string) {
+    return this.updateStatus(user, id, { status: CashAdvanceStatus.FOR_APPROVAL });
+  }
+
+  async remove(user: AuthUser, id: string) {
     const companyId = this.getActiveCompanyId(user);
-    const recordId = parsePositiveBigIntId(id);
+    const rows = await this.findBatchRows(companyId, id);
 
-    const existing = await this.prisma.cashAdvance.findFirst({
-      where: { id: recordId, companyId, deletedAt: null },
-      include: CashAdvanceInclude,
-    });
-
-    if (!existing) {
+    if (rows.length === 0) {
       throw new NotFoundException('Cash Advance record not found.');
     }
 
-    if (existing.status !== CashAdvanceStatus.DRAFT) {
-      throw new BadRequestException('Only Draft records can be submitted for approval.');
-    }
-    this.assertCashAdvanceReady(existing);
-
-    const updated = await this.prisma.cashAdvance.update({
-      where: { id: recordId },
+    const batchNo = getBatchTransNo(rows[0].transNo);
+    await this.prisma.cashAdvance.updateMany({
+      where: { companyId, transNo: { startsWith: batchNo }, deletedAt: null },
       data: {
-        status: CashAdvanceStatus.FOR_APPROVAL,
+        status: CashAdvanceStatus.CANCELLED,
+        deletedAt: new Date(),
+        cancelledByUserId: user.id,
+        cancelledAt: new Date(),
         updatedByUserId: user.id,
       },
-      include: CashAdvanceInclude,
     });
 
-    const mapped = (await this.mapWithAuditUsers([updated]))[0];
-    return { message: 'Cash Advance submitted for approval.', data: mapped };
+    return { message: 'Cash Advance record cancelled successfully.' };
+  }
+
+  private async createRows(
+    user: AuthUser,
+    companyId: number,
+    branchUnitId: number,
+    batchNo: string,
+    dto: CreateCashAdvanceDto,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma,
+  ) {
+    const status = dto.status ?? CashAdvanceStatus.DRAFT;
+    const sourceItems =
+      status === CashAdvanceStatus.DRAFT
+        ? ((dto.items ?? []).filter((item) => item.partyCode?.trim() || item.partyName?.trim() || item.amount?.trim()) ?? [])
+        : (dto.items ?? []).filter((item) => item.partyCode?.trim() && item.partyName?.trim());
+    const validItems = sourceItems.length > 0 ? sourceItems : status === CashAdvanceStatus.DRAFT ? [{ partyCode: '', partyName: '', amount: '0.00' }] : [];
+
+    if (validItems.length === 0) {
+      throw new BadRequestException('Add at least one cash advance entry.');
+    }
+
+    const accountCode = dto.accountCode?.trim() ?? '';
+    const creditAccount = accountCode
+      ? await this.prisma.chartAccount.findFirst({
+          where: { companyId, accountCode, deletedAt: null },
+        })
+      : null;
+
+    for (const [index, item] of validItems.entries()) {
+      const partyCode = item.partyCode?.trim() ?? '';
+      const partyName = item.partyName?.trim() ?? '';
+      const party = partyCode
+        ? await this.prisma.party.findFirst({
+            where: { companyId, partyCodeNo: partyCode, deletedAt: null },
+          })
+        : null;
+      const lineNo = String(index + 1).padStart(3, '0');
+
+      await tx.cashAdvance.create({
+        data: {
+          companyId,
+          branchUnitId,
+          partyId: party?.id ?? null,
+          creditAccountId: creditAccount?.id ?? null,
+          transNo: `${batchNo}-L${lineNo}`,
+          documentDate: new Date(dto.documentDate),
+          dueDate: new Date(dto.documentDate),
+          partyCodeSnapshot: partyCode,
+          partyNameSnapshot: partyName,
+          accountCodeSnapshot: accountCode,
+          accountTitleSnapshot: cleanOptional(dto.accountTitle) || creditAccount?.accountTitle || null,
+          costCenterSnapshot: cleanOptional(item.responsibilityCenter) || cleanOptional(dto.costCenter),
+          projectNameSnapshot: cleanOptional(dto.projectName) ?? cleanOptional(dto.projectRef),
+          projectCodeSnapshot: cleanOptional(dto.projectCode),
+          currencyCode: dto.currency?.trim() || 'PHP',
+          exchangeRate: new Prisma.Decimal((dto.exchangeRate || '1.0000').replaceAll(',', '').trim() || '1.0000'),
+          amount: new Prisma.Decimal((item.amount || '0.00').replaceAll(',', '').trim() || '0.00'),
+          remarks: cleanOptional(item.particulars) || cleanOptional(item.remarks) || cleanOptional(dto.remarks),
+          status,
+          createdByUserId: user.id,
+        },
+      });
+    }
+  }
+
+  private async findBatchRows(companyId: number, id: string) {
+    const batchNo = getBatchTransNo(id);
+    return this.prisma.cashAdvance.findMany({
+      where: { companyId, deletedAt: null, transNo: { startsWith: batchNo } },
+      include: CashAdvanceInclude,
+      orderBy: { transNo: 'asc' },
+    });
+  }
+
+  private async isBatchNoIssued(companyId: number, transactionNo: string) {
+    const batchNo = getBatchTransNo(transactionNo);
+    const count = await this.prisma.cashAdvance.count({
+      where: { companyId, transNo: { startsWith: batchNo }, deletedAt: null },
+    });
+    return count > 0;
+  }
+
+  private async mapGroups(rows: CashAdvanceBatchRow[]) {
+    const groups = new Map<string, CashAdvanceBatchRow[]>();
+
+    for (const row of rows) {
+      const batchNo = getBatchTransNo(row.transNo);
+      groups.set(batchNo, [...(groups.get(batchNo) ?? []), row]);
+    }
+
+    const userIds = new Set<number>();
+    for (const row of rows) {
+      if (row.createdByUserId) userIds.add(row.createdByUserId);
+      if (row.updatedByUserId) userIds.add(row.updatedByUserId);
+    }
+
+    const userNames = await resolveAuditUserNames(this.prisma, [...userIds]);
+
+    return [...groups.entries()].map(([batchNo, batchRows]) => {
+      const first = batchRows[0];
+      const amount = batchRows.reduce((total, row) => total + Number(row.amount), 0);
+      const items = batchRows.map((row) => ({
+        id: row.id.toString(),
+        partyCode: row.partyCodeSnapshot,
+        partyName: row.partyNameSnapshot,
+        cashAdvanceBalance: '',
+        cashAdvanceLimit: row.party?.cashAdvanceLimit != null ? Number(row.party.cashAdvanceLimit).toFixed(2) : '',
+        particulars: row.remarks ?? '',
+        remarks: row.remarks ?? '',
+        amount: Number(row.amount).toFixed(2),
+        responsibilityCenter: row.costCenterSnapshot ?? '',
+      }));
+      const accountingEntries = items.map((item, index) => ({
+        id: `${batchNo}-accounting-${index + 1}`,
+        accountCode: first.accountCodeSnapshot,
+        accountTitle: first.accountTitleSnapshot ?? first.creditAccount?.accountTitle ?? '',
+        debit: item.amount,
+        credit: '',
+        partyCode: item.partyCode,
+        partyName: item.partyName,
+        particulars: item.particulars,
+        remarks: item.remarks,
+        responsibilityCenter: item.responsibilityCenter,
+      }));
+
+      return {
+        id: batchNo,
+        transNo: batchNo,
+        documentDate: first.documentDate.toISOString().slice(0, 10),
+        partyCode: first.partyCodeSnapshot,
+        partyName: first.partyNameSnapshot,
+        projectCode: first.projectCodeSnapshot ?? '',
+        projectName: first.projectNameSnapshot ?? '',
+        accountCode: first.accountCodeSnapshot,
+        accountTitle: first.accountTitleSnapshot ?? first.creditAccount?.accountTitle ?? '',
+        costCenter: first.costCenterSnapshot ?? '',
+        amount,
+        remarks: first.remarks ?? '',
+        status: first.status,
+        formValues: {
+          accountCode: first.accountCodeSnapshot,
+          accountTitle: first.accountTitleSnapshot ?? first.creditAccount?.accountTitle ?? '',
+          accountingEntries,
+          attachments: [],
+          contractNo: '',
+          costCenter: first.costCenterSnapshot ?? '',
+          currency: first.currencyCode,
+          documentDate: first.documentDate.toISOString().slice(0, 10),
+          exchangeRate: Number(first.exchangeRate).toFixed(2),
+          items,
+          partyCode: first.partyCodeSnapshot,
+          partyName: first.partyNameSnapshot,
+          projectCode: first.projectCodeSnapshot ?? '',
+          projectName: first.projectNameSnapshot ?? '',
+          projectRef: first.projectNameSnapshot ?? '',
+          remarks: first.remarks ?? '',
+          status: first.status,
+          totalAmount: amount.toFixed(2),
+          transNo: batchNo,
+        },
+        createdBy: first.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(first.createdByUserId) ?? null),
+        createdAt: first.createdAt.toISOString(),
+        updatedBy: (first.updatedByUserId && userNames.get(first.updatedByUserId)) ?? null,
+        updatedAt: first.updatedAt.toISOString(),
+      };
+    });
+  }
+
+  private normalizeStatus(status?: string) {
+    if (!status?.trim() || status === 'all') {
+      return null;
+    }
+
+    const normalized = status.trim().toUpperCase().replaceAll(' ', '_');
+    return Object.values(CashAdvanceStatus).includes(normalized as CashAdvanceStatus) ? (normalized as CashAdvanceStatus) : null;
+  }
+
+  private isSubmittedStatus(status: CashAdvanceStatus) {
+    return status === CashAdvanceStatus.FOR_APPROVAL || status === CashAdvanceStatus.POSTED;
+  }
+
+  private assertCashAdvanceDtoReady(dto: CreateCashAdvanceDto) {
+    if (!dto.accountCode?.trim()) {
+      throw new BadRequestException('Select a default account before submitting this Cash Advance.');
+    }
+
+    const validItems = (dto.items ?? []).filter(
+      (item) => item.partyCode?.trim() && item.partyName?.trim() && Number((item.amount ?? '0').replaceAll(',', '')) > 0,
+    );
+    if (validItems.length === 0) {
+      throw new BadRequestException('Add at least one cash advance entry with a party and non-zero amount before submitting.');
+    }
+  }
+
+  private assertCashAdvanceRowsReady(rows: CashAdvanceBatchRow[]) {
+    if (rows.some((row) => !row.accountCodeSnapshot?.trim())) {
+      throw new BadRequestException('Select a default account before submitting this Cash Advance.');
+    }
+
+    const validRows = rows.filter((row) => row.partyCodeSnapshot?.trim() && row.partyNameSnapshot?.trim() && Number(row.amount) > 0);
+    if (validRows.length === 0) {
+      throw new BadRequestException('Add at least one cash advance entry with a party and non-zero amount before submitting.');
+    }
   }
 
   private getActiveCompanyId(user: AuthUser): number {
@@ -405,36 +462,9 @@ export class CashAdvanceService {
 
     return branch.id;
   }
+}
 
-  private async mapWithAuditUsers(records: CashAdvanceWithPayload[]) {
-    const userIds = new Set<number>();
-    for (const record of records) {
-      if (record.createdByUserId) userIds.add(record.createdByUserId);
-      if (record.updatedByUserId) userIds.add(record.updatedByUserId);
-    }
-
-    const userNames = await resolveAuditUserNames(this.prisma, [...userIds]);
-    return records.map((record) => mapCashAdvance(record, userNames));
-  }
-
-  private isSubmittedStatus(status: CashAdvanceStatus) {
-    return status === CashAdvanceStatus.FOR_APPROVAL || status === CashAdvanceStatus.APPROVED || status === CashAdvanceStatus.POSTED;
-  }
-
-  private assertCashAdvanceReady(record: {
-    partyCodeSnapshot: string | null;
-    partyNameSnapshot: string | null;
-    accountCodeSnapshot: string | null;
-    amount: Prisma.Decimal;
-  }) {
-    if (!record.partyCodeSnapshot?.trim() || !record.partyNameSnapshot?.trim()) {
-      throw new BadRequestException('Select a party before submitting this Cash Advance.');
-    }
-    if (!record.accountCodeSnapshot?.trim()) {
-      throw new BadRequestException('Select a default account before submitting this Cash Advance.');
-    }
-    if (Number(record.amount) <= 0) {
-      throw new BadRequestException('Enter an amount greater than zero before submitting this Cash Advance.');
-    }
-  }
+export function getBatchTransNo(value: string) {
+  const match = value.trim().match(BatchTransNoPattern);
+  return match ? match[1] : value.trim();
 }

@@ -17,8 +17,8 @@ export function parseUtcDateOnly(value: string, fieldName = 'date') {
   return date;
 }
 
-export function getUtcToday() {
-  return parseUtcDateOnly(new Date().toISOString());
+export function toDateValue(date: Date) {
+  return date.toISOString().slice(0, 10);
 }
 
 function invalidDate(fieldName: string) {

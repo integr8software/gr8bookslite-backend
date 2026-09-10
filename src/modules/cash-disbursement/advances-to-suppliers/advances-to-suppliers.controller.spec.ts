@@ -2,6 +2,7 @@ import { PATH_METADATA } from '@nestjs/common/constants';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { AdvancesToSuppliersController } from './advances-to-suppliers.controller';
 import { AdvancesToSuppliersService } from './advances-to-suppliers.service';
+import { AdvanceToSupplierCopySourceService } from './copy-from/advance-to-supplier-copy-source.service';
 
 describe('AdvancesToSuppliersController', () => {
   const service = {
@@ -14,7 +15,13 @@ describe('AdvancesToSuppliersController', () => {
     submitApproval: jest.fn(),
     remove: jest.fn(),
   };
-  const controller = new AdvancesToSuppliersController(service as unknown as AdvancesToSuppliersService);
+  const copySourceService = {
+    findCandidates: jest.fn(),
+  };
+  const controller = new AdvancesToSuppliersController(
+    service as unknown as AdvancesToSuppliersService,
+    copySourceService as unknown as AdvanceToSupplierCopySourceService,
+  );
   const user = { id: 1, companyId: 2 } as AuthUser;
 
   beforeEach(() => jest.clearAllMocks());

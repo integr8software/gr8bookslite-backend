@@ -1,5 +1,14 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChartAccount, CompanyUnitType, Party, PartyAddress, RevolvingFundReplenishmentStatus, Prisma, ResponsibilityCenter } from '@prisma/client';
+import {
+  ChartAccount,
+  CompanyUnitType,
+  Party,
+  PartyAddress,
+  RevolvingFundReplenishmentStatus,
+  RevolvingFundStatus,
+  Prisma,
+  ResponsibilityCenter,
+} from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -7,12 +16,14 @@ import { CompanyCurrencyService } from '../../../common/currency/company-currenc
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 import { ensureModuleAction } from '../../../common/utils/module-permissions.util';
+import { roundMoney } from '../../../common/utils/money.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   resolveTransactionNumberForCompanyBranch,
   suggestTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
+import { formatRevolvingFundReference } from '../revolving-fund/revolving-fund.service';
 import { CreateRevolvingFundReplenishmentDto } from './dto/create-revolving-fund-replenishment.dto';
 import { GetRevolvingFundReplenishmentListQueryDto } from './dto/get-revolving-fund-replenishment-list-query.dto';
 import { RevolvingFundReplenishmentDetailDto } from './dto/revolving-fund-replenishment-detail.dto';
@@ -20,9 +31,23 @@ import { UpdateRevolvingFundReplenishmentDto } from './dto/update-revolving-fund
 import { UpdateRevolvingFundReplenishmentStatusDto } from './dto/update-revolving-fund-replenishment-status.dto';
 import { RevolvingFundReplenishmentMapper } from './mappers/revolving-fund-replenishment.mapper';
 import { RevolvingFundReplenishmentInclude } from './prisma/revolving-fund-replenishment.include';
+
+export {
+  RevolvingFundReplenishmentCopySourceLabel,
+  formatRevolvingFundReplenishmentReference,
+} from './copy-from/revolving-fund-replenishment-copy-source.service';
+
 export const RevolvingFundReplenishmentModuleCode = 'RFR';
 
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
+type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
+
+const RevolvingFundSourceAllocationLockNamespace = 7095n;
+const ActiveRevolvingFundReplenishmentStatuses = [
+  RevolvingFundReplenishmentStatus.DRAFT,
+  RevolvingFundReplenishmentStatus.FOR_APPROVAL,
+  RevolvingFundReplenishmentStatus.POSTED,
+];
 
 @Injectable()
 export class RevolvingFundReplenishmentService {
@@ -154,6 +179,15 @@ export class RevolvingFundReplenishmentService {
         calculatedAmount = dto.details.reduce((sum, detail) => sum + (detail.amount ?? detail.disburseAmount ?? 0), 0);
       }
       const targetStatus = dto.status ?? RevolvingFundReplenishmentStatus.DRAFT;
+      this.assertUniqueRevolvingFundNumbers(dto.details);
+      await this.validateRevolvingFundSourceDetails(tx, {
+        branchUnitId,
+        companyId,
+        currencyCode,
+        details: dto.details,
+        partyCode: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? '',
+        partyId: resolvedReferences.party?.id ?? null,
+      });
 
       const created = await tx.revolvingFundReplenishment.create({
         data: {
@@ -240,6 +274,16 @@ export class RevolvingFundReplenishmentService {
         calculatedAmount = dto.details.reduce((sum, detail) => sum + (detail.amount ?? detail.disburseAmount ?? 0), 0);
       }
       const targetStatus = dto.status ?? existing.status;
+      this.assertUniqueRevolvingFundNumbers(dto.details);
+      await this.validateRevolvingFundSourceDetails(tx, {
+        branchUnitId,
+        companyId,
+        currencyCode,
+        currentTargetId: recordId,
+        details: dto.details,
+        partyCode: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? existing.partyCodeSnapshot,
+        partyId: resolvedReferences.party?.id ?? existing.partyId,
+      });
 
       await tx.revolvingFundReplenishment.update({
         where: { id: recordId },
@@ -326,15 +370,14 @@ export class RevolvingFundReplenishmentService {
       updatedByUserId: user.id,
     };
 
-    if (dto.status === RevolvingFundReplenishmentStatus.APPROVED) {
+    if (dto.status === RevolvingFundReplenishmentStatus.POSTED) {
       statusData.approvedByUserId = user.id;
       statusData.approvedAt = now;
+      statusData.postedByUserId = user.id;
+      statusData.postedAt = now;
     } else if (dto.status === RevolvingFundReplenishmentStatus.DISAPPROVED) {
       statusData.disapprovedByUserId = user.id;
       statusData.disapprovedAt = now;
-    } else if (dto.status === RevolvingFundReplenishmentStatus.POSTED) {
-      statusData.postedByUserId = user.id;
-      statusData.postedAt = now;
     } else if (dto.status === RevolvingFundReplenishmentStatus.CANCELLED) {
       statusData.cancelledByUserId = user.id;
       statusData.cancelledAt = now;
@@ -382,11 +425,7 @@ export class RevolvingFundReplenishmentService {
   }
 
   private isSubmittedStatus(status: RevolvingFundReplenishmentStatus) {
-    return (
-      status === RevolvingFundReplenishmentStatus.FOR_APPROVAL ||
-      status === RevolvingFundReplenishmentStatus.APPROVED ||
-      status === RevolvingFundReplenishmentStatus.POSTED
-    );
+    return status === RevolvingFundReplenishmentStatus.FOR_APPROVAL || status === RevolvingFundReplenishmentStatus.POSTED;
   }
 
   private assertRevolvingFundReplenishmentReady(record: {
@@ -419,6 +458,15 @@ export class RevolvingFundReplenishmentService {
     }
   }
 
+  private assertUniqueRevolvingFundNumbers(details: RevolvingFundReplenishmentDetailDto[] = []) {
+    const voucherNumbers = details
+      .map((detail) => cleanOptional(detail.revolvingFundNo ?? detail.voucherNo)?.toLowerCase())
+      .filter((revolvingFundNo): revolvingFundNo is string => Boolean(revolvingFundNo?.startsWith('rf:')));
+    if (new Set(voucherNumbers).size !== voucherNumbers.length) {
+      throw new BadRequestException('Revolving Fund Numbers must be unique.');
+    }
+  }
+
   private async createDetails(
     tx: Prisma.TransactionClient,
     companyId: number,
@@ -432,8 +480,8 @@ export class RevolvingFundReplenishmentService {
       const amount = line.amount ?? line.disburseAmount ?? 0;
       const vatAmount = line.vatAmount ?? 0;
       const ewtAmount = line.ewtAmount ?? 0;
-      const netAmount = line.netAmount ?? amount - ewtAmount;
-      const disburseAmount = line.disburseAmount ?? amount;
+      const netAmount = line.netAmount ?? amount - vatAmount;
+      const disburseAmount = line.disburseAmount ?? amount - ewtAmount;
 
       let detailPartyId: bigint | null = null;
       if (line.partyId) {
@@ -473,6 +521,171 @@ export class RevolvingFundReplenishmentService {
         },
       });
     }
+  }
+
+  private async validateRevolvingFundSourceDetails(
+    tx: Prisma.TransactionClient,
+    input: {
+      branchUnitId: number | null;
+      companyId: number;
+      currencyCode: string;
+      currentTargetId?: bigint;
+      details?: RevolvingFundReplenishmentDetailDto[];
+      partyCode: string;
+      partyId?: bigint | null;
+    },
+  ) {
+    const allocations = this.getRevolvingFundSourceDetailAmounts(input.details);
+    if (allocations.length === 0) {
+      return;
+    }
+
+    const rfNos = allocations.map((allocation) => allocation.transactionNo);
+    const records = await tx.revolvingFund.findMany({
+      where: { companyId: input.companyId, deletedAt: null, transactionNo: { in: rfNos } },
+      select: {
+        branchUnitId: true,
+        currencyCode: true,
+        details: { select: { amount: true, disburseAmount: true, grossAmount: true } },
+        id: true,
+        partyCodeSnapshot: true,
+        partyId: true,
+        status: true,
+        transactionNo: true,
+      },
+    });
+
+    for (const record of records) {
+      await this.lockAllocation(tx, RevolvingFundSourceAllocationLockNamespace, record.id);
+    }
+
+    const recordByNo = new Map(records.map((record) => [record.transactionNo, record] as const));
+    const consumedAmounts = await this.getRevolvingFundReplenishmentConsumedAmounts(
+      tx,
+      input.companyId,
+      records.map((record) => ({ transactionNo: record.transactionNo })),
+      input.currentTargetId,
+    );
+
+    for (const allocation of allocations) {
+      if (!input.partyId && !input.partyCode) {
+        throw new BadRequestException('Party is required when copying from RF.');
+      }
+
+      const record = recordByNo.get(allocation.transactionNo);
+      if (!record) {
+        throw new BadRequestException(`RF ${allocation.transactionNo} was not found.`);
+      }
+      if (input.branchUnitId && record.branchUnitId !== input.branchUnitId) {
+        throw new BadRequestException(`RF ${allocation.transactionNo} belongs to a different branch.`);
+      }
+      if (input.partyId && record.partyId !== input.partyId) {
+        throw new BadRequestException(`RF ${allocation.transactionNo} belongs to a different party.`);
+      }
+      if (!input.partyId && input.partyCode && record.partyCodeSnapshot.trim().toLowerCase() !== input.partyCode.trim().toLowerCase()) {
+        throw new BadRequestException(`RF ${allocation.transactionNo} belongs to a different party.`);
+      }
+      if (record.currencyCode.trim().toUpperCase() !== input.currencyCode.trim().toUpperCase()) {
+        throw new BadRequestException(`RF ${allocation.transactionNo} uses ${record.currencyCode}, not ${input.currencyCode}.`);
+      }
+
+      const sourceGrossAmount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.grossAmount || detail.amount || 0), 0));
+      const sourceDisburseAmount = roundMoney(
+        record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0), 0),
+      );
+      const consumed = consumedAmounts.get(`RF:${allocation.transactionNo}`) ?? { grossAmount: 0, disburseAmount: 0 };
+      const availableGrossAmount = roundMoney(sourceGrossAmount - consumed.grossAmount);
+      const availableAmount = roundMoney(sourceDisburseAmount - consumed.disburseAmount);
+
+      if (allocation.grossAmount > availableGrossAmount) {
+        throw new BadRequestException(`RF ${allocation.transactionNo} only has ${availableGrossAmount.toFixed(2)} gross amount remaining.`);
+      }
+      if (allocation.disburseAmount > availableAmount) {
+        throw new BadRequestException(`RF ${allocation.transactionNo} only has ${availableAmount.toFixed(2)} disburse amount remaining.`);
+      }
+      if (record.status !== RevolvingFundStatus.POSTED) {
+        throw new BadRequestException(`RF ${allocation.transactionNo} is not available for replenishment copying.`);
+      }
+    }
+  }
+
+  private getRevolvingFundSourceDetailAmounts(details: RevolvingFundReplenishmentDetailDto[] = []) {
+    const amountsByReference = new Map<string, { disburseAmount: number; grossAmount: number; transactionNo: string }>();
+    for (const detail of details) {
+      const reference = cleanOptional(detail.revolvingFundNo ?? detail.voucherNo);
+      if (!reference || !reference.toUpperCase().startsWith('RF:')) {
+        continue;
+      }
+
+      const transactionNo = reference.slice(3).trim();
+      if (!transactionNo) {
+        continue;
+      }
+
+      const key = `RF:${transactionNo}`;
+      const current = amountsByReference.get(key) ?? { disburseAmount: 0, grossAmount: 0, transactionNo };
+      amountsByReference.set(key, {
+        ...current,
+        grossAmount: roundMoney(current.grossAmount + Number(detail.amount || 0)),
+        disburseAmount: roundMoney(current.disburseAmount + Number(detail.disburseAmount || detail.amount || 0)),
+      });
+    }
+
+    return [...amountsByReference.values()];
+  }
+
+  private async getRevolvingFundReplenishmentConsumedAmounts(
+    tx: PrismaWriteClient,
+    companyId: number,
+    sources: Array<{ transactionNo: string }>,
+    currentTargetId?: bigint,
+  ) {
+    const consumed = new Map<string, { disburseAmount: number; grossAmount: number }>();
+    if (sources.length === 0) {
+      return consumed;
+    }
+
+    const sourceKeyByReference = new Map<string, string>();
+    for (const source of sources) {
+      sourceKeyByReference.set(formatRevolvingFundReference(source.transactionNo), `RF:${source.transactionNo}`);
+      sourceKeyByReference.set(source.transactionNo, `RF:${source.transactionNo}`);
+    }
+
+    const details = await tx.revolvingFundReplenishmentDetail.findMany({
+      where: {
+        companyId,
+        revolvingFundNo: { in: [...sourceKeyByReference.keys()] },
+        replenishment: {
+          deletedAt: null,
+          status: { in: ActiveRevolvingFundReplenishmentStatuses },
+          ...(currentTargetId ? { id: { not: currentTargetId } } : {}),
+        },
+      },
+      select: { amount: true, disburseAmount: true, revolvingFundNo: true },
+    });
+
+    for (const detail of details) {
+      const reference = cleanOptional(detail.revolvingFundNo);
+      if (!reference) {
+        continue;
+      }
+      const sourceKey = sourceKeyByReference.get(reference);
+      if (!sourceKey) {
+        continue;
+      }
+      const current = consumed.get(sourceKey) ?? { grossAmount: 0, disburseAmount: 0 };
+      consumed.set(sourceKey, {
+        grossAmount: roundMoney(current.grossAmount + Number(detail.amount || 0)),
+        disburseAmount: roundMoney(current.disburseAmount + Number(detail.disburseAmount || detail.amount || 0)),
+      });
+    }
+
+    return consumed;
+  }
+
+  private async lockAllocation(tx: Prisma.TransactionClient, namespace: bigint, sourceId: bigint) {
+    const lockKey = (namespace << 32n) + sourceId;
+    await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(${lockKey})`);
   }
 
   private buildListWhere(

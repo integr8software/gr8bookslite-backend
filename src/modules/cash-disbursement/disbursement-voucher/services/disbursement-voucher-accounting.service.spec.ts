@@ -8,7 +8,7 @@ describe('DisbursementVoucherAccountingService', () => {
       service.validateSubmittedPayload({
         currencyCode: 'PHP',
         exchangeRate: 1,
-        voucherAmount: 1000,
+        voucherAmount: 990,
         details: [
           {
             id: 'expense-1',
@@ -48,7 +48,7 @@ describe('DisbursementVoucherAccountingService', () => {
       service.validateSubmittedPayload({
         currencyCode: 'PHP',
         exchangeRate: 1,
-        voucherAmount: 1000,
+        voucherAmount: 990,
         details: [
           {
             lineNumber: 1,
@@ -71,6 +71,29 @@ describe('DisbursementVoucherAccountingService', () => {
             accountTitle: 'Cash on Hand',
             credit: 990,
             disburseAmount: 990,
+          },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
+  it('uses disburse amount as the voucher amount basis for partial APV settlement', () => {
+    expect(() =>
+      service.validateSubmittedPayload({
+        currencyCode: 'PHP',
+        exchangeRate: 1,
+        voucherAmount: 2000,
+        details: [
+          {
+            id: 'apv-expense-1',
+            lineNumber: 1,
+            accountCode: '6001',
+            accountTitle: 'Professional Fees',
+            debit: 3000,
+            grossAmount: 3000,
+            netAmount: 3000,
+            disburseAmount: 2000,
+            refId: '1',
           },
         ],
       }),

@@ -3,11 +3,13 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { DisbursementVoucherController } from './disbursement-voucher.controller';
 import { DisbursementVoucherService } from './disbursement-voucher.service';
 import type { GetDisbursementVoucherListQueryDto } from './dto/get-disbursement-voucher-list-query.dto';
+import type { GetChartAccountListQueryDto } from '../../maintenance/chart-of-accounts/dto/get-chart-account-list-query.dto';
 
 describe('DisbursementVoucherController', () => {
   const service = {
     suggestTransactionNumber: jest.fn(),
     findAll: jest.fn(),
+    findAccountTitleOptions: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
@@ -31,6 +33,17 @@ describe('DisbursementVoucherController', () => {
 
     await expect(controller.suggestTransactionNumber(user, query)).resolves.toBe(response);
     expect(service.suggestTransactionNumber).toHaveBeenCalledWith(user, 3);
+  });
+
+  it('delegates account title option lookups to the service', async () => {
+    const query = { search: 'advance' } as GetChartAccountListQueryDto;
+    const response = {
+      accounts: [{ id: '20', accountCode: '1010103004', accountTitle: 'Advances to Employees' }],
+    };
+    service.findAccountTitleOptions.mockResolvedValue(response);
+
+    await expect(controller.findAccountTitleOptions(user, query)).resolves.toBe(response);
+    expect(service.findAccountTitleOptions).toHaveBeenCalledWith(user, query);
   });
 
   it('delegates the complete disbursement-voucher workflow with realistic data', async () => {

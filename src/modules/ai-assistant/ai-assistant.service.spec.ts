@@ -59,7 +59,7 @@ describe('AiAssistantService', () => {
   });
 
   it('lists modules for a requested business area without repeating the area heading', async () => {
-    const cashDisbursementModuleCodes = ['CV', 'DV', 'CA', 'CAME', 'PCV', 'PCF', 'PCR', 'RF', 'RFR', 'RFP', 'ATS', 'RT'];
+    const cashDisbursementModuleCodes = ['CV', 'DV', 'CA', 'CAME', 'PCV', 'PCR', 'RF', 'RFR', 'RFP', 'ATS', 'RT'];
     const response = await createService().chat(
       {
         ...user,
@@ -78,9 +78,7 @@ describe('AiAssistantService', () => {
         '• Cash Voucher',
         '• Disbursement Voucher',
         '• Cash Advance',
-        '• Cash Advance Multiple Entry',
         '• Petty Cash Voucher',
-        '• Petty Cash Fund',
         '• Petty Cash Replenishment',
         '• Revolving Fund',
         '• Revolving Fund Replenishment',

@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma, ServiceAccountSetupMode, ServiceMaintenanceType } from '@prisma/client';
-import { cleanOptional, normalizeIdentityValue } from '../../../../common/utils/string-normalization.util';
+import { cleanOptional } from '../../../../common/utils/string-normalization.util';
 import { CreateServiceMaintenanceDto } from '../dto/create-service-maintenance.dto';
 import { GetServiceMaintenanceListQueryDto } from '../dto/get-service-maintenance-list-query.dto';
 import { UpdateServiceMaintenanceDto } from '../dto/update-service-maintenance.dto';

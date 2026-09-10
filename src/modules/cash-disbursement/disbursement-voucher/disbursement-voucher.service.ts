@@ -20,8 +20,18 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { resolveAuditUserNames } from '../../../common/utils/audit-user.util';
 import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
+import { toJsonInput } from '../../../common/utils/prisma-json.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import {
+  AccountsPayableVoucherCopySourceLabel,
+  AccountsPayableVoucherCopySourceService,
+} from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
+import { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
+import { AdvanceToSupplierCopySourceService } from '../advances-to-suppliers/copy-from/advance-to-supplier-copy-source.service';
+import { CashAdvanceCopySourceService } from '../cash-advance/copy-from/cash-advance-copy-source.service';
+import { PettyCashReplenishmentCopySourceService } from '../petty-cash-replenishment/copy-from/petty-cash-replenishment-copy-source.service';
+import { RevolvingFundReplenishmentCopySourceService } from '../revolving-fund-replenishment/copy-from/revolving-fund-replenishment-copy-source.service';
 import {
   resolveTransactionNumberForCompanyBranch,
   resolveTransactionNumberScopeForCompanyBranch,
@@ -30,15 +40,17 @@ import {
 import { DisbursementVoucherDetailDto } from './dto/disbursement-voucher-detail.dto';
 import { CreateDisbursementVoucherDto } from './dto/create-disbursement-voucher.dto';
 import { GetDisbursementVoucherListQueryDto } from './dto/get-disbursement-voucher-list-query.dto';
+import { GetChartAccountListQueryDto } from '../../maintenance/chart-of-accounts/dto/get-chart-account-list-query.dto';
 import { JournalEntryDto } from './dto/journal-entry.dto';
 import { UpdateDisbursementVoucherDto } from './dto/update-disbursement-voucher.dto';
 import { UpdateDisbursementVoucherStatusDto } from './dto/update-disbursement-voucher-status.dto';
 import { mapDisbursementVoucher } from './mappers/disbursement-voucher.mapper';
 import { DisbursementVoucherInclude } from './prisma/disbursement-voucher.include';
-import { DisbursementVoucherAccountingService, DisbursementVoucherReferenceType } from './services/disbursement-voucher-accounting.service';
+import { DisbursementVoucherAccountingService, DisbursementVoucherReferenceType, isSourceDetailRow } from './services/disbursement-voucher-accounting.service';
 export const DisbursementVoucherModuleCode = 'DV';
 import type { DisbursementVoucherJournalEntry, DisbursementVoucherWithDetails } from './types/disbursement-voucher-with-details.type';
 import { roundCurrency } from './utils/disbursement-voucher-totals.util';
+import { findCashDisbursementAccountTitleOptions } from '../shared/cash-disbursement-account-title-options.util';
 
 const JournalEntryNumberAdvisoryLockNamespace = 7082;
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
@@ -71,6 +83,12 @@ export class DisbursementVoucherService {
     private readonly prisma: PrismaService,
     private readonly companyCurrencyService: CompanyCurrencyService,
     private readonly accountingService: DisbursementVoucherAccountingService,
+    private readonly accountsPayableVoucherCopySourceService: AccountsPayableVoucherCopySourceService,
+    private readonly advanceToSupplierCopySourceService: AdvanceToSupplierCopySourceService,
+    private readonly cashAdvanceCopySourceService: CashAdvanceCopySourceService,
+    private readonly journalVoucherCopySourceService: JournalVoucherCopySourceService,
+    private readonly pettyCashReplenishmentCopySourceService: PettyCashReplenishmentCopySourceService,
+    private readonly revolvingFundReplenishmentCopySourceService: RevolvingFundReplenishmentCopySourceService,
   ) {}
 
   async findAll(user: AuthUser, query: GetDisbursementVoucherListQueryDto) {
@@ -118,6 +136,20 @@ export class DisbursementVoucherService {
     };
   }
 
+  async findAccountTitleOptions(user: AuthUser, query: GetChartAccountListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    this.ensureCan(user, companyId, PermissionAction.VIEW);
+
+    return {
+      accounts: await findCashDisbursementAccountTitleOptions({
+        companyId,
+        prisma: this.prisma,
+        query,
+      }),
+    };
+  }
+
   async findOne(user: AuthUser, id: string, requestedBranchUnitId?: number) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
@@ -161,27 +193,87 @@ export class DisbursementVoucherService {
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
     const targetStatus = dto.status || DisbursementVoucherStatus.DRAFT;
+    const details = this.normalizeAccountsPayableVoucherCopiedDetails(dto.details ?? [], normalized.amount, dto.referenceModule, dto.voucherReferenceNo);
+    const effectiveDto = { ...dto, details };
 
     if (this.requiresSubmissionValidation(targetStatus)) {
-      this.validateSubmittedHeader(dto);
+      this.validateSubmittedHeader(effectiveDto);
       this.accountingService.validateSubmittedPayload({
         currencyCode: normalized.currencyCode,
-        details: dto.details ?? [],
+        details,
         exchangeRate: normalized.exchangeRate,
-        journalEntries: dto.journalEntries,
+        journalEntries: effectiveDto.journalEntries,
         voucherAmount: normalized.amount,
       });
     }
 
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveVoucherReferences(tx, companyId, dto, {
+        const references = await this.resolveVoucherReferences(tx, companyId, effectiveDto, {
           requireDetailAccounts: this.requiresSubmissionValidation(targetStatus),
         });
         const transactionNo = await this.resolveTransactionNumberForCreate(tx, {
           branchUnitId,
           companyId,
-          requestedTransactionNo: dto.voucherNo || dto.transactionNo,
+          requestedTransactionNo: effectiveDto.voucherNo || effectiveDto.transactionNo,
+        });
+        await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'disbursement-voucher',
+        });
+        await this.advanceToSupplierCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'disbursement-voucher',
+        });
+        await this.cashAdvanceCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'disbursement-voucher',
+        });
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          target: 'disbursement-voucher',
+        });
+        await this.pettyCashReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'disbursement-voucher',
+        });
+        await this.revolvingFundReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'disbursement-voucher',
         });
 
         const created = await tx.disbursementVoucher.create({
@@ -193,23 +285,23 @@ export class DisbursementVoucherService {
             voucherNo: transactionNo,
             voucherDate: normalized.voucherDate,
             paymentDueDate: normalized.paymentDueDate,
-            referenceNo: cleanOptional(dto.referenceNo),
-            referenceModule: cleanOptional(dto.referenceModule),
-            voucherReferenceNo: cleanOptional(dto.voucherReferenceNo),
-            invoiceReferenceNo: cleanOptional(dto.invoiceReferenceNo),
-            paymentMethod: cleanOptional(dto.paymentMethod) || '',
-            disbursementType: cleanOptional(dto.disbursementType) || 'Vendor Payment',
-            paymentDetails: toJsonInput(dto.paymentDetails),
-            attachments: toJsonInput(dto.attachments),
-            partyCodeSnapshot: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
-            partyNameSnapshot: references.party ? this.getPartyName(references.party, dto.partyName) : dto.partyName?.trim() || '',
-            projectCode: cleanOptional(dto.projectCode) ?? cleanOptional(dto.costCenter),
-            projectName: cleanOptional(dto.projectName),
-            preparedBy: cleanOptional(dto.preparedBy),
+            referenceNo: cleanOptional(effectiveDto.referenceNo),
+            referenceModule: cleanOptional(effectiveDto.referenceModule),
+            voucherReferenceNo: cleanOptional(effectiveDto.voucherReferenceNo),
+            invoiceReferenceNo: cleanOptional(effectiveDto.invoiceReferenceNo),
+            paymentMethod: cleanOptional(effectiveDto.paymentMethod) || '',
+            disbursementType: cleanOptional(effectiveDto.disbursementType) || 'Vendor Payment',
+            paymentDetails: toJsonInput(effectiveDto.paymentDetails),
+            attachments: toJsonInput(effectiveDto.attachments),
+            partyCodeSnapshot: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || '',
+            partyNameSnapshot: references.party ? this.getPartyName(references.party, effectiveDto.partyName) : effectiveDto.partyName?.trim() || '',
+            projectCode: cleanOptional(effectiveDto.projectCode) ?? cleanOptional(effectiveDto.costCenter),
+            projectName: cleanOptional(effectiveDto.projectName),
+            preparedBy: cleanOptional(effectiveDto.preparedBy),
             currencyCode: normalized.currencyCode,
             exchangeRate: new Prisma.Decimal(String(normalized.exchangeRate)),
             amount: new Prisma.Decimal(String(normalized.amount)),
-            remarks: cleanOptional(dto.remarks),
+            remarks: cleanOptional(effectiveDto.remarks),
             status: targetStatus,
             createdByUserId: user.id ? Number(user.id) : null,
           },
@@ -224,7 +316,7 @@ export class DisbursementVoucherService {
           branchUnitId,
           normalized.currencyCode,
           normalized.exchangeRate,
-          cleanOptional(dto.remarks),
+          cleanOptional(effectiveDto.remarks),
           references.journalEntries,
         );
 
@@ -271,17 +363,25 @@ export class DisbursementVoucherService {
       details: dto.details ?? [],
     });
     const targetStatus = dto.status || current.status;
+    const referenceModule = dto.referenceModule ?? current.referenceModule;
+    const details = this.normalizeAccountsPayableVoucherCopiedDetails(
+      dto.details ?? [],
+      normalized.amount,
+      referenceModule,
+      dto.voucherReferenceNo ?? current.voucherReferenceNo,
+    );
+    const effectiveDto = { ...dto, details };
 
     if (this.requiresSubmissionValidation(targetStatus)) {
       this.validateSubmittedHeader({
-        ...dto,
-        partyCode: dto.partyCode ?? current.partyCodeSnapshot,
-        partyName: dto.partyName ?? current.partyNameSnapshot,
+        ...effectiveDto,
+        partyCode: effectiveDto.partyCode ?? current.partyCodeSnapshot,
+        partyName: effectiveDto.partyName ?? current.partyNameSnapshot,
       });
       this.accountingService.validateSubmittedPayload({
         currencyCode: normalized.currencyCode,
         details:
-          dto.details ??
+          effectiveDto.details ??
           current.details.map((detail, index) => ({
             lineNumber: detail.lineNumber || index + 1,
             accountId: detail.accountId?.toString(),
@@ -293,14 +393,14 @@ export class DisbursementVoucherService {
             disburseAmount: Number(detail.disburseAmount),
           })),
         exchangeRate: normalized.exchangeRate,
-        journalEntries: dto.journalEntries,
+        journalEntries: effectiveDto.journalEntries,
         voucherAmount: normalized.amount,
       });
     }
 
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveVoucherReferences(tx, companyId, dto, {
+        const references = await this.resolveVoucherReferences(tx, companyId, effectiveDto, {
           requireDetailAccounts: this.requiresSubmissionValidation(targetStatus),
         });
         const transactionNo = await this.resolveTransactionNumberForUpdate(tx, {
@@ -308,7 +408,71 @@ export class DisbursementVoucherService {
           companyId,
           currentTransactionNo: current.voucherNo,
           excludedVoucherId: voucherId,
-          requestedTransactionNo: dto.voucherNo || dto.transactionNo,
+          requestedTransactionNo: effectiveDto.voucherNo || effectiveDto.transactionNo,
+        });
+        await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'disbursement-voucher',
+        });
+        await this.advanceToSupplierCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'disbursement-voucher',
+        });
+        await this.cashAdvanceCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'disbursement-voucher',
+        });
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currentTargetId: voucherId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          target: 'disbursement-voucher',
+        });
+        await this.pettyCashReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'disbursement-voucher',
+        });
+        await this.revolvingFundReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'disbursement-voucher',
         });
 
         await tx.disbursementVoucher.update({
@@ -408,11 +572,7 @@ export class DisbursementVoucherService {
       };
     }
 
-    if (
-      targetStatus === DisbursementVoucherStatus.FOR_APPROVAL ||
-      targetStatus === DisbursementVoucherStatus.APPROVED ||
-      targetStatus === DisbursementVoucherStatus.POSTED
-    ) {
+    if (targetStatus === DisbursementVoucherStatus.FOR_APPROVAL || targetStatus === DisbursementVoucherStatus.POSTED) {
       this.validateSubmittedHeader({
         partyCode: current.partyCodeSnapshot,
         partyName: current.partyNameSnapshot,
@@ -431,10 +591,9 @@ export class DisbursementVoucherService {
       updatedByUserId: userId,
     };
 
-    if (targetStatus === DisbursementVoucherStatus.APPROVED) {
+    if (targetStatus === DisbursementVoucherStatus.POSTED) {
       auditData.approvedByUserId = userId;
       auditData.approvedAt = now;
-    } else if (targetStatus === DisbursementVoucherStatus.POSTED || targetStatus === DisbursementVoucherStatus.CLOSED) {
       auditData.postedByUserId = userId;
       auditData.postedAt = now;
     } else if (targetStatus === DisbursementVoucherStatus.DISAPPROVED) {
@@ -597,7 +756,7 @@ export class DisbursementVoucherService {
       totalVouchers,
       draftVouchers: countsMap.get(DisbursementVoucherStatus.DRAFT) ?? 0,
       forApprovalVouchers: countsMap.get(DisbursementVoucherStatus.FOR_APPROVAL) ?? 0,
-      postedVouchers: (countsMap.get(DisbursementVoucherStatus.POSTED) ?? 0) + (countsMap.get(DisbursementVoucherStatus.CLOSED) ?? 0),
+      postedVouchers: countsMap.get(DisbursementVoucherStatus.POSTED) ?? 0,
       disapprovedVouchers: countsMap.get(DisbursementVoucherStatus.DISAPPROVED) ?? 0,
       cancelledVouchers: countsMap.get(DisbursementVoucherStatus.CANCELLED) ?? 0,
     };
@@ -812,7 +971,7 @@ export class DisbursementVoucherService {
 
     let amount = Number(dto.amount || 0);
     if (!amount && dto.details && dto.details.length > 0) {
-      amount = dto.details.reduce((sum, d) => sum + Number(d.grossAmount || d.debit || d.disburseAmount || 0), 0);
+      amount = dto.details.reduce((sum, d) => sum + Number(d.disburseAmount || d.debit || d.grossAmount || 0), 0);
     }
 
     return {
@@ -822,6 +981,75 @@ export class DisbursementVoucherService {
       paymentDueDate,
       voucherDate,
     };
+  }
+
+  private normalizeAccountsPayableVoucherCopiedDetails(
+    details: DisbursementVoucherDetailDto[],
+    voucherAmount: number,
+    referenceModule?: string | null,
+    voucherReferenceNo?: string | null,
+  ): DisbursementVoucherDetailDto[] {
+    if (!this.isAccountsPayableVoucherCopyPayload(details, referenceModule, voucherReferenceNo) || voucherAmount <= 0 || details.length === 0) {
+      return details;
+    }
+
+    const sourceDetails = details.filter((detail) => this.isAccountsPayableVoucherCopiedSourceDetail(detail));
+    const sourceDisburseAmount = roundCurrency(
+      sourceDetails.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.debit || detail.grossAmount || 0), 0),
+    );
+
+    if (sourceDisburseAmount <= 0 || sourceDisburseAmount <= voucherAmount || Math.abs(sourceDisburseAmount - voucherAmount) <= 0.01) {
+      return details;
+    }
+
+    const ratio = voucherAmount / sourceDisburseAmount;
+
+    return details.map((detail) => {
+      if (!cleanOptional(detail.refId)) {
+        return detail;
+      }
+
+      return {
+        ...detail,
+        credit: this.scaleCopiedAmount(detail.credit, ratio),
+        debit: this.scaleCopiedAmount(detail.debit, ratio),
+        disburseAmount: this.scaleCopiedAmount(detail.disburseAmount, ratio),
+        ewtAmount: this.scaleCopiedAmount(detail.ewtAmount, ratio),
+        grossAmount: this.scaleCopiedAmount(detail.grossAmount, ratio),
+        netAmount: this.scaleCopiedAmount(detail.netAmount, ratio),
+        vatAmount: this.scaleCopiedAmount(detail.vatAmount, ratio),
+      };
+    });
+  }
+
+  private isAccountsPayableVoucherCopiedSourceDetail(detail: DisbursementVoucherDetailDto) {
+    return Boolean(cleanOptional(detail.refId)) && isSourceDetailRow(detail);
+  }
+
+  private isAccountsPayableVoucherCopyPayload(details: DisbursementVoucherDetailDto[], referenceModule?: string | null, voucherReferenceNo?: string | null) {
+    const normalizedReferenceModule = cleanOptional(referenceModule)?.toLowerCase();
+    if (normalizedReferenceModule === AccountsPayableVoucherCopySourceLabel.toLowerCase()) {
+      return true;
+    }
+
+    const normalizedVoucherReferenceNo = cleanOptional(voucherReferenceNo)?.toUpperCase() ?? '';
+    if (normalizedVoucherReferenceNo.includes('APV-')) {
+      return true;
+    }
+
+    return details.some((detail) => {
+      const refId = cleanOptional(detail.refId);
+
+      return Boolean(refId && /^\d+$/.test(refId) && this.isAccountsPayableVoucherCopiedSourceDetail(detail));
+    });
+  }
+
+  private scaleCopiedAmount(value: number | undefined, ratio: number) {
+    if (value === undefined) {
+      return value;
+    }
+
+    return roundCurrency(Number(value || 0) * ratio);
   }
 
   private async resolveVoucherReferences(
@@ -1104,12 +1332,10 @@ export class DisbursementVoucherService {
       .toUpperCase()
       .replace(/[\s-]+/g, '_');
     if (normalized === 'FOR_APPROVAL' || normalized === 'FORAPPROVAL') return DisbursementVoucherStatus.FOR_APPROVAL;
-    if (normalized === 'APPROVED') return DisbursementVoucherStatus.APPROVED;
+    if (normalized === 'APPROVED') return DisbursementVoucherStatus.POSTED;
     if (normalized === 'POSTED') return DisbursementVoucherStatus.POSTED;
     if (normalized === 'DISAPPROVED') return DisbursementVoucherStatus.DISAPPROVED;
     if (normalized === 'CANCELLED' || normalized === 'CANCELED') return DisbursementVoucherStatus.CANCELLED;
-    if (normalized === 'CLOSED') return DisbursementVoucherStatus.CLOSED;
-
     return DisbursementVoucherStatus.DRAFT;
   }
 
@@ -1231,11 +1457,4 @@ export class DisbursementVoucherService {
       }
     }
   }
-}
-
-function toJsonInput(value: unknown): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput | undefined {
-  if (value === undefined) return undefined;
-  if (value === null) return Prisma.JsonNull;
-
-  return value;
 }

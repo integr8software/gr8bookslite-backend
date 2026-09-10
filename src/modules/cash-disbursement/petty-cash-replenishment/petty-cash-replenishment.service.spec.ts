@@ -6,6 +6,7 @@ import { PettyCashReplenishmentService } from './petty-cash-replenishment.servic
 
 type PettyCashReplenishmentServiceInternals = {
   isSubmittedStatus: (status: PettyCashReplenishmentStatus) => boolean;
+  assertUniquePettyCashVoucherNumbers: (details?: Array<{ pettyCashNo?: string; voucherNo?: string }>) => void;
   assertPettyCashReplenishmentReady: (record: {
     partyCodeSnapshot: string | null;
     partyNameSnapshot: string | null;
@@ -24,7 +25,7 @@ describe('PettyCashReplenishmentService', () => {
 
   it('treats only submitted statuses as requiring complete data', () => {
     expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.FOR_APPROVAL)).toBe(true);
-    expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.APPROVED)).toBe(true);
+    expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.POSTED)).toBe(true);
     expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.DRAFT)).toBe(false);
     expect(service.isSubmittedStatus(PettyCashReplenishmentStatus.CANCELLED)).toBe(false);
@@ -52,5 +53,13 @@ describe('PettyCashReplenishmentService', () => {
         details: [{ supplierNameSnapshot: '', amount: new Prisma.Decimal('50') }],
       }),
     ).toThrow(BadRequestException);
+  });
+
+  it('ignores non-PCV references but requires unique Petty Cash Voucher numbers', () => {
+    expect(() => service.assertUniquePettyCashVoucherNumbers([{ pettyCashNo: 'RF:RF-000001' }, { voucherNo: 'rf:RF-000001' }])).not.toThrow();
+
+    expect(() => service.assertUniquePettyCashVoucherNumbers([{ pettyCashNo: 'PCV:PCV-000001' }, { voucherNo: 'pcv:PCV-000001' }])).toThrow(
+      'Petty Cash Voucher Numbers must be unique.',
+    );
   });
 });

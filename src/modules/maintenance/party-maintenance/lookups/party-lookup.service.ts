@@ -225,6 +225,12 @@ export class PartyLookupService {
       },
       termId: party.termId?.toString() ?? '',
       termName: party.term?.name ?? '',
+      defaultResponsibilityCenterId: party.defaultResponsibilityCenterId?.toString() ?? '',
+      defaultResponsibilityCenterName: party.defaultResponsibilityCenter?.name ?? '',
+      defaultPaymentTypeId: party.defaultPaymentTypeId?.toString() ?? '',
+      defaultPaymentTypeName: party.defaultPaymentType?.name ?? '',
+      defaultBank: party.defaultBank ?? '',
+      defaultBankAccountNo: party.defaultBankAccountNo ?? '',
       tin: party.tin ?? '',
       atcCode: party.atcCode ?? '',
       defaultPurchaseInputVatTaxSourceKey: party.defaultPurchaseInputVatTaxSourceKey ?? '',
@@ -244,7 +250,7 @@ export class PartyLookupService {
       where: {
         companyId,
         deletedAt: null,
-        status: { in: [CashAdvanceStatus.FOR_APPROVAL, CashAdvanceStatus.APPROVED, CashAdvanceStatus.POSTED] },
+        status: { in: [CashAdvanceStatus.FOR_APPROVAL, CashAdvanceStatus.POSTED, CashAdvanceStatus.POSTED] },
       },
       _sum: { amount: true },
     });
