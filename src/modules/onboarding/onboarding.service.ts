@@ -1,6 +1,16 @@
 import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { BillingMode, BillingProvider, CompanyUnitType, MembershipRole, MembershipStatus, Prisma, SubscriptionPlanScope, SubscriptionPlanStatus, SubscriptionStatus } from '@prisma/client';
+import {
+  BillingMode,
+  BillingProvider,
+  CompanyUnitType,
+  MembershipRole,
+  MembershipStatus,
+  Prisma,
+  SubscriptionPlanScope,
+  SubscriptionPlanStatus,
+  SubscriptionStatus,
+} from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import type { AuthUser } from '../../common/interfaces/auth-user.interface';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
@@ -14,7 +24,8 @@ import { seedCompanyTermsMaintenanceDefaults } from '../maintenance/terms-mainte
 import { seedCompanyUnitOfMeasurementDefaults } from '../maintenance/unit-of-measurement/seed/unit-of-measurement.seed';
 import { seedCompanyPaymentTypeMaintenanceDefaults } from '../maintenance/payment-type-maintenance/seed/payment-type-maintenance.seed';
 import { seedCompanyChartAccountDefaults } from '../maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
-import { seedCompanyDefaultAccountDefaults } from '../maintenance/default-account/seed/default-accounts.seed';
+import { seedCompanyCollectionTypes } from '../maintenance/collection-type/seed/collection-types.seed';
+import { seedCompanyDisbursementTypes } from '../maintenance/disbursement-type/seed/disbursement-types.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import { seedCompanyServicesMaintenanceDefaults } from '../maintenance/services-maintenance/seed/services-maintenance.seed';
 import { seedCompanyItemCategoryDefaults } from '../maintenance/item-category/seed/item-category.seed';
@@ -151,7 +162,7 @@ export class OnboardingService {
         ? {
             plan: draft.subscriptionPlan ? mapSubscriptionPlan(draft.subscriptionPlan) : null,
             billingCycle: draft.billingCycle,
-            billingMode: draft.paymentMethodReference === 'MANUAL' ? BillingMode.MANUAL : (draft.cardLast4 ? BillingMode.AUTO : null),
+            billingMode: draft.paymentMethodReference === 'MANUAL' ? BillingMode.MANUAL : draft.cardLast4 ? BillingMode.AUTO : null,
             cardholderName: draft.cardholderName,
             billingEmail: draft.billingEmail,
             billingAddress: draft.billingAddress,
@@ -591,7 +602,8 @@ export class OnboardingService {
       await seedCompanyPaymentTypeMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyChartAccountDefaults(tx, provisionedCompany.id);
       await seedCompanyServicesMaintenanceDefaults(tx, provisionedCompany.id);
-      await seedCompanyDefaultAccountDefaults(tx, provisionedCompany.id);
+      await seedCompanyDisbursementTypes(tx, provisionedCompany.id);
+      await seedCompanyCollectionTypes(tx, provisionedCompany.id);
       await seedCompanyItemCategoryDefaults(tx, provisionedCompany.id);
       await seedCompanyDiscountMaintenanceDefaults(tx, provisionedCompany.id);
       await seedCompanyResponsibilityCenterDefaults(tx, provisionedCompany.id);

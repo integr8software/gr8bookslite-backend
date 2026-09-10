@@ -44,7 +44,7 @@ export class GetCashVoucherListQueryDto {
   @IsOptional()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by Status (DRAFT, FOR_APPROVAL, APPROVED, POSTED, DISAPPROVED, CANCELLED, CLOSED)' })
+  @ApiPropertyOptional({ description: 'Filter by Status (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)' })
   @IsString()
   @IsOptional()
   status?: string;

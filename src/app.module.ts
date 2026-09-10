@@ -24,6 +24,7 @@ import { BranchUsersModule } from './modules/company/branch-users/branch-users.m
 import { FormSignatoriesModule } from './modules/maintenance/form-signatories/form-signatories.module';
 import { ChartOfAccountsModule } from './modules/maintenance/chart-of-accounts/chart-of-accounts.module';
 import { TermsMaintenanceModule } from './modules/maintenance/terms-maintenance/terms-maintenance.module';
+import { ProjectMaintenanceModule } from './modules/maintenance/project-maintenance/project-maintenance.module';
 import { ItemVariationsModule } from './modules/maintenance/item-variations/item-variations.module';
 import { ItemCategoryModule } from './modules/maintenance/item-category/item-category.module';
 import { UnitOfMeasurementModule } from './modules/maintenance/unit-of-measurement/unit-of-measurement.module';
@@ -31,7 +32,8 @@ import { PaymentTypeMaintenanceModule } from './modules/maintenance/payment-type
 import { DiscountMaintenanceModule } from './modules/maintenance/discount-maintenance/discount-maintenance.module';
 import { PartyMaintenanceModule } from './modules/maintenance/party-maintenance/party-maintenance.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
-import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
+import { CollectionTypeModule } from './modules/maintenance/collection-type/collection-type.module';
+import { DisbursementTypeModule } from './modules/maintenance/disbursement-type/disbursement-type.module';
 import { ServicesMaintenanceModule } from './modules/maintenance/services-maintenance/services-maintenance.module';
 import { ResponsibilityCenterModule } from './modules/maintenance/responsibility-center/responsibility-center.module';
 import { TaxModule } from './modules/tax/tax.module';
@@ -90,6 +92,7 @@ import { PurchasingModule } from './modules/purchasing/purchasing.module';
     FormSignatoriesModule,
     ChartOfAccountsModule,
     TermsMaintenanceModule,
+    ProjectMaintenanceModule,
     ItemVariationsModule,
     ItemCategoryModule,
     UnitOfMeasurementModule,
@@ -97,7 +100,8 @@ import { PurchasingModule } from './modules/purchasing/purchasing.module';
     DiscountMaintenanceModule,
     PartyMaintenanceModule,
     BankMasterfileModule,
-    DefaultAccountModule,
+    DisbursementTypeModule,
+    CollectionTypeModule,
     ServicesMaintenanceModule,
     ResponsibilityCenterModule,
     TaxModule,

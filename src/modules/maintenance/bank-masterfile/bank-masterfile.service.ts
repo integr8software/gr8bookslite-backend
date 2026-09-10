@@ -160,7 +160,6 @@ export class BankMasterfileService {
       const bankAccount = await this.prisma.$transaction(async (tx) => {
         const cashInBankAccount = await this.support.findCashInBankParentOrThrow(companyId, tx);
         const indicatedAccountCode = dto.accountCode?.trim();
-        const indicatedAccountName = dto.accountName?.trim();
 
         let accountCode: string;
         if (indicatedAccountCode) {

@@ -166,7 +166,7 @@ export class DisbursementVoucherRecordResponseDto {
   @ApiProperty({ description: 'Status', enum: DisbursementVoucherStatus, example: DisbursementVoucherStatus.DRAFT })
   status: DisbursementVoucherStatus;
 
-  @ApiProperty({ description: 'Details / Line items', type: [DisbursementVoucherDetailResponseDto] })
+  @ApiProperty({ description: 'Details / Line items', type: () => [DisbursementVoucherDetailResponseDto] })
   details: DisbursementVoucherDetailResponseDto[];
 
   @ApiPropertyOptional({ description: 'Created By User Name', example: 'System Administrator' })
@@ -217,17 +217,17 @@ export class DisbursementVoucherPaginationMetaDto {
 }
 
 export class DisbursementVoucherListResponseDto {
-  @ApiProperty({ description: 'List of Disbursement Vouchers', type: [DisbursementVoucherRecordResponseDto] })
+  @ApiProperty({ description: 'List of Disbursement Vouchers', type: () => [DisbursementVoucherRecordResponseDto] })
   data: DisbursementVoucherRecordResponseDto[];
 
-  @ApiProperty({ description: 'Pagination Metadata', type: DisbursementVoucherPaginationMetaDto })
+  @ApiProperty({ description: 'Pagination Metadata', type: () => DisbursementVoucherPaginationMetaDto })
   meta: DisbursementVoucherPaginationMetaDto;
 
-  @ApiPropertyOptional({ description: 'Voucher Status Statistics', type: DisbursementVoucherStatisticsDto })
+  @ApiPropertyOptional({ description: 'Voucher Status Statistics', type: () => DisbursementVoucherStatisticsDto })
   statistics?: DisbursementVoucherStatisticsDto;
 }
 
 export class DisbursementVoucherSingleResponseDto {
-  @ApiProperty({ description: 'Disbursement Voucher Record', type: DisbursementVoucherRecordResponseDto })
+  @ApiProperty({ description: 'Disbursement Voucher Record', type: () => DisbursementVoucherRecordResponseDto })
   data: DisbursementVoucherRecordResponseDto;
 }

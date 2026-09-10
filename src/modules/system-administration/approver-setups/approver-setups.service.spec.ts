@@ -35,10 +35,7 @@ describe('ApproverSetupsService', () => {
     validUntil: null,
     createdAt: new Date('2026-09-08T00:00:00.000Z'),
     updatedAt: new Date('2026-09-08T00:00:00.000Z'),
-    approvers: [
-      { user: { id: 10, name: 'Approver One', email: 'one@example.com' } },
-      { user: { id: 20, name: 'Approver Two', email: 'two@example.com' } },
-    ],
+    approvers: [{ user: { id: 10, name: 'Approver One', email: 'one@example.com' } }, { user: { id: 20, name: 'Approver Two', email: 'two@example.com' } }],
     ...overrides,
   });
 
@@ -57,9 +54,7 @@ describe('ApproverSetupsService', () => {
       const service = new ApproverSetupsService(prisma);
 
       await expect(service.create(user, dto)).rejects.toThrow(BadRequestException);
-      await expect(service.create(user, dto)).rejects.toThrow(
-        'Approver setup for module "APV" with type "Level-based" already exists.',
-      );
+      await expect(service.create(user, dto)).rejects.toThrow('Approver setup for module "APV" with type "Level-based" already exists.');
       expect(prisma.approverSetup.findFirst).toHaveBeenCalledWith({
         where: {
           companyId: 7,
@@ -178,9 +173,7 @@ describe('ApproverSetupsService', () => {
       const service = new ApproverSetupsService(prisma);
 
       await expect(service.create(user, dto)).rejects.toThrow(BadRequestException);
-      await expect(service.create(user, dto)).rejects.toThrow(
-        'Approver user ids do not belong to this company: 999',
-      );
+      await expect(service.create(user, dto)).rejects.toThrow('Approver user ids do not belong to this company: 999');
     });
 
     it('throws BadRequestException when temporary assignment type lacks a valid until date', async () => {
@@ -229,9 +222,7 @@ describe('ApproverSetupsService', () => {
       const service = new ApproverSetupsService(prisma);
 
       await expect(service.update(user, 'target-setup-id', dto)).rejects.toThrow(BadRequestException);
-      await expect(service.update(user, 'target-setup-id', dto)).rejects.toThrow(
-        'Approver setup for module "APV" with type "Level-based" already exists.',
-      );
+      await expect(service.update(user, 'target-setup-id', dto)).rejects.toThrow('Approver setup for module "APV" with type "Level-based" already exists.');
     });
 
     it('successfully updates approver setup and reconfigures approvers when valid', async () => {
@@ -296,9 +287,7 @@ describe('ApproverSetupsService', () => {
       const service = new ApproverSetupsService(prisma);
 
       await expect(service.update(user, 'missing-setup-id', dto)).rejects.toThrow(NotFoundException);
-      await expect(service.update(user, 'missing-setup-id', dto)).rejects.toThrow(
-        'Approver setup not found.',
-      );
+      await expect(service.update(user, 'missing-setup-id', dto)).rejects.toThrow('Approver setup not found.');
     });
   });
 

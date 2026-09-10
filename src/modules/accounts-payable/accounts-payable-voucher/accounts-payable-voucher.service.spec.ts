@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { AccountsPayableVoucherStatus, Prisma } from '@prisma/client';
 import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
 import { AccountsPayableVoucherService } from './accounts-payable-voucher.service';
 import { AccountsPayableVoucherAccountingService } from './services/accounts-payable-voucher-accounting.service';
 
@@ -16,15 +17,18 @@ describe('AccountsPayableVoucherService', () => {
     {} as PrismaService,
     {} as CompanyCurrencyService,
     {} as AccountsPayableVoucherAccountingService,
+    {} as JournalVoucherCopySourceService,
   ) as unknown as AccountsPayableVoucherServiceInternals;
 
   it('allows only APV lifecycle transitions supported by the workflow', () => {
     const allowedTransitions: Array<[AccountsPayableVoucherStatus, AccountsPayableVoucherStatus]> = [
-      [AccountsPayableVoucherStatus.DRAFT, AccountsPayableVoucherStatus.APPROVED],
+      [AccountsPayableVoucherStatus.DRAFT, AccountsPayableVoucherStatus.FOR_APPROVAL],
       [AccountsPayableVoucherStatus.DRAFT, AccountsPayableVoucherStatus.CANCELLED],
       [AccountsPayableVoucherStatus.DRAFT, AccountsPayableVoucherStatus.DISAPPROVED],
-      [AccountsPayableVoucherStatus.APPROVED, AccountsPayableVoucherStatus.DRAFT],
-      [AccountsPayableVoucherStatus.APPROVED, AccountsPayableVoucherStatus.CLOSED],
+      [AccountsPayableVoucherStatus.FOR_APPROVAL, AccountsPayableVoucherStatus.DRAFT],
+      [AccountsPayableVoucherStatus.FOR_APPROVAL, AccountsPayableVoucherStatus.POSTED],
+      [AccountsPayableVoucherStatus.POSTED, AccountsPayableVoucherStatus.FOR_APPROVAL],
+      [AccountsPayableVoucherStatus.POSTED, AccountsPayableVoucherStatus.CLOSED],
       [AccountsPayableVoucherStatus.CANCELLED, AccountsPayableVoucherStatus.DRAFT],
       [AccountsPayableVoucherStatus.DISAPPROVED, AccountsPayableVoucherStatus.DRAFT],
     ];
@@ -33,15 +37,16 @@ describe('AccountsPayableVoucherService', () => {
       expect(() => service.ensureStatusTransitionAllowed(currentStatus, targetStatus)).not.toThrow();
     }
 
-    expect(() => service.ensureStatusTransitionAllowed(AccountsPayableVoucherStatus.CLOSED, AccountsPayableVoucherStatus.DRAFT)).toThrow(BadRequestException);
-    expect(() => service.ensureStatusTransitionAllowed(AccountsPayableVoucherStatus.DISAPPROVED, AccountsPayableVoucherStatus.CLOSED)).toThrow(
+    expect(() => service.ensureStatusTransitionAllowed(AccountsPayableVoucherStatus.POSTED, AccountsPayableVoucherStatus.DRAFT)).toThrow(BadRequestException);
+    expect(() => service.ensureStatusTransitionAllowed(AccountsPayableVoucherStatus.DISAPPROVED, AccountsPayableVoucherStatus.POSTED)).toThrow(
       BadRequestException,
     );
   });
 
   it('maps APV statuses to journal entry statuses used by accounting', () => {
-    expect(service.getJournalEntryStatus(AccountsPayableVoucherStatus.APPROVED)).toBe('For Approval');
-    expect(service.getJournalEntryStatus(AccountsPayableVoucherStatus.CLOSED)).toBe('Posted');
+    expect(service.getJournalEntryStatus(AccountsPayableVoucherStatus.FOR_APPROVAL)).toBe('For Approval');
+    expect(service.getJournalEntryStatus(AccountsPayableVoucherStatus.POSTED)).toBe('Posted');
+    expect(service.getJournalEntryStatus(AccountsPayableVoucherStatus.CLOSED)).toBe('Closed');
     expect(service.getJournalEntryStatus(AccountsPayableVoucherStatus.DRAFT)).toBe('Draft');
     expect(service.getJournalEntryStatus(AccountsPayableVoucherStatus.DISAPPROVED)).toBe('Disapproved');
     expect(service.getJournalEntryStatus(AccountsPayableVoucherStatus.CANCELLED)).toBe('Cancelled');

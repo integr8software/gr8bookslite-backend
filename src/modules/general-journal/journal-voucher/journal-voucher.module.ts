@@ -7,6 +7,7 @@ import { ChartOfAccountsModule } from '../../maintenance/chart-of-accounts/chart
 import { PartyMaintenanceModule } from '../../maintenance/party-maintenance/party-maintenance.module';
 import { ResponsibilityCenterModule } from '../../maintenance/responsibility-center/responsibility-center.module';
 import { TransactionNumberSequencesModule } from '../../system-administration/transaction-number-sequences/transaction-number-sequences.module';
+import { JournalVoucherCopySourceService } from './copy-from/journal-voucher-copy-source.service';
 import { JournalVoucherController } from './journal-voucher.controller';
 import { JournalVoucherService } from './journal-voucher.service';
 import { JournalVoucherAccountingService } from './services/journal-voucher-accounting.service';
@@ -24,6 +25,7 @@ import { JournalVoucherLookupService } from './services/journal-voucher-lookup.s
     TransactionNumberSequencesModule,
   ],
   controllers: [JournalVoucherController],
-  providers: [JournalVoucherService, JournalVoucherAccountingService, JournalVoucherLookupService],
+  providers: [JournalVoucherService, JournalVoucherAccountingService, JournalVoucherLookupService, JournalVoucherCopySourceService],
+  exports: [JournalVoucherCopySourceService],
 })
 export class JournalVoucherModule {}

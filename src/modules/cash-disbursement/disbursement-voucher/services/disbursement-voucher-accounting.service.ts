@@ -37,7 +37,7 @@ export class DisbursementVoucherAccountingService {
     // the user-entered expense rows. Those rows are accounting counterparts,
     // not additional voucher detail amounts, so exclude them from this check.
     const detailTotals = getDisbursementVoucherDetailTotals(details.filter(isSourceDetailRow));
-    const expectedAmount = detailTotals.grossAmount > 0 ? detailTotals.grossAmount : detailTotals.disburseAmount;
+    const expectedAmount = detailTotals.disburseAmount > 0 ? detailTotals.disburseAmount : detailTotals.grossAmount;
 
     if (expectedAmount > 0 && !amountsMatch(expectedAmount, voucherAmount)) {
       throw new BadRequestException('Detail total amount must match voucher amount.');
@@ -174,7 +174,7 @@ export class DisbursementVoucherAccountingService {
   }
 }
 
-function isSourceDetailRow(detail: DisbursementVoucherDetailDto): boolean {
+export function isSourceDetailRow(detail: DisbursementVoucherDetailDto): boolean {
   const generatedId = detail.id?.toLowerCase() ?? '';
   const accountTitle = detail.accountTitle?.trim().toLowerCase() ?? '';
   const debit = Number(detail.debit ?? 0);

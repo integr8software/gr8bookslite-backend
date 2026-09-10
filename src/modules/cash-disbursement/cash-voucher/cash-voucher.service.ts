@@ -23,6 +23,15 @@ import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../c
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
+  AccountsPayableVoucherCopySourceLabel,
+  AccountsPayableVoucherCopySourceService,
+} from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
+import { JournalVoucherCopySourceService } from '../../general-journal/journal-voucher/copy-from/journal-voucher-copy-source.service';
+import { AdvanceToSupplierCopySourceService } from '../advances-to-suppliers/copy-from/advance-to-supplier-copy-source.service';
+import { CashAdvanceCopySourceService } from '../cash-advance/copy-from/cash-advance-copy-source.service';
+import { PettyCashReplenishmentCopySourceService } from '../petty-cash-replenishment/copy-from/petty-cash-replenishment-copy-source.service';
+import { RevolvingFundReplenishmentCopySourceService } from '../revolving-fund-replenishment/copy-from/revolving-fund-replenishment-copy-source.service';
+import {
   resolveTransactionNumberForCompanyBranch,
   resolveTransactionNumberScopeForCompanyBranch,
   suggestTransactionNumberForCompanyBranch,
@@ -30,15 +39,17 @@ import {
 import { CashVoucherDetailDto } from './dto/cash-voucher-detail.dto';
 import { CreateCashVoucherDto } from './dto/create-cash-voucher.dto';
 import { GetCashVoucherListQueryDto } from './dto/get-cash-voucher-list-query.dto';
+import { GetChartAccountListQueryDto } from '../../maintenance/chart-of-accounts/dto/get-chart-account-list-query.dto';
 import { JournalEntryDto } from './dto/journal-entry.dto';
 import { UpdateCashVoucherDto } from './dto/update-cash-voucher.dto';
 import { UpdateCashVoucherStatusDto } from './dto/update-cash-voucher-status.dto';
 import { mapCashVoucher } from './mappers/cash-voucher.mapper';
 import { CashVoucherInclude } from './prisma/cash-voucher.include';
-import { CashVoucherAccountingService, CashVoucherReferenceType } from './services/cash-voucher-accounting.service';
+import { CashVoucherAccountingService, CashVoucherReferenceType, isSourceDetailRow } from './services/cash-voucher-accounting.service';
 export const CashVoucherModuleCode = 'CV';
 import type { CashVoucherJournalEntry, CashVoucherWithDetails } from './types/cash-voucher-with-details.type';
 import { roundCurrency } from './utils/cash-voucher-totals.util';
+import { findCashDisbursementAccountTitleOptions } from '../shared/cash-disbursement-account-title-options.util';
 
 const JournalEntryNumberAdvisoryLockNamespace = 7082;
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
@@ -71,6 +82,12 @@ export class CashVoucherService {
     private readonly prisma: PrismaService,
     private readonly companyCurrencyService: CompanyCurrencyService,
     private readonly accountingService: CashVoucherAccountingService,
+    private readonly accountsPayableVoucherCopySourceService: AccountsPayableVoucherCopySourceService,
+    private readonly advanceToSupplierCopySourceService: AdvanceToSupplierCopySourceService,
+    private readonly cashAdvanceCopySourceService: CashAdvanceCopySourceService,
+    private readonly journalVoucherCopySourceService: JournalVoucherCopySourceService,
+    private readonly pettyCashReplenishmentCopySourceService: PettyCashReplenishmentCopySourceService,
+    private readonly revolvingFundReplenishmentCopySourceService: RevolvingFundReplenishmentCopySourceService,
   ) {}
 
   async findAll(user: AuthUser, query: GetCashVoucherListQueryDto) {
@@ -115,6 +132,20 @@ export class CashVoucherService {
       pagination,
       statistics,
       permissions,
+    };
+  }
+
+  async findAccountTitleOptions(user: AuthUser, query: GetChartAccountListQueryDto) {
+    const companyId = this.getActiveCompanyId(user);
+    await this.ensureCompanyAccess(user, companyId);
+    this.ensureCan(user, companyId, PermissionAction.VIEW);
+
+    return {
+      accounts: await findCashDisbursementAccountTitleOptions({
+        companyId,
+        prisma: this.prisma,
+        query,
+      }),
     };
   }
 
@@ -239,27 +270,87 @@ export class CashVoucherService {
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
     const targetStatus = dto.status || CashVoucherStatus.DRAFT;
+    const details = this.normalizeAccountsPayableVoucherCopiedDetails(dto.details ?? [], normalized.amount, dto.referenceModule, dto.voucherReferenceNo);
+    const effectiveDto = { ...dto, details };
 
     if (this.requiresSubmissionValidation(targetStatus)) {
-      this.validateSubmittedHeader(dto);
+      this.validateSubmittedHeader(effectiveDto);
       this.accountingService.validateSubmittedPayload({
         currencyCode: normalized.currencyCode,
-        details: dto.details ?? [],
+        details,
         exchangeRate: normalized.exchangeRate,
-        journalEntries: dto.journalEntries,
+        journalEntries: effectiveDto.journalEntries,
         voucherAmount: normalized.amount,
       });
     }
 
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveVoucherReferences(tx, companyId, dto, {
+        const references = await this.resolveVoucherReferences(tx, companyId, effectiveDto, {
           requireDetailAccounts: this.requiresSubmissionValidation(targetStatus),
         });
         const transactionNo = await this.resolveTransactionNumberForCreate(tx, {
           branchUnitId,
           companyId,
-          requestedTransactionNo: dto.voucherNo || dto.transactionNo,
+          requestedTransactionNo: effectiveDto.voucherNo || effectiveDto.transactionNo,
+        });
+        await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.advanceToSupplierCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.cashAdvanceCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          target: 'cash-voucher',
+        });
+        await this.pettyCashReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.revolvingFundReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
+          partyId: references.party?.id ?? null,
+          referenceModule: effectiveDto.referenceModule,
+          target: 'cash-voucher',
         });
 
         const created = await tx.cashVoucher.create({
@@ -271,21 +362,21 @@ export class CashVoucherService {
             voucherNo: transactionNo,
             voucherDate: normalized.voucherDate,
             paymentDueDate: normalized.paymentDueDate,
-            referenceNo: cleanOptional(dto.referenceNo),
-            referenceModule: cleanOptional(dto.referenceModule),
-            voucherReferenceNo: cleanOptional(dto.voucherReferenceNo),
-            invoiceReferenceNo: cleanOptional(dto.invoiceReferenceNo),
-            paymentMethod: cleanOptional(dto.paymentMethod) || 'Cash',
-            disbursementType: cleanOptional(dto.disbursementType) || 'Vendor Payment',
+            referenceNo: cleanOptional(effectiveDto.referenceNo),
+            referenceModule: cleanOptional(effectiveDto.referenceModule),
+            voucherReferenceNo: cleanOptional(effectiveDto.voucherReferenceNo),
+            invoiceReferenceNo: cleanOptional(effectiveDto.invoiceReferenceNo),
+            paymentMethod: cleanOptional(effectiveDto.paymentMethod) || 'Cash',
+            disbursementType: cleanOptional(effectiveDto.disbursementType) || 'Vendor Payment',
             partyCodeSnapshot: references.party?.partyCodeNo || dto.partyCode?.trim() || '',
             partyNameSnapshot: references.party ? this.getPartyName(references.party, dto.partyName) : dto.partyName?.trim() || '',
-            projectCode: cleanOptional(dto.projectCode) ?? cleanOptional(dto.costCenter),
-            projectName: cleanOptional(dto.projectName),
-            preparedBy: cleanOptional(dto.preparedBy),
+            projectCode: cleanOptional(effectiveDto.projectCode) ?? cleanOptional(effectiveDto.costCenter),
+            projectName: cleanOptional(effectiveDto.projectName),
+            preparedBy: cleanOptional(effectiveDto.preparedBy),
             currencyCode: normalized.currencyCode,
             exchangeRate: new Prisma.Decimal(String(normalized.exchangeRate)),
             amount: new Prisma.Decimal(String(normalized.amount)),
-            remarks: cleanOptional(dto.remarks),
+            remarks: cleanOptional(effectiveDto.remarks),
             status: targetStatus,
             createdByUserId: user.id ? Number(user.id) : null,
           },
@@ -300,7 +391,7 @@ export class CashVoucherService {
           branchUnitId,
           normalized.currencyCode,
           normalized.exchangeRate,
-          cleanOptional(dto.remarks),
+          cleanOptional(effectiveDto.remarks),
           references.journalEntries,
         );
 
@@ -347,17 +438,25 @@ export class CashVoucherService {
       details: dto.details ?? [],
     });
     const targetStatus = dto.status || current.status;
+    const referenceModule = dto.referenceModule ?? current.referenceModule;
+    const details = this.normalizeAccountsPayableVoucherCopiedDetails(
+      dto.details ?? [],
+      normalized.amount,
+      referenceModule,
+      dto.voucherReferenceNo ?? current.voucherReferenceNo,
+    );
+    const effectiveDto = { ...dto, details };
 
     if (this.requiresSubmissionValidation(targetStatus)) {
       this.validateSubmittedHeader({
-        ...dto,
-        partyCode: dto.partyCode ?? current.partyCodeSnapshot,
-        partyName: dto.partyName ?? current.partyNameSnapshot,
+        ...effectiveDto,
+        partyCode: effectiveDto.partyCode ?? current.partyCodeSnapshot,
+        partyName: effectiveDto.partyName ?? current.partyNameSnapshot,
       });
       this.accountingService.validateSubmittedPayload({
         currencyCode: normalized.currencyCode,
         details:
-          dto.details ??
+          effectiveDto.details ??
           current.details.map((detail, index) => ({
             lineNumber: detail.lineNumber || index + 1,
             accountId: detail.accountId?.toString(),
@@ -369,14 +468,14 @@ export class CashVoucherService {
             disburseAmount: Number(detail.disburseAmount),
           })),
         exchangeRate: normalized.exchangeRate,
-        journalEntries: dto.journalEntries,
+        journalEntries: effectiveDto.journalEntries,
         voucherAmount: normalized.amount,
       });
     }
 
     try {
       const voucher = await this.prisma.$transaction(async (tx) => {
-        const references = await this.resolveVoucherReferences(tx, companyId, dto, {
+        const references = await this.resolveVoucherReferences(tx, companyId, effectiveDto, {
           requireDetailAccounts: this.requiresSubmissionValidation(targetStatus),
         });
         const transactionNo = await this.resolveTransactionNumberForUpdate(tx, {
@@ -384,7 +483,71 @@ export class CashVoucherService {
           companyId,
           currentTransactionNo: current.voucherNo,
           excludedVoucherId: voucherId,
-          requestedTransactionNo: dto.voucherNo || dto.transactionNo,
+          requestedTransactionNo: effectiveDto.voucherNo || effectiveDto.transactionNo,
+        });
+        await this.accountsPayableVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.advanceToSupplierCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.cashAdvanceCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.journalVoucherCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currentTargetId: voucherId,
+          currencyCode: normalized.currencyCode,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          target: 'cash-voucher',
+        });
+        await this.pettyCashReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'cash-voucher',
+        });
+        await this.revolvingFundReplenishmentCopySourceService.validateCopiedDetails(tx, {
+          branchUnitId,
+          companyId,
+          currencyCode: normalized.currencyCode,
+          currentTargetId: voucherId,
+          details,
+          partyCode: references.party?.partyCodeNo || effectiveDto.partyCode?.trim() || current.partyCodeSnapshot,
+          partyId: references.party?.id ?? current.partyId,
+          referenceModule,
+          target: 'cash-voucher',
         });
 
         await tx.cashVoucher.update({
@@ -482,7 +645,7 @@ export class CashVoucherService {
       };
     }
 
-    if (targetStatus === CashVoucherStatus.FOR_APPROVAL || targetStatus === CashVoucherStatus.APPROVED || targetStatus === CashVoucherStatus.POSTED) {
+    if (targetStatus === CashVoucherStatus.FOR_APPROVAL || targetStatus === CashVoucherStatus.POSTED) {
       this.validateSubmittedHeader({
         partyCode: current.partyCodeSnapshot,
         partyName: current.partyNameSnapshot,
@@ -501,10 +664,9 @@ export class CashVoucherService {
       updatedByUserId: userId,
     };
 
-    if (targetStatus === CashVoucherStatus.APPROVED) {
+    if (targetStatus === CashVoucherStatus.POSTED) {
       auditData.approvedByUserId = userId;
       auditData.approvedAt = now;
-    } else if (targetStatus === CashVoucherStatus.POSTED || targetStatus === CashVoucherStatus.CLOSED) {
       auditData.postedByUserId = userId;
       auditData.postedAt = now;
     } else if (targetStatus === CashVoucherStatus.DISAPPROVED) {
@@ -667,7 +829,7 @@ export class CashVoucherService {
       totalVouchers,
       draftVouchers: countsMap.get(CashVoucherStatus.DRAFT) ?? 0,
       forApprovalVouchers: countsMap.get(CashVoucherStatus.FOR_APPROVAL) ?? 0,
-      postedVouchers: (countsMap.get(CashVoucherStatus.POSTED) ?? 0) + (countsMap.get(CashVoucherStatus.CLOSED) ?? 0),
+      postedVouchers: countsMap.get(CashVoucherStatus.POSTED) ?? 0,
       disapprovedVouchers: countsMap.get(CashVoucherStatus.DISAPPROVED) ?? 0,
       cancelledVouchers: countsMap.get(CashVoucherStatus.CANCELLED) ?? 0,
     };
@@ -882,7 +1044,7 @@ export class CashVoucherService {
 
     let amount = Number(dto.amount || 0);
     if (!amount && dto.details && dto.details.length > 0) {
-      amount = dto.details.reduce((sum, d) => sum + Number(d.grossAmount || d.debit || d.disburseAmount || 0), 0);
+      amount = dto.details.reduce((sum, d) => sum + Number(d.disburseAmount || d.debit || d.grossAmount || 0), 0);
     }
 
     return {
@@ -892,6 +1054,75 @@ export class CashVoucherService {
       paymentDueDate,
       voucherDate,
     };
+  }
+
+  private normalizeAccountsPayableVoucherCopiedDetails(
+    details: CashVoucherDetailDto[],
+    voucherAmount: number,
+    referenceModule?: string | null,
+    voucherReferenceNo?: string | null,
+  ): CashVoucherDetailDto[] {
+    if (!this.isAccountsPayableVoucherCopyPayload(details, referenceModule, voucherReferenceNo) || voucherAmount <= 0 || details.length === 0) {
+      return details;
+    }
+
+    const sourceDetails = details.filter((detail) => this.isAccountsPayableVoucherCopiedSourceDetail(detail));
+    const sourceDisburseAmount = roundCurrency(
+      sourceDetails.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.debit || detail.grossAmount || 0), 0),
+    );
+
+    if (sourceDisburseAmount <= 0 || sourceDisburseAmount <= voucherAmount || Math.abs(sourceDisburseAmount - voucherAmount) <= 0.01) {
+      return details;
+    }
+
+    const ratio = voucherAmount / sourceDisburseAmount;
+
+    return details.map((detail) => {
+      if (!cleanOptional(detail.refId)) {
+        return detail;
+      }
+
+      return {
+        ...detail,
+        credit: this.scaleCopiedAmount(detail.credit, ratio),
+        debit: this.scaleCopiedAmount(detail.debit, ratio),
+        disburseAmount: this.scaleCopiedAmount(detail.disburseAmount, ratio),
+        ewtAmount: this.scaleCopiedAmount(detail.ewtAmount, ratio),
+        grossAmount: this.scaleCopiedAmount(detail.grossAmount, ratio),
+        netAmount: this.scaleCopiedAmount(detail.netAmount, ratio),
+        vatAmount: this.scaleCopiedAmount(detail.vatAmount, ratio),
+      };
+    });
+  }
+
+  private isAccountsPayableVoucherCopiedSourceDetail(detail: CashVoucherDetailDto) {
+    return Boolean(cleanOptional(detail.refId)) && isSourceDetailRow(detail);
+  }
+
+  private isAccountsPayableVoucherCopyPayload(details: CashVoucherDetailDto[], referenceModule?: string | null, voucherReferenceNo?: string | null) {
+    const normalizedReferenceModule = cleanOptional(referenceModule)?.toLowerCase();
+    if (normalizedReferenceModule === AccountsPayableVoucherCopySourceLabel.toLowerCase()) {
+      return true;
+    }
+
+    const normalizedVoucherReferenceNo = cleanOptional(voucherReferenceNo)?.toUpperCase() ?? '';
+    if (normalizedVoucherReferenceNo.includes('APV-')) {
+      return true;
+    }
+
+    return details.some((detail) => {
+      const refId = cleanOptional(detail.refId);
+
+      return Boolean(refId && /^\d+$/.test(refId) && this.isAccountsPayableVoucherCopiedSourceDetail(detail));
+    });
+  }
+
+  private scaleCopiedAmount(value: number | undefined, ratio: number) {
+    if (value === undefined) {
+      return value;
+    }
+
+    return roundCurrency(Number(value || 0) * ratio);
   }
 
   private async resolveVoucherReferences(
@@ -1174,12 +1405,10 @@ export class CashVoucherService {
       .toUpperCase()
       .replace(/[\s-]+/g, '_');
     if (normalized === 'FOR_APPROVAL' || normalized === 'FORAPPROVAL') return CashVoucherStatus.FOR_APPROVAL;
-    if (normalized === 'APPROVED') return CashVoucherStatus.APPROVED;
+    if (normalized === 'APPROVED') return CashVoucherStatus.POSTED;
     if (normalized === 'POSTED') return CashVoucherStatus.POSTED;
     if (normalized === 'DISAPPROVED') return CashVoucherStatus.DISAPPROVED;
     if (normalized === 'CANCELLED' || normalized === 'CANCELED') return CashVoucherStatus.CANCELLED;
-    if (normalized === 'CLOSED') return CashVoucherStatus.CLOSED;
-
     return CashVoucherStatus.DRAFT;
   }
 

@@ -1,17 +1,28 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChartAccountStatus, Party, PartyStatus, Prisma, ResponsibilityCenterCategory, ResponsibilityCenterStatus } from '@prisma/client';
+import {
+  AdvanceToSupplierStatus,
+  Party,
+  PartyStatus,
+  Prisma,
+  PurchaseOrderStatus,
+  ResponsibilityCenterCategory,
+  ResponsibilityCenterStatus,
+} from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 import { parseOptionalPositiveBigIntId, parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { GetPurchaseOrderCopyFromCandidatesQueryDto } from './copy-from/dto/get-purchase-order-copy-from-candidates-query.dto';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { GetPurchaseOrderListQueryDto } from './dto/get-purchase-order-list-query.dto';
 import { PurchaseOrderItemDto } from './dto/purchase-order-item.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
 const PurchaseTypes = ['Goods', 'Services', 'Assets'];
+export const PurchaseOrderCopySourceLabel = 'Purchase Order';
+const ActiveAdvanceToSupplierStatuses = [AdvanceToSupplierStatus.DRAFT, AdvanceToSupplierStatus.FOR_APPROVAL, AdvanceToSupplierStatus.POSTED];
 
 @Injectable()
 export class PurchaseOrderService {
@@ -47,6 +58,99 @@ export class PurchaseOrderService {
       this.prisma.purchaseOrder.count({ where }),
     ]);
     return { purchaseOrders: records.map((record) => this.map(record)), pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } };
+  }
+
+  async findCopyFromCandidates(user: AuthUser, query: GetPurchaseOrderCopyFromCandidatesQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    const page = query.page ?? DefaultPage;
+    const limit = query.limit ?? DefaultLimit;
+    const search = cleanOptional(query.search);
+    const partyId = query.partyId ? parsePositiveBigIntId(query.partyId, 'partyId') : null;
+    const partyCode = cleanOptional(query.partyCode);
+    const where: Prisma.PurchaseOrderWhereInput = {
+      companyId,
+      deletedAt: null,
+      status: PurchaseOrderStatus.POSTED,
+      ...(query.branchUnitId ? { branchUnitId: query.branchUnitId } : {}),
+      ...(partyId ? { partyId } : partyCode ? { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } } : {}),
+      ...(search
+        ? {
+            OR: [
+              { transNo: { contains: search, mode: 'insensitive' } },
+              { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
+              { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
+              { projectCodeSnapshot: { contains: search, mode: 'insensitive' } },
+              { projectNameSnapshot: { contains: search, mode: 'insensitive' } },
+              { remarks: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [records, total] = await Promise.all([
+      this.prisma.purchaseOrder.findMany({
+        where,
+        include: this.include(),
+        orderBy: [{ poDate: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.purchaseOrder.count({ where }),
+    ]);
+    const consumedAmounts = await this.getAdvanceToSupplierConsumedAmounts(
+      companyId,
+      records.map((record) => record.transNo),
+    );
+    const candidates = records
+      .map((record) => {
+        const amount = roundMoney(record.entries.reduce((sum, entry) => sum + Number(entry.netAmount), 0));
+        const consumedAmount = consumedAmounts.get(record.transNo) ?? 0;
+        const availableAmount = roundMoney(amount - consumedAmount);
+
+        return {
+          amount,
+          availableAmount,
+          availableGrossAmount: availableAmount,
+          branchUnitId: record.branchUnitId,
+          consumedAmount,
+          consumedGrossAmount: consumedAmount,
+          currency: record.currencyCode,
+          details: record.entries.map((entry) => ({
+            amount: Number(entry.netAmount),
+            description: entry.description,
+            grossAmount: Number(entry.grossAmount),
+            id: entry.id.toString(),
+            itemCode: entry.itemCode,
+            itemId: entry.itemId,
+            lineNumber: entry.lineNo,
+            price: Number(entry.price),
+            quantity: Number(entry.poQty),
+            responsibilityCenter: entry.responsibilityCenterName,
+            responsibilityCenterId: entry.responsibilityCenterId?.toString() ?? null,
+            uom: entry.uom,
+          })),
+          documentDate: record.poDate.toISOString().slice(0, 10),
+          exchangeRate: Number(record.exchangeRate),
+          grossAmount: amount,
+          id: record.id.toString(),
+          partyCode: record.partyCodeSnapshot,
+          partyId: record.partyId.toString(),
+          partyName: record.partyNameSnapshot,
+          projectCode: record.projectCodeSnapshot,
+          projectName: record.projectNameSnapshot,
+          remarks: record.remarks,
+          source: PurchaseOrderCopySourceLabel,
+          sourceNo: record.transNo,
+          transactionNo: record.transNo,
+        };
+      })
+      .filter((record) => record.availableAmount > 0);
+
+    return {
+      records: candidates,
+      pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) },
+    };
   }
 
   async findOne(user: AuthUser, id: string) {
@@ -198,6 +302,7 @@ export class PurchaseOrderService {
   }
 
   private async entries(companyId: number, branchUnitId: number, items: PurchaseOrderItemDto[], purchaseType: string, headerPrId?: bigint) {
+    const isServices = purchaseType.trim().toLowerCase() === 'services';
     return Promise.all(
       items.map(async (item, index) => {
         const prEntryId = parseOptionalPositiveBigIntId(item.purchaseRequestEntryId, 'purchaseRequestEntryId');
@@ -214,6 +319,9 @@ export class PurchaseOrderService {
             : null;
         if ((rcId || item.responsibilityCenter) && !rc) throw new BadRequestException('Select a valid Responsibility Center.');
         const serviceId = parseOptionalPositiveBigIntId(item.serviceMaintenanceId, 'serviceMaintenanceId');
+        if (isServices && !serviceId) {
+          throw new BadRequestException('Select a valid service from Service Maintenance.');
+        }
         const service = serviceId ? await this.prisma.serviceMaintenance.findFirst({ where: { id: serviceId, companyId, deletedAt: null } }) : null;
         if (serviceId && !service) throw new BadRequestException('Select a valid service from Service Maintenance.');
         const description = item.description.trim();
@@ -222,7 +330,9 @@ export class PurchaseOrderService {
         const rate = item.discountRate ?? 0;
         const discount = rate > 0 ? (gross * rate) / 100 : Math.min(item.discountAmount ?? 0, gross);
         const after = gross - discount;
-        const vat = item.vatAmount ?? 0;
+        const vatable = item.vatable ?? false;
+        const vatInclusive = item.vatInclusive ?? false;
+        const vat = item.vatAmount != null ? item.vatAmount : vatable ? (vatInclusive ? roundMoney(after - after / 1.12) : roundMoney(after * 0.12)) : 0;
         return {
           companyId,
           branchUnitId,
@@ -230,16 +340,16 @@ export class PurchaseOrderService {
           purchaseRequestEntryId: prEntry?.id ?? null,
           responsibilityCenterId: rc?.id ?? null,
           serviceMaintenanceId: service?.id ?? null,
-          itemId: cleanOptional(item.itemId),
-          itemCode: cleanOptional(item.itemCode),
-          barcode: cleanOptional(item.barcode),
+          itemId: isServices ? null : cleanOptional(item.itemId),
+          itemCode: isServices ? null : cleanOptional(item.itemCode),
+          barcode: isServices ? null : cleanOptional(item.barcode),
           description,
-          color: cleanOptional(item.color),
-          brand: cleanOptional(item.brand),
-          size: cleanOptional(item.size),
-          model: cleanOptional(item.model),
-          uom: cleanOptional(item.uom),
-          lotNo: cleanOptional(item.lotNo),
+          color: isServices ? null : cleanOptional(item.color),
+          brand: isServices ? null : cleanOptional(item.brand),
+          size: isServices ? null : cleanOptional(item.size),
+          model: isServices ? null : cleanOptional(item.model),
+          uom: isServices ? null : cleanOptional(item.uom),
+          lotNo: isServices ? null : cleanOptional(item.lotNo),
           prQty: new Prisma.Decimal(item.prQty),
           poQty: new Prisma.Decimal(item.poQty),
           price: new Prisma.Decimal(item.price),
@@ -248,10 +358,10 @@ export class PurchaseOrderService {
           discountAmount: new Prisma.Decimal(discount),
           grossAfterDiscount: new Prisma.Decimal(after),
           vatAmount: new Prisma.Decimal(vat),
-          vatable: item.vatable ?? false,
-          vatInclusive: item.vatInclusive ?? false,
-          netOfVatAmount: new Prisma.Decimal(item.vatInclusive ? after - vat : after),
-          netAmount: new Prisma.Decimal(item.vatInclusive ? after : after + vat),
+          vatable,
+          vatInclusive,
+          netOfVatAmount: new Prisma.Decimal(vatInclusive ? after - vat : after),
+          netAmount: new Prisma.Decimal(vatInclusive ? after : after + vat),
           prNoSnapshot: cleanOptional(item.prNo),
           canvassNoSnapshot: cleanOptional(item.canvassNo),
           responsibilityCenterName: rc?.name ?? cleanOptional(item.responsibilityCenter),
@@ -383,8 +493,47 @@ export class PurchaseOrderService {
   private partyName(p: Party) {
     return p.partyName || p.tradeName || [p.firstName, p.middleName, p.lastName, p.suffixName].filter(Boolean).join(' ') || p.partyCodeNo;
   }
+
+  private async getAdvanceToSupplierConsumedAmounts(companyId: number, transactionNos: string[]) {
+    const consumedAmounts = new Map<string, number>();
+    if (transactionNos.length === 0) {
+      return consumedAmounts;
+    }
+
+    const poByReference = new Map<string, string>();
+    for (const transactionNo of transactionNos) {
+      poByReference.set(transactionNo, transactionNo);
+      poByReference.set(formatPurchaseOrderReference(transactionNo), transactionNo);
+    }
+
+    const rows = await this.prisma.advanceToSupplier.groupBy({
+      by: ['poReference'],
+      where: {
+        companyId,
+        deletedAt: null,
+        poReference: { in: [...poByReference.keys()] },
+        status: { in: ActiveAdvanceToSupplierStatuses },
+      },
+      _sum: { amount: true },
+    });
+
+    for (const row of rows) {
+      const transactionNo = poByReference.get(row.poReference);
+      if (!transactionNo) {
+        continue;
+      }
+
+      consumedAmounts.set(transactionNo, roundMoney((consumedAmounts.get(transactionNo) ?? 0) + Number(row._sum.amount ?? 0)));
+    }
+
+    return consumedAmounts;
+  }
 }
 
 function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+export function formatPurchaseOrderReference(transactionNo: string) {
+  return `PO:${transactionNo.trim()}`;
 }

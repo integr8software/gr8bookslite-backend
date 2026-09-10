@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { ChartAccountLevel, ChartAccountStatus, ChartAccountType, ServiceMaintenanceType } from '@prisma/client';
+import { ChartAccountLevel, ChartAccountType, ServiceMaintenanceType } from '@prisma/client';
 import {
   buildServiceRevenueAccountGroupTags,
   findSelectableServiceAccountOrThrow,
@@ -8,7 +8,7 @@ import {
   generateNextServiceRevenueAccountCode,
   ServiceRevenueAccountGroupTag,
 } from './service-maintenance-account.util';
-import { SystemAccountGroups, SystemAccountGroupTags } from '../../chart-of-accounts/utils/system-account-groups.util';
+import { SystemAccountGroupTags } from '../../chart-of-accounts/utils/system-account-groups.util';
 
 describe('service-maintenance-account.util', () => {
   function createMockTx() {
@@ -23,7 +23,11 @@ describe('service-maintenance-account.util', () => {
   describe('findServiceRevenueParentOrThrow', () => {
     it('finds the service revenue parent system account group', async () => {
       const tx = createMockTx();
-      const parentGroup = { id: 10n, accountCode: '4010100000', accountGroup: [SystemAccountGroups.servicesMaintenance.serviceRevenueParent] };
+      const parentGroup = {
+        id: 10n,
+        accountCode: '4010100000',
+        accountGroup: [SystemAccountGroupTags.servicesMaintenanceRevenueParent],
+      };
       tx.chartAccount.findMany.mockResolvedValue([parentGroup]);
 
       const result = await findServiceRevenueParentOrThrow(1, tx as never);

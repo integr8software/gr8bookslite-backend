@@ -1,5 +1,14 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChartAccount, CompanyUnitType, Party, PartyAddress, PettyCashVoucherStatus, Prisma, ResponsibilityCenter } from '@prisma/client';
+import {
+  ChartAccount,
+  CompanyUnitType,
+  Party,
+  PartyAddress,
+  PettyCashVoucherStatus,
+  PettyCashReplenishmentStatus,
+  Prisma,
+  ResponsibilityCenter,
+} from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -7,6 +16,7 @@ import { CompanyCurrencyService } from '../../../common/currency/company-currenc
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 import { ensureModuleAction } from '../../../common/utils/module-permissions.util';
+import { roundMoney } from '../../../common/utils/money.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -14,15 +24,21 @@ import {
   suggestTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
 import { CreatePettyCashVoucherDto } from './dto/create-petty-cash-voucher.dto';
+import { GetPettyCashVoucherCopyFromCandidatesQueryDto } from './copy-from/dto/get-petty-cash-voucher-copy-from-candidates-query.dto';
 import { GetPettyCashVoucherListQueryDto } from './dto/get-petty-cash-voucher-list-query.dto';
-
+import { PettyCashVoucherDetailDto } from './dto/petty-cash-voucher-detail.dto';
 import { UpdatePettyCashVoucherDto } from './dto/update-petty-cash-voucher.dto';
 import { UpdatePettyCashVoucherStatusDto } from './dto/update-petty-cash-voucher-status.dto';
 import { PettyCashVoucherMapper } from './mappers/petty-cash-voucher.mapper';
 import { PettyCashVoucherInclude } from './prisma/petty-cash-voucher.include';
 export const PettyCashVoucherModuleCode = 'PCV';
+export const PettyCashVoucherCopySourceLabel = 'Petty Cash Voucher';
 
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
+
+function getPettyCashVoucherDetailConsumptionKey(sourceId: string, supplierCode?: string | null, supplierName?: string | null) {
+  return [sourceId, cleanOptional(supplierCode)?.toLowerCase() ?? '', cleanOptional(supplierName)?.toLowerCase() ?? ''].join(':');
+}
 
 @Injectable()
 export class PettyCashVoucherService {
@@ -105,6 +121,157 @@ export class PettyCashVoucherService {
     };
   }
 
+  async findCopyFromCandidates(user: AuthUser, query: GetPettyCashVoucherCopyFromCandidatesQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, PettyCashVoucherModuleCode, PermissionAction.VIEW, 'You do not have permission to view PettyCashVoucher records.');
+
+    const page = query.page ?? DefaultPage;
+    const limit = query.limit ?? DefaultLimit;
+    const skip = (page - 1) * limit;
+    const search = cleanOptional(query.search);
+    const partyId = query.partyId ? parsePositiveBigIntId(query.partyId, 'partyId') : null;
+    const partyCode = cleanOptional(query.partyCode);
+    const branchUnitId = query.branchUnitId;
+    const partyFilter: Prisma.PettyCashVoucherWhereInput | null = partyId
+      ? { partyId }
+      : partyCode
+        ? {
+            OR: [{ partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } }, { party: { partyCodeNo: { equals: partyCode, mode: 'insensitive' } } }],
+          }
+        : null;
+    const searchFilter: Prisma.PettyCashVoucherWhereInput | null = search
+      ? {
+          OR: [
+            { transactionNo: { contains: search, mode: 'insensitive' } },
+            { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
+            { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
+            { remarks: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : null;
+    const where: Prisma.PettyCashVoucherWhereInput = {
+      companyId,
+      deletedAt: null,
+      status: PettyCashVoucherStatus.POSTED,
+      ...(branchUnitId ? { branchUnitId } : {}),
+      ...(partyFilter || searchFilter ? { AND: [partyFilter, searchFilter].filter(Boolean) as Prisma.PettyCashVoucherWhereInput[] } : {}),
+    };
+
+    const [records, total] = await Promise.all([
+      this.prisma.pettyCashVoucher.findMany({
+        where,
+        include: { party: true, details: { orderBy: { lineNumber: 'asc' } } },
+        orderBy: [{ documentDate: 'desc' }, { id: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.pettyCashVoucher.count({ where }),
+    ]);
+    const consumedDetailAmounts = await this.getReplenishmentConsumedDetailAmounts(
+      records.map((record) => ({ id: record.id.toString(), transactionNo: record.transactionNo })),
+      companyId,
+    );
+
+    const candidates = records
+      .map((record) => {
+        const sourceId = record.id.toString();
+        const allDetails = record.details.map((detail) => {
+          const detailGrossAmount = Number(detail.grossAmount || detail.amount || 0);
+          const detailDisburseAmount = Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0);
+          const consumptionKey = getPettyCashVoucherDetailConsumptionKey(sourceId, detail.supplierCodeSnapshot, detail.supplierNameSnapshot);
+          const remainingConsumedDetail = consumedDetailAmounts.get(consumptionKey) ?? {
+            gross: 0,
+            disburse: 0,
+          };
+          const consumedDetail = {
+            gross: roundMoney(Math.min(detailGrossAmount, remainingConsumedDetail.gross)),
+            disburse: roundMoney(Math.min(detailDisburseAmount, remainingConsumedDetail.disburse)),
+          };
+          consumedDetailAmounts.set(consumptionKey, {
+            gross: roundMoney(remainingConsumedDetail.gross - consumedDetail.gross),
+            disburse: roundMoney(remainingConsumedDetail.disburse - consumedDetail.disburse),
+          });
+          const availableGrossAmount = roundMoney(detailGrossAmount - consumedDetail.gross);
+          const availableAmount = roundMoney(detailDisburseAmount - consumedDetail.disburse);
+
+          return {
+            date: detail.date ? detail.date.toISOString().slice(0, 10) : null,
+            disburseAmount: detailDisburseAmount,
+            consumedAmount: consumedDetail.disburse,
+            availableAmount,
+            ewtAmount: Number(detail.ewtAmount),
+            ewtCode: detail.ewtCode,
+            ewtPercent: Number(detail.ewtPercent),
+            grossAmount: detailGrossAmount,
+            consumedGrossAmount: consumedDetail.gross,
+            availableGrossAmount,
+            id: detail.id.toString(),
+            lineNumber: detail.lineNumber,
+            netAmount: Number(detail.netAmount),
+            particulars: detail.particulars,
+            remarks: detail.remarks,
+            responsibilityCenter: detail.responsibilityCenterSnapshot,
+            responsibilityCenterCode: detail.responsibilityCenterCodeSnapshot,
+            responsibilityCenterId: detail.responsibilityCenterId?.toString() ?? null,
+            supplierCode: detail.supplierCodeSnapshot,
+            supplierName: detail.supplierNameSnapshot,
+            vatAmount: Number(detail.vatAmount),
+            vatPercent: Number(detail.vatPercent),
+            vatType: detail.vatType,
+          };
+        });
+        const details = allDetails.filter((detail) => detail.availableGrossAmount > 0 && detail.availableAmount > 0);
+        const amount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.grossAmount || detail.amount || 0), 0));
+        const disburseAmount = roundMoney(
+          record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0), 0),
+        );
+        const consumedGrossAmount = roundMoney(allDetails.reduce((sum, detail) => sum + detail.consumedGrossAmount, 0));
+        const consumedAmount = roundMoney(allDetails.reduce((sum, detail) => sum + detail.consumedAmount, 0));
+        const availableGrossAmount = roundMoney(details.reduce((sum, detail) => sum + detail.availableGrossAmount, 0));
+        const availableAmount = roundMoney(details.reduce((sum, detail) => sum + detail.availableAmount, 0));
+
+        return {
+          accountCode: record.accountCodeSnapshot,
+          accountTitle: record.accountTitleSnapshot,
+          amount,
+          availableAmount,
+          availableGrossAmount,
+          consumedAmount,
+          consumedGrossAmount,
+          currency: record.currencyCode,
+          details,
+          disburseAmount,
+          documentDate: record.documentDate.toISOString().slice(0, 10),
+          exchangeRate: Number(record.exchangeRate),
+          id: sourceId,
+          partyCode: record.party?.partyCodeNo ?? record.partyCodeSnapshot,
+          partyId: record.partyId?.toString() ?? null,
+          partyName: record.party?.partyName ?? record.partyNameSnapshot,
+          projectCode: record.projectCode,
+          projectName: record.projectName,
+          remarks: record.remarks,
+          responsibilityCenter: record.responsibilityCenterSnapshot,
+          responsibilityCenterCode: record.responsibilityCenterCodeSnapshot,
+          responsibilityCenterId: record.responsibilityCenterId?.toString() ?? null,
+          source: PettyCashVoucherCopySourceLabel,
+          sourceNo: record.transactionNo,
+          transactionNo: record.transactionNo,
+        };
+      })
+      .filter((record) => record.availableGrossAmount > 0 && record.availableAmount > 0 && record.details.length > 0);
+
+    return {
+      records: candidates,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+    };
+  }
+
   async create(user: AuthUser, dto: CreatePettyCashVoucherDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
@@ -114,7 +281,7 @@ export class PettyCashVoucherService {
     const resolvedReferences = await this.resolveReferences(companyId, dto);
 
     return this.prisma.$transaction(async (tx) => {
-      const inputNo = cleanOptional(dto.voucherNo ?? dto.transactionNo);
+      const inputNo = cleanOptional(dto.transactionNo);
       const assignedNo = await resolveTransactionNumberForCompanyBranch(tx, {
         branchUnitId,
         companyId,
@@ -123,7 +290,7 @@ export class PettyCashVoucherService {
       });
 
       const existing = await tx.pettyCashVoucher.findFirst({
-        where: { companyId, voucherNo: assignedNo, deletedAt: null },
+        where: { companyId, transactionNo: assignedNo, deletedAt: null },
       });
       if (existing) {
         throw new ConflictException(`PettyCashVoucher number "${assignedNo}" already exists.`);
@@ -131,28 +298,17 @@ export class PettyCashVoucherService {
 
       const currencyCode = cleanCurrencyCode(dto.currencyCode ?? dto.currency ?? 'PHP') ?? 'PHP';
 
-      const grossAmount = dto.grossAmount ?? dto.amount ?? 0;
-      const vatAmount = dto.vatAmount ?? 0;
-      const ewtAmount = dto.ewtAmount ?? 0;
-      const netAmount = dto.netAmount ?? grossAmount - ewtAmount;
-      const amount = dto.amount ?? netAmount;
-      const targetStatus = dto.status ?? PettyCashVoucherStatus.DRAFT;
-
-      if (this.isSubmittedStatus(targetStatus)) {
-        this.assertPettyCashVoucherReady({
-          partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? '',
-          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName ?? '',
-          accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? '',
-          accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? '',
-          grossAmount: new Prisma.Decimal(grossAmount),
-        });
+      let calculatedAmount = dto.amount ?? 0;
+      if (dto.details && dto.details.length > 0) {
+        calculatedAmount = dto.details.reduce((sum, detail) => sum + (detail.grossAmount ?? detail.amount ?? detail.disburseAmount ?? 0), 0);
       }
+      const targetStatus = dto.status ?? PettyCashVoucherStatus.DRAFT;
 
       const created = await tx.pettyCashVoucher.create({
         data: {
           companyId,
           branchUnitId,
-          voucherNo: assignedNo,
+          transactionNo: assignedNo,
           documentDate: new Date(dto.documentDate),
           partyId: resolvedReferences.party?.id ?? null,
           partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? '',
@@ -171,28 +327,25 @@ export class PettyCashVoucherService {
           projectName: cleanOptional(dto.projectName) ?? undefined,
           currencyCode,
           exchangeRate: dto.exchangeRate ?? 1.0,
-          grossAmount,
-          amount,
-          netAmount,
-          vatType: cleanOptional(dto.vatType) ?? undefined,
-          vatable: cleanOptional(dto.vatable) ?? undefined,
-          vatRate: cleanOptional(dto.vatRate) ?? undefined,
-          vatPercent: dto.vatPercent ?? 0,
-          vatAmount,
-          ewtCode: cleanOptional(dto.ewtCode) ?? undefined,
-          ewtRate: cleanOptional(dto.ewtRate) ?? undefined,
-          ewtPercent: dto.ewtPercent ?? 0,
-          ewtAmount,
+          amount: calculatedAmount,
           remarks: cleanOptional(dto.remarks) ?? undefined,
           status: targetStatus,
           createdByUserId: user.id,
         },
       });
 
+      if (dto.details && dto.details.length > 0) {
+        await this.createDetails(tx, companyId, branchUnitId, created.id, dto.details);
+      }
+
       const reloaded = await tx.pettyCashVoucher.findUniqueOrThrow({
         where: { id: created.id },
         include: PettyCashVoucherInclude,
       });
+
+      if (this.isSubmittedStatus(targetStatus)) {
+        this.assertPettyCashVoucherReady(reloaded);
+      }
 
       return PettyCashVoucherMapper.toResponseDto(reloaded);
     });
@@ -225,28 +378,17 @@ export class PettyCashVoucherService {
       const currencyCode =
         dto.currencyCode || dto.currency ? (cleanCurrencyCode(dto.currencyCode ?? dto.currency ?? 'PHP') ?? existing.currencyCode) : existing.currencyCode;
 
-      const grossAmount = dto.grossAmount ?? (dto.amount !== undefined ? dto.amount : Number(existing.grossAmount));
-      const vatAmount = dto.vatAmount ?? Number(existing.vatAmount);
-      const ewtAmount = dto.ewtAmount ?? Number(existing.ewtAmount);
-      const netAmount = dto.netAmount ?? grossAmount - ewtAmount;
-      const amount = dto.amount ?? netAmount;
-      const targetStatus = dto.status ?? existing.status;
-
-      if (this.isSubmittedStatus(targetStatus)) {
-        this.assertPettyCashVoucherReady({
-          partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? existing.partyCodeSnapshot,
-          partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName ?? existing.partyNameSnapshot,
-          accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? existing.accountCodeSnapshot,
-          accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? existing.accountTitleSnapshot,
-          grossAmount: new Prisma.Decimal(grossAmount),
-        });
+      let calculatedAmount = dto.amount !== undefined ? dto.amount : Number(existing.amount);
+      if (dto.details && dto.details.length > 0) {
+        calculatedAmount = dto.details.reduce((sum, detail) => sum + (detail.grossAmount ?? detail.amount ?? detail.disburseAmount ?? 0), 0);
       }
+      const targetStatus = dto.status ?? existing.status;
 
       await tx.pettyCashVoucher.update({
         where: { id: recordId },
         data: {
           branchUnitId,
-          voucherNo: dto.voucherNo ? (cleanOptional(dto.voucherNo) ?? undefined) : existing.voucherNo,
+          transactionNo: dto.transactionNo ? (cleanOptional(dto.transactionNo) ?? undefined) : existing.transactionNo,
           documentDate: dto.documentDate ? new Date(dto.documentDate) : existing.documentDate,
           partyId: resolvedReferences.party ? resolvedReferences.party.id : existing.partyId,
           partyCodeSnapshot: resolvedReferences.party?.partyCodeNo ?? dto.partyCode ?? existing.partyCodeSnapshot,
@@ -269,28 +411,28 @@ export class PettyCashVoucherService {
           projectName: dto.projectName !== undefined ? (cleanOptional(dto.projectName) ?? undefined) : (existing.projectName ?? undefined),
           currencyCode,
           exchangeRate: dto.exchangeRate ?? existing.exchangeRate,
-          grossAmount,
-          amount,
-          netAmount,
-          vatType: dto.vatType !== undefined ? (cleanOptional(dto.vatType) ?? undefined) : (existing.vatType ?? undefined),
-          vatable: dto.vatable !== undefined ? (cleanOptional(dto.vatable) ?? undefined) : (existing.vatable ?? undefined),
-          vatRate: dto.vatRate !== undefined ? (cleanOptional(dto.vatRate) ?? undefined) : (existing.vatRate ?? undefined),
-          vatPercent: dto.vatPercent ?? existing.vatPercent,
-          vatAmount,
-          ewtCode: dto.ewtCode !== undefined ? (cleanOptional(dto.ewtCode) ?? undefined) : (existing.ewtCode ?? undefined),
-          ewtRate: dto.ewtRate !== undefined ? (cleanOptional(dto.ewtRate) ?? undefined) : (existing.ewtRate ?? undefined),
-          ewtPercent: dto.ewtPercent ?? existing.ewtPercent,
-          ewtAmount,
+          amount: calculatedAmount,
           remarks: dto.remarks !== undefined ? (cleanOptional(dto.remarks) ?? undefined) : (existing.remarks ?? undefined),
           status: targetStatus,
           updatedByUserId: user.id,
         },
       });
 
+      if (dto.details !== undefined) {
+        await tx.pettyCashVoucherDetail.deleteMany({ where: { voucherId: recordId } });
+        if (dto.details.length > 0) {
+          await this.createDetails(tx, companyId, branchUnitId, recordId, dto.details);
+        }
+      }
+
       const reloaded = await tx.pettyCashVoucher.findUniqueOrThrow({
         where: { id: recordId },
         include: PettyCashVoucherInclude,
       });
+
+      if (this.isSubmittedStatus(targetStatus)) {
+        this.assertPettyCashVoucherReady(reloaded);
+      }
 
       return PettyCashVoucherMapper.toResponseDto(reloaded);
     });
@@ -321,15 +463,14 @@ export class PettyCashVoucherService {
       updatedByUserId: user.id,
     };
 
-    if (dto.status === PettyCashVoucherStatus.APPROVED) {
+    if (dto.status === PettyCashVoucherStatus.POSTED) {
       statusData.approvedByUserId = user.id;
       statusData.approvedAt = now;
+      statusData.postedByUserId = user.id;
+      statusData.postedAt = now;
     } else if (dto.status === PettyCashVoucherStatus.DISAPPROVED) {
       statusData.disapprovedByUserId = user.id;
       statusData.disapprovedAt = now;
-    } else if (dto.status === PettyCashVoucherStatus.POSTED) {
-      statusData.postedByUserId = user.id;
-      statusData.postedAt = now;
     } else if (dto.status === PettyCashVoucherStatus.CANCELLED) {
       statusData.cancelledByUserId = user.id;
       statusData.cancelledAt = now;
@@ -376,8 +517,171 @@ export class PettyCashVoucherService {
     return { success: true, message: `PettyCashVoucher #${id} deleted successfully.` };
   }
 
+  private async createDetails(
+    tx: Prisma.TransactionClient,
+    companyId: number,
+    branchUnitId: number | null,
+    voucherId: bigint,
+    details: PettyCashVoucherDetailDto[],
+  ) {
+    for (let i = 0; i < details.length; i++) {
+      const line = details[i];
+      const lineNumber = line.lineNumber ?? i + 1;
+      const amount = line.amount ?? line.grossAmount ?? line.disburseAmount ?? 0;
+      const grossAmount = line.grossAmount ?? amount;
+      const vatAmount = line.vatAmount ?? 0;
+      const ewtAmount = line.ewtAmount ?? 0;
+      const netAmount = line.netAmount ?? grossAmount - vatAmount;
+      const disburseAmount = line.disburseAmount ?? grossAmount - ewtAmount;
+
+      let detailPartyId: bigint | null = null;
+      if (line.partyId) {
+        detailPartyId = parsePositiveBigIntId(line.partyId, 'Detail Party ID');
+      }
+
+      let detailRcId: bigint | null = null;
+      if (line.responsibilityCenterId) {
+        detailRcId = parsePositiveBigIntId(line.responsibilityCenterId, 'Detail RC ID');
+      }
+
+      await tx.pettyCashVoucherDetail.create({
+        data: {
+          voucherId,
+          companyId,
+          branchUnitId,
+          lineNumber,
+          date: line.date || line.itemDate ? new Date(line.date ?? line.itemDate!) : null,
+          partyId: detailPartyId,
+          supplierCodeSnapshot: line.supplierCodeSnapshot ?? line.supplierCode ?? null,
+          supplierNameSnapshot: line.supplierNameSnapshot ?? line.supplierName ?? null,
+          orNo: cleanOptional(line.orNo) ?? undefined,
+          tinNo: cleanOptional(line.tinNo) ?? undefined,
+          particulars: cleanOptional(line.particulars) ?? undefined,
+          remarks: cleanOptional(line.remarks) ?? undefined,
+          amount,
+          grossAmount,
+          netAmount,
+          disburseAmount,
+          vatType: cleanOptional(line.vatType) ?? undefined,
+          vatPercent: line.vatPercent ?? 0,
+          vatAmount,
+          ewtCode: cleanOptional(line.ewtCode) ?? undefined,
+          ewtPercent: line.ewtPercent ?? 0,
+          ewtAmount,
+          expenseType: cleanOptional(line.expenseType) ?? undefined,
+          responsibilityCenterId: detailRcId,
+          responsibilityCenterCodeSnapshot: cleanOptional(line.responsibilityCenterCodeSnapshot ?? line.responsibilityCenterCode) ?? undefined,
+          responsibilityCenterSnapshot: cleanOptional(line.responsibilityCenterSnapshot ?? line.responsibilityCenter) ?? undefined,
+        },
+      });
+    }
+  }
+
+  private async getReplenishmentConsumedAmounts(sources: Array<{ id: string; transactionNo: string }>, companyId: number) {
+    const consumed = {
+      disburse: new Map<string, number>(),
+      gross: new Map<string, number>(),
+    };
+    if (sources.length === 0) {
+      return consumed;
+    }
+
+    const sourceIdByReference = new Map<string, string>();
+    for (const source of sources) {
+      sourceIdByReference.set(source.id, source.id);
+      sourceIdByReference.set(formatPettyCashVoucherReference(source.transactionNo), source.id);
+      sourceIdByReference.set(source.transactionNo, source.id);
+    }
+
+    const details = await this.prisma.pettyCashReplenishmentDetail.findMany({
+      where: {
+        companyId,
+        pettyCashNo: { in: [...sourceIdByReference.keys()] },
+        replenishment: {
+          deletedAt: null,
+          status: {
+            in: [PettyCashReplenishmentStatus.DRAFT, PettyCashReplenishmentStatus.FOR_APPROVAL, PettyCashReplenishmentStatus.POSTED],
+          },
+        },
+      },
+      select: { amount: true, disburseAmount: true, pettyCashNo: true },
+    });
+
+    for (const detail of details) {
+      const reference = cleanOptional(detail.pettyCashNo);
+      if (!reference) {
+        continue;
+      }
+
+      const sourceId = sourceIdByReference.get(reference);
+      if (!sourceId) {
+        continue;
+      }
+
+      consumed.gross.set(sourceId, roundMoney((consumed.gross.get(sourceId) ?? 0) + Number(detail.amount || 0)));
+      consumed.disburse.set(sourceId, roundMoney((consumed.disburse.get(sourceId) ?? 0) + Number(detail.disburseAmount || detail.amount || 0)));
+    }
+
+    return consumed;
+  }
+
+  private async getReplenishmentConsumedDetailAmounts(sources: Array<{ id: string; transactionNo: string }>, companyId: number) {
+    const consumed = new Map<string, { gross: number; disburse: number }>();
+    if (sources.length === 0) {
+      return consumed;
+    }
+
+    const sourceIdByReference = new Map<string, string>();
+    for (const source of sources) {
+      sourceIdByReference.set(source.id, source.id);
+      sourceIdByReference.set(formatPettyCashVoucherReference(source.transactionNo), source.id);
+      sourceIdByReference.set(source.transactionNo, source.id);
+    }
+
+    const details = await this.prisma.pettyCashReplenishmentDetail.findMany({
+      where: {
+        companyId,
+        pettyCashNo: { in: [...sourceIdByReference.keys()] },
+        replenishment: {
+          deletedAt: null,
+          status: {
+            in: [PettyCashReplenishmentStatus.DRAFT, PettyCashReplenishmentStatus.FOR_APPROVAL, PettyCashReplenishmentStatus.POSTED],
+          },
+        },
+      },
+      select: {
+        amount: true,
+        disburseAmount: true,
+        pettyCashNo: true,
+        supplierCodeSnapshot: true,
+        supplierNameSnapshot: true,
+      },
+    });
+
+    for (const detail of details) {
+      const reference = cleanOptional(detail.pettyCashNo);
+      if (!reference) {
+        continue;
+      }
+
+      const sourceId = sourceIdByReference.get(reference);
+      if (!sourceId) {
+        continue;
+      }
+
+      const key = getPettyCashVoucherDetailConsumptionKey(sourceId, detail.supplierCodeSnapshot, detail.supplierNameSnapshot);
+      const current = consumed.get(key) ?? { gross: 0, disburse: 0 };
+      consumed.set(key, {
+        gross: roundMoney(current.gross + Number(detail.amount || 0)),
+        disburse: roundMoney(current.disburse + Number(detail.disburseAmount || detail.amount || 0)),
+      });
+    }
+
+    return consumed;
+  }
+
   private isSubmittedStatus(status: PettyCashVoucherStatus) {
-    return status === PettyCashVoucherStatus.FOR_APPROVAL || status === PettyCashVoucherStatus.APPROVED || status === PettyCashVoucherStatus.POSTED;
+    return status === PettyCashVoucherStatus.FOR_APPROVAL || status === PettyCashVoucherStatus.POSTED;
   }
 
   private assertPettyCashVoucherReady(record: {
@@ -385,7 +689,12 @@ export class PettyCashVoucherService {
     partyNameSnapshot: string | null;
     accountCodeSnapshot: string | null;
     accountTitleSnapshot: string | null;
-    grossAmount: Prisma.Decimal;
+    amount: Prisma.Decimal;
+    details?: Array<{
+      supplierNameSnapshot: string | null;
+      grossAmount: Prisma.Decimal;
+      amount: Prisma.Decimal;
+    }>;
   }) {
     if (!record.partyCodeSnapshot?.trim() || !record.partyNameSnapshot?.trim()) {
       throw new BadRequestException('Select a party before submitting this Petty Cash Voucher.');
@@ -393,8 +702,14 @@ export class PettyCashVoucherService {
     if (!record.accountCodeSnapshot?.trim() || !record.accountTitleSnapshot?.trim()) {
       throw new BadRequestException('Select an account before submitting this Petty Cash Voucher.');
     }
-    if (Number(record.grossAmount) <= 0) {
+    if (Number(record.amount) <= 0) {
       throw new BadRequestException('Enter a gross amount greater than zero before submitting this Petty Cash Voucher.');
+    }
+
+    const details = record.details ?? [];
+    const validDetails = details.filter((detail) => detail.supplierNameSnapshot?.trim() && Number(detail.grossAmount ?? detail.amount) > 0);
+    if (validDetails.length === 0) {
+      throw new BadRequestException('Add at least one detail row with a supplier and non-zero gross amount before submitting this Petty Cash Voucher.');
     }
   }
 
@@ -439,7 +754,7 @@ export class PettyCashVoucherService {
     if (query.search && query.search.trim()) {
       const search = query.search.trim();
       where.OR = [
-        { voucherNo: { contains: search, mode: 'insensitive' } },
+        { transactionNo: { contains: search, mode: 'insensitive' } },
         { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
         { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
         { accountCodeSnapshot: { contains: search, mode: 'insensitive' } },
@@ -456,9 +771,9 @@ export class PettyCashVoucherService {
     const sortBy = query.sortBy ?? 'createdAt';
 
     switch (sortBy) {
-      case 'voucherNo':
       case 'transactionNo':
-        return [{ voucherNo: sortOrder }, { id: 'desc' }];
+      case 'voucherNo':
+        return [{ transactionNo: sortOrder }, { id: 'desc' }];
       case 'documentDate':
         return [{ documentDate: sortOrder }, { id: 'desc' }];
       case 'partyName':
@@ -533,4 +848,8 @@ export class PettyCashVoucherService {
 
     return unit.id;
   }
+}
+
+export function formatPettyCashVoucherReference(transactionNo: string) {
+  return `PCV:${transactionNo.trim()}`;
 }

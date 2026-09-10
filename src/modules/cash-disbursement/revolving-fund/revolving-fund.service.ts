@@ -1,5 +1,14 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChartAccount, CompanyUnitType, Party, PartyAddress, RevolvingFundStatus, Prisma, ResponsibilityCenter } from '@prisma/client';
+import {
+  ChartAccount,
+  CompanyUnitType,
+  Party,
+  PartyAddress,
+  RevolvingFundReplenishmentStatus,
+  RevolvingFundStatus,
+  Prisma,
+  ResponsibilityCenter,
+} from '@prisma/client';
 import { DefaultLimit, DefaultPage } from '../../../common/constants/pagination.constant';
 import { PermissionAction } from '../../../common/enums/permission-action.enum';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
@@ -7,6 +16,7 @@ import { CompanyCurrencyService } from '../../../common/currency/company-currenc
 import { parsePositiveBigIntId } from '../../../common/utils/id.util';
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
 import { ensureModuleAction } from '../../../common/utils/module-permissions.util';
+import { roundMoney } from '../../../common/utils/money.util';
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -14,6 +24,7 @@ import {
   suggestTransactionNumberForCompanyBranch,
 } from '../../system-administration/transaction-number-sequences/transaction-number-sequence.helper';
 import { CreateRevolvingFundDto } from './dto/create-revolving-fund.dto';
+import { GetRevolvingFundCopyFromCandidatesQueryDto } from './copy-from/dto/get-revolving-fund-copy-from-candidates-query.dto';
 import { GetRevolvingFundListQueryDto } from './dto/get-revolving-fund-list-query.dto';
 import { RevolvingFundDetailDto } from './dto/revolving-fund-detail.dto';
 import { UpdateRevolvingFundDto } from './dto/update-revolving-fund.dto';
@@ -21,8 +32,13 @@ import { UpdateRevolvingFundStatusDto } from './dto/update-revolving-fund-status
 import { RevolvingFundMapper } from './mappers/revolving-fund.mapper';
 import { RevolvingFundInclude } from './prisma/revolving-fund.include';
 export const RevolvingFundModuleCode = 'RF';
+export const RevolvingFundCopySourceLabel = 'Revolving Fund';
 
 type PartyWithAddresses = Party & { addresses: PartyAddress[] };
+
+function getRevolvingFundDetailConsumptionKey(sourceId: string, supplierCode?: string | null, supplierName?: string | null) {
+  return [sourceId, cleanOptional(supplierCode)?.toLowerCase() ?? '', cleanOptional(supplierName)?.toLowerCase() ?? ''].join(':');
+}
 
 @Injectable()
 export class RevolvingFundService {
@@ -102,6 +118,157 @@ export class RevolvingFundService {
       branchUnitId: resolvedBranchId,
       inputMode: suggestion.inputMode,
       transactionNo: suggestion.transactionNumber,
+    };
+  }
+
+  async findCopyFromCandidates(user: AuthUser, query: GetRevolvingFundCopyFromCandidatesQueryDto) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, RevolvingFundModuleCode, PermissionAction.VIEW, 'You do not have permission to view RevolvingFund records.');
+
+    const page = query.page ?? DefaultPage;
+    const limit = query.limit ?? DefaultLimit;
+    const skip = (page - 1) * limit;
+    const search = cleanOptional(query.search);
+    const partyId = query.partyId ? parsePositiveBigIntId(query.partyId, 'partyId') : null;
+    const partyCode = cleanOptional(query.partyCode);
+    const branchUnitId = query.branchUnitId;
+    const partyFilter: Prisma.RevolvingFundWhereInput | null = partyId
+      ? { partyId }
+      : partyCode
+        ? {
+            OR: [{ partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } }, { party: { partyCodeNo: { equals: partyCode, mode: 'insensitive' } } }],
+          }
+        : null;
+    const searchFilter: Prisma.RevolvingFundWhereInput | null = search
+      ? {
+          OR: [
+            { transactionNo: { contains: search, mode: 'insensitive' } },
+            { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
+            { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
+            { remarks: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : null;
+    const where: Prisma.RevolvingFundWhereInput = {
+      companyId,
+      deletedAt: null,
+      status: RevolvingFundStatus.POSTED,
+      ...(branchUnitId ? { branchUnitId } : {}),
+      ...(partyFilter || searchFilter ? { AND: [partyFilter, searchFilter].filter(Boolean) as Prisma.RevolvingFundWhereInput[] } : {}),
+    };
+
+    const [records, total] = await Promise.all([
+      this.prisma.revolvingFund.findMany({
+        where,
+        include: { party: true, details: { orderBy: { lineNumber: 'asc' } } },
+        orderBy: [{ documentDate: 'desc' }, { id: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.revolvingFund.count({ where }),
+    ]);
+    const consumedDetailAmounts = await this.getReplenishmentConsumedDetailAmounts(
+      records.map((record) => ({ id: record.id.toString(), transactionNo: record.transactionNo })),
+      companyId,
+    );
+
+    const candidates = records
+      .map((record) => {
+        const sourceId = record.id.toString();
+        const allDetails = record.details.map((detail) => {
+          const detailGrossAmount = Number(detail.grossAmount || detail.amount || 0);
+          const detailDisburseAmount = Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0);
+          const consumptionKey = getRevolvingFundDetailConsumptionKey(sourceId, detail.supplierCodeSnapshot, detail.supplierNameSnapshot);
+          const remainingConsumedDetail = consumedDetailAmounts.get(consumptionKey) ?? {
+            gross: 0,
+            disburse: 0,
+          };
+          const consumedDetail = {
+            gross: roundMoney(Math.min(detailGrossAmount, remainingConsumedDetail.gross)),
+            disburse: roundMoney(Math.min(detailDisburseAmount, remainingConsumedDetail.disburse)),
+          };
+          consumedDetailAmounts.set(consumptionKey, {
+            gross: roundMoney(remainingConsumedDetail.gross - consumedDetail.gross),
+            disburse: roundMoney(remainingConsumedDetail.disburse - consumedDetail.disburse),
+          });
+          const availableGrossAmount = roundMoney(detailGrossAmount - consumedDetail.gross);
+          const availableAmount = roundMoney(detailDisburseAmount - consumedDetail.disburse);
+
+          return {
+            date: detail.date ? detail.date.toISOString().slice(0, 10) : null,
+            disburseAmount: detailDisburseAmount,
+            consumedAmount: consumedDetail.disburse,
+            availableAmount,
+            ewtAmount: Number(detail.ewtAmount),
+            ewtCode: detail.ewtCode,
+            ewtPercent: Number(detail.ewtPercent),
+            grossAmount: detailGrossAmount,
+            consumedGrossAmount: consumedDetail.gross,
+            availableGrossAmount,
+            id: detail.id.toString(),
+            lineNumber: detail.lineNumber,
+            netAmount: Number(detail.netAmount),
+            particulars: detail.particulars,
+            remarks: detail.remarks,
+            responsibilityCenter: detail.responsibilityCenterSnapshot,
+            responsibilityCenterCode: detail.responsibilityCenterCodeSnapshot,
+            responsibilityCenterId: detail.responsibilityCenterId?.toString() ?? null,
+            supplierCode: detail.supplierCodeSnapshot,
+            supplierName: detail.supplierNameSnapshot,
+            vatAmount: Number(detail.vatAmount),
+            vatPercent: Number(detail.vatPercent),
+            vatType: detail.vatType,
+          };
+        });
+        const details = allDetails.filter((detail) => detail.availableGrossAmount > 0 && detail.availableAmount > 0);
+        const amount = roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.grossAmount || detail.amount || 0), 0));
+        const disburseAmount = roundMoney(
+          record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0), 0),
+        );
+        const consumedGrossAmount = roundMoney(allDetails.reduce((sum, detail) => sum + detail.consumedGrossAmount, 0));
+        const consumedAmount = roundMoney(allDetails.reduce((sum, detail) => sum + detail.consumedAmount, 0));
+        const availableGrossAmount = roundMoney(details.reduce((sum, detail) => sum + detail.availableGrossAmount, 0));
+        const availableAmount = roundMoney(details.reduce((sum, detail) => sum + detail.availableAmount, 0));
+
+        return {
+          accountCode: record.accountCodeSnapshot,
+          accountTitle: record.accountTitleSnapshot,
+          amount,
+          availableAmount,
+          availableGrossAmount,
+          consumedAmount,
+          consumedGrossAmount,
+          currency: record.currencyCode,
+          details,
+          disburseAmount,
+          documentDate: record.documentDate.toISOString().slice(0, 10),
+          exchangeRate: Number(record.exchangeRate),
+          id: sourceId,
+          partyCode: record.party?.partyCodeNo ?? record.partyCodeSnapshot,
+          partyId: record.partyId?.toString() ?? null,
+          partyName: record.party?.partyName ?? record.partyNameSnapshot,
+          projectCode: record.projectCode,
+          projectName: record.projectName,
+          remarks: record.remarks,
+          responsibilityCenter: record.responsibilityCenterSnapshot,
+          responsibilityCenterCode: record.responsibilityCenterCodeSnapshot,
+          responsibilityCenterId: record.responsibilityCenterId?.toString() ?? null,
+          source: RevolvingFundCopySourceLabel,
+          sourceNo: record.transactionNo,
+          transactionNo: record.transactionNo,
+        };
+      })
+      .filter((record) => record.availableGrossAmount > 0 && record.availableAmount > 0 && record.details.length > 0);
+
+    return {
+      records: candidates,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
     };
   }
 
@@ -296,15 +463,14 @@ export class RevolvingFundService {
       updatedByUserId: user.id,
     };
 
-    if (dto.status === RevolvingFundStatus.APPROVED) {
+    if (dto.status === RevolvingFundStatus.POSTED) {
       statusData.approvedByUserId = user.id;
       statusData.approvedAt = now;
+      statusData.postedByUserId = user.id;
+      statusData.postedAt = now;
     } else if (dto.status === RevolvingFundStatus.DISAPPROVED) {
       statusData.disapprovedByUserId = user.id;
       statusData.disapprovedAt = now;
-    } else if (dto.status === RevolvingFundStatus.POSTED) {
-      statusData.postedByUserId = user.id;
-      statusData.postedAt = now;
     } else if (dto.status === RevolvingFundStatus.CANCELLED) {
       statusData.cancelledByUserId = user.id;
       statusData.cancelledAt = now;
@@ -346,7 +512,7 @@ export class RevolvingFundService {
   }
 
   private isSubmittedStatus(status: RevolvingFundStatus) {
-    return status === RevolvingFundStatus.FOR_APPROVAL || status === RevolvingFundStatus.APPROVED || status === RevolvingFundStatus.POSTED;
+    return status === RevolvingFundStatus.FOR_APPROVAL || status === RevolvingFundStatus.POSTED;
   }
 
   private assertRevolvingFundReady(record: {
@@ -386,8 +552,8 @@ export class RevolvingFundService {
       const grossAmount = line.grossAmount ?? amount;
       const vatAmount = line.vatAmount ?? 0;
       const ewtAmount = line.ewtAmount ?? 0;
-      const netAmount = line.netAmount ?? grossAmount - ewtAmount;
-      const disburseAmount = line.disburseAmount ?? amount;
+      const netAmount = line.netAmount ?? grossAmount - vatAmount;
+      const disburseAmount = line.disburseAmount ?? grossAmount - ewtAmount;
 
       let detailPartyId: bigint | null = null;
       if (line.partyId) {
@@ -430,6 +596,109 @@ export class RevolvingFundService {
         },
       });
     }
+  }
+
+  private async getReplenishmentConsumedAmounts(sources: Array<{ id: string; transactionNo: string }>, companyId: number) {
+    const consumed = {
+      disburse: new Map<string, number>(),
+      gross: new Map<string, number>(),
+    };
+    if (sources.length === 0) {
+      return consumed;
+    }
+
+    const sourceIdByReference = new Map<string, string>();
+    for (const source of sources) {
+      sourceIdByReference.set(source.id, source.id);
+      sourceIdByReference.set(formatRevolvingFundReference(source.transactionNo), source.id);
+      sourceIdByReference.set(source.transactionNo, source.id);
+    }
+
+    const details = await this.prisma.revolvingFundReplenishmentDetail.findMany({
+      where: {
+        companyId,
+        revolvingFundNo: { in: [...sourceIdByReference.keys()] },
+        replenishment: {
+          deletedAt: null,
+          status: {
+            in: [RevolvingFundReplenishmentStatus.DRAFT, RevolvingFundReplenishmentStatus.FOR_APPROVAL, RevolvingFundReplenishmentStatus.POSTED],
+          },
+        },
+      },
+      select: { amount: true, disburseAmount: true, revolvingFundNo: true },
+    });
+
+    for (const detail of details) {
+      const reference = cleanOptional(detail.revolvingFundNo);
+      if (!reference) {
+        continue;
+      }
+
+      const sourceId = sourceIdByReference.get(reference);
+      if (!sourceId) {
+        continue;
+      }
+
+      consumed.gross.set(sourceId, roundMoney((consumed.gross.get(sourceId) ?? 0) + Number(detail.amount || 0)));
+      consumed.disburse.set(sourceId, roundMoney((consumed.disburse.get(sourceId) ?? 0) + Number(detail.disburseAmount || detail.amount || 0)));
+    }
+
+    return consumed;
+  }
+
+  private async getReplenishmentConsumedDetailAmounts(sources: Array<{ id: string; transactionNo: string }>, companyId: number) {
+    const consumed = new Map<string, { gross: number; disburse: number }>();
+    if (sources.length === 0) {
+      return consumed;
+    }
+
+    const sourceIdByReference = new Map<string, string>();
+    for (const source of sources) {
+      sourceIdByReference.set(source.id, source.id);
+      sourceIdByReference.set(formatRevolvingFundReference(source.transactionNo), source.id);
+      sourceIdByReference.set(source.transactionNo, source.id);
+    }
+
+    const details = await this.prisma.revolvingFundReplenishmentDetail.findMany({
+      where: {
+        companyId,
+        revolvingFundNo: { in: [...sourceIdByReference.keys()] },
+        replenishment: {
+          deletedAt: null,
+          status: {
+            in: [RevolvingFundReplenishmentStatus.DRAFT, RevolvingFundReplenishmentStatus.FOR_APPROVAL, RevolvingFundReplenishmentStatus.POSTED],
+          },
+        },
+      },
+      select: {
+        amount: true,
+        disburseAmount: true,
+        revolvingFundNo: true,
+        supplierCodeSnapshot: true,
+        supplierNameSnapshot: true,
+      },
+    });
+
+    for (const detail of details) {
+      const reference = cleanOptional(detail.revolvingFundNo);
+      if (!reference) {
+        continue;
+      }
+
+      const sourceId = sourceIdByReference.get(reference);
+      if (!sourceId) {
+        continue;
+      }
+
+      const key = getRevolvingFundDetailConsumptionKey(sourceId, detail.supplierCodeSnapshot, detail.supplierNameSnapshot);
+      const current = consumed.get(key) ?? { gross: 0, disburse: 0 };
+      consumed.set(key, {
+        gross: roundMoney(current.gross + Number(detail.amount || 0)),
+        disburse: roundMoney(current.disburse + Number(detail.disburseAmount || detail.amount || 0)),
+      });
+    }
+
+    return consumed;
   }
 
   private buildListWhere(companyId: number, branchUnitId: number | null, query: GetRevolvingFundListQueryDto): Prisma.RevolvingFundWhereInput {
@@ -567,4 +836,8 @@ export class RevolvingFundService {
 
     return unit.id;
   }
+}
+
+export function formatRevolvingFundReference(transactionNo: string) {
+  return `RF:${transactionNo.trim()}`;
 }

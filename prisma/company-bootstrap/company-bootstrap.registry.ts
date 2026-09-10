@@ -3,9 +3,11 @@ import { EntitlementService } from '../../src/common/access/entitlements/entitle
 import { seedCompanyBankAccountDefaults } from '../../src/modules/maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyChartAccountDefaults } from '../../src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
 import { StandardDefaultChartAccounts } from '../../src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts-defaults.seed';
-import { seedCompanyDefaultAccountDefaults } from '../../src/modules/maintenance/default-account/seed/default-accounts.seed';
+import { seedCompanyCollectionTypes } from '../../src/modules/maintenance/collection-type/seed/collection-types.seed';
+import { StandardCollectionTypeTemplates } from '../../src/modules/maintenance/collection-type/seed/collection-type-defaults.seed';
+import { seedCompanyDisbursementTypes } from '../../src/modules/maintenance/disbursement-type/seed/disbursement-types.seed';
 import { findSystemAccountGroupOrThrow, SystemAccountGroups } from '../../src/modules/maintenance/chart-of-accounts/utils/system-account-groups.util';
-import { StandardDefaultAccountTemplates } from '../../src/modules/maintenance/default-account/seed/default-account-defaults.seed';
+import { StandardDisbursementTypeTemplates } from '../../src/modules/maintenance/disbursement-type/seed/disbursement-type-defaults.seed';
 import {
   PaymentTypeMaintenanceSeedRecords,
   seedCompanyPaymentTypeMaintenanceDefaults,
@@ -421,34 +423,67 @@ export const CompanyBootstrapHandlers: CompanyBootstrapHandler[] = [
     },
   },
   {
-    key: 'default-accounts',
-    label: 'Default account records bootstrap',
+    key: 'disbursement-types',
+    label: 'Disbursement Type Maintenance defaults bootstrap',
     async inspect(companyId, tx) {
-      const existingDefaultAccounts = await tx.defaultAccount.findMany({
+      const existingDisbursementTypes = await tx.defaultAccount.findMany({
         where: {
           companyId,
+          type: 'EXPENSE',
           name: {
-            in: StandardDefaultAccountTemplates.map((template) => template.name),
+            in: StandardDisbursementTypeTemplates.map((template) => template.name),
           },
         },
         select: { name: true },
       });
-      const existingNames = new Set(existingDefaultAccounts.map((account) => account.name));
-      const missingDefaultAccounts = StandardDefaultAccountTemplates.filter((template) => !existingNames.has(template.name));
+      const existingNames = new Set(existingDisbursementTypes.map((account) => account.name));
+      const missingDisbursementTypes = StandardDisbursementTypeTemplates.filter((template) => !existingNames.has(template.name));
 
-      return missingDefaultAccounts.length === 0
-        ? ok('Default account records exist.', {
-            count: existingDefaultAccounts.length,
+      return missingDisbursementTypes.length === 0
+        ? ok('Disbursement type records exist.', {
+            count: existingDisbursementTypes.length,
           })
-        : missing('Default account records are incomplete.', [`Seed ${missingDefaultAccounts.length} missing default account records.`], {
-            count: existingDefaultAccounts.length,
-            expectedCount: StandardDefaultAccountTemplates.length,
-            missingNames: missingDefaultAccounts.map((template) => template.name),
+        : missing('Disbursement type records are incomplete.', [`Seed ${missingDisbursementTypes.length} missing disbursement type records.`], {
+            count: existingDisbursementTypes.length,
+            expectedCount: StandardDisbursementTypeTemplates.length,
+            missingNames: missingDisbursementTypes.map((template) => template.name),
           });
     },
-    backup: (companyId, tx) => backupCounts('default-accounts', companyId, tx),
+    backup: (companyId, tx) => backupCounts('disbursement-types', companyId, tx),
     async apply(companyId, tx) {
-      await seedCompanyDefaultAccountDefaults(tx, companyId);
+      await seedCompanyDisbursementTypes(tx, companyId);
+    },
+  },
+  {
+    key: 'collection-types',
+    label: 'Collection Type Maintenance defaults bootstrap',
+    async inspect(companyId, tx) {
+      const existingCollectionTypes = await tx.defaultAccount.findMany({
+        where: {
+          companyId,
+          type: 'COLLECTION',
+          name: {
+            in: StandardCollectionTypeTemplates.map((template) => template.name),
+          },
+        },
+        select: { name: true },
+      });
+      const existingNames = new Set(existingCollectionTypes.map((account) => account.name));
+      const missingCollectionTypes = StandardCollectionTypeTemplates.filter((template) => !existingNames.has(template.name));
+
+      return missingCollectionTypes.length === 0
+        ? ok('Collection type records exist.', {
+            count: existingCollectionTypes.length,
+          })
+        : missing('Collection type records are incomplete.', [`Seed ${missingCollectionTypes.length} missing collection type records.`], {
+            count: existingCollectionTypes.length,
+            expectedCount: StandardCollectionTypeTemplates.length,
+            missingNames: missingCollectionTypes.map((template) => template.name),
+          });
+    },
+    backup: (companyId, tx) => backupCounts('collection-types', companyId, tx),
+    async apply(companyId, tx) {
+      await seedCompanyCollectionTypes(tx, companyId);
     },
   },
   {

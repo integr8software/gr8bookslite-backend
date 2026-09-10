@@ -5,11 +5,14 @@ import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/tran
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { CreatePettyCashReplenishmentDto } from './dto/create-petty-cash-replenishment.dto';
+import { PettyCashReplenishmentCopyFromCandidatesResponseDto } from './copy-from/dto/petty-cash-replenishment-copy-from-candidate.dto';
+import { GetPettyCashReplenishmentCopyFromCandidatesQueryDto } from './copy-from/dto/get-petty-cash-replenishment-copy-from-candidates-query.dto';
 import { GetPettyCashReplenishmentListQueryDto } from './dto/get-petty-cash-replenishment-list-query.dto';
 import { PettyCashReplenishmentListResponseDto, PettyCashReplenishmentResponseDto } from './dto/petty-cash-replenishment-response.dto';
 import { UpdatePettyCashReplenishmentDto } from './dto/update-petty-cash-replenishment.dto';
 import { UpdatePettyCashReplenishmentStatusDto } from './dto/update-petty-cash-replenishment-status.dto';
 import { PettyCashReplenishmentService } from './petty-cash-replenishment.service';
+import { PettyCashReplenishmentCopySourceService } from './copy-from/petty-cash-replenishment-copy-source.service';
 
 @ApiTags('Petty Cash Replenishment')
 @ApiBearerAuth()
@@ -19,7 +22,10 @@ import { PettyCashReplenishmentService } from './petty-cash-replenishment.servic
   version: '1',
 })
 export class PettyCashReplenishmentController {
-  constructor(private readonly service: PettyCashReplenishmentService) {}
+  constructor(
+    private readonly service: PettyCashReplenishmentService,
+    private readonly copySourceService: PettyCashReplenishmentCopySourceService,
+  ) {}
 
   @Get('transaction-number')
   @ApiOperation({ summary: 'Suggest a Petty Cash Replenishment transaction number' })
@@ -34,6 +40,13 @@ export class PettyCashReplenishmentController {
   @ApiOkResponse({ type: PettyCashReplenishmentListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetPettyCashReplenishmentListQueryDto) {
     return this.service.findAll(user, query);
+  }
+
+  @Get('copy-from/candidates')
+  @ApiOperation({ summary: 'List available Petty Cash Replenishments for voucher Copy From' })
+  @ApiOkResponse({ description: 'Available Petty Cash Replenishments for Copy From.', type: PettyCashReplenishmentCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetPettyCashReplenishmentCopyFromCandidatesQueryDto) {
+    return this.copySourceService.findCandidates(user, query);
   }
 
   @Get(':id')

@@ -19,10 +19,12 @@ const IgnoredLabels = new Set(['Add', 'Edit', 'View', 'Save', 'Cancel', 'Delete'
 const ModuleDirectoryHints: Record<string, string[]> = {
   DO: ['dashboard'],
   COA: ['financial-maintenance/charts-of-accounts'],
-  DA: ['financial-maintenance/default-account'],
+  DTM: ['financial-maintenance/disbursement-type'],
+  CTM: ['financial-maintenance/collection-type'],
   BM: ['financial-maintenance/bank-masterfile'],
   SM: ['financial-maintenance/services-maintenance'],
   PM: ['party-management'],
+  PJM: ['project-maintenance'],
   I: ['item-management/items'],
   IB: ['item-management/item-bundles'],
   IC: ['item-management/item-category'],
@@ -51,9 +53,7 @@ const ModuleDirectoryHints: Record<string, string[]> = {
   CV: ['cash-disbursement/cash-voucher'],
   DV: ['cash-disbursement/disbursement-voucher'],
   CA: ['cash-disbursement/cash-advance'],
-  CAME: ['cash-disbursement/cash-advance-multiple-entry'],
   PCV: ['cash-disbursement/petty-cash-voucher'],
-  PCF: ['cash-disbursement/petty-cash-fund'],
   PCR: ['cash-disbursement/petty-cash-replenishment'],
   RF: ['cash-disbursement/revolving-fund'],
   RFR: ['cash-disbursement/revolving-fund-replenishment'],
@@ -186,7 +186,6 @@ function discoverModuleFields(moduleCode: string, moduleName: string): ModuleFie
             });
           }
         }
-
       }
     }
   }

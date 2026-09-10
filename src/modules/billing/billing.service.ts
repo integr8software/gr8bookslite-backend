@@ -221,10 +221,7 @@ export class BillingService {
           planPriceId: planPrice.id,
           billingCycle: dto.billingCycle,
         });
-    const isPaidTrialOnboarding =
-      dto.purpose === BillingPaymentPurpose.ONBOARDING &&
-      (plan.trialDays ?? 0) > 0 &&
-      (plan.trialPriceInCents ?? 0) > 0;
+    const isPaidTrialOnboarding = dto.purpose === BillingPaymentPurpose.ONBOARDING && (plan.trialDays ?? 0) > 0 && (plan.trialPriceInCents ?? 0) > 0;
 
     const periodStart = new Date();
     const periodEnd = isPaidTrialOnboarding
@@ -584,12 +581,12 @@ export class BillingService {
           startsAt: readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? new Date(),
           trialEndsAt:
             plan.trialDays > 0
-              ? readProviderUnixDate(remoteSubscriptionAttributes.trial_end) ??
+              ? (readProviderUnixDate(remoteSubscriptionAttributes.trial_end) ??
                 readProviderUnixDate(remoteSubscriptionAttributes.next_billing_schedule) ??
                 this.addBillingInterval(readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? new Date(), {
                   intervalCount: plan.trialDays,
                   intervalUnit: 'DAY',
-                })
+                }))
               : null,
           currentPeriodStartAt: readProviderUnixDate(remoteSubscriptionAttributes.created_at) ?? null,
           nextBillingAt: readProviderUnixDate(remoteSubscriptionAttributes.next_billing_schedule),

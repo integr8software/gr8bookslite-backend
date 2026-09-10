@@ -18,7 +18,7 @@ export class GetPettyCashVoucherListQueryDto {
   @Min(1)
   limit?: number;
 
-  @ApiPropertyOptional({ description: 'Search term', example: 'Acme' })
+  @ApiPropertyOptional({ description: 'Search term', example: 'PCV-2026' })
   @IsOptional()
   @IsString()
   search?: string;
@@ -28,7 +28,7 @@ export class GetPettyCashVoucherListQueryDto {
   @IsEnum(PettyCashVoucherStatus)
   status?: PettyCashVoucherStatus;
 
-  @ApiPropertyOptional({ description: 'Party code filter', example: 'PTY-001' })
+  @ApiPropertyOptional({ description: 'Party code filter', example: 'EMP-001' })
   @IsOptional()
   @IsString()
   partyCode?: string;
@@ -61,7 +61,7 @@ export class GetPettyCashVoucherListQueryDto {
   @IsNumber()
   branchUnitId?: number;
 
-  @ApiPropertyOptional({ description: 'Sort column', example: 'voucherNo' })
+  @ApiPropertyOptional({ description: 'Sort column', example: 'transactionNo' })
   @IsOptional()
   @IsString()
   sortBy?: string;

@@ -3,6 +3,8 @@ import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { GetPurchaseOrderCopyFromCandidatesQueryDto } from './copy-from/dto/get-purchase-order-copy-from-candidates-query.dto';
+import { PurchaseOrderCopyFromCandidatesResponseDto } from './copy-from/dto/purchase-order-copy-from-candidate.dto';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { GetPurchaseOrderListQueryDto } from './dto/get-purchase-order-list-query.dto';
 import { PurchaseOrderContainerResponseDto, PurchaseOrderListResponseDto } from './dto/purchase-order-response.dto';
@@ -15,6 +17,12 @@ import { PurchaseOrderService } from './purchase-order.service';
 @Controller({ path: 'purchasing/purchase-order', version: '1' })
 export class PurchaseOrderController {
   constructor(private readonly service: PurchaseOrderService) {}
+  @Get('copy-from/candidates')
+  @ApiOperation({ summary: 'List available Purchase Orders for Advances to Suppliers Copy From' })
+  @ApiOkResponse({ description: 'Available Purchase Orders for Copy From.', type: PurchaseOrderCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetPurchaseOrderCopyFromCandidatesQueryDto) {
+    return this.service.findCopyFromCandidates(user, query);
+  }
   @Get()
   @ApiOperation({ summary: 'List purchase orders' })
   @ApiOkResponse({ type: PurchaseOrderListResponseDto })

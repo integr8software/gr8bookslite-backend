@@ -1,5 +1,14 @@
 import { BadRequestException } from '@nestjs/common';
-import { BillingCycle, BillingMode, BillingProvider, CompanyStatus, SubscriptionPlanScope, SubscriptionPlanStatus, SubscriptionStatus, TaxpayerType } from '@prisma/client';
+import {
+  BillingCycle,
+  BillingMode,
+  BillingProvider,
+  CompanyStatus,
+  SubscriptionPlanScope,
+  SubscriptionPlanStatus,
+  SubscriptionStatus,
+  TaxpayerType,
+} from '@prisma/client';
 import { AppRole } from '../../common/enums/app-role.enum';
 import { OnboardingService } from './onboarding.service';
 

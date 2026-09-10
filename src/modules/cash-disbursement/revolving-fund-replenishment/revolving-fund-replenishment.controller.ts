@@ -5,11 +5,14 @@ import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/tran
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { CreateRevolvingFundReplenishmentDto } from './dto/create-revolving-fund-replenishment.dto';
+import { RevolvingFundReplenishmentCopyFromCandidatesResponseDto } from './copy-from/dto/revolving-fund-replenishment-copy-from-candidate.dto';
+import { GetRevolvingFundReplenishmentCopyFromCandidatesQueryDto } from './copy-from/dto/get-revolving-fund-replenishment-copy-from-candidates-query.dto';
 import { GetRevolvingFundReplenishmentListQueryDto } from './dto/get-revolving-fund-replenishment-list-query.dto';
 import { RevolvingFundReplenishmentListResponseDto, RevolvingFundReplenishmentResponseDto } from './dto/revolving-fund-replenishment-response.dto';
 import { UpdateRevolvingFundReplenishmentDto } from './dto/update-revolving-fund-replenishment.dto';
 import { UpdateRevolvingFundReplenishmentStatusDto } from './dto/update-revolving-fund-replenishment-status.dto';
 import { RevolvingFundReplenishmentService } from './revolving-fund-replenishment.service';
+import { RevolvingFundReplenishmentCopySourceService } from './copy-from/revolving-fund-replenishment-copy-source.service';
 
 @ApiTags('Revolving Fund Replenishment')
 @ApiBearerAuth()
@@ -19,7 +22,10 @@ import { RevolvingFundReplenishmentService } from './revolving-fund-replenishmen
   version: '1',
 })
 export class RevolvingFundReplenishmentController {
-  constructor(private readonly service: RevolvingFundReplenishmentService) {}
+  constructor(
+    private readonly service: RevolvingFundReplenishmentService,
+    private readonly copySourceService: RevolvingFundReplenishmentCopySourceService,
+  ) {}
 
   @Get('transaction-number')
   @ApiOperation({ summary: 'Suggest a Revolving Fund Replenishment transaction number' })
@@ -34,6 +40,13 @@ export class RevolvingFundReplenishmentController {
   @ApiOkResponse({ type: RevolvingFundReplenishmentListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetRevolvingFundReplenishmentListQueryDto) {
     return this.service.findAll(user, query);
+  }
+
+  @Get('copy-from/candidates')
+  @ApiOperation({ summary: 'List available Revolving Fund Replenishments for voucher Copy From' })
+  @ApiOkResponse({ description: 'Available Revolving Fund Replenishments for Copy From.', type: RevolvingFundReplenishmentCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetRevolvingFundReplenishmentCopyFromCandidatesQueryDto) {
+    return this.copySourceService.findCandidates(user, query);
   }
 
   @Get(':id')

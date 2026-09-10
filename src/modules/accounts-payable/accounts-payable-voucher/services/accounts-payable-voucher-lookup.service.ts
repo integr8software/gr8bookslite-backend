@@ -153,24 +153,14 @@ export class AccountsPayableVoucherLookupService {
 
   async findExpenseTypes(user: AuthUser) {
     const companyId = await this.getAccessibleCompanyId(user);
-    const defaultAccounts = await this.prisma.defaultAccount.findMany({
+    const disbursementTypes = await this.prisma.defaultAccount.findMany({
       where: {
         companyId,
         deletedAt: null,
-        status: ChartAccountStatus.ACTIVE,
         type: DefaultAccountTemplateType.EXPENSE,
-        expenseCoa: {
-          is: {
-            companyId,
-            deletedAt: null,
-            isPostingAccount: true,
-            status: ChartAccountStatus.ACTIVE,
-          },
-        },
+        status: ChartAccountStatus.ACTIVE,
       },
-      orderBy: [{ name: 'asc' }, { id: 'asc' }],
       select: {
-        id: true,
         name: true,
         description: true,
         expenseCoa: {
@@ -180,23 +170,30 @@ export class AccountsPayableVoucherLookupService {
             accountTitle: true,
             accountType: true,
             accountNature: true,
-            statementSection: true,
-            description: true,
-            status: true,
           },
         },
       },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
     });
 
     return {
-      accounts: defaultAccounts.flatMap((defaultAccount) => {
-        if (!defaultAccount.expenseCoa) {
+      accounts: disbursementTypes.flatMap((disbursementType) => {
+        if (!disbursementType.expenseCoa) {
           return [];
         }
 
-        return this.mapChartAccountDropdownOption(defaultAccount.expenseCoa, {
-          accountName: defaultAccount.name,
-          description: defaultAccount.description ?? defaultAccount.expenseCoa.description ?? defaultAccount.name,
+        return this.mapChartAccountDropdownOption({
+          id: disbursementType.expenseCoa.id,
+          accountCode: disbursementType.expenseCoa.accountCode,
+          accountTitle: disbursementType.expenseCoa.accountTitle,
+          accountType: disbursementType.expenseCoa.accountType,
+          accountNature: disbursementType.expenseCoa.accountNature,
+          statementSection: null,
+          description: disbursementType.description,
+          status: ChartAccountStatus.ACTIVE,
+        }, {
+          accountName: disbursementType.name,
+          description: disbursementType.description || disbursementType.name,
         });
       }),
     };

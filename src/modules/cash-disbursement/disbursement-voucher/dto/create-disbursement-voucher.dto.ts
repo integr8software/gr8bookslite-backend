@@ -212,14 +212,14 @@ export class CreateDisbursementVoucherDto {
   @IsOptional()
   status?: DisbursementVoucherStatus;
 
-  @ApiPropertyOptional({ description: 'Voucher Line Entries / Details', type: [DisbursementVoucherDetailDto] })
+  @ApiPropertyOptional({ description: 'Voucher Line Entries / Details', type: () => [DisbursementVoucherDetailDto] })
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => DisbursementVoucherDetailDto)
   details?: DisbursementVoucherDetailDto[];
 
-  @ApiPropertyOptional({ description: 'Journal Entries', type: [JournalEntryDto] })
+  @ApiPropertyOptional({ description: 'Journal Entries', type: () => [JournalEntryDto] })
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })

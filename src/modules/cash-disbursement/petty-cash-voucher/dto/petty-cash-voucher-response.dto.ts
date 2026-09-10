@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PettyCashVoucherStatus } from '@prisma/client';
+import { PettyCashVoucherDetailDto } from './petty-cash-voucher-detail.dto';
 
 export class PettyCashVoucherResponseDto {
   @ApiProperty({ description: 'ID', example: '1' })
@@ -11,10 +12,7 @@ export class PettyCashVoucherResponseDto {
   @ApiPropertyOptional({ description: 'Branch Unit ID', example: 1 })
   branchUnitId?: number | null;
 
-  @ApiProperty({ description: 'Voucher Number', example: 'PCV-2026-000001' })
-  voucherNo: string;
-
-  @ApiProperty({ description: 'Transaction Number alias', example: 'PCV-2026-000001' })
+  @ApiProperty({ description: 'Transaction Number', example: 'PCV-2026-000001' })
   transactionNo: string;
 
   @ApiProperty({ description: 'Document Date', example: '2026-05-21' })
@@ -23,19 +21,19 @@ export class PettyCashVoucherResponseDto {
   @ApiPropertyOptional({ description: 'Party ID', example: '1' })
   partyId?: string | null;
 
-  @ApiProperty({ description: 'Party Code Snapshot', example: 'PTY-001' })
+  @ApiProperty({ description: 'Party Code Snapshot', example: 'EMP-001' })
   partyCodeSnapshot: string;
 
-  @ApiProperty({ description: 'Party Name Snapshot', example: 'Acme Corp' })
+  @ApiProperty({ description: 'Party Name Snapshot', example: 'John Doe' })
   partyNameSnapshot: string;
 
-  @ApiPropertyOptional({ description: 'Party Code alias', example: 'PTY-001' })
+  @ApiPropertyOptional({ description: 'Party Code alias', example: 'EMP-001' })
   partyCode?: string;
 
-  @ApiPropertyOptional({ description: 'Party Name alias', example: 'Acme Corp' })
+  @ApiPropertyOptional({ description: 'Party Name alias', example: 'John Doe' })
   partyName?: string;
 
-  @ApiPropertyOptional({ description: 'Default Account / Credit Account ID', example: '1' })
+  @ApiPropertyOptional({ description: 'Credit Account ID / Default Account ID', example: '1' })
   creditAccountId?: string | null;
 
   @ApiPropertyOptional({ description: 'Default Account ID alias', example: '1' })
@@ -44,13 +42,13 @@ export class PettyCashVoucherResponseDto {
   @ApiProperty({ description: 'Account Code Snapshot', example: '1010101000' })
   accountCodeSnapshot: string;
 
-  @ApiPropertyOptional({ description: 'Account Title Snapshot', example: 'Petty Cash Fund' })
+  @ApiPropertyOptional({ description: 'Account Title Snapshot', example: 'Petty Cash Voucher' })
   accountTitleSnapshot?: string | null;
 
   @ApiPropertyOptional({ description: 'Default Account Code alias', example: '1010101000' })
   accountCode?: string;
 
-  @ApiPropertyOptional({ description: 'Default Account Title alias', example: 'Petty Cash Fund' })
+  @ApiPropertyOptional({ description: 'Default Account Title alias', example: 'Petty Cash Voucher' })
   accountTitle?: string | null;
 
   @ApiPropertyOptional({ description: 'Responsibility Center ID', example: '1' })
@@ -83,47 +81,17 @@ export class PettyCashVoucherResponseDto {
   @ApiProperty({ description: 'Exchange Rate', example: 1.0 })
   exchangeRate: number;
 
-  @ApiProperty({ description: 'Amount', example: 5000.0 })
+  @ApiProperty({ description: 'Amount', example: 10000.0 })
   amount: number;
 
-  @ApiProperty({ description: 'Gross Amount', example: 5000.0 })
-  grossAmount: number;
-
-  @ApiProperty({ description: 'Net Amount', example: 4500.0 })
-  netAmount: number;
-
-  @ApiPropertyOptional({ description: 'VAT Type', example: 'VAT Inclusive' })
-  vatType?: string | null;
-
-  @ApiPropertyOptional({ description: 'VATable flag', example: 'True' })
-  vatable?: string | null;
-
-  @ApiPropertyOptional({ description: 'VAT Rate Description', example: '12%' })
-  vatRate?: string | null;
-
-  @ApiProperty({ description: 'VAT Percent', example: 12.0 })
-  vatPercent: number;
-
-  @ApiProperty({ description: 'VAT Amount', example: 600.0 })
-  vatAmount: number;
-
-  @ApiPropertyOptional({ description: 'EWT Code', example: 'WC100' })
-  ewtCode?: string | null;
-
-  @ApiPropertyOptional({ description: 'EWT Rate Description', example: '2%' })
-  ewtRate?: string | null;
-
-  @ApiProperty({ description: 'EWT Percent', example: 2.0 })
-  ewtPercent: number;
-
-  @ApiProperty({ description: 'EWT Amount', example: 100.0 })
-  ewtAmount: number;
-
-  @ApiPropertyOptional({ description: 'Remarks', example: 'Office supplies expense' })
+  @ApiPropertyOptional({ description: 'Remarks', example: 'Petty cash fund establishment' })
   remarks?: string | null;
 
   @ApiProperty({ description: 'Status', enum: PettyCashVoucherStatus, example: PettyCashVoucherStatus.DRAFT })
   status: PettyCashVoucherStatus;
+
+  @ApiPropertyOptional({ description: 'Fund Details', type: () => [PettyCashVoucherDetailDto] })
+  details?: PettyCashVoucherDetailDto[];
 
   @ApiProperty({ description: 'Created At', example: '2026-05-21T08:00:00.000Z' })
   createdAt: string;
@@ -153,9 +121,9 @@ export class PettyCashVoucherPaginationMetaDto {
 }
 
 export class PettyCashVoucherListResponseDto {
-  @ApiProperty({ type: [PettyCashVoucherResponseDto] })
+  @ApiProperty({ type: () => [PettyCashVoucherResponseDto] })
   items: PettyCashVoucherResponseDto[];
 
-  @ApiProperty({ type: PettyCashVoucherPaginationMetaDto })
+  @ApiProperty({ type: () => PettyCashVoucherPaginationMetaDto })
   meta: PettyCashVoucherPaginationMetaDto;
 }

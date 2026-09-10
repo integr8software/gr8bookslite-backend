@@ -3,22 +3,39 @@ import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { CreateItemBasicInfoDto, UpdateItemBasicInfoDto, ItemBasicInfoResponseDto, ItemBasicInfoListResponseDto } from './dto/item-basic-info.dto';
+import {
+  CreateItemBasicInfoDto,
+  UpdateItemBasicInfoDto,
+  ItemBasicInfoResponseDto,
+  ItemBasicInfoListResponseDto,
+  ItemBasicInfoOptionsResponseDto,
+} from './dto/item-basic-info.dto';
 import { UpsertItemPricingDto, ItemPricingResponseDto } from './dto/item-pricing.dto';
 import { ItemsService } from './items.service';
+import { ItemsLookupService } from './lookups/items-lookup.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 @ApiTags('Items')
 @Controller({ path: 'maintenance/items', version: '1' })
 export class ItemsController {
-  constructor(private readonly items: ItemsService) {}
+  constructor(
+    private readonly items: ItemsService,
+    private readonly itemsLookupService: ItemsLookupService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get list of item basic info records' })
   @ApiOkResponse({ type: ItemBasicInfoListResponseDto })
   findAll(@CurrentUser() user: AuthUser) {
     return this.items.findAll(user);
+  }
+
+  @Get('options')
+  @ApiOperation({ summary: 'Get item options' })
+  @ApiOkResponse({ type: ItemBasicInfoOptionsResponseDto })
+  findOptions(@CurrentUser() user: AuthUser) {
+    return this.itemsLookupService.findOptionsForCompanyUser(user);
   }
 
   @Get(':id')

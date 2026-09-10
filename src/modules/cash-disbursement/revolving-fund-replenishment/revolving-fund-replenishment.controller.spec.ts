@@ -2,6 +2,7 @@ import { PATH_METADATA } from '@nestjs/common/constants';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { RevolvingFundReplenishmentController } from './revolving-fund-replenishment.controller';
 import { RevolvingFundReplenishmentService } from './revolving-fund-replenishment.service';
+import { RevolvingFundReplenishmentCopySourceService } from './copy-from/revolving-fund-replenishment-copy-source.service';
 
 describe('RevolvingFundReplenishmentController', () => {
   const service = {
@@ -13,7 +14,13 @@ describe('RevolvingFundReplenishmentController', () => {
     updateStatus: jest.fn(),
     remove: jest.fn(),
   };
-  const controller = new RevolvingFundReplenishmentController(service as unknown as RevolvingFundReplenishmentService);
+  const copySourceService = {
+    findCandidates: jest.fn(),
+  };
+  const controller = new RevolvingFundReplenishmentController(
+    service as unknown as RevolvingFundReplenishmentService,
+    copySourceService as unknown as RevolvingFundReplenishmentCopySourceService,
+  );
   const user = { id: 1, companyId: 2 } as AuthUser;
 
   beforeEach(() => jest.clearAllMocks());

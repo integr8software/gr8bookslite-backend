@@ -4,12 +4,16 @@ import { toOptionalInt } from '../../../../common/utils/dto-transform.util';
 
 export const AccountsPayableVoucherStatusInputValues = [
   'DRAFT',
+  'FOR_APPROVAL',
   'APPROVED',
+  'POSTED',
   'DISAPPROVED',
   'CLOSED',
   'CANCELLED',
   'Draft',
+  'For Approval',
   'Approved',
+  'Posted',
   'Disapproved',
   'Closed',
   'Cancelled',

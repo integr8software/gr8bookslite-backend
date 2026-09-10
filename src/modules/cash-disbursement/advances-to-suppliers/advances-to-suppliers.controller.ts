@@ -5,6 +5,9 @@ import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { TransactionNumberSuggestionResponseDto } from '../../../common/dto/transaction-number-suggestion-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AdvancesToSuppliersService } from './advances-to-suppliers.service';
+import { AdvanceToSupplierCopySourceService } from './copy-from/advance-to-supplier-copy-source.service';
+import { AdvanceToSupplierCopyFromCandidatesResponseDto } from './copy-from/dto/advance-to-supplier-copy-from-candidate.dto';
+import { GetAdvanceToSupplierCopyFromCandidatesQueryDto } from './copy-from/dto/get-advance-to-supplier-copy-from-candidates-query.dto';
 import { AdvanceToSupplierListResponseDto, AdvanceToSupplierResponseDto } from './dto/advance-to-supplier-response.dto';
 import { CreateAdvanceToSupplierDto } from './dto/create-advance-to-supplier.dto';
 import { GetAdvanceToSupplierListQueryDto } from './dto/get-advance-to-supplier-list-query.dto';
@@ -19,7 +22,10 @@ import { UpdateAdvanceToSupplierDto } from './dto/update-advance-to-supplier.dto
   version: '1',
 })
 export class AdvancesToSuppliersController {
-  constructor(private readonly service: AdvancesToSuppliersService) {}
+  constructor(
+    private readonly service: AdvancesToSuppliersService,
+    private readonly copySourceService: AdvanceToSupplierCopySourceService,
+  ) {}
 
   @Get('transaction-number')
   @ApiOperation({ summary: 'Suggest an Advances to Suppliers transaction number' })
@@ -34,6 +40,13 @@ export class AdvancesToSuppliersController {
   @ApiOkResponse({ type: AdvanceToSupplierListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetAdvanceToSupplierListQueryDto) {
     return this.service.findAll(user, query);
+  }
+
+  @Get('copy-from/candidates')
+  @ApiOperation({ summary: 'List available Advances to Suppliers for voucher Copy From' })
+  @ApiOkResponse({ description: 'Available Advances to Suppliers for Copy From.', type: AdvanceToSupplierCopyFromCandidatesResponseDto })
+  findCopyFromCandidates(@CurrentUser() user: AuthUser, @Query() query: GetAdvanceToSupplierCopyFromCandidatesQueryDto) {
+    return this.copySourceService.findCandidates(user, query);
   }
 
   @Get(':id')
