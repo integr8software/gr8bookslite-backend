@@ -1546,7 +1546,6 @@ model ItemPricing {
   item    ItemBasicInfo @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, itemId], map: "item_pricing_company_item_id_key")
-  @@index([itemId])
   @@index([companyId])
   @@map("item_pricing")
 }
