@@ -60,5 +60,3 @@ export class SaveOnboardingBillingDto {
   @Matches(/^pm_[A-Za-z0-9]+$/, { message: 'Enter a valid PayMongo payment method reference.' })
   paymentMethodId?: string;
 }
-
-

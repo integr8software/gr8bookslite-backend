@@ -27,8 +27,8 @@ export class GetProjectMaintenanceListQueryDto {
   limit?: number;
 
   @IsOptional()
-  @IsIn(['projectName', 'status', 'createdAt', 'updatedAt'])
-  sortBy?: 'projectName' | 'status' | 'createdAt' | 'updatedAt';
+  @IsIn(['projectCode', 'projectName', 'status', 'createdAt', 'updatedAt'])
+  sortBy?: 'projectCode' | 'projectName' | 'status' | 'createdAt' | 'updatedAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

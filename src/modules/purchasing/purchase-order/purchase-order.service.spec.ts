@@ -124,9 +124,7 @@ describe('PurchaseOrderService business logic', () => {
   it('requires Services lines to select an active Service Maintenance record', async () => {
     const { buildEntries, serviceMaintenanceFindFirst } = createService();
 
-    await expect(buildEntries(7, 3, [createItem()], 'Services')).rejects.toThrow(
-      new BadRequestException('Select a valid service from Service Maintenance.'),
-    );
+    await expect(buildEntries(7, 3, [createItem()], 'Services')).rejects.toThrow(new BadRequestException('Select a valid service from Service Maintenance.'));
     expect(serviceMaintenanceFindFirst).not.toHaveBeenCalled();
   });
 
@@ -141,13 +139,15 @@ describe('PurchaseOrderService business logic', () => {
       'Services',
     );
 
-    expect(entry).toEqual(expect.objectContaining({
-      serviceMaintenanceId: 15n,
-      itemId: null,
-      itemCode: null,
-      barcode: null,
-      uom: null,
-    }));
+    expect(entry).toEqual(
+      expect.objectContaining({
+        serviceMaintenanceId: 15n,
+        itemId: null,
+        itemCode: null,
+        barcode: null,
+        uom: null,
+      }),
+    );
   });
 });
 

@@ -63,6 +63,33 @@
         ]
       }
     },
+    "/api/v1/maintenance/items/options": {
+      "get": {
+        "operationId": "ItemsController_findOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemBasicInfoOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get item options",
+        "tags": [
+          "Items"
+        ]
+      }
+    },
     "/api/v1/maintenance/items/{id}": {
       "get": {
         "operationId": "ItemsController_findOne_v1",
@@ -4336,6 +4363,7 @@
             "schema": {
               "type": "string",
               "enum": [
+                "projectCode",
                 "projectName",
                 "status",
                 "createdAt",
@@ -4409,6 +4437,101 @@
           }
         ],
         "summary": "Create a project record",
+        "tags": [
+          "Project Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/project-maintenance/options": {
+      "get": {
+        "operationId": "ProjectMaintenanceController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "projectCode",
+                "projectName",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMaintenanceOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get project options",
         "tags": [
           "Project Maintenance"
         ]
@@ -6749,9 +6872,9 @@
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/default-accounts": {
+    "/api/v1/maintenance/financial-management/disbursement-types": {
       "get": {
-        "operationId": "DefaultAccountController_findAll_v1",
+        "operationId": "DisbursementTypeController_findAll_v1",
         "parameters": [
           {
             "name": "search",
@@ -6841,7 +6964,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DefaultAccountListResponseDto"
+                  "$ref": "#/components/schemas/DisbursementTypeListResponseDto"
                 }
               }
             }
@@ -6852,20 +6975,20 @@
             "bearer": []
           }
         ],
-        "summary": "Get paginated list of default account template records",
+        "summary": "Get paginated list of disbursement type records",
         "tags": [
-          "Default Account"
+          "Disbursement Type Maintenance"
         ]
       },
       "post": {
-        "operationId": "DefaultAccountController_create_v1",
+        "operationId": "DisbursementTypeController_create_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateDefaultAccountTemplateDto"
+                "$ref": "#/components/schemas/CreateDisbursementTypeTemplateDto"
               }
             }
           }
@@ -6876,7 +6999,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaveDefaultAccountResponseDto"
+                  "$ref": "#/components/schemas/SaveDisbursementTypeResponseDto"
                 }
               }
             }
@@ -6887,15 +7010,15 @@
             "bearer": []
           }
         ],
-        "summary": "Create a default account template record",
+        "summary": "Create a disbursement type record",
         "tags": [
-          "Default Account"
+          "Disbursement Type Maintenance"
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/default-accounts/options": {
+    "/api/v1/maintenance/financial-management/disbursement-types/options": {
       "get": {
-        "operationId": "DefaultAccountController_findOptions_v1",
+        "operationId": "DisbursementTypeController_findOptions_v1",
         "parameters": [
           {
             "name": "search",
@@ -6925,7 +7048,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DefaultAccountOptionsResponseDto"
+                  "$ref": "#/components/schemas/DisbursementTypeOptionsResponseDto"
                 }
               }
             }
@@ -6936,72 +7059,15 @@
             "bearer": []
           }
         ],
-        "summary": "Get default account options",
+        "summary": "Get disbursement type options",
         "tags": [
-          "Default Account"
+          "Disbursement Type Maintenance"
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/default-accounts/options/{type}": {
+    "/api/v1/maintenance/financial-management/disbursement-types/expense-parent-options": {
       "get": {
-        "operationId": "DefaultAccountController_findOptionsByType_v1",
-        "parameters": [
-          {
-            "name": "type",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 120,
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "INACTIVE"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DefaultAccountOptionsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get default account options by template type",
-        "tags": [
-          "Default Account"
-        ]
-      }
-    },
-    "/api/v1/maintenance/financial-management/default-accounts/expense-parent-options": {
-      "get": {
-        "operationId": "DefaultAccountController_findExpenseParentOptions_v1",
+        "operationId": "DisbursementTypeController_findExpenseParentOptions_v1",
         "parameters": [],
         "responses": {
           "200": {
@@ -7009,7 +7075,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DefaultAccountExpenseParentOptionsResponseDto"
+                  "$ref": "#/components/schemas/DisbursementTypeExpenseParentOptionsResponseDto"
                 }
               }
             }
@@ -7020,15 +7086,15 @@
             "bearer": []
           }
         ],
-        "summary": "Get default expense parent account options",
+        "summary": "Get disbursement type expense parent account options",
         "tags": [
-          "Default Account"
+          "Disbursement Type Maintenance"
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/default-accounts/expense-sub-accounts": {
+    "/api/v1/maintenance/financial-management/disbursement-types/expense-sub-accounts": {
       "post": {
-        "operationId": "DefaultAccountController_createExpenseSubAccount_v1",
+        "operationId": "DisbursementTypeController_createExpenseSubAccount_v1",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -7046,7 +7112,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaveDefaultAccountExpenseSubAccountResponseDto"
+                  "$ref": "#/components/schemas/SaveDisbursementTypeExpenseSubAccountResponseDto"
                 }
               }
             }
@@ -7057,15 +7123,15 @@
             "bearer": []
           }
         ],
-        "summary": "Create a default expense sub-account",
+        "summary": "Create a disbursement type expense sub-account",
         "tags": [
-          "Default Account"
+          "Disbursement Type Maintenance"
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/default-accounts/{id}": {
+    "/api/v1/maintenance/financial-management/disbursement-types/{id}": {
       "get": {
-        "operationId": "DefaultAccountController_findOne_v1",
+        "operationId": "DisbursementTypeController_findOne_v1",
         "parameters": [
           {
             "name": "id",
@@ -7082,7 +7148,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DefaultAccountContainerResponseDto"
+                  "$ref": "#/components/schemas/DisbursementTypeContainerResponseDto"
                 }
               }
             }
@@ -7093,13 +7159,13 @@
             "bearer": []
           }
         ],
-        "summary": "Get default account template details by ID",
+        "summary": "Get disbursement type details by ID",
         "tags": [
-          "Default Account"
+          "Disbursement Type Maintenance"
         ]
       },
       "patch": {
-        "operationId": "DefaultAccountController_update_v1",
+        "operationId": "DisbursementTypeController_update_v1",
         "parameters": [
           {
             "name": "id",
@@ -7115,7 +7181,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateDefaultAccountTemplateDto"
+                "$ref": "#/components/schemas/UpdateDisbursementTypeTemplateDto"
               }
             }
           }
@@ -7126,7 +7192,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaveDefaultAccountResponseDto"
+                  "$ref": "#/components/schemas/SaveDisbursementTypeResponseDto"
                 }
               }
             }
@@ -7137,15 +7203,15 @@
             "bearer": []
           }
         ],
-        "summary": "Update a default account template record",
+        "summary": "Update a disbursement type record",
         "tags": [
-          "Default Account"
+          "Disbursement Type Maintenance"
         ]
       }
     },
-    "/api/v1/maintenance/financial-management/default-accounts/{id}/status": {
+    "/api/v1/maintenance/financial-management/disbursement-types/{id}/status": {
       "patch": {
-        "operationId": "DefaultAccountController_updateStatus_v1",
+        "operationId": "DisbursementTypeController_updateStatus_v1",
         "parameters": [
           {
             "name": "id",
@@ -7161,7 +7227,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateDefaultAccountTemplateStatusDto"
+                "$ref": "#/components/schemas/UpdateDisbursementTypeTemplateStatusDto"
               }
             }
           }
@@ -7172,7 +7238,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaveDefaultAccountResponseDto"
+                  "$ref": "#/components/schemas/SaveDisbursementTypeResponseDto"
                 }
               }
             }
@@ -7183,9 +7249,328 @@
             "bearer": []
           }
         ],
-        "summary": "Update default account template status",
+        "summary": "Update disbursement type status",
         "tags": [
-          "Default Account"
+          "Disbursement Type Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/collection-types": {
+      "get": {
+        "operationId": "CollectionTypeController_findAll_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "EXPENSE",
+                "COLLECTION",
+                "FIXED_ASSET"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "description",
+                "type",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "sortDirection",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionTypeListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get paginated list of collection type records",
+        "tags": [
+          "Collection Type Maintenance"
+        ]
+      },
+      "post": {
+        "operationId": "CollectionTypeController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollectionTypeTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveCollectionTypeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a collection type record",
+        "tags": [
+          "Collection Type Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/collection-types/options": {
+      "get": {
+        "operationId": "CollectionTypeController_findOptions_v1",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionTypeOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get collection type options",
+        "tags": [
+          "Collection Type Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/collection-types/{id}": {
+      "get": {
+        "operationId": "CollectionTypeController_findOne_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionTypeContainerResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get collection type details by ID",
+        "tags": [
+          "Collection Type Maintenance"
+        ]
+      },
+      "patch": {
+        "operationId": "CollectionTypeController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCollectionTypeTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveCollectionTypeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a collection type record",
+        "tags": [
+          "Collection Type Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/collection-types/{id}/status": {
+      "patch": {
+        "operationId": "CollectionTypeController_updateStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCollectionTypeTemplateStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveCollectionTypeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update collection type status",
+        "tags": [
+          "Collection Type Maintenance"
         ]
       }
     },
@@ -16810,7 +17195,6 @@
             "name": "page",
             "required": false,
             "in": "query",
-            "description": "Page number",
             "schema": {
               "minimum": 1,
               "default": 1,
@@ -16821,7 +17205,6 @@
             "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Records per page",
             "schema": {
               "minimum": 1,
               "maximum": 100,
@@ -16833,7 +17216,7 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Search term (transNo, partyName, partyCode, remarks)",
+            "description": "Search transaction no, party, account, or remarks",
             "schema": {
               "type": "string"
             }
@@ -16842,7 +17225,7 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "Status filter (DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, CANCELLED)",
+            "description": "DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, or CANCELLED",
             "schema": {
               "type": "string"
             }
@@ -16851,7 +17234,6 @@
             "name": "partyCode",
             "required": false,
             "in": "query",
-            "description": "Party Code filter",
             "schema": {
               "type": "string"
             }
@@ -16860,7 +17242,6 @@
             "name": "startDate",
             "required": false,
             "in": "query",
-            "description": "Start Date in YYYY-MM-DD format",
             "schema": {
               "type": "string"
             }
@@ -16869,7 +17250,6 @@
             "name": "endDate",
             "required": false,
             "in": "query",
-            "description": "End Date in YYYY-MM-DD format",
             "schema": {
               "type": "string"
             }
@@ -16878,9 +17258,7 @@
             "name": "sortBy",
             "required": false,
             "in": "query",
-            "description": "Sort field",
             "schema": {
-              "default": "createdAt",
               "type": "string"
             }
           },
@@ -16888,20 +17266,14 @@
             "name": "sortOrder",
             "required": false,
             "in": "query",
-            "description": "Sort direction (asc/desc)",
             "schema": {
-              "default": "desc",
-              "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Cash advance list.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16916,7 +17288,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get paginated list of cash advance records",
+        "summary": "Get paginated cash advance records",
         "tags": [
           "Cash Advance"
         ]
@@ -16936,14 +17308,7 @@
         },
         "responses": {
           "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CashAdvanceSingleResponseDto"
-                }
-              }
-            }
+            "description": "Cash advance created."
           }
         },
         "security": [
@@ -16951,7 +17316,7 @@
             "bearer": []
           }
         ],
-        "summary": "Create new cash advance record",
+        "summary": "Create a cash advance batch",
         "tags": [
           "Cash Advance"
         ]
@@ -16972,7 +17337,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Cash Advance transaction number retrieved.",
+            "description": "Cash advance transaction number retrieved.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17112,7 +17477,7 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Cash advance record.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17127,7 +17492,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get single cash advance details by ID",
+        "summary": "Get one cash advance batch",
         "tags": [
           "Cash Advance"
         ]
@@ -17156,14 +17521,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CashAdvanceSingleResponseDto"
-                }
-              }
-            }
+            "description": "Cash advance updated."
           }
         },
         "security": [
@@ -17171,7 +17529,7 @@
             "bearer": []
           }
         ],
-        "summary": "Update existing cash advance record",
+        "summary": "Update a draft cash advance batch",
         "tags": [
           "Cash Advance"
         ]
@@ -17190,20 +17548,7 @@
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Cash Advance record cancelled successfully."
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Cash advance cancelled."
           }
         },
         "security": [
@@ -17211,7 +17556,7 @@
             "bearer": []
           }
         ],
-        "summary": "Cancel/soft-delete cash advance record",
+        "summary": "Cancel a cash advance batch",
         "tags": [
           "Cash Advance"
         ]
@@ -17242,14 +17587,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CashAdvanceSingleResponseDto"
-                }
-              }
-            }
+            "description": "Cash advance status updated."
           }
         },
         "security": [
@@ -17257,7 +17595,7 @@
             "bearer": []
           }
         ],
-        "summary": "Update cash advance status",
+        "summary": "Update a cash advance batch status",
         "tags": [
           "Cash Advance"
         ]
@@ -17278,14 +17616,7 @@
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CashAdvanceSingleResponseDto"
-                }
-              }
-            }
+            "description": "Cash advance submitted for approval."
           }
         },
         "security": [
@@ -17296,262 +17627,6 @@
         "summary": "Submit cash advance record for approval",
         "tags": [
           "Cash Advance"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-advance-multiple-entry": {
-      "get": {
-        "operationId": "CashAdvanceMultipleEntryController_findAll_v1",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 10,
-              "type": "number"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "Search transaction no, party, account, or remarks",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "description": "DRAFT, FOR_APPROVAL, POSTED, DISAPPROVED, or CANCELLED",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cash advance multiple-entry list."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get paginated cash advance multiple-entry batches",
-        "tags": [
-          "Cash Advance Multiple Entry"
-        ]
-      },
-      "post": {
-        "operationId": "CashAdvanceMultipleEntryController_create_v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCashAdvanceMultipleEntryDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Cash advance multiple-entry created."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a cash advance multiple-entry batch",
-        "tags": [
-          "Cash Advance Multiple Entry"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-advance-multiple-entry/transaction-number": {
-      "get": {
-        "operationId": "CashAdvanceMultipleEntryController_suggestTransactionNumber_v1",
-        "parameters": [
-          {
-            "name": "branchUnitId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cash advance multiple-entry transaction number retrieved.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Suggest a cash advance multiple-entry transaction number",
-        "tags": [
-          "Cash Advance Multiple Entry"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-advance-multiple-entry/{id}": {
-      "get": {
-        "operationId": "CashAdvanceMultipleEntryController_findOne_v1",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cash advance multiple-entry record."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get one cash advance multiple-entry batch",
-        "tags": [
-          "Cash Advance Multiple Entry"
-        ]
-      },
-      "put": {
-        "operationId": "CashAdvanceMultipleEntryController_update_v1",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCashAdvanceMultipleEntryDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Cash advance multiple-entry updated."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update a draft cash advance multiple-entry batch",
-        "tags": [
-          "Cash Advance Multiple Entry"
-        ]
-      },
-      "delete": {
-        "operationId": "CashAdvanceMultipleEntryController_remove_v1",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cash advance multiple-entry cancelled."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Cancel a cash advance multiple-entry batch",
-        "tags": [
-          "Cash Advance Multiple Entry"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/cash-advance-multiple-entry/{id}/status": {
-      "patch": {
-        "operationId": "CashAdvanceMultipleEntryController_updateStatus_v1",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCashAdvanceMultipleEntryStatusDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Cash advance multiple-entry status updated."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update a cash advance multiple-entry batch status",
-        "tags": [
-          "Cash Advance Multiple Entry"
         ]
       }
     },
@@ -19446,7 +19521,7 @@
             "in": "query",
             "description": "Search term",
             "schema": {
-              "example": "Acme",
+              "example": "PCV-2026",
               "type": "string"
             }
           },
@@ -19473,7 +19548,7 @@
             "in": "query",
             "description": "Party code filter",
             "schema": {
-              "example": "PTY-001",
+              "example": "EMP-001",
               "type": "string"
             }
           },
@@ -19533,7 +19608,7 @@
             "in": "query",
             "description": "Sort column",
             "schema": {
-              "example": "voucherNo",
+              "example": "transactionNo",
               "type": "string"
             }
           },
@@ -19857,490 +19932,6 @@
         "summary": "Update status of a Petty Cash Voucher",
         "tags": [
           "Petty Cash Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/petty-cash-fund/transaction-number": {
-      "get": {
-        "operationId": "PettyCashFundController_suggestTransactionNumber_v1",
-        "parameters": [
-          {
-            "name": "branchUnitId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Petty Cash Fund transaction number retrieved.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionNumberSuggestionResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Suggest a Petty Cash Fund transaction number",
-        "tags": [
-          "Petty Cash Fund"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/petty-cash-fund": {
-      "get": {
-        "operationId": "PettyCashFundController_findAll_v1",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "description": "Page number",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Limit per page",
-            "schema": {
-              "minimum": 1,
-              "default": 10,
-              "example": 10,
-              "type": "number"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "Search term",
-            "schema": {
-              "example": "PCF-2026",
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "description": "Status filter",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "DRAFT",
-                "FOR_APPROVAL",
-                "POSTED",
-                "DISAPPROVED",
-                "CANCELLED",
-                "CLOSED"
-              ]
-            }
-          },
-          {
-            "name": "partyCode",
-            "required": false,
-            "in": "query",
-            "description": "Party code filter",
-            "schema": {
-              "example": "EMP-001",
-              "type": "string"
-            }
-          },
-          {
-            "name": "startDate",
-            "required": false,
-            "in": "query",
-            "description": "Start date filter (YYYY-MM-DD)",
-            "schema": {
-              "example": "2026-01-01",
-              "type": "string"
-            }
-          },
-          {
-            "name": "endDate",
-            "required": false,
-            "in": "query",
-            "description": "End date filter (YYYY-MM-DD)",
-            "schema": {
-              "example": "2026-12-31",
-              "type": "string"
-            }
-          },
-          {
-            "name": "amountFrom",
-            "required": false,
-            "in": "query",
-            "description": "Minimum amount filter",
-            "schema": {
-              "example": 100,
-              "type": "number"
-            }
-          },
-          {
-            "name": "amountTo",
-            "required": false,
-            "in": "query",
-            "description": "Maximum amount filter",
-            "schema": {
-              "example": 50000,
-              "type": "number"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": false,
-            "in": "query",
-            "description": "Branch Unit ID filter",
-            "schema": {
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "sortBy",
-            "required": false,
-            "in": "query",
-            "description": "Sort column",
-            "schema": {
-              "example": "transactionNo",
-              "type": "string"
-            }
-          },
-          {
-            "name": "sortOrder",
-            "required": false,
-            "in": "query",
-            "description": "Sort direction",
-            "schema": {
-              "example": "desc",
-              "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PettyCashFundListResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List Petty Cash Funds with pagination and filtering",
-        "tags": [
-          "Petty Cash Fund"
-        ]
-      },
-      "post": {
-        "operationId": "PettyCashFundController_create_v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePettyCashFundDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PettyCashFundResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a new Petty Cash Fund",
-        "tags": [
-          "Petty Cash Fund"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/petty-cash-fund/copy-from/candidates": {
-      "get": {
-        "operationId": "PettyCashFundController_findCopyFromCandidates_v1",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "Search term across transaction number, party, or remarks",
-            "schema": {
-              "maxLength": 120,
-              "example": "PCF-2026",
-              "type": "string"
-            }
-          },
-          {
-            "name": "branchUnitId",
-            "required": false,
-            "in": "query",
-            "description": "Branch unit ID filter",
-            "schema": {
-              "minimum": 1,
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "partyId",
-            "required": false,
-            "in": "query",
-            "description": "Party primary key ID",
-            "schema": {
-              "maxLength": 40,
-              "example": "1",
-              "type": "string"
-            }
-          },
-          {
-            "name": "partyCode",
-            "required": false,
-            "in": "query",
-            "description": "Party code filter",
-            "schema": {
-              "maxLength": 80,
-              "example": "EMP-001",
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "description": "Page number",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Limit per page",
-            "schema": {
-              "minimum": 1,
-              "maximum": 500,
-              "default": 10,
-              "example": 10,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Available Petty Cash Funds for Copy From.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PettyCashFundCopyFromCandidatesResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List available Petty Cash Funds for Petty Cash Replenishment Copy From",
-        "tags": [
-          "Petty Cash Fund"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/petty-cash-fund/{id}": {
-      "get": {
-        "operationId": "PettyCashFundController_findOne_v1",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PettyCashFundResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get Petty Cash Fund details by ID",
-        "tags": [
-          "Petty Cash Fund"
-        ]
-      },
-      "patch": {
-        "operationId": "PettyCashFundController_update_v1",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePettyCashFundDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PettyCashFundResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update an existing Petty Cash Fund",
-        "tags": [
-          "Petty Cash Fund"
-        ]
-      },
-      "delete": {
-        "operationId": "PettyCashFundController_remove_v1",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deleted successfully"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Soft delete a Petty Cash Fund",
-        "tags": [
-          "Petty Cash Fund"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/petty-cash-fund/{id}/status": {
-      "patch": {
-        "operationId": "PettyCashFundController_updateStatus_v1",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePettyCashFundStatusDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PettyCashFundResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update status of a Petty Cash Fund",
-        "tags": [
-          "Petty Cash Fund"
         ]
       }
     },
@@ -22577,6 +22168,110 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ItemBasicInfoResponseDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ItemBasicInfoOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "skuCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "barcode": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "unitOfMeasurementId": {
+            "type": "string"
+          },
+          "unitOfMeasurementSymbol": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "externalReferenceCode": {
+            "type": "string"
+          },
+          "responsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "responsibilityCenterName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "costPrice": {
+            "type": "number"
+          },
+          "sellingPrice": {
+            "type": "number"
+          },
+          "suggestedPrice": {
+            "type": "number"
+          },
+          "taxTreatment": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "categoryId",
+          "categoryName",
+          "unitOfMeasurementId",
+          "unitOfMeasurementSymbol",
+          "responsibilityCenterId",
+          "responsibilityCenterName",
+          "tags",
+          "status"
+        ]
+      },
+      "ItemBasicInfoOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemBasicInfoOptionResponseDto"
             }
           }
         },
@@ -28338,10 +28033,14 @@
           "id": {
             "type": "string"
           },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
           "projectName": {
             "type": "string"
           },
-          "projectDescription": {
+          "description": {
             "type": "string",
             "nullable": true
           },
@@ -28371,8 +28070,9 @@
         },
         "required": [
           "id",
+          "projectCode",
           "projectName",
-          "projectDescription",
+          "description",
           "status",
           "createdBy",
           "createdAt",
@@ -28474,6 +28174,57 @@
           "permissions"
         ]
       },
+      "ProjectMaintenanceOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "projectCode",
+          "projectName",
+          "name",
+          "description",
+          "status"
+        ]
+      },
+      "ProjectMaintenanceOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectMaintenanceOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "projects"
+        ]
+      },
       "ProjectMaintenanceContainerResponseDto": {
         "type": "object",
         "properties": {
@@ -28492,11 +28243,15 @@
       "CreateProjectMaintenanceDto": {
         "type": "object",
         "properties": {
+          "projectCode": {
+            "type": "string",
+            "maxLength": 80
+          },
           "projectName": {
             "type": "string",
             "maxLength": 150
           },
-          "projectDescription": {
+          "description": {
             "type": "string",
             "maxLength": 500
           },
@@ -28530,11 +28285,15 @@
       "UpdateProjectMaintenanceDto": {
         "type": "object",
         "properties": {
+          "projectCode": {
+            "type": "string",
+            "maxLength": 80
+          },
           "projectName": {
             "type": "string",
             "maxLength": 150
           },
-          "projectDescription": {
+          "description": {
             "type": "string",
             "maxLength": 500
           },
@@ -32101,7 +31860,7 @@
           "status"
         ]
       },
-      "GeneratedDefaultAccountResponseDto": {
+      "GeneratedDisbursementTypeResponseDto": {
         "type": "object",
         "properties": {
           "role": {
@@ -32162,7 +31921,7 @@
           "status"
         ]
       },
-      "DefaultAccountResponseDto": {
+      "DisbursementTypeResponseDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -32199,7 +31958,7 @@
           "generatedAccounts": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GeneratedDefaultAccountResponseDto"
+              "$ref": "#/components/schemas/GeneratedDisbursementTypeResponseDto"
             }
           },
           "createdBy": {
@@ -32233,7 +31992,7 @@
           "updatedAt"
         ]
       },
-      "DefaultAccountStatisticsResponseDto": {
+      "DisbursementTypeStatisticsResponseDto": {
         "type": "object",
         "properties": {
           "totalDefaultAccounts": {
@@ -32260,7 +32019,7 @@
           "collectionDefaultAccounts"
         ]
       },
-      "DefaultAccountPaginationResponseDto": {
+      "DisbursementTypePaginationResponseDto": {
         "type": "object",
         "properties": {
           "page": {
@@ -32283,7 +32042,7 @@
           "totalPages"
         ]
       },
-      "DefaultAccountPermissionsResponseDto": {
+      "DisbursementTypePermissionsResponseDto": {
         "type": "object",
         "properties": {
           "canView": {
@@ -32313,23 +32072,23 @@
           "canExport"
         ]
       },
-      "DefaultAccountListResponseDto": {
+      "DisbursementTypeListResponseDto": {
         "type": "object",
         "properties": {
           "defaultAccounts": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DefaultAccountResponseDto"
+              "$ref": "#/components/schemas/DisbursementTypeResponseDto"
             }
           },
           "statistics": {
-            "$ref": "#/components/schemas/DefaultAccountStatisticsResponseDto"
+            "$ref": "#/components/schemas/DisbursementTypeStatisticsResponseDto"
           },
           "pagination": {
-            "$ref": "#/components/schemas/DefaultAccountPaginationResponseDto"
+            "$ref": "#/components/schemas/DisbursementTypePaginationResponseDto"
           },
           "permissions": {
-            "$ref": "#/components/schemas/DefaultAccountPermissionsResponseDto"
+            "$ref": "#/components/schemas/DisbursementTypePermissionsResponseDto"
           }
         },
         "required": [
@@ -32339,7 +32098,7 @@
           "permissions"
         ]
       },
-      "DefaultAccountOptionResponseDto": {
+      "DisbursementTypeOptionResponseDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -32411,13 +32170,13 @@
           "accountNature"
         ]
       },
-      "DefaultAccountOptionsResponseDto": {
+      "DisbursementTypeOptionsResponseDto": {
         "type": "object",
         "properties": {
           "options": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DefaultAccountOptionResponseDto"
+              "$ref": "#/components/schemas/DisbursementTypeOptionResponseDto"
             }
           }
         },
@@ -32425,7 +32184,7 @@
           "options"
         ]
       },
-      "DefaultAccountExpenseParentOptionResponseDto": {
+      "DisbursementTypeExpenseParentOptionResponseDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -32460,13 +32219,13 @@
           "parentAccountId"
         ]
       },
-      "DefaultAccountExpenseParentOptionsResponseDto": {
+      "DisbursementTypeExpenseParentOptionsResponseDto": {
         "type": "object",
         "properties": {
           "options": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DefaultAccountExpenseParentOptionResponseDto"
+              "$ref": "#/components/schemas/DisbursementTypeExpenseParentOptionResponseDto"
             }
           }
         },
@@ -32485,7 +32244,7 @@
           "id"
         ]
       },
-      "SaveDefaultAccountExpenseSubAccountResponseDto": {
+      "SaveDisbursementTypeExpenseSubAccountResponseDto": {
         "type": "object",
         "properties": {
           "message": {
@@ -32500,14 +32259,14 @@
           "account"
         ]
       },
-      "DefaultAccountContainerResponseDto": {
+      "DisbursementTypeContainerResponseDto": {
         "type": "object",
         "properties": {
           "defaultAccount": {
-            "$ref": "#/components/schemas/DefaultAccountResponseDto"
+            "$ref": "#/components/schemas/DisbursementTypeResponseDto"
           },
           "permissions": {
-            "$ref": "#/components/schemas/DefaultAccountPermissionsResponseDto"
+            "$ref": "#/components/schemas/DisbursementTypePermissionsResponseDto"
           }
         },
         "required": [
@@ -32515,7 +32274,7 @@
           "permissions"
         ]
       },
-      "CreateDefaultAccountTemplateDto": {
+      "CreateDisbursementTypeTemplateDto": {
         "type": "object",
         "properties": {
           "type": {
@@ -32550,14 +32309,14 @@
           "defaultAccountName"
         ]
       },
-      "SaveDefaultAccountResponseDto": {
+      "SaveDisbursementTypeResponseDto": {
         "type": "object",
         "properties": {
           "message": {
             "type": "string"
           },
           "defaultAccount": {
-            "$ref": "#/components/schemas/DefaultAccountResponseDto"
+            "$ref": "#/components/schemas/DisbursementTypeResponseDto"
           }
         },
         "required": [
@@ -32565,7 +32324,7 @@
           "defaultAccount"
         ]
       },
-      "UpdateDefaultAccountTemplateDto": {
+      "UpdateDisbursementTypeTemplateDto": {
         "type": "object",
         "properties": {
           "type": {
@@ -32596,7 +32355,442 @@
           }
         }
       },
-      "UpdateDefaultAccountTemplateStatusDto": {
+      "UpdateDisbursementTypeTemplateStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "GeneratedCollectionTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": [
+              "EXPENSE",
+              "REVENUE"
+            ],
+            "type": "string"
+          },
+          "chartAccountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountTitle": {
+            "type": "string"
+          },
+          "accountType": {
+            "nullable": true,
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "nullable": true,
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          },
+          "parentAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "chartAccountId",
+          "accountCode",
+          "accountTitle",
+          "accountType",
+          "accountNature",
+          "parentAccountId",
+          "status"
+        ]
+      },
+      "CollectionTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "number"
+          },
+          "type": {
+            "enum": [
+              "EXPENSE",
+              "COLLECTION",
+              "FIXED_ASSET"
+            ],
+            "type": "string"
+          },
+          "defaultAccountName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "expenseParentCoaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "generatedAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeneratedCollectionTypeResponseDto"
+            }
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "type",
+          "defaultAccountName",
+          "description",
+          "status",
+          "expenseParentCoaId",
+          "generatedAccounts",
+          "createdBy",
+          "createdAt",
+          "updatedBy",
+          "updatedAt"
+        ]
+      },
+      "CollectionTypeStatisticsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalDefaultAccounts": {
+            "type": "number"
+          },
+          "activeDefaultAccounts": {
+            "type": "number"
+          },
+          "inactiveDefaultAccounts": {
+            "type": "number"
+          },
+          "expenseDefaultAccounts": {
+            "type": "number"
+          },
+          "collectionDefaultAccounts": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalDefaultAccounts",
+          "activeDefaultAccounts",
+          "inactiveDefaultAccounts",
+          "expenseDefaultAccounts",
+          "collectionDefaultAccounts"
+        ]
+      },
+      "CollectionTypePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "CollectionTypePermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "canView": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canUpdate": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canExport": {
+            "type": "boolean"
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canView",
+          "canCreate",
+          "canUpdate",
+          "canCancel",
+          "canExport"
+        ]
+      },
+      "CollectionTypeListResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionTypeResponseDto"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/CollectionTypeStatisticsResponseDto"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/CollectionTypePaginationResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/CollectionTypePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "defaultAccounts",
+          "statistics",
+          "pagination",
+          "permissions"
+        ]
+      },
+      "CollectionTypeOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "EXPENSE",
+              "COLLECTION",
+              "FIXED_ASSET"
+            ],
+            "type": "string"
+          },
+          "defaultAccountName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "chartAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountType": {
+            "nullable": true,
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "REVENUE",
+              "EXPENSE"
+            ],
+            "type": "string"
+          },
+          "accountNature": {
+            "nullable": true,
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "defaultAccountName",
+          "description",
+          "status",
+          "chartAccountId",
+          "accountCode",
+          "accountTitle",
+          "accountType",
+          "accountNature"
+        ]
+      },
+      "CollectionTypeOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionTypeOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "options"
+        ]
+      },
+      "CollectionTypeContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "defaultAccount": {
+            "$ref": "#/components/schemas/CollectionTypeResponseDto"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/CollectionTypePermissionsResponseDto"
+          }
+        },
+        "required": [
+          "defaultAccount",
+          "permissions"
+        ]
+      },
+      "CreateCollectionTypeTemplateDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "EXPENSE",
+              "COLLECTION",
+              "FIXED_ASSET"
+            ],
+            "type": "string"
+          },
+          "defaultAccountName": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "expenseParentCoaId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "defaultAccountName"
+        ]
+      },
+      "SaveCollectionTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "defaultAccount": {
+            "$ref": "#/components/schemas/CollectionTypeResponseDto"
+          }
+        },
+        "required": [
+          "message",
+          "defaultAccount"
+        ]
+      },
+      "UpdateCollectionTypeTemplateDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "EXPENSE",
+              "COLLECTION",
+              "FIXED_ASSET"
+            ],
+            "type": "string"
+          },
+          "defaultAccountName": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "expenseParentCoaId": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateCollectionTypeTemplateStatusDto": {
         "type": "object",
         "properties": {
           "status": {
@@ -46439,32 +46633,12 @@
           "status"
         ]
       },
-      "CashAdvanceDto": {
+      "CashAdvanceItemDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "example": "1"
-          },
-          "transNo": {
-            "type": "string",
-            "example": "CA-2026-00001"
-          },
-          "documentDate": {
-            "type": "string",
-            "example": "2026-06-11"
-          },
-          "dueDate": {
-            "type": "string",
-            "example": "2026-06-11"
-          },
-          "referenceNo": {
-            "type": "string",
-            "example": "REF-12345"
-          },
-          "partyId": {
-            "type": "string",
-            "example": "17"
+            "example": "EMP-0017"
           },
           "partyCode": {
             "type": "string",
@@ -46474,50 +46648,138 @@
             "type": "string",
             "example": "Maria Santos"
           },
+          "cashAdvanceLimit": {
+            "type": "string",
+            "example": "50000.00"
+          },
+          "cashAdvanceBalance": {
+            "type": "string",
+            "example": "12500.00"
+          },
+          "particulars": {
+            "type": "string",
+            "example": "Travel advance"
+          },
+          "remarks": {
+            "type": "string",
+            "example": "Remarks"
+          },
+          "responsibilityCenter": {
+            "type": "string",
+            "example": "Operations"
+          },
+          "amount": {
+            "type": "string",
+            "example": "12500.00"
+          }
+        }
+      },
+      "CashAdvanceAccountingEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "5000"
+          },
           "accountCode": {
             "type": "string",
-            "example": "1130-CA"
+            "example": "1010103000"
           },
           "accountTitle": {
             "type": "string",
             "example": "Cash Advance - Employees"
           },
-          "costCenter": {
+          "debit": {
+            "type": "string",
+            "example": "12500.00"
+          },
+          "credit": {
+            "type": "string",
+            "example": "0.00"
+          },
+          "partyCode": {
+            "type": "string",
+            "example": "EMP-0017"
+          },
+          "partyName": {
+            "type": "string",
+            "example": "Maria Santos"
+          },
+          "particulars": {
+            "type": "string",
+            "example": "Travel advance"
+          },
+          "responsibilityCenter": {
             "type": "string",
             "example": "Operations"
           },
-          "costCenterCode": {
+          "remarks": {
             "type": "string",
-            "example": "OPS-01"
+            "example": "Travel advance"
+          }
+        }
+      },
+      "CreateCashAdvanceDto": {
+        "type": "object",
+        "properties": {
+          "branchUnitId": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Branch Unit ID",
+            "example": 1
           },
-          "projectName": {
+          "accountCode": {
             "type": "string",
-            "example": "Site Expansion"
+            "example": "1010103000"
           },
-          "projectCode": {
+          "accountTitle": {
             "type": "string",
-            "example": "PRJ-001"
-          },
-          "projectRef": {
-            "type": "string",
-            "example": "Site Expansion",
-            "description": "Legacy alias for projectName"
+            "example": "Cash Advance - Employees"
           },
           "currency": {
             "type": "string",
             "example": "PHP"
           },
-          "fxRate": {
-            "type": "number",
-            "example": 1
+          "exchangeRate": {
+            "type": "string",
+            "example": "1.0000"
           },
-          "amount": {
-            "type": "number",
-            "example": 12500
+          "documentDate": {
+            "type": "string",
+            "example": "2026-08-28"
+          },
+          "transNo": {
+            "type": "string",
+            "example": "CA-2026-000001"
+          },
+          "partyCode": {
+            "type": "string",
+            "example": "EMP-0017"
+          },
+          "partyName": {
+            "type": "string",
+            "example": "Maria Santos"
+          },
+          "projectName": {
+            "type": "string",
+            "example": "Implementation Projects"
+          },
+          "projectCode": {
+            "type": "string",
+            "example": "IMPL-PROJ"
+          },
+          "projectRef": {
+            "type": "string",
+            "description": "Legacy alias for Project Name",
+            "example": "Implementation Projects"
+          },
+          "costCenter": {
+            "type": "string",
+            "example": "Operations"
           },
           "remarks": {
             "type": "string",
-            "example": "Optional remarks"
+            "example": "Batch remarks"
           },
           "status": {
             "enum": [
@@ -46531,21 +46793,112 @@
             "type": "string",
             "example": "DRAFT"
           },
-          "createdBy": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashAdvanceItemDto"
+            }
+          },
+          "accountingEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashAdvanceAccountingEntryDto"
+            }
+          }
+        },
+        "required": [
+          "documentDate"
+        ]
+      },
+      "CashAdvanceRecordResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "CA-2026-000001"
+          },
+          "transNo": {
+            "type": "string",
+            "example": "CA-2026-000001"
+          },
+          "documentDate": {
+            "type": "string",
+            "example": "2026-08-28"
+          },
+          "partyCode": {
+            "type": "string",
+            "example": "EMP-0017"
+          },
+          "partyName": {
             "type": "string",
             "example": "Maria Santos"
+          },
+          "projectCode": {
+            "type": "string",
+            "example": "IMPL-PROJ"
+          },
+          "projectName": {
+            "type": "string",
+            "example": "Implementation Projects"
+          },
+          "projectRef": {
+            "type": "string",
+            "example": "Implementation Projects"
+          },
+          "accountCode": {
+            "type": "string",
+            "example": "1010103000"
+          },
+          "accountTitle": {
+            "type": "string",
+            "example": "Cash Advance - Employees"
+          },
+          "costCenter": {
+            "type": "string",
+            "example": "Operations"
+          },
+          "currency": {
+            "type": "string",
+            "example": "PHP"
+          },
+          "exchangeRate": {
+            "type": "object",
+            "example": "1.0000"
+          },
+          "amount": {
+            "type": "number",
+            "example": 12500
+          },
+          "remarks": {
+            "type": "string",
+            "example": "Batch remarks"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
+            ],
+            "type": "string",
+            "example": "DRAFT"
+          },
+          "formValues": {
+            "$ref": "#/components/schemas/CreateCashAdvanceDto"
           },
           "createdAt": {
-            "type": "string",
-            "example": "2026-06-11T08:15:00.000Z"
+            "type": "string"
           },
-          "updatedBy": {
-            "type": "string",
-            "example": "Maria Santos"
+          "createdBy": {
+            "type": "string"
           },
           "updatedAt": {
-            "type": "string",
-            "example": "2026-06-11T08:15:00.000Z"
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
           }
         },
         "required": [
@@ -46554,11 +46907,39 @@
           "documentDate",
           "partyCode",
           "partyName",
-          "currency",
-          "fxRate",
+          "accountCode",
+          "accountTitle",
+          "costCenter",
           "amount",
-          "status",
-          "createdAt"
+          "remarks",
+          "status"
+        ]
+      },
+      "CashAdvancePaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 10
+          },
+          "total": {
+            "type": "number",
+            "example": 50
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
         ]
       },
       "CashAdvanceListResponseDto": {
@@ -46567,11 +46948,11 @@
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CashAdvanceDto"
+              "$ref": "#/components/schemas/CashAdvanceRecordResponseDto"
             }
           },
           "meta": {
-            "$ref": "#/components/schemas/PaginationMetaDto"
+            "$ref": "#/components/schemas/CashAdvancePaginationMetaDto"
           }
         },
         "required": [
@@ -46776,128 +47157,12 @@
       "CashAdvanceSingleResponseDto": {
         "type": "object",
         "properties": {
-          "message": {
-            "type": "string",
-            "example": "Cash advance operation successfully completed."
-          },
           "data": {
-            "$ref": "#/components/schemas/CashAdvanceDto"
+            "$ref": "#/components/schemas/CashAdvanceRecordResponseDto"
           }
         },
         "required": [
-          "message",
           "data"
-        ]
-      },
-      "CreateCashAdvanceDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1,
-            "description": "Branch Unit ID",
-            "example": 1
-          },
-          "partyId": {
-            "type": "string",
-            "description": "Party Primary Key ID",
-            "example": "1"
-          },
-          "partyCode": {
-            "type": "string",
-            "description": "Party Code (Employee/Vendor)",
-            "example": "EMP-0017"
-          },
-          "partyName": {
-            "type": "string",
-            "description": "Party Name",
-            "example": "Maria Santos"
-          },
-          "creditAccountId": {
-            "type": "string",
-            "description": "Chart Account Primary Key ID",
-            "example": "1"
-          },
-          "accountCode": {
-            "type": "string",
-            "description": "Default Account Code",
-            "example": "1010103000"
-          },
-          "accountTitle": {
-            "type": "string",
-            "description": "Default Account Title",
-            "example": "Accounts Receivable - Trade"
-          },
-          "costCenterId": {
-            "type": "string",
-            "description": "Responsibility Center Primary Key ID",
-            "example": "1"
-          },
-          "costCenter": {
-            "type": "string",
-            "description": "Responsibility Center Name",
-            "example": "Finance and Administration"
-          },
-          "costCenterCode": {
-            "type": "string",
-            "description": "Responsibility Center Code",
-            "example": "FA-01"
-          },
-          "projectId": {
-            "type": "string",
-            "description": "Project Primary Key ID",
-            "example": "1"
-          },
-          "projectName": {
-            "type": "string",
-            "description": "Project Name",
-            "example": "Implementation Projects"
-          },
-          "projectCode": {
-            "type": "string",
-            "description": "Project Code",
-            "example": "PRJ-01"
-          },
-          "projectRef": {
-            "type": "string",
-            "description": "Legacy alias for Project Name",
-            "example": "Implementation Projects"
-          },
-          "currency": {
-            "type": "string",
-            "description": "Currency Code",
-            "example": "PHP",
-            "default": "PHP"
-          },
-          "fxRate": {
-            "type": "string",
-            "description": "Exchange Rate",
-            "example": "1.0000",
-            "default": "1.0000"
-          },
-          "amount": {
-            "type": "string",
-            "description": "Cash Advance Amount",
-            "example": "12500.00"
-          },
-          "documentDate": {
-            "type": "string",
-            "description": "Document Date in YYYY-MM-DD format",
-            "example": "2026-06-11"
-          },
-          "transNo": {
-            "type": "string",
-            "description": "Custom Transaction Sequence No",
-            "example": "CA-2026-000001"
-          },
-          "remarks": {
-            "type": "string",
-            "description": "Remarks",
-            "example": "Travel allowance advance"
-          }
-        },
-        "required": [
-          "documentDate"
         ]
       },
       "UpdateCashAdvanceDto": {
@@ -46909,394 +47174,89 @@
             "description": "Branch Unit ID",
             "example": 1
           },
-          "partyId": {
-            "type": "string",
-            "description": "Party Primary Key ID",
-            "example": "1"
-          },
-          "partyCode": {
-            "type": "string",
-            "description": "Party Code (Employee/Vendor)",
-            "example": "EMP-0017"
-          },
-          "partyName": {
-            "type": "string",
-            "description": "Party Name",
-            "example": "Maria Santos"
-          },
-          "creditAccountId": {
-            "type": "string",
-            "description": "Chart Account Primary Key ID",
-            "example": "1"
-          },
           "accountCode": {
             "type": "string",
-            "description": "Default Account Code",
             "example": "1010103000"
           },
           "accountTitle": {
             "type": "string",
-            "description": "Default Account Title",
-            "example": "Accounts Receivable - Trade"
-          },
-          "costCenterId": {
-            "type": "string",
-            "description": "Responsibility Center Primary Key ID",
-            "example": "1"
-          },
-          "costCenter": {
-            "type": "string",
-            "description": "Responsibility Center Name",
-            "example": "Finance and Administration"
-          },
-          "costCenterCode": {
-            "type": "string",
-            "description": "Responsibility Center Code",
-            "example": "FA-01"
-          },
-          "projectId": {
-            "type": "string",
-            "description": "Project Primary Key ID",
-            "example": "1"
-          },
-          "projectName": {
-            "type": "string",
-            "description": "Project Name",
-            "example": "Implementation Projects"
-          },
-          "projectCode": {
-            "type": "string",
-            "description": "Project Code",
-            "example": "PRJ-01"
-          },
-          "projectRef": {
-            "type": "string",
-            "description": "Legacy alias for Project Name",
-            "example": "Implementation Projects"
+            "example": "Cash Advance - Employees"
           },
           "currency": {
             "type": "string",
-            "description": "Currency Code",
-            "example": "PHP",
-            "default": "PHP"
+            "example": "PHP"
           },
-          "fxRate": {
+          "exchangeRate": {
             "type": "string",
-            "description": "Exchange Rate",
-            "example": "1.0000",
-            "default": "1.0000"
-          },
-          "amount": {
-            "type": "string",
-            "description": "Cash Advance Amount",
-            "example": "12500.00"
+            "example": "1.0000"
           },
           "documentDate": {
             "type": "string",
-            "description": "Document Date in YYYY-MM-DD format",
-            "example": "2026-06-11"
+            "example": "2026-08-28"
           },
           "transNo": {
             "type": "string",
-            "description": "Custom Transaction Sequence No",
             "example": "CA-2026-000001"
           },
+          "partyCode": {
+            "type": "string",
+            "example": "EMP-0017"
+          },
+          "partyName": {
+            "type": "string",
+            "example": "Maria Santos"
+          },
+          "projectName": {
+            "type": "string",
+            "example": "Implementation Projects"
+          },
+          "projectCode": {
+            "type": "string",
+            "example": "IMPL-PROJ"
+          },
+          "projectRef": {
+            "type": "string",
+            "description": "Legacy alias for Project Name",
+            "example": "Implementation Projects"
+          },
+          "costCenter": {
+            "type": "string",
+            "example": "Operations"
+          },
           "remarks": {
             "type": "string",
-            "description": "Remarks",
-            "example": "Travel allowance advance"
+            "example": "Batch remarks"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "FOR_APPROVAL",
+              "POSTED",
+              "DISAPPROVED",
+              "CANCELLED",
+              "CLOSED"
+            ],
+            "type": "string",
+            "example": "DRAFT"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashAdvanceItemDto"
+            }
+          },
+          "accountingEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashAdvanceAccountingEntryDto"
+            }
           }
-        }
+        },
+        "required": [
+          "documentDate"
+        ]
       },
       "UpdateCashAdvanceStatusDto": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "enum": [
-              "DRAFT",
-              "FOR_APPROVAL",
-              "POSTED",
-              "DISAPPROVED",
-              "CANCELLED",
-              "CLOSED"
-            ],
-            "type": "string",
-            "example": "FOR_APPROVAL"
-          }
-        },
-        "required": [
-          "status"
-        ]
-      },
-      "CashAdvanceMultipleEntryItemDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "EMP-0017"
-          },
-          "partyCode": {
-            "type": "string",
-            "example": "EMP-0017"
-          },
-          "partyName": {
-            "type": "string",
-            "example": "Maria Santos"
-          },
-          "cashAdvanceLimit": {
-            "type": "string",
-            "example": "50000.00"
-          },
-          "cashAdvanceBalance": {
-            "type": "string",
-            "example": "12500.00"
-          },
-          "particulars": {
-            "type": "string",
-            "example": "Travel advance"
-          },
-          "remarks": {
-            "type": "string",
-            "example": "Remarks"
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "example": "Operations"
-          },
-          "amount": {
-            "type": "string",
-            "example": "12500.00"
-          }
-        }
-      },
-      "CashAdvanceMultipleEntryAccountingEntryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "5000"
-          },
-          "accountCode": {
-            "type": "string",
-            "example": "1010103000"
-          },
-          "accountTitle": {
-            "type": "string",
-            "example": "Cash Advance - Employees"
-          },
-          "debit": {
-            "type": "string",
-            "example": "12500.00"
-          },
-          "credit": {
-            "type": "string",
-            "example": "0.00"
-          },
-          "partyCode": {
-            "type": "string",
-            "example": "EMP-0017"
-          },
-          "partyName": {
-            "type": "string",
-            "example": "Maria Santos"
-          },
-          "particulars": {
-            "type": "string",
-            "example": "Travel advance"
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "example": "Operations"
-          },
-          "remarks": {
-            "type": "string",
-            "example": "Travel advance"
-          }
-        }
-      },
-      "CreateCashAdvanceMultipleEntryDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1,
-            "description": "Branch Unit ID",
-            "example": 1
-          },
-          "accountCode": {
-            "type": "string",
-            "example": "1010103000"
-          },
-          "accountTitle": {
-            "type": "string",
-            "example": "Cash Advance - Employees"
-          },
-          "currency": {
-            "type": "string",
-            "example": "PHP"
-          },
-          "exchangeRate": {
-            "type": "string",
-            "example": "1.0000"
-          },
-          "documentDate": {
-            "type": "string",
-            "example": "2026-08-28"
-          },
-          "transNo": {
-            "type": "string",
-            "example": "CAME-2026-000001"
-          },
-          "partyCode": {
-            "type": "string",
-            "example": "EMP-0017"
-          },
-          "partyName": {
-            "type": "string",
-            "example": "Maria Santos"
-          },
-          "projectName": {
-            "type": "string",
-            "example": "Implementation Projects"
-          },
-          "projectCode": {
-            "type": "string",
-            "example": "IMPL-PROJ"
-          },
-          "projectRef": {
-            "type": "string",
-            "description": "Legacy alias for Project Name",
-            "example": "Implementation Projects"
-          },
-          "costCenter": {
-            "type": "string",
-            "example": "Operations"
-          },
-          "remarks": {
-            "type": "string",
-            "example": "Batch remarks"
-          },
-          "status": {
-            "enum": [
-              "DRAFT",
-              "FOR_APPROVAL",
-              "POSTED",
-              "DISAPPROVED",
-              "CANCELLED",
-              "CLOSED"
-            ],
-            "type": "string",
-            "example": "DRAFT"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CashAdvanceMultipleEntryItemDto"
-            }
-          },
-          "accountingEntries": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CashAdvanceMultipleEntryAccountingEntryDto"
-            }
-          }
-        },
-        "required": [
-          "documentDate"
-        ]
-      },
-      "UpdateCashAdvanceMultipleEntryDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "minimum": 1,
-            "description": "Branch Unit ID",
-            "example": 1
-          },
-          "accountCode": {
-            "type": "string",
-            "example": "1010103000"
-          },
-          "accountTitle": {
-            "type": "string",
-            "example": "Cash Advance - Employees"
-          },
-          "currency": {
-            "type": "string",
-            "example": "PHP"
-          },
-          "exchangeRate": {
-            "type": "string",
-            "example": "1.0000"
-          },
-          "documentDate": {
-            "type": "string",
-            "example": "2026-08-28"
-          },
-          "transNo": {
-            "type": "string",
-            "example": "CAME-2026-000001"
-          },
-          "partyCode": {
-            "type": "string",
-            "example": "EMP-0017"
-          },
-          "partyName": {
-            "type": "string",
-            "example": "Maria Santos"
-          },
-          "projectName": {
-            "type": "string",
-            "example": "Implementation Projects"
-          },
-          "projectCode": {
-            "type": "string",
-            "example": "IMPL-PROJ"
-          },
-          "projectRef": {
-            "type": "string",
-            "description": "Legacy alias for Project Name",
-            "example": "Implementation Projects"
-          },
-          "costCenter": {
-            "type": "string",
-            "example": "Operations"
-          },
-          "remarks": {
-            "type": "string",
-            "example": "Batch remarks"
-          },
-          "status": {
-            "enum": [
-              "DRAFT",
-              "FOR_APPROVAL",
-              "POSTED",
-              "DISAPPROVED",
-              "CANCELLED",
-              "CLOSED"
-            ],
-            "type": "string",
-            "example": "DRAFT"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CashAdvanceMultipleEntryItemDto"
-            }
-          },
-          "accountingEntries": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CashAdvanceMultipleEntryAccountingEntryDto"
-            }
-          }
-        },
-        "required": [
-          "documentDate"
-        ]
-      },
-      "UpdateCashAdvanceMultipleEntryStatusDto": {
         "type": "object",
         "properties": {
           "status": {
@@ -49741,950 +49701,7 @@
           "status"
         ]
       },
-      "PettyCashVoucherResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "ID",
-            "example": "1"
-          },
-          "companyId": {
-            "type": "number",
-            "description": "Company ID",
-            "example": 1
-          },
-          "branchUnitId": {
-            "type": "number",
-            "nullable": true,
-            "description": "Branch Unit ID",
-            "example": 1
-          },
-          "voucherNo": {
-            "type": "string",
-            "description": "Voucher Number",
-            "example": "PCV-2026-000001"
-          },
-          "transactionNo": {
-            "type": "string",
-            "description": "Transaction Number alias",
-            "example": "PCV-2026-000001"
-          },
-          "documentDate": {
-            "type": "string",
-            "description": "Document Date",
-            "example": "2026-05-21"
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "description": "Party ID",
-            "example": "1"
-          },
-          "partyCodeSnapshot": {
-            "type": "string",
-            "description": "Party Code Snapshot",
-            "example": "PTY-001"
-          },
-          "partyNameSnapshot": {
-            "type": "string",
-            "description": "Party Name Snapshot",
-            "example": "Acme Corp"
-          },
-          "partyCode": {
-            "type": "string",
-            "description": "Party Code alias",
-            "example": "PTY-001"
-          },
-          "partyName": {
-            "type": "string",
-            "description": "Party Name alias",
-            "example": "Acme Corp"
-          },
-          "creditAccountId": {
-            "type": "string",
-            "nullable": true,
-            "description": "Default Account / Credit Account ID",
-            "example": "1"
-          },
-          "accountId": {
-            "type": "string",
-            "nullable": true,
-            "description": "Default Account ID alias",
-            "example": "1"
-          },
-          "accountCodeSnapshot": {
-            "type": "string",
-            "description": "Account Code Snapshot",
-            "example": "1010101000"
-          },
-          "accountTitleSnapshot": {
-            "type": "string",
-            "nullable": true,
-            "description": "Account Title Snapshot",
-            "example": "Petty Cash Fund"
-          },
-          "accountCode": {
-            "type": "string",
-            "description": "Default Account Code alias",
-            "example": "1010101000"
-          },
-          "accountTitle": {
-            "type": "string",
-            "nullable": true,
-            "description": "Default Account Title alias",
-            "example": "Petty Cash Fund"
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true,
-            "description": "Responsibility Center ID",
-            "example": "1"
-          },
-          "responsibilityCenterCodeSnapshot": {
-            "type": "string",
-            "nullable": true,
-            "description": "Responsibility Center Code Snapshot",
-            "example": "RC-001"
-          },
-          "responsibilityCenterSnapshot": {
-            "type": "string",
-            "nullable": true,
-            "description": "Responsibility Center Snapshot",
-            "example": "Operations"
-          },
-          "responsibilityCenterCode": {
-            "type": "string",
-            "nullable": true,
-            "description": "Responsibility Center Code alias",
-            "example": "RC-001"
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true,
-            "description": "Responsibility Center Name alias",
-            "example": "Operations"
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "description": "Project Code",
-            "example": "PRJ-001"
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "description": "Project Name",
-            "example": "Headquarters Renovation"
-          },
-          "currencyCode": {
-            "type": "string",
-            "description": "Currency Code",
-            "example": "PHP"
-          },
-          "currency": {
-            "type": "string",
-            "description": "Currency Code alias",
-            "example": "PHP"
-          },
-          "exchangeRate": {
-            "type": "number",
-            "description": "Exchange Rate",
-            "example": 1
-          },
-          "amount": {
-            "type": "number",
-            "description": "Amount",
-            "example": 5000
-          },
-          "grossAmount": {
-            "type": "number",
-            "description": "Gross Amount",
-            "example": 5000
-          },
-          "netAmount": {
-            "type": "number",
-            "description": "Net Amount",
-            "example": 4500
-          },
-          "vatType": {
-            "type": "string",
-            "nullable": true,
-            "description": "VAT Type",
-            "example": "VAT Inclusive"
-          },
-          "vatable": {
-            "type": "string",
-            "nullable": true,
-            "description": "VATable flag",
-            "example": "True"
-          },
-          "vatRate": {
-            "type": "string",
-            "nullable": true,
-            "description": "VAT Rate Description",
-            "example": "12%"
-          },
-          "vatPercent": {
-            "type": "number",
-            "description": "VAT Percent",
-            "example": 12
-          },
-          "vatAmount": {
-            "type": "number",
-            "description": "VAT Amount",
-            "example": 600
-          },
-          "ewtCode": {
-            "type": "string",
-            "nullable": true,
-            "description": "EWT Code",
-            "example": "WC100"
-          },
-          "ewtRate": {
-            "type": "string",
-            "nullable": true,
-            "description": "EWT Rate Description",
-            "example": "2%"
-          },
-          "ewtPercent": {
-            "type": "number",
-            "description": "EWT Percent",
-            "example": 2
-          },
-          "ewtAmount": {
-            "type": "number",
-            "description": "EWT Amount",
-            "example": 100
-          },
-          "remarks": {
-            "type": "string",
-            "nullable": true,
-            "description": "Remarks",
-            "example": "Office supplies expense"
-          },
-          "status": {
-            "enum": [
-              "DRAFT",
-              "FOR_APPROVAL",
-              "POSTED",
-              "DISAPPROVED",
-              "CANCELLED",
-              "CLOSED"
-            ],
-            "type": "string",
-            "description": "Status",
-            "example": "DRAFT"
-          },
-          "createdAt": {
-            "type": "string",
-            "description": "Created At",
-            "example": "2026-05-21T08:00:00.000Z"
-          },
-          "updatedAt": {
-            "type": "string",
-            "description": "Updated At",
-            "example": "2026-05-21T08:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "companyId",
-          "voucherNo",
-          "transactionNo",
-          "documentDate",
-          "partyCodeSnapshot",
-          "partyNameSnapshot",
-          "accountCodeSnapshot",
-          "currencyCode",
-          "exchangeRate",
-          "amount",
-          "grossAmount",
-          "netAmount",
-          "vatPercent",
-          "vatAmount",
-          "ewtPercent",
-          "ewtAmount",
-          "status",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "PettyCashVoucherPaginationMetaDto": {
-        "type": "object",
-        "properties": {
-          "page": {
-            "type": "number",
-            "description": "Current page number",
-            "example": 1
-          },
-          "limit": {
-            "type": "number",
-            "description": "Items per page",
-            "example": 10
-          },
-          "total": {
-            "type": "number",
-            "description": "Total item count",
-            "example": 42
-          },
-          "totalPages": {
-            "type": "number",
-            "description": "Total pages count",
-            "example": 5
-          },
-          "hasNextPage": {
-            "type": "boolean",
-            "description": "Has next page",
-            "example": true
-          },
-          "hasPreviousPage": {
-            "type": "boolean",
-            "description": "Has previous page",
-            "example": false
-          }
-        },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages",
-          "hasNextPage",
-          "hasPreviousPage"
-        ]
-      },
-      "PettyCashVoucherListResponseDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PettyCashVoucherResponseDto"
-            }
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PettyCashVoucherPaginationMetaDto"
-          }
-        },
-        "required": [
-          "items",
-          "meta"
-        ]
-      },
-      "PettyCashVoucherCopyFromCandidateDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Petty Cash Voucher ID",
-            "example": "1"
-          },
-          "transactionNo": {
-            "type": "string",
-            "description": "Petty Cash Voucher transaction number",
-            "example": "PCV-2026-000001"
-          },
-          "documentDate": {
-            "type": "string",
-            "description": "Document date in YYYY-MM-DD format",
-            "example": "2026-09-07"
-          },
-          "partyId": {
-            "type": "string",
-            "nullable": true,
-            "description": "Party primary key ID",
-            "example": "1"
-          },
-          "partyCode": {
-            "type": "string",
-            "description": "Party code snapshot",
-            "example": "EMP-001"
-          },
-          "partyName": {
-            "type": "string",
-            "description": "Party name snapshot",
-            "example": "John Doe"
-          },
-          "currency": {
-            "type": "string",
-            "description": "Currency code",
-            "example": "PHP"
-          },
-          "exchangeRate": {
-            "type": "number",
-            "description": "Exchange rate",
-            "example": 1
-          },
-          "amount": {
-            "type": "number",
-            "description": "Original gross amount",
-            "example": 5000
-          },
-          "consumedGrossAmount": {
-            "type": "number",
-            "description": "Gross amount already copied to active Petty Cash Replenishments",
-            "example": 3000
-          },
-          "availableGrossAmount": {
-            "type": "number",
-            "description": "Remaining gross amount available to copy",
-            "example": 2000
-          },
-          "disburseAmount": {
-            "type": "number",
-            "description": "Original disburse amount",
-            "example": 4850
-          },
-          "consumedAmount": {
-            "type": "number",
-            "description": "Disburse amount already copied to active Petty Cash Replenishments",
-            "example": 2910
-          },
-          "availableAmount": {
-            "type": "number",
-            "description": "Remaining disburse amount available to copy",
-            "example": 1940
-          },
-          "accountCode": {
-            "type": "string",
-            "nullable": true,
-            "description": "Default account code",
-            "example": "1010101000"
-          },
-          "accountTitle": {
-            "type": "string",
-            "nullable": true,
-            "description": "Default account title",
-            "example": "Petty Cash Fund"
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "nullable": true,
-            "description": "Responsibility center ID",
-            "example": "1"
-          },
-          "responsibilityCenterCode": {
-            "type": "string",
-            "nullable": true,
-            "description": "Responsibility center code",
-            "example": "RC-001"
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "nullable": true,
-            "description": "Responsibility center name",
-            "example": "Admin Dept"
-          },
-          "projectCode": {
-            "type": "string",
-            "nullable": true,
-            "description": "Project code",
-            "example": "PRJ-01"
-          },
-          "projectName": {
-            "type": "string",
-            "nullable": true,
-            "description": "Project name",
-            "example": "Main Office Expansion"
-          },
-          "remarks": {
-            "type": "string",
-            "nullable": true,
-            "description": "Remarks",
-            "example": "Office supplies expense"
-          },
-          "source": {
-            "type": "string",
-            "description": "Source module display name",
-            "example": "Petty Cash Voucher"
-          },
-          "sourceNo": {
-            "type": "string",
-            "description": "Source transaction number",
-            "example": "PCV-2026-000001"
-          }
-        },
-        "required": [
-          "id",
-          "transactionNo",
-          "documentDate",
-          "partyCode",
-          "partyName",
-          "currency",
-          "exchangeRate",
-          "amount",
-          "consumedGrossAmount",
-          "availableGrossAmount",
-          "disburseAmount",
-          "consumedAmount",
-          "availableAmount",
-          "source",
-          "sourceNo"
-        ]
-      },
-      "PettyCashVoucherCopyFromCandidatesResponseDto": {
-        "type": "object",
-        "properties": {
-          "records": {
-            "description": "Available PCV records",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PettyCashVoucherCopyFromCandidateDto"
-            }
-          },
-          "pagination": {
-            "description": "Pagination metadata",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/PaginationMetaDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "records",
-          "pagination"
-        ]
-      },
-      "CreatePettyCashVoucherDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "description": "Branch Unit ID",
-            "example": 1
-          },
-          "partyId": {
-            "type": "string",
-            "description": "Party ID",
-            "example": "1"
-          },
-          "partyCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Party Code",
-            "example": "PTY-001"
-          },
-          "partyName": {
-            "type": "string",
-            "maxLength": 255,
-            "description": "Party Name",
-            "example": "Acme Corp"
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "description": "Responsibility Center ID",
-            "example": "1"
-          },
-          "responsibilityCenterCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Responsibility Center Code",
-            "example": "RC-001"
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "maxLength": 150,
-            "description": "Responsibility Center Name",
-            "example": "Operations"
-          },
-          "projectCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Project Code",
-            "example": "PRJ-001"
-          },
-          "projectName": {
-            "type": "string",
-            "maxLength": 255,
-            "description": "Project Name",
-            "example": "Headquarters Renovation"
-          },
-          "accountId": {
-            "type": "string",
-            "description": "Default Account ID",
-            "example": "1"
-          },
-          "creditAccountId": {
-            "type": "string",
-            "description": "Credit Account ID (Default Account)",
-            "example": "1"
-          },
-          "accountCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Default Account Code",
-            "example": "1010101000"
-          },
-          "accountTitle": {
-            "type": "string",
-            "maxLength": 255,
-            "description": "Default Account Title",
-            "example": "Petty Cash Fund"
-          },
-          "voucherNo": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Transaction Voucher Number",
-            "example": "PCV-2026-000001"
-          },
-          "transactionNo": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Transaction Number alias",
-            "example": "PCV-2026-000001"
-          },
-          "documentDate": {
-            "type": "string",
-            "description": "Document Date",
-            "example": "2026-05-21"
-          },
-          "currencyCode": {
-            "type": "string",
-            "maxLength": 10,
-            "description": "Currency code",
-            "default": "PHP",
-            "example": "PHP"
-          },
-          "currency": {
-            "type": "string",
-            "maxLength": 10,
-            "description": "Currency alias",
-            "default": "PHP",
-            "example": "PHP"
-          },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0,
-            "description": "Exchange Rate",
-            "default": 1,
-            "example": 1
-          },
-          "grossAmount": {
-            "type": "number",
-            "description": "Gross Amount",
-            "default": 0,
-            "example": 5000
-          },
-          "amount": {
-            "type": "number",
-            "description": "Voucher Amount (alias for net amount/total)",
-            "default": 0,
-            "example": 5000
-          },
-          "netAmount": {
-            "type": "number",
-            "description": "Net Amount",
-            "default": 0,
-            "example": 4500
-          },
-          "vatType": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "VAT Type",
-            "example": "VAT Inclusive"
-          },
-          "vatable": {
-            "type": "string",
-            "maxLength": 20,
-            "description": "VATable flag",
-            "example": "True"
-          },
-          "vatRate": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "VAT Rate Description or Code",
-            "example": "12%"
-          },
-          "vatPercent": {
-            "type": "number",
-            "description": "VAT Percent",
-            "default": 0,
-            "example": 12
-          },
-          "vatAmount": {
-            "type": "number",
-            "description": "VAT Amount",
-            "default": 0,
-            "example": 600
-          },
-          "ewtCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "EWT Code",
-            "example": "WC100"
-          },
-          "ewtRate": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "EWT Rate description",
-            "example": "2%"
-          },
-          "ewtPercent": {
-            "type": "number",
-            "description": "EWT Percent",
-            "default": 0,
-            "example": 2
-          },
-          "ewtAmount": {
-            "type": "number",
-            "description": "EWT Amount",
-            "default": 0,
-            "example": 100
-          },
-          "remarks": {
-            "type": "string",
-            "maxLength": 500,
-            "description": "Remarks",
-            "example": "Office supplies expense"
-          },
-          "status": {
-            "enum": [
-              "DRAFT",
-              "FOR_APPROVAL",
-              "POSTED",
-              "DISAPPROVED",
-              "CANCELLED",
-              "CLOSED"
-            ],
-            "type": "string",
-            "description": "Initial Status",
-            "default": "DRAFT"
-          }
-        },
-        "required": [
-          "documentDate"
-        ]
-      },
-      "UpdatePettyCashVoucherDto": {
-        "type": "object",
-        "properties": {
-          "branchUnitId": {
-            "type": "number",
-            "description": "Branch Unit ID",
-            "example": 1
-          },
-          "partyId": {
-            "type": "string",
-            "description": "Party ID",
-            "example": "1"
-          },
-          "partyCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Party Code",
-            "example": "PTY-001"
-          },
-          "partyName": {
-            "type": "string",
-            "maxLength": 255,
-            "description": "Party Name",
-            "example": "Acme Corp"
-          },
-          "responsibilityCenterId": {
-            "type": "string",
-            "description": "Responsibility Center ID",
-            "example": "1"
-          },
-          "responsibilityCenterCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Responsibility Center Code",
-            "example": "RC-001"
-          },
-          "responsibilityCenter": {
-            "type": "string",
-            "maxLength": 150,
-            "description": "Responsibility Center Name",
-            "example": "Operations"
-          },
-          "projectCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Project Code",
-            "example": "PRJ-001"
-          },
-          "projectName": {
-            "type": "string",
-            "maxLength": 255,
-            "description": "Project Name",
-            "example": "Headquarters Renovation"
-          },
-          "accountId": {
-            "type": "string",
-            "description": "Default Account ID",
-            "example": "1"
-          },
-          "creditAccountId": {
-            "type": "string",
-            "description": "Credit Account ID (Default Account)",
-            "example": "1"
-          },
-          "accountCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Default Account Code",
-            "example": "1010101000"
-          },
-          "accountTitle": {
-            "type": "string",
-            "maxLength": 255,
-            "description": "Default Account Title",
-            "example": "Petty Cash Fund"
-          },
-          "voucherNo": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Transaction Voucher Number",
-            "example": "PCV-2026-000001"
-          },
-          "transactionNo": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "Transaction Number alias",
-            "example": "PCV-2026-000001"
-          },
-          "documentDate": {
-            "type": "string",
-            "description": "Document Date",
-            "example": "2026-05-21"
-          },
-          "currencyCode": {
-            "type": "string",
-            "maxLength": 10,
-            "description": "Currency code",
-            "default": "PHP",
-            "example": "PHP"
-          },
-          "currency": {
-            "type": "string",
-            "maxLength": 10,
-            "description": "Currency alias",
-            "default": "PHP",
-            "example": "PHP"
-          },
-          "exchangeRate": {
-            "type": "number",
-            "minimum": 0,
-            "description": "Exchange Rate",
-            "default": 1,
-            "example": 1
-          },
-          "grossAmount": {
-            "type": "number",
-            "description": "Gross Amount",
-            "default": 0,
-            "example": 5000
-          },
-          "amount": {
-            "type": "number",
-            "description": "Voucher Amount (alias for net amount/total)",
-            "default": 0,
-            "example": 5000
-          },
-          "netAmount": {
-            "type": "number",
-            "description": "Net Amount",
-            "default": 0,
-            "example": 4500
-          },
-          "vatType": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "VAT Type",
-            "example": "VAT Inclusive"
-          },
-          "vatable": {
-            "type": "string",
-            "maxLength": 20,
-            "description": "VATable flag",
-            "example": "True"
-          },
-          "vatRate": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "VAT Rate Description or Code",
-            "example": "12%"
-          },
-          "vatPercent": {
-            "type": "number",
-            "description": "VAT Percent",
-            "default": 0,
-            "example": 12
-          },
-          "vatAmount": {
-            "type": "number",
-            "description": "VAT Amount",
-            "default": 0,
-            "example": 600
-          },
-          "ewtCode": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "EWT Code",
-            "example": "WC100"
-          },
-          "ewtRate": {
-            "type": "string",
-            "maxLength": 80,
-            "description": "EWT Rate description",
-            "example": "2%"
-          },
-          "ewtPercent": {
-            "type": "number",
-            "description": "EWT Percent",
-            "default": 0,
-            "example": 2
-          },
-          "ewtAmount": {
-            "type": "number",
-            "description": "EWT Amount",
-            "default": 0,
-            "example": 100
-          },
-          "remarks": {
-            "type": "string",
-            "maxLength": 500,
-            "description": "Remarks",
-            "example": "Office supplies expense"
-          },
-          "status": {
-            "enum": [
-              "DRAFT",
-              "FOR_APPROVAL",
-              "POSTED",
-              "DISAPPROVED",
-              "CANCELLED",
-              "CLOSED"
-            ],
-            "type": "string",
-            "description": "Initial Status",
-            "default": "DRAFT"
-          }
-        }
-      },
-      "UpdatePettyCashVoucherStatusDto": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "enum": [
-              "DRAFT",
-              "FOR_APPROVAL",
-              "POSTED",
-              "DISAPPROVED",
-              "CANCELLED",
-              "CLOSED"
-            ],
-            "type": "string",
-            "description": "Target Petty Cash Voucher status",
-            "example": "POSTED"
-          }
-        },
-        "required": [
-          "status"
-        ]
-      },
-      "PettyCashFundDetailDto": {
+      "PettyCashVoucherDetailDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -50850,7 +49867,7 @@
           }
         }
       },
-      "PettyCashFundResponseDto": {
+      "PettyCashVoucherResponseDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -50872,7 +49889,7 @@
           "transactionNo": {
             "type": "string",
             "description": "Transaction Number",
-            "example": "PCF-2026-000001"
+            "example": "PCV-2026-000001"
           },
           "documentDate": {
             "type": "string",
@@ -50926,7 +49943,7 @@
             "type": "string",
             "nullable": true,
             "description": "Account Title Snapshot",
-            "example": "Petty Cash Fund"
+            "example": "Petty Cash Voucher"
           },
           "accountCode": {
             "type": "string",
@@ -50937,7 +49954,7 @@
             "type": "string",
             "nullable": true,
             "description": "Default Account Title alias",
-            "example": "Petty Cash Fund"
+            "example": "Petty Cash Voucher"
           },
           "responsibilityCenterId": {
             "type": "string",
@@ -51024,7 +50041,7 @@
             "description": "Fund Details",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PettyCashFundDetailDto"
+              "$ref": "#/components/schemas/PettyCashVoucherDetailDto"
             }
           },
           "createdAt": {
@@ -51054,7 +50071,7 @@
           "updatedAt"
         ]
       },
-      "PettyCashFundPaginationMetaDto": {
+      "PettyCashVoucherPaginationMetaDto": {
         "type": "object",
         "properties": {
           "page": {
@@ -51097,17 +50114,17 @@
           "hasPreviousPage"
         ]
       },
-      "PettyCashFundListResponseDto": {
+      "PettyCashVoucherListResponseDto": {
         "type": "object",
         "properties": {
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PettyCashFundResponseDto"
+              "$ref": "#/components/schemas/PettyCashVoucherResponseDto"
             }
           },
           "meta": {
-            "$ref": "#/components/schemas/PettyCashFundPaginationMetaDto"
+            "$ref": "#/components/schemas/PettyCashVoucherPaginationMetaDto"
           }
         },
         "required": [
@@ -51115,12 +50132,12 @@
           "meta"
         ]
       },
-      "PettyCashFundCopyFromCandidateDetailDto": {
+      "PettyCashVoucherCopyFromCandidateDetailDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "description": "Petty Cash Fund detail line ID",
+            "description": "Petty Cash Voucher detail line ID",
             "example": "1"
           },
           "lineNumber": {
@@ -51260,18 +50277,18 @@
           "availableAmount"
         ]
       },
-      "PettyCashFundCopyFromCandidateDto": {
+      "PettyCashVoucherCopyFromCandidateDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "description": "Petty Cash Fund ID",
+            "description": "Petty Cash Voucher ID",
             "example": "1"
           },
           "transactionNo": {
             "type": "string",
-            "description": "Petty Cash Fund transaction number",
-            "example": "PCF-2026-000001"
+            "description": "Petty Cash Voucher transaction number",
+            "example": "PCV-2026-000001"
           },
           "documentDate": {
             "type": "string",
@@ -51344,7 +50361,7 @@
             "type": "string",
             "nullable": true,
             "description": "Default account title",
-            "example": "Petty Cash Fund"
+            "example": "Petty Cash Voucher"
           },
           "responsibilityCenterId": {
             "type": "string",
@@ -51383,21 +50400,21 @@
             "example": "Initial fund"
           },
           "details": {
-            "description": "PCF detail lines to copy into Petty Cash Replenishment",
+            "description": "PCV detail lines to copy into Petty Cash Replenishment",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PettyCashFundCopyFromCandidateDetailDto"
+              "$ref": "#/components/schemas/PettyCashVoucherCopyFromCandidateDetailDto"
             }
           },
           "source": {
             "type": "string",
             "description": "Source module display name",
-            "example": "Petty Cash Fund"
+            "example": "Petty Cash Voucher"
           },
           "sourceNo": {
             "type": "string",
             "description": "Source transaction number",
-            "example": "PCF-2026-000001"
+            "example": "PCV-2026-000001"
           }
         },
         "required": [
@@ -51419,14 +50436,14 @@
           "sourceNo"
         ]
       },
-      "PettyCashFundCopyFromCandidatesResponseDto": {
+      "PettyCashVoucherCopyFromCandidatesResponseDto": {
         "type": "object",
         "properties": {
           "records": {
-            "description": "Available PCF records",
+            "description": "Available PCV records",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PettyCashFundCopyFromCandidateDto"
+              "$ref": "#/components/schemas/PettyCashVoucherCopyFromCandidateDto"
             }
           },
           "pagination": {
@@ -51443,7 +50460,7 @@
           "pagination"
         ]
       },
-      "CreatePettyCashFundDto": {
+      "CreatePettyCashVoucherDto": {
         "type": "object",
         "properties": {
           "branchUnitId": {
@@ -51455,7 +50472,7 @@
             "type": "string",
             "maxLength": 80,
             "description": "Transaction Number",
-            "example": "PCF-2026-000001"
+            "example": "PCV-2026-000001"
           },
           "documentDate": {
             "type": "string",
@@ -51528,7 +50545,7 @@
             "type": "string",
             "maxLength": 255,
             "description": "Account Title Snapshot",
-            "example": "Petty Cash Fund"
+            "example": "Petty Cash Voucher"
           },
           "currencyCode": {
             "type": "string",
@@ -51577,10 +50594,10 @@
             "default": "DRAFT"
           },
           "details": {
-            "description": "Petty Cash Fund Details",
+            "description": "Petty Cash Voucher Details",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PettyCashFundDetailDto"
+              "$ref": "#/components/schemas/PettyCashVoucherDetailDto"
             }
           }
         },
@@ -51588,7 +50605,7 @@
           "documentDate"
         ]
       },
-      "UpdatePettyCashFundDto": {
+      "UpdatePettyCashVoucherDto": {
         "type": "object",
         "properties": {
           "branchUnitId": {
@@ -51600,7 +50617,7 @@
             "type": "string",
             "maxLength": 80,
             "description": "Transaction Number",
-            "example": "PCF-2026-000001"
+            "example": "PCV-2026-000001"
           },
           "documentDate": {
             "type": "string",
@@ -51673,7 +50690,7 @@
             "type": "string",
             "maxLength": 255,
             "description": "Account Title Snapshot",
-            "example": "Petty Cash Fund"
+            "example": "Petty Cash Voucher"
           },
           "currencyCode": {
             "type": "string",
@@ -51722,15 +50739,15 @@
             "default": "DRAFT"
           },
           "details": {
-            "description": "Petty Cash Fund Details",
+            "description": "Petty Cash Voucher Details",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PettyCashFundDetailDto"
+              "$ref": "#/components/schemas/PettyCashVoucherDetailDto"
             }
           }
         }
       },
-      "UpdatePettyCashFundStatusDto": {
+      "UpdatePettyCashVoucherStatusDto": {
         "type": "object",
         "properties": {
           "status": {
@@ -51743,7 +50760,7 @@
               "CLOSED"
             ],
             "type": "string",
-            "description": "Target Petty Cash Fund status",
+            "description": "Target Petty Cash Voucher status",
             "example": "POSTED"
           }
         },

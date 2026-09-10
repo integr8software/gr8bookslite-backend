@@ -4,9 +4,8 @@ import {
   CompanyUnitType,
   Party,
   PartyAddress,
-  PettyCashFundStatus,
-  PettyCashReplenishmentStatus,
   PettyCashVoucherStatus,
+  PettyCashReplenishmentStatus,
   Prisma,
   ResponsibilityCenter,
 } from '@prisma/client';
@@ -20,7 +19,6 @@ import { ensureModuleAction } from '../../../common/utils/module-permissions.uti
 import { cleanCurrencyCode, cleanOptional } from '../../../common/utils/string-normalization.util';
 import { roundMoney } from '../../../common/utils/money.util';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { formatPettyCashFundReference } from '../petty-cash-fund/petty-cash-fund.service';
 import { formatPettyCashVoucherReference } from '../petty-cash-voucher/petty-cash-voucher.service';
 import {
   resolveTransactionNumberForCompanyBranch,
@@ -537,29 +535,11 @@ export class PettyCashReplenishmentService {
       return;
     }
 
-    const pcvNos = allocations.filter((allocation) => allocation.source === 'PCV').map((allocation) => allocation.transactionNo);
-    const pcfNos = allocations.filter((allocation) => allocation.source === 'PCF').map((allocation) => allocation.transactionNo);
+    const pcvNos = allocations.map((allocation) => allocation.transactionNo);
     const pcvs =
       pcvNos.length > 0
         ? await tx.pettyCashVoucher.findMany({
-            where: { companyId: input.companyId, deletedAt: null, voucherNo: { in: pcvNos } },
-            select: {
-              branchUnitId: true,
-              currencyCode: true,
-              grossAmount: true,
-              id: true,
-              netAmount: true,
-              partyCodeSnapshot: true,
-              partyId: true,
-              status: true,
-              voucherNo: true,
-            },
-          })
-        : [];
-    const pcfs =
-      pcfNos.length > 0
-        ? await tx.pettyCashFund.findMany({
-            where: { companyId: input.companyId, deletedAt: null, transactionNo: { in: pcfNos } },
+            where: { companyId: input.companyId, deletedAt: null, transactionNo: { in: pcvNos } },
             select: {
               branchUnitId: true,
               currencyCode: true,
@@ -576,19 +556,12 @@ export class PettyCashReplenishmentService {
     for (const pcv of pcvs) {
       await this.lockAllocation(tx, PettyCashSourceAllocationLockNamespace, pcv.id);
     }
-    for (const pcf of pcfs) {
-      await this.lockAllocation(tx, PettyCashSourceAllocationLockNamespace, pcf.id);
-    }
 
-    const pcvByNo = new Map(pcvs.map((record) => [record.voucherNo, record] as const));
-    const pcfByNo = new Map(pcfs.map((record) => [record.transactionNo, record] as const));
+    const pcvByNo = new Map(pcvs.map((record) => [record.transactionNo, record] as const));
     const consumedAmounts = await this.getPettyCashReplenishmentConsumedAmounts(
       tx,
       input.companyId,
-      [
-        ...pcvs.map((record) => ({ source: 'PCV' as const, transactionNo: record.voucherNo })),
-        ...pcfs.map((record) => ({ source: 'PCF' as const, transactionNo: record.transactionNo })),
-      ],
+      pcvs.map((record) => ({ source: 'PCV' as const, transactionNo: record.transactionNo })),
       input.currentTargetId,
     );
 
@@ -597,36 +570,20 @@ export class PettyCashReplenishmentService {
         throw new BadRequestException(`Party is required when copying from ${allocation.source}.`);
       }
 
-      const sourceSummary =
-        allocation.source === 'PCV'
-          ? (() => {
-              const record = pcvByNo.get(allocation.transactionNo);
-              if (!record) return null;
-              return {
-                branchUnitId: record.branchUnitId,
-                currencyCode: record.currencyCode,
-                disburseAmount: roundMoney(Number(record.netAmount)),
-                grossAmount: roundMoney(Number(record.grossAmount)),
-                isAvailable: record.status === PettyCashVoucherStatus.POSTED,
-                partyCodeSnapshot: record.partyCodeSnapshot,
-                partyId: record.partyId,
-              };
-            })()
-          : (() => {
-              const record = pcfByNo.get(allocation.transactionNo);
-              if (!record) return null;
-              return {
-                branchUnitId: record.branchUnitId,
-                currencyCode: record.currencyCode,
-                disburseAmount: roundMoney(
-                  record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0), 0),
-                ),
-                grossAmount: roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.grossAmount || detail.amount || 0), 0)),
-                isAvailable: record.status === PettyCashFundStatus.POSTED,
-                partyCodeSnapshot: record.partyCodeSnapshot,
-                partyId: record.partyId,
-              };
-            })();
+      const record = pcvByNo.get(allocation.transactionNo);
+      const sourceSummary = record
+        ? {
+            branchUnitId: record.branchUnitId,
+            currencyCode: record.currencyCode,
+            disburseAmount: roundMoney(
+              record.details.reduce((sum, detail) => sum + Number(detail.disburseAmount || detail.amount || detail.grossAmount || 0), 0),
+            ),
+            grossAmount: roundMoney(record.details.reduce((sum, detail) => sum + Number(detail.grossAmount || detail.amount || 0), 0)),
+            isAvailable: record.status === PettyCashVoucherStatus.POSTED,
+            partyCodeSnapshot: record.partyCodeSnapshot,
+            partyId: record.partyId,
+          }
+        : null;
       if (!sourceSummary) {
         throw new BadRequestException(`${allocation.source} ${allocation.transactionNo} was not found.`);
       }
@@ -662,14 +619,14 @@ export class PettyCashReplenishmentService {
   }
 
   private getPettyCashSourceDetailAmounts(details: PettyCashReplenishmentDetailDto[] = []) {
-    const amountsByReference = new Map<string, { disburseAmount: number; grossAmount: number; source: 'PCF' | 'PCV'; transactionNo: string }>();
+    const amountsByReference = new Map<string, { disburseAmount: number; grossAmount: number; source: 'PCV'; transactionNo: string }>();
     for (const detail of details) {
       const reference = cleanOptional(detail.pettyCashNo ?? detail.voucherNo);
-      if (!reference || (!reference.toUpperCase().startsWith('PCV:') && !reference.toUpperCase().startsWith('PCF:'))) {
+      if (!reference || !reference.toUpperCase().startsWith('PCV:')) {
         continue;
       }
 
-      const source = reference.toUpperCase().startsWith('PCV:') ? 'PCV' : 'PCF';
+      const source = 'PCV';
       const transactionNo = reference.slice(4).trim();
       if (!transactionNo) {
         continue;
@@ -690,7 +647,7 @@ export class PettyCashReplenishmentService {
   private async getPettyCashReplenishmentConsumedAmounts(
     tx: PrismaWriteClient,
     companyId: number,
-    sources: Array<{ source: 'PCF' | 'PCV'; transactionNo: string }>,
+    sources: Array<{ source: 'PCV'; transactionNo: string }>,
     currentTargetId?: bigint,
   ) {
     const consumed = new Map<string, { disburseAmount: number; grossAmount: number }>();
@@ -700,7 +657,7 @@ export class PettyCashReplenishmentService {
 
     const sourceKeyByReference = new Map<string, string>();
     for (const source of sources) {
-      const reference = source.source === 'PCV' ? formatPettyCashVoucherReference(source.transactionNo) : formatPettyCashFundReference(source.transactionNo);
+      const reference = formatPettyCashVoucherReference(source.transactionNo);
       sourceKeyByReference.set(reference, `${source.source}:${source.transactionNo}`);
       sourceKeyByReference.set(source.transactionNo, `${source.source}:${source.transactionNo}`);
     }

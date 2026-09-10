@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AccountNature, ChartAccountStatus, ChartAccountType } from '@prisma/client';
 import { findCashDisbursementAccountTitleOptions } from './cash-disbursement-account-title-options.util';
 
@@ -7,13 +8,14 @@ describe('findCashDisbursementAccountTitleOptions', () => {
       defaultAccount: {
         findMany: jest.fn().mockResolvedValue([
           {
+            name: 'Office Supplies',
+            description: 'Office Supplies Expense',
             expenseCoa: {
               id: 10n,
               accountCode: '5020100001',
               accountTitle: 'Office Supplies Expense',
               accountType: ChartAccountType.EXPENSE,
               accountNature: AccountNature.DEBIT,
-              status: ChartAccountStatus.ACTIVE,
             },
           },
         ]),
@@ -62,8 +64,8 @@ describe('findCashDisbursementAccountTitleOptions', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           companyId: 7,
+          status: ChartAccountStatus.ACTIVE,
           type: 'EXPENSE',
-          expenseCoa: { is: expect.objectContaining({ isPostingAccount: true, status: ChartAccountStatus.ACTIVE }) },
         }),
       }),
     );
@@ -88,7 +90,15 @@ describe('findCashDisbursementAccountTitleOptions', () => {
       status: ChartAccountStatus.ACTIVE,
     };
     const prisma = {
-      defaultAccount: { findMany: jest.fn().mockResolvedValue([{ expenseCoa: sharedAccount }]) },
+      defaultAccount: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            name: sharedAccount.accountTitle,
+            description: sharedAccount.accountTitle,
+            expenseCoa: sharedAccount,
+          },
+        ]),
+      },
       party: {
         findMany: jest.fn().mockResolvedValue([{ employeeAdvanceAccount: sharedAccount }, { employeeAdvanceAccount: sharedAccount }]),
       },

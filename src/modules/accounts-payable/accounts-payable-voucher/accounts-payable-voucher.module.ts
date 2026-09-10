@@ -14,7 +14,12 @@ import { AccountsPayableVoucherLookupService } from './services/accounts-payable
 @Module({
   imports: [PrismaModule, CompanyCurrencyModule, AccessControlModule, AuthModule, JournalVoucherModule, TransactionNumberSequencesModule],
   controllers: [AccountsPayableVoucherController],
-  providers: [AccountsPayableVoucherService, AccountsPayableVoucherAccountingService, AccountsPayableVoucherLookupService, AccountsPayableVoucherCopySourceService],
+  providers: [
+    AccountsPayableVoucherService,
+    AccountsPayableVoucherAccountingService,
+    AccountsPayableVoucherLookupService,
+    AccountsPayableVoucherCopySourceService,
+  ],
   exports: [AccountsPayableVoucherCopySourceService],
 })
 export class AccountsPayableVoucherModule {}

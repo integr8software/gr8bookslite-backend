@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { ChartAccountLevel, ChartAccountStatus, ChartAccountType, ServiceMaintenanceType } from '@prisma/client';
+import { ChartAccountLevel, ChartAccountType, ServiceMaintenanceType } from '@prisma/client';
 import {
   buildServiceRevenueAccountGroupTags,
   findSelectableServiceAccountOrThrow,

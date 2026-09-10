@@ -11,9 +11,9 @@ describe('CashAdvanceController', () => {
     findOne: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
-    remove: jest.fn(),
     updateStatus: jest.fn(),
     submitApproval: jest.fn(),
+    remove: jest.fn(),
   };
   const copySourceService = {
     findCandidates: jest.fn(),
@@ -36,22 +36,24 @@ describe('CashAdvanceController', () => {
     expect(service.suggestTransactionNumber).toHaveBeenCalledWith(user, '3');
   });
 
-  it('delegates the complete cash-advance workflow with realistic data', async () => {
-    const id = '837cc3c5-c381-4bb2-9f69-fd8ab1c668a1';
-    const listQuery = { page: 1, limit: 20, status: 'DRAFT', partyCode: 'EMP-014' } as Parameters<typeof controller.findAll>[1];
+  it('delegates the complete multiple-entry workflow with realistic data', async () => {
+    const id = '1283f678-84a8-49cb-aab3-5ea71bde4ce3';
+    const listQuery = { page: 1, limit: 20, status: 'DRAFT' } as Parameters<typeof controller.findAll>[1];
     const createDto = {
       branchUnitId: 3,
       transNo: 'CA-2026-0001',
       documentDate: '2026-09-01',
-      partyCode: 'EMP-014',
-      partyName: 'Maria Santos',
       accountCode: '110300',
       accountTitle: 'Employee Cash Advances',
       currency: 'PHP',
-      amount: '8500.00',
-      remarks: 'Travel cash advance for Cebu client visit',
+      remarks: 'Weekly field-team cash advances',
+      items: [
+        { partyCode: 'EMP-014', partyName: 'Maria Santos', particulars: 'Cebu travel', amount: '8500.00' },
+        { partyCode: 'EMP-027', partyName: 'Jose Reyes', particulars: 'Davao travel', amount: '7200.00' },
+      ],
+      accountingEntries: [{ accountCode: '110300', accountTitle: 'Employee Cash Advances', debit: '15700.00', credit: '0.00' }],
     } as Parameters<typeof controller.create>[1];
-    const updateDto = { ...createDto, amount: '9000.00' } as Parameters<typeof controller.update>[2];
+    const updateDto = { ...createDto, remarks: 'Updated weekly field-team advances' } as Parameters<typeof controller.update>[2];
     const statusDto = { status: 'FOR_APPROVAL' } as Parameters<typeof controller.updateStatus>[2];
     const record = { id, ...createDto, status: 'DRAFT' };
     const list = { data: [record], meta: { page: 1, limit: 20, total: 1, totalPages: 1 } };
@@ -60,24 +62,24 @@ describe('CashAdvanceController', () => {
     service.findOne.mockResolvedValue(record);
     service.create.mockResolvedValue(record);
     service.update.mockResolvedValue({ ...record, ...updateDto });
-    service.remove.mockResolvedValue({ message: 'Cash advance cancelled.' });
     service.updateStatus.mockResolvedValue({ ...record, status: 'FOR_APPROVAL' });
     service.submitApproval.mockResolvedValue({ ...record, status: 'FOR_APPROVAL' });
+    service.remove.mockResolvedValue({ message: 'Cash advance batch cancelled.' });
 
     await expect(controller.findAll(user, listQuery)).resolves.toBe(list);
     await expect(controller.findOne(user, id)).resolves.toBe(record);
     await expect(controller.create(user, createDto)).resolves.toBe(record);
     await controller.update(user, id, updateDto);
-    await controller.remove(user, id);
     await controller.updateStatus(user, id, statusDto);
     await controller.submitApproval(user, id);
+    await controller.remove(user, id);
 
     expect(service.findAll).toHaveBeenCalledWith(user, listQuery);
     expect(service.findOne).toHaveBeenCalledWith(user, id);
     expect(service.create).toHaveBeenCalledWith(user, createDto);
     expect(service.update).toHaveBeenCalledWith(user, id, updateDto);
-    expect(service.remove).toHaveBeenCalledWith(user, id);
     expect(service.updateStatus).toHaveBeenCalledWith(user, id, statusDto);
     expect(service.submitApproval).toHaveBeenCalledWith(user, id);
+    expect(service.remove).toHaveBeenCalledWith(user, id);
   });
 });

@@ -20,7 +20,8 @@ import {
 import * as bcrypt from 'bcrypt';
 import { seedCompanyBankAccountDefaults } from '../../src/modules/maintenance/bank-masterfile/seed/bank-masterfile.seed';
 import { seedCompanyChartAccountDefaults } from '../../src/modules/maintenance/chart-of-accounts/seed/chart-of-accounts.seed';
-import { seedCompanyDefaultAccountDefaults } from '../../src/modules/maintenance/default-account/seed/default-accounts.seed';
+import { seedCompanyCollectionTypes } from '../../src/modules/maintenance/collection-type/seed/collection-types.seed';
+import { seedCompanyDisbursementTypes } from '../../src/modules/maintenance/disbursement-type/seed/disbursement-types.seed';
 import { seedCompanyDiscountMaintenanceDefaults } from '../../src/modules/maintenance/discount-maintenance/seed/discount-maintenance.seed';
 import { seedCompanyItemCategoryDefaults } from '../../src/modules/maintenance/item-category/seed/item-category.seed';
 import { seedCompanyItemVariationDefaults } from '../../src/modules/maintenance/item-variations/seed/item-variations.seed';
@@ -88,7 +89,8 @@ async function seedCompanyDefaults(tx: Prisma.TransactionClient, companyId: numb
   await seedCompanyPaymentTypeMaintenanceDefaults(tx, companyId);
   await seedCompanyChartAccountDefaults(tx, companyId);
   await seedCompanyServicesMaintenanceDefaults(tx, companyId);
-  await seedCompanyDefaultAccountDefaults(tx, companyId);
+  await seedCompanyDisbursementTypes(tx, companyId);
+  await seedCompanyCollectionTypes(tx, companyId);
   await seedCompanyItemCategoryDefaults(tx, companyId);
   await seedCompanyDiscountMaintenanceDefaults(tx, companyId);
   await seedCompanyResponsibilityCenterDefaults(tx, companyId);

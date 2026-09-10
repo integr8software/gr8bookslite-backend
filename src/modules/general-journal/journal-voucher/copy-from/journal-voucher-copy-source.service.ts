@@ -35,11 +35,7 @@ const ActiveAccountsPayableVoucherStatuses = [
   AccountsPayableVoucherStatus.POSTED,
 ];
 const ActiveCashVoucherStatuses = [CashVoucherStatus.DRAFT, CashVoucherStatus.FOR_APPROVAL, CashVoucherStatus.POSTED];
-const ActiveDisbursementVoucherStatuses = [
-  DisbursementVoucherStatus.DRAFT,
-  DisbursementVoucherStatus.FOR_APPROVAL,
-  DisbursementVoucherStatus.POSTED,
-];
+const ActiveDisbursementVoucherStatuses = [DisbursementVoucherStatus.DRAFT, DisbursementVoucherStatus.FOR_APPROVAL, DisbursementVoucherStatus.POSTED];
 
 type CopiedReferenceLine = {
   amount: number;
@@ -110,10 +106,7 @@ export class JournalVoucherCopySourceService {
         ...(branchUnitId ? { branchUnitId } : {}),
         ...(search
           ? {
-              OR: [
-                { referenceNo: { contains: search, mode: 'insensitive' } },
-                { remarks: { contains: search, mode: 'insensitive' } },
-              ],
+              OR: [{ referenceNo: { contains: search, mode: 'insensitive' } }, { remarks: { contains: search, mode: 'insensitive' } }],
             }
           : {}),
       },
@@ -204,7 +197,13 @@ export class JournalVoucherCopySourceService {
       ),
     );
 
-    const consumed = await this.getConsumedAmounts(tx, input.companyId, allocations.map((allocation) => allocation.reference), input.target, input.currentTargetId);
+    const consumed = await this.getConsumedAmounts(
+      tx,
+      input.companyId,
+      allocations.map((allocation) => allocation.reference),
+      input.target,
+      input.currentTargetId,
+    );
     const side = this.getTargetSide(input.target);
 
     for (const allocation of allocations) {
@@ -225,7 +224,9 @@ export class JournalVoucherCopySourceService {
       const sourceAmount = roundMoney(Number(side === 'debit' ? source.line.debit : source.line.credit));
       const availableAmount = roundMoney(sourceAmount - (consumed.get(allocation.reference) ?? 0));
       if (allocation.amount > availableAmount) {
-        throw new BadRequestException(`${JournalVoucherCopySourceLabel} ${source.header.referenceNo} line ${source.line.lineNumber} only has ${availableAmount.toFixed(2)} remaining.`);
+        throw new BadRequestException(
+          `${JournalVoucherCopySourceLabel} ${source.header.referenceNo} line ${source.line.lineNumber} only has ${availableAmount.toFixed(2)} remaining.`,
+        );
       }
     }
   }

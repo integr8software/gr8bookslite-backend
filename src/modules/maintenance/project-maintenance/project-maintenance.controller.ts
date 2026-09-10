@@ -8,8 +8,10 @@ import { GetProjectMaintenanceListQueryDto } from './dto/get-project-maintenance
 import {
   ProjectMaintenanceContainerResponseDto,
   ProjectMaintenanceListResponseDto,
+  ProjectMaintenanceOptionsResponseDto,
   SaveProjectMaintenanceResponseDto,
 } from './dto/project-maintenance-response.dto';
+import { ProjectMaintenanceLookupService } from './lookups/project-maintenance-lookup.service';
 import { UpdateProjectMaintenanceDto } from './dto/update-project-maintenance.dto';
 import { ProjectMaintenanceService } from './project-maintenance.service';
 
@@ -21,13 +23,23 @@ import { ProjectMaintenanceService } from './project-maintenance.service';
   version: '1',
 })
 export class ProjectMaintenanceController {
-  constructor(private readonly projectMaintenanceService: ProjectMaintenanceService) {}
+  constructor(
+    private readonly projectMaintenanceService: ProjectMaintenanceService,
+    private readonly projectMaintenanceLookupService: ProjectMaintenanceLookupService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get paginated list of project records' })
   @ApiOkResponse({ type: ProjectMaintenanceListResponseDto })
   findAll(@CurrentUser() user: AuthUser, @Query() query: GetProjectMaintenanceListQueryDto) {
     return this.projectMaintenanceService.findAll(user, query);
+  }
+
+  @Get('options')
+  @ApiOperation({ summary: 'Get project options' })
+  @ApiOkResponse({ type: ProjectMaintenanceOptionsResponseDto })
+  findOptions(@CurrentUser() user: AuthUser, @Query() query: GetProjectMaintenanceListQueryDto) {
+    return this.projectMaintenanceLookupService.findOptionsForCompanyUser(user, query);
   }
 
   @Get(':id')

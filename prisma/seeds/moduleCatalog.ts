@@ -27,9 +27,15 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: Maintenance,
   },
   {
-    code: 'DA',
-    name: 'Default Accounts',
+    code: 'DTM',
+    name: 'Disbursement Type Maintenance',
     icon: 'fileCog',
+    type: Maintenance,
+  },
+  {
+    code: 'CTM',
+    name: 'Collection Type Maintenance',
+    icon: 'receipt',
     type: Maintenance,
   },
   {
@@ -231,20 +237,8 @@ export const ModuleCatalog: ModuleCatalogEntry[] = [
     type: TransactionRegistry,
   },
   {
-    code: 'CAME',
-    name: 'Cash Advance Multiple Entry',
-    icon: 'cashOut',
-    type: TransactionRegistry,
-  },
-  {
     code: 'PCV',
     name: 'Petty Cash Voucher',
-    icon: 'cashOut',
-    type: TransactionRegistry,
-  },
-  {
-    code: 'PCF',
-    name: 'Petty Cash Fund',
     icon: 'cashOut',
     type: TransactionRegistry,
   },

@@ -1,6 +1,77 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationMetaDto } from '../../../../../common/dto/pagination-meta.dto';
 
+export class PettyCashVoucherCopyFromCandidateDetailDto {
+  @ApiProperty({ description: 'Petty Cash Voucher detail line ID', example: '1' })
+  id: string;
+
+  @ApiProperty({ description: 'Source line number', example: 1 })
+  lineNumber: number;
+
+  @ApiPropertyOptional({ description: 'Petty cash line date', example: '2026-09-07' })
+  date?: string | null;
+
+  @ApiPropertyOptional({ description: 'Supplier code snapshot', example: 'SUP-001' })
+  supplierCode?: string | null;
+
+  @ApiPropertyOptional({ description: 'Supplier name snapshot', example: 'Anna Supplies' })
+  supplierName?: string | null;
+
+  @ApiProperty({ description: 'Gross amount', example: 5000 })
+  grossAmount: number;
+
+  @ApiProperty({ description: 'Gross amount already copied to active Petty Cash Replenishments for this detail line', example: 3000 })
+  consumedGrossAmount: number;
+
+  @ApiProperty({ description: 'Remaining gross amount available to copy for this detail line', example: 2000 })
+  availableGrossAmount: number;
+
+  @ApiProperty({ description: 'Net amount', example: 4400 })
+  netAmount: number;
+
+  @ApiPropertyOptional({ description: 'VAT type/code', example: 'Input VAT' })
+  vatType?: string | null;
+
+  @ApiProperty({ description: 'VAT percent', example: 12 })
+  vatPercent: number;
+
+  @ApiProperty({ description: 'VAT amount', example: 600 })
+  vatAmount: number;
+
+  @ApiPropertyOptional({ description: 'EWT code', example: 'WC100' })
+  ewtCode?: string | null;
+
+  @ApiProperty({ description: 'EWT percent', example: 2 })
+  ewtPercent: number;
+
+  @ApiProperty({ description: 'EWT amount', example: 100 })
+  ewtAmount: number;
+
+  @ApiProperty({ description: 'Disburse amount', example: 4900 })
+  disburseAmount: number;
+
+  @ApiProperty({ description: 'Disburse amount already copied to active Petty Cash Replenishments for this detail line', example: 2850 })
+  consumedAmount: number;
+
+  @ApiProperty({ description: 'Remaining disburse amount available to copy for this detail line', example: 2050 })
+  availableAmount: number;
+
+  @ApiPropertyOptional({ description: 'Particulars', example: 'Office supplies' })
+  particulars?: string | null;
+
+  @ApiPropertyOptional({ description: 'Remarks', example: 'Receipt A' })
+  remarks?: string | null;
+
+  @ApiPropertyOptional({ description: 'Responsibility center ID', example: '1' })
+  responsibilityCenterId?: string | null;
+
+  @ApiPropertyOptional({ description: 'Responsibility center code', example: 'RC-001' })
+  responsibilityCenterCode?: string | null;
+
+  @ApiPropertyOptional({ description: 'Responsibility center name', example: 'Admin Dept' })
+  responsibilityCenter?: string | null;
+}
+
 export class PettyCashVoucherCopyFromCandidateDto {
   @ApiProperty({ description: 'Petty Cash Voucher ID', example: '1' })
   id: string;
@@ -47,7 +118,7 @@ export class PettyCashVoucherCopyFromCandidateDto {
   @ApiPropertyOptional({ description: 'Default account code', example: '1010101000' })
   accountCode?: string | null;
 
-  @ApiPropertyOptional({ description: 'Default account title', example: 'Petty Cash Fund' })
+  @ApiPropertyOptional({ description: 'Default account title', example: 'Petty Cash Voucher' })
   accountTitle?: string | null;
 
   @ApiPropertyOptional({ description: 'Responsibility center ID', example: '1' })
@@ -65,8 +136,11 @@ export class PettyCashVoucherCopyFromCandidateDto {
   @ApiPropertyOptional({ description: 'Project name', example: 'Main Office Expansion' })
   projectName?: string | null;
 
-  @ApiPropertyOptional({ description: 'Remarks', example: 'Office supplies expense' })
+  @ApiPropertyOptional({ description: 'Remarks', example: 'Initial fund' })
   remarks?: string | null;
+
+  @ApiProperty({ description: 'PCV detail lines to copy into Petty Cash Replenishment', type: () => [PettyCashVoucherCopyFromCandidateDetailDto] })
+  details: PettyCashVoucherCopyFromCandidateDetailDto[];
 
   @ApiProperty({ description: 'Source module display name', example: 'Petty Cash Voucher' })
   source: string;

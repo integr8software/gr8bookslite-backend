@@ -265,8 +265,7 @@ model Company {
   disbursementVouchers              DisbursementVoucher[]
   disbursementVoucherDetails        DisbursementVoucherDetail[]
   pettyCashVouchers                 PettyCashVoucher[]
-  pettyCashFunds                    PettyCashFund[]
-  pettyCashFundDetails              PettyCashFundDetail[]
+  pettyCashVoucherDetails           PettyCashVoucherDetail[]
   pettyCashReplenishments           PettyCashReplenishment[]
   pettyCashReplenishmentDetails     PettyCashReplenishmentDetail[]
   revolvingFunds                    RevolvingFund[]
@@ -332,8 +331,7 @@ model CompanyUnit {
   disbursementVouchers              DisbursementVoucher[]
   disbursementVoucherDetails        DisbursementVoucherDetail[]
   pettyCashVouchers                 PettyCashVoucher[]
-  pettyCashFunds                    PettyCashFund[]
-  pettyCashFundDetails              PettyCashFundDetail[]
+  pettyCashVoucherDetails           PettyCashVoucherDetail[]
   pettyCashReplenishments           PettyCashReplenishment[]
   pettyCashReplenishmentDetails     PettyCashReplenishmentDetail[]
   revolvingFunds                    RevolvingFund[]
@@ -857,7 +855,6 @@ model ChartAccount {
   disbursementVouchers                   DisbursementVoucher[]
   disbursementVoucherDetails             DisbursementVoucherDetail[]
   pettyCashVouchers                      PettyCashVoucher[]
-  pettyCashFunds                         PettyCashFund[]
   pettyCashReplenishments                PettyCashReplenishment[]
   revolvingFunds                         RevolvingFund[]
   revolvingFundReplenishments            RevolvingFundReplenishment[]
@@ -1005,6 +1002,7 @@ model Term {
 model ProjectMaintenance {
   id                 BigInt                   @id @default(autoincrement())
   companyId          Int                      @map("company_id")
+  projectCode        String?                  @map("project_code") @db.VarChar(80)
   projectName        String                   @map("project_name") @db.VarChar(150)
   projectDescription String?                  @map("project_description") @db.VarChar(500)
   status             ProjectMaintenanceStatus @default(ACTIVE)
@@ -1015,6 +1013,7 @@ model ProjectMaintenance {
   updatedAt          DateTime?                @map("updated_at")
   company            Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  @@unique([companyId, projectCode], map: "project_maintenance_company_project_code_key")
   @@unique([companyId, projectName], map: "project_maintenance_company_project_name_key")
   @@index([companyId], map: "project_maintenance_company_id_idx")
   @@index([companyId, status], map: "project_maintenance_company_status_idx")
@@ -1281,8 +1280,7 @@ model ResponsibilityCenter {
   cashVoucherDetails                CashVoucherDetail[]
   disbursementVoucherDetails        DisbursementVoucherDetail[]
   pettyCashVouchers                 PettyCashVoucher[]
-  pettyCashFunds                    PettyCashFund[]
-  pettyCashFundDetails              PettyCashFundDetail[]
+  pettyCashVoucherDetails           PettyCashVoucherDetail[]
   pettyCashReplenishments           PettyCashReplenishment[]
   pettyCashReplenishmentDetails     PettyCashReplenishmentDetail[]
   revolvingFunds                    RevolvingFund[]
@@ -1407,8 +1405,7 @@ model Party {
   disbursementVouchers                DisbursementVoucher[]
   disbursementVoucherDetails          DisbursementVoucherDetail[]
   pettyCashVouchers                   PettyCashVoucher[]
-  pettyCashFunds                      PettyCashFund[]
-  pettyCashFundDetails                PettyCashFundDetail[]
+  pettyCashVoucherDetails             PettyCashVoucherDetail[]
   pettyCashReplenishments             PettyCashReplenishment[]
   pettyCashReplenishmentDetails       PettyCashReplenishmentDetail[]
   revolvingFunds                      RevolvingFund[]
@@ -2154,31 +2151,20 @@ model PettyCashVoucher {
   creditAccountId        BigInt? @map("credit_account_id")
   responsibilityCenterId BigInt? @map("responsibility_center_id")
 
-  voucherNo                        String   @map("voucher_no") @db.VarChar(80)
+  transactionNo                    String   @map("transaction_no") @db.VarChar(80)
   documentDate                     DateTime @map("document_date") @db.Date
   partyCodeSnapshot                String   @map("party_code_snapshot") @db.VarChar(80)
   partyNameSnapshot                String   @map("party_name_snapshot") @db.VarChar(255)
-  accountCodeSnapshot              String   @map("account_code_snapshot") @db.VarChar(80)
-  accountTitleSnapshot             String?  @map("account_title_snapshot") @db.VarChar(255)
   responsibilityCenterCodeSnapshot String?  @map("responsibility_center_code_snapshot") @db.VarChar(80)
   responsibilityCenterSnapshot     String?  @map("responsibility_center_snapshot") @db.VarChar(150)
   projectCode                      String?  @map("project_code") @db.VarChar(80)
   projectName                      String?  @map("project_name") @db.VarChar(255)
+  accountCodeSnapshot              String   @map("account_code_snapshot") @db.VarChar(80)
+  accountTitleSnapshot             String?  @map("account_title_snapshot") @db.VarChar(255)
 
   currencyCode String                 @default("PHP") @map("currency_code") @db.VarChar(10)
   exchangeRate Decimal                @default(1.00) @map("exchange_rate") @db.Decimal(18, 6)
   amount       Decimal                @default(0) @db.Decimal(18, 2)
-  grossAmount  Decimal                @default(0) @map("gross_amount") @db.Decimal(18, 2)
-  netAmount    Decimal                @default(0) @map("net_amount") @db.Decimal(18, 2)
-  vatType      String?                @map("vat_type") @db.VarChar(80)
-  vatable      String?                @db.VarChar(20)
-  vatRate      String?                @map("vat_rate") @db.VarChar(80)
-  vatPercent   Decimal                @default(0) @map("vat_percent") @db.Decimal(8, 4)
-  vatAmount    Decimal                @default(0) @map("vat_amount") @db.Decimal(18, 2)
-  ewtCode      String?                @map("ewt_code") @db.VarChar(80)
-  ewtRate      String?                @map("ewt_rate") @db.VarChar(80)
-  ewtPercent   Decimal                @default(0) @map("ewt_percent") @db.Decimal(8, 4)
-  ewtAmount    Decimal                @default(0) @map("ewt_amount") @db.Decimal(18, 2)
   remarks      String?                @db.VarChar(500)
   status       PettyCashVoucherStatus @default(DRAFT)
 
@@ -2196,75 +2182,23 @@ model PettyCashVoucher {
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
-  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit           CompanyUnit?          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
-  party                Party?                @relation(fields: [partyId], references: [id], onDelete: SetNull)
-  creditAccount        ChartAccount?         @relation(fields: [creditAccountId], references: [id], onDelete: SetNull)
-  responsibilityCenter ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
+  company              Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchUnit           CompanyUnit?             @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
+  party                Party?                   @relation(fields: [partyId], references: [id], onDelete: SetNull)
+  creditAccount        ChartAccount?            @relation(fields: [creditAccountId], references: [id], onDelete: SetNull)
+  responsibilityCenter ResponsibilityCenter?    @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
+  details              PettyCashVoucherDetail[]
 
-  @@unique([companyId, voucherNo], map: "petty_cash_vouchers_company_voucher_no_key")
+  @@unique([companyId, transactionNo], map: "petty_cash_vouchers_company_transaction_no_key")
   @@index([companyId, status], map: "petty_cash_vouchers_company_status_idx")
   @@index([companyId, documentDate], map: "petty_cash_vouchers_company_document_date_idx")
   @@index([partyId], map: "petty_cash_vouchers_party_id_idx")
   @@map("petty_cash_vouchers")
 }
 
-model PettyCashFund {
-  id                     BigInt  @id @default(autoincrement())
-  companyId              Int     @map("company_id")
-  branchUnitId           Int?    @map("branch_unit_id")
-  partyId                BigInt? @map("party_id")
-  creditAccountId        BigInt? @map("credit_account_id")
-  responsibilityCenterId BigInt? @map("responsibility_center_id")
-
-  transactionNo                    String   @map("transaction_no") @db.VarChar(80)
-  documentDate                     DateTime @map("document_date") @db.Date
-  partyCodeSnapshot                String   @map("party_code_snapshot") @db.VarChar(80)
-  partyNameSnapshot                String   @map("party_name_snapshot") @db.VarChar(255)
-  responsibilityCenterCodeSnapshot String?  @map("responsibility_center_code_snapshot") @db.VarChar(80)
-  responsibilityCenterSnapshot     String?  @map("responsibility_center_snapshot") @db.VarChar(150)
-  projectCode                      String?  @map("project_code") @db.VarChar(80)
-  projectName                      String?  @map("project_name") @db.VarChar(255)
-  accountCodeSnapshot              String   @map("account_code_snapshot") @db.VarChar(80)
-  accountTitleSnapshot             String?  @map("account_title_snapshot") @db.VarChar(255)
-
-  currencyCode String              @default("PHP") @map("currency_code") @db.VarChar(10)
-  exchangeRate Decimal             @default(1.00) @map("exchange_rate") @db.Decimal(18, 6)
-  amount       Decimal             @default(0) @db.Decimal(18, 2)
-  remarks      String?             @db.VarChar(500)
-  status       PettyCashFundStatus @default(DRAFT)
-
-  createdByUserId     Int?      @map("created_by_user_id")
-  updatedByUserId     Int?      @map("updated_by_user_id")
-  approvedByUserId    Int?      @map("approved_by_user_id")
-  approvedAt          DateTime? @map("approved_at")
-  disapprovedByUserId Int?      @map("disapproved_by_user_id")
-  disapprovedAt       DateTime? @map("disapproved_at")
-  cancelledByUserId   Int?      @map("cancelled_by_user_id")
-  cancelledAt         DateTime? @map("cancelled_at")
-  postedByUserId      Int?      @map("posted_by_user_id")
-  postedAt            DateTime? @map("posted_at")
-  deletedAt           DateTime? @map("deleted_at")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
-
-  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchUnit           CompanyUnit?          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
-  party                Party?                @relation(fields: [partyId], references: [id], onDelete: SetNull)
-  creditAccount        ChartAccount?         @relation(fields: [creditAccountId], references: [id], onDelete: SetNull)
-  responsibilityCenter ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
-  details              PettyCashFundDetail[]
-
-  @@unique([companyId, transactionNo], map: "petty_cash_funds_company_transaction_no_key")
-  @@index([companyId, status], map: "petty_cash_funds_company_status_idx")
-  @@index([companyId, documentDate], map: "petty_cash_funds_company_document_date_idx")
-  @@index([partyId], map: "petty_cash_funds_party_id_idx")
-  @@map("petty_cash_funds")
-}
-
-model PettyCashFundDetail {
+model PettyCashVoucherDetail {
   id                               BigInt    @id @default(autoincrement())
-  fundId                           BigInt    @map("fund_id")
+  voucherId                        BigInt    @map("voucher_id")
   companyId                        Int       @map("company_id")
   branchUnitId                     Int?      @map("branch_unit_id")
   partyId                          BigInt?   @map("party_id")
@@ -2293,16 +2227,16 @@ model PettyCashFundDetail {
   createdAt                        DateTime  @default(now()) @map("created_at")
   updatedAt                        DateTime  @updatedAt @map("updated_at")
 
-  fund                 PettyCashFund         @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  voucher              PettyCashVoucher      @relation(fields: [voucherId], references: [id], onDelete: Cascade)
   company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
   branchUnit           CompanyUnit?          @relation(fields: [branchUnitId], references: [id], onDelete: Restrict)
   party                Party?                @relation(fields: [partyId], references: [id], onDelete: SetNull)
   responsibilityCenter ResponsibilityCenter? @relation(fields: [responsibilityCenterId], references: [id], onDelete: SetNull)
 
-  @@unique([fundId, lineNumber], map: "petty_cash_fund_details_fund_line_key")
-  @@index([companyId], map: "petty_cash_fund_details_company_idx")
-  @@index([partyId], map: "petty_cash_fund_details_party_id_idx")
-  @@map("petty_cash_fund_details")
+  @@unique([voucherId, lineNumber], map: "petty_cash_voucher_details_voucher_line_key")
+  @@index([companyId], map: "petty_cash_voucher_details_company_idx")
+  @@index([partyId], map: "petty_cash_voucher_details_party_id_idx")
+  @@map("petty_cash_voucher_details")
 }
 
 model PettyCashReplenishment {
@@ -4444,15 +4378,6 @@ enum TaxAmountSource {
 }
 
 enum PettyCashVoucherStatus {
-  DRAFT
-  FOR_APPROVAL
-  POSTED
-  DISAPPROVED
-  CANCELLED
-  CLOSED
-}
-
-enum PettyCashFundStatus {
   DRAFT
   FOR_APPROVAL
   POSTED

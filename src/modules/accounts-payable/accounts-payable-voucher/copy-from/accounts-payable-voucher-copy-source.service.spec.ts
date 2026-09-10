@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 import { AccountsPayableVoucherStatus } from '@prisma/client';
 import { AppRole } from '../../../../common/enums/app-role.enum';
 import type { AuthUser } from '../../../../common/interfaces/auth-user.interface';

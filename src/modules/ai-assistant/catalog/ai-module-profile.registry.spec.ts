@@ -36,7 +36,7 @@ describe('AiModuleProfileRegistry', () => {
   });
 
   it('matches the most specific module when names overlap', () => {
-    expect(findAiModuleProfile('open cash advance multiple entry')?.moduleCode).toBe('CAME');
+    expect(findAiModuleProfile('open cash advance')?.moduleCode).toBe('CA');
     expect(findAiModuleProfile('explain petty cash replenishment')?.moduleCode).toBe('PCR');
   });
 

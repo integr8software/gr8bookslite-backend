@@ -5,11 +5,14 @@ export class ProjectMaintenanceResponseDto {
   @ApiProperty()
   id!: string;
 
+  @ApiProperty({ nullable: true })
+  projectCode!: string | null;
+
   @ApiProperty()
   projectName!: string;
 
   @ApiProperty({ nullable: true })
-  projectDescription!: string | null;
+  description!: string | null;
 
   @ApiProperty({ enum: ProjectMaintenanceStatus })
   status!: ProjectMaintenanceStatus;
@@ -25,6 +28,26 @@ export class ProjectMaintenanceResponseDto {
 
   @ApiProperty()
   updatedAt!: Date;
+}
+
+export class ProjectMaintenanceOptionResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty({ nullable: true })
+  projectCode!: string | null;
+
+  @ApiProperty()
+  projectName!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty({ nullable: true })
+  description!: string | null;
+
+  @ApiProperty({ enum: ProjectMaintenanceStatus })
+  status!: ProjectMaintenanceStatus;
 }
 
 export class ProjectMaintenanceStatisticsResponseDto {
@@ -81,6 +104,11 @@ export class ProjectMaintenanceListResponseDto {
 
   @ApiProperty({ type: ProjectMaintenancePermissionsResponseDto })
   permissions!: ProjectMaintenancePermissionsResponseDto;
+}
+
+export class ProjectMaintenanceOptionsResponseDto {
+  @ApiProperty({ type: [ProjectMaintenanceOptionResponseDto] })
+  projects!: ProjectMaintenanceOptionResponseDto[];
 }
 
 export class ProjectMaintenanceContainerResponseDto {

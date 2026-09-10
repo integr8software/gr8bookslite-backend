@@ -32,7 +32,8 @@ import { PaymentTypeMaintenanceModule } from './modules/maintenance/payment-type
 import { DiscountMaintenanceModule } from './modules/maintenance/discount-maintenance/discount-maintenance.module';
 import { PartyMaintenanceModule } from './modules/maintenance/party-maintenance/party-maintenance.module';
 import { BankMasterfileModule } from './modules/maintenance/bank-masterfile/bank-masterfile.module';
-import { DefaultAccountModule } from './modules/maintenance/default-account/default-account.module';
+import { CollectionTypeModule } from './modules/maintenance/collection-type/collection-type.module';
+import { DisbursementTypeModule } from './modules/maintenance/disbursement-type/disbursement-type.module';
 import { ServicesMaintenanceModule } from './modules/maintenance/services-maintenance/services-maintenance.module';
 import { ResponsibilityCenterModule } from './modules/maintenance/responsibility-center/responsibility-center.module';
 import { TaxModule } from './modules/tax/tax.module';
@@ -99,7 +100,8 @@ import { PurchasingModule } from './modules/purchasing/purchasing.module';
     DiscountMaintenanceModule,
     PartyMaintenanceModule,
     BankMasterfileModule,
-    DefaultAccountModule,
+    DisbursementTypeModule,
+    CollectionTypeModule,
     ServicesMaintenanceModule,
     ResponsibilityCenterModule,
     TaxModule,

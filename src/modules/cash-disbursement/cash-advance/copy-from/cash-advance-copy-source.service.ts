@@ -17,8 +17,6 @@ import { GetCashAdvanceCopyFromCandidatesQueryDto } from './dto/get-cash-advance
 export const CashAdvanceCopySourceLabel = 'Employee Advance';
 
 const CashAdvanceModuleCode = 'CA';
-const CashAdvanceMultipleEntryModuleCode = 'CAME';
-const CashAdvanceMultipleEntryPrefix = 'CAME-';
 const CashAdvanceAllocationLockNamespace = 7094n;
 const ActiveCashVoucherStatuses = [CashVoucherStatus.DRAFT, CashVoucherStatus.FOR_APPROVAL, CashVoucherStatus.POSTED];
 const ActiveDisbursementVoucherStatuses = [DisbursementVoucherStatus.DRAFT, DisbursementVoucherStatus.FOR_APPROVAL, DisbursementVoucherStatus.POSTED];
@@ -394,10 +392,7 @@ export class CashAdvanceCopySourceService {
     if (
       canAccessModuleAction(user, companyId, CashAdvanceModuleCode, PermissionAction.VIEW) ||
       canAccessModuleAction(user, companyId, CashAdvanceModuleCode, PermissionAction.CREATE) ||
-      canAccessModuleAction(user, companyId, CashAdvanceModuleCode, PermissionAction.UPDATE) ||
-      canAccessModuleAction(user, companyId, CashAdvanceMultipleEntryModuleCode, PermissionAction.VIEW) ||
-      canAccessModuleAction(user, companyId, CashAdvanceMultipleEntryModuleCode, PermissionAction.CREATE) ||
-      canAccessModuleAction(user, companyId, CashAdvanceMultipleEntryModuleCode, PermissionAction.UPDATE)
+      canAccessModuleAction(user, companyId, CashAdvanceModuleCode, PermissionAction.UPDATE)
     ) {
       return;
     }
@@ -435,12 +430,12 @@ function getCashAdvanceCopiedAmount(detail: CopiedDetailInput) {
   return disburseAmount > 0 ? disburseAmount : getCopiedDetailAmount(detail);
 }
 
-function getCashAdvanceReferencePrefix(transactionNo: string) {
-  return transactionNo.trim().toUpperCase().startsWith(CashAdvanceMultipleEntryPrefix) ? CashAdvanceMultipleEntryModuleCode : CashAdvanceModuleCode;
+function getCashAdvanceReferencePrefix(transactionNo?: string) {
+  return transactionNo && transactionNo.startsWith('CAME-') ? 'CAME' : CashAdvanceModuleCode;
 }
 
 function formatCashAdvanceReference(transactionNo: string) {
-  return `${getCashAdvanceReferencePrefix(transactionNo)}:${transactionNo.trim()}`;
+  return `${getCashAdvanceReferencePrefix()}:${transactionNo.trim()}`;
 }
 
 function parseCashAdvanceReference(reference: string) {
@@ -448,12 +443,8 @@ function parseCashAdvanceReference(reference: string) {
   const prefix = separatorIndex >= 0 ? reference.slice(0, separatorIndex).trim().toUpperCase() : '';
   const transactionNo = separatorIndex >= 0 ? reference.slice(separatorIndex + 1).trim() : '';
 
-  if ((prefix !== CashAdvanceModuleCode && prefix !== CashAdvanceMultipleEntryModuleCode) || !transactionNo) {
-    throw new BadRequestException('Employee Advance detail Reference No must use CA:<transactionNo> or CAME:<transactionNo>.');
-  }
-
-  if (prefix === CashAdvanceMultipleEntryModuleCode && !transactionNo.toUpperCase().startsWith(CashAdvanceMultipleEntryPrefix)) {
-    throw new BadRequestException('Employee Advance CAME references must use a CAME transaction number.');
+  if ((prefix !== CashAdvanceModuleCode && prefix !== 'CAME') || !transactionNo) {
+    throw new BadRequestException('Employee Advance detail Reference No must use CA:<transactionNo>.');
   }
 
   return transactionNo;

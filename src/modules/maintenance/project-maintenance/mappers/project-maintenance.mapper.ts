@@ -4,8 +4,9 @@ import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.u
 export function mapProjectMaintenance(project: ProjectMaintenance, userNames: Map<number, string>) {
   return {
     id: project.id.toString(),
+    projectCode: project.projectCode ?? '',
     projectName: project.projectName,
-    projectDescription: project.projectDescription ?? '',
+    description: project.projectDescription ?? '',
     status: project.status,
     createdBy: project.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(project.createdByUserId) ?? null),
     createdAt: project.createdAt,

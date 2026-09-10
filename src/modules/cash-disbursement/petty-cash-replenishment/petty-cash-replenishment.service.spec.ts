@@ -55,8 +55,8 @@ describe('PettyCashReplenishmentService', () => {
     ).toThrow(BadRequestException);
   });
 
-  it('allows repeated Petty Cash Fund numbers but requires unique Petty Cash Voucher numbers', () => {
-    expect(() => service.assertUniquePettyCashVoucherNumbers([{ pettyCashNo: 'PCF:PCF-000001' }, { voucherNo: 'pcf:PCF-000001' }])).not.toThrow();
+  it('ignores non-PCV references but requires unique Petty Cash Voucher numbers', () => {
+    expect(() => service.assertUniquePettyCashVoucherNumbers([{ pettyCashNo: 'RF:RF-000001' }, { voucherNo: 'rf:RF-000001' }])).not.toThrow();
 
     expect(() => service.assertUniquePettyCashVoucherNumbers([{ pettyCashNo: 'PCV:PCV-000001' }, { voucherNo: 'pcv:PCV-000001' }])).toThrow(
       'Petty Cash Voucher Numbers must be unique.',

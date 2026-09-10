@@ -10,11 +10,18 @@ export const FinancialMaintenanceProfiles = defineAiModuleProfiles([
     summary: 'Maintains the account codes and names used for accounting entries and financial reporting.',
   },
   {
-    moduleCode: 'DA',
-    name: 'Default Accounts',
+    moduleCode: 'DTM',
+    name: 'Disbursement Type Maintenance',
     area: 'Financial Maintenance',
-    aliases: ['default account', 'account defaults'],
-    summary: 'Maintains reusable default account mappings used by supported business processes.',
+    aliases: ['disbursement type', 'expense type', 'expense defaults', 'account defaults'],
+    summary: 'Maintains reusable disbursement type account templates used by disbursement workflows.',
+  },
+  {
+    moduleCode: 'CTM',
+    name: 'Collection Type Maintenance',
+    area: 'Financial Maintenance',
+    aliases: ['collection type', 'collection defaults', 'receipt defaults'],
+    summary: 'Maintains reusable collection type account templates used by collection workflows.',
   },
   {
     moduleCode: 'BM',

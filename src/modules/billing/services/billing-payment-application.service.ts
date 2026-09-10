@@ -107,8 +107,7 @@ export class BillingPaymentApplicationService {
           });
 
         const isTrialPayment =
-          lockedAttempt.purpose === BillingPaymentPurpose.ONBOARDING &&
-          Boolean(lockedAttempt.subscriptionInvoice.description?.toLowerCase().includes('trial'));
+          lockedAttempt.purpose === BillingPaymentPurpose.ONBOARDING && Boolean(lockedAttempt.subscriptionInvoice.description?.toLowerCase().includes('trial'));
 
         if (lockedAttempt.companySubscriptionId) {
           await tx.companySubscription.update({

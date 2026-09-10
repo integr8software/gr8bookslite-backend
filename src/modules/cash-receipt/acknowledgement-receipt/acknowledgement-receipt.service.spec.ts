@@ -52,11 +52,7 @@ describe('AcknowledgementReceiptService payment type resolution', () => {
 });
 
 describe('AcknowledgementReceiptService entry persistence', () => {
-  const service = new AcknowledgementReceiptService(
-    {} as PrismaService,
-    {} as AcknowledgementReceiptAccountingService,
-    {} as JournalVoucherCopySourceService,
-  );
+  const service = new AcknowledgementReceiptService({} as PrismaService, {} as AcknowledgementReceiptAccountingService, {} as JournalVoucherCopySourceService);
 
   it('stores each collection item and its hidden columns in AcknowledgementReceiptDetails', async () => {
     const createMany = jest.fn().mockResolvedValue({ count: 1 });

@@ -31,28 +31,26 @@ describe('PettyCashVoucherController', () => {
     expect(service.suggestTransactionNumber).toHaveBeenCalledWith(user, 3);
   });
 
-  it('delegates the complete petty-cash voucher workflow with realistic data', async () => {
-    const id = '301';
-    const query = { page: 1, limit: 20, search: 'QuickMart' } as Parameters<typeof controller.findAll>[1];
+  it('delegates the complete petty-cash fund workflow with realistic data', async () => {
+    const id = '101';
+    const query = { page: 1, limit: 20, search: 'Juan dela Cruz' } as Parameters<typeof controller.findAll>[1];
     const createDto = {
       branchUnitId: 3,
-      voucherNo: 'PCV-2026-0001',
       transactionNo: 'PCV-2026-0001',
       documentDate: '2026-09-01',
-      partyCode: 'SUP-0102',
-      partyName: 'QuickMart Office Supplies',
-      accountCode: '610100',
-      accountTitle: 'Office Supplies Expense',
+      partyId: '41',
+      partyCode: 'EMP-0041',
+      partyName: 'Juan dela Cruz',
+      accountId: '12',
+      accountCode: '100200',
+      accountTitle: 'Petty Cash Voucher',
       currencyCode: 'PHP',
       exchangeRate: 1,
-      grossAmount: 1850,
-      amount: 1850,
-      netAmount: 1850,
-      vatAmount: 0,
-      ewtAmount: 0,
-      remarks: 'Printer ink and bond paper purchase',
+      amount: 25000,
+      remarks: 'Initial petty-cash fund for September operations',
+      details: [{ lineNumber: 1, date: '2026-09-01', supplierName: 'QuickMart Office Supplies', particulars: 'Initial operating float', amount: 25000 }],
     } as Parameters<typeof controller.create>[1];
-    const updateDto = { ...createDto, grossAmount: 1950, amount: 1950, netAmount: 1950 } as Parameters<typeof controller.update>[2];
+    const updateDto = { ...createDto, amount: 27000, remarks: 'Adjusted approved fund level' } as Parameters<typeof controller.update>[2];
     const statusDto = { status: 'FOR_APPROVAL' } as Parameters<typeof controller.updateStatus>[2];
     const record = { id, ...createDto, status: 'DRAFT' };
     const list = { data: [record], meta: { page: 1, limit: 20, total: 1 } };

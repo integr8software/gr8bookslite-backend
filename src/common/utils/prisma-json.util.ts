@@ -4,5 +4,5 @@ export function toJsonInput(value: unknown): Prisma.InputJsonValue | Prisma.Null
   if (value === undefined) return undefined;
   if (value === null) return Prisma.JsonNull;
 
-  return value as Prisma.InputJsonValue;
+  return value;
 }

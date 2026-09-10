@@ -137,10 +137,7 @@ export class RevolvingFundService {
       ? { partyId }
       : partyCode
         ? {
-            OR: [
-              { partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } },
-              { party: { partyCodeNo: { equals: partyCode, mode: 'insensitive' } } },
-            ],
+            OR: [{ partyCodeSnapshot: { equals: partyCode, mode: 'insensitive' } }, { party: { partyCodeNo: { equals: partyCode, mode: 'insensitive' } } }],
           }
         : null;
     const searchFilter: Prisma.RevolvingFundWhereInput | null = search
@@ -624,11 +621,7 @@ export class RevolvingFundService {
         replenishment: {
           deletedAt: null,
           status: {
-            in: [
-              RevolvingFundReplenishmentStatus.DRAFT,
-              RevolvingFundReplenishmentStatus.FOR_APPROVAL,
-              RevolvingFundReplenishmentStatus.POSTED,
-            ],
+            in: [RevolvingFundReplenishmentStatus.DRAFT, RevolvingFundReplenishmentStatus.FOR_APPROVAL, RevolvingFundReplenishmentStatus.POSTED],
           },
         },
       },
@@ -673,11 +666,7 @@ export class RevolvingFundService {
         replenishment: {
           deletedAt: null,
           status: {
-            in: [
-              RevolvingFundReplenishmentStatus.DRAFT,
-              RevolvingFundReplenishmentStatus.FOR_APPROVAL,
-              RevolvingFundReplenishmentStatus.POSTED,
-            ],
+            in: [RevolvingFundReplenishmentStatus.DRAFT, RevolvingFundReplenishmentStatus.FOR_APPROVAL, RevolvingFundReplenishmentStatus.POSTED],
           },
         },
       },

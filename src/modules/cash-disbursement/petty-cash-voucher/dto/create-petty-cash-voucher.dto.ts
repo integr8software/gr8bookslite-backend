@@ -1,7 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
 import { PettyCashVoucherStatus } from '@prisma/client';
+import { PettyCashVoucherDetailDto } from './petty-cash-voucher-detail.dto';
 
 export class CreatePettyCashVoucherDto {
   @ApiPropertyOptional({ description: 'Branch Unit ID', example: 1 })
@@ -10,18 +11,28 @@ export class CreatePettyCashVoucherDto {
   @IsNumber()
   branchUnitId?: number;
 
-  @ApiPropertyOptional({ description: 'Party ID', example: '1' })
+  @ApiPropertyOptional({ description: 'Transaction Number', example: 'PCV-2026-000001' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  transactionNo?: string;
+
+  @ApiProperty({ description: 'Document Date', example: '2026-05-21' })
+  @IsDateString()
+  documentDate: string;
+
+  @ApiPropertyOptional({ description: 'Party ID (Custodian / Employee)', example: '1' })
   @IsOptional()
   @IsString()
   partyId?: string;
 
-  @ApiPropertyOptional({ description: 'Party Code', example: 'PTY-001' })
+  @ApiPropertyOptional({ description: 'Party Code', example: 'EMP-001' })
   @IsOptional()
   @IsString()
   @MaxLength(80)
   partyCode?: string;
 
-  @ApiPropertyOptional({ description: 'Party Name', example: 'Acme Corp' })
+  @ApiPropertyOptional({ description: 'Party Name (Custodian)', example: 'John Doe' })
   @IsOptional()
   @IsString()
   @MaxLength(255)
@@ -56,43 +67,27 @@ export class CreatePettyCashVoucherDto {
   @MaxLength(255)
   projectName?: string;
 
-  @ApiPropertyOptional({ description: 'Default Account ID', example: '1' })
+  @ApiPropertyOptional({ description: 'Credit Account ID / Default Account ID', example: '1' })
   @IsOptional()
   @IsString()
   accountId?: string;
 
-  @ApiPropertyOptional({ description: 'Credit Account ID (Default Account)', example: '1' })
+  @ApiPropertyOptional({ description: 'Credit Account ID', example: '1' })
   @IsOptional()
   @IsString()
   creditAccountId?: string;
 
-  @ApiPropertyOptional({ description: 'Default Account Code', example: '1010101000' })
+  @ApiPropertyOptional({ description: 'Account Code Snapshot', example: '1010101000' })
   @IsOptional()
   @IsString()
   @MaxLength(80)
   accountCode?: string;
 
-  @ApiPropertyOptional({ description: 'Default Account Title', example: 'Petty Cash Fund' })
+  @ApiPropertyOptional({ description: 'Account Title Snapshot', example: 'Petty Cash Voucher' })
   @IsOptional()
   @IsString()
   @MaxLength(255)
   accountTitle?: string;
-
-  @ApiPropertyOptional({ description: 'Transaction Voucher Number', example: 'PCV-2026-000001' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  voucherNo?: string;
-
-  @ApiPropertyOptional({ description: 'Transaction Number alias', example: 'PCV-2026-000001' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  transactionNo?: string;
-
-  @ApiProperty({ description: 'Document Date', example: '2026-05-21' })
-  @IsDateString()
-  documentDate: string;
 
   @ApiPropertyOptional({ description: 'Currency code', default: 'PHP', example: 'PHP' })
   @IsOptional()
@@ -113,79 +108,13 @@ export class CreatePettyCashVoucherDto {
   @Min(0)
   exchangeRate?: number;
 
-  @ApiPropertyOptional({ description: 'Gross Amount', default: 0, example: 5000.0 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  grossAmount?: number;
-
-  @ApiPropertyOptional({ description: 'Voucher Amount (alias for net amount/total)', default: 0, example: 5000.0 })
+  @ApiPropertyOptional({ description: 'Total Amount', default: 0, example: 10000.0 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   amount?: number;
 
-  @ApiPropertyOptional({ description: 'Net Amount', default: 0, example: 4500.0 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  netAmount?: number;
-
-  @ApiPropertyOptional({ description: 'VAT Type', example: 'VAT Inclusive' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  vatType?: string;
-
-  @ApiPropertyOptional({ description: 'VATable flag', example: 'True' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  vatable?: string;
-
-  @ApiPropertyOptional({ description: 'VAT Rate Description or Code', example: '12%' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  vatRate?: string;
-
-  @ApiPropertyOptional({ description: 'VAT Percent', default: 0, example: 12.0 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  vatPercent?: number;
-
-  @ApiPropertyOptional({ description: 'VAT Amount', default: 0, example: 600.0 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  vatAmount?: number;
-
-  @ApiPropertyOptional({ description: 'EWT Code', example: 'WC100' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  ewtCode?: string;
-
-  @ApiPropertyOptional({ description: 'EWT Rate description', example: '2%' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  ewtRate?: string;
-
-  @ApiPropertyOptional({ description: 'EWT Percent', default: 0, example: 2.0 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  ewtPercent?: number;
-
-  @ApiPropertyOptional({ description: 'EWT Amount', default: 0, example: 100.0 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  ewtAmount?: number;
-
-  @ApiPropertyOptional({ description: 'Remarks', example: 'Office supplies expense' })
+  @ApiPropertyOptional({ description: 'Remarks', example: 'Petty cash fund establishment' })
   @IsOptional()
   @IsString()
   @MaxLength(500)
@@ -195,4 +124,11 @@ export class CreatePettyCashVoucherDto {
   @IsOptional()
   @IsEnum(PettyCashVoucherStatus)
   status?: PettyCashVoucherStatus;
+
+  @ApiPropertyOptional({ description: 'Petty Cash Voucher Details', type: () => [PettyCashVoucherDetailDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PettyCashVoucherDetailDto)
+  details?: PettyCashVoucherDetailDto[];
 }

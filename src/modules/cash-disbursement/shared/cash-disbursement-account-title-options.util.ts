@@ -44,13 +44,8 @@ export async function findCashDisbursementAccountTitleOptions({
       where: {
         companyId,
         deletedAt: null,
-        status: ChartAccountStatus.ACTIVE,
         type: DefaultAccountTemplateType.EXPENSE,
-        expenseCoa: {
-          is: {
-            ...activePostingAccountWhere,
-          },
-        },
+        status: ChartAccountStatus.ACTIVE,
         ...(search
           ? {
               OR: [
@@ -63,6 +58,9 @@ export async function findCashDisbursementAccountTitleOptions({
           : {}),
       },
       select: {
+        id: true,
+        name: true,
+        description: true,
         expenseCoa: {
           select: {
             id: true,
@@ -70,10 +68,10 @@ export async function findCashDisbursementAccountTitleOptions({
             accountTitle: true,
             accountType: true,
             accountNature: true,
-            status: true,
           },
         },
       },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
     }),
     prisma.party.findMany({
       where: {
@@ -130,7 +128,21 @@ export async function findCashDisbursementAccountTitleOptions({
     });
   };
 
-  defaultExpenseAccounts.forEach((defaultAccount) => addAccount(defaultAccount.expenseCoa));
+  defaultExpenseAccounts.forEach((disbursementType) => {
+    const expenseCoa = disbursementType.expenseCoa;
+    if (!expenseCoa) {
+      return;
+    }
+
+    addAccount({
+      id: expenseCoa.id,
+      accountCode: expenseCoa.accountCode,
+      accountTitle: expenseCoa.accountTitle,
+      accountType: expenseCoa.accountType,
+      accountNature: expenseCoa.accountNature,
+      status: ChartAccountStatus.ACTIVE,
+    });
+  });
   employeeAdvanceAccounts.forEach((party) => addAccount(party.employeeAdvanceAccount));
 
   return Array.from(optionsById.values()).sort(

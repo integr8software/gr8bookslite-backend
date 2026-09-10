@@ -22,11 +22,7 @@ import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
 const PurchaseTypes = ['Goods', 'Services', 'Assets'];
 export const PurchaseOrderCopySourceLabel = 'Purchase Order';
-const ActiveAdvanceToSupplierStatuses = [
-  AdvanceToSupplierStatus.DRAFT,
-  AdvanceToSupplierStatus.FOR_APPROVAL,
-  AdvanceToSupplierStatus.POSTED,
-];
+const ActiveAdvanceToSupplierStatuses = [AdvanceToSupplierStatus.DRAFT, AdvanceToSupplierStatus.FOR_APPROVAL, AdvanceToSupplierStatus.POSTED];
 
 @Injectable()
 export class PurchaseOrderService {

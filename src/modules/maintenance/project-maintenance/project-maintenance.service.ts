@@ -74,6 +74,7 @@ export class ProjectMaintenanceService {
     ensureModuleAction(user, companyId, ProjectMaintenanceModuleCode, PermissionAction.CREATE, ProjectMaintenancePermissionMessage);
 
     await this.ensureProjectNameAvailable(companyId, dto.projectName);
+    await this.ensureProjectCodeAvailable(companyId, dto.projectCode);
 
     try {
       const project = await this.prisma.projectMaintenance.create({
@@ -106,6 +107,9 @@ export class ProjectMaintenanceService {
     if (dto.projectName !== undefined) {
       await this.ensureProjectNameAvailable(companyId, dto.projectName, projectId);
     }
+    if (dto.projectCode !== undefined) {
+      await this.ensureProjectCodeAvailable(companyId, dto.projectCode, projectId);
+    }
 
     try {
       const project = await this.prisma.projectMaintenance.update({
@@ -137,7 +141,11 @@ export class ProjectMaintenanceService {
       ...(query.status ? { status: query.status } : {}),
       ...(search
         ? {
-            OR: [{ projectName: { contains: search, mode: 'insensitive' } }, { projectDescription: { contains: search, mode: 'insensitive' } }],
+            OR: [
+              { projectCode: { contains: search, mode: 'insensitive' } },
+              { projectName: { contains: search, mode: 'insensitive' } },
+              { projectDescription: { contains: search, mode: 'insensitive' } },
+            ],
           }
         : {}),
     };
@@ -192,15 +200,17 @@ export class ProjectMaintenanceService {
 
   private toCreateProjectData(dto: CreateProjectMaintenanceDto) {
     return {
+      projectCode: dto.projectCode?.trim() || null,
       projectName: dto.projectName.trim(),
-      projectDescription: dto.projectDescription?.trim() ?? '',
+      projectDescription: dto.description?.trim() ?? '',
     };
   }
 
   private toProjectData(dto: UpdateProjectMaintenanceDto) {
     return {
+      ...(dto.projectCode !== undefined ? { projectCode: dto.projectCode.trim() || null } : {}),
       ...(dto.projectName !== undefined ? { projectName: dto.projectName.trim() } : {}),
-      ...(dto.projectDescription !== undefined ? { projectDescription: dto.projectDescription.trim() } : {}),
+      ...(dto.description !== undefined ? { projectDescription: dto.description.trim() } : {}),
       ...(dto.status !== undefined ? { status: dto.status } : {}),
     };
   }
@@ -245,6 +255,33 @@ export class ProjectMaintenanceService {
 
     if (existingProject) {
       throw new ConflictException('A project with this name already exists.');
+    }
+  }
+
+  private async ensureProjectCodeAvailable(companyId: number, projectCode?: string, excludedProjectId?: bigint) {
+    const normalizedProjectCode = projectCode?.trim();
+
+    if (!normalizedProjectCode) {
+      return;
+    }
+
+    const existingProject = await this.prisma.projectMaintenance.findFirst({
+      where: {
+        companyId,
+        deletedAt: null,
+        id: excludedProjectId ? { not: excludedProjectId } : undefined,
+        projectCode: {
+          equals: normalizedProjectCode,
+          mode: 'insensitive',
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (existingProject) {
+      throw new ConflictException('A project with this code already exists.');
     }
   }
 }

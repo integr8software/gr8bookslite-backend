@@ -11,7 +11,12 @@ type PettyCashVoucherServiceInternals = {
     partyNameSnapshot: string | null;
     accountCodeSnapshot: string | null;
     accountTitleSnapshot: string | null;
-    grossAmount: Prisma.Decimal;
+    amount: Prisma.Decimal;
+    details?: Array<{
+      supplierNameSnapshot: string | null;
+      grossAmount: Prisma.Decimal;
+      amount: Prisma.Decimal;
+    }>;
   }) => void;
 };
 
@@ -26,14 +31,15 @@ describe('PettyCashVoucherService', () => {
     expect(service.isSubmittedStatus(PettyCashVoucherStatus.CANCELLED)).toBe(false);
   });
 
-  it('requires party, account, and positive gross amount before submission', () => {
+  it('requires party, account, positive amount, and one valid detail before submission', () => {
     expect(() =>
       service.assertPettyCashVoucherReady({
         partyCodeSnapshot: 'EMP-001',
         partyNameSnapshot: 'Employee',
         accountCodeSnapshot: '1010',
         accountTitleSnapshot: 'Petty Cash',
-        grossAmount: new Prisma.Decimal('100'),
+        amount: new Prisma.Decimal('100'),
+        details: [{ supplierNameSnapshot: 'Supplier', grossAmount: new Prisma.Decimal('50'), amount: new Prisma.Decimal('50') }],
       }),
     ).not.toThrow();
 
@@ -43,7 +49,8 @@ describe('PettyCashVoucherService', () => {
         partyNameSnapshot: 'Employee',
         accountCodeSnapshot: '1010',
         accountTitleSnapshot: 'Petty Cash',
-        grossAmount: new Prisma.Decimal('0'),
+        amount: new Prisma.Decimal('100'),
+        details: [],
       }),
     ).toThrow(BadRequestException);
   });
