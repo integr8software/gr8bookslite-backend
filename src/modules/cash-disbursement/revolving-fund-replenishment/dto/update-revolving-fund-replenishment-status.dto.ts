@@ -1,13 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { RevolvingFundReplenishmentStatus } from '@prisma/client';
 
 export class UpdateRevolvingFundReplenishmentStatusDto {
-  @ApiProperty({
-    description: 'Target Revolving Fund Replenishment status',
-    enum: RevolvingFundReplenishmentStatus,
-    example: RevolvingFundReplenishmentStatus.POSTED,
-  })
+  // prettier-ignore
+  @ApiProperty({ description: 'Target Revolving Fund Replenishment status', enum: RevolvingFundReplenishmentStatus, example: RevolvingFundReplenishmentStatus.POSTED })
   @IsEnum(RevolvingFundReplenishmentStatus)
+  @IsNotEmpty()
   status: RevolvingFundReplenishmentStatus;
 }

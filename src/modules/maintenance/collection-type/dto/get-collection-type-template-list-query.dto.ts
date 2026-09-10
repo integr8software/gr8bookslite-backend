@@ -14,11 +14,8 @@ export class GetCollectionTypeTemplateListQueryDto {
   @MaxLength(120)
   search?: string;
 
-  @ApiPropertyOptional({
-    description: 'Default account template type filter',
-    enum: DefaultAccountTemplateType,
-    example: DefaultAccountTemplateType.COLLECTION,
-  })
+  // prettier-ignore
+  @ApiPropertyOptional({ description: 'Default account template type filter', enum: DefaultAccountTemplateType, example: DefaultAccountTemplateType.COLLECTION })
   @IsOptional()
   @IsEnum(DefaultAccountTemplateType)
   type?: DefaultAccountTemplateType;
