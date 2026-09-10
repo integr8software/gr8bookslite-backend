@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -69,6 +69,7 @@ export class AccountsPayableVoucherController {
   }
 
   @Get('lookups/payable-accounts')
+  @ApiOperation({ summary: 'Get accounts payable voucher payable account options' })
   @ApiOkResponse({ description: 'Accounts payable voucher payable account options retrieved.' })
   findPayableAccountOptions(@CurrentUser() user: AuthUser) {
     return this.accountsPayableVoucherLookupService.findPayableAccounts(user);

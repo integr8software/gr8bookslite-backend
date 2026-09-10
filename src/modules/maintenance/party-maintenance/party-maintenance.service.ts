@@ -387,11 +387,23 @@ export class PartyMaintenanceService {
   ): Promise<NormalizedPartyDto> {
     const partyTypes = this.normalizePartyTypes(dto.partyTypes);
     const termId = this.normalizeOptionalString(dto.termId);
+    const defaultResponsibilityCenterId = this.normalizeOptionalString(dto.defaultResponsibilityCenterId);
+    const defaultPaymentTypeId = this.normalizeOptionalString(dto.defaultPaymentTypeId);
+    const defaultBank = this.normalizeOptionalString(dto.defaultBank);
+    const defaultBankAccountNo = this.normalizeOptionalString(dto.defaultBankAccountNo);
     const partyEntityType = await this.resolvePartyEntityType(dto.classification, dto.partyEntityType);
     const partyEntityTypeIsGovernment = Boolean(partyEntityType?.isGovernment);
 
     if (termId) {
       await this.ensureTermBelongsToCompany(companyId, parsePositiveBigIntId(termId));
+    }
+
+    if (defaultResponsibilityCenterId) {
+      await this.ensureResponsibilityCenterBelongsToCompany(companyId, parsePositiveBigIntId(defaultResponsibilityCenterId));
+    }
+
+    if (defaultPaymentTypeId) {
+      await this.ensurePaymentTypeBelongsToCompany(companyId, parsePositiveBigIntId(defaultPaymentTypeId));
     }
 
     const normalized: NormalizedPartyDto = {
@@ -421,6 +433,10 @@ export class PartyMaintenanceService {
       employeePayableAccount: this.normalizeOptionalString(dto.employeePayableAccount),
       cashAdvanceLimit: partyTypes.includes(PartyType.EMPLOYEE) ? (dto.cashAdvanceLimit ?? null) : null,
       termId,
+      defaultResponsibilityCenterId,
+      defaultPaymentTypeId,
+      defaultBank,
+      defaultBankAccountNo,
       tin: this.normalizeOptionalString(dto.tin),
       atcCode: this.normalizeOptionalString(dto.atcCode),
       defaultPurchaseInputVatTaxSourceKey: this.normalizeOptionalString(dto.defaultPurchaseInputVatTaxSourceKey),
@@ -501,6 +517,10 @@ export class PartyMaintenanceService {
       employeePayableAccount: dto.employeePayableAccount ?? current.employeePayableAccountId?.toString() ?? '',
       cashAdvanceLimit: dto.cashAdvanceLimit ?? current.cashAdvanceLimit?.toNumber() ?? null,
       termId: dto.termId ?? current.termId?.toString() ?? '',
+      defaultResponsibilityCenterId: dto.defaultResponsibilityCenterId ?? current.defaultResponsibilityCenterId?.toString() ?? '',
+      defaultPaymentTypeId: dto.defaultPaymentTypeId ?? current.defaultPaymentTypeId?.toString() ?? '',
+      defaultBank: dto.defaultBank ?? current.defaultBank ?? '',
+      defaultBankAccountNo: dto.defaultBankAccountNo ?? current.defaultBankAccountNo ?? '',
       tin: dto.tin ?? current.tin ?? '',
       atcCode: dto.atcCode ?? current.atcCode ?? '',
       defaultPurchaseInputVatTaxSourceKey: dto.defaultPurchaseInputVatTaxSourceKey ?? currentTaxDefaults.defaultPurchaseInputVatTaxSourceKey ?? '',
@@ -978,6 +998,28 @@ export class PartyMaintenanceService {
     }
   }
 
+  private async ensureResponsibilityCenterBelongsToCompany(companyId: number, centerId: bigint) {
+    const center = await this.prisma.responsibilityCenter.findFirst({
+      where: { id: centerId, companyId, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!center) {
+      throw new BadRequestException('Selected responsibility center does not exist.');
+    }
+  }
+
+  private async ensurePaymentTypeBelongsToCompany(companyId: number, paymentTypeId: bigint) {
+    const paymentType = await this.prisma.paymentType.findFirst({
+      where: { id: paymentTypeId, companyId, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!paymentType) {
+      throw new BadRequestException('Selected payment type does not exist.');
+    }
+  }
+
   private async resolvePartyEntityType(classification: PartyClassification, value: string | null | undefined) {
     if (classification === PartyClassification.INDIVIDUAL) {
       return null;
@@ -1023,6 +1065,10 @@ export class PartyMaintenanceService {
   private toPartyData(dto: NormalizedPartyDto) {
     return {
       termId: dto.termId ? parsePositiveBigIntId(dto.termId) : null,
+      defaultResponsibilityCenterId: dto.defaultResponsibilityCenterId ? parsePositiveBigIntId(dto.defaultResponsibilityCenterId) : null,
+      defaultPaymentTypeId: dto.defaultPaymentTypeId ? parsePositiveBigIntId(dto.defaultPaymentTypeId) : null,
+      defaultBank: dto.defaultBank ?? null,
+      defaultBankAccountNo: dto.defaultBankAccountNo ?? null,
       partyCodeNo: dto.partyCodeNo,
       classification: dto.classification,
       partyEntityTypeId: dto.partyEntityTypeId,

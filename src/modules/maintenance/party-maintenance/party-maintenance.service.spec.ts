@@ -41,6 +41,62 @@ describe('PartyMaintenanceService party ownership', () => {
 
     await expect(callPrivate(service, 'findPartyOrThrow', 11, 99n)).rejects.toThrow(NotFoundException);
   });
+
+  it('validates that the responsibility center belongs to the company', async () => {
+    const prisma = {
+      responsibilityCenter: {
+        findFirst: jest.fn().mockResolvedValue({ id: 5n }),
+      },
+    };
+    const service = new PartyMaintenanceService(prisma as never, {} as never);
+
+    await expect(callPrivate(service, 'ensureResponsibilityCenterBelongsToCompany', 11, 5n)).resolves.toBeUndefined();
+    expect(prisma.responsibilityCenter.findFirst).toHaveBeenCalledWith({
+      where: { id: 5n, companyId: 11, deletedAt: null },
+      select: { id: true },
+    });
+  });
+
+  it('rejects an invalid responsibility center', async () => {
+    const prisma = {
+      responsibilityCenter: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+    };
+    const service = new PartyMaintenanceService(prisma as never, {} as never);
+
+    await expect(callPrivate(service, 'ensureResponsibilityCenterBelongsToCompany', 11, 99n)).rejects.toThrow(
+      'Selected responsibility center does not exist.',
+    );
+  });
+
+  it('validates that the payment type belongs to the company', async () => {
+    const prisma = {
+      paymentType: {
+        findFirst: jest.fn().mockResolvedValue({ id: 7n }),
+      },
+    };
+    const service = new PartyMaintenanceService(prisma as never, {} as never);
+
+    await expect(callPrivate(service, 'ensurePaymentTypeBelongsToCompany', 11, 7n)).resolves.toBeUndefined();
+    expect(prisma.paymentType.findFirst).toHaveBeenCalledWith({
+      where: { id: 7n, companyId: 11, deletedAt: null },
+      select: { id: true },
+    });
+  });
+
+  it('rejects an invalid payment type', async () => {
+    const prisma = {
+      paymentType: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+    };
+    const service = new PartyMaintenanceService(prisma as never, {} as never);
+
+    await expect(callPrivate(service, 'ensurePaymentTypeBelongsToCompany', 11, 99n)).rejects.toThrow(
+      'Selected payment type does not exist.',
+    );
+  });
 });
 
 function callPrivate(service: PartyMaintenanceService, methodName: string, ...args: unknown[]) {

@@ -1210,6 +1210,7 @@ model PaymentType {
   collectionReceipts      CollectionReceipt[]
   provisionalReceipts     ProvisionalReceipt[]
   acknowledgementReceipts AcknowledgementReceipt[]
+  parties                 Party[]                   @relation("PartyDefaultPaymentType")
 
   @@unique([companyId, name], map: "payment_types_company_name_key")
   @@index([companyId], map: "payment_types_company_id_idx")
@@ -1291,6 +1292,7 @@ model ResponsibilityCenter {
   purchaseRequestEntries            PurchaseRequestEntry[]
   purchaseOrderProjects             PurchaseOrder[]                    @relation("PurchaseOrderProject")
   purchaseOrderEntries              PurchaseOrderEntry[]
+  parties                           Party[]                            @relation("PartyDefaultResponsibilityCenter")
 
   @@unique([companyId, code], map: "responsibility_centers_company_code_key")
   @@unique([companyId, name], map: "responsibility_centers_company_name_key")
@@ -1346,6 +1348,10 @@ model Party {
   companyId                           Int                                @map("company_id")
   termId                              BigInt?                            @map("term_id")
   partyEntityTypeId                   BigInt?                            @map("party_entity_type_id")
+  defaultResponsibilityCenterId       BigInt?                            @map("default_responsibility_center_id")
+  defaultPaymentTypeId                BigInt?                            @map("default_payment_type_id")
+  defaultBank                         String?                            @map("default_bank") @db.VarChar(150)
+  defaultBankAccountNo                String?                            @map("default_bank_account_no") @db.VarChar(100)
   partyCodeNo                         String                             @map("party_code_no") @db.VarChar(80)
   classification                      PartyClassification
   partyTypes                          PartyType[]                        @map("party_types")
@@ -1389,6 +1395,8 @@ model Party {
   company                             Company                            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   partyEntityType                     PartyEntityType?                   @relation(fields: [partyEntityTypeId], references: [id], onDelete: Restrict)
   term                                Term?                              @relation(fields: [termId], references: [id], onDelete: SetNull)
+  defaultResponsibilityCenter         ResponsibilityCenter?              @relation("PartyDefaultResponsibilityCenter", fields: [defaultResponsibilityCenterId], references: [id], onDelete: SetNull)
+  defaultPaymentType                  PaymentType?                       @relation("PartyDefaultPaymentType", fields: [defaultPaymentTypeId], references: [id], onDelete: SetNull)
   defaultReceivableAccount            ChartAccount?                      @relation("PartyDefaultReceivableAccount", fields: [defaultReceivableAccountId], references: [id], onDelete: Restrict)
   customerAdvanceAccount              ChartAccount?                      @relation("PartyCustomerAdvanceAccount", fields: [customerAdvanceAccountId], references: [id], onDelete: Restrict)
   defaultPayableAccount               ChartAccount?                      @relation("PartyDefaultPayableAccount", fields: [defaultPayableAccountId], references: [id], onDelete: Restrict)
@@ -1429,6 +1437,8 @@ model Party {
   @@index([companyId, classification], map: "parties_company_classification_idx")
   @@index([partyEntityTypeId], map: "parties_party_entity_type_id_idx")
   @@index([termId], map: "parties_term_id_idx")
+  @@index([defaultResponsibilityCenterId], map: "parties_default_responsibility_center_id_idx")
+  @@index([defaultPaymentTypeId], map: "parties_default_payment_type_id_idx")
   @@index([defaultReceivableAccountId], map: "parties_default_receivable_account_id_idx")
   @@index([customerAdvanceAccountId], map: "parties_customer_advance_account_id_idx")
   @@index([defaultPayableAccountId], map: "parties_default_payable_account_id_idx")

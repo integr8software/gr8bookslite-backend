@@ -4320,8 +4320,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search across project code, project name, or description",
             "schema": {
               "maxLength": 120,
+              "example": "portal",
               "type": "string"
             }
           },
@@ -4329,7 +4331,9 @@
             "name": "status",
             "required": false,
             "in": "query",
+            "description": "Project status filter",
             "schema": {
+              "example": "ACTIVE",
               "type": "string",
               "enum": [
                 "ACTIVE",
@@ -4341,8 +4345,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -4350,9 +4357,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Items per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 50,
+              "example": 10,
               "type": "number"
             }
           },
@@ -4360,7 +4370,10 @@
             "name": "sortBy",
             "required": false,
             "in": "query",
+            "description": "Field to sort by",
             "schema": {
+              "default": "projectName",
+              "example": "projectName",
               "type": "string",
               "enum": [
                 "projectCode",
@@ -4375,7 +4388,10 @@
             "name": "sortDirection",
             "required": false,
             "in": "query",
+            "description": "Sort direction",
             "schema": {
+              "default": "asc",
+              "example": "asc",
               "type": "string",
               "enum": [
                 "asc",
@@ -4450,8 +4466,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search across project code, project name, or description",
             "schema": {
               "maxLength": 120,
+              "example": "portal",
               "type": "string"
             }
           },
@@ -4459,7 +4477,9 @@
             "name": "status",
             "required": false,
             "in": "query",
+            "description": "Project status filter",
             "schema": {
+              "example": "ACTIVE",
               "type": "string",
               "enum": [
                 "ACTIVE",
@@ -4471,8 +4491,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -4480,9 +4503,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Items per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 50,
+              "example": 10,
               "type": "number"
             }
           },
@@ -4490,7 +4516,10 @@
             "name": "sortBy",
             "required": false,
             "in": "query",
+            "description": "Field to sort by",
             "schema": {
+              "default": "projectName",
+              "example": "projectName",
               "type": "string",
               "enum": [
                 "projectCode",
@@ -4505,7 +4534,10 @@
             "name": "sortDirection",
             "required": false,
             "in": "query",
+            "description": "Sort direction",
             "schema": {
+              "default": "asc",
+              "example": "asc",
               "type": "string",
               "enum": [
                 "asc",
@@ -6880,8 +6912,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search across disbursement type name, description, or generated account",
             "schema": {
               "maxLength": 120,
+              "example": "supplies",
               "type": "string"
             }
           },
@@ -6889,7 +6923,9 @@
             "name": "type",
             "required": false,
             "in": "query",
+            "description": "Default account template type filter",
             "schema": {
+              "example": "EXPENSE",
               "type": "string",
               "enum": [
                 "EXPENSE",
@@ -6902,7 +6938,9 @@
             "name": "status",
             "required": false,
             "in": "query",
+            "description": "Disbursement type status filter",
             "schema": {
+              "example": "ACTIVE",
               "type": "string",
               "enum": [
                 "ACTIVE",
@@ -6914,8 +6952,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -6923,9 +6964,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Items per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 50,
+              "example": 10,
               "type": "number"
             }
           },
@@ -6933,7 +6977,10 @@
             "name": "sortBy",
             "required": false,
             "in": "query",
+            "description": "Field to sort by",
             "schema": {
+              "default": "name",
+              "example": "name",
               "type": "string",
               "enum": [
                 "name",
@@ -6949,7 +6996,10 @@
             "name": "sortDirection",
             "required": false,
             "in": "query",
+            "description": "Sort direction",
             "schema": {
+              "default": "asc",
+              "example": "asc",
               "type": "string",
               "enum": [
                 "asc",
@@ -7024,8 +7074,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search across disbursement type name, description, or generated expense account",
             "schema": {
               "maxLength": 120,
+              "example": "supplies",
               "type": "string"
             }
           },
@@ -7033,7 +7085,9 @@
             "name": "status",
             "required": false,
             "in": "query",
+            "description": "Disbursement type status filter",
             "schema": {
+              "example": "ACTIVE",
               "type": "string",
               "enum": [
                 "ACTIVE",
@@ -7087,6 +7141,33 @@
           }
         ],
         "summary": "Get disbursement type expense parent account options",
+        "tags": [
+          "Disbursement Type Maintenance"
+        ]
+      }
+    },
+    "/api/v1/maintenance/financial-management/disbursement-types/account-options": {
+      "get": {
+        "operationId": "DisbursementTypeController_findAccountOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementTypeAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get disbursement type expense account options",
         "tags": [
           "Disbursement Type Maintenance"
         ]
@@ -7263,8 +7344,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search across collection type name, description, or generated account",
             "schema": {
               "maxLength": 120,
+              "example": "tuition",
               "type": "string"
             }
           },
@@ -7272,7 +7355,9 @@
             "name": "type",
             "required": false,
             "in": "query",
+            "description": "Default account template type filter",
             "schema": {
+              "example": "COLLECTION",
               "type": "string",
               "enum": [
                 "EXPENSE",
@@ -7285,7 +7370,9 @@
             "name": "status",
             "required": false,
             "in": "query",
+            "description": "Collection type status filter",
             "schema": {
+              "example": "ACTIVE",
               "type": "string",
               "enum": [
                 "ACTIVE",
@@ -7297,8 +7384,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -7306,9 +7396,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Items per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 50,
+              "example": 10,
               "type": "number"
             }
           },
@@ -7316,7 +7409,10 @@
             "name": "sortBy",
             "required": false,
             "in": "query",
+            "description": "Field to sort by",
             "schema": {
+              "default": "name",
+              "example": "name",
               "type": "string",
               "enum": [
                 "name",
@@ -7332,7 +7428,10 @@
             "name": "sortDirection",
             "required": false,
             "in": "query",
+            "description": "Sort direction",
             "schema": {
+              "default": "asc",
+              "example": "asc",
               "type": "string",
               "enum": [
                 "asc",
@@ -7407,8 +7506,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search across collection type name, description, or generated revenue account",
             "schema": {
               "maxLength": 120,
+              "example": "tuition",
               "type": "string"
             }
           },
@@ -7416,7 +7517,9 @@
             "name": "status",
             "required": false,
             "in": "query",
+            "description": "Collection type status filter",
             "schema": {
+              "example": "ACTIVE",
               "type": "string",
               "enum": [
                 "ACTIVE",
@@ -11454,6 +11557,7 @@
             "description": "Accounts payable voucher payable account options retrieved."
           }
         },
+        "summary": "Get accounts payable voucher payable account options",
         "tags": [
           "Accounts Payable Voucher"
         ]
@@ -11467,7 +11571,9 @@
             "name": "target",
             "required": true,
             "in": "query",
+            "description": "Target voucher that will consume the APV balance",
             "schema": {
+              "example": "cash-voucher",
               "type": "string",
               "enum": [
                 "cash-voucher",
@@ -11479,8 +11585,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search across transaction number, party, account, or remarks",
             "schema": {
               "maxLength": 120,
+              "example": "APV-2026",
               "type": "string"
             }
           },
@@ -11488,8 +11596,10 @@
             "name": "branchUnitId",
             "required": false,
             "in": "query",
+            "description": "Branch unit ID filter",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -11497,8 +11607,10 @@
             "name": "partyId",
             "required": false,
             "in": "query",
+            "description": "Party primary key ID filter",
             "schema": {
               "maxLength": 40,
+              "example": "1",
               "type": "string"
             }
           },
@@ -11506,8 +11618,10 @@
             "name": "partyCode",
             "required": false,
             "in": "query",
+            "description": "Party code filter",
             "schema": {
               "maxLength": 80,
+              "example": "SUP-001",
               "type": "string"
             }
           },
@@ -11515,8 +11629,10 @@
             "name": "partyName",
             "required": false,
             "in": "query",
+            "description": "Party name filter",
             "schema": {
               "maxLength": 160,
+              "example": "National Bookstore",
               "type": "string"
             }
           },
@@ -11524,8 +11640,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -11533,9 +11652,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Items per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 50,
+              "example": 10,
               "type": "number"
             }
           }
@@ -12090,7 +12212,9 @@
             "name": "target",
             "required": true,
             "in": "query",
+            "description": "Target module that will consume the Journal Voucher line balance",
             "schema": {
+              "example": "cash-voucher",
               "type": "string",
               "enum": [
                 "official-receipt",
@@ -12105,8 +12229,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search across JV number, account, party, or particulars",
             "schema": {
               "maxLength": 120,
+              "example": "JV-2026",
               "type": "string"
             }
           },
@@ -12114,8 +12240,10 @@
             "name": "branchUnitId",
             "required": false,
             "in": "query",
+            "description": "Branch unit ID filter",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -12123,8 +12251,10 @@
             "name": "partyCode",
             "required": false,
             "in": "query",
+            "description": "Party code filter",
             "schema": {
               "maxLength": 80,
+              "example": "EMP-001",
               "type": "string"
             }
           },
@@ -12132,8 +12262,10 @@
             "name": "partyName",
             "required": false,
             "in": "query",
+            "description": "Party name filter",
             "schema": {
               "maxLength": 160,
+              "example": "Juan Dela Cruz",
               "type": "string"
             }
           },
@@ -12141,8 +12273,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -12150,9 +12285,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Items per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 50,
+              "example": 10,
               "type": "number"
             }
           }
@@ -17366,7 +17504,9 @@
             "name": "target",
             "required": true,
             "in": "query",
+            "description": "Target voucher that will consume the cash advance balance",
             "schema": {
+              "example": "cash-voucher",
               "type": "string",
               "enum": [
                 "cash-voucher",
@@ -17378,8 +17518,10 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Search across transaction number, employee, or remarks",
             "schema": {
               "maxLength": 120,
+              "example": "CA-2026",
               "type": "string"
             }
           },
@@ -17387,8 +17529,10 @@
             "name": "branchUnitId",
             "required": false,
             "in": "query",
+            "description": "Branch unit ID filter",
             "schema": {
               "minimum": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -17396,8 +17540,10 @@
             "name": "partyId",
             "required": false,
             "in": "query",
+            "description": "Party primary key ID filter",
             "schema": {
               "maxLength": 40,
+              "example": "1",
               "type": "string"
             }
           },
@@ -17405,8 +17551,10 @@
             "name": "partyCode",
             "required": false,
             "in": "query",
+            "description": "Party code filter",
             "schema": {
               "maxLength": 80,
+              "example": "EMP-001",
               "type": "string"
             }
           },
@@ -17414,8 +17562,10 @@
             "name": "partyName",
             "required": false,
             "in": "query",
+            "description": "Party name filter",
             "schema": {
               "maxLength": 160,
+              "example": "Juan Dela Cruz",
               "type": "string"
             }
           },
@@ -17423,8 +17573,11 @@
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page number",
             "schema": {
               "minimum": 1,
+              "default": 1,
+              "example": 1,
               "type": "number"
             }
           },
@@ -17432,9 +17585,12 @@
             "name": "limit",
             "required": false,
             "in": "query",
+            "description": "Items per page",
             "schema": {
               "minimum": 1,
               "maximum": 500,
+              "default": 50,
+              "example": 10,
               "type": "number"
             }
           }
@@ -30196,6 +30352,24 @@
           "termName": {
             "type": "string"
           },
+          "defaultResponsibilityCenterId": {
+            "type": "string"
+          },
+          "defaultResponsibilityCenterName": {
+            "type": "string"
+          },
+          "defaultPaymentTypeId": {
+            "type": "string"
+          },
+          "defaultPaymentTypeName": {
+            "type": "string"
+          },
+          "defaultBank": {
+            "type": "string"
+          },
+          "defaultBankAccountNo": {
+            "type": "string"
+          },
           "tin": {
             "type": "string"
           },
@@ -30281,6 +30455,12 @@
           "accountingAccounts",
           "termId",
           "termName",
+          "defaultResponsibilityCenterId",
+          "defaultResponsibilityCenterName",
+          "defaultPaymentTypeId",
+          "defaultPaymentTypeName",
+          "defaultBank",
+          "defaultBankAccountNo",
           "tin",
           "atcCode",
           "defaultPurchaseInputVatTaxSourceKey",
@@ -30709,6 +30889,24 @@
           "termName": {
             "type": "string"
           },
+          "defaultResponsibilityCenterId": {
+            "type": "string"
+          },
+          "defaultResponsibilityCenterName": {
+            "type": "string"
+          },
+          "defaultPaymentTypeId": {
+            "type": "string"
+          },
+          "defaultPaymentTypeName": {
+            "type": "string"
+          },
+          "defaultBank": {
+            "type": "string"
+          },
+          "defaultBankAccountNo": {
+            "type": "string"
+          },
           "tin": {
             "type": "string"
           },
@@ -31007,6 +31205,24 @@
             "type": "string",
             "nullable": true
           },
+          "defaultResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultPaymentTypeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultBank": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "defaultBankAccountNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
           "tin": {
             "type": "string",
             "nullable": true,
@@ -31275,6 +31491,24 @@
           "termId": {
             "type": "string",
             "nullable": true
+          },
+          "defaultResponsibilityCenterId": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultPaymentTypeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultBank": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 150
+          },
+          "defaultBankAccountNo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
           },
           "tin": {
             "type": "string",
@@ -32233,6 +32467,67 @@
           "options"
         ]
       },
+      "DisbursementTypeAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "statementGroup": {
+            "type": "string"
+          },
+          "statementSection": {
+            "type": "string"
+          },
+          "normalBalance": {
+            "type": "string"
+          },
+          "accountCategory": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountNumber",
+          "accountName",
+          "accountType",
+          "statementGroup",
+          "statementSection",
+          "normalBalance",
+          "accountCategory",
+          "description",
+          "status"
+        ]
+      },
+      "DisbursementTypeAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DisbursementTypeAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "accounts"
+        ]
+      },
       "CreateDefaultAccountExpenseSubAccountResponseDto": {
         "type": "object",
         "properties": {
@@ -32302,6 +32597,9 @@
           },
           "expenseParentCoaId": {
             "type": "string"
+          },
+          "expenseCoaId": {
+            "type": "string"
           }
         },
         "required": [
@@ -32351,6 +32649,9 @@
             "type": "string"
           },
           "expenseParentCoaId": {
+            "type": "string"
+          },
+          "expenseCoaId": {
             "type": "string"
           }
         }
@@ -53843,8 +54144,8 @@
               "CLOSED"
             ],
             "type": "string",
-            "example": "POSTED",
-            "description": "Target Revolving Fund Replenishment status"
+            "description": "Target Revolving Fund Replenishment status",
+            "example": "POSTED"
           }
         },
         "required": [

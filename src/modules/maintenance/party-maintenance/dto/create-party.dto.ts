@@ -172,6 +172,28 @@ export class CreatePartyDto {
   @IsString()
   termId?: string | null;
 
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  defaultResponsibilityCenterId?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  defaultPaymentTypeId?: string | null;
+
+  @ApiPropertyOptional({ maxLength: 150, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  defaultBank?: string | null;
+
+  @ApiPropertyOptional({ maxLength: 100, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  defaultBankAccountNo?: string | null;
+
   @ApiPropertyOptional({ pattern: '^\\d{3}-\\d{3}-\\d{3}-\\d{3}$', nullable: true })
   @IsOptional()
   @IsString()

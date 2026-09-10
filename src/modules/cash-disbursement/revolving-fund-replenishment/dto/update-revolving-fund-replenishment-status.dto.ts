@@ -4,9 +4,9 @@ import { RevolvingFundReplenishmentStatus } from '@prisma/client';
 
 export class UpdateRevolvingFundReplenishmentStatusDto {
   @ApiProperty({
+    description: 'Target Revolving Fund Replenishment status',
     enum: RevolvingFundReplenishmentStatus,
     example: RevolvingFundReplenishmentStatus.POSTED,
-    description: 'Target Revolving Fund Replenishment status',
   })
   @IsEnum(RevolvingFundReplenishmentStatus)
   status: RevolvingFundReplenishmentStatus;

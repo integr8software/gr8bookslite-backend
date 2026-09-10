@@ -150,6 +150,12 @@ describe('PartyLookupService', () => {
         employeePayableAccount: null,
         termId: null,
         term: null,
+        defaultResponsibilityCenterId: 101n,
+        defaultResponsibilityCenter: { name: 'IT Department' },
+        defaultPaymentTypeId: 202n,
+        defaultPaymentType: { name: 'Bank Transfer' },
+        defaultBank: 'BDO Unibank',
+        defaultBankAccountNo: '1234567890',
         honorific: null,
         gender: null,
         civilStatus: null,
@@ -175,6 +181,12 @@ describe('PartyLookupService', () => {
       expect.objectContaining({
         cashAdvanceLimit: '1500.5',
         cashAdvanceBalance: '1500.5',
+        defaultResponsibilityCenterId: '101',
+        defaultResponsibilityCenterName: 'IT Department',
+        defaultPaymentTypeId: '202',
+        defaultPaymentTypeName: 'Bank Transfer',
+        defaultBank: 'BDO Unibank',
+        defaultBankAccountNo: '1234567890',
       }),
     );
   });

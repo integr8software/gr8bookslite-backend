@@ -4,7 +4,6 @@ import {
   AccountsPayableVoucherStatus,
   CashVoucherStatus,
   DisbursementVoucherStatus,
-  JournalVoucherStatus,
   OfficialReceiptStatus,
   Prisma,
 } from '@prisma/client';
@@ -371,7 +370,7 @@ export class JournalVoucherCopySourceService {
   }
 
   private parseReference(reference: string) {
-    const match = /^JV:(.+):L(\d+)$/i.exec(reference.trim());
+    const match = reference.trim().match(/^JV:(.+):L(\d+)$/i);
     if (!match) {
       throw new BadRequestException('Journal Voucher references must use JV:<transactionNo>:L<lineNumber>.');
     }
