@@ -298,7 +298,7 @@ export class DisbursementTypeService {
 
     try {
       const template = await this.prisma.$transaction(async (tx) => {
-        if (defaultAccountName !== currentTemplate.name) {
+        if (defaultAccountName !== currentTemplate.name && !dto.expenseCoaId) {
           await this.updateGeneratedAccountTitles({
             description: defaultAccountName,
             template: currentTemplate,
