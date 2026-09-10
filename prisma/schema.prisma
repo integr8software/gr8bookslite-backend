@@ -1004,6 +1004,7 @@ model ProjectMaintenance {
   companyId          Int                      @map("company_id")
   projectCode        String?                  @map("project_code") @db.VarChar(80)
   projectName        String                   @map("project_name") @db.VarChar(150)
+  type               ProjectMaintenanceType   @default(DEPARTMENT)
   projectDescription String?                  @map("project_description") @db.VarChar(500)
   status             ProjectMaintenanceStatus @default(ACTIVE)
   createdByUserId    Int?                     @map("created_by_user_id")
@@ -4053,6 +4054,13 @@ enum TermStatus {
 enum ProjectMaintenanceStatus {
   ACTIVE
   INACTIVE
+}
+
+enum ProjectMaintenanceType {
+  DIVISION
+  DEPARTMENT
+  SECTION
+  UNIT
 }
 
 enum ItemAttributeUsage {

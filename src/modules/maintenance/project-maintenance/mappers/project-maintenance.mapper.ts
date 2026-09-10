@@ -6,6 +6,7 @@ export function mapProjectMaintenance(project: ProjectMaintenance, userNames: Ma
     id: project.id.toString(),
     projectCode: project.projectCode ?? '',
     projectName: project.projectName,
+    type: project.type,
     description: project.projectDescription ?? '',
     status: project.status,
     createdBy: project.createdByUserId === null ? SystemGeneratedAuditLabel : (userNames.get(project.createdByUserId) ?? null),

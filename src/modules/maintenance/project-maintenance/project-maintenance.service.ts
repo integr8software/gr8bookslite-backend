@@ -68,19 +68,30 @@ export class ProjectMaintenanceService {
     };
   }
 
+  async getNextCode(user: AuthUser) {
+    const companyId = getActiveCompanyId(user);
+    await ensureActiveCompanyAccess(this.prisma, user, companyId);
+    ensureModuleAction(user, companyId, ProjectMaintenanceModuleCode, PermissionAction.CREATE, ProjectMaintenancePermissionMessage);
+
+    return {
+      projectCode: await this.generateNextProjectCode(companyId),
+    };
+  }
+
   async create(user: AuthUser, dto: CreateProjectMaintenanceDto) {
     const companyId = getActiveCompanyId(user);
     await ensureActiveCompanyAccess(this.prisma, user, companyId);
     ensureModuleAction(user, companyId, ProjectMaintenanceModuleCode, PermissionAction.CREATE, ProjectMaintenancePermissionMessage);
 
     await this.ensureProjectNameAvailable(companyId, dto.projectName);
-    await this.ensureProjectCodeAvailable(companyId, dto.projectCode);
+    const projectCode = await this.generateNextProjectCode(companyId);
+    await this.ensureProjectCodeAvailable(companyId, projectCode);
 
     try {
       const project = await this.prisma.projectMaintenance.create({
         data: {
           companyId,
-          ...this.toCreateProjectData(dto),
+          ...this.toCreateProjectData(dto, projectCode),
           status: dto.status ?? ProjectMaintenanceStatus.ACTIVE,
           createdByUserId: user.id,
         },
@@ -198,10 +209,11 @@ export class ProjectMaintenanceService {
       });
   }
 
-  private toCreateProjectData(dto: CreateProjectMaintenanceDto) {
+  private toCreateProjectData(dto: CreateProjectMaintenanceDto, projectCode: string) {
     return {
-      projectCode: dto.projectCode?.trim() || null,
+      projectCode,
       projectName: dto.projectName.trim(),
+      type: dto.type,
       projectDescription: dto.description?.trim() ?? '',
     };
   }
@@ -210,6 +222,7 @@ export class ProjectMaintenanceService {
     return {
       ...(dto.projectCode !== undefined ? { projectCode: dto.projectCode.trim() || null } : {}),
       ...(dto.projectName !== undefined ? { projectName: dto.projectName.trim() } : {}),
+      ...(dto.type !== undefined ? { type: dto.type } : {}),
       ...(dto.description !== undefined ? { projectDescription: dto.description.trim() } : {}),
       ...(dto.status !== undefined ? { status: dto.status } : {}),
     };
@@ -283,5 +296,30 @@ export class ProjectMaintenanceService {
     if (existingProject) {
       throw new ConflictException('A project with this code already exists.');
     }
+  }
+
+  private async generateNextProjectCode(companyId: number) {
+    const year = new Date().getFullYear();
+    const prefix = `PRJ-${year}-`;
+    const projects = await this.prisma.projectMaintenance.findMany({
+      where: {
+        companyId,
+        projectCode: {
+          startsWith: prefix,
+        },
+      },
+      select: {
+        projectCode: true,
+      },
+    });
+    const sequencePattern = new RegExp(`^${prefix}(\\d+)$`);
+    const highestSequence = projects.reduce((highest, project) => {
+      const match = project.projectCode?.match(sequencePattern);
+      const sequence = match ? Number(match[1]) : 0;
+
+      return Number.isSafeInteger(sequence) ? Math.max(highest, sequence) : highest;
+    }, 0);
+
+    return `${prefix}${String(highestSequence + 1).padStart(3, '0')}`;
   }
 }

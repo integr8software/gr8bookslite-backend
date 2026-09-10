@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProjectMaintenanceStatus } from '@prisma/client';
+import { ProjectMaintenanceStatus, ProjectMaintenanceType } from '@prisma/client';
 
 export class ProjectMaintenanceResponseDto {
   @ApiProperty()
@@ -10,6 +10,9 @@ export class ProjectMaintenanceResponseDto {
 
   @ApiProperty()
   projectName!: string;
+
+  @ApiProperty({ enum: ProjectMaintenanceType })
+  type!: ProjectMaintenanceType;
 
   @ApiProperty({ nullable: true })
   description!: string | null;
@@ -39,6 +42,9 @@ export class ProjectMaintenanceOptionResponseDto {
 
   @ApiProperty()
   projectName!: string;
+
+  @ApiProperty({ enum: ProjectMaintenanceType })
+  type!: ProjectMaintenanceType;
 
   @ApiProperty()
   name!: string;
@@ -109,6 +115,11 @@ export class ProjectMaintenanceListResponseDto {
 export class ProjectMaintenanceOptionsResponseDto {
   @ApiProperty({ type: [ProjectMaintenanceOptionResponseDto] })
   projects!: ProjectMaintenanceOptionResponseDto[];
+}
+
+export class ProjectMaintenanceNextCodeResponseDto {
+  @ApiProperty({ example: 'PRJ-2026-001' })
+  projectCode!: string;
 }
 
 export class ProjectMaintenanceContainerResponseDto {
