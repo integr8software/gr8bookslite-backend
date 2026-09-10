@@ -30334,6 +30334,9 @@
           "vendorAdvanceAccount": {
             "type": "string"
           },
+          "purchaseType": {
+            "type": "string"
+          },
           "employeeAdvanceAccount": {
             "type": "string"
           },
@@ -30449,6 +30452,7 @@
           "customerAdvanceAccount",
           "defaultPayableAccount",
           "vendorAdvanceAccount",
+          "purchaseType",
           "employeeAdvanceAccount",
           "employeePayableAccount",
           "cashAdvanceLimit",
@@ -31186,6 +31190,11 @@
             "nullable": true,
             "maxLength": 80
           },
+          "purchaseType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 50
+          },
           "employeeAdvanceAccount": {
             "type": "string",
             "nullable": true,
@@ -31472,6 +31481,11 @@
             "type": "string",
             "nullable": true,
             "maxLength": 80
+          },
+          "purchaseType": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 50
           },
           "employeeAdvanceAccount": {
             "type": "string",

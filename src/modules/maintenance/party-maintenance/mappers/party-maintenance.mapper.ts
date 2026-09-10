@@ -29,6 +29,7 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     customerAdvanceAccount: party.customerAdvanceAccountId?.toString() ?? '',
     defaultPayableAccount: party.defaultPayableAccountId?.toString() ?? '',
     vendorAdvanceAccount: party.vendorAdvanceAccountId?.toString() ?? '',
+    purchaseType: party.purchaseType ?? '',
     employeeAdvanceAccount: party.employeeAdvanceAccountId?.toString() ?? '',
     employeePayableAccount: party.employeePayableAccountId?.toString() ?? '',
     cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
