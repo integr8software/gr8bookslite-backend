@@ -148,6 +148,12 @@ export class CreatePartyDto {
   @MaxLength(80)
   vendorAdvanceAccount?: string | null;
 
+  @ApiPropertyOptional({ maxLength: 50, nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  purchaseType?: string | null;
+
   @ApiPropertyOptional({ maxLength: 80, nullable: true })
   @IsOptional()
   @IsString()

@@ -159,6 +159,9 @@ export class PartyResponseDto {
   vendorAdvanceAccount!: string;
 
   @ApiProperty()
+  purchaseType!: string;
+
+  @ApiProperty()
   employeeAdvanceAccount!: string;
 
   @ApiProperty()
