@@ -1,13 +1,28 @@
-import { ProjectMaintenanceStatus } from '@prisma/client';
+import { ProjectMaintenanceStatus, ProjectMaintenanceType } from '@prisma/client';
 import { AppRole } from '../../../common/enums/app-role.enum';
 import { ProjectMaintenanceService } from './project-maintenance.service';
 
 describe('ProjectMaintenanceService', () => {
+  it('generates the next yearly project code with a three-digit sequence', async () => {
+    const year = new Date().getFullYear();
+    const prisma = {
+      projectMaintenance: {
+        findMany: jest.fn().mockResolvedValue([{ projectCode: `PRJ-${year}-001` }, { projectCode: `PRJ-${year}-010` }, { projectCode: 'LEGACY-001' }]),
+      },
+    };
+    const service = new ProjectMaintenanceService(prisma as never);
+
+    const result = await service.getNextCode({ companyId: 11, id: 1, role: AppRole.SUPER_ADMIN, permissions: [] } as never);
+
+    expect(result).toEqual({ projectCode: `PRJ-${year}-011` });
+  });
+
   it('builds searchable paginated project lists with statistics', async () => {
     const project = {
       id: 20n,
       projectCode: 'PRJ-001',
       projectName: 'Customer Portal',
+      type: ProjectMaintenanceType.DEPARTMENT,
       projectDescription: 'Frontend refresh',
       status: ProjectMaintenanceStatus.ACTIVE,
       createdByUserId: 1,
@@ -53,6 +68,8 @@ describe('ProjectMaintenanceService', () => {
     );
     expect(result.statistics).toEqual({ totalProjects: 1, activeProjects: 1, inactiveProjects: 0 });
     expect(result.pagination).toEqual({ page: 2, limit: 5, total: 1, totalPages: 1 });
-    expect(result.projects[0]).toEqual(expect.objectContaining({ id: '20', projectCode: 'PRJ-001', createdBy: 'Bay' }));
+    expect(result.projects[0]).toEqual(
+      expect.objectContaining({ id: '20', projectCode: 'PRJ-001', type: ProjectMaintenanceType.DEPARTMENT, createdBy: 'Bay' }),
+    );
   });
 });

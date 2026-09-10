@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { ProjectMaintenanceStatus } from '@prisma/client';
+import { ProjectMaintenanceStatus, ProjectMaintenanceType } from '@prisma/client';
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { normalizeCode, trimString } from '../../../../common/utils/dto-transform.util';
 
@@ -17,6 +17,10 @@ export class CreateProjectMaintenanceDto {
   @IsString()
   @MaxLength(150)
   projectName!: string;
+
+  @ApiProperty({ enum: ProjectMaintenanceType })
+  @IsEnum(ProjectMaintenanceType)
+  type!: ProjectMaintenanceType;
 
   @ApiPropertyOptional({ maxLength: 500 })
   @IsOptional()

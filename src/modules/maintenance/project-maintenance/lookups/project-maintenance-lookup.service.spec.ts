@@ -1,4 +1,4 @@
-import { ProjectMaintenanceStatus } from '@prisma/client';
+import { ProjectMaintenanceStatus, ProjectMaintenanceType } from '@prisma/client';
 import { ProjectMaintenanceLookupService } from './project-maintenance-lookup.service';
 
 describe('ProjectMaintenanceLookupService', () => {
@@ -10,6 +10,7 @@ describe('ProjectMaintenanceLookupService', () => {
         id: 20n,
         projectCode: 'PRJ-001',
         projectName: 'Website Revamp',
+        type: ProjectMaintenanceType.DIVISION,
         projectDescription: 'Customer portal refresh',
         status: ProjectMaintenanceStatus.ACTIVE,
       },
@@ -36,6 +37,7 @@ describe('ProjectMaintenanceLookupService', () => {
         id: '20',
         projectCode: 'PRJ-001',
         projectName: 'Website Revamp',
+        type: ProjectMaintenanceType.DIVISION,
         name: 'Website Revamp',
         description: 'Customer portal refresh',
         status: ProjectMaintenanceStatus.ACTIVE,

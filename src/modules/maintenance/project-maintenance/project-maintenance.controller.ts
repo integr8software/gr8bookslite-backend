@@ -8,6 +8,7 @@ import { GetProjectMaintenanceListQueryDto } from './dto/get-project-maintenance
 import {
   ProjectMaintenanceContainerResponseDto,
   ProjectMaintenanceListResponseDto,
+  ProjectMaintenanceNextCodeResponseDto,
   ProjectMaintenanceOptionsResponseDto,
   SaveProjectMaintenanceResponseDto,
 } from './dto/project-maintenance-response.dto';
@@ -40,6 +41,13 @@ export class ProjectMaintenanceController {
   @ApiOkResponse({ type: ProjectMaintenanceOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: GetProjectMaintenanceListQueryDto) {
     return this.projectMaintenanceLookupService.findOptionsForCompanyUser(user, query);
+  }
+
+  @Get('next-code')
+  @ApiOperation({ summary: 'Get the next automatic project code' })
+  @ApiOkResponse({ type: ProjectMaintenanceNextCodeResponseDto })
+  getNextCode(@CurrentUser() user: AuthUser) {
+    return this.projectMaintenanceService.getNextCode(user);
   }
 
   @Get(':id')
