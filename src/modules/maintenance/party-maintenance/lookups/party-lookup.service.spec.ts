@@ -117,6 +117,29 @@ describe('PartyLookupService', () => {
     );
   });
 
+  it('uses party name as the option label before trade name for non-individual parties', async () => {
+    prisma.party.findMany.mockResolvedValue([
+      {
+        ...basicParty,
+        classification: PartyClassification.NON_INDIVIDUAL,
+        partyName: 'ASD',
+        tradeName: 'Pacific Office Supplies Inc.',
+        firstName: null,
+        middleName: null,
+        lastName: null,
+      },
+    ]);
+
+    const result = await service.findOptions({ companyId: 11, query: {} });
+
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        name: 'ASD',
+        partyCodeNo: 'EMP-00051',
+      }),
+    );
+  });
+
   it('returns empty cash advance values when no limit is configured', async () => {
     prisma.party.findMany.mockResolvedValue([{ ...basicParty, cashAdvanceLimit: null }]);
 

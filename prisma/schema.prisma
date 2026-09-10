@@ -891,6 +891,7 @@ model DefaultAccount {
   name                         String                     @db.VarChar(250)
   description                  String?                    @db.VarChar(500)
   status                       ChartAccountStatus         @default(ACTIVE)
+  accountSetupMode             ServiceAccountSetupMode    @default(AUTO) @map("account_setup_mode")
   expenseCoaId                 BigInt?                    @map("expense_coa_id")
   revenueCoaId                 BigInt?                    @map("revenue_coa_id")
   assetCoaId                   BigInt?                    @map("asset_coa_id")

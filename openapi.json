@@ -7551,6 +7551,33 @@
         ]
       }
     },
+    "/api/v1/maintenance/financial-management/collection-types/account-options": {
+      "get": {
+        "operationId": "CollectionTypeController_findAccountOptions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionTypeAccountOptionsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get collection type revenue account options",
+        "tags": [
+          "Collection Type Maintenance"
+        ]
+      }
+    },
     "/api/v1/maintenance/financial-management/collection-types/{id}": {
       "get": {
         "operationId": "CollectionTypeController_findOne_v1",
@@ -32776,7 +32803,18 @@
             ],
             "type": "string"
           },
+          "accountSetupMode": {
+            "enum": [
+              "AUTO",
+              "EXISTING"
+            ],
+            "type": "string"
+          },
           "expenseParentCoaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "revenueCoaId": {
             "type": "string",
             "nullable": true
           },
@@ -32809,7 +32847,9 @@
           "defaultAccountName",
           "description",
           "status",
+          "accountSetupMode",
           "expenseParentCoaId",
+          "revenueCoaId",
           "generatedAccounts",
           "createdBy",
           "createdAt",
@@ -33009,6 +33049,67 @@
           "options"
         ]
       },
+      "CollectionTypeAccountOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "statementGroup": {
+            "type": "string"
+          },
+          "statementSection": {
+            "type": "string"
+          },
+          "normalBalance": {
+            "type": "string"
+          },
+          "accountCategory": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountNumber",
+          "accountName",
+          "accountType",
+          "statementGroup",
+          "statementSection",
+          "normalBalance",
+          "accountCategory",
+          "description",
+          "status"
+        ]
+      },
+      "CollectionTypeAccountOptionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionTypeAccountOptionResponseDto"
+            }
+          }
+        },
+        "required": [
+          "accounts"
+        ]
+      },
       "CollectionTypeContainerResponseDto": {
         "type": "object",
         "properties": {
@@ -33050,13 +33151,25 @@
             ],
             "type": "string"
           },
+          "accountSetupMode": {
+            "enum": [
+              "AUTO",
+              "EXISTING"
+            ],
+            "type": "string"
+          },
+          "revenueCoaId": {
+            "type": "string",
+            "nullable": true
+          },
           "expenseParentCoaId": {
             "type": "string"
           }
         },
         "required": [
           "type",
-          "defaultAccountName"
+          "defaultAccountName",
+          "accountSetupMode"
         ]
       },
       "SaveCollectionTypeResponseDto": {
@@ -33099,6 +33212,17 @@
               "INACTIVE"
             ],
             "type": "string"
+          },
+          "accountSetupMode": {
+            "enum": [
+              "AUTO",
+              "EXISTING"
+            ],
+            "type": "string"
+          },
+          "revenueCoaId": {
+            "type": "string",
+            "nullable": true
           },
           "expenseParentCoaId": {
             "type": "string"
