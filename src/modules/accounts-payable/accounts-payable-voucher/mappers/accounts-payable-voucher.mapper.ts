@@ -14,6 +14,8 @@ export function mapAccountsPayableVoucher(voucher: AccountsPayableVoucherWithDet
     contactNo: voucher.contactNoSnapshot ?? null,
     projectCode: voucher.projectCode ?? null,
     projectName: voucher.projectName ?? null,
+    responsibilityCenterId: voucher.responsibilityCenterId?.toString() ?? null,
+    responsibilityCenter: voucher.responsibilityCenterSnapshot ?? null,
     currency: voucher.currencyCode,
     exchangeRate: Number(voucher.exchangeRate),
     amount: Number(voucher.amount),
