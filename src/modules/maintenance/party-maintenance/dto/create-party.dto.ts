@@ -1,12 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayUnique,
   ArrayMinSize,
   IsDateString,
   IsArray,
   IsEmail,
   IsEnum,
   IsInt,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -16,6 +18,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PartyClassification, PartyStatus, PartyType } from '@prisma/client';
+import { PartyPurchaseTypeOptions } from '../utils/party-purchase-type.util';
 import { CreatePartyAddressDto } from './create-party-address.dto';
 
 export class CreatePartyDto {
@@ -148,11 +151,12 @@ export class CreatePartyDto {
   @MaxLength(80)
   vendorAdvanceAccount?: string | null;
 
-  @ApiPropertyOptional({ maxLength: 50, nullable: true })
+  @ApiPropertyOptional({ type: [String], enum: PartyPurchaseTypeOptions, nullable: true })
   @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  purchaseType?: string | null;
+  @IsArray()
+  @ArrayUnique()
+  @IsIn(PartyPurchaseTypeOptions, { each: true })
+  purchaseType?: string[] | null;
 
   @ApiPropertyOptional({ maxLength: 80, nullable: true })
   @IsOptional()

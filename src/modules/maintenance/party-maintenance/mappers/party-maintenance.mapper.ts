@@ -1,6 +1,7 @@
 import type { ChartAccount, PartyAddress } from '@prisma/client';
 import { SystemGeneratedAuditLabel } from '../../../../common/utils/audit-user.util';
 import type { PartyWithDetails } from '../types/party-with-details.type';
+import { normalizePartyPurchaseTypes } from '../utils/party-purchase-type.util';
 
 export function mapParty(party: PartyWithDetails, userNames: Map<number, string>) {
   const taxDefaults = party;
@@ -29,7 +30,7 @@ export function mapParty(party: PartyWithDetails, userNames: Map<number, string>
     customerAdvanceAccount: party.customerAdvanceAccountId?.toString() ?? '',
     defaultPayableAccount: party.defaultPayableAccountId?.toString() ?? '',
     vendorAdvanceAccount: party.vendorAdvanceAccountId?.toString() ?? '',
-    purchaseType: party.purchaseType ?? '',
+    purchaseType: normalizePartyPurchaseTypes(party.purchaseType),
     employeeAdvanceAccount: party.employeeAdvanceAccountId?.toString() ?? '',
     employeePayableAccount: party.employeePayableAccountId?.toString() ?? '',
     cashAdvanceLimit: party.cashAdvanceLimit?.toString() ?? '',
