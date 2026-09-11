@@ -189,7 +189,20 @@ src/modules/maintenance/services-maintenance/utils/
 
 ---
 
-## 4. Pre-PR Self-Check Checklist
+## 4. Maintenance Account Setup Contracts
+
+When a maintenance module supports both **Select Existing Account** and **Generate Account Automatically**, keep the mode explicit across the full contract:
+
+- Persist an account setup mode (`AUTO` / `EXISTING`) in the backend model instead of inferring mode from the presence of a Chart of Accounts foreign key.
+- Request DTOs must include the mode and validate the selected account ID when `EXISTING` is used.
+- Response DTOs must return the mode and linked account ID so edit/view screens do not guess from generated account arrays.
+- Status changes should update linked Chart of Accounts rows only for backend-generated accounts; selected existing accounts stay independently managed.
+- Add colocated service specs for missing selected account validation, existing-account saves, and automatic account generation.
+- Regenerate Swagger/OpenAPI before frontend Orval, then wire the generated DTO enum/types through the frontend API adapter.
+
+---
+
+## 5. Pre-PR Self-Check Checklist
 
 Before committing and opening or updating a pull request:
 
