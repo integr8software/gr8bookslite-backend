@@ -5,6 +5,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../../common/interfaces/auth-user.interface';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import {
+  CollectionTypeAccountOptionsResponseDto,
   CollectionTypeContainerResponseDto,
   CollectionTypeListResponseDto,
   CollectionTypeOptionsResponseDto,
@@ -45,6 +46,13 @@ export class CollectionTypeController {
   @ApiOkResponse({ type: CollectionTypeOptionsResponseDto })
   findOptions(@CurrentUser() user: AuthUser, @Query() query: CollectionTypeOptionQueryDto) {
     return this.collectionTypeService.findCollectionOptions(user, query);
+  }
+
+  @Get('account-options')
+  @ApiOperation({ summary: 'Get collection type revenue account options' })
+  @ApiOkResponse({ type: CollectionTypeAccountOptionsResponseDto })
+  findAccountOptions(@CurrentUser() user: AuthUser) {
+    return this.collectionTypeService.findAccountOptions(user, CollectionTypeContext);
   }
 
   @Get(':id')

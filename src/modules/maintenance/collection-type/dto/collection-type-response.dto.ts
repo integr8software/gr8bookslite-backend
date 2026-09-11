@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChartAccountStatus, ChartAccountType, AccountNature, DefaultAccountTemplateType } from '@prisma/client';
+import { ChartAccountStatus, ChartAccountType, AccountNature, DefaultAccountTemplateType, ServiceAccountSetupMode } from '@prisma/client';
 
 export class GeneratedCollectionTypeResponseDto {
   @ApiProperty({ enum: ['EXPENSE', 'REVENUE'] })
@@ -46,8 +46,14 @@ export class CollectionTypeResponseDto {
   @ApiProperty({ enum: ChartAccountStatus })
   status!: ChartAccountStatus;
 
+  @ApiProperty({ enum: ServiceAccountSetupMode })
+  accountSetupMode!: ServiceAccountSetupMode;
+
   @ApiProperty({ nullable: true })
   expenseParentCoaId!: string | null;
+
+  @ApiProperty({ nullable: true })
+  revenueCoaId!: string | null;
 
   @ApiProperty({ type: [GeneratedCollectionTypeResponseDto] })
   generatedAccounts!: GeneratedCollectionTypeResponseDto[];
@@ -173,6 +179,43 @@ export class CollectionTypeOptionResponseDto {
 export class CollectionTypeOptionsResponseDto {
   @ApiProperty({ type: [CollectionTypeOptionResponseDto] })
   options!: CollectionTypeOptionResponseDto[];
+}
+
+export class CollectionTypeAccountOptionResponseDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  accountNumber!: string;
+
+  @ApiProperty()
+  accountName!: string;
+
+  @ApiProperty()
+  accountType!: string;
+
+  @ApiProperty()
+  statementGroup!: string;
+
+  @ApiProperty()
+  statementSection!: string;
+
+  @ApiProperty()
+  normalBalance!: string;
+
+  @ApiProperty()
+  accountCategory!: string;
+
+  @ApiProperty()
+  description!: string;
+
+  @ApiProperty()
+  status!: string;
+}
+
+export class CollectionTypeAccountOptionsResponseDto {
+  @ApiProperty({ type: [CollectionTypeAccountOptionResponseDto] })
+  accounts!: CollectionTypeAccountOptionResponseDto[];
 }
 
 export class SaveCollectionTypeResponseDto {

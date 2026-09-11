@@ -35,15 +35,16 @@ function isPrismaClientCurrent() {
     return false;
   }
 
-  const schemaUpdatedAt = fs.statSync(schemaPath).mtimeMs;
-  const generatedSchemaUpdatedAt = fs.statSync(generatedSchemaPath).mtimeMs;
   const generatedPackage = readJson(generatedPackagePath);
   const installedClientPackage = readJson(installedClientPackagePath);
 
-  return (
-    generatedPackage.version === installedClientPackage.version &&
-    generatedSchemaUpdatedAt >= schemaUpdatedAt
-  );
+  if (generatedPackage.version !== installedClientPackage.version) {
+    return false;
+  }
+
+  const schemaContent = fs.readFileSync(schemaPath);
+  const generatedSchemaContent = fs.readFileSync(generatedSchemaPath);
+  return schemaContent.equals(generatedSchemaContent);
 }
 
 function addWindowsPrismaEnginePaths(environment) {
