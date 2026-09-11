@@ -118,9 +118,6 @@ export class PettyCashVoucherCopyFromCandidateDto {
   @ApiPropertyOptional({ description: 'Default account code', example: '1010101000' })
   accountCode?: string | null;
 
-  @ApiPropertyOptional({ description: 'Default account title', example: 'Petty Cash Voucher' })
-  accountTitle?: string | null;
-
   @ApiPropertyOptional({ description: 'Responsibility center ID', example: '1' })
   responsibilityCenterId?: string | null;
 

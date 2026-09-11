@@ -16,7 +16,6 @@ describe('PettyCashVoucherMapper', () => {
       party: { partyCodeNo: 'CUST-001', partyName: 'Custodian Name' },
       creditAccountId: 33n,
       accountCodeSnapshot: '1010',
-      accountTitleSnapshot: 'Petty Cash',
       creditAccount: { accountCode: '1011', accountTitle: 'Petty Cash Account' },
       responsibilityCenterId: 43n,
       responsibilityCenterCodeSnapshot: 'OPS-SNAP',

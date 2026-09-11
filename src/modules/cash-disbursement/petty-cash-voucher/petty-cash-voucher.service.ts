@@ -233,7 +233,6 @@ export class PettyCashVoucherService {
 
         return {
           accountCode: record.accountCodeSnapshot,
-          accountTitle: record.accountTitleSnapshot,
           amount,
           availableAmount,
           availableGrossAmount,
@@ -315,7 +314,6 @@ export class PettyCashVoucherService {
           partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName ?? '',
           creditAccountId: resolvedReferences.creditAccount?.id ?? null,
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? '',
-          accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? '',
           responsibilityCenterId: resolvedReferences.responsibilityCenter?.id ?? null,
           responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter
             ? resolvedReferences.responsibilityCenter.code
@@ -395,7 +393,6 @@ export class PettyCashVoucherService {
           partyNameSnapshot: resolvedReferences.party?.partyName ?? dto.partyName ?? existing.partyNameSnapshot,
           creditAccountId: resolvedReferences.creditAccount ? resolvedReferences.creditAccount.id : existing.creditAccountId,
           accountCodeSnapshot: resolvedReferences.creditAccount?.accountCode ?? dto.accountCode ?? existing.accountCodeSnapshot,
-          accountTitleSnapshot: resolvedReferences.creditAccount?.accountTitle ?? dto.accountTitle ?? existing.accountTitleSnapshot,
           responsibilityCenterId: resolvedReferences.responsibilityCenter ? resolvedReferences.responsibilityCenter.id : existing.responsibilityCenterId,
           responsibilityCenterCodeSnapshot: resolvedReferences.responsibilityCenter
             ? resolvedReferences.responsibilityCenter.code
@@ -688,7 +685,6 @@ export class PettyCashVoucherService {
     partyCodeSnapshot: string | null;
     partyNameSnapshot: string | null;
     accountCodeSnapshot: string | null;
-    accountTitleSnapshot: string | null;
     amount: Prisma.Decimal;
     details?: Array<{
       supplierNameSnapshot: string | null;
@@ -699,7 +695,7 @@ export class PettyCashVoucherService {
     if (!record.partyCodeSnapshot?.trim() || !record.partyNameSnapshot?.trim()) {
       throw new BadRequestException('Select a party before submitting this Petty Cash Voucher.');
     }
-    if (!record.accountCodeSnapshot?.trim() || !record.accountTitleSnapshot?.trim()) {
+    if (!record.accountCodeSnapshot?.trim()) {
       throw new BadRequestException('Select an account before submitting this Petty Cash Voucher.');
     }
     if (Number(record.amount) <= 0) {
@@ -758,7 +754,6 @@ export class PettyCashVoucherService {
         { partyNameSnapshot: { contains: search, mode: 'insensitive' } },
         { partyCodeSnapshot: { contains: search, mode: 'insensitive' } },
         { accountCodeSnapshot: { contains: search, mode: 'insensitive' } },
-        { accountTitleSnapshot: { contains: search, mode: 'insensitive' } },
         { remarks: { contains: search, mode: 'insensitive' } },
       ];
     }

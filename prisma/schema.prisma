@@ -2172,7 +2172,6 @@ model PettyCashVoucher {
   projectCode                      String?  @map("project_code") @db.VarChar(80)
   projectName                      String?  @map("project_name") @db.VarChar(255)
   accountCodeSnapshot              String   @map("account_code_snapshot") @db.VarChar(80)
-  accountTitleSnapshot             String?  @map("account_title_snapshot") @db.VarChar(255)
 
   currencyCode String                 @default("PHP") @map("currency_code") @db.VarChar(10)
   exchangeRate Decimal                @default(1.00) @map("exchange_rate") @db.Decimal(18, 6)

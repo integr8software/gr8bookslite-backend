@@ -43,7 +43,6 @@ describe('PettyCashVoucherController', () => {
       partyName: 'Juan dela Cruz',
       accountId: '12',
       accountCode: '100200',
-      accountTitle: 'Petty Cash Voucher',
       currencyCode: 'PHP',
       exchangeRate: 1,
       amount: 25000,

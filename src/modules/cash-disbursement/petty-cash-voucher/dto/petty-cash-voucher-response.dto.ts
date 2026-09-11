@@ -42,14 +42,8 @@ export class PettyCashVoucherResponseDto {
   @ApiProperty({ description: 'Account Code Snapshot', example: '1010101000' })
   accountCodeSnapshot: string;
 
-  @ApiPropertyOptional({ description: 'Account Title Snapshot', example: 'Petty Cash Voucher' })
-  accountTitleSnapshot?: string | null;
-
   @ApiPropertyOptional({ description: 'Default Account Code alias', example: '1010101000' })
   accountCode?: string;
-
-  @ApiPropertyOptional({ description: 'Default Account Title alias', example: 'Petty Cash Voucher' })
-  accountTitle?: string | null;
 
   @ApiPropertyOptional({ description: 'Responsibility Center ID', example: '1' })
   responsibilityCenterId?: string | null;

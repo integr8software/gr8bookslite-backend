@@ -83,12 +83,6 @@ export class CreatePettyCashVoucherDto {
   @MaxLength(80)
   accountCode?: string;
 
-  @ApiPropertyOptional({ description: 'Account Title Snapshot', example: 'Petty Cash Voucher' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  accountTitle?: string;
-
   @ApiPropertyOptional({ description: 'Currency code', default: 'PHP', example: 'PHP' })
   @IsOptional()
   @IsString()

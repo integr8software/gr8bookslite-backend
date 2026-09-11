@@ -10,7 +10,6 @@ type PettyCashVoucherServiceInternals = {
     partyCodeSnapshot: string | null;
     partyNameSnapshot: string | null;
     accountCodeSnapshot: string | null;
-    accountTitleSnapshot: string | null;
     amount: Prisma.Decimal;
     details?: Array<{
       supplierNameSnapshot: string | null;
@@ -37,7 +36,6 @@ describe('PettyCashVoucherService', () => {
         partyCodeSnapshot: 'EMP-001',
         partyNameSnapshot: 'Employee',
         accountCodeSnapshot: '1010',
-        accountTitleSnapshot: 'Petty Cash',
         amount: new Prisma.Decimal('100'),
         details: [{ supplierNameSnapshot: 'Supplier', grossAmount: new Prisma.Decimal('50'), amount: new Prisma.Decimal('50') }],
       }),
@@ -48,7 +46,6 @@ describe('PettyCashVoucherService', () => {
         partyCodeSnapshot: 'EMP-001',
         partyNameSnapshot: 'Employee',
         accountCodeSnapshot: '1010',
-        accountTitleSnapshot: 'Petty Cash',
         amount: new Prisma.Decimal('100'),
         details: [],
       }),
