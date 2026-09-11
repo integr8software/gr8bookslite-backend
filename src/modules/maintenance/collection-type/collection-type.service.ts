@@ -580,31 +580,26 @@ export class CollectionTypeService {
   }
 
   private async findSelectableRevenueAccounts(companyId: number, tx: Prisma.TransactionClient | PrismaService) {
-    return tx.chartAccount
-      .findMany({
-        where: {
-          companyId,
-          accountType: ChartAccountType.REVENUE,
-          accountNature: AccountNature.CREDIT,
-          accountLevel: ChartAccountLevel.SPECIFIC,
-          status: ChartAccountStatus.ACTIVE,
-          deletedAt: null,
-          isPostingAccount: true,
-        },
-        select: {
-          id: true,
-          accountCode: true,
-          accountTitle: true,
-          accountType: true,
-          accountNature: true,
-          accountGroup: true,
-          statementSection: true,
-          description: true,
-          status: true,
-        },
-        orderBy: [{ accountCode: 'asc' }, { id: 'asc' }],
-      })
-      .then((accounts) => accounts.filter((account) => accountGroupHasTag(account.accountGroup, SystemAccountGroupTags.defaultAccountRevenueParent)));
+    return tx.chartAccount.findMany({
+      where: {
+        companyId,
+        status: ChartAccountStatus.ACTIVE,
+        deletedAt: null,
+        isPostingAccount: true,
+      },
+      select: {
+        id: true,
+        accountCode: true,
+        accountTitle: true,
+        accountType: true,
+        accountNature: true,
+        accountGroup: true,
+        statementSection: true,
+        description: true,
+        status: true,
+      },
+      orderBy: [{ accountCode: 'asc' }, { id: 'asc' }],
+    });
   }
 
   private async findSelectableRevenueAccountOrThrow(companyId: number, accountId: bigint, tx: Prisma.TransactionClient | PrismaService) {
@@ -612,9 +607,6 @@ export class CollectionTypeService {
       where: {
         id: accountId,
         companyId,
-        accountType: ChartAccountType.REVENUE,
-        accountNature: AccountNature.CREDIT,
-        accountLevel: ChartAccountLevel.SPECIFIC,
         status: ChartAccountStatus.ACTIVE,
         deletedAt: null,
         isPostingAccount: true,
@@ -622,8 +614,8 @@ export class CollectionTypeService {
       select: { id: true, accountGroup: true },
     });
 
-    if (!account || !accountGroupHasTag(account.accountGroup, SystemAccountGroupTags.defaultAccountRevenueParent)) {
-      throw new BadRequestException('Select an active revenue posting account.');
+    if (!account) {
+      throw new BadRequestException('Select an active posting account.');
     }
 
     return account;

@@ -65,9 +65,7 @@ describe('PartyMaintenanceService party ownership', () => {
     };
     const service = new PartyMaintenanceService(prisma as never, {} as never);
 
-    await expect(callPrivate(service, 'ensureResponsibilityCenterBelongsToCompany', 11, 99n)).rejects.toThrow(
-      'Selected responsibility center does not exist.',
-    );
+    await expect(callPrivate(service, 'ensureResponsibilityCenterBelongsToCompany', 11, 99n)).rejects.toThrow('Selected responsibility center does not exist.');
   });
 
   it('validates that the payment type belongs to the company', async () => {
@@ -93,9 +91,7 @@ describe('PartyMaintenanceService party ownership', () => {
     };
     const service = new PartyMaintenanceService(prisma as never, {} as never);
 
-    await expect(callPrivate(service, 'ensurePaymentTypeBelongsToCompany', 11, 99n)).rejects.toThrow(
-      'Selected payment type does not exist.',
-    );
+    await expect(callPrivate(service, 'ensurePaymentTypeBelongsToCompany', 11, 99n)).rejects.toThrow('Selected payment type does not exist.');
   });
 });
 

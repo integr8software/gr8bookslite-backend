@@ -31,9 +31,7 @@ export async function seedCompanyDisbursementTypes(tx: Prisma.TransactionClient 
 
   for (const template of StandardDisbursementTypeTemplates) {
     const expenseAccount = getCopiedTemplateAccount(copiedChartAccountByCode, template.expenseAccountCode, template.name);
-    const templateStatus = expenseAccount.status === ChartAccountStatus.ACTIVE
-      ? ChartAccountStatus.ACTIVE
-      : ChartAccountStatus.INACTIVE;
+    const templateStatus = expenseAccount.status === ChartAccountStatus.ACTIVE ? ChartAccountStatus.ACTIVE : ChartAccountStatus.INACTIVE;
     const templateDeletedAt = templateStatus === ChartAccountStatus.INACTIVE ? new Date() : null;
 
     await tx.defaultAccount.upsert({

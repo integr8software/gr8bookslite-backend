@@ -4,6 +4,25 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { ApprovalRulePayload } from './mappers/approval-workflow.mapper';
 import { ApprovalManagementService } from './approval-management.service';
 
+type ApprovalTransactionApproverCreateInput = {
+  sequence: number;
+  status: string;
+  userId: number;
+};
+
+type ApprovalTransactionCreateArgs = {
+  data: {
+    amount: Prisma.Decimal;
+    approvers: {
+      create: ApprovalTransactionApproverCreateInput[];
+    };
+    moduleScope: string;
+    referenceNo: string;
+    ruleId: string;
+    status: string;
+  };
+};
+
 describe('ApprovalManagementService', () => {
   it('creates approval progress with the first matching ordered amount rule for pending journal headers', async () => {
     const header = {
@@ -36,24 +55,26 @@ describe('ApprovalManagementService', () => {
       id: 'rule-condition-10',
       routeName: 'Condition 10',
     });
-    const approvalTransactionCreate = jest.fn(async (args: Record<string, any>) => ({
-      amount: args.data.amount,
-      approvers: args.data.approvers.create.map((approver: { sequence: number; status: string; userId: number }) => ({
-        ...approver,
-        approvedAt: null,
-        remarks: null,
-        user: {
-          id: approver.userId,
-          name: approver.userId === 22 ? 'Mara Santos' : 'Nico Reyes',
-        },
-      })),
-      createdAt: new Date('2026-09-04T08:01:00.000Z'),
-      id: 'approval-progress-1',
-      moduleScope: args.data.moduleScope,
-      referenceNo: args.data.referenceNo,
-      rule: selectedRule,
-      status: args.data.status,
-    }));
+    const approvalTransactionCreate = jest.fn((args: ApprovalTransactionCreateArgs) =>
+      Promise.resolve({
+        amount: args.data.amount,
+        approvers: args.data.approvers.create.map((approver) => ({
+          ...approver,
+          approvedAt: null,
+          remarks: null,
+          user: {
+            id: approver.userId,
+            name: approver.userId === 22 ? 'Mara Santos' : 'Nico Reyes',
+          },
+        })),
+        createdAt: new Date('2026-09-04T08:01:00.000Z'),
+        id: 'approval-progress-1',
+        moduleScope: args.data.moduleScope,
+        referenceNo: args.data.referenceNo,
+        rule: selectedRule,
+        status: args.data.status,
+      }),
+    );
     const prisma = {
       accountsPayableVoucher: { findMany: jest.fn().mockResolvedValue([]) },
       approvalRule: { findMany: jest.fn().mockResolvedValue([fallbackRule, laterMatchingRule, selectedRule]) },
@@ -68,23 +89,19 @@ describe('ApprovalManagementService', () => {
 
     const result = await service.findTransactions({ companyId: 7, id: 22 } as AuthUser);
 
-    expect(approvalTransactionCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          amount: new Prisma.Decimal('1500'),
-          moduleScope: 'JV',
-          referenceNo: 'JV-5',
-          ruleId: 'rule-condition-2',
-          status: 'For Approval',
-          approvers: {
-            create: [
-              { sequence: 1, status: 'Pending', userId: 22 },
-              { sequence: 2, status: 'Pending', userId: 33 },
-            ],
-          },
-        }),
-      }),
-    );
+    expect(approvalTransactionCreate.mock.calls[0]?.[0].data).toMatchObject({
+      amount: new Prisma.Decimal('1500'),
+      moduleScope: 'JV',
+      referenceNo: 'JV-5',
+      ruleId: 'rule-condition-2',
+      status: 'For Approval',
+      approvers: {
+        create: [
+          { sequence: 1, status: 'Pending', userId: 22 },
+          { sequence: 2, status: 'Pending', userId: 33 },
+        ],
+      },
+    });
     expect(result.transactions).toEqual([
       expect.objectContaining({
         amount: '1500',
@@ -99,6 +116,104 @@ describe('ApprovalManagementService', () => {
         status: 'For Approval',
       }),
     ]);
+  });
+
+  it('uses cash and disbursement voucher numbers as approval transaction references', async () => {
+    const cvHeader = {
+      branchUnitId: 1,
+      companyId: 7,
+      createdAt: new Date('2026-09-11T05:29:00.000Z'),
+      id: 901n,
+      jeno: 3n,
+      remarks: 'Cash voucher approval',
+      referenceId: 6n,
+      referenceNo: null,
+      referenceType: 'CV',
+      status: 'For Approval',
+      totalDebit: new Prisma.Decimal('300'),
+      transactionDate: new Date('2026-09-11T00:00:00.000Z'),
+    };
+    const dvHeader = {
+      ...cvHeader,
+      id: 902n,
+      jeno: 4n,
+      remarks: 'Disbursement voucher approval',
+      referenceId: 8n,
+      referenceType: 'DV',
+    };
+    const cvRule = createApprovalRule({
+      id: 'rule-cv',
+      moduleName: 'Cash Voucher',
+      moduleScope: 'CV',
+      routeName: 'Department Review',
+      ruleType: 'default',
+    });
+    const dvRule = createApprovalRule({
+      id: 'rule-dv',
+      moduleName: 'Disbursement Voucher',
+      moduleScope: 'DV',
+      routeName: 'Department Review',
+      ruleType: 'default',
+    });
+    const rulesById = new Map<string, ApprovalRulePayload>([
+      [cvRule.id, cvRule],
+      [dvRule.id, dvRule],
+    ]);
+    const approvalTransactionCreate = jest.fn((args: ApprovalTransactionCreateArgs) => {
+      const rule = rulesById.get(args.data.ruleId)!;
+
+      return Promise.resolve({
+        amount: args.data.amount,
+        approvers: args.data.approvers.create.map((approver) => ({
+          ...approver,
+          approvedAt: null,
+          remarks: null,
+          user: {
+            id: approver.userId,
+            name: approver.userId === 22 ? 'Mara Santos' : 'Nico Reyes',
+          },
+        })),
+        createdAt: new Date('2026-09-11T05:30:00.000Z'),
+        id: `approval-progress-${args.data.moduleScope}`,
+        moduleScope: args.data.moduleScope,
+        referenceNo: args.data.referenceNo,
+        rule,
+        status: args.data.status,
+      });
+    });
+    const prisma = {
+      accountsPayableVoucher: { findMany: jest.fn().mockResolvedValue([]) },
+      approvalRule: { findMany: jest.fn().mockResolvedValue([cvRule, dvRule]) },
+      approvalTransaction: {
+        create: approvalTransactionCreate,
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+      cashVoucher: { findMany: jest.fn().mockResolvedValue([{ id: 6n, voucherNo: 'CV-000003' }]) },
+      disbursementVoucher: { findMany: jest.fn().mockResolvedValue([{ id: 8n, voucherNo: 'DV-000004' }]) },
+      journalEntryHeader: { findMany: jest.fn().mockResolvedValue([cvHeader, dvHeader]) },
+      journalVoucher: { findMany: jest.fn().mockResolvedValue([]) },
+    } as unknown as PrismaService;
+    const service = new ApprovalManagementService(prisma);
+
+    const result = await service.findTransactions({ companyId: 7, id: 22 } as AuthUser);
+
+    expect(result.transactions).toEqual([
+      expect.objectContaining({
+        id: '901',
+        moduleScope: 'CV',
+        referenceNo: 'CV-000003',
+      }),
+      expect.objectContaining({
+        id: '902',
+        moduleScope: 'DV',
+        referenceNo: 'DV-000004',
+      }),
+    ]);
+    const cvCreateArg = approvalTransactionCreate.mock.calls.find(([args]) => args.data.moduleScope === 'CV')?.[0];
+    const dvCreateArg = approvalTransactionCreate.mock.calls.find(([args]) => args.data.moduleScope === 'DV')?.[0];
+
+    expect(cvCreateArg?.data.referenceNo).toBe('CV-6');
+    expect(dvCreateArg?.data.referenceNo).toBe('DV-8');
   });
 });
 

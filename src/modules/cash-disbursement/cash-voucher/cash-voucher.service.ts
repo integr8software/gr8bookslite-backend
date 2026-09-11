@@ -253,7 +253,7 @@ export class CashVoucherService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
-    const targetStatus = dto.status || CashVoucherStatus.DRAFT;
+    const targetStatus = await this.resolveApprovalAwareSubmissionStatus(companyId, dto.status || CashVoucherStatus.DRAFT);
     const details = this.normalizeAccountsPayableVoucherCopiedDetails(dto.details ?? [], normalized.amount, dto.referenceModule, dto.voucherReferenceNo);
     const effectiveDto = { ...dto, details };
 
@@ -366,6 +366,7 @@ export class CashVoucherService {
           },
           include: CashVoucherInclude,
         });
+        await this.applySubmissionAuditData(tx, created.id, targetStatus, user.id ? Number(user.id) : null);
 
         await this.replaceDetails(tx, created.id, companyId, branchUnitId, references.details);
         await this.replaceJournalEntries(
@@ -377,6 +378,7 @@ export class CashVoucherService {
           normalized.exchangeRate,
           cleanOptional(effectiveDto.remarks),
           references.journalEntries,
+          targetStatus,
         );
 
         const saved = await tx.cashVoucher.findUniqueOrThrow({
@@ -421,7 +423,7 @@ export class CashVoucherService {
       voucherDate: dto.voucherDate ?? dto.documentDate ?? current.voucherDate.toISOString(),
       details: dto.details ?? [],
     });
-    const targetStatus = dto.status || current.status;
+    const targetStatus = await this.resolveApprovalAwareSubmissionStatus(companyId, dto.status || current.status);
     const referenceModule = dto.referenceModule ?? current.referenceModule;
     const details = this.normalizeAccountsPayableVoucherCopiedDetails(
       dto.details ?? [],
@@ -568,6 +570,7 @@ export class CashVoucherService {
             updatedByUserId: user.id ? Number(user.id) : null,
           },
         });
+        await this.applySubmissionAuditData(tx, voucherId, targetStatus, user.id ? Number(user.id) : null);
 
         if (dto.details && dto.details.length > 0) {
           await this.replaceDetails(tx, voucherId, companyId, branchUnitId, references.details);
@@ -583,6 +586,7 @@ export class CashVoucherService {
             normalized.exchangeRate,
             cleanOptional(dto.remarks) ?? current.remarks,
             references.journalEntries,
+            targetStatus,
           );
         }
 
@@ -612,7 +616,7 @@ export class CashVoucherService {
   async updateStatus(user: AuthUser, id: string, dto: UpdateCashVoucherStatusDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const targetStatus = this.normalizeStatus(dto.status);
+    const targetStatus = await this.resolveApprovalAwareSubmissionStatus(companyId, this.normalizeStatus(dto.status));
     const requiredAction = targetStatus === CashVoucherStatus.CANCELLED ? PermissionAction.CANCEL : PermissionAction.UPDATE;
 
     this.ensureCan(user, companyId, requiredAction);
@@ -661,10 +665,16 @@ export class CashVoucherService {
       auditData.cancelledAt = now;
     }
 
-    const voucher = await this.prisma.cashVoucher.update({
-      where: { id: voucherId },
-      data: auditData,
-      include: CashVoucherInclude,
+    const voucher = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.cashVoucher.update({
+        where: { id: voucherId },
+        data: auditData,
+        include: CashVoucherInclude,
+      });
+
+      await this.updateJournalEntryHeaderStatus(tx, companyId, voucherId, targetStatus);
+
+      return updated;
     });
 
     const saved = (await this.attachJournalEntries([voucher]))[0];
@@ -953,6 +963,7 @@ export class CashVoucherService {
     exchangeRate: number,
     particulars: string | null,
     journalEntries: ResolvedJournalEntry[],
+    status: CashVoucherStatus,
   ) {
     await tx.journalEntryHeader.deleteMany({
       where: {
@@ -980,12 +991,12 @@ export class CashVoucherService {
         remarks: particulars,
         referenceId: voucherId,
         referenceType: CashVoucherReferenceType,
+        status: this.getJournalEntryStatus(status),
         transactionDate: new Date(),
         totalCredit: new Prisma.Decimal(String(roundCurrency(totalCredit))),
         totalDebit: new Prisma.Decimal(String(roundCurrency(totalDebit))),
         details: {
           create: journalEntries.map((item, index) => ({
-            companyId,
             lineNumber: item.input.lineNumber || index + 1,
             accountId: item.account.id,
             accountCodeSnapshot: item.account.accountCode,
@@ -1398,6 +1409,85 @@ export class CashVoucherService {
 
   private requiresSubmissionValidation(status: CashVoucherStatus) {
     return status !== CashVoucherStatus.DRAFT && status !== CashVoucherStatus.CANCELLED && status !== CashVoucherStatus.DISAPPROVED;
+  }
+
+  private async resolveApprovalAwareSubmissionStatus(companyId: number, requestedStatus: CashVoucherStatus) {
+    if (requestedStatus !== CashVoucherStatus.FOR_APPROVAL) {
+      return requestedStatus;
+    }
+
+    const hasApprovalWorkflow = await this.hasActiveApprovalWorkflow(companyId);
+
+    return hasApprovalWorkflow ? CashVoucherStatus.FOR_APPROVAL : CashVoucherStatus.POSTED;
+  }
+
+  private async hasActiveApprovalWorkflow(companyId: number) {
+    const workflow = await this.prisma.approvalRule.findFirst({
+      where: {
+        companyId,
+        moduleScope: CashVoucherModuleCode,
+        status: 'Active',
+        approverSetup: {
+          status: 'Active',
+          approvers: {
+            some: {},
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return Boolean(workflow);
+  }
+
+  private async applySubmissionAuditData(tx: Prisma.TransactionClient, voucherId: bigint, status: CashVoucherStatus, userId: number | null) {
+    if (status !== CashVoucherStatus.POSTED) {
+      return;
+    }
+
+    const now = new Date();
+
+    await tx.cashVoucher.update({
+      where: {
+        id: voucherId,
+      },
+      data: {
+        approvedByUserId: userId,
+        approvedAt: now,
+        postedByUserId: userId,
+        postedAt: now,
+      },
+    });
+  }
+
+  private async updateJournalEntryHeaderStatus(tx: Prisma.TransactionClient, companyId: number, voucherId: bigint, status: CashVoucherStatus) {
+    await tx.journalEntryHeader.updateMany({
+      where: {
+        companyId,
+        referenceId: voucherId,
+        referenceType: CashVoucherReferenceType,
+      },
+      data: {
+        status: this.getJournalEntryStatus(status),
+      },
+    });
+  }
+
+  private getJournalEntryStatus(status: CashVoucherStatus) {
+    switch (status) {
+      case CashVoucherStatus.FOR_APPROVAL:
+        return 'For Approval';
+      case CashVoucherStatus.POSTED:
+        return 'Posted';
+      case CashVoucherStatus.DISAPPROVED:
+        return 'Disapproved';
+      case CashVoucherStatus.CANCELLED:
+        return 'Cancelled';
+      default:
+        return 'Draft';
+    }
   }
 
   private validateSubmittedHeader(dto: Pick<Partial<CreateCashVoucherDto>, 'partyCode' | 'partyName'>) {

@@ -443,9 +443,6 @@ export class ServicesMaintenanceService {
     const accounts = await this.prisma.chartAccount.findMany({
       where: {
         companyId,
-        accountLevel: ChartAccountLevel.SPECIFIC,
-        accountType: ChartAccountType.REVENUE,
-        accountNature: AccountNature.CREDIT,
         status: ChartAccountStatus.ACTIVE,
         deletedAt: null,
         isPostingAccount: true,
@@ -453,17 +450,15 @@ export class ServicesMaintenanceService {
       orderBy: [{ accountCode: 'asc' }],
     });
 
-    return accounts
-      .filter((account) => accountGroupHasTag(account.accountGroup, ServiceRevenueAccountGroupTag))
-      .map((account) => ({
-        id: account.id.toString(),
-        accountNumber: account.accountCode,
-        accountName: account.accountTitle,
-        description: account.description ?? '',
-        accountType: account.accountType ?? '',
-        accountCategory: account.accountLevel === ChartAccountLevel.SPECIFIC ? 'Detail' : 'Header',
-        status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
-      }));
+    return accounts.map((account) => ({
+      id: account.id.toString(),
+      accountNumber: account.accountCode,
+      accountName: account.accountTitle,
+      description: account.description ?? '',
+      accountType: account.accountType ?? '',
+      accountCategory: account.accountLevel === ChartAccountLevel.SPECIFIC ? 'Detail' : 'Header',
+      status: account.status === ChartAccountStatus.ACTIVE ? 'Active' : 'Inactive',
+    }));
   }
 
   private async ensureSelectedAccountIsValid(

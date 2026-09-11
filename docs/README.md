@@ -42,6 +42,7 @@ Feature-specific analysis, plans, verification, and reusable APIs.
 
 - `modules/maintenance/` - shared maintenance APIs
 - `modules/responsibility-center/` - Responsibility Center refactor documents
+- `modules/system-administration/approval-management/` - Approval Management workflow rules, approval transactions, frontend contract, and backend status synchronization
 - `modules/tax/` - tax and default-account APIs
 
 ## Agent Instructions

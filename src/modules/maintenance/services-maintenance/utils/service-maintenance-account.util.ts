@@ -55,7 +55,6 @@ export async function findSelectableServiceAccountOrThrow(
     where: {
       id: parsedId,
       companyId,
-      accountLevel: ChartAccountLevel.SPECIFIC,
       status: ChartAccountStatus.ACTIVE,
       deletedAt: null,
       isPostingAccount: true,
@@ -66,15 +65,16 @@ export async function findSelectableServiceAccountOrThrow(
     throw new BadRequestException('Selected account must be an active posting account.');
   }
 
-  if (serviceType === ServiceMaintenanceType.PURCHASES) {
-    if (account.accountType !== ChartAccountType.EXPENSE) {
-      throw new BadRequestException('Selected account for purchase of service must be an active posting expense account.');
-    }
-  } else {
-    if (account.accountType !== ChartAccountType.REVENUE || !accountGroupHasTag(account.accountGroup, SystemAccountGroupTags.serviceRevenues)) {
-      throw new BadRequestException('Selected revenue account must be an active posting account under Service Revenues.');
-    }
-  }
+  // Commented out - Validate account type based on service type
+  // if (serviceType === ServiceMaintenanceType.PURCHASES) {
+  //   if (account.accountType !== ChartAccountType.EXPENSE) {
+  //     throw new BadRequestException('Selected account for purchase of service must be an active posting expense account.');
+  //   }
+  // } else {
+  //   if (account.accountType !== ChartAccountType.REVENUE || !accountGroupHasTag(account.accountGroup, SystemAccountGroupTags.serviceRevenues)) {
+  //     throw new BadRequestException('Selected revenue account must be an active posting account under Service Revenues.');
+  //   }
+  // }
 
   return account;
 }

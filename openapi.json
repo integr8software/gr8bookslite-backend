@@ -4569,6 +4569,33 @@
         ]
       }
     },
+    "/api/v1/maintenance/project-maintenance/next-code": {
+      "get": {
+        "operationId": "ProjectMaintenanceController_getNextCode_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMaintenanceNextCodeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the next automatic project code",
+        "tags": [
+          "Project Maintenance"
+        ]
+      }
+    },
     "/api/v1/maintenance/project-maintenance/{id}": {
       "get": {
         "operationId": "ProjectMaintenanceController_findOne_v1",
@@ -18257,113 +18284,6 @@
         ]
       }
     },
-    "/api/v1/cash-disbursement/cash-voucher/account-title-options": {
-      "get": {
-        "operationId": "CashVoucherController_findAccountTitleOptions_v1",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 120,
-              "type": "string"
-            }
-          },
-          {
-            "name": "accountLevel",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "SUB3",
-                "SUB1",
-                "SUB2",
-                "MAJOR",
-                "SPECIFIC"
-              ]
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "INACTIVE"
-              ]
-            }
-          },
-          {
-            "name": "accountType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ASSET",
-                "EXPENSE",
-                "REVENUE",
-                "LIABILITY",
-                "EQUITY"
-              ]
-            }
-          },
-          {
-            "name": "accountNature",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "DEBIT",
-                "CREDIT"
-              ]
-            }
-          },
-          {
-            "name": "postingOnly",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "parentAccountId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChartAccountOptionsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get cash voucher account title options",
-        "tags": [
-          "Cash Voucher"
-        ]
-      }
-    },
     "/api/v1/cash-disbursement/cash-voucher/{id}": {
       "get": {
         "operationId": "CashVoucherController_findOne_v1",
@@ -19149,113 +19069,6 @@
           }
         ],
         "summary": "Get auto-suggested transaction number sequence",
-        "tags": [
-          "Disbursement Voucher"
-        ]
-      }
-    },
-    "/api/v1/cash-disbursement/disbursement-voucher/account-title-options": {
-      "get": {
-        "operationId": "DisbursementVoucherController_findAccountTitleOptions_v1",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 120,
-              "type": "string"
-            }
-          },
-          {
-            "name": "accountLevel",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "SUB3",
-                "SUB1",
-                "SUB2",
-                "MAJOR",
-                "SPECIFIC"
-              ]
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "INACTIVE"
-              ]
-            }
-          },
-          {
-            "name": "accountType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ASSET",
-                "EXPENSE",
-                "REVENUE",
-                "LIABILITY",
-                "EQUITY"
-              ]
-            }
-          },
-          {
-            "name": "accountNature",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "DEBIT",
-                "CREDIT"
-              ]
-            }
-          },
-          {
-            "name": "postingOnly",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "parentAccountId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChartAccountOptionsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get disbursement voucher account title options",
         "tags": [
           "Disbursement Voucher"
         ]
@@ -28223,6 +28036,15 @@
           "projectName": {
             "type": "string"
           },
+          "type": {
+            "enum": [
+              "DIVISION",
+              "DEPARTMENT",
+              "SECTION",
+              "UNIT"
+            ],
+            "type": "string"
+          },
           "description": {
             "type": "string",
             "nullable": true
@@ -28255,6 +28077,7 @@
           "id",
           "projectCode",
           "projectName",
+          "type",
           "description",
           "status",
           "createdBy",
@@ -28370,6 +28193,15 @@
           "projectName": {
             "type": "string"
           },
+          "type": {
+            "enum": [
+              "DIVISION",
+              "DEPARTMENT",
+              "SECTION",
+              "UNIT"
+            ],
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
@@ -28389,6 +28221,7 @@
           "id",
           "projectCode",
           "projectName",
+          "type",
           "name",
           "description",
           "status"
@@ -28406,6 +28239,18 @@
         },
         "required": [
           "projects"
+        ]
+      },
+      "ProjectMaintenanceNextCodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "projectCode": {
+            "type": "string",
+            "example": "PRJ-2026-001"
+          }
+        },
+        "required": [
+          "projectCode"
         ]
       },
       "ProjectMaintenanceContainerResponseDto": {
@@ -28434,6 +28279,15 @@
             "type": "string",
             "maxLength": 150
           },
+          "type": {
+            "enum": [
+              "DIVISION",
+              "DEPARTMENT",
+              "SECTION",
+              "UNIT"
+            ],
+            "type": "string"
+          },
           "description": {
             "type": "string",
             "maxLength": 500
@@ -28447,7 +28301,8 @@
           }
         },
         "required": [
-          "projectName"
+          "projectName",
+          "type"
         ]
       },
       "SaveProjectMaintenanceResponseDto": {
@@ -28475,6 +28330,15 @@
           "projectName": {
             "type": "string",
             "maxLength": 150
+          },
+          "type": {
+            "enum": [
+              "DIVISION",
+              "DEPARTMENT",
+              "SECTION",
+              "UNIT"
+            ],
+            "type": "string"
           },
           "description": {
             "type": "string",

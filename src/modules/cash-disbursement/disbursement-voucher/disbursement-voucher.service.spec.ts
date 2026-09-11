@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { DisbursementVoucherStatus, Prisma } from '@prisma/client';
 import { CompanyCurrencyService } from '../../../common/currency/company-currency.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AccountsPayableVoucherCopySourceService } from '../../accounts-payable/accounts-payable-voucher/copy-from/accounts-payable-voucher-copy-source.service';
@@ -11,6 +11,66 @@ import { DisbursementVoucherService } from './disbursement-voucher.service';
 import { DisbursementVoucherAccountingService } from './services/disbursement-voucher-accounting.service';
 
 describe('DisbursementVoucherService', () => {
+  it('keeps submitted disbursement vouchers for approval when DV has an active approval workflow', async () => {
+    const service = createService({
+      approvalRule: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'approval-rule-1' }),
+      },
+    });
+    const serviceInternals = service as unknown as {
+      resolveApprovalAwareSubmissionStatus: (companyId: number, requestedStatus: DisbursementVoucherStatus) => Promise<DisbursementVoucherStatus>;
+    };
+
+    await expect(serviceInternals.resolveApprovalAwareSubmissionStatus(17, DisbursementVoucherStatus.FOR_APPROVAL)).resolves.toBe(
+      DisbursementVoucherStatus.FOR_APPROVAL,
+    );
+  });
+
+  it('posts submitted disbursement vouchers when DV has no active approval workflow', async () => {
+    const service = createService({
+      approvalRule: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+    });
+    const serviceInternals = service as unknown as {
+      resolveApprovalAwareSubmissionStatus: (companyId: number, requestedStatus: DisbursementVoucherStatus) => Promise<DisbursementVoucherStatus>;
+    };
+
+    await expect(serviceInternals.resolveApprovalAwareSubmissionStatus(17, DisbursementVoucherStatus.FOR_APPROVAL)).resolves.toBe(
+      DisbursementVoucherStatus.POSTED,
+    );
+  });
+
+  it('does not alter draft status while checking approval-aware submission status', async () => {
+    const approvalRuleFindFirst = jest.fn();
+    const service = createService({
+      approvalRule: {
+        findFirst: approvalRuleFindFirst,
+      },
+    });
+    const serviceInternals = service as unknown as {
+      resolveApprovalAwareSubmissionStatus: (companyId: number, requestedStatus: DisbursementVoucherStatus) => Promise<DisbursementVoucherStatus>;
+    };
+
+    await expect(serviceInternals.resolveApprovalAwareSubmissionStatus(17, DisbursementVoucherStatus.DRAFT)).resolves.toBe(DisbursementVoucherStatus.DRAFT);
+    expect(approvalRuleFindFirst).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [DisbursementVoucherStatus.DRAFT, 'Draft'],
+    [DisbursementVoucherStatus.FOR_APPROVAL, 'For Approval'],
+    [DisbursementVoucherStatus.POSTED, 'Posted'],
+    [DisbursementVoucherStatus.DISAPPROVED, 'Disapproved'],
+    [DisbursementVoucherStatus.CANCELLED, 'Cancelled'],
+  ])('maps %s to the journal entry header status %s', (status, expected) => {
+    const service = createService();
+    const serviceInternals = service as unknown as {
+      getJournalEntryStatus: (status: DisbursementVoucherStatus) => string;
+    };
+
+    expect(serviceInternals.getJournalEntryStatus(status)).toBe(expected);
+  });
+
   it('locks journal-number allocation with a parameterized query before reading the latest number', async () => {
     let executedQuery: Prisma.Sql | undefined;
     const executeRaw = jest.fn((query: Prisma.Sql): Promise<number> => {
@@ -18,17 +78,7 @@ describe('DisbursementVoucherService', () => {
       return Promise.resolve(1);
     });
     const findFirst = jest.fn<Promise<{ jeno: bigint } | null>, [args: unknown]>().mockResolvedValue({ jeno: 41n });
-    const service = new DisbursementVoucherService(
-      {} as PrismaService,
-      {} as CompanyCurrencyService,
-      {} as DisbursementVoucherAccountingService,
-      {} as AccountsPayableVoucherCopySourceService,
-      {} as AdvanceToSupplierCopySourceService,
-      {} as CashAdvanceCopySourceService,
-      {} as JournalVoucherCopySourceService,
-      {} as PettyCashReplenishmentCopySourceService,
-      {} as RevolvingFundReplenishmentCopySourceService,
-    );
+    const service = createService();
     const serviceInternals = service as unknown as {
       allocateJournalEntryNumber: (tx: Prisma.TransactionClient, companyId: number) => Promise<bigint>;
     };
@@ -55,3 +105,17 @@ describe('DisbursementVoucherService', () => {
     expect(executeRaw.mock.invocationCallOrder[0]).toBeLessThan(findFirst.mock.invocationCallOrder[0]);
   });
 });
+
+function createService(prisma: Record<string, unknown> = {}) {
+  return new DisbursementVoucherService(
+    prisma as unknown as PrismaService,
+    {} as CompanyCurrencyService,
+    {} as DisbursementVoucherAccountingService,
+    {} as AccountsPayableVoucherCopySourceService,
+    {} as AdvanceToSupplierCopySourceService,
+    {} as CashAdvanceCopySourceService,
+    {} as JournalVoucherCopySourceService,
+    {} as PettyCashReplenishmentCopySourceService,
+    {} as RevolvingFundReplenishmentCopySourceService,
+  );
+}

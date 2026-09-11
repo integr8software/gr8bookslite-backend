@@ -176,7 +176,7 @@ export class DisbursementVoucherService {
     this.ensureCan(user, companyId, PermissionAction.CREATE);
     const branchUnitId = await this.resolveBranchUnitId(companyId, dto.branchUnitId);
     const normalized = await this.normalizeVoucherInput(companyId, dto);
-    const targetStatus = dto.status || DisbursementVoucherStatus.DRAFT;
+    const targetStatus = await this.resolveApprovalAwareSubmissionStatus(companyId, dto.status || DisbursementVoucherStatus.DRAFT);
     const details = this.normalizeAccountsPayableVoucherCopiedDetails(dto.details ?? [], normalized.amount, dto.referenceModule, dto.voucherReferenceNo);
     const effectiveDto = { ...dto, details };
 
@@ -291,6 +291,7 @@ export class DisbursementVoucherService {
           },
           include: DisbursementVoucherInclude,
         });
+        await this.applySubmissionAuditData(tx, created.id, targetStatus, user.id ? Number(user.id) : null);
 
         await this.replaceDetails(tx, created.id, companyId, branchUnitId, references.details);
         await this.replaceJournalEntries(
@@ -302,6 +303,7 @@ export class DisbursementVoucherService {
           normalized.exchangeRate,
           cleanOptional(effectiveDto.remarks),
           references.journalEntries,
+          targetStatus,
         );
 
         const saved = await tx.disbursementVoucher.findUniqueOrThrow({
@@ -346,7 +348,7 @@ export class DisbursementVoucherService {
       voucherDate: dto.voucherDate ?? dto.documentDate ?? current.voucherDate.toISOString(),
       details: dto.details ?? [],
     });
-    const targetStatus = dto.status || current.status;
+    const targetStatus = await this.resolveApprovalAwareSubmissionStatus(companyId, dto.status || current.status);
     const referenceModule = dto.referenceModule ?? current.referenceModule;
     const details = this.normalizeAccountsPayableVoucherCopiedDetails(
       dto.details ?? [],
@@ -495,6 +497,7 @@ export class DisbursementVoucherService {
             updatedByUserId: user.id ? Number(user.id) : null,
           },
         });
+        await this.applySubmissionAuditData(tx, voucherId, targetStatus, user.id ? Number(user.id) : null);
 
         if (dto.details && dto.details.length > 0) {
           await this.replaceDetails(tx, voucherId, companyId, branchUnitId, references.details);
@@ -510,6 +513,7 @@ export class DisbursementVoucherService {
             normalized.exchangeRate,
             cleanOptional(dto.remarks) ?? current.remarks,
             references.journalEntries,
+            targetStatus,
           );
         }
 
@@ -539,7 +543,7 @@ export class DisbursementVoucherService {
   async updateStatus(user: AuthUser, id: string, dto: UpdateDisbursementVoucherStatusDto) {
     const companyId = this.getActiveCompanyId(user);
     await this.ensureCompanyAccess(user, companyId);
-    const targetStatus = this.normalizeStatus(dto.status);
+    const targetStatus = await this.resolveApprovalAwareSubmissionStatus(companyId, this.normalizeStatus(dto.status));
     const requiredAction = targetStatus === DisbursementVoucherStatus.CANCELLED ? PermissionAction.CANCEL : PermissionAction.UPDATE;
 
     this.ensureCan(user, companyId, requiredAction);
@@ -588,10 +592,16 @@ export class DisbursementVoucherService {
       auditData.cancelledAt = now;
     }
 
-    const voucher = await this.prisma.disbursementVoucher.update({
-      where: { id: voucherId },
-      data: auditData,
-      include: DisbursementVoucherInclude,
+    const voucher = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.disbursementVoucher.update({
+        where: { id: voucherId },
+        data: auditData,
+        include: DisbursementVoucherInclude,
+      });
+
+      await this.updateJournalEntryHeaderStatus(tx, companyId, voucherId, targetStatus);
+
+      return updated;
     });
 
     const saved = (await this.attachJournalEntries([voucher]))[0];
@@ -880,6 +890,7 @@ export class DisbursementVoucherService {
     exchangeRate: number,
     particulars: string | null,
     journalEntries: ResolvedJournalEntry[],
+    status: DisbursementVoucherStatus,
   ) {
     await tx.journalEntryHeader.deleteMany({
       where: {
@@ -907,12 +918,12 @@ export class DisbursementVoucherService {
         remarks: particulars,
         referenceId: voucherId,
         referenceType: DisbursementVoucherReferenceType,
+        status: this.getJournalEntryStatus(status),
         transactionDate: new Date(),
         totalCredit: new Prisma.Decimal(String(roundCurrency(totalCredit))),
         totalDebit: new Prisma.Decimal(String(roundCurrency(totalDebit))),
         details: {
           create: journalEntries.map((item, index) => ({
-            companyId,
             lineNumber: item.input.lineNumber || index + 1,
             accountId: item.account.id,
             accountCodeSnapshot: item.account.accountCode,
@@ -1325,6 +1336,85 @@ export class DisbursementVoucherService {
 
   private requiresSubmissionValidation(status: DisbursementVoucherStatus) {
     return status !== DisbursementVoucherStatus.DRAFT && status !== DisbursementVoucherStatus.CANCELLED && status !== DisbursementVoucherStatus.DISAPPROVED;
+  }
+
+  private async resolveApprovalAwareSubmissionStatus(companyId: number, requestedStatus: DisbursementVoucherStatus) {
+    if (requestedStatus !== DisbursementVoucherStatus.FOR_APPROVAL) {
+      return requestedStatus;
+    }
+
+    const hasApprovalWorkflow = await this.hasActiveApprovalWorkflow(companyId);
+
+    return hasApprovalWorkflow ? DisbursementVoucherStatus.FOR_APPROVAL : DisbursementVoucherStatus.POSTED;
+  }
+
+  private async hasActiveApprovalWorkflow(companyId: number) {
+    const workflow = await this.prisma.approvalRule.findFirst({
+      where: {
+        companyId,
+        moduleScope: DisbursementVoucherModuleCode,
+        status: 'Active',
+        approverSetup: {
+          status: 'Active',
+          approvers: {
+            some: {},
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return Boolean(workflow);
+  }
+
+  private async applySubmissionAuditData(tx: Prisma.TransactionClient, voucherId: bigint, status: DisbursementVoucherStatus, userId: number | null) {
+    if (status !== DisbursementVoucherStatus.POSTED) {
+      return;
+    }
+
+    const now = new Date();
+
+    await tx.disbursementVoucher.update({
+      where: {
+        id: voucherId,
+      },
+      data: {
+        approvedByUserId: userId,
+        approvedAt: now,
+        postedByUserId: userId,
+        postedAt: now,
+      },
+    });
+  }
+
+  private async updateJournalEntryHeaderStatus(tx: Prisma.TransactionClient, companyId: number, voucherId: bigint, status: DisbursementVoucherStatus) {
+    await tx.journalEntryHeader.updateMany({
+      where: {
+        companyId,
+        referenceId: voucherId,
+        referenceType: DisbursementVoucherReferenceType,
+      },
+      data: {
+        status: this.getJournalEntryStatus(status),
+      },
+    });
+  }
+
+  private getJournalEntryStatus(status: DisbursementVoucherStatus) {
+    switch (status) {
+      case DisbursementVoucherStatus.FOR_APPROVAL:
+        return 'For Approval';
+      case DisbursementVoucherStatus.POSTED:
+        return 'Posted';
+      case DisbursementVoucherStatus.DISAPPROVED:
+        return 'Disapproved';
+      case DisbursementVoucherStatus.CANCELLED:
+        return 'Cancelled';
+      default:
+        return 'Draft';
+    }
   }
 
   private validateSubmittedHeader(dto: Pick<Partial<CreateDisbursementVoucherDto>, 'partyCode' | 'partyName' | 'paymentMethod'>) {

@@ -64,69 +64,17 @@ describe('service-maintenance-account.util', () => {
       );
     });
 
-    it('throws BadRequestException for PURCHASES if accountType is not EXPENSE', async () => {
+    it('returns account when active posting account is found', async () => {
       const tx = createMockTx();
-      tx.chartAccount.findFirst.mockResolvedValue({
-        id: 55n,
-        accountType: ChartAccountType.ASSET,
-        accountGroup: [],
-      });
-
-      await expect(findSelectableServiceAccountOrThrow(1, '55', ServiceMaintenanceType.PURCHASES, tx as never)).rejects.toThrow(
-        new BadRequestException('Selected account for purchase of service must be an active posting expense account.'),
-      );
-    });
-
-    it('returns account for PURCHASES when account is EXPENSE', async () => {
-      const tx = createMockTx();
-      const expenseAccount = {
+      const account = {
         id: 55n,
         accountType: ChartAccountType.EXPENSE,
         accountGroup: [],
       };
-      tx.chartAccount.findFirst.mockResolvedValue(expenseAccount);
+      tx.chartAccount.findFirst.mockResolvedValue(account);
 
       const result = await findSelectableServiceAccountOrThrow(1, '55', ServiceMaintenanceType.PURCHASES, tx as never);
-      expect(result).toBe(expenseAccount);
-    });
-
-    it('throws BadRequestException for SALES if accountType is not REVENUE', async () => {
-      const tx = createMockTx();
-      tx.chartAccount.findFirst.mockResolvedValue({
-        id: 55n,
-        accountType: ChartAccountType.EXPENSE,
-        accountGroup: [SystemAccountGroupTags.serviceRevenues],
-      });
-
-      await expect(findSelectableServiceAccountOrThrow(1, '55', ServiceMaintenanceType.SALES, tx as never)).rejects.toThrow(
-        new BadRequestException('Selected revenue account must be an active posting account under Service Revenues.'),
-      );
-    });
-
-    it('throws BadRequestException for SALES if accountGroup does not have serviceRevenues tag', async () => {
-      const tx = createMockTx();
-      tx.chartAccount.findFirst.mockResolvedValue({
-        id: 55n,
-        accountType: ChartAccountType.REVENUE,
-        accountGroup: ['Sales Revenue'],
-      });
-
-      await expect(findSelectableServiceAccountOrThrow(1, '55', ServiceMaintenanceType.SALES, tx as never)).rejects.toThrow(
-        new BadRequestException('Selected revenue account must be an active posting account under Service Revenues.'),
-      );
-    });
-
-    it('returns account for SALES when account is REVENUE and has serviceRevenues tag', async () => {
-      const tx = createMockTx();
-      const revenueAccount = {
-        id: 55n,
-        accountType: ChartAccountType.REVENUE,
-        accountGroup: [SystemAccountGroupTags.serviceRevenues],
-      };
-      tx.chartAccount.findFirst.mockResolvedValue(revenueAccount);
-
-      const result = await findSelectableServiceAccountOrThrow(1, '55', ServiceMaintenanceType.SALES, tx as never);
-      expect(result).toBe(revenueAccount);
+      expect(result).toBe(account);
     });
   });
 

@@ -135,9 +135,8 @@ describe('CollectionTypeService account setup', () => {
         where: expect.objectContaining({
           id: 101n,
           companyId: 11,
-          accountType: ChartAccountType.REVENUE,
-          accountNature: AccountNature.CREDIT,
-          accountLevel: ChartAccountLevel.SPECIFIC,
+          status: ChartAccountStatus.ACTIVE,
+          deletedAt: null,
           isPostingAccount: true,
         }),
       }),

@@ -5,7 +5,9 @@ import {
   BillingInvoiceStatus,
   BillingStatementStatus,
   BillingStatus,
+  CashVoucherStatus,
   CollectionReceiptStatus,
+  DisbursementVoucherStatus,
   JournalVoucherStatus,
   OfficialReceiptStatus,
   Prisma,
@@ -568,8 +570,10 @@ export class ApprovalManagementService {
   private async findSourceTransactionReferenceNos(companyId: number, headers: JournalEntryHeaderPayload[]) {
     const db = this.approvalDb(this.prisma);
     const referenceNos = new Map<string, string>();
-    const apvIds = headers.filter((header) => header.referenceType === 'APV').map((header) => header.referenceId);
-    const jvIds = headers.filter((header) => header.referenceType === 'JV').map((header) => header.referenceId);
+    const apvIds = headers.filter((header) => header.referenceType === AccountsPayableVoucherReferenceType).map((header) => header.referenceId);
+    const cvIds = headers.filter((header) => header.referenceType === CashVoucherReferenceType).map((header) => header.referenceId);
+    const dvIds = headers.filter((header) => header.referenceType === DisbursementVoucherReferenceType).map((header) => header.referenceId);
+    const jvIds = headers.filter((header) => header.referenceType === JournalVoucherReferenceType).map((header) => header.referenceId);
 
     if (apvIds.length) {
       const vouchers = (await db.accountsPayableVoucher.findMany({
@@ -586,7 +590,55 @@ export class ApprovalManagementService {
       })) as Array<{ apvId: bigint; transactionNo: string }>;
 
       for (const voucher of vouchers) {
-        referenceNos.set(getSourceReferenceKey('APV', voucher.apvId), voucher.transactionNo);
+        referenceNos.set(getSourceReferenceKey(AccountsPayableVoucherReferenceType, voucher.apvId), voucher.transactionNo);
+      }
+    }
+
+    if (cvIds.length) {
+      const transactions = (
+        (await db.cashVoucher.findMany({
+          where: {
+            companyId,
+            id: {
+              in: cvIds,
+            },
+          },
+          select: {
+            id: true,
+            voucherNo: true,
+          },
+        })) as Array<{ id: bigint; voucherNo: string }>
+      ).map(({ id, voucherNo }) => ({
+        id,
+        transactionNo: voucherNo,
+      }));
+
+      for (const transaction of transactions) {
+        referenceNos.set(getSourceReferenceKey(CashVoucherReferenceType, transaction.id), transaction.transactionNo);
+      }
+    }
+
+    if (dvIds.length) {
+      const transactions = (
+        (await db.disbursementVoucher.findMany({
+          where: {
+            companyId,
+            id: {
+              in: dvIds,
+            },
+          },
+          select: {
+            id: true,
+            voucherNo: true,
+          },
+        })) as Array<{ id: bigint; voucherNo: string }>
+      ).map(({ id, voucherNo }) => ({
+        id,
+        transactionNo: voucherNo,
+      }));
+
+      for (const transaction of transactions) {
+        referenceNos.set(getSourceReferenceKey(DisbursementVoucherReferenceType, transaction.id), transaction.transactionNo);
       }
     }
 
@@ -605,7 +657,7 @@ export class ApprovalManagementService {
       })) as Array<{ id: bigint; transactionNo: string }>;
 
       for (const voucher of vouchers) {
-        referenceNos.set(getSourceReferenceKey('JV', voucher.id), voucher.transactionNo);
+        referenceNos.set(getSourceReferenceKey(JournalVoucherReferenceType, voucher.id), voucher.transactionNo);
       }
     }
 
@@ -866,6 +918,9 @@ export class ApprovalManagementService {
 }
 
 const AccountsPayableVoucherReferenceType = 'APV';
+const CashVoucherReferenceType = 'CV';
+const DisbursementVoucherReferenceType = 'DV';
+const JournalVoucherReferenceType = 'JV';
 const JournalEntryStatusPosted = 'Posted';
 const ApprovalStatusApproved = 'Approved';
 const ApprovalStatusDisapproved = 'Disapproved';
@@ -873,7 +928,7 @@ const ApprovalStatusForApproval = 'For Approval';
 const ApprovalStatusPending = 'Pending';
 const ApprovalActionRemarksMaxLength = 500;
 
-const SupportedApprovalSourceScopes = ['APV', 'JV', 'SI', 'OR', 'CR', 'AR', 'PVR', 'BI', 'BILL', 'BS'] as const;
+const SupportedApprovalSourceScopes = ['APV', 'CV', 'DV', 'JV', 'SI', 'OR', 'CR', 'AR', 'PVR', 'BI', 'BILL', 'BS'] as const;
 type SupportedApprovalSourceScope = (typeof SupportedApprovalSourceScopes)[number];
 
 function isSupportedApprovalSourceScope(referenceType: string): referenceType is SupportedApprovalSourceScope {
@@ -920,9 +975,7 @@ const ApprovalTransactionInclude = {
 };
 
 type ApprovalManagementPrismaClient = {
-  accountsPayableVoucher: SourceDelegate & {
-    findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
-  };
+  accountsPayableVoucher: QueryableSourceDelegate;
   acknowledgementReceipt: SourceDelegate;
   approvalRule: {
     create: (args: Record<string, unknown>) => Promise<unknown>;
@@ -951,7 +1004,9 @@ type ApprovalManagementPrismaClient = {
   billing: SourceDelegate;
   billingInvoice: SourceDelegate;
   billingStatement: SourceDelegate;
+  cashVoucher: QueryableSourceDelegate;
   collectionReceipt: SourceDelegate;
+  disbursementVoucher: QueryableSourceDelegate;
   journalEntryHeader: {
     findFirst: (args: Record<string, unknown>) => Promise<Record<string, unknown> | null>;
     findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
@@ -967,6 +1022,10 @@ type ApprovalManagementPrismaClient = {
 
 type SourceDelegate = {
   updateMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
+};
+
+type QueryableSourceDelegate = SourceDelegate & {
+  findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
 };
 
 type ApproverSetupWithUsers = {
@@ -1192,6 +1251,10 @@ function getPostedSourceStatus(referenceType: string) {
   switch (referenceType) {
     case 'JV':
       return JournalVoucherStatus.POSTED;
+    case 'CV':
+      return CashVoucherStatus.POSTED;
+    case 'DV':
+      return DisbursementVoucherStatus.POSTED;
     case 'SI':
       return ServiceInvoiceStatus.POSTED;
     case 'OR':
@@ -1217,6 +1280,10 @@ function getDisapprovedSourceStatus(referenceType: string) {
   switch (referenceType) {
     case 'JV':
       return JournalVoucherStatus.DISAPPROVED;
+    case 'CV':
+      return CashVoucherStatus.DISAPPROVED;
+    case 'DV':
+      return DisbursementVoucherStatus.DISAPPROVED;
     case 'SI':
       return ServiceInvoiceStatus.DISAPPROVED;
     case 'OR':
@@ -1250,6 +1317,22 @@ async function updateSourceTransaction(db: ApprovalManagementPrismaClient, heade
       });
     case 'JV':
       return db.journalVoucher.updateMany({
+        where: {
+          companyId: header.companyId,
+          id: header.referenceId,
+        },
+        data,
+      });
+    case 'CV':
+      return db.cashVoucher.updateMany({
+        where: {
+          companyId: header.companyId,
+          id: header.referenceId,
+        },
+        data,
+      });
+    case 'DV':
+      return db.disbursementVoucher.updateMany({
         where: {
           companyId: header.companyId,
           id: header.referenceId,

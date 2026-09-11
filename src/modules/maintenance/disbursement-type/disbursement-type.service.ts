@@ -670,7 +670,11 @@ export class DisbursementTypeService {
     });
   }
 
-  private async findMappedParentOrThrow(companyId: number, accountRole: DisbursementTypeParentRole, tx: Prisma.TransactionClient | PrismaService = this.prisma) {
+  private async findMappedParentOrThrow(
+    companyId: number,
+    accountRole: DisbursementTypeParentRole,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma,
+  ) {
     const definition = getDefaultAccountParentDefinition(accountRole);
 
     return findSystemAccountGroupOrThrow(tx, companyId, definition);
@@ -724,9 +728,6 @@ export class DisbursementTypeService {
     return tx.chartAccount.findMany({
       where: {
         companyId,
-        accountType: ChartAccountType.EXPENSE,
-        accountNature: AccountNature.DEBIT,
-        accountLevel: ChartAccountLevel.SPECIFIC,
         status: ChartAccountStatus.ACTIVE,
         deletedAt: null,
         isPostingAccount: true,
@@ -750,9 +751,6 @@ export class DisbursementTypeService {
       where: {
         id: accountId,
         companyId,
-        accountType: ChartAccountType.EXPENSE,
-        accountNature: AccountNature.DEBIT,
-        accountLevel: ChartAccountLevel.SPECIFIC,
         status: ChartAccountStatus.ACTIVE,
         deletedAt: null,
         isPostingAccount: true,
@@ -761,7 +759,7 @@ export class DisbursementTypeService {
     });
 
     if (!account) {
-      throw new BadRequestException('Select an active expense posting account.');
+      throw new BadRequestException('Select an active posting account.');
     }
 
     return account;
