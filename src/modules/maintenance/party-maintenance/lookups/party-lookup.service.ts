@@ -280,7 +280,7 @@ export class PartyLookupService {
     tradeName: string | null;
   }) {
     if (party.classification === PartyClassification.NON_INDIVIDUAL) {
-      return party.tradeName?.trim() || party.partyName?.trim() || 'Unnamed Party';
+      return party.partyName?.trim() || party.tradeName?.trim() || 'Unnamed Party';
     }
 
     const fullName = [party.firstName, party.middleName, party.lastName, party.suffixName]

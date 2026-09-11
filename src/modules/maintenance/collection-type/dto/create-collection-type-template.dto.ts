@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-import { ChartAccountStatus, DefaultAccountTemplateType } from '@prisma/client';
+import { IsEnum, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
+import { ChartAccountStatus, DefaultAccountTemplateType, ServiceAccountSetupMode } from '@prisma/client';
 
 export class CreateCollectionTypeTemplateDto {
   @ApiProperty({ enum: DefaultAccountTemplateType })
@@ -22,6 +22,15 @@ export class CreateCollectionTypeTemplateDto {
   @IsOptional()
   @IsEnum(ChartAccountStatus)
   status?: ChartAccountStatus;
+
+  @ApiProperty({ enum: ServiceAccountSetupMode })
+  @IsEnum(ServiceAccountSetupMode)
+  accountSetupMode!: ServiceAccountSetupMode;
+
+  @ApiPropertyOptional({ nullable: true })
+  @ValidateIf((dto: CreateCollectionTypeTemplateDto) => dto.accountSetupMode === ServiceAccountSetupMode.EXISTING)
+  @IsString()
+  revenueCoaId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()

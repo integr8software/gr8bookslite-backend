@@ -39,7 +39,6 @@ import {
 import { CashVoucherDetailDto } from './dto/cash-voucher-detail.dto';
 import { CreateCashVoucherDto } from './dto/create-cash-voucher.dto';
 import { GetCashVoucherListQueryDto } from './dto/get-cash-voucher-list-query.dto';
-import { GetChartAccountListQueryDto } from '../../maintenance/chart-of-accounts/dto/get-chart-account-list-query.dto';
 import { JournalEntryDto } from './dto/journal-entry.dto';
 import { UpdateCashVoucherDto } from './dto/update-cash-voucher.dto';
 import { UpdateCashVoucherStatusDto } from './dto/update-cash-voucher-status.dto';
@@ -49,7 +48,6 @@ import { CashVoucherAccountingService, CashVoucherReferenceType, isSourceDetailR
 export const CashVoucherModuleCode = 'CV';
 import type { CashVoucherJournalEntry, CashVoucherWithDetails } from './types/cash-voucher-with-details.type';
 import { roundCurrency } from './utils/cash-voucher-totals.util';
-import { findCashDisbursementAccountTitleOptions } from '../shared/cash-disbursement-account-title-options.util';
 
 const JournalEntryNumberAdvisoryLockNamespace = 7082;
 type PrismaWriteClient = PrismaService | Prisma.TransactionClient;
@@ -132,20 +130,6 @@ export class CashVoucherService {
       pagination,
       statistics,
       permissions,
-    };
-  }
-
-  async findAccountTitleOptions(user: AuthUser, query: GetChartAccountListQueryDto) {
-    const companyId = this.getActiveCompanyId(user);
-    await this.ensureCompanyAccess(user, companyId);
-    this.ensureCan(user, companyId, PermissionAction.VIEW);
-
-    return {
-      accounts: await findCashDisbursementAccountTitleOptions({
-        companyId,
-        prisma: this.prisma,
-        query,
-      }),
     };
   }
 
