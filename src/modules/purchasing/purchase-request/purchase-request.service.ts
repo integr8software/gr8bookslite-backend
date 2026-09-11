@@ -21,7 +21,7 @@ import { PurchaseRequestItemDto } from './dto/purchase-request-item.dto';
 import { UpdatePurchaseRequestDto } from './dto/update-purchase-request.dto';
 import { UpdatePurchaseRequestStatusDto } from './dto/update-purchase-request-status.dto';
 
-const DefaultPurchaseRequestTypes = ['Goods', 'Services', 'Assets'];
+const DefaultPurchaseRequestTypes = ['Goods', 'Services', 'Assets', 'Goods & Services'];
 
 @Injectable()
 export class PurchaseRequestService {
@@ -226,7 +226,7 @@ export class PurchaseRequestService {
   private resolvePurchaseType(companyId: number, dto: CreatePurchaseRequestDto) {
     void companyId;
     const purchaseType = DefaultPurchaseRequestTypes.find((type) => type.toLowerCase() === dto.purchaseType.trim().toLowerCase());
-    if (!purchaseType) throw new BadRequestException('Purchase Type must be Goods, Services, or Assets.');
+    if (!purchaseType) throw new BadRequestException('Purchase Type must be Goods, Services, Assets, or Goods & Services.');
     return purchaseType;
   }
 
@@ -267,23 +267,25 @@ export class PurchaseRequestService {
 
   private async buildItemData(companyId: number, branchUnitId: number, items: PurchaseRequestItemDto[], purchaseTypeName: string) {
     const isServices = purchaseTypeName.trim().toLowerCase() === 'services';
+    const isGoodsAndServices = purchaseTypeName.trim().toLowerCase() === 'goods & services';
     const resolvedItems = await Promise.all(
       items.map(async (item, index) => {
+        const itemIsService = isServices || (isGoodsAndServices && Boolean(item.serviceMaintenanceId));
         const [responsibilityCenter, serviceMaintenance] = await Promise.all([
           this.resolveItemResponsibilityCenter(companyId, item),
-          isServices ? this.resolveServiceMaintenance(companyId, item) : Promise.resolve(null),
+          itemIsService ? this.resolveServiceMaintenance(companyId, item) : Promise.resolve(null),
         ]);
 
         return {
           companyId,
           branchUnitId,
           lineNo: index + 1,
-          itemId: isServices ? null : cleanOptional(item.itemId),
+          itemId: itemIsService ? null : cleanOptional(item.itemId),
           serviceMaintenanceId: serviceMaintenance?.id ?? null,
           itemCode: cleanOptional(item.itemCode),
-          barcode: isServices ? null : cleanOptional(item.barcode),
+          barcode: itemIsService ? null : cleanOptional(item.barcode),
           description: item.description.trim(),
-          uom: isServices ? null : cleanOptional(item.uom),
+          uom: itemIsService ? null : cleanOptional(item.uom),
           qty: new Prisma.Decimal(item.qty),
           lotNo: cleanOptional(item.lotNo),
           cost: new Prisma.Decimal(item.cost ?? 0),
@@ -297,7 +299,8 @@ export class PurchaseRequestService {
       if (!item.description) {
         throw new BadRequestException('Each purchase request line needs a description.');
       }
-      if (!isServices && (!item.barcode || !item.uom)) {
+      const isServiceLine = Boolean(item.serviceMaintenanceId);
+      if (!isServiceLine && (!item.barcode || !item.uom)) {
         throw new BadRequestException('Goods purchase request lines need barcode and UOM.');
       }
     });

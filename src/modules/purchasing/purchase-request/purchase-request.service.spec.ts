@@ -68,6 +68,38 @@ describe('PurchaseRequestService entry source handling', () => {
     );
   });
 
+  it('supports Goods & Services by correctly routing item vs service lines', async () => {
+    const { buildItemData, findServiceMaintenance } = createService();
+    findServiceMaintenance.mockResolvedValue({ id: 42n });
+
+    const entries = await buildItemData(
+      7,
+      3,
+      [
+        createItem({ itemId: 'item-1', barcode: '123', uom: 'PC' }),
+        createItem({ serviceMaintenanceId: '42', description: 'Repair service' }),
+      ],
+      'Goods & Services',
+    );
+
+    expect(entries[0]).toEqual(
+      expect.objectContaining({
+        itemId: 'item-1',
+        serviceMaintenanceId: null,
+        barcode: '123',
+        uom: 'PC',
+      }),
+    );
+    expect(entries[1]).toEqual(
+      expect.objectContaining({
+        itemId: null,
+        serviceMaintenanceId: 42n,
+        barcode: null,
+        uom: null,
+      }),
+    );
+  });
+
   it('rejects a Service ID that is not active in the current company', async () => {
     const { buildItemData, findServiceMaintenance } = createService();
     findServiceMaintenance.mockResolvedValue(null);

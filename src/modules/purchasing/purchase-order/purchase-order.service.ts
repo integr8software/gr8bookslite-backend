@@ -20,7 +20,7 @@ import { GetPurchaseOrderListQueryDto } from './dto/get-purchase-order-list-quer
 import { PurchaseOrderItemDto } from './dto/purchase-order-item.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 
-const PurchaseTypes = ['Goods', 'Services', 'Assets'];
+const PurchaseTypes = ['Goods', 'Services', 'Assets', 'Goods & Services'];
 export const PurchaseOrderCopySourceLabel = 'Purchase Order';
 const ActiveAdvanceToSupplierStatuses = [AdvanceToSupplierStatus.DRAFT, AdvanceToSupplierStatus.FOR_APPROVAL, AdvanceToSupplierStatus.POSTED];
 
@@ -261,7 +261,7 @@ export class PurchaseOrderService {
 
   private async resolveReferences(companyId: number, dto: CreatePurchaseOrderDto) {
     const purchaseType = PurchaseTypes.find((x) => x.toLowerCase() === dto.purchaseType.trim().toLowerCase());
-    if (!purchaseType) throw new BadRequestException('Purchase Type must be Goods, Services, or Assets.');
+    if (!purchaseType) throw new BadRequestException('Purchase Type must be Goods, Services, Assets, or Goods & Services.');
     const partyId = parseOptionalPositiveBigIntId(dto.partyId, 'partyId');
     const party = await this.prisma.party.findFirst({
       where: { companyId, deletedAt: null, status: PartyStatus.ACTIVE, ...(partyId ? { id: partyId } : { partyCodeNo: dto.partyCode?.trim() }) },
@@ -303,6 +303,7 @@ export class PurchaseOrderService {
 
   private async entries(companyId: number, branchUnitId: number, items: PurchaseOrderItemDto[], purchaseType: string, headerPrId?: bigint) {
     const isServices = purchaseType.trim().toLowerCase() === 'services';
+    const isGoodsAndServices = purchaseType.trim().toLowerCase() === 'goods & services';
     return Promise.all(
       items.map(async (item, index) => {
         const prEntryId = parseOptionalPositiveBigIntId(item.purchaseRequestEntryId, 'purchaseRequestEntryId');
@@ -319,6 +320,7 @@ export class PurchaseOrderService {
             : null;
         if ((rcId || item.responsibilityCenter) && !rc) throw new BadRequestException('Select a valid Responsibility Center.');
         const serviceId = parseOptionalPositiveBigIntId(item.serviceMaintenanceId, 'serviceMaintenanceId');
+        const itemIsService = isServices || (isGoodsAndServices && Boolean(serviceId));
         if (isServices && !serviceId) {
           throw new BadRequestException('Select a valid service from Service Maintenance.');
         }
@@ -340,16 +342,16 @@ export class PurchaseOrderService {
           purchaseRequestEntryId: prEntry?.id ?? null,
           responsibilityCenterId: rc?.id ?? null,
           serviceMaintenanceId: service?.id ?? null,
-          itemId: isServices ? null : cleanOptional(item.itemId),
-          itemCode: isServices ? null : cleanOptional(item.itemCode),
-          barcode: isServices ? null : cleanOptional(item.barcode),
+          itemId: itemIsService ? null : cleanOptional(item.itemId),
+          itemCode: itemIsService ? null : cleanOptional(item.itemCode),
+          barcode: itemIsService ? null : cleanOptional(item.barcode),
           description,
-          color: isServices ? null : cleanOptional(item.color),
-          brand: isServices ? null : cleanOptional(item.brand),
-          size: isServices ? null : cleanOptional(item.size),
-          model: isServices ? null : cleanOptional(item.model),
-          uom: isServices ? null : cleanOptional(item.uom),
-          lotNo: isServices ? null : cleanOptional(item.lotNo),
+          color: itemIsService ? null : cleanOptional(item.color),
+          brand: itemIsService ? null : cleanOptional(item.brand),
+          size: itemIsService ? null : cleanOptional(item.size),
+          model: itemIsService ? null : cleanOptional(item.model),
+          uom: itemIsService ? null : cleanOptional(item.uom),
+          lotNo: itemIsService ? null : cleanOptional(item.lotNo),
           prQty: new Prisma.Decimal(item.prQty),
           poQty: new Prisma.Decimal(item.poQty),
           price: new Prisma.Decimal(item.price),
