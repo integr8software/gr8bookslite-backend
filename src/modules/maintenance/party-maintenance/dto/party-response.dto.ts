@@ -158,8 +158,8 @@ export class PartyResponseDto {
   @ApiProperty()
   vendorAdvanceAccount!: string;
 
-  @ApiProperty()
-  purchaseType!: string;
+  @ApiProperty({ type: [String] })
+  purchaseType!: string[];
 
   @ApiProperty()
   employeeAdvanceAccount!: string;

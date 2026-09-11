@@ -18,6 +18,7 @@ import { ImportPartiesDto } from './dto/import-parties.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
 import { mapParty } from './mappers/party-maintenance.mapper';
 import { PartyInclude } from './prisma/party.include';
+import { normalizePartyPurchaseTypes } from './utils/party-purchase-type.util';
 import type { PartyWithDetails } from './types/party-with-details.type';
 
 import { ensureActiveCompanyAccess, getActiveCompanyId } from '../../../common/utils/module-access.util';
@@ -429,7 +430,7 @@ export class PartyMaintenanceService {
       customerAdvanceAccount: this.normalizeOptionalString(dto.customerAdvanceAccount),
       defaultPayableAccount: this.normalizeOptionalString(dto.defaultPayableAccount),
       vendorAdvanceAccount: this.normalizeOptionalString(dto.vendorAdvanceAccount),
-      purchaseType: partyTypes.includes(PartyType.VENDOR) ? this.normalizeOptionalString(dto.purchaseType) : null,
+      purchaseType: partyTypes.includes(PartyType.VENDOR) ? normalizePartyPurchaseTypes(dto.purchaseType) : [],
       employeeAdvanceAccount: this.normalizeOptionalString(dto.employeeAdvanceAccount),
       employeePayableAccount: this.normalizeOptionalString(dto.employeePayableAccount),
       cashAdvanceLimit: partyTypes.includes(PartyType.EMPLOYEE) ? (dto.cashAdvanceLimit ?? null) : null,
@@ -514,7 +515,7 @@ export class PartyMaintenanceService {
       customerAdvanceAccount: dto.customerAdvanceAccount ?? current.customerAdvanceAccountId?.toString() ?? '',
       defaultPayableAccount: dto.defaultPayableAccount ?? current.defaultPayableAccountId?.toString() ?? '',
       vendorAdvanceAccount: dto.vendorAdvanceAccount ?? current.vendorAdvanceAccountId?.toString() ?? '',
-      purchaseType: dto.purchaseType !== undefined ? (dto.purchaseType ?? '') : (current.purchaseType ?? ''),
+      purchaseType: dto.purchaseType !== undefined ? (dto.purchaseType ?? []) : normalizePartyPurchaseTypes(current.purchaseType),
       employeeAdvanceAccount: dto.employeeAdvanceAccount ?? current.employeeAdvanceAccountId?.toString() ?? '',
       employeePayableAccount: dto.employeePayableAccount ?? current.employeePayableAccountId?.toString() ?? '',
       cashAdvanceLimit: dto.cashAdvanceLimit ?? current.cashAdvanceLimit?.toNumber() ?? null,
@@ -1091,7 +1092,7 @@ export class PartyMaintenanceService {
       customerAdvanceAccountId: dto.partyTypes.includes(PartyType.CUSTOMER) ? parseOptionalPositiveBigIntId(dto.customerAdvanceAccount) : null,
       defaultPayableAccountId: dto.partyTypes.includes(PartyType.VENDOR) ? parseOptionalPositiveBigIntId(dto.defaultPayableAccount) : null,
       vendorAdvanceAccountId: dto.partyTypes.includes(PartyType.VENDOR) ? parseOptionalPositiveBigIntId(dto.vendorAdvanceAccount) : null,
-      purchaseType: dto.partyTypes.includes(PartyType.VENDOR) ? (dto.purchaseType ?? null) : null,
+      purchaseType: dto.partyTypes.includes(PartyType.VENDOR) ? (dto.purchaseType ?? []) : [],
       employeeAdvanceAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE) ? parseOptionalPositiveBigIntId(dto.employeeAdvanceAccount) : null,
       employeePayableAccountId: dto.partyTypes.includes(PartyType.EMPLOYEE) ? parseOptionalPositiveBigIntId(dto.employeePayableAccount) : null,
       cashAdvanceLimit: dto.partyTypes.includes(PartyType.EMPLOYEE) ? dto.cashAdvanceLimit : null,

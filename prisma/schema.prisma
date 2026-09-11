@@ -1373,7 +1373,7 @@ model Party {
   customerAdvanceAccountId            BigInt?                            @map("customer_advance_account_id")
   defaultPayableAccountId             BigInt?                            @map("default_payable_account_id")
   vendorAdvanceAccountId              BigInt?                            @map("vendor_advance_account_id")
-  purchaseType                        String?                            @map("purchase_type") @db.VarChar(50)
+  purchaseType                        Json                               @default("[]") @map("purchase_type") @db.JsonB
   employeeAdvanceAccountId            BigInt?                            @map("employee_advance_account_id")
   employeePayableAccountId            BigInt?                            @map("employee_payable_account_id")
   cashAdvanceLimit                    Decimal?                           @map("cash_advance_limit") @db.Decimal(18, 2)

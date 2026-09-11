@@ -30362,7 +30362,10 @@
             "type": "string"
           },
           "purchaseType": {
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "employeeAdvanceAccount": {
             "type": "string"
@@ -31218,9 +31221,17 @@
             "maxLength": 80
           },
           "purchaseType": {
-            "type": "string",
+            "type": "array",
             "nullable": true,
-            "maxLength": 50
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "Goods",
+                "Services",
+                "Assets"
+              ]
+            }
           },
           "employeeAdvanceAccount": {
             "type": "string",
@@ -31510,9 +31521,17 @@
             "maxLength": 80
           },
           "purchaseType": {
-            "type": "string",
+            "type": "array",
             "nullable": true,
-            "maxLength": 50
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "Goods",
+                "Services",
+                "Assets"
+              ]
+            }
           },
           "employeeAdvanceAccount": {
             "type": "string",
