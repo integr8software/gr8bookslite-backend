@@ -71,6 +71,16 @@ export class CreateAccountsPayableVoucherDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(40)
+  responsibilityCenterId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  responsibilityCenter?: string | null;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(10)
   currency?: string | null;
 

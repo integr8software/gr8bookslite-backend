@@ -13,6 +13,7 @@ import {
   PartyType,
   Prisma,
   ResponsibilityCenter,
+  ResponsibilityCenterFinancialType,
   ResponsibilityCenterStatus,
   Term,
   TermStatus,
@@ -58,6 +59,7 @@ type ResolvedVoucherReferences = {
   details: ResolvedDetailLine[];
   journalEntries: ResolvedJournalEntry[];
   party: PartyWithAddresses;
+  responsibilityCenter: ResponsibilityCenter | null;
   term: Term;
 };
 
@@ -205,6 +207,8 @@ export class AccountsPayableVoucherService {
             payableType: normalized.payableType,
             projectCode: cleanOptional(dto.projectCode),
             projectName: cleanOptional(dto.projectName),
+            responsibilityCenterId: references.responsibilityCenter?.id ?? null,
+            responsibilityCenterSnapshot: references.responsibilityCenter?.name ?? cleanOptional(dto.responsibilityCenter),
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
             status: saveStatus,
@@ -310,6 +314,8 @@ export class AccountsPayableVoucherService {
             payableType: normalized.payableType,
             projectCode: cleanOptional(dto.projectCode),
             projectName: cleanOptional(dto.projectName),
+            responsibilityCenterId: references.responsibilityCenter?.id ?? null,
+            responsibilityCenterSnapshot: references.responsibilityCenter?.name ?? cleanOptional(dto.responsibilityCenter),
             referenceNo: cleanOptional(dto.referenceNo),
             remarks: cleanOptional(dto.remarks),
             ...(current.status === saveStatus ? {} : this.getStatusAuditData(saveStatus, user.id)),
@@ -586,13 +592,19 @@ export class AccountsPayableVoucherService {
   }
 
   private async resolveVoucherReferences(tx: PrismaWriteClient, companyId: number, dto: CreateAccountsPayableVoucherDto): Promise<ResolvedVoucherReferences> {
-    const [party, term, creditAccount] = await Promise.all([
+    const [party, term, creditAccount, responsibilityCenter] = await Promise.all([
       this.resolveParty(tx, companyId, { partyCode: dto.partyCode, partyId: dto.partyId, required: true }),
       this.resolveTerm(tx, companyId, dto.termId),
       this.resolvePostingAccount(tx, companyId, {
         accountCode: dto.creditAccountCode,
         accountId: dto.creditAccountId,
         label: 'Credit account',
+      }),
+      this.resolveResponsibilityCenter(tx, companyId, {
+        financialType: ResponsibilityCenterFinancialType.COST_CENTER,
+        label: 'Header cost center',
+        responsibilityCenter: dto.responsibilityCenter,
+        responsibilityCenterId: dto.responsibilityCenterId,
       }),
     ]);
 
@@ -655,6 +667,7 @@ export class AccountsPayableVoucherService {
       details,
       journalEntries,
       party,
+      responsibilityCenter,
       term,
     };
   }
@@ -953,10 +966,12 @@ export class AccountsPayableVoucherService {
     companyId: number,
     {
       label,
+      financialType,
       responsibilityCenter,
       responsibilityCenterId,
     }: {
       label: string;
+      financialType?: ResponsibilityCenterFinancialType;
       responsibilityCenter?: string | null;
       responsibilityCenterId?: string | null;
     },
@@ -973,6 +988,7 @@ export class AccountsPayableVoucherService {
         companyId,
         deletedAt: null,
         status: ResponsibilityCenterStatus.ACTIVE,
+        ...(financialType ? { financialType } : {}),
         ...(parsedResponsibilityCenterId
           ? { id: parsedResponsibilityCenterId }
           : {

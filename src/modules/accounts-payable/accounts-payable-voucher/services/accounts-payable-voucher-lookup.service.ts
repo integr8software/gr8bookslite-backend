@@ -136,7 +136,8 @@ export class AccountsPayableVoucherLookupService {
         code: true,
         name: true,
         status: true,
-        type: { select: { name: true } },
+        financialType: true,
+        type: { select: { classification: { select: { name: true } }, name: true } },
       },
     });
 
@@ -145,6 +146,8 @@ export class AccountsPayableVoucherLookupService {
         id: center.id.toString(),
         code: center.code,
         name: center.name,
+        classificationName: center.type.classification.name,
+        financialType: center.financialType,
         typeName: center.type.name,
         status: center.status,
       })),
